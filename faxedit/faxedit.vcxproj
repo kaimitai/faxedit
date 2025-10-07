@@ -128,13 +128,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\source\Bitreader.cpp" />
-    <ClCompile Include="..\common\source\kfile\Kfile.cpp" />
+    <ClCompile Include="src\common\klib\Bitreader.cpp" />
+    <ClCompile Include="src\common\klib\Kfile.cpp" />
+    <ClCompile Include="src\fe\Chunk.cpp" />
+    <ClCompile Include="src\fe\Door.cpp" />
+    <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\source\Bitreader.h" />
-    <ClInclude Include="..\common\source\kfile\Kfile.h" />
+    <ClInclude Include="src\common\klib\Bitreader.h" />
+    <ClInclude Include="src\common\klib\Kfile.h" />
+    <ClInclude Include="src\common\klib\Kutil.h" />
+    <ClInclude Include="src\fe\Chunk.h" />
+    <ClInclude Include="src\fe\Door.h" />
+    <ClInclude Include="src\fe\Screen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,11 +1,11 @@
-#ifndef KF_BITREADER_H
-#define KF_BITREADER_H
+#ifndef KLIB_BITREADER_H
+#define KLIB_BITREADER_H
 
 #include <vector>
 
 using byte = unsigned char;
 
-namespace kf {
+namespace klib {
 
 	class Bitreader {
 

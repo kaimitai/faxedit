@@ -1,0 +1,34 @@
+#ifndef FE_SCREEN_H
+#define FE_SCREEN_H
+
+#include <optional>
+#include <vector>
+#include "Door.h"
+
+using byte = unsigned char;
+
+namespace fe {
+
+	class Screen {
+
+		std::vector<std::vector<byte>> m_tilemap;
+		std::vector<fe::Door> m_doors;
+		std::optional<std::size_t> m_scroll_left, m_scroll_right,
+			m_scroll_up, m_scroll_down;
+
+		std::optional<std::size_t> scroll_property_to_opt(byte p_val) const;
+
+	public:
+		// constructor that reads ROM data and extracts it
+		Screen(const std::vector<byte>& p_rom, std::size_t p_offset);
+
+		// procedure that reads scroll properties from rom
+		void set_scroll_properties(const std::vector<byte>& p_rom, std::size_t p_offset);
+
+		// procedure that adds door
+		void add_door(byte p_coords, byte p_dest, byte p_dest_coords);
+	};
+
+}
+
+#endif

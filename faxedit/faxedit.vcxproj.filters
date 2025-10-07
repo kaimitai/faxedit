@@ -19,30 +19,54 @@
     <Filter Include="Source Files\common">
       <UniqueIdentifier>{2f54ee6d-64b1-4974-8c0f-45f00874773e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\kfile">
-      <UniqueIdentifier>{5595a8c7-9b30-4e9d-b53b-ac3c843f0cea}</UniqueIdentifier>
+    <Filter Include="Header Files\common\klib">
+      <UniqueIdentifier>{2a21fde4-7622-4594-af7e-1ad9fc841102}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\common\kfile">
-      <UniqueIdentifier>{7750cd1f-7ca0-4ac7-be3e-08ad607850af}</UniqueIdentifier>
+    <Filter Include="Header Files\fe">
+      <UniqueIdentifier>{2dd465c5-e365-4491-910b-4f5751dd6592}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe">
+      <UniqueIdentifier>{1b4bba44-d9ec-4e46-9c9d-28dfbc017fea}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\source\Bitreader.cpp">
+    <ClCompile Include="src\common\klib\Bitreader.cpp">
       <Filter>Source Files\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\source\kfile\Kfile.cpp">
-      <Filter>Source Files\common\kfile</Filter>
+    <ClCompile Include="src\common\klib\Kfile.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Chunk.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Screen.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Door.cpp">
+      <Filter>Source Files\fe</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\source\Bitreader.h">
-      <Filter>Header Files\common</Filter>
+    <ClInclude Include="src\common\klib\Bitreader.h">
+      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\source\kfile\Kfile.h">
-      <Filter>Header Files\kfile</Filter>
+    <ClInclude Include="src\common\klib\Kfile.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Chunk.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Kutil.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Screen.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Door.h">
+      <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

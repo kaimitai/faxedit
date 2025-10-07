@@ -2,11 +2,11 @@
 
 #include <stdexcept>
 
-kf::Bitreader::Bitreader(std::size_t p_byte_index, std::size_t p_bit_index) :
+klib::Bitreader::Bitreader(std::size_t p_byte_index, std::size_t p_bit_index) :
 	m_byte_index{ p_byte_index }, m_bit_index{ p_bit_index }
 { }
 
-unsigned int kf::Bitreader::read_int(const std::vector<byte>& p_data,
+unsigned int klib::Bitreader::read_int(const std::vector<byte>& p_data,
 	std::size_t p_bits) {
 
     if (p_bits == 0)
