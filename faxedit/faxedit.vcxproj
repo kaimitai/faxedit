@@ -106,14 +106,16 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\vclib\SDL3-3.2.24\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,6 +135,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\common\imgui\imgui.cpp" />
+    <ClCompile Include="src\common\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\common\imgui\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="src\common\imgui\imgui_impl_sdlrenderer3.cpp" />
+    <ClCompile Include="src\common\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
@@ -141,8 +149,18 @@
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\windows\gfx.cpp" />
+    <ClCompile Include="src\windows\MainWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\common\imgui\imconfig.h" />
+    <ClInclude Include="src\common\imgui\imgui.h" />
+    <ClInclude Include="src\common\imgui\imgui_impl_sdl3.h" />
+    <ClInclude Include="src\common\imgui\imgui_impl_sdlrenderer3.h" />
+    <ClInclude Include="src\common\imgui\imgui_internal.h" />
+    <ClInclude Include="src\common\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\common\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\common\imgui\imstb_truetype.h" />
     <ClInclude Include="src\common\klib\Bitreader.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
@@ -151,6 +169,8 @@
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\Game.h" />
     <ClInclude Include="src\fe\Screen.h" />
+    <ClInclude Include="src\windows\gfx.h" />
+    <ClInclude Include="src\windows\MainWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

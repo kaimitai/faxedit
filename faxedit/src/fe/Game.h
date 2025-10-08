@@ -26,6 +26,10 @@ namespace fe {
 	public:
 		Game(const std::vector<byte>& p_rom_data);
 
+		std::size_t get_chunk_count(void) const;
+		std::size_t get_screen_count(std::size_t p_chunk_no) const;
+
+		const std::vector<klib::NES_tile>& get_nes_tiles(void) const;
 	};
 
 }

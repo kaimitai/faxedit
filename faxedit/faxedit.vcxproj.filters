@@ -31,8 +31,17 @@
     <Filter Include="Source Files\fe">
       <UniqueIdentifier>{1b4bba44-d9ec-4e46-9c9d-28dfbc017fea}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\gfx">
-      <UniqueIdentifier>{33b8b96b-8c59-4b66-a73c-ad184ed5c21b}</UniqueIdentifier>
+    <Filter Include="Header Files\common\imgui">
+      <UniqueIdentifier>{a89a0e2e-d7bf-477d-8cd0-d7741a7157dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\imgui">
+      <UniqueIdentifier>{bb0b2927-62e1-4ddb-a188-7322b05fa59a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\windows">
+      <UniqueIdentifier>{a1d2286e-26b3-4bcb-a04f-322e18bba48b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\windows">
+      <UniqueIdentifier>{11543951-df9b-4765-b09f-f711f12d574a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -60,6 +69,30 @@
     <ClCompile Include="src\fe\Game.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui_draw.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui_impl_sdl3.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui_impl_sdlrenderer3.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui_tables.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imgui\imgui_widgets.cpp">
+      <Filter>Source Files\common\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\MainWindow.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\gfx.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -85,6 +118,36 @@
     </ClInclude>
     <ClInclude Include="src\fe\Game.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imconfig.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imgui.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imgui_impl_sdl3.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imgui_impl_sdlrenderer3.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imgui_internal.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imstb_rectpack.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imstb_textedit.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imgui\imstb_truetype.h">
+      <Filter>Header Files\common\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\MainWindow.h">
+      <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\gfx.h">
+      <Filter>Header Files\windows</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -97,3 +97,16 @@ void fe::Game::set_various(const std::vector<byte>& p_rom,
 	p_chunk.set_tsa_data(p_rom, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right);
 	p_chunk.set_screen_doors(p_rom, l_chunk_door_data, l_chunk_door_dest_data);
 }
+
+// getters
+std::size_t fe::Game::get_chunk_count(void) const {
+	return m_chunks.size();
+}
+
+std::size_t fe::Game::get_screen_count(std::size_t p_chunk_no) const {
+	return m_chunks.at(p_chunk_no).get_screen_count();
+}
+
+const std::vector<klib::NES_tile>&  fe::Game::get_nes_tiles(void) const {
+	return m_nes_tiles;
+}
