@@ -8,13 +8,11 @@ using byte = unsigned char;
 
 namespace klib {
 
-	class Kfile {
+	namespace file {
 
-	public:
-		Kfile(void) = default;
+		std::vector<byte> read_file_as_bytes(const std::string& p_filename);
 
-		std::vector<byte> read_file_as_bytes(const std::string& p_filename) const;
-	};
+	}
 
 }
 

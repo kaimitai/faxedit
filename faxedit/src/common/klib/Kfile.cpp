@@ -2,7 +2,7 @@
 #include <fstream>
 #include <stdexcept>
 
-std::vector<byte> klib::Kfile::read_file_as_bytes(const std::string& p_filename) const {
+std::vector<byte> klib::file::read_file_as_bytes(const std::string& p_filename) {
     std::ifstream file(p_filename, std::ios::binary);
     if (!file)
         throw std::runtime_error("Failed to open file: " + p_filename);

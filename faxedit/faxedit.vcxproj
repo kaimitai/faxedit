@@ -70,6 +70,10 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>C:\vclib\SDL3-3.2.24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vclib\SDL3-3.2.24\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -109,6 +113,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,8 +135,10 @@
   <ItemGroup>
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
+    <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
+    <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -139,8 +146,10 @@
     <ClInclude Include="src\common\klib\Bitreader.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
+    <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Door.h" />
+    <ClInclude Include="src\fe\Game.h" />
     <ClInclude Include="src\fe\Screen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
