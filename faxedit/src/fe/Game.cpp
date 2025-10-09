@@ -11,7 +11,9 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) {
 	const std::size_t VARIOUS_PT{ 0xc010 };
 	// pointer to gfx data bank 1?
 	// treated as immutable
-	const std::size_t GFX_OFFSET{ 0x10010 };
+	 const std::size_t GFX_OFFSET{ 0x10010 - 128*16 }; // chunk 0 ok for some reason
+	 //const std::size_t GFX_OFFSET{ 0x12810 - (0xa0) * 16 };
+	//const std::size_t GFX_OFFSET{ 0x12e10 - (0xa0) * 16 };
 
 	// extract screens for all chunks
 	for (std::size_t i{ 0 }; i < SCREEN_PT_PT.size(); ++i) {
@@ -109,4 +111,12 @@ std::size_t fe::Game::get_screen_count(std::size_t p_chunk_no) const {
 
 const std::vector<klib::NES_tile>&  fe::Game::get_nes_tiles(void) const {
 	return m_nes_tiles;
+}
+
+const Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
+	return m_chunks.at(p_chunk_no).get_metatile(p_metatile_no);
+}
+
+const Tilemap& fe::Game::get_screen_tilemap(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	return m_chunks.at(p_chunk_no).get_screen_tilemap(p_screen_no);
 }

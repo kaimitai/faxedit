@@ -64,3 +64,7 @@ void fe::Screen::set_scroll_properties(const std::vector<byte>& p_rom, std::size
 void fe::Screen::add_door(byte p_coords, byte p_dest, byte p_dest_coords) {
 	m_doors.push_back(fe::Door(p_coords, p_dest, p_dest_coords));
 }
+
+const std::vector<std::vector<byte>>& fe::Screen::get_tilemap(void) const {
+	return m_tilemap;
+}

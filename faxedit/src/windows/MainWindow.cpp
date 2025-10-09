@@ -13,9 +13,38 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_ga
 	m_gfx.generate_textures(p_rnd, p_game.get_nes_tiles());
 }
 
+void fe::MainWindow::draw_screen(SDL_Renderer* p_rnd, const fe::Game& p_game) const {
+	const auto& l_tilemap{ p_game.get_screen_tilemap(m_sel_chunk, m_sel_screen) };
+	const int X_OFFSET{ 300 };
+	const int Y_OFFSET{ 20 };
+
+	for (int y{ 0 }; y < 13; ++y)
+		for (int x{ 0 }; x < 16; ++x) {
+
+			byte mt_no = l_tilemap.at(y).at(x);
+			if (mt_no > 127)
+				mt_no = 0;
+
+			const auto& l_metatile{ p_game.get_metatile(m_sel_chunk, mt_no) };
+
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(0).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(0).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(1).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y + 8);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(1).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y + 8);
+		}
+}
+
 void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
 	SDL_RenderClear(p_rnd);
+
+	draw_screen(p_rnd, p_game);
+
+	for (std::size_t y{ 0 }; y < 16; ++y) {
+		for (std::size_t x{ 0 }; x < 16; ++x) {
+			m_gfx.blit(p_rnd, m_gfx.get_texture(16 * y + x), 8 * x, 8 * y);
+		}
+	}
 
 	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
@@ -26,6 +55,13 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7);
 
 	ImGui::Text("Chunk screen count %d", p_game.get_screen_count(m_sel_chunk));
+
+	std::size_t l_sc_count{ p_game.get_screen_count(m_sel_chunk) };
+
+	if (m_sel_screen >= l_sc_count)
+		m_sel_screen = l_sc_count - 1;
+
+	ImGui::SliderInt("Screen", &m_sel_screen, 0, l_sc_count - 1);
 
 	ImGui::End();
 

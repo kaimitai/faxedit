@@ -6,6 +6,7 @@
 
 using byte = unsigned char;
 using Metatile = std::vector<std::vector<byte>>;
+using Tilemap = std::vector<std::vector<byte>>;
 
 namespace fe {
 
@@ -32,7 +33,10 @@ namespace fe {
 		void set_screen_doors(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_end_offset);
 
+		const Metatile& get_metatile(std::size_t p_metatile_no) const;
 		std::size_t get_screen_count(void) const;
+
+		const Tilemap& get_screen_tilemap(std::size_t p_screen_no) const;
 	};
 
 }

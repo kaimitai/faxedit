@@ -28,6 +28,14 @@ std::size_t fe::Chunk::get_screen_count(void) const {
 	return m_screens.size();
 }
 
+const Metatile& fe::Chunk::get_metatile(std::size_t p_metatile_no) const {
+	return m_metatiles.at(p_metatile_no);
+}
+
+const Tilemap& fe::Chunk::get_screen_tilemap(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).get_tilemap();
+}
+
 void fe::Chunk::set_screen_scroll_properties(const std::vector<byte>& p_rom,
 	std::size_t p_offset) {
 	for (std::size_t i{ 0 }; i < m_screens.size(); ++i)

@@ -19,7 +19,7 @@ int main(int argc, char** argv) try {
 		throw std::runtime_error(SDL_GetError());
 	else {
 		// create game object
-		fe::Game l_game(klib::file::read_file_as_bytes("c:/Temp/Faxanadu (USA) (Rev A).nes"));
+		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (USA) (Rev A).nes"));
 
 		// Event handler
 		SDL_Event e;
@@ -53,6 +53,7 @@ int main(int argc, char** argv) try {
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
 			fe::MainWindow l_main_window;
+			l_main_window.generate_textures(l_rnd, l_game);
 		   // main_window.set_application_icon(l_window);
 
 		   // input handler

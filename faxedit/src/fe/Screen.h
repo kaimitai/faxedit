@@ -6,12 +6,13 @@
 #include "Door.h"
 
 using byte = unsigned char;
+using Tilemap = std::vector<std::vector<byte>>;
 
 namespace fe {
 
 	class Screen {
 
-		std::vector<std::vector<byte>> m_tilemap;
+		Tilemap m_tilemap;
 		std::vector<fe::Door> m_doors;
 		std::optional<std::size_t> m_scroll_left, m_scroll_right,
 			m_scroll_up, m_scroll_down;
@@ -27,6 +28,8 @@ namespace fe {
 
 		// procedure that adds door
 		void add_door(byte p_coords, byte p_dest, byte p_dest_coords);
+
+		const Tilemap& get_tilemap(void) const;
 	};
 
 }

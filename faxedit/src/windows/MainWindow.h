@@ -18,6 +18,7 @@ namespace fe {
 		void generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game);
 		void draw(SDL_Renderer* p_rnd, const fe::Game& p_game);
 
+		void draw_screen(SDL_Renderer* p_rnd, const fe::Game& p_game) const;
 	};
 
 }
