@@ -31,9 +31,10 @@ namespace fe {
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
 
 		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles,
-			const std::vector<NES_Palette>& p_palettes);
+			const NES_Palette& p_palette);
 
-		SDL_Texture* get_texture(std::size_t p_chunk_no, std::size_t p_txt_no, std::size_t p_palette_no) const;
+		SDL_Texture* get_texture(std::size_t p_tileset_no, std::size_t p_txt_no,
+			std::size_t p_sub_palette_no) const;
 	};
 
 }

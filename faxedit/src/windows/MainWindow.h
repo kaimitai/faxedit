@@ -9,7 +9,7 @@ namespace fe {
 
 	class MainWindow {
 
-		int m_sel_chunk, m_sel_screen;
+		int m_sel_chunk, m_sel_screen, m_sel_pal;
 		fe::gfx m_gfx;
 
 		std::size_t get_tileset(int p_chunk_no, int p_screen_no) const;

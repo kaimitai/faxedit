@@ -28,19 +28,11 @@ std::size_t fe::Chunk::get_screen_count(void) const {
 	return m_screens.size();
 }
 
-std::size_t fe::Chunk::get_palette_count(void) const {
-	return m_palettes.size();
-}
-
-const std::vector<NES_Palette>& fe::Chunk::get_palettes(void) const {
-	return m_palettes;
-}
-
 std::size_t fe::Chunk::get_metatile_count(void) const {
 	return m_metatiles.size();
 }
 
-const Metatile& fe::Chunk::get_metatile(std::size_t p_metatile_no) const {
+const fe::Metatile& fe::Chunk::get_metatile(std::size_t p_metatile_no) const {
 	return m_metatiles.at(p_metatile_no);
 }
 
@@ -54,23 +46,27 @@ void fe::Chunk::set_screen_scroll_properties(const std::vector<byte>& p_rom,
 		m_screens[i].set_scroll_properties(p_rom, p_offset + 4 * i);
 }
 
-void fe::Chunk::set_tsa_data(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
+void fe::Chunk::add_metatiles(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
 	std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
-	std::size_t p_metatile_count) {
+	std::size_t p_attributes_offset, std::size_t p_metatile_count) {
+
 	for (std::size_t i{ 0 }; i < p_metatile_count; ++i) {
-		m_metatiles.push_back({
-			{p_rom.at(p_tl_offset + i), p_rom.at(p_tr_offset + i)},
-			{p_rom.at(p_bl_offset + i), p_rom.at(p_br_offset + i)}
-			});
+		m_metatiles.push_back(fe::Metatile(p_rom.at(p_tl_offset + i),
+			p_rom.at(p_tr_offset + i),
+			p_rom.at(p_bl_offset + i),
+			p_rom.at(p_br_offset + i),
+			p_rom.at(p_attributes_offset + i)
+		)
+		);
 	}
 }
 
-void fe::Chunk::set_palettes(const std::vector<byte>& p_rom,
-	std::size_t p_offset, std::size_t p_palette_count) {
-	for (std::size_t i{ 0 }; i < p_palette_count; ++i) {
-		m_palettes.push_back(std::vector<byte>({ p_rom.at(p_offset + 4 * i),p_rom.at(p_offset + 4 * i + 1),
-			p_rom.at(p_offset + 4 * i + 2),p_rom.at(p_offset + 4 * i + 3) }));
-	}
+byte fe::Chunk::get_palette_attribute(std::size_t p_x, std::size_t p_y) const {
+	return m_palette_attributes.at(p_y).at(p_x);
+}
+
+byte fe::Chunk::get_default_palette_no(void) const {
+	return m_default_palette_no;
 }
 
 void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
@@ -93,4 +89,8 @@ void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 
 	}
 
+}
+
+void fe::Chunk::set_default_palette_no(byte p_palette_no) {
+	m_default_palette_no = p_palette_no;
 }

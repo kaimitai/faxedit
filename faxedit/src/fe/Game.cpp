@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Metatile.h"
 
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data }
@@ -53,8 +54,30 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	}
 
 	// extract palettes
+	// metadata: {0x00, 0x06, 0x0A, 0x1B, 0x1B, 0x08, 0x0C, 0x0F}
+	// {chunk 0, 1 (3) }
+	// rearrange to match my chunk ordering
+	std::vector<std::size_t> l_pal_offsets{
+		  0x00,
+		  0x0A,
+		  0x1B,
+		  0x06,
+		  0x08,
+		  0x0C,
+		  0x1B,
+		  0x0F
+	};
+
+	for (std::size_t i{ 0 }; i < 31; ++i) {
+		NES_Palette l_tmp_palette;
+		for (std::size_t pidx{ PALETTE_PT + 16 * i }; pidx < PALETTE_PT + 16 * i + 16; ++pidx)
+			l_tmp_palette.push_back(p_rom_data[pidx]);
+
+		m_palettes.push_back(l_tmp_palette);
+	}
+
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		m_chunks.at(i).set_palettes(p_rom_data, PALETTE_PT + i * 16);
+		m_chunks.at(i).set_default_palette_no(l_pal_offsets[i]);
 	}
 }
 
@@ -136,13 +159,17 @@ void fe::Game::set_various(const std::vector<byte>& p_rom, std::size_t p_chunk_n
 
 	m_chunks[l_remapped_chunk_no].set_block_properties(p_rom, l_block_properties, l_metatile_count);
 	m_chunks[l_remapped_chunk_no].set_screen_scroll_properties(p_rom, l_chunk_scroll_data);
-	m_chunks[l_remapped_chunk_no].set_tsa_data(p_rom, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_metatile_count);
+	m_chunks[l_remapped_chunk_no].add_metatiles(p_rom, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_metatile_count);
 	m_chunks[l_remapped_chunk_no].set_screen_doors(p_rom, l_chunk_door_data, l_chunk_door_dest_data);
 }
 
 // getters
 std::size_t fe::Game::get_chunk_count(void) const {
 	return m_chunks.size();
+}
+
+byte fe::Game::get_chunk_default_palette_no(std::size_t p_chunk_no) const {
+	return m_chunks.at(p_chunk_no).get_default_palette_no();
 }
 
 std::size_t fe::Game::get_screen_count(std::size_t p_chunk_no) const {
@@ -161,18 +188,14 @@ std::size_t fe::Game::get_metatile_count(std::size_t p_chunk_no) const {
 	return m_chunks.at(p_chunk_no).get_metatile_count();
 }
 
-const Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
+const std::vector<NES_Palette>& fe::Game::get_palettes(void) const {
+	return m_palettes;
+}
+
+const fe::Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
 	return m_chunks.at(p_chunk_no).get_metatile(p_metatile_no);
 }
 
 const Tilemap& fe::Game::get_screen_tilemap(std::size_t p_chunk_no, std::size_t p_screen_no) const {
 	return m_chunks.at(p_chunk_no).get_screen_tilemap(p_screen_no);
-}
-
-std::size_t fe::Game::get_palette_count(std::size_t p_chunk_no) const {
-	return m_chunks.at(p_chunk_no).get_palette_count();
-}
-
-const std::vector<NES_Palette>& fe::Game::get_chunk_palettes(std::size_t p_chunk_no) const {
-	return m_chunks.at(p_chunk_no).get_palettes();
 }
