@@ -20,12 +20,16 @@ std::vector<byte> fe::Chunk::extract_bytes(const std::vector<byte>& p_rom,
 }
 
 void fe::Chunk::set_block_properties(const std::vector<byte>& p_rom,
-	std::size_t p_offset) {
-	m_block_properties = extract_bytes(p_rom, p_offset, 128);
+	std::size_t p_offset, std::size_t p_metatile_count) {
+	m_block_properties = extract_bytes(p_rom, p_offset, p_metatile_count);
 }
 
 std::size_t fe::Chunk::get_screen_count(void) const {
 	return m_screens.size();
+}
+
+std::size_t fe::Chunk::get_metatile_count(void) const {
+	return m_metatiles.size();
 }
 
 const Metatile& fe::Chunk::get_metatile(std::size_t p_metatile_no) const {
@@ -43,8 +47,9 @@ void fe::Chunk::set_screen_scroll_properties(const std::vector<byte>& p_rom,
 }
 
 void fe::Chunk::set_tsa_data(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
-	std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset) {
-	for (std::size_t i{ 0 }; i < 128; ++i) {
+	std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
+	std::size_t p_metatile_count) {
+	for (std::size_t i{ 0 }; i < p_metatile_count; ++i) {
 		m_metatiles.push_back({
 			{p_rom.at(p_tl_offset + i), p_rom.at(p_tr_offset + i)},
 			{p_rom.at(p_bl_offset + i), p_rom.at(p_br_offset + i)}

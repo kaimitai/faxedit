@@ -25,14 +25,16 @@ namespace fe {
 		void decompress_and_add_screen(const std::vector<byte>& p_rom,
 			std::size_t p_offset);
 		void set_block_properties(const std::vector<byte>& p_rom,
-			std::size_t p_offset);
+			std::size_t p_offset, std::size_t p_metatile_count);
 		void set_screen_scroll_properties(const std::vector<byte>& p_rom,
 			std::size_t p_offset);
 		void set_tsa_data(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
-			std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset);
+			std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
+			std::size_t p_metatile_count);
 		void set_screen_doors(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_end_offset);
 
+		std::size_t get_metatile_count(void) const;
 		const Metatile& get_metatile(std::size_t p_metatile_no) const;
 		std::size_t get_screen_count(void) const;
 

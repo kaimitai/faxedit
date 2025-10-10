@@ -11,7 +11,7 @@ namespace fe {
 
 	class gfx {
 
-		std::vector<SDL_Texture*> m_textures;
+		std::vector<std::vector<SDL_Texture*>> m_textures;
 		SDL_Palette* m_nes_palette;
 
 		// surface operations
@@ -30,7 +30,7 @@ namespace fe {
 
 		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles);
 
-		SDL_Texture* get_texture(std::size_t p_txt_no) const;
+		SDL_Texture* get_texture(std::size_t p_chunk_no, std::size_t p_txt_no) const;
 	};
 
 }

@@ -10,7 +10,15 @@ fe::MainWindow::MainWindow(void) :
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
-	m_gfx.generate_textures(p_rnd, p_game.get_nes_tiles());
+	for (std::size_t i{ 0 }; i < p_game.get_tileset_count(); ++i)
+		m_gfx.generate_textures(p_rnd, p_game.get_tileset(i));
+}
+
+std::size_t fe::MainWindow::get_tileset(int p_chunk_no, int p_screen_no) const {
+	if (p_chunk_no == 6 && p_chunk_no >= 3)
+		return p_screen_no >= 8 ? 9 : 8;
+	else
+		return p_chunk_no;
 }
 
 void fe::MainWindow::draw_screen(SDL_Renderer* p_rnd, const fe::Game& p_game) const {
@@ -18,19 +26,25 @@ void fe::MainWindow::draw_screen(SDL_Renderer* p_rnd, const fe::Game& p_game) co
 	const int X_OFFSET{ 300 };
 	const int Y_OFFSET{ 20 };
 
+	std::size_t l_tileset{ get_tileset(m_sel_chunk, m_sel_screen) };
+
 	for (int y{ 0 }; y < 13; ++y)
 		for (int x{ 0 }; x < 16; ++x) {
 
 			byte mt_no = l_tilemap.at(y).at(x);
-			if (mt_no > 127)
+
+			// don't know if this should ever happen
+			if (mt_no >= p_game.get_metatile_count(m_sel_chunk))
 				mt_no = 0;
 
 			const auto& l_metatile{ p_game.get_metatile(m_sel_chunk, mt_no) };
 
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(0).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(0).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(1).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y + 8);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_metatile.at(1).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y + 8);
+
+
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y + 8);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y + 8);
 		}
 }
 
@@ -40,9 +54,11 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 	draw_screen(p_rnd, p_game);
 
+	std::size_t l_tileset{ get_tileset(m_sel_chunk, m_sel_screen) };
+
 	for (std::size_t y{ 0 }; y < 16; ++y) {
 		for (std::size_t x{ 0 }; x < 16; ++x) {
-			m_gfx.blit(p_rnd, m_gfx.get_texture(16 * y + x), 8 * x, 8 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, 16 * y + x), 8 * x, 8 * y);
 		}
 	}
 

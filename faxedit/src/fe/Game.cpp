@@ -1,19 +1,29 @@
 #include "Game.h"
 
-fe::Game::Game(const std::vector<byte>& p_rom_data) {
+fe::Game::Game(const std::vector<byte>& p_rom_data) :
+	m_rom_data{ p_rom_data }
+{
 	// pointers to the screen pointers for each of the 8 chunks. treated as immutable
 	const std::vector<std::size_t> SCREEN_PT_PT{
 		0x10, 0x12, 0x14, 0x4010, 0x4012, 0x8010, 0x8012, 0x8014
 	};
 
-	// pointer to the pointer table for various chunk metadata
-	// treated as immutable
+	// pointer to the pointer table for various chunk metadata - treated as immutable
 	const std::size_t VARIOUS_PT{ 0xc010 };
-	// pointer to gfx data bank 1?
-	// treated as immutable
-	 const std::size_t GFX_OFFSET{ 0x10010 - 128*16 }; // chunk 0 ok for some reason
-	 //const std::size_t GFX_OFFSET{ 0x12810 - (0xa0) * 16 };
-	//const std::size_t GFX_OFFSET{ 0x12e10 - (0xa0) * 16 };
+
+	// pointer to gfx start location per chunk (with the exception of the shop/guru-chunk) - treated as immutable
+	const std::vector<std::size_t> GFX_OFFSETS{
+		0xf810,   // verified: eolis
+		0x10810,  // verified: mist
+		0x11810,  // verified: town
+		0x10010,  // verified: road to apolune, towers, springs and screen outside forepaw and apolune
+		0x11010,  // verified: branches
+		0x13010,  // verified: dartmoor + evil fortress
+		0x11e10,  // verified, guru and king screens in chunk 6
+		0x13010,  // verified: dartmoor + evil fortress
+		0x12410,  // verified: extra set used for the shop and building interior screens in chunk 6
+		0x12a10   // verified: extra set used for the training shops in chunk 6
+	};
 
 	// extract screens for all chunks
 	for (std::size_t i{ 0 }; i < SCREEN_PT_PT.size(); ++i) {
@@ -27,13 +37,21 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) {
 
 	// extract various
 	for (std::size_t i{ 0 }; i < 8; ++i)
-		set_various(p_rom_data, m_chunks.at(i), i, VARIOUS_PT);
+		set_various(p_rom_data, i, VARIOUS_PT);
 
 	// extract gfx
-	for (std::size_t i{ 0 }; i < 256; ++i) {
-		m_nes_tiles.push_back(klib::NES_tile::NES_tile(p_rom_data,
-			GFX_OFFSET + 16 * i));
+	for (std::size_t c{ 0 }; c < GFX_OFFSETS.size(); ++c) {
+		m_tilesets.push_back(std::vector<klib::NES_tile>());
+
+		for (std::size_t i{ 0 }; i < 256; ++i) {
+			m_tilesets[c].push_back(klib::NES_tile::NES_tile(p_rom_data,
+				GFX_OFFSETS[c] + 16 * i));
+		}
 	}
+}
+
+const std::vector<byte>& fe::Game::get_rom_data(void) const {
+	return m_rom_data;
 }
 
 std::size_t fe::Game::get_pointer_address(const std::vector<byte>& p_rom,
@@ -65,9 +83,18 @@ std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<byte>& 
 	return l_result;
 }
 
-void fe::Game::set_various(const std::vector<byte>& p_rom,
-	fe::Chunk& p_chunk, std::size_t p_chunk_no,
-	std::size_t pt_to_various) {
+void fe::Game::set_various(const std::vector<byte>& p_rom, std::size_t p_chunk_no, std::size_t pt_to_various) {
+	// mapping from chunk id to index id in this metatable
+
+	const std::vector<std::size_t> METADATA_CHUNK_REMAPS{
+		0,  // verified
+		3,  // verified
+		1,  // verified
+		2,  // verified
+		6,  // verified
+		4,  // verified
+		5,  // verified
+		7 }; // verified
 
 	// get address from the 16-bit metatable relating to the chunk we want
 	std::size_t l_table_offset{ get_pointer_address(p_rom, pt_to_various) + 2 * p_chunk_no };
@@ -76,7 +103,7 @@ void fe::Game::set_various(const std::vector<byte>& p_rom,
 
 	// metadata, 2 bytes: points 2 bytes forward - but why?
 	std::size_t l_chunk_attributes{ get_pointer_address(p_rom, l_chunk_offset) };
-	// properties per metatile: 128 bytes
+	// properties per metatile: #metatile bytes
 	std::size_t l_block_properties{ get_pointer_address(p_rom, l_chunk_offset + 2) };
 	// 4 bytes per screen, defining which screen each edge scrolls to
 	// order: left, right, up, down
@@ -94,10 +121,15 @@ void fe::Game::set_various(const std::vector<byte>& p_rom,
 	std::size_t l_tsa_bottom_left{ get_pointer_address(p_rom, l_chunk_offset + 16) };
 	std::size_t l_tsa_bottom_right{ get_pointer_address(p_rom, l_chunk_offset + 18) };
 
-	p_chunk.set_block_properties(p_rom, l_block_properties);
-	p_chunk.set_screen_scroll_properties(p_rom, l_chunk_scroll_data);
-	p_chunk.set_tsa_data(p_rom, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right);
-	p_chunk.set_screen_doors(p_rom, l_chunk_door_data, l_chunk_door_dest_data);
+	// the meta-tile definition counts seem to vary between chunks
+	std::size_t l_metatile_count{ l_tsa_top_right - l_tsa_top_left };
+
+	std::size_t l_remapped_chunk_no{ METADATA_CHUNK_REMAPS[p_chunk_no] };
+
+	m_chunks[l_remapped_chunk_no].set_block_properties(p_rom, l_block_properties, l_metatile_count);
+	m_chunks[l_remapped_chunk_no].set_screen_scroll_properties(p_rom, l_chunk_scroll_data);
+	m_chunks[l_remapped_chunk_no].set_tsa_data(p_rom, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_metatile_count);
+	m_chunks[l_remapped_chunk_no].set_screen_doors(p_rom, l_chunk_door_data, l_chunk_door_dest_data);
 }
 
 // getters
@@ -109,8 +141,16 @@ std::size_t fe::Game::get_screen_count(std::size_t p_chunk_no) const {
 	return m_chunks.at(p_chunk_no).get_screen_count();
 }
 
-const std::vector<klib::NES_tile>&  fe::Game::get_nes_tiles(void) const {
-	return m_nes_tiles;
+const std::size_t fe::Game::get_tileset_count(void) const {
+	return m_tilesets.size();
+}
+
+const std::vector<klib::NES_tile>& fe::Game::get_tileset(std::size_t p_tileset_no) const {
+	return m_tilesets.at(p_tileset_no);
+}
+
+std::size_t fe::Game::get_metatile_count(std::size_t p_chunk_no) const {
+	return m_chunks.at(p_chunk_no).get_metatile_count();
 }
 
 const Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
