@@ -11,11 +11,11 @@ fe::MainWindow::MainWindow(void) :
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	for (std::size_t i{ 0 }; i < p_game.get_tileset_count(); ++i)
-		m_gfx.generate_textures(p_rnd, p_game.get_tileset(i));
+		m_gfx.generate_textures(p_rnd, p_game.get_tileset(i), p_game.get_chunk_palettes(i >= 8 ? 6 : i));
 }
 
 std::size_t fe::MainWindow::get_tileset(int p_chunk_no, int p_screen_no) const {
-	if (p_chunk_no == 6 && p_chunk_no >= 3)
+	if (p_chunk_no == 6 && p_screen_no >= 3)
 		return p_screen_no >= 8 ? 9 : 8;
 	else
 		return p_chunk_no;
@@ -41,10 +41,10 @@ void fe::MainWindow::draw_screen(SDL_Renderer* p_rnd, const fe::Game& p_game) co
 
 
 
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(0)), X_OFFSET + 16 * x, Y_OFFSET + 16 * y + 8);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(1)), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y + 8);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(0), 0), X_OFFSET + 16 * x, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(0).at(1), 0), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(0), 0), X_OFFSET + 16 * x, Y_OFFSET + 16 * y + 8);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_metatile.at(1).at(1), 0), X_OFFSET + 16 * x + 8, Y_OFFSET + 16 * y + 8);
 		}
 }
 
@@ -58,7 +58,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 	for (std::size_t y{ 0 }; y < 16; ++y) {
 		for (std::size_t x{ 0 }; x < 16; ++x) {
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, 16 * y + x), 8 * x, 8 * y);
+			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, 16 * y + x, 0), 8 * x, 8 * y);
 		}
 	}
 

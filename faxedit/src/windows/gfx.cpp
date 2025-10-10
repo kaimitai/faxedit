@@ -17,27 +17,35 @@ fe::gfx::~gfx(void) {
 }
 
 void fe::gfx::generate_textures(SDL_Renderer* p_rnd,
-	const std::vector<klib::NES_tile>& p_tiles) {
+	const std::vector<klib::NES_tile>& p_tiles,
+	const std::vector<NES_Palette>& p_palettes) {
 
-	m_textures.push_back(std::vector<SDL_Texture*>());
-	std::vector<byte> l_palette{ 0x0f, 0x05, 0x17, 0x26 };
+	std::vector<std::vector<SDL_Texture*>> l_tiles_all_palettes;
 
-	for (const auto& tile : p_tiles) {
+	for (const auto& l_palette : p_palettes) {
+		std::vector<SDL_Texture*> l_tiles_this_palette;
 
-		auto l_srf = create_sdl_surface(8, 8);
+		for (const auto& tile : p_tiles) {
 
-		for (int y{ 0 }; y < 8; ++y)
-			for (int x{ 0 }; x < 8; ++x) {
-				put_nes_pixel(l_srf, x, y, l_palette[tile.get_color(x, y)]);
-			}
+			auto l_srf = create_sdl_surface(8, 8);
 
-		m_textures.back().push_back(surface_to_texture(p_rnd, l_srf));
+			for (int y{ 0 }; y < 8; ++y)
+				for (int x{ 0 }; x < 8; ++x) {
+					put_nes_pixel(l_srf, x, y, l_palette[tile.get_color(x, y)]);
+				}
 
+			l_tiles_this_palette.push_back(surface_to_texture(p_rnd, l_srf));
+
+		}
+
+		l_tiles_all_palettes.push_back(l_tiles_this_palette);
 	}
+
+	m_textures.push_back(l_tiles_all_palettes);
 }
 
-SDL_Texture* fe::gfx::get_texture(std::size_t p_chunk_no, std::size_t p_txt_no) const {
-	return m_textures.at(p_chunk_no).at(p_txt_no);
+SDL_Texture* fe::gfx::get_texture(std::size_t p_chunk_no, std::size_t p_txt_no, std::size_t p_palette_no) const {
+	return m_textures.at(p_chunk_no).at(p_palette_no).at(p_txt_no);
 }
 
 SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h) const {

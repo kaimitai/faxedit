@@ -7,12 +7,14 @@
 using byte = unsigned char;
 using Metatile = std::vector<std::vector<byte>>;
 using Tilemap = std::vector<std::vector<byte>>;
+using NES_Palette = std::vector<byte>;
 
 namespace fe {
 
 	class Chunk {
 
 		std::vector<Metatile> m_metatiles;
+		std::vector<NES_Palette> m_palettes;
 		std::vector<fe::Screen> m_screens;
 		std::vector<byte> m_block_properties;
 
@@ -33,10 +35,14 @@ namespace fe {
 			std::size_t p_metatile_count);
 		void set_screen_doors(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_end_offset);
+		void set_palettes(const std::vector<byte>& p_rom,
+			std::size_t p_offset, std::size_t p_palette_count = 4);
 
 		std::size_t get_metatile_count(void) const;
 		const Metatile& get_metatile(std::size_t p_metatile_no) const;
 		std::size_t get_screen_count(void) const;
+		std::size_t get_palette_count(void) const;
+		const std::vector<NES_Palette>& get_palettes(void) const;
 
 		const Tilemap& get_screen_tilemap(std::size_t p_screen_no) const;
 	};

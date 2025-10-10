@@ -25,6 +25,9 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		0x12a10   // verified: extra set used for the training shops in chunk 6
 	};
 
+	// pointer to palettes
+	const std::size_t PALETTE_PT{ 0x2c010 };
+
 	// extract screens for all chunks
 	for (std::size_t i{ 0 }; i < SCREEN_PT_PT.size(); ++i) {
 		m_chunks.push_back(fe::Chunk());
@@ -47,6 +50,11 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			m_tilesets[c].push_back(klib::NES_tile::NES_tile(p_rom_data,
 				GFX_OFFSETS[c] + 16 * i));
 		}
+	}
+
+	// extract palettes
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		m_chunks.at(i).set_palettes(p_rom_data, PALETTE_PT + i * 16);
 	}
 }
 
@@ -159,4 +167,12 @@ const Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_met
 
 const Tilemap& fe::Game::get_screen_tilemap(std::size_t p_chunk_no, std::size_t p_screen_no) const {
 	return m_chunks.at(p_chunk_no).get_screen_tilemap(p_screen_no);
+}
+
+std::size_t fe::Game::get_palette_count(std::size_t p_chunk_no) const {
+	return m_chunks.at(p_chunk_no).get_palette_count();
+}
+
+const std::vector<NES_Palette>& fe::Game::get_chunk_palettes(std::size_t p_chunk_no) const {
+	return m_chunks.at(p_chunk_no).get_palettes();
 }

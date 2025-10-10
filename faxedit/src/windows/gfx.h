@@ -6,12 +6,14 @@
 #include "./../common/klib/NES_tile.h"
 
 using byte = unsigned char;
+using NES_Palette = std::vector<byte>;
 
 namespace fe {
 
 	class gfx {
 
-		std::vector<std::vector<SDL_Texture*>> m_textures;
+		// tileset no -> palette no -> texture
+		std::vector<std::vector<std::vector<SDL_Texture*>>> m_textures;
 		SDL_Palette* m_nes_palette;
 
 		// surface operations
@@ -28,9 +30,10 @@ namespace fe {
 		// blitting operations
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
 
-		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles);
+		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles,
+			const std::vector<NES_Palette>& p_palettes);
 
-		SDL_Texture* get_texture(std::size_t p_chunk_no, std::size_t p_txt_no) const;
+		SDL_Texture* get_texture(std::size_t p_chunk_no, std::size_t p_txt_no, std::size_t p_palette_no) const;
 	};
 
 }

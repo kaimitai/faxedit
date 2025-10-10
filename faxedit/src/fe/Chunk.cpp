@@ -28,6 +28,14 @@ std::size_t fe::Chunk::get_screen_count(void) const {
 	return m_screens.size();
 }
 
+std::size_t fe::Chunk::get_palette_count(void) const {
+	return m_palettes.size();
+}
+
+const std::vector<NES_Palette>& fe::Chunk::get_palettes(void) const {
+	return m_palettes;
+}
+
 std::size_t fe::Chunk::get_metatile_count(void) const {
 	return m_metatiles.size();
 }
@@ -54,6 +62,14 @@ void fe::Chunk::set_tsa_data(const std::vector<byte>& p_rom, std::size_t p_tl_of
 			{p_rom.at(p_tl_offset + i), p_rom.at(p_tr_offset + i)},
 			{p_rom.at(p_bl_offset + i), p_rom.at(p_br_offset + i)}
 			});
+	}
+}
+
+void fe::Chunk::set_palettes(const std::vector<byte>& p_rom,
+	std::size_t p_offset, std::size_t p_palette_count) {
+	for (std::size_t i{ 0 }; i < p_palette_count; ++i) {
+		m_palettes.push_back(std::vector<byte>({ p_rom.at(p_offset + 4 * i),p_rom.at(p_offset + 4 * i + 1),
+			p_rom.at(p_offset + 4 * i + 2),p_rom.at(p_offset + 4 * i + 3) }));
 	}
 }
 
