@@ -65,6 +65,71 @@ void fe::Screen::add_door(byte p_coords, byte p_dest, byte p_dest_coords) {
 	m_doors.push_back(fe::Door(p_coords, p_dest, p_dest_coords));
 }
 
+void fe::Screen::add_sprite(byte p_id, byte p_x, byte p_y) {
+	m_sprites.push_back(fe::Sprite(p_id, p_x, p_y));
+}
+
+void fe::Screen::set_sprite_text(std::size_t p_sprite_no, byte p_text) {
+	m_sprites.at(p_sprite_no).set_text(p_text);
+}
+
 const std::vector<std::vector<byte>>& fe::Screen::get_tilemap(void) const {
 	return m_tilemap;
+}
+
+bool fe::Screen::has_exit_right(void) const {
+	return m_scroll_right.has_value();
+}
+
+bool fe::Screen::has_exit_left(void) const {
+	return m_scroll_left.has_value();
+}
+
+bool fe::Screen::has_exit_up(void) const {
+	return m_scroll_up.has_value();
+}
+
+bool fe::Screen::has_exit_down(void) const {
+	return m_scroll_down.has_value();
+}
+
+std::size_t fe::Screen::get_exit_right(void) const {
+	return m_scroll_right.value();
+}
+
+std::size_t fe::Screen::get_exit_left(void) const {
+	return m_scroll_left.value();
+}
+
+std::size_t fe::Screen::get_exit_up(void) const {
+	return m_scroll_up.value();
+}
+
+std::size_t fe::Screen::get_exit_down(void) const {
+	return m_scroll_down.value();
+}
+
+// sprites
+std::size_t fe::Screen::get_sprite_count(void) const {
+	return m_sprites.size();
+}
+
+byte fe::Screen::get_sprite_id(std::size_t p_sprite_no) const {
+	return m_sprites.at(p_sprite_no).get_id();
+}
+
+byte fe::Screen::get_sprite_x(std::size_t p_sprite_no) const {
+	return m_sprites.at(p_sprite_no).get_x();
+}
+
+byte fe::Screen::get_sprite_y(std::size_t p_sprite_no) const {
+	return m_sprites.at(p_sprite_no).get_y();
+}
+
+byte fe::Screen::get_sprite_text(std::size_t p_sprite_no) const {
+	return m_sprites.at(p_sprite_no).get_text();
+}
+
+bool fe::Screen::has_sprite_text(std::size_t p_sprite_no) const {
+	return m_sprites.at(p_sprite_no).has_text();
 }

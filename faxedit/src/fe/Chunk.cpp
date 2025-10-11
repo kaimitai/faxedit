@@ -32,6 +32,10 @@ std::size_t fe::Chunk::get_metatile_count(void) const {
 	return m_metatiles.size();
 }
 
+byte fe::Chunk::get_metatile_property(std::size_t p_metatile_no) const {
+	return m_block_properties.at(p_metatile_no);
+}
+
 const fe::Metatile& fe::Chunk::get_metatile(std::size_t p_metatile_no) const {
 	return m_metatiles.at(p_metatile_no);
 }
@@ -93,4 +97,70 @@ void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 
 void fe::Chunk::set_default_palette_no(byte p_palette_no) {
 	m_default_palette_no = p_palette_no;
+}
+
+bool fe::Chunk::has_screen_exit_right(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).has_exit_right();
+}
+
+bool fe::Chunk::has_screen_exit_left(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).has_exit_left();
+}
+
+bool fe::Chunk::has_screen_exit_up(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).has_exit_up();
+}
+
+bool fe::Chunk::has_screen_exit_down(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).has_exit_down();
+}
+
+std::size_t fe::Chunk::get_screen_exit_right(std::size_t p_screen_no) const {
+	return  m_screens.at(p_screen_no).get_exit_right();
+}
+
+std::size_t fe::Chunk::get_screen_exit_left(std::size_t p_screen_no) const {
+	return  m_screens.at(p_screen_no).get_exit_left();
+}
+
+std::size_t fe::Chunk::get_screen_exit_up(std::size_t p_screen_no) const {
+	return  m_screens.at(p_screen_no).get_exit_up();
+}
+
+std::size_t fe::Chunk::get_screen_exit_down(std::size_t p_screen_no) const {
+	return  m_screens.at(p_screen_no).get_exit_down();
+}
+
+std::size_t fe::Chunk::get_screen_sprite_count(std::size_t p_screen_no) const {
+	return m_screens.at(p_screen_no).get_sprite_count();
+}
+
+byte fe::Chunk::get_screen_sprite_id(std::size_t p_screen_no, std::size_t p_sprite_no) const {
+	return m_screens.at(p_screen_no).get_sprite_id(p_sprite_no);
+}
+
+byte fe::Chunk::get_screen_sprite_x(std::size_t p_screen_no, std::size_t p_sprite_no) const {
+	return m_screens.at(p_screen_no).get_sprite_x(p_sprite_no);
+}
+
+byte fe::Chunk::get_screen_sprite_y(std::size_t p_screen_no, std::size_t p_sprite_no) const {
+	return m_screens.at(p_screen_no).get_sprite_y(p_sprite_no);
+}
+
+byte fe::Chunk::get_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no) const {
+	return m_screens.at(p_screen_no).get_sprite_text(p_sprite_no);
+}
+
+bool fe::Chunk::has_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no) const {
+	return m_screens.at(p_screen_no).has_sprite_text(p_sprite_no);
+}
+
+void fe::Chunk::add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x,
+	byte p_y) {
+	m_screens.at(p_screen_no).add_sprite(p_id, p_x, p_y);
+}
+
+void fe::Chunk::set_screen_sprite_text(std::size_t p_screen_no,
+	std::size_t p_sprite_no, byte p_text_id) {
+	m_screens.at(p_screen_no).set_sprite_text(p_sprite_no, p_text_id);
 }

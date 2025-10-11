@@ -52,7 +52,7 @@ int main(int argc, char** argv) try {
 			ImGui::GetIO().IniFilename = l_ini_filename.c_str();
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
-			fe::MainWindow l_main_window;
+			fe::MainWindow l_main_window(l_rnd);
 			l_main_window.generate_textures(l_rnd, l_game);
 		   // main_window.set_application_icon(l_window);
 
