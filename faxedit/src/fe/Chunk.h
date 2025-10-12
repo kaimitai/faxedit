@@ -11,7 +11,7 @@ using NES_Palette = std::vector<byte>;
 
 namespace fe {
 
-	class Chunk {
+	struct Chunk {
 
 		std::vector<fe::Metatile> m_metatiles;
 		std::vector<fe::Screen> m_screens;
@@ -40,32 +40,6 @@ namespace fe {
 		void add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x, byte p_y);
 		void set_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no, byte p_text_id);
 
-		std::size_t get_metatile_count(void) const;
-		byte get_metatile_property(std::size_t p_metatile_no) const;
-		const fe::Metatile& get_metatile(std::size_t p_metatile_no) const;
-		std::size_t get_screen_count(void) const;
-		byte get_palette_attribute(std::size_t p_x, std::size_t p_y) const;
-		byte get_default_palette_no(void) const;
-
-		const Tilemap& get_screen_tilemap(std::size_t p_screen_no) const;
-
-		bool has_screen_exit_right(std::size_t p_screen_no) const;
-		bool has_screen_exit_left(std::size_t p_screen_no) const;
-		bool has_screen_exit_up(std::size_t p_screen_no) const;
-		bool has_screen_exit_down(std::size_t p_screen_no) const;
-
-		std::size_t get_screen_exit_right(std::size_t p_screen_no) const;
-		std::size_t get_screen_exit_left(std::size_t p_screen_no) const;
-		std::size_t get_screen_exit_up(std::size_t p_screen_no) const;
-		std::size_t get_screen_exit_down(std::size_t p_screen_no) const;
-
-		// screen sprites
-		std::size_t get_screen_sprite_count(std::size_t p_screen_no) const;
-		byte get_screen_sprite_id(std::size_t p_screen_no, std::size_t p_sprite_no) const;
-		byte get_screen_sprite_x(std::size_t p_screen_no, std::size_t p_sprite_no) const;
-		byte get_screen_sprite_y(std::size_t p_screen_no, std::size_t p_sprite_no) const;
-		byte get_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no) const;
-		bool has_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no) const;
 	};
 
 }

@@ -147,6 +147,7 @@
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
+    <ClCompile Include="src\fe\InterChunkScroll.cpp" />
     <ClCompile Include="src\fe\Metatile.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
@@ -170,6 +171,7 @@
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\Game.h" />
+    <ClInclude Include="src\fe\InterChunkScroll.h" />
     <ClInclude Include="src\fe\Metatile.h" />
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />

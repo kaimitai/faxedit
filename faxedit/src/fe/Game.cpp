@@ -12,8 +12,11 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	// pointer to the pointer table for various chunk metadata - treated as immutable
 	const std::size_t VARIOUS_PT{ 0xc010 };
 
-	// pointer to sprite pointer table - treates as immutable
+	// pointer to sprite pointer table - treated as immutable
 	const std::size_t SPRITES_PT{ 0x2C220 };
+
+	// pointer to inter chunk scrollign table - treated as immutable
+	const std::size_t INTERCHUNK_PT{ 0x3eaac };
 
 	// pointer to gfx start location per chunk (with the exception of the shop/guru-chunk) - treated as immutable
 	const std::vector<std::size_t> GFX_OFFSETS{
@@ -45,9 +48,12 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	// extract various
 	for (std::size_t i{ 0 }; i < 8; ++i)
 		set_various(p_rom_data, i, VARIOUS_PT);
-
+	// extract sprites
 	for (std::size_t i{ 0 }; i < 8; ++i)
 		set_sprites(p_rom_data, i, SPRITES_PT);
+	// extract inter-chunk transitions
+	for (std::size_t i{ 0 }; i < 8; ++i)
+		set_interchunk_scrolling(p_rom_data, i, INTERCHUNK_PT);
 
 	// extract gfx
 	for (std::size_t c{ 0 }; c < GFX_OFFSETS.size(); ++c) {
@@ -85,10 +91,6 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		m_chunks.at(i).set_default_palette_no(l_pal_offsets[i]);
 	}
-}
-
-const std::vector<byte>& fe::Game::get_rom_data(void) const {
-	return m_rom_data;
 }
 
 std::size_t fe::Game::get_pointer_address(const std::vector<byte>& p_rom,
@@ -185,20 +187,20 @@ void fe::Game::set_sprites(const std::vector<byte>& p_rom, std::size_t p_chunk_n
 	{
 		0,  // verified
 		3,  // verified
-		1,  
-		2,  
-		6,  
-		4,  
-		5,  
+		1,
+		2,
+		6,
+		4,
+		5,
 		7
-}; 
+	};
 
 	std::size_t l_true_chunk = SPRITE_CHUNK_REMAP[p_chunk_no];
 
-	std::size_t l_ptr_to_screens{ get_pointer_address(p_rom, pt_to_sprites + 2*p_chunk_no,
+	std::size_t l_ptr_to_screens{ get_pointer_address(p_rom, pt_to_sprites + 2 * p_chunk_no,
 		0x24010) };
 
-	for (std::size_t i{ 0 }; i < m_chunks.at(l_true_chunk).get_screen_count(); ++i) {
+	for (std::size_t i{ 0 }; i < m_chunks.at(l_true_chunk).m_screens.size(); ++i) {
 		std::size_t l_ptr_to_screen{ get_pointer_address(p_rom, l_ptr_to_screens + 2 * i, 0x24010) };
 
 		std::size_t l_spr_count{ 0 };
@@ -226,105 +228,37 @@ void fe::Game::set_sprites(const std::vector<byte>& p_rom, std::size_t p_chunk_n
 	}
 }
 
-// getters
-std::size_t fe::Game::get_chunk_count(void) const {
-	return m_chunks.size();
-}
+void fe::Game::set_interchunk_scrolling(const std::vector<byte>& p_rom,
+	std::size_t p_chunk_no, std::size_t pt_to_interchunk) {
 
-byte fe::Game::get_chunk_default_palette_no(std::size_t p_chunk_no) const {
-	return m_chunks.at(p_chunk_no).get_default_palette_no();
-}
+	const std::vector<std::size_t> SPRITE_CHUNK_REMAP//{ 0, 3, 1, 2, 4, 5, 6, 7 };
+	{
+		0,  // verified
+		3,  // verified
+		1,
+		2,
+		6,
+		4,
+		5,
+		7
+	};
 
-std::size_t fe::Game::get_screen_count(std::size_t p_chunk_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_count();
-}
+	std::size_t l_true_chunk_no{ SPRITE_CHUNK_REMAP[p_chunk_no] };
 
-const std::size_t fe::Game::get_tileset_count(void) const {
-	return m_tilesets.size();
-}
+	std::size_t l_ptr_to_screens{ get_pointer_address(p_rom,
+		pt_to_interchunk + 2 * p_chunk_no, 0x30010)
+	};
 
-const std::vector<klib::NES_tile>& fe::Game::get_tileset(std::size_t p_tileset_no) const {
-	return m_tilesets.at(p_tileset_no);
-}
+	for (std::size_t i{ 0 }; p_rom.at(l_ptr_to_screens + i) != 0xff; i += 5) {
+		byte l_screen_id{ p_rom.at(l_ptr_to_screens + i) };
 
-std::size_t fe::Game::get_metatile_count(std::size_t p_chunk_no) const {
-	return m_chunks.at(p_chunk_no).get_metatile_count();
-}
+		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_interchunk_scroll =
+			fe::InterChunkScroll(
+				SPRITE_CHUNK_REMAP[p_rom.at(l_ptr_to_screens + i + 1)],
+				p_rom.at(l_ptr_to_screens + i + 2),
+				p_rom.at(l_ptr_to_screens + i + 3),
+				p_rom.at(l_ptr_to_screens + i + 4)
+			);
+	}
 
-byte fe::Game::get_metatile_property(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
-	return m_chunks.at(p_chunk_no).get_metatile_property(p_metatile_no);
-}
-
-const std::vector<NES_Palette>& fe::Game::get_palettes(void) const {
-	return m_palettes;
-}
-
-const fe::Metatile& fe::Game::get_metatile(std::size_t p_chunk_no, std::size_t p_metatile_no) const {
-	return m_chunks.at(p_chunk_no).get_metatile(p_metatile_no);
-}
-
-const Tilemap& fe::Game::get_screen_tilemap(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_tilemap(p_screen_no);
-}
-
-bool fe::Game::has_screen_exit_right(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).has_screen_exit_right(p_screen_no);
-}
-
-bool fe::Game::has_screen_exit_left(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).has_screen_exit_left(p_screen_no);
-}
-
-bool fe::Game::has_screen_exit_up(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).has_screen_exit_up(p_screen_no);
-}
-
-bool fe::Game::has_screen_exit_down(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).has_screen_exit_down(p_screen_no);
-}
-
-std::size_t fe::Game::get_screen_exit_right(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_exit_right(p_screen_no);
-}
-
-std::size_t fe::Game::get_screen_exit_left(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_exit_left(p_screen_no);
-}
-
-std::size_t fe::Game::get_screen_exit_up(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_exit_up(p_screen_no);
-}
-
-std::size_t fe::Game::get_screen_exit_down(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_exit_down(p_screen_no);
-}
-
-std::size_t fe::Game::get_screen_sprite_count(std::size_t p_chunk_no,
-	std::size_t p_screen_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_sprite_count(p_screen_no);
-}
-
-byte fe::Game::get_screen_sprite_id(std::size_t p_chunk_no, std::size_t p_screen_no,
-	std::size_t p_sprite_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_sprite_id(p_screen_no, p_sprite_no);
-}
-
-byte fe::Game::get_screen_sprite_x(std::size_t p_chunk_no, std::size_t p_screen_no,
-	std::size_t p_sprite_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_sprite_x(p_screen_no, p_sprite_no);
-}
-
-byte fe::Game::get_screen_sprite_y(std::size_t p_chunk_no, std::size_t p_screen_no,
-	std::size_t p_sprite_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_sprite_y(p_screen_no, p_sprite_no);
-}
-
-byte fe::Game::get_screen_sprite_text(std::size_t p_chunk_no, std::size_t p_screen_no,
-	std::size_t p_sprite_no) const {
-	return m_chunks.at(p_chunk_no).get_screen_sprite_text(p_screen_no, p_sprite_no);
-}
-
-bool fe::Game::has_screen_sprite_text(std::size_t p_chunk_no, std::size_t p_screen_no,
-	std::size_t p_sprite_no) const {
-	return m_chunks.at(p_chunk_no).has_screen_sprite_text(p_screen_no, p_sprite_no);
 }

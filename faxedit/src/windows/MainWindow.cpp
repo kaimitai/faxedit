@@ -18,9 +18,11 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
-	for (std::size_t i{ 0 }; i < p_game.get_tileset_count(); ++i)
-		m_gfx.generate_textures(p_rnd, p_game.get_tileset(i), p_game.get_palettes().at(
-			p_game.get_chunk_default_palette_no(i >= 8 ? 6 : i))
+
+	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i)
+		m_gfx.generate_textures(p_rnd, p_game.m_tilesets[i], p_game.m_palettes.at(
+			p_game.m_chunks[i >= 8 ? 6 : i].m_default_palette_no
+		)
 		);
 }
 
@@ -38,7 +40,9 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 
 	SDL_SetRenderTarget(p_rnd, m_screen_txt);
 
-	const auto& l_tilemap{ p_game.get_screen_tilemap(m_sel_chunk, m_sel_screen) };
+	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
+	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
+	const auto& l_tilemap{ l_screen.m_tilemap };
 	std::size_t l_tileset{ get_tileset(m_sel_chunk, m_sel_screen) };
 
 	for (int y{ 0 }; y < 13; ++y)
@@ -47,11 +51,11 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 			byte mt_no = l_tilemap.at(y).at(x);
 
 			// don't know if this should ever happen
-			if (mt_no >= p_game.get_metatile_count(m_sel_chunk))
+			if (mt_no >= p_game.m_chunks.at(m_sel_chunk).m_metatiles.size())
 				mt_no = 0;
 
-			const auto& l_metatile{ p_game.get_metatile(m_sel_chunk, mt_no) };
-			const auto& l_mt_tilemap{ l_metatile.get_tilemap() };
+			const auto& l_metatile{ p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
+			const auto& l_mt_tilemap{ l_metatile.m_tilemap };
 			byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
 
 			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_mt_tilemap.at(0).at(0), l_pal_no), 16 * x, 16 * y);
@@ -61,13 +65,15 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 		}
 
 	// draw placeholder rectangles for sprites
-	for (std::size_t s{ 0 }; s < p_game.get_screen_sprite_count(m_sel_chunk, m_sel_screen); ++s) {
+	for (std::size_t s{ 0 }; s < l_screen.m_sprites.size(); ++s) {
+		const auto& l_sprite{ l_screen.m_sprites[s] };
+
 		SDL_SetRenderDrawColor(p_rnd,
-			p_game.has_screen_sprite_text(m_sel_chunk, m_sel_screen, s) ? 255 : 0,
+			l_sprite.m_text_id.has_value() ? 255 : 0,
 			120, 120, 255);
 
-		auto l_x{ p_game.get_screen_sprite_x(m_sel_chunk, m_sel_screen, s) };
-		auto l_y{ p_game.get_screen_sprite_y(m_sel_chunk, m_sel_screen, s) };
+		auto l_x{ l_sprite.m_x };
+		auto l_y{ l_sprite.m_y };
 
 		SDL_FRect l_rect(16 * l_x, 16 * l_y, 16, 16);
 
@@ -169,9 +175,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 	ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7);
 
-	ImGui::Text("Chunk screen count %d", p_game.get_screen_count(m_sel_chunk));
+	std::size_t l_sc_count{ p_game.m_chunks.at(m_sel_chunk).m_screens.size() };
 
-	std::size_t l_sc_count{ p_game.get_screen_count(m_sel_chunk) };
+	ImGui::Text("Chunk screen count %d", l_sc_count);
 
 	if (m_sel_screen >= l_sc_count)
 		m_sel_screen = l_sc_count - 1;
@@ -182,14 +188,16 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 		std::string l_output;
 		std::map<byte, int> l_counts;
 
-		for (std::size_t i{ 0 }; i < p_game.get_chunk_count(); ++i) {
+		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
 
-			for (std::size_t j{ 0 }; j < p_game.get_screen_count(i); ++j) {
-				for (std::size_t s{ 0 }; s < p_game.get_screen_sprite_count(i, j); ++s) {
-					byte l_id{ p_game.get_screen_sprite_id(i, j, s) };
+			for (std::size_t j{ 0 }; j < p_game.m_chunks[i].m_screens.size(); ++j) {
+				for (std::size_t s{ 0 }; s < p_game.m_chunks[i].m_screens[j].m_sprites.size(); ++s) {
+					const auto& l_sprite{ p_game.m_chunks[i].m_screens[j].m_sprites[s] };
 
-					if (p_game.has_screen_sprite_text(i, j, s)) {
-						byte l_text_id{ p_game.get_screen_sprite_text(i, j, s) };
+					byte l_id{ l_sprite.m_id };
+
+					if (l_sprite.m_text_id.has_value()) {
+						byte l_text_id{ l_sprite.m_text_id.value() };
 						if (l_text_id == 0x25)
 							++l_counts[l_text_id];
 						else
@@ -211,26 +219,29 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 	ImGui::Separator();
 
-	if (ImGui::Button("Left") && p_game.has_screen_exit_left(m_sel_chunk, m_sel_screen))
-		m_sel_screen = p_game.get_screen_exit_left(m_sel_chunk, m_sel_screen);
-	if (ImGui::Button("Right") && p_game.has_screen_exit_right(m_sel_chunk, m_sel_screen))
-		m_sel_screen = p_game.get_screen_exit_right(m_sel_chunk, m_sel_screen);
-	if (ImGui::Button("Up") && p_game.has_screen_exit_up(m_sel_chunk, m_sel_screen))
-		m_sel_screen = p_game.get_screen_exit_up(m_sel_chunk, m_sel_screen);
-	if (ImGui::Button("Down") && p_game.has_screen_exit_down(m_sel_chunk, m_sel_screen))
-		m_sel_screen = p_game.get_screen_exit_down(m_sel_chunk, m_sel_screen);
+	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
 
+	if (ImGui::Button("Left") && l_screen.m_scroll_left.has_value())
+		m_sel_screen = l_screen.m_scroll_left.value();
+	if (ImGui::Button("Right") && l_screen.m_scroll_right.has_value())
+		m_sel_screen = l_screen.m_scroll_right.value();
+	if (ImGui::Button("Up") && l_screen.m_scroll_up.has_value())
+		m_sel_screen = l_screen.m_scroll_up.value();
+	if (ImGui::Button("Down") && l_screen.m_scroll_down.has_value())
+		m_sel_screen = l_screen.m_scroll_down.value();
 
-	std::size_t l_sprite_count{ p_game.get_screen_sprite_count(m_sel_chunk, m_sel_screen) };
+	std::size_t l_sprite_count{ l_screen.m_sprites.size() };
 
 	imgui_text("Screen sprite count: " + std::to_string(l_sprite_count));
 
 	for (std::size_t i{ 0 }; i < l_sprite_count; ++i) {
-		byte l_id{ p_game.get_screen_sprite_id(m_sel_chunk, m_sel_screen, i) };
-		byte l_x{ p_game.get_screen_sprite_x(m_sel_chunk, m_sel_screen, i) };
-		byte l_y{ p_game.get_screen_sprite_y(m_sel_chunk, m_sel_screen, i) };
-		std::string l_text{ p_game.has_screen_sprite_text(m_sel_chunk, m_sel_screen, i) ?
-			std::to_string(p_game.get_screen_sprite_text(m_sel_chunk, m_sel_screen, i)) :
+		const auto& l_sprite{ l_screen.m_sprites[i] };
+
+		byte l_id{ l_sprite.m_id };
+		byte l_x{ l_sprite.m_x };
+		byte l_y{ l_sprite.m_y };
+		std::string l_text{ l_sprite.m_text_id.has_value() ?
+			klib::Bitreader::byte_to_hex(l_sprite.m_text_id.value()) :
 			"None"
 		};
 
@@ -238,6 +249,19 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 			" [ID=" + klib::Bitreader::byte_to_hex(l_id) +
 			"] - coords=("
 			+ std::to_string(l_x) + "," + std::to_string(l_y) + "), Text: " + l_text);
+	}
+
+	ImGui::Separator();
+
+	if (l_screen.m_interchunk_scroll.has_value()) {
+		const auto& l_is{ l_screen.m_interchunk_scroll };
+
+		ImGui::Text("Inter-world scroll transition");
+		imgui_text("Destination world=" + std::to_string(l_is.value().m_dest_chunk)
+		+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
+			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
+			+ "," + std::to_string(l_is.value().m_dest_y) + ")"
+		);
 	}
 
 	ImGui::End();
@@ -254,7 +278,7 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 	std::size_t p_sel_chunk, std::size_t p_sel_screen,
 	std::size_t p_sel_x, std::size_t p_sel_y) {
 
-	byte l_metatile_id{ p_game.get_screen_tilemap(p_sel_chunk, p_sel_screen).at(p_sel_y).at(p_sel_x) };
+	byte l_metatile_id{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap.at(p_sel_y).at(p_sel_x) };
 
 	ImGui::Begin("Metatile");
 
@@ -263,7 +287,7 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 
 	imgui_text("Position: " + std::to_string(p_sel_x) + "," + std::to_string(p_sel_y));
 
-	imgui_text("Property: " + klib::Bitreader::byte_to_hex(p_game.get_metatile_property(p_sel_chunk, l_metatile_id)));
+	imgui_text("Property: " + klib::Bitreader::byte_to_hex(p_game.m_chunks.at(m_sel_chunk).m_block_properties.at(l_metatile_id)));
 
 	ImGui::End();
 
