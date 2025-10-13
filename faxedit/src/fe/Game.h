@@ -19,18 +19,19 @@ namespace fe {
 		std::vector<byte> m_rom_data;
 		std::vector<NES_Palette> m_palettes;
 
-		std::size_t get_pointer_address(const std::vector<byte>& p_rom,
-			std::size_t p_offset, std::size_t p_relative_offset = 0) const;
-		std::vector<std::size_t> get_screen_pointers(const std::vector<byte>& p_rom,
-			const std::vector<std::size_t>& p_offsets,
-			std::size_t p_chunk_no) const;
-		void set_various(const std::vector<byte>& p_rom, std::size_t p_chunk_no, std::size_t pt_to_various);
-		void set_sprites(const std::vector<byte>& p_rom, std::size_t p_chunk_no,
-			std::size_t pt_to_sprites);
-		void set_interchunk_scrolling(const std::vector<byte>& p_rom, std::size_t p_chunk_no, std::size_t pt_to_interchunk);
-
 		Game(const std::vector<byte>& p_rom_data);
 
+	private:
+		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_sprite_data, m_ptr_chunk_interchunk_transitions,
+			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes;
+		std::vector<std::size_t> m_ptr_chunk_screen_data, m_map_chunk_idx, m_offsets_bg_gfx;
+
+		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset = 0) const;
+		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;
+		void set_various(std::size_t p_chunk_no, std::size_t pt_to_various);
+		void set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites);
+		void set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_interchunk);
+		void set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_intrachunk);
 	};
 
 }

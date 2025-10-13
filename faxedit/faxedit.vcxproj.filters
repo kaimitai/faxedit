@@ -102,6 +102,9 @@
     <ClCompile Include="src\fe\InterChunkScroll.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
+    <ClCompile Include="src\fe\IntraChunkScroll.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -165,6 +168,12 @@
       <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\InterChunkScroll.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\fe_constants.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\IntraChunkScroll.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>

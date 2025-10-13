@@ -10,15 +10,19 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
 	m_screen_txt{
 		SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
-		SDL_TEXTUREACCESS_TARGET, 16 * 16, 13 * 16) }
+		SDL_TEXTUREACCESS_TARGET, 16 * 16, 13 * 16) },
+		m_gfx{ fe::gfx(p_rnd) }
 {
-
 	SDL_SetTextureScaleMode(m_screen_txt, SDL_SCALEMODE_NEAREST);
-
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
+	m_gfx.generate_atlas(p_rnd, p_game.m_tilesets.at(0), p_game.m_palettes.at(
+		p_game.m_chunks.at(0).m_default_palette_no
+	));
+
+	// TODO: Remove
 	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i)
 		m_gfx.generate_textures(p_rnd, p_game.m_tilesets[i], p_game.m_palettes.at(
 			p_game.m_chunks[i >= 8 ? 6 : i].m_default_palette_no
@@ -36,14 +40,34 @@ std::size_t fe::MainWindow::get_tileset(int p_chunk_no, int p_screen_no) const {
 void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
 	int& hoverMX, int& hoverMY, bool& clicked) const {
 
-	// draw the screen to texture
-
-	SDL_SetRenderTarget(p_rnd, m_screen_txt);
-
 	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
 	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
 	const auto& l_tilemap{ l_screen.m_tilemap };
 	std::size_t l_tileset{ get_tileset(m_sel_chunk, m_sel_screen) };
+
+	// draw the screen
+	for (int y{ 0 }; y < 13; ++y)
+		for (int x{ 0 }; x < 16; ++x) {
+
+			byte mt_no = l_tilemap.at(y).at(x);
+
+			// don't know if this should ever happen
+			if (mt_no >= p_game.m_chunks.at(m_sel_chunk).m_metatiles.size())
+				mt_no = 0;
+
+			const auto& l_metatile{ p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
+			const auto& l_mt_tilemap{ l_metatile.m_tilemap };
+			byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
+
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(0), l_pal_no, 2 * x, 2 * y);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * x + 1, 2 * y);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * x, 2 * y + 1);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
+		}
+
+	// draw the screen to texture (TODO: Remove this member and use fe::gfx::m_screen_texture instead)
+
+	SDL_SetRenderTarget(p_rnd, m_screen_txt);
 
 	for (int y{ 0 }; y < 13; ++y)
 		for (int x{ 0 }; x < 16; ++x) {
@@ -258,7 +282,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 		ImGui::Text("Inter-world scroll transition");
 		imgui_text("Destination world=" + std::to_string(l_is.value().m_dest_chunk)
-		+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
+			+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
 			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
 			+ "," + std::to_string(l_is.value().m_dest_y) + ")"
 		);

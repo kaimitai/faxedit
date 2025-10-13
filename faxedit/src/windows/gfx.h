@@ -12,6 +12,13 @@ namespace fe {
 
 	class gfx {
 
+		// background tile atlas, tiles will be pulled from here when rendering the background gfx of a screen
+		// based on a vector<NES tile> and a NES palette with 4 sub-palettes
+		// 256 x 4 tiles, one row of tiles per sub-palette. Total dimensions (256*8 x 4x8) = 1024x32 pixels
+		SDL_Texture* m_atlas;
+		// texture for holding the screen data
+		SDL_Texture* m_screen_texture;
+
 		// tileset no -> palette no -> texture
 		std::vector<std::vector<std::vector<SDL_Texture*>>> m_textures;
 		SDL_Palette* m_nes_palette;
@@ -24,17 +31,23 @@ namespace fe {
 		static const std::vector<std::vector<byte>> NES_PALETTE;
 
 	public:
-		gfx(void);
+		gfx(SDL_Renderer* p_rnd);
 		~gfx(void);
+
+		// atlast operations
+		void generate_atlas(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles, const std::vector<byte>& p_palette);
 
 		// blitting operations
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
+		void blit_to_screen(SDL_Renderer* p_rnd, int tile_no, int sub_palette_no, int x, int y) const;
 
 		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles,
 			const NES_Palette& p_palette);
 
 		SDL_Texture* get_texture(std::size_t p_tileset_no, std::size_t p_txt_no,
 			std::size_t p_sub_palette_no) const;
+
+		SDL_Texture* get_screen_texture(void) const;
 	};
 
 }

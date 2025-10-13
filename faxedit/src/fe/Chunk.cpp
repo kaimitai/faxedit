@@ -47,7 +47,7 @@ void fe::Chunk::add_metatiles(const std::vector<byte>& p_rom, std::size_t p_tl_o
 
 void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 	std::size_t p_offset, std::size_t p_end_offset) {
-
+	/*
 	for (std::size_t i{ p_offset }; i < p_end_offset; i += 4) {
 
 		std::size_t l_screen_id{ static_cast<std::size_t>(p_rom.at(i)) };
@@ -64,7 +64,7 @@ void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 			);
 
 	}
-
+	*/
 }
 
 void fe::Chunk::set_default_palette_no(byte p_palette_no) {

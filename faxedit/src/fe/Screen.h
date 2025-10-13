@@ -6,6 +6,7 @@
 #include "Sprite.h"
 #include "Door.h"
 #include "InterChunkScroll.h"
+#include "IntraChunkScroll.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -20,6 +21,7 @@ namespace fe {
 		std::optional<std::size_t> m_scroll_left, m_scroll_right,
 			m_scroll_up, m_scroll_down;
 		std::optional<fe::InterChunkScroll> m_interchunk_scroll;
+		std::optional<fe::IntraChunkScroll> m_intrachunk_scroll;
 
 		// constructor that reads ROM data and extracts it
 		Screen(const std::vector<byte>& p_rom, std::size_t p_offset);
