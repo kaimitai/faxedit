@@ -6,6 +6,8 @@ fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_screen_texture{ SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
 		SDL_TEXTUREACCESS_TARGET, 16 * 16, 13 * 16) }
 {
+	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
+
 	// generate NES palette
 	SDL_Color out_palette[256] = {};
 	for (std::size_t i = 0; i < NES_PALETTE.size(); ++i) {
@@ -54,40 +56,6 @@ void fe::gfx::generate_atlas(SDL_Renderer* p_rnd,
 		SDL_DestroyTexture(m_atlas);
 
 	m_atlas = surface_to_texture(p_rnd, l_srf);
-}
-
-void fe::gfx::generate_textures(SDL_Renderer* p_rnd,
-	const std::vector<klib::NES_tile>& p_tiles,
-	const NES_Palette& p_palette) {
-
-	std::vector<std::vector<SDL_Texture*>> l_tiles_all_sub_palettes;
-
-	for (std::size_t i{ 0 }; i < p_palette.size(); i += 4) {
-
-		std::vector<SDL_Texture*> l_tiles_this_sub_palette;
-
-		for (const auto& tile : p_tiles) {
-
-			auto l_srf = create_sdl_surface(8, 8);
-
-			for (int y{ 0 }; y < 8; ++y)
-				for (int x{ 0 }; x < 8; ++x) {
-					put_nes_pixel(l_srf, x, y, p_palette[i + tile.get_color(x, y)]);
-				}
-
-			l_tiles_this_sub_palette.push_back(surface_to_texture(p_rnd, l_srf));
-
-		}
-		l_tiles_all_sub_palettes.push_back(l_tiles_this_sub_palette);
-
-	}
-
-	m_textures.push_back(l_tiles_all_sub_palettes);
-}
-
-SDL_Texture* fe::gfx::get_texture(std::size_t p_tileset_no, std::size_t p_txt_no,
-	std::size_t p_sub_palette_no) const {
-	return m_textures.at(p_tileset_no).at(p_sub_palette_no).at(p_txt_no);
 }
 
 SDL_Texture* fe::gfx::get_screen_texture(void) const {
@@ -153,6 +121,22 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 	SDL_SetRenderTarget(renderer, m_screen_texture);
 	SDL_RenderTexture(renderer, m_atlas, &src_rect, &dst_rect);
 	SDL_SetRenderTarget(renderer, nullptr);
+}
+
+void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
+	int p_x, int p_y, int p_w, int p_h) const {
+
+	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
+
+	SDL_FRect l_rect(static_cast<float>(16 * p_x),
+		static_cast<float>(16 * p_y),
+		static_cast<float>(p_w * 16),
+		static_cast<float>(p_h * 16));
+
+	SDL_RenderRect(p_rnd, &l_rect);
+
+	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 const std::vector<std::vector<byte>> fe::gfx::NES_PALETTE = {

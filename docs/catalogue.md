@@ -107,3 +107,62 @@ Text ID | Use Count | Description
 0x50 | 1 | 
 0x52 | 1 | 
 0x60 | 1 | 
+
+
+
+
+Inter-world transitions
+Chunk=3,Screen=12,Dest screen=22,Palette ID=6
+Chunk=3,Screen=22,Dest screen=12,Palette ID=6
+
+
+
+
+
+Intra-world transitions
+
+// from mist to towns
+Chunk=1,Screen=9,Dest chunk=2,Dest screen=4,Palette ID=27
+Chunk=1,Screen=12,Dest chunk=2,Dest screen=5,Palette ID=27
+Chunk=1,Screen=34,Dest chunk=2,Dest screen=6,Palette ID=27
+Chunk=1,Screen=37,Dest chunk=2,Dest screen=7,Palette ID=27
+
+// error config? screen 3,27 is a copy of this screen and has messed up scrolling bytes
+Chunk=3,Screen=0,Dest chunk=2,Dest screen=2,Palette ID=27
+
+// to apolune
+Chunk=3,Screen=7,Dest chunk=2,Dest screen=0,Palette ID=27
+Chunk=3,Screen=8,Dest chunk=2,Dest screen=1,Palette ID=27
+
+// to forepaw
+Chunk=3,Screen=26,Dest chunk=2,Dest screen=2,Palette ID=27
+Chunk=3,Screen=29,Dest chunk=2,Dest screen=3,Palette ID=27
+
+// to branch town #1
+Chunk=4,Screen=13,Dest chunk=2,Dest screen=8,Palette ID=27
+
+// daybreak
+Chunk=4,Screen=35,Dest chunk=2,Dest screen=10,Palette ID=27
+Chunk=4,Screen=36,Dest chunk=2,Dest screen=11,Palette ID=27
+// to dartmoor town
+Chunk=5,Screen=3,Dest chunk=2,Dest screen=12,Palette ID=27
+
+// ------- TOWNS ----------
+// apolune
+Chunk=2,Screen=0,Dest chunk=3,Dest screen=7,Palette ID=6
+Chunk=2,Screen=1,Dest chunk=3,Dest screen=8,Palette ID=6
+// forepaw
+Chunk=2,Screen=2,Dest chunk=3,Dest screen=26,Palette ID=6
+Chunk=2,Screen=3,Dest chunk=3,Dest screen=29,Palette ID=6
+// from towns to mist
+Chunk=2,Screen=4,Dest chunk=1,Dest screen=9,Palette ID=10
+Chunk=2,Screen=5,Dest chunk=1,Dest screen=12,Palette ID=10
+Chunk=2,Screen=6,Dest chunk=1,Dest screen=34,Palette ID=10
+Chunk=2,Screen=7,Dest chunk=1,Dest screen=37,Palette ID=10
+// branch town #1 (one entry and exit)
+Chunk=2,Screen=8,Dest chunk=4,Dest screen=13,Palette ID=8
+//daybreak
+Chunk=2,Screen=10,Dest chunk=4,Dest screen=35,Palette ID=8
+Chunk=2,Screen=11,Dest chunk=4,Dest screen=36,Palette ID=8
+// dartmoor town (one entry and exit)
+Chunk=2,Screen=12,Dest chunk=5,Dest screen=3,Palette ID=12

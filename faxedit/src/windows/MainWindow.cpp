@@ -8,33 +8,21 @@
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
-	m_screen_txt{
-		SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
-		SDL_TEXTUREACCESS_TARGET, 16 * 16, 13 * 16) },
-		m_gfx{ fe::gfx(p_rnd) }
+	m_gfx{ fe::gfx(p_rnd) },
+	m_atlas_palette_no{ 1 },
+	m_atlas_tileset_no{ 1 },
+	m_atlas_new_tileset_no{ 0 },
+	m_atlas_new_palette_no{ 0 }
 {
-	SDL_SetTextureScaleMode(m_screen_txt, SDL_SCALEMODE_NEAREST);
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
-	m_gfx.generate_atlas(p_rnd, p_game.m_tilesets.at(0), p_game.m_palettes.at(
-		p_game.m_chunks.at(0).m_default_palette_no
-	));
+	// ensure the atlas will be generated
+	m_atlas_new_tileset_no = get_default_tileset_no(0, 0);
+	m_atlas_new_palette_no = get_default_palette_no(p_game, 0, 0);
 
-	// TODO: Remove
-	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i)
-		m_gfx.generate_textures(p_rnd, p_game.m_tilesets[i], p_game.m_palettes.at(
-			p_game.m_chunks[i >= 8 ? 6 : i].m_default_palette_no
-		)
-		);
-}
-
-std::size_t fe::MainWindow::get_tileset(int p_chunk_no, int p_screen_no) const {
-	if (p_chunk_no == 6 && p_screen_no >= 3)
-		return p_screen_no >= 8 ? 9 : 8;
-	else
-		return p_chunk_no;
+	// TODO: generate sprite textures
 }
 
 void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
@@ -43,7 +31,7 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
 	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
 	const auto& l_tilemap{ l_screen.m_tilemap };
-	std::size_t l_tileset{ get_tileset(m_sel_chunk, m_sel_screen) };
+	std::size_t l_tileset{ get_default_tileset_no(m_sel_chunk, m_sel_screen) };
 
 	// draw the screen
 	for (int y{ 0 }; y < 13; ++y)
@@ -65,54 +53,28 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
 		}
 
-	// draw the screen to texture (TODO: Remove this member and use fe::gfx::m_screen_texture instead)
-
-	SDL_SetRenderTarget(p_rnd, m_screen_txt);
-
-	for (int y{ 0 }; y < 13; ++y)
-		for (int x{ 0 }; x < 16; ++x) {
-
-			byte mt_no = l_tilemap.at(y).at(x);
-
-			// don't know if this should ever happen
-			if (mt_no >= p_game.m_chunks.at(m_sel_chunk).m_metatiles.size())
-				mt_no = 0;
-
-			const auto& l_metatile{ p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
-			const auto& l_mt_tilemap{ l_metatile.m_tilemap };
-			byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
-
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_mt_tilemap.at(0).at(0), l_pal_no), 16 * x, 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_mt_tilemap.at(0).at(1), l_pal_no), 16 * x + 8, 16 * y);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_mt_tilemap.at(1).at(0), l_pal_no), 16 * x, 16 * y + 8);
-			m_gfx.blit(p_rnd, m_gfx.get_texture(l_tileset, l_mt_tilemap.at(1).at(1), l_pal_no), 16 * x + 8, 16 * y + 8);
-		}
-
 	// draw placeholder rectangles for sprites
 	for (std::size_t s{ 0 }; s < l_screen.m_sprites.size(); ++s) {
 		const auto& l_sprite{ l_screen.m_sprites[s] };
 
-		SDL_SetRenderDrawColor(p_rnd,
-			l_sprite.m_text_id.has_value() ? 255 : 0,
-			120, 120, 255);
+		m_gfx.draw_rect_on_screen(p_rnd,
+			SDL_Color(l_sprite.m_text_id.has_value() ? 255 : 0,
+				120, 120, 255),
+			l_sprite.m_x, l_sprite.m_y,
+			1, 1
+		);
 
-		auto l_x{ l_sprite.m_x };
-		auto l_y{ l_sprite.m_y };
-
-		SDL_FRect l_rect(16 * l_x, 16 * l_y, 16, 16);
-
-		SDL_RenderRect(p_rnd, &l_rect);
 	}
 
-	SDL_SetRenderTarget(p_rnd, nullptr);
-
 	ImGui::Begin("Screen");
+
+	SDL_Texture* l_screen_txt{ m_gfx.get_screen_texture() };
 
 	// Get how much space the ImGui window gives us
 	ImVec2 avail = ImGui::GetContentRegionAvail();
 
 	// Compute how to fit the texture inside while preserving aspect ratio
-	float texAspect = float(m_screen_txt->w) / float(m_screen_txt->h);
+	float texAspect = float(l_screen_txt->w) / float(l_screen_txt->h);
 	float winAspect = avail.x / avail.y;
 
 	ImVec2 drawSize;
@@ -132,7 +94,7 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 	ImVec2 pMin = cursorPos;
 	ImVec2 pMax = ImVec2(pMin.x + drawSize.x, pMin.y + drawSize.y);
 
-	dl->AddImage((ImTextureID)m_screen_txt, pMin, pMax);
+	dl->AddImage((ImTextureID)l_screen_txt, pMin, pMax);
 
 	hoverMX = hoverMY = -1;
 	clicked = false;
@@ -143,8 +105,8 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 	{
 		float relX = (mousePos.x - pMin.x) / (pMax.x - pMin.x);
 		float relY = (mousePos.y - pMin.y) / (pMax.y - pMin.y);
-		float pxX = relX * m_screen_txt->w;
-		float pxY = relY * m_screen_txt->h;
+		float pxX = relX * l_screen_txt->w;
+		float pxY = relY * l_screen_txt->h;
 
 		int mtX = int(pxX) / (8 * 2);
 		int mtY = int(pxY) / (8 * 2);
@@ -153,10 +115,10 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 			hoverMY = mtY;
 
 			// highlight hovered metatile
-			float hx0 = pMin.x + (float(mtX * 8 * 2) / m_screen_txt->w) * drawSize.x;
-			float hy0 = pMin.y + (float(mtY * 8 * 2) / m_screen_txt->h) * drawSize.y;
-			float hx1 = pMin.x + (float((mtX + 1) * 8 * 2) / m_screen_txt->w) * drawSize.x;
-			float hy1 = pMin.y + (float((mtY + 1) * 8 * 2) / m_screen_txt->h) * drawSize.y;
+			float hx0 = pMin.x + (float(mtX * 8 * 2) / l_screen_txt->w) * drawSize.x;
+			float hy0 = pMin.y + (float(mtY * 8 * 2) / l_screen_txt->h) * drawSize.y;
+			float hx1 = pMin.x + (float((mtX + 1) * 8 * 2) / l_screen_txt->w) * drawSize.x;
+			float hy1 = pMin.y + (float((mtY + 1) * 8 * 2) / l_screen_txt->h) * drawSize.y;
 
 			dl->AddRect(ImVec2(hx0, hy0), ImVec2(hx1, hy1),
 				IM_COL32(255, 255, 0, 180), 0.0f, 0, 2.0f);
@@ -187,6 +149,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	int l_hover_x, l_hover_y;
 	bool l_clicked;
 
+	regenerate_atlas_if_needed(p_rnd, p_game);
 	draw_screen_window(p_rnd, p_game, l_hover_x, l_hover_y, l_clicked);
 
 	if (l_hover_x >= 0 && l_hover_y >= 0)
@@ -195,9 +158,12 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 
 	ImGui::Begin("Main");
 
-	ImGui::Image(m_screen_txt, { 16 * 16, 13 * 16 });
+	ImGui::Image(m_gfx.get_screen_texture(), { 16 * 16, 13 * 16 });
 
-	ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7);
+	if (ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7)) {
+		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
+	}
 
 	std::size_t l_sc_count{ p_game.m_chunks.at(m_sel_chunk).m_screens.size() };
 
@@ -206,38 +172,25 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	if (m_sel_screen >= l_sc_count)
 		m_sel_screen = l_sc_count - 1;
 
-	ImGui::SliderInt("Screen", &m_sel_screen, 0, l_sc_count - 1);
+	if (ImGui::SliderInt("Screen", &m_sel_screen, 0, l_sc_count - 1)) {
+		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
+	}
 
 	if (ImGui::Button("Check")) {
 		std::string l_output;
-		std::map<byte, int> l_counts;
 
-		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i)
+			for (std::size_t j{ 0 }; j < p_game.m_chunks[i].m_screens.size(); ++j)
+				if (p_game.m_chunks[i].m_screens[j].m_intrachunk_scroll.has_value()) {
+					const auto& l_inter{ p_game.m_chunks[i].m_screens[j].m_intrachunk_scroll.value() };
 
-			for (std::size_t j{ 0 }; j < p_game.m_chunks[i].m_screens.size(); ++j) {
-				for (std::size_t s{ 0 }; s < p_game.m_chunks[i].m_screens[j].m_sprites.size(); ++s) {
-					const auto& l_sprite{ p_game.m_chunks[i].m_screens[j].m_sprites[s] };
-
-					byte l_id{ l_sprite.m_id };
-
-					if (l_sprite.m_text_id.has_value()) {
-						byte l_text_id{ l_sprite.m_text_id.value() };
-						if (l_text_id == 0x25)
-							++l_counts[l_text_id];
-						else
-							++l_counts[l_text_id];
-					}
+					l_output += "Chunk=" + std::to_string(i) +
+						",Screen=" + std::to_string(j) +
+						",Dest screen=" + std::to_string(l_inter.m_dest_screen) +
+						",Palette ID=" + std::to_string(l_inter.m_palette_id)
+						+ "\n";
 				}
-			}
-
-		}
-
-
-
-		for (const auto& kv : l_counts) {
-			l_output += klib::Bitreader::byte_to_hex(kv.first) + ": "
-				+ std::to_string(kv.second) + "\n";
-		}
 
 	}
 
@@ -284,7 +237,21 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 		imgui_text("Destination world=" + std::to_string(l_is.value().m_dest_chunk)
 			+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
 			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
-			+ "," + std::to_string(l_is.value().m_dest_y) + ")"
+			+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
+			+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
+		);
+	}
+
+	ImGui::Separator();
+
+	if (l_screen.m_intrachunk_scroll.has_value()) {
+		const auto& l_is{ l_screen.m_intrachunk_scroll };
+
+		ImGui::Text("Intra-world scroll transition");
+		imgui_text("Destination screen=" + std::to_string(l_is.value().m_dest_screen)
+			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
+			+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
+			+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
 		);
 	}
 
@@ -315,4 +282,34 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 
 	ImGui::End();
 
+}
+
+void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
+	const fe::Game& p_game) {
+
+	if (m_atlas_new_tileset_no != m_atlas_tileset_no ||
+		m_atlas_new_palette_no != m_atlas_palette_no) {
+		m_gfx.generate_atlas(p_rnd, p_game.m_tilesets.at(m_atlas_new_tileset_no),
+			p_game.m_palettes.at(m_atlas_new_palette_no));
+
+		m_atlas_tileset_no = m_atlas_new_tileset_no;
+		m_atlas_palette_no = m_atlas_new_palette_no;
+	}
+
+}
+
+std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	if (p_chunk_no == 6 && p_screen_no >= 3)
+		return p_screen_no >= 8 ? 9 : 8;
+	else
+		return p_chunk_no;
+}
+
+std::size_t fe::MainWindow::get_default_palette_no(const fe::Game& p_game,
+	std::size_t p_chunk_no, std::size_t p_screen_no) const {
+
+	if (p_chunk_no == 6)
+		return p_screen_no + 17;
+	else
+		return p_game.m_chunks.at(p_chunk_no).m_default_palette_no;
 }

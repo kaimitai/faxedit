@@ -5,6 +5,7 @@
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
 	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
+	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
 	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
 	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
 	m_ptr_chunk_sprite_data{ c::PTR_CHUNK_SPRITE_DATA },
@@ -30,8 +31,10 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	for (std::size_t i{ 0 }; i < 8; ++i)
 		set_sprites(i, m_ptr_chunk_sprite_data);
 	// extract inter-chunk transitions
-	for (std::size_t i{ 0 }; i < 8; ++i)
+	for (std::size_t i{ 0 }; i < 8; ++i) {
 		set_interchunk_scrolling(i, m_ptr_chunk_interchunk_transitions);
+		set_intrachunk_scrolling(i, m_ptr_chunk_intrachunk_transitions);
+	}
 
 	// extract gfx
 	for (std::size_t c{ 0 }; c < m_offsets_bg_gfx.size(); ++c) {
@@ -45,7 +48,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 
 	// set default palette indexes for each chunk
 	for (std::size_t i{ 0 }; i < 8; ++i)
-		m_chunks.at(m_map_chunk_idx.at(i)).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx));
+		m_chunks.at(m_map_chunk_idx.at(i)).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx + i));
 
 	for (std::size_t i{ 0 }; i < 31; ++i) {
 		NES_Palette l_tmp_palette;
@@ -186,7 +189,7 @@ void fe::Game::set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_intrachunk + 2 * p_chunk_no, 0x30010) };
 
-	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 5) {
+	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 4) {
 		byte l_screen_id{ m_rom_data.at(l_ptr_to_screens + i) };
 
 		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_intrachunk_scroll =

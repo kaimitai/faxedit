@@ -19,8 +19,6 @@ namespace fe {
 		// texture for holding the screen data
 		SDL_Texture* m_screen_texture;
 
-		// tileset no -> palette no -> texture
-		std::vector<std::vector<std::vector<SDL_Texture*>>> m_textures;
 		SDL_Palette* m_nes_palette;
 
 		// surface operations
@@ -40,12 +38,7 @@ namespace fe {
 		// blitting operations
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
 		void blit_to_screen(SDL_Renderer* p_rnd, int tile_no, int sub_palette_no, int x, int y) const;
-
-		void generate_textures(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles,
-			const NES_Palette& p_palette);
-
-		SDL_Texture* get_texture(std::size_t p_tileset_no, std::size_t p_txt_no,
-			std::size_t p_sub_palette_no) const;
+		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 
 		SDL_Texture* get_screen_texture(void) const;
 	};

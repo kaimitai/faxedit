@@ -11,12 +11,17 @@ namespace fe {
 	class MainWindow {
 
 		int m_sel_chunk, m_sel_screen;
+		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
+			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		fe::gfx m_gfx;
-		SDL_Texture* m_screen_txt;
-
-		std::size_t get_tileset(int p_chunk_no, int p_screen_no) const;
 
 		void imgui_text(const std::string& p_str);
+		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
+			const fe::Game& p_game);
+
+		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::size_t get_default_palette_no(const fe::Game& p_game,
+			std::size_t p_chunk_no, std::size_t p_screen_no) const;
 
 	public:
 
