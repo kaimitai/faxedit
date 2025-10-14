@@ -161,6 +161,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	ImGui::Image(m_gfx.get_screen_texture(), { 16 * 16, 13 * 16 });
 
 	if (ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7)) {
+		m_sel_screen = 0;
 		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
 		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
 	}
@@ -254,6 +255,19 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 			+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
 		);
 	}
+
+	ImGui::Separator();
+
+	const auto& l_cconn{ p_game.m_chunks.at(m_sel_chunk).m_door_connections };
+
+	if (l_cconn.has_value()) {
+		imgui_text("Next chunk and screen: " + std::to_string(l_cconn.value().m_next_chunk) + ", " + std::to_string(l_cconn.value().m_next_screen) +
+			" - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_next_door_req));
+		imgui_text("Prev chunk and screen: " + std::to_string(l_cconn.value().m_prev_chunk) + ", " + std::to_string(l_cconn.value().m_prev_screen)
+			+ " - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_prev_door_req));
+	}
+	else
+		imgui_text("This world has no concept of next and previous world");
 
 	ImGui::End();
 

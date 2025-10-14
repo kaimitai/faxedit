@@ -1,9 +1,11 @@
 #ifndef FE_CHUNK_H
 #define FE_CHUNK_H
 
+#include <utility>
 #include <vector>
 #include "Screen.h"
 #include "Metatile.h"
+#include "Chunk_door_connections.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -18,6 +20,7 @@ namespace fe {
 		std::vector<byte> m_block_properties;
 		std::vector<std::vector<byte>> m_palette_attributes;
 		byte m_default_palette_no;
+		std::optional<fe::Chunk_door_connections> m_door_connections;
 
 		std::vector<byte> extract_bytes(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_length) const;

@@ -1,6 +1,8 @@
 #include "Game.h"
 #include "Metatile.h"
 #include "fe_constants.h"
+#include "Chunk_door_connections.h"
+#include <algorithm>
 
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
@@ -12,6 +14,10 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
 	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
+	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
+	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
+	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
+	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
 	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
 {
 	// extract screens for all chunks
@@ -34,6 +40,26 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		set_interchunk_scrolling(i, m_ptr_chunk_interchunk_transitions);
 		set_intrachunk_scrolling(i, m_ptr_chunk_intrachunk_transitions);
+	}
+
+	// extract inter-chunk connections when using "next level" and "last level" doors
+	// not all chunks have this, so consult the mapping table
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		const auto iter{ std::find(begin(m_map_chunk_levels), end(m_map_chunk_levels), i) };
+
+		// found a match for this chunk id - extract the data
+		if (iter != end(m_map_chunk_levels)) {
+			std::size_t l_true_chunk{ static_cast<std::size_t>(iter - begin(m_map_chunk_levels)) };
+
+			m_chunks.at(i).m_door_connections = fe::Chunk_door_connections(
+				m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk + 1)),
+				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk + 1),
+				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk + 1),
+				m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk)),
+				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk),
+				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk)
+			);
+		}
 	}
 
 	// extract gfx

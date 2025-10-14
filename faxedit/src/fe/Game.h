@@ -23,8 +23,9 @@ namespace fe {
 
 	private:
 		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_sprite_data, m_ptr_chunk_interchunk_transitions,
-			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes;
-		std::vector<std::size_t> m_ptr_chunk_screen_data, m_map_chunk_idx, m_offsets_bg_gfx;
+			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes,
+			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen, m_ptr_chunk_door_reqs;
+		std::vector<std::size_t> m_ptr_chunk_screen_data, m_map_chunk_idx, m_map_chunk_levels, m_offsets_bg_gfx;
 
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset = 0) const;
 		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;

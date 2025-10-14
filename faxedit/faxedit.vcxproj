@@ -74,6 +74,10 @@
     <IncludePath>C:\vclib\SDL3-3.2.24\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\vclib\SDL3-3.2.24\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>C:\vclib\SDL3-3.2.24\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\vclib\SDL3-3.2.24\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -126,12 +130,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -145,6 +152,7 @@
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
+    <ClCompile Include="src\fe\Chunk_door_connections.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
@@ -170,6 +178,7 @@
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\fe\Chunk.h" />
+    <ClInclude Include="src\fe\Chunk_door_connections.h" />
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
