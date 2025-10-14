@@ -10,7 +10,7 @@ namespace fe {
 
 	class MainWindow {
 
-		int m_sel_chunk, m_sel_screen;
+		std::size_t m_sel_chunk, m_sel_screen;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		fe::gfx m_gfx;
@@ -22,19 +22,23 @@ namespace fe {
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::size_t get_default_palette_no(const fe::Game& p_game,
 			std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
+		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
+
+		void draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
+			int& p_hover_x, int& p_hover_y, bool& p_clicked) const;
+		void draw_metatile_info(const fe::Game& p_game,
+			std::size_t p_sel_chunk, std::size_t p_sel_screen,
+			std::size_t p_sel_x, std::size_t p_sel_y);
+
+		void draw_chunk_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+		void draw_screen_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 
 	public:
 
 		MainWindow(SDL_Renderer* p_rnd);
 		void generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game);
-		void draw(SDL_Renderer* p_rnd, const fe::Game& p_game);
-
-		void draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
-			int& p_hover_x, int& p_hover_y, bool& p_clicked) const;
-
-		void draw_metatile_info(const fe::Game& p_game,
-			std::size_t p_sel_chunk, std::size_t p_sel_screen,
-			std::size_t p_sel_x, std::size_t p_sel_y);
+		void draw(SDL_Renderer* p_rnd, fe::Game& p_game);
 	};
 
 }

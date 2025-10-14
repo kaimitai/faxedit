@@ -5,6 +5,8 @@
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include <map>
 #include "./../common/klib/Bitreader.h"
+#include "Imgui_helper.h"
+#include "./../fe/fe_constants.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
@@ -25,7 +27,7 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_ga
 	// TODO: generate sprite textures
 }
 
-void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
+void fe::MainWindow::draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
 	int& hoverMX, int& hoverMY, bool& clicked) const {
 
 	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
@@ -66,7 +68,7 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 
 	}
 
-	ImGui::Begin("Screen");
+	ImGui::Begin("Screen##tm");
 
 	SDL_Texture* l_screen_txt{ m_gfx.get_screen_texture() };
 
@@ -138,7 +140,7 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, const fe::Game& p_g
 	ImGui::End();
 }
 
-void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
+void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
 	SDL_RenderClear(p_rnd);
 
@@ -150,160 +152,14 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	bool l_clicked;
 
 	regenerate_atlas_if_needed(p_rnd, p_game);
-	draw_screen_window(p_rnd, p_game, l_hover_x, l_hover_y, l_clicked);
+	draw_tilemap_window(p_rnd, p_game, l_hover_x, l_hover_y, l_clicked);
 
 	if (l_hover_x >= 0 && l_hover_y >= 0)
 		draw_metatile_info(p_game, m_sel_chunk, m_sel_screen,
 			static_cast<std::size_t>(l_hover_x), static_cast<std::size_t>(l_hover_y));
 
-	ImGui::Begin("Main");
-
-	ImGui::Image(m_gfx.get_screen_texture(), { 16 * 16, 13 * 16 });
-
-	if (ImGui::SliderInt("Chunk", &m_sel_chunk, 0, 7)) {
-		m_sel_screen = 0;
-		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
-	}
-
-	std::size_t l_sc_count{ p_game.m_chunks.at(m_sel_chunk).m_screens.size() };
-
-	ImGui::Text("Chunk screen count %d", l_sc_count);
-
-	if (m_sel_screen >= l_sc_count)
-		m_sel_screen = l_sc_count - 1;
-
-	if (ImGui::SliderInt("Screen", &m_sel_screen, 0, l_sc_count - 1)) {
-		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
-	}
-
-	if (ImGui::Button("Check")) {
-		std::string l_output;
-
-		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i)
-			for (std::size_t j{ 0 }; j < p_game.m_chunks[i].m_screens.size(); ++j)
-				if (p_game.m_chunks[i].m_screens[j].m_intrachunk_scroll.has_value()) {
-					const auto& l_inter{ p_game.m_chunks[i].m_screens[j].m_intrachunk_scroll.value() };
-
-					l_output += "Chunk=" + std::to_string(i) +
-						",Screen=" + std::to_string(j) +
-						",Dest screen=" + std::to_string(l_inter.m_dest_screen) +
-						",Palette ID=" + std::to_string(l_inter.m_palette_id)
-						+ "\n";
-				}
-
-	}
-
-	ImGui::Separator();
-
-	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
-
-	if (ImGui::Button("Left") && l_screen.m_scroll_left.has_value())
-		m_sel_screen = l_screen.m_scroll_left.value();
-	if (ImGui::Button("Right") && l_screen.m_scroll_right.has_value())
-		m_sel_screen = l_screen.m_scroll_right.value();
-	if (ImGui::Button("Up") && l_screen.m_scroll_up.has_value())
-		m_sel_screen = l_screen.m_scroll_up.value();
-	if (ImGui::Button("Down") && l_screen.m_scroll_down.has_value())
-		m_sel_screen = l_screen.m_scroll_down.value();
-
-	std::size_t l_sprite_count{ l_screen.m_sprites.size() };
-
-	imgui_text("Screen sprite count: " + std::to_string(l_sprite_count));
-
-	for (std::size_t i{ 0 }; i < l_sprite_count; ++i) {
-		const auto& l_sprite{ l_screen.m_sprites[i] };
-
-		byte l_id{ l_sprite.m_id };
-		byte l_x{ l_sprite.m_x };
-		byte l_y{ l_sprite.m_y };
-		std::string l_text{ l_sprite.m_text_id.has_value() ?
-			klib::Bitreader::byte_to_hex(l_sprite.m_text_id.value()) :
-			"None"
-		};
-
-		imgui_text("Sprite #" + std::to_string(i) +
-			" [ID=" + klib::Bitreader::byte_to_hex(l_id) +
-			"] - coords=("
-			+ std::to_string(l_x) + "," + std::to_string(l_y) + "), Text: " + l_text);
-	}
-
-	ImGui::Separator();
-
-	if (l_screen.m_interchunk_scroll.has_value()) {
-		const auto& l_is{ l_screen.m_interchunk_scroll };
-
-		ImGui::Text("Inter-world scroll transition");
-		imgui_text("Destination world=" + std::to_string(l_is.value().m_dest_chunk)
-			+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
-			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
-			+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
-			+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
-		);
-	}
-
-	ImGui::Separator();
-
-	if (l_screen.m_intrachunk_scroll.has_value()) {
-		const auto& l_is{ l_screen.m_intrachunk_scroll };
-
-		ImGui::Text("Intra-world scroll transition");
-		imgui_text("Destination screen=" + std::to_string(l_is.value().m_dest_screen)
-			+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
-			+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
-			+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
-		);
-	}
-
-	ImGui::Separator();
-
-	const auto& l_cconn{ p_game.m_chunks.at(m_sel_chunk).m_door_connections };
-
-	if (l_cconn.has_value()) {
-		imgui_text("Next chunk and screen: " + std::to_string(l_cconn.value().m_next_chunk) + ", " + std::to_string(l_cconn.value().m_next_screen) +
-			" - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_next_door_req));
-		imgui_text("Prev chunk and screen: " + std::to_string(l_cconn.value().m_prev_chunk) + ", " + std::to_string(l_cconn.value().m_prev_screen)
-			+ " - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_prev_door_req));
-	}
-	else
-		imgui_text("This world has no concept of next and previous world");
-
-	ImGui::Separator();
-
-	imgui_text("Door count: " + std::to_string(l_screen.m_doors.size()));
-
-	for (std::size_t i{ 0 }; i < l_screen.m_doors.size(); ++i) {
-		const auto& l_door{ l_screen.m_doors[i] };
-
-		std::string l_doortxt{ "Door #" + std::to_string(i) + " at ("
-		+ std::to_string(l_door.m_coords.first) + ","
-			+ std::to_string(l_door.m_coords.second) + "), dest=("
-
-		+ std::to_string(l_door.m_dest_coords.first) + ","
-			+ std::to_string(l_door.m_dest_coords.second) + "), unknown="
-			+ klib::Bitreader::byte_to_hex(l_door.m_unknown)
-			+ ",type="
-		};
-
-		if (l_door.m_door_type == fe::DoorType::NextWorld)
-			l_doortxt += "Next World";
-		else if (l_door.m_door_type == fe::DoorType::PrevWorld)
-			l_doortxt += "Previous World";
-		else if (l_door.m_door_type == fe::DoorType::Building)
-			l_doortxt += "Building, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
-			+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
-			+ ", NPC bundle=" + klib::Bitreader::byte_to_hex(l_door.m_npc_bundle);
-		else
-			l_doortxt += "IntraChunk, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
-			+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
-			+ ", Palette=" + klib::Bitreader::byte_to_hex(l_door.m_dest_palette_id);
-
-
-		imgui_text(l_doortxt);
-	}
-
-	ImGui::End();
+	draw_chunk_window(p_rnd, p_game);
+	draw_screen_window(p_rnd, p_game);
 
 	ImGui::Render();
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
@@ -319,7 +175,7 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 
 	byte l_metatile_id{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap.at(p_sel_y).at(p_sel_x) };
 
-	ImGui::Begin("Metatile");
+	ImGui::Begin("Metatile##mt");
 
 	imgui_text("Metatile ID: " +
 		klib::Bitreader::byte_to_hex(l_metatile_id));
@@ -360,4 +216,22 @@ std::size_t fe::MainWindow::get_default_palette_no(const fe::Game& p_game,
 		return p_screen_no + 17;
 	else
 		return p_game.m_chunks.at(p_chunk_no).m_default_palette_no;
+}
+
+std::string fe::MainWindow::get_description(byte p_index,
+	const std::map<byte, std::string>& p_map) const {
+	const auto& iter{ p_map.find(p_index) };
+
+	if (iter == end(p_map))
+		return std::format("Unknown ({})", klib::Bitreader::byte_to_hex(p_index));
+	else
+		return std::format("{} ({})", iter->second, klib::Bitreader::byte_to_hex(p_index));
+}
+
+std::string fe::MainWindow::get_description(byte p_index,
+	const std::vector<std::string>& p_vec) const {
+	if (p_index < p_vec.size())
+		return std::format("{} ({})", p_vec[p_index], klib::Bitreader::byte_to_hex(p_index));
+	else
+		return std::format("Unknown ({})", klib::Bitreader::byte_to_hex(p_index));
 }

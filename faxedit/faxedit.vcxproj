@@ -161,8 +161,11 @@
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\windows\Chunk_window.cpp" />
     <ClCompile Include="src\windows\gfx.cpp" />
+    <ClCompile Include="src\windows\imgui_helper.cpp" />
     <ClCompile Include="src\windows\MainWindow.cpp" />
+    <ClCompile Include="src\windows\Screen_window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\imgui\imconfig.h" />
@@ -188,6 +191,7 @@
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
     <ClInclude Include="src\windows\gfx.h" />
+    <ClInclude Include="src\windows\Imgui_helper.h" />
     <ClInclude Include="src\windows\MainWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

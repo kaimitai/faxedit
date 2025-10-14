@@ -13,7 +13,7 @@ std::vector<byte>(13 * 16, 0)
 
 	std::size_t idx{ 0 };
 
-	while (idx < (16 * 13)) {
+	while (idx < static_cast<std::size_t>(16 * 13)) {
 		unsigned int l_control{ reader.read_int(p_rom, 2) };
 		byte l_tile_val{ 0 };
 

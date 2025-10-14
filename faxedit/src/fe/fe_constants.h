@@ -1,6 +1,7 @@
 #ifndef FE_CONSTANTS_H
 #define FE_CONSTANTS_H
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -32,9 +33,6 @@ namespace fe {
 		// missing values (town and buildings) are invalid indexes into that table
 		inline const std::vector<std::size_t> MAP_CHUNK_LEVELS{ 0, 3, 1, 4, 5, 7 };
 
-		// a label of all the chunks, in ROM-order
-		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Mist", "Towns", "Overworld", "Branches", "Dartmoor", "Buildings", "Evil Lair" };
-
 		// map to background gfx start locations - treated as immutable
 		// when extracting the 256 nes tiles starting at any of these locations, the chunk tilemap indexes will match
 		// special care needed for chunk 6 which uses different tilesets depending on screen id
@@ -49,6 +47,46 @@ namespace fe {
 			0x13010,  // dartmoor + evil fortress
 			0x12410,  // set used for the shop and building interior screens
 			0x12a10   // set used for the training shops
+		};
+
+		// a label of all the chunks, in ROM-order
+		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Mist", "Towns", "Overworld", "Branches", "Dartmoor", "Buildings", "Evil Lair" };
+
+		inline const std::map<byte, std::string> LABELS_DOOR_REQS{
+			{0x00, "None"},
+			{0x01, "Key A"},
+			{0x02, "Key K"},
+			{0x03, "Key Q"},
+			{0x04, "Key J"},
+			{0x05, "Key Jo"},
+			{0x06, "Ring of Elf"},
+			{0x07, "Ring of Dwarf"},
+			{0x08, "Demon's Ring"}
+		};
+
+		inline const std::map<byte, std::string> LABELS_BLOCK_PROPERTIES{
+			{0x00, "Air"},
+			{0x01, "Solid"},
+			{0x02, "Ladder"},
+			{0x03, "Door"},
+			{0x04, "Foreground"},
+			{0x06, "Pushable"},
+			{0x0a, "Transition Ladder"},
+			{0x0b, "Return Exit"},
+			{0x0c, "Inta-World transition"},
+		};
+
+		inline const std::map<byte, std::string> LABELS_BUILDINGS{
+			{0x00, "King"},
+			{0x01, "Guru"},
+			{0x02, "Hospital"},
+			{0x03, "Pub"},
+			{0x04, "Weapon Shop"},
+			{0x05, "Key Shop"},
+			{0x06, "House"},
+			{0x07, "Meat Shop"},
+			{0x08, "Strength Trainer"},
+			{0x09, "Magic Trainer"}
 		};
 	}
 
