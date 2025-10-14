@@ -269,6 +269,40 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, const fe::Game& p_game) {
 	else
 		imgui_text("This world has no concept of next and previous world");
 
+	ImGui::Separator();
+
+	imgui_text("Door count: " + std::to_string(l_screen.m_doors.size()));
+
+	for (std::size_t i{ 0 }; i < l_screen.m_doors.size(); ++i) {
+		const auto& l_door{ l_screen.m_doors[i] };
+
+		std::string l_doortxt{ "Door #" + std::to_string(i) + " at ("
+		+ std::to_string(l_door.m_coords.first) + ","
+			+ std::to_string(l_door.m_coords.second) + "), dest=("
+
+		+ std::to_string(l_door.m_dest_coords.first) + ","
+			+ std::to_string(l_door.m_dest_coords.second) + "), unknown="
+			+ klib::Bitreader::byte_to_hex(l_door.m_unknown)
+			+ ",type="
+		};
+
+		if (l_door.m_door_type == fe::DoorType::NextWorld)
+			l_doortxt += "Next World";
+		else if (l_door.m_door_type == fe::DoorType::PrevWorld)
+			l_doortxt += "Previous World";
+		else if (l_door.m_door_type == fe::DoorType::Building)
+			l_doortxt += "Building, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
+			+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
+			+ ", NPC bundle=" + klib::Bitreader::byte_to_hex(l_door.m_npc_bundle);
+		else
+			l_doortxt += "IntraChunk, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
+			+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
+			+ ", Palette=" + klib::Bitreader::byte_to_hex(l_door.m_dest_palette_id);
+
+
+		imgui_text(l_doortxt);
+	}
+
 	ImGui::End();
 
 	ImGui::Render();

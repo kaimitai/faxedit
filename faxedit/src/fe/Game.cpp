@@ -52,10 +52,10 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			std::size_t l_true_chunk{ static_cast<std::size_t>(iter - begin(m_map_chunk_levels)) };
 
 			m_chunks.at(i).m_door_connections = fe::Chunk_door_connections(
-				m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk + 1)),
+				static_cast<byte>(m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk + 1))),
 				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk + 1),
 				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk + 1),
-				m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk)),
+				static_cast<byte>(m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk))),
 				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk),
 				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk)
 			);
@@ -138,8 +138,7 @@ void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
 	std::size_t l_chunk_door_data{ get_pointer_address(l_chunk_offset + 6) };
 	// door destination screen ids? referenced to from the previous data?
 	std::size_t l_chunk_door_dest_data{ get_pointer_address(l_chunk_offset + 8) };
-	// palettes, 128 bytes: 1 byte per 2x2 block area
-	// if 128 bytes and not 64, why?
+	// palettes, 1 byte per metatile defining its palette - 2 bits per quadrant
 	std::size_t l_chunk_palette_attr{ get_pointer_address(l_chunk_offset + 10) };
 
 	std::size_t l_tsa_top_left{ get_pointer_address(l_chunk_offset + 12) };
@@ -155,7 +154,11 @@ void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
 	m_chunks[l_true_chunk_no].set_block_properties(m_rom_data, l_block_properties, l_metatile_count);
 	m_chunks[l_true_chunk_no].set_screen_scroll_properties(m_rom_data, l_chunk_scroll_data);
 	m_chunks[l_true_chunk_no].add_metatiles(m_rom_data, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_metatile_count);
-	m_chunks[l_true_chunk_no].set_screen_doors(m_rom_data, l_chunk_door_data, l_chunk_door_dest_data);
+
+	// the doors for the town chunk offsets the index by 0x20 (hard coded game logic)
+	// probably to save space since all the doors there go to buildings
+	m_chunks[l_true_chunk_no].set_screen_doors(m_rom_data, l_chunk_door_data, l_chunk_door_dest_data,
+		l_true_chunk_no == 2 ? 0x20 : 0x00);
 }
 
 void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {

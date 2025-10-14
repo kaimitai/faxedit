@@ -24,7 +24,7 @@ int main(int argc, char** argv) try {
 		// Event handler
 		SDL_Event e;
 
-		l_window = SDL_CreateWindow("Visual Faxanadu", 1024, 768, SDL_WINDOW_RESIZABLE);
+		l_window = SDL_CreateWindow("Echoes of Eolis", 1024 * 2, 1200, SDL_WINDOW_RESIZABLE);
 		if (l_window == nullptr)
 			throw std::runtime_error(SDL_GetError());
 		else {
@@ -54,10 +54,10 @@ int main(int argc, char** argv) try {
 
 			fe::MainWindow l_main_window(l_rnd);
 			l_main_window.generate_textures(l_rnd, l_game);
-		   // main_window.set_application_icon(l_window);
+			// main_window.set_application_icon(l_window);
 
-		   // input handler
-		   // klib::User_input input;
+			// input handler
+			// klib::User_input input;
 			int mouse_wheel_y{ 0 };
 			bool mw_used{ false };
 

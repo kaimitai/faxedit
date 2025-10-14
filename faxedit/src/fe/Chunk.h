@@ -38,7 +38,8 @@ namespace fe {
 			std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
 			std::size_t p_attributes_offset, std::size_t p_metatile_count);
 		void set_screen_doors(const std::vector<byte>& p_rom,
-			std::size_t p_offset, std::size_t p_end_offset);
+			std::size_t p_door_offset, std::size_t p_door_param_offset,
+			byte p_param_offset);
 		void set_default_palette_no(byte p_palette_no);
 		void add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x, byte p_y);
 		void set_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no, byte p_text_id);

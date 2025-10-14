@@ -46,25 +46,24 @@ void fe::Chunk::add_metatiles(const std::vector<byte>& p_rom, std::size_t p_tl_o
 }
 
 void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
-	std::size_t p_offset, std::size_t p_end_offset) {
-	/*
-	for (std::size_t i{ p_offset }; i < p_end_offset; i += 4) {
+	std::size_t p_offset, std::size_t p_door_param_offset,
+	byte p_param_offset) {
 
-		std::size_t l_screen_id{ static_cast<std::size_t>(p_rom.at(i)) };
-		std::size_t l_coords{ static_cast<std::size_t>(p_rom.at(i + 1)) };
-		std::size_t l_dest{ static_cast<std::size_t>(p_rom.at(i + 2)) };
-		std::size_t l_dest_coords{ static_cast<std::size_t>(p_rom.at(i + 3)) };
+	for (std::size_t i{ p_offset }; i < p_door_param_offset && p_rom.at(i) != 0xff; i += 4) {
 
-		// TODO: This data interpretation is obviously wrong
-		if (l_screen_id < m_screens.size())
-			m_screens.at(l_screen_id).add_door(
-				l_coords,
-				l_dest,
-				l_dest_coords
-			);
+		std::size_t l_screen_id{ p_rom.at(i) };
 
+		m_screens.at(l_screen_id).m_doors.push_back(
+			fe::Door(
+				p_rom.at(i + 1),
+				p_rom.at(i + 2),
+				p_rom.at(i + 3),
+				p_rom,
+				p_door_param_offset,
+				p_param_offset
+			)
+		);
 	}
-	*/
 }
 
 void fe::Chunk::set_default_palette_no(byte p_palette_no) {

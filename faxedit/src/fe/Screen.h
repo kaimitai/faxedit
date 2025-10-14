@@ -27,8 +27,6 @@ namespace fe {
 		Screen(const std::vector<byte>& p_rom, std::size_t p_offset);
 		// procedure that reads scroll properties from rom
 		void set_scroll_properties(const std::vector<byte>& p_rom, std::size_t p_offset);
-		// procedure that adds door
-		void add_door(byte p_coords, byte p_dest, byte p_dest_coords);
 		void add_sprite(byte p_id, byte p_x, byte p_y);
 		void set_sprite_text(std::size_t p_sprite_no, byte p_text);
 

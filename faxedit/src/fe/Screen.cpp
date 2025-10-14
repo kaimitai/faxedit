@@ -61,10 +61,6 @@ void fe::Screen::set_scroll_properties(const std::vector<byte>& p_rom, std::size
 	m_scroll_down = scroll_property_to_opt(p_rom.at(p_offset + 3));
 }
 
-void fe::Screen::add_door(byte p_coords, byte p_dest, byte p_dest_coords) {
-	m_doors.push_back(fe::Door(p_coords, p_dest, p_dest_coords));
-}
-
 void fe::Screen::add_sprite(byte p_id, byte p_x, byte p_y) {
 	m_sprites.push_back(fe::Sprite(p_id, p_x, p_y));
 }
