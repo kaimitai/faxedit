@@ -24,7 +24,7 @@ int main(int argc, char** argv) try {
 		// Event handler
 		SDL_Event e;
 
-		l_window = SDL_CreateWindow("Echoes of Eolis", 1024 * 2, 1200, SDL_WINDOW_RESIZABLE);
+		l_window = SDL_CreateWindow("Echoes of Eolis", 1024, 768, SDL_WINDOW_RESIZABLE);
 		if (l_window == nullptr)
 			throw std::runtime_error(SDL_GetError());
 		else {

@@ -17,8 +17,8 @@ namespace fe {
 
 		std::vector<fe::Metatile> m_metatiles;
 		std::vector<fe::Screen> m_screens;
+		// TODO: Incorporate block properties as an attribute of metatiles as their count should be equal
 		std::vector<byte> m_block_properties;
-		std::vector<std::vector<byte>> m_palette_attributes;
 		byte m_default_palette_no;
 		std::optional<fe::Chunk_door_connections> m_door_connections;
 

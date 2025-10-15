@@ -43,6 +43,18 @@
     <Filter Include="Source Files\windows">
       <UniqueIdentifier>{11543951-df9b-4765-b09f-f711f12d574a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common\pugixml">
+      <UniqueIdentifier>{3ea14066-12e3-4c50-9480-a18bdc07941d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\pugixml">
+      <UniqueIdentifier>{932f5f0c-6360-4d6c-97be-7d6fe5ffdfd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fe\xml">
+      <UniqueIdentifier>{e7f857a6-ab2f-4217-8ed0-c004be9dffeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\xml">
+      <UniqueIdentifier>{1f70b568-2e08-4b3d-882e-193f744c61a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -116,6 +128,12 @@
     </ClCompile>
     <ClCompile Include="src\windows\Chunk_window.cpp">
       <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\pugixml\pugixml.cpp">
+      <Filter>Source Files\common\pugixml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\xml\Xml_helper.cpp">
+      <Filter>Source Files\fe\xml</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -193,6 +211,18 @@
     </ClInclude>
     <ClInclude Include="src\windows\Imgui_helper.h">
       <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\pugixml\pugiconfig.hpp">
+      <Filter>Header Files\common\pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\pugixml\pugixml.hpp">
+      <Filter>Header Files\common\pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_helper.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_constants.h">
+      <Filter>Header Files\fe\xml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

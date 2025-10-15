@@ -7,6 +7,7 @@
 #include "./../common/klib/Bitreader.h"
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
+#include "./../fe/xml/Xml_helper.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
@@ -147,6 +148,13 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
+
+	ui::imgui_screen("Game###gw");
+
+	if (ImGui::Button("Save XML"))
+		xml::save_xml("c:/temp/out.xml", p_game);
+
+	ImGui::End();
 
 	int l_hover_x, l_hover_y;
 	bool l_clicked;
