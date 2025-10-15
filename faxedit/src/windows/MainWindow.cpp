@@ -143,6 +143,8 @@ void fe::MainWindow::draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_
 }
 
 void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
+	regenerate_atlas_if_needed(p_rnd, p_game);
+
 	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
 	SDL_RenderClear(p_rnd);
 
@@ -150,26 +152,19 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-	ui::imgui_screen("Game###gw");
-
-	if (ImGui::Button("Save XML"))
-		xml::save_xml("c:/temp/out.xml", p_game);
-
-	if (ImGui::Button("Test compression"))
-		klib::file::write_bytes_to_file(p_game.m_chunks.at(0).m_screens.at(0).get_tilemap_bytes(), "c:/temp/out.bin");
-
-	ImGui::End();
-
 	int l_hover_x, l_hover_y;
 	bool l_clicked;
-
-	regenerate_atlas_if_needed(p_rnd, p_game);
 	draw_tilemap_window(p_rnd, p_game, l_hover_x, l_hover_y, l_clicked);
-
-	if (l_hover_x >= 0 && l_hover_y >= 0)
+	if (l_hover_x >= 0 && l_hover_y >= 0) {
 		draw_metatile_info(p_game, m_sel_chunk, m_sel_screen,
 			static_cast<std::size_t>(l_hover_x), static_cast<std::size_t>(l_hover_y));
 
+		if (l_clicked)
+			p_game.m_chunks[m_sel_chunk].m_screens[m_sel_screen].m_tilemap.at(
+				l_hover_y).at(l_hover_x
+				) = 0x34 - l_hover_y % 2;
+	}
+	draw_control_window(p_rnd, p_game);
 	draw_chunk_window(p_rnd, p_game);
 	draw_screen_window(p_rnd, p_game);
 

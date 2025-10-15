@@ -2,9 +2,11 @@
 #define FE_MAINWINDOW_H
 
 #include <SDL3/SDL.h>
+#include <deque>
 #include <string>
-#include "./../fe/Game.h"
 #include "gfx.h"
+#include "./../fe/Game.h"
+#include "./../fe/ROM_Manager.h"
 
 namespace fe {
 
@@ -14,6 +16,8 @@ namespace fe {
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		fe::gfx m_gfx;
+		std::deque<std::string> m_messages;
+		fe::ROM_Manager m_rom_manager;
 
 		void imgui_text(const std::string& p_str);
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
@@ -31,8 +35,11 @@ namespace fe {
 			std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);
 
+		void draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 		void draw_chunk_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 		void draw_screen_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+
+		void add_message(const std::string& p_msg);
 
 	public:
 

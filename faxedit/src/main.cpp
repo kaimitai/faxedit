@@ -19,6 +19,7 @@ int main(int argc, char** argv) try {
 		throw std::runtime_error(SDL_GetError());
 	else {
 		// create game object
+		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/fax-out.nes"));
 		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (USA) (Rev A).nes"));
 
 		// Event handler

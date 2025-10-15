@@ -73,3 +73,9 @@ void fe::MainWindow::draw_screen_window(SDL_Renderer* p_rnd, fe::Game& p_game) {
 
 	ImGui::End();
 }
+
+void fe::MainWindow::add_message(const std::string& p_msg) {
+	if (m_messages.size() > 50)
+		m_messages.pop_back();
+	m_messages.push_front(p_msg);
+}
