@@ -1,6 +1,7 @@
 #include "Screen.h"
 #include "./../common/klib/Kutil.h"
 #include "./../common/klib/Bitreader.h"
+#include "./../common/klib/Bitwriter.h"
 
 using byte = unsigned char;
 
@@ -67,4 +68,26 @@ void fe::Screen::add_sprite(byte p_id, byte p_x, byte p_y) {
 
 void fe::Screen::set_sprite_text(std::size_t p_sprite_no, byte p_text) {
 	m_sprites.at(p_sprite_no).set_text(p_text);
+}
+
+std::vector<byte> fe::Screen::get_tilemap_bytes(void) const {
+	klib::Bitwriter writer;
+
+	auto l_tm_data{ klib::kutil::flatten_2d_vec(m_tilemap) };
+
+	for (std::size_t i{ 0 }; i < l_tm_data.size(); ++i) {
+		if (i >= 1 && l_tm_data[i] == l_tm_data[i - 1])
+			writer.write_bits(0b00, 2);
+		else if (i >= 16 && l_tm_data[i] == l_tm_data[i - 16])
+			writer.write_bits(0b01, 2);
+		else if (i >= 17 && l_tm_data[i] == l_tm_data[i - 17])
+			writer.write_bits(0b10, 2);
+		else {
+			writer.write_bits(0b11, 2);
+			writer.write_bits(l_tm_data[i], 8);
+		}
+		
+	}
+
+	return writer.get_data();
 }

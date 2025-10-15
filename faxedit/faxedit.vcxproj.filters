@@ -135,6 +135,9 @@
     <ClCompile Include="src\fe\xml\Xml_helper.cpp">
       <Filter>Source Files\fe\xml</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\klib\Bitwriter.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -223,6 +226,9 @@
     </ClInclude>
     <ClInclude Include="src\fe\xml\Xml_constants.h">
       <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Bitwriter.h">
+      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -79,7 +79,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 			n_metatile.attribute(c::ATTR_NO).set_value(mt);
 
 			n_metatile.append_attribute(c::ATTR_MT_PROPERTY);
-			n_metatile.attribute(c::ATTR_MT_PROPERTY).set_value(byte_to_hex(lc_chunk.m_block_properties.at(i)));
+			n_metatile.attribute(c::ATTR_MT_PROPERTY).set_value(byte_to_hex(lc_chunk.m_block_properties.at(mt)));
 
 
 			// the metatile tilemap is just 4 tiles, so we just flatten the tilemap and push the bytes

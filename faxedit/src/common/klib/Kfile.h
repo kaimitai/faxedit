@@ -11,6 +11,7 @@ namespace klib {
 	namespace file {
 
 		std::vector<byte> read_file_as_bytes(const std::string& p_filename);
+		void write_bytes_to_file(const std::vector<byte>& p_data, const std::string& p_filename);
 
 	}
 

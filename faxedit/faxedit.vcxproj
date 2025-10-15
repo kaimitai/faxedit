@@ -149,6 +149,7 @@
     <ClCompile Include="src\common\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
+    <ClCompile Include="src\common\klib\Bitwriter.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="src\common\imgui\imstb_textedit.h" />
     <ClInclude Include="src\common\imgui\imstb_truetype.h" />
     <ClInclude Include="src\common\klib\Bitreader.h" />
+    <ClInclude Include="src\common\klib\Bitwriter.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />

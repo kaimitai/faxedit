@@ -1,3 +1,17 @@
+Metatile property | Metatile Definition Use Count | Description
+0x00 | 756 | Sky
+0x01 | 143 | Solid
+0x02 | 6 | Ladder
+0x03 | 37 | 
+0x04 | 50 | Foreground
+0x05 | 5 | 
+0x06 | 2 | Pushable
+0x0a | 2 | 
+0x0b | 6 | 
+0x0c | 14 | 
+0x0d | 4 | 
+0x0e | 1 | 
+
 Sprite ID | Use Count | Description
 0x04 | 5 | 
 0x05 | 3 | 

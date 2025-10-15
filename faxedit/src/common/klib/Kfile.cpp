@@ -20,3 +20,12 @@ std::vector<byte> klib::file::read_file_as_bytes(const std::string& p_filename) 
 
     return buffer;
 }
+
+void klib::file::write_bytes_to_file(const std::vector<byte>& p_data, const std::string& p_filename) {
+    std::ofstream file(p_filename, std::ios::binary);
+    if (!file) {
+        throw std::runtime_error("Failed to open file: " + p_filename);
+    }
+
+    file.write(reinterpret_cast<const char*>(p_data.data()), p_data.size());
+}

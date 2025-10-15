@@ -30,6 +30,8 @@ namespace fe {
 		void add_sprite(byte p_id, byte p_x, byte p_y);
 		void set_sprite_text(std::size_t p_sprite_no, byte p_text);
 
+		std::vector<byte> get_tilemap_bytes(void) const;
+
 	private:
 		std::optional<std::size_t> scroll_property_to_opt(byte p_val) const;
 

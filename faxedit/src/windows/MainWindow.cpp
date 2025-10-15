@@ -8,6 +8,7 @@
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/xml/Xml_helper.h"
+#include "./../common/klib/Kfile.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
@@ -153,6 +154,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 
 	if (ImGui::Button("Save XML"))
 		xml::save_xml("c:/temp/out.xml", p_game);
+
+	if (ImGui::Button("Test compression"))
+		klib::file::write_bytes_to_file(p_game.m_chunks.at(0).m_screens.at(0).get_tilemap_bytes(), "c:/temp/out.bin");
 
 	ImGui::End();
 

@@ -27,6 +27,19 @@ namespace klib {
 			return l_result;
 		}
 
+		template<class T>
+			std::vector<T> flatten_2d_vec(const std::vector<std::vector<T>>& p_matrix) {
+
+				std::vector<T> l_result;
+
+				for (const auto& l_row : p_matrix)
+					l_result.insert(end(l_result), begin(l_row), end(l_row));
+
+				return l_result;
+
+		}
+
+
 	}
 }
 
