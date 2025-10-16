@@ -69,6 +69,8 @@ namespace fe {
 			constexpr char ATTR_DEST_PALETTE[]{ "destination_palette" };
 			constexpr char ATTR_DEST_PARAM_ID[]{ "destination_parameter" };
 			constexpr char ATTR_UNKNOWN_BYTE[]{ "unknown_byte" };
+			constexpr char ATTR_SPRITE_COMM_BYTE[]{ "sprite_command_byte" };
+			constexpr char ATTR_UNKNOWN_SPR_BYTES[]{ "unknown_sprite_bytes" };
 			constexpr char ATTR_BYTES[]{ "bytes" };
 			constexpr char ATTR_ROW[]{ "row" };
 			constexpr char ATTR_TYPE[]{ "type" };

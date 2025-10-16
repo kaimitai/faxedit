@@ -36,7 +36,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		std::vector<byte> l_rom{ p_game.m_rom_data };
 
 		for (std::size_t i{ 0 }; i < 3; ++i) {
-			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(i, p_game) };
+			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(p_game, i) };
 			klib::file::write_bytes_to_file(l_bank_screen_data, "c:/temp/bank" + std::to_string(i) + ".bin");
 			std::copy(begin(l_bank_screen_data), end(l_bank_screen_data), begin(l_rom) + c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(i));
 		}
@@ -48,15 +48,39 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 
 	}
 
-	if (ImGui::Button("Chunk sprite data to file")) {
-		std::vector<byte> l_sprite_data;
+	if (ImGui::Button("Patch sprite data")) {
+		/*
+		p_game.m_chunks[0].m_screens[0].m_sprites.clear();
 
-		for (std::size_t s{ 0 }; s < p_game.m_chunks.at(m_sel_chunk).m_screens.size(); ++s) {
-			auto l_sc_sprite_data{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(s).get_sprite_bytes() };
-			l_sprite_data.insert(end(l_sprite_data), begin(l_sc_sprite_data), end(l_sc_sprite_data));
+		p_game.m_chunks[0].m_screens[8].m_sprite_command_byte = 0x01;
+
+		p_game.m_chunks[0].m_screens[8].m_sprites.clear();
+		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x5b, 5, 10));
+		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x2d, 11, 4));
+		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x5b, 12, 10));
+		*/
+		std::vector<byte> l_sprite_data{ m_rom_manager.encode_game_sprite_data(p_game) };
+		std::vector<byte> l_sprite_data2{ m_rom_manager.encode_game_sprite_data_new(p_game) };
+		
+		for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
+			std::vector<byte> l_spr_data;
+
+			for (std::size_t s{ 0 }; s < p_game.m_chunks[c].m_screens.size(); ++s) {
+				auto l_sdata{ p_game.m_chunks[c].m_screens[s].get_sprite_bytes() };
+
+				l_spr_data.insert(end(l_spr_data), begin(l_sdata), end(l_sdata));
+			}
+			
+			klib::file::write_bytes_to_file(l_spr_data, "sprite-chunk" +
+				std::to_string(c) + ".bin");
 		}
+		
+		auto l_rom{ p_game.m_rom_data };
 
-		klib::file::write_bytes_to_file(l_sprite_data, "c:/temp/spr-" + std::to_string(m_sel_chunk) + ".bin");
+		std::copy(begin(l_sprite_data2), end(l_sprite_data2),
+			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
+
+		klib::file::write_bytes_to_file(l_rom, "c:/temp/test-sprites.nes");
 	}
 
 	if (ImGui::Button("Unused metatiles?")) {

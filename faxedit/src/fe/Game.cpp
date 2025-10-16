@@ -170,8 +170,6 @@ void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 	for (std::size_t i{ 0 }; i < m_chunks.at(l_true_chunk).m_screens.size(); ++i) {
 		std::size_t l_ptr_to_screen{ get_pointer_address(l_ptr_to_screens + 2 * i, 0x24010) };
 
-		std::size_t l_spr_count{ 0 };
-
 		// firstly: extract sprite data
 		while (m_rom_data.at(l_ptr_to_screen) != 0xff) {
 			byte l_id{ m_rom_data.at(l_ptr_to_screen) };
@@ -179,19 +177,28 @@ void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 			byte l_x{ static_cast<byte>(m_rom_data.at(l_ptr_to_screen + 1) % 16) };
 
 			m_chunks.at(l_true_chunk).add_screen_sprite(i, l_id, l_x, l_y);
-			++l_spr_count;
 			l_ptr_to_screen += 2;
 		}
+
+		auto& l_sprites{ m_chunks[l_true_chunk].m_screens[i].m_sprites };
 
 		// secondly: extract sprite text data
 		// hypothesis: 0xff at end of stream seems to be optional
 		// when every sprite has a text byte associated with it
 		std::size_t l_sprite_no{ 0 };
-		while (m_rom_data.at(++l_ptr_to_screen) != 0xff && l_sprite_no < l_spr_count) {
-			m_chunks.at(l_true_chunk).set_screen_sprite_text(i, l_sprite_no++,
-				m_rom_data.at(l_ptr_to_screen));
+		
+		while (m_rom_data.at(++l_ptr_to_screen) != 0xff) {
+
+			byte l_text_id{ m_rom_data.at(l_ptr_to_screen) };
+			if (l_sprite_no < l_sprites.size())
+				l_sprites[l_sprite_no++].m_text_id = l_text_id;
+			else
+				m_chunks[l_true_chunk].m_screens[i].m_unknown_sprite_bytes.push_back(l_text_id);
+
 		}
 
+		if (m_rom_data.at(l_ptr_to_screen + 1) == 0x80)
+			m_chunks[l_true_chunk].m_screens[i].m_sprite_command_byte = m_rom_data.at(l_ptr_to_screen + 2);
 	}
 }
 

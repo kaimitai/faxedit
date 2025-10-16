@@ -22,6 +22,9 @@ namespace fe {
 		// the size of this vector also define the number of chunks in the game - which is indeed 8 in the original game and can't be changed easily
 		inline const std::vector<std::size_t> CHUNK_TILEMAPS_BANK_IDX{ 0, 0, 0, 1, 1, 2, 2, 2 };
 
+		// the following pointers are on the form { ROM offset for master ptr table, ROM offset considered 0 by the ptrs }
+		constexpr std::pair<std::size_t, std::size_t> PTR_SPRITE_DATA{ 0x2c220, 0x24010 };
+
 		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
 
 		// pointers to chunk data pointer tables

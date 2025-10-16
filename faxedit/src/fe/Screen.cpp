@@ -131,5 +131,11 @@ std::vector<byte> fe::Screen::get_sprite_bytes(void) const {
 	// the original game seems to omit this sometimes in these cases
 	l_result.push_back(0xff);
 
+	// add sprite command byte if it exists
+	if (m_sprite_command_byte.has_value()) {
+		l_result.push_back(0x80);
+		l_result.push_back(m_sprite_command_byte.value());
+	}
+
 	return l_result;
 }

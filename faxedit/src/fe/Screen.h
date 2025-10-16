@@ -23,6 +23,9 @@ namespace fe {
 		std::optional<fe::InterChunkScroll> m_interchunk_scroll;
 		std::optional<fe::IntraChunkScroll> m_intrachunk_scroll;
 
+		std::optional<byte> m_sprite_command_byte;
+		std::vector<byte> m_unknown_sprite_bytes;
+
 		// constructor that reads ROM data and extracts it
 		Screen(const std::vector<byte>& p_rom, std::size_t p_offset);
 		// procedure that reads scroll properties from rom

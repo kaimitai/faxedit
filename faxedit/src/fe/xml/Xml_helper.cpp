@@ -137,6 +137,16 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 				n_screen.attribute(c::ATTR_SCREEN_ID_DOWN).set_value(lc_screen.m_scroll_down.value());
 			}
 
+			if (lc_screen.m_sprite_command_byte.has_value()) {
+				n_screen.append_attribute(c::ATTR_SPRITE_COMM_BYTE);
+				n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).set_value(byte_to_hex(lc_screen.m_sprite_command_byte.value()));
+			}
+
+			if (!lc_screen.m_unknown_sprite_bytes.empty()) {
+				n_screen.append_attribute(c::ATTR_UNKNOWN_SPR_BYTES);
+				n_screen.attribute(c::ATTR_UNKNOWN_SPR_BYTES).set_value(join_bytes(lc_screen.m_unknown_sprite_bytes, true));
+			}
+
 			// inter-chunk scrolling
 			if (lc_screen.m_interchunk_scroll.has_value()) {
 				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
