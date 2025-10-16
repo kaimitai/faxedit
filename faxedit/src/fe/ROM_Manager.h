@@ -19,10 +19,14 @@ namespace fe {
 			std::size_t p_ptr_base_rom_offset,
 			const std::vector<std::vector<byte>>& p_data) const;
 
-	public:
-		ROM_Manager(void) = default;
-		std::vector<byte> encode_bank_screen_data(std::size_t p_bank_no, const fe::Game& p_game) const;
+		// pointer variables - check the constants header for descriptions
+		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
 
+
+	public:
+		ROM_Manager(void);
+
+		std::vector<byte> encode_bank_screen_data(std::size_t p_bank_no, const fe::Game& p_game) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 	};
 

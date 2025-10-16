@@ -1,24 +1,35 @@
 #include "ROM_manager.h"
 #include <algorithm>
 
+fe::ROM_Manager::ROM_Manager(void) :
+	m_chunk_tilemaps_bank_idx{ c::CHUNK_TILEMAPS_BANK_IDX },
+	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET }
+{
+}
+
 // this function encodes the screen data for a given bank
 std::vector<byte> fe::ROM_Manager::encode_bank_screen_data(std::size_t p_bank_no, const fe::Game& p_game) const {
 
-	
+	// extract all chunk nos for this bank
+	std::vector<std::size_t> l_chunks_this_bank;
+	for (std::size_t i{ 0 }; i < m_chunk_tilemaps_bank_idx.size(); ++i)
+		if (p_bank_no == m_chunk_tilemaps_bank_idx[i])
+			l_chunks_this_bank.push_back(i);
 
+	// l_chunks_this_bank now holds all the chunk numbers in the correct order - create ROM data for these chunk tilemaps
 	std::vector<std::vector<byte>> l_all_screen_data_chunks;
-	std::size_t l_cur_rom_offset{ p_game.m_ptr_chunk_screen_data[0] + 6 };
+	std::size_t l_cur_rom_offset{ m_ptr_tilemaps_bank_rom_offset.at(p_bank_no) + 2 * l_chunks_this_bank.size() };
 
-	for (std::size_t i{ 0 }; i < 3; ++i) {
+	for (std::size_t i{ 0 }; i < l_chunks_this_bank.size(); ++i) {
 		std::vector<std::vector<byte>> l_cmpr_scr;
 
-		for (std::size_t s{ 0 }; s < p_game.m_chunks[i].m_screens.size(); ++s)
-			l_cmpr_scr.push_back(p_game.m_chunks[i].m_screens[s].get_tilemap_bytes());
+		for (std::size_t s{ 0 }; s < p_game.m_chunks[l_chunks_this_bank[i]].m_screens.size(); ++s)
+			l_cmpr_scr.push_back(p_game.m_chunks[l_chunks_this_bank[i]].m_screens[s].get_tilemap_bytes());
 
 		auto l_data{
 		build_pointer_table_and_data(
 			l_cur_rom_offset,
-			0x10,
+			m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
 			l_cmpr_scr)
 		};
 
@@ -29,8 +40,8 @@ std::vector<byte> fe::ROM_Manager::encode_bank_screen_data(std::size_t p_bank_no
 	}
 
 	auto l_all_screens_w_ptr_table{ build_pointer_table_and_data(
-	p_game.m_ptr_chunk_screen_data[0],
-		0x10,
+	m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
+		m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
 		l_all_screen_data_chunks
 	) };
 

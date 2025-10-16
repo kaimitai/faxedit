@@ -86,8 +86,50 @@ std::vector<byte> fe::Screen::get_tilemap_bytes(void) const {
 			writer.write_bits(0b11, 2);
 			writer.write_bits(l_tm_data[i], 8);
 		}
-		
+
 	}
 
 	return writer.get_data();
+}
+
+std::vector<byte> fe::Screen::get_sprite_bytes(void) const {
+	std::vector<byte> l_result;
+
+	// if there are both sprites with and without text - put the text ones first
+	std::vector<std::size_t> l_txt_sprites, l_mute_sprites;
+
+	for (std::size_t s{ 0 }; s < m_sprites.size(); ++s) {
+		if (m_sprites[s].m_text_id.has_value())
+			l_txt_sprites.push_back(s);
+		else
+			l_mute_sprites.push_back(s);
+	}
+
+	// hypothesis: we don't really need to end the text portion with 0xff if all the sprites use text
+	// as the game doesn't look for text bytes beyond the actual screen sprite counts
+	for (std::size_t i{ 0 }; i < l_txt_sprites.size(); ++i) {
+		const auto& l_sprite{ m_sprites[l_txt_sprites[i]] };
+		l_result.push_back(l_sprite.m_id);
+		l_result.push_back(l_sprite.m_y * 16 + l_sprite.m_x);
+	}
+
+	for (std::size_t i{ 0 }; i < l_mute_sprites.size(); ++i) {
+		const auto& l_sprite{ m_sprites[l_mute_sprites[i]] };
+		l_result.push_back(l_sprite.m_id);
+		l_result.push_back(l_sprite.m_y * 16 + l_sprite.m_x);
+	}
+
+	l_result.push_back(0xff);
+
+	// add the text bytes
+	for (std::size_t i{ 0 }; i < l_txt_sprites.size(); ++i) {
+		const auto& l_sprite{ m_sprites[l_txt_sprites[i]] };
+		l_result.push_back(l_sprite.m_text_id.value());
+	}
+
+	// is this really necessary if l_txt_sprites.size() == l_mute_sprites.size()
+	// the original game seems to omit this sometimes in these cases
+	l_result.push_back(0xff);
+
+	return l_result;
 }

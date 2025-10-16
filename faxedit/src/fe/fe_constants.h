@@ -11,6 +11,19 @@ namespace fe {
 
 	namespace c {
 
+		// START - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
+
+		// the start of the pointer table for each chunks's tilemaps
+		// the start of the data (ptr table + data for each chunk) follows immediately after this outer pointer table
+		inline const std::vector<std::size_t> PTR_TILEMAPS_BANK_ROM_OFFSET{ 0x10, 0x4010, 0x8010 };
+
+		// a map from chunk no (vector index) to bank number - this defines how we order the chunks in the application
+		// if you change this, the remap tables also have to be recalculated
+		// the size of this vector also define the number of chunks in the game - which is indeed 8 in the original game and can't be changed easily
+		inline const std::vector<std::size_t> CHUNK_TILEMAPS_BANK_IDX{ 0, 0, 0, 1, 1, 2, 2, 2 };
+
+		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
+
 		// pointers to chunk data pointer tables
 		// indexed by chunk no (offet address by (2 * chunk no) to get the ptr to the chunk we're interested in)
 		constexpr std::size_t PTR_CHUNK_METADATA{ 0xc010 };
