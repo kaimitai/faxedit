@@ -12,7 +12,7 @@ namespace fe {
 
 	struct Door {
 
-		std::pair<std::size_t, std::size_t> m_coords, m_dest_coords;
+		std::pair<byte, byte> m_coords, m_dest_coords;
 		fe::DoorType m_door_type;
 
 		// doors with parameter < 0xfe
@@ -28,7 +28,7 @@ namespace fe {
 		// for intra-chunk doors this is the screen in in the same chunk
 		byte m_dest_screen_id;
 
-		std::pair<std::size_t, std::size_t> byte_to_coords(byte p_coords) const;
+		std::pair<byte, byte> byte_to_coords(byte p_coords) const;
 
 		Door(byte p_coords, byte p_param, byte p_dest_coords,
 			const std::vector<byte>& p_rom, std::size_t p_door_param_offset,

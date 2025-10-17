@@ -30,59 +30,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		}
 	}
 
-	if (ImGui::Button("Patch ROM")) {
-		// p_game.m_chunks.at(0).m_screens.at(0).m_tilemap.at(3).at(3) = 0x30;
-
-		std::vector<byte> l_rom{ p_game.m_rom_data };
-
-		for (std::size_t i{ 0 }; i < 3; ++i) {
-			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(p_game, i) };
-			klib::file::write_bytes_to_file(l_bank_screen_data, "c:/temp/bank" + std::to_string(i) + ".bin");
-			std::copy(begin(l_bank_screen_data), end(l_bank_screen_data), begin(l_rom) + c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(i));
-		}
-
-		if (l_rom != p_game.m_rom_data)
-			add_message("patch bad to the bone");
-		else
-			add_message("patching is roses and sunshine! and rainbows!");
-
-	}
-
-	if (ImGui::Button("Patch sprite data")) {
-		/*
-		p_game.m_chunks[0].m_screens[0].m_sprites.clear();
-
-		p_game.m_chunks[0].m_screens[8].m_sprite_command_byte = 0x01;
-
-		p_game.m_chunks[0].m_screens[8].m_sprites.clear();
-		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x5b, 5, 10));
-		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x2d, 11, 4));
-		p_game.m_chunks[0].m_screens[8].m_sprites.push_back(fe::Sprite(0x5b, 12, 10));
-		*/
-		std::vector<byte> l_sprite_data{ m_rom_manager.encode_game_sprite_data(p_game) };
-		std::vector<byte> l_sprite_data2{ m_rom_manager.encode_game_sprite_data_new(p_game) };
-		
-		for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
-			std::vector<byte> l_spr_data;
-
-			for (std::size_t s{ 0 }; s < p_game.m_chunks[c].m_screens.size(); ++s) {
-				auto l_sdata{ p_game.m_chunks[c].m_screens[s].get_sprite_bytes() };
-
-				l_spr_data.insert(end(l_spr_data), begin(l_sdata), end(l_sdata));
-			}
-			
-			klib::file::write_bytes_to_file(l_spr_data, "sprite-chunk" +
-				std::to_string(c) + ".bin");
-		}
-		
-		auto l_rom{ p_game.m_rom_data };
-
-		std::copy(begin(l_sprite_data2), end(l_sprite_data2),
-			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
-
-		klib::file::write_bytes_to_file(l_rom, "c:/temp/test-sprites.nes");
-	}
-
 	if (ImGui::Button("Unused metatiles?")) {
 
 		for (std::size_t i{ 0 }; i < 8; ++i) {
@@ -108,6 +55,28 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 			add_message(std::format("Chunk {} unused metatiles: {}", i, l_unused_cnt));
 		}
 
+	}
+
+	if (ImGui::Button("Patch ROM")) {
+		auto l_rom{ p_game.m_rom_data };
+
+		// encode metadata
+		auto l_metadata{ m_rom_manager.encode_game_metadata_all(p_game) };
+		std::copy(begin(l_metadata), end(l_metadata), begin(l_rom) + 0xc012);
+
+		// encode all screens
+		for (std::size_t i{ 0 }; i < 3; ++i) {
+			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(p_game, i) };
+			std::copy(begin(l_bank_screen_data), end(l_bank_screen_data), begin(l_rom) + c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(i));
+		}
+
+		// encode sprites
+		std::vector<byte> l_sprite_data{ m_rom_manager.encode_game_sprite_data_new(p_game) };
+		std::copy(begin(l_sprite_data), end(l_sprite_data),
+			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
+
+		klib::file::write_bytes_to_file(l_rom,
+			"c:/temp/faxanadu-out.nes");
 	}
 
 	ImGui::Separator();

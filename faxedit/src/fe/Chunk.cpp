@@ -2,7 +2,8 @@
 #include "./../common/klib/Bitreader.h"
 #include "./../common/klib/Kutil.h"
 
-#include <iostream>
+#include <map>
+#include <stdexcept>
 
 void fe::Chunk::decompress_and_add_screen(const std::vector<byte>& p_rom,
 	std::size_t p_offset) {
@@ -85,6 +86,16 @@ std::vector<byte> fe::Chunk::get_block_property_bytes(void) const {
 	return l_result;
 }
 
+// helper
+std::vector<byte> fe::Chunk::get_metatile_quadrant_bytes(std::size_t p_x, std::size_t p_y) const {
+	std::vector<byte> l_result;
+
+	for (const auto& mt : m_metatiles)
+		l_result.push_back(mt.m_tilemap.at(p_y).at(p_x));
+
+	return l_result;
+}
+
 std::vector<byte> fe::Chunk::get_screen_scroll_bytes(void) const {
 	std::vector<byte> l_result;
 
@@ -96,4 +107,116 @@ std::vector<byte> fe::Chunk::get_screen_scroll_bytes(void) const {
 	}
 
 	return l_result;
+}
+
+std::vector<byte> fe::Chunk::get_palette_attribute_bytes(void) const {
+	std::vector<byte> l_result;
+
+	for (const auto& mt : m_metatiles)
+		l_result.push_back(
+			(mt.m_attr_tl << 6) +
+			(mt.m_attr_tr << 4) +
+			(mt.m_attr_bl << 2) +
+			mt.m_attr_br
+		);
+
+	return l_result;
+}
+
+std::vector<byte> fe::Chunk::get_metatile_top_left_bytes(void) const {
+	return get_metatile_quadrant_bytes(0, 0);
+}
+
+std::vector<byte> fe::Chunk::get_metatile_top_right_bytes(void) const {
+	return get_metatile_quadrant_bytes(1, 0);
+}
+
+std::vector<byte> fe::Chunk::get_metatile_bottom_left_bytes(void) const {
+	return get_metatile_quadrant_bytes(0, 1);
+}
+
+std::vector<byte> fe::Chunk::get_metatile_bottom_right_bytes(void) const {
+	return get_metatile_quadrant_bytes(1, 1);
+}
+
+// a little complicated - we need to build the door entry and destination
+// tables simultaneously. the p_idx_offset is 0x20 for the town chunk
+// TODO: possible optimization; reuse duplicate destination table entries
+std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p_is_town) const {
+	std::vector<byte> l_door_bytes, l_tmp_sw_bytes, l_tmp_bld_bytes;
+
+	byte l_sw_door_cnt{ 0 }, l_bld_door_cnt{ 0 };
+
+	for (std::size_t scr{ 0 }; scr < m_screens.size(); ++scr) {
+		for (std::size_t d{ 0 }; d < m_screens[scr].m_doors.size(); ++d) {
+			const auto& l_door{ m_screens[scr].m_doors[d] };
+
+			// first byte of door data is screen id
+			l_door_bytes.push_back(static_cast<byte>(scr));
+			// second byte is location (y*16 + x)
+			l_door_bytes.push_back(l_door.m_coords.first + 16 * l_door.m_coords.second);
+			// third byte depends on door type
+			if (l_door.m_door_type == fe::DoorType::NextWorld)
+				l_door_bytes.push_back(0xff);
+			else if (l_door.m_door_type == fe::DoorType::PrevWorld)
+				l_door_bytes.push_back(0xfe);
+			else if (l_door.m_door_type == fe::DoorType::SameWorld) {
+				if (p_is_town)
+					throw std::exception("Can not have intra-world doors in town world");
+				else if (l_sw_door_cnt == 0x20)
+					throw std::exception("More than 31 same-world doors");
+				else {
+					// set index byte to be same-world
+					l_door_bytes.push_back(l_sw_door_cnt++);
+
+					// make a new entry in the destination table with idx < 0x20
+
+					// the following screen id is in the current chunk
+					l_tmp_sw_bytes.push_back(l_door.m_dest_screen_id);
+					l_tmp_sw_bytes.push_back(l_door.m_dest_palette_id);
+					l_tmp_sw_bytes.push_back(l_door.m_requirement);
+					l_tmp_sw_bytes.push_back(l_door.m_unknown);
+				}
+
+			}
+			// we necessarily have a door to building
+			else {
+				if (0x20 + l_bld_door_cnt == 0xfe)
+					throw std::exception("More than 221 doors to buildings");
+				else {
+					// set index byte to be building
+					l_door_bytes.push_back(0x20 + l_bld_door_cnt++);
+
+					// make a new entry in the destination table with idx >= 0x20
+					// and idx < 0xfe
+					l_tmp_bld_bytes.push_back(l_door.m_npc_bundle);
+					// the following screen id is in the buildings chunk
+					l_tmp_bld_bytes.push_back(l_door.m_dest_screen_id);
+					l_tmp_bld_bytes.push_back(l_door.m_requirement);
+					l_tmp_bld_bytes.push_back(l_door.m_unknown);
+				}
+			}
+
+			// fourth byte is destination location (y*16 + x)
+			l_door_bytes.push_back(l_door.m_dest_coords.first + 16 * l_door.m_dest_coords.second);
+		}
+	}
+
+	// pad the first part of the destination table until it reaches
+	// buildings, if there are any building doors defined
+	// if we are in a town chunk keep this vector empty so no special
+	// handling is needed, other than this check
+	if (l_bld_door_cnt != 0 && !p_is_town)
+		while (l_tmp_sw_bytes.size() < static_cast<std::size_t>(0x20 * 4))
+			l_tmp_sw_bytes.push_back(0xff);
+
+	// append the destination entries for doors to buildings
+	l_tmp_sw_bytes.insert(end(l_tmp_sw_bytes),
+		begin(l_tmp_bld_bytes), end(l_tmp_bld_bytes));
+
+	// the game puts and 0xff here, but the doors should be defines such
+	// that there always is a match. could save 8 ROM bytes! :)
+	l_door_bytes.push_back(0xff);
+
+	return std::make_pair(std::move(l_door_bytes), std::move(l_tmp_sw_bytes));
 }

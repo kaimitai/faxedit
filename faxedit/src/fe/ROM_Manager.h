@@ -33,6 +33,8 @@ namespace fe {
 		std::vector<byte> encode_game_sprite_data_new(const fe::Game& p_game) const;
 		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
 		std::vector<byte> encode_game_sprite_data(const fe::Game& p_game) const;
+		std::vector<byte> encode_game_metadata(const fe::Game& p_game) const;
+		std::vector<byte> encode_game_metadata_all(const fe::Game& p_game) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 
 	};

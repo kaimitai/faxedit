@@ -41,9 +41,9 @@ fe::Door::Door(byte p_coords, byte p_param, byte p_dest_coords,
 
 }
 
-std::pair<std::size_t, std::size_t> fe::Door::byte_to_coords(byte p_coords) const {
+std::pair<byte, byte> fe::Door::byte_to_coords(byte p_coords) const {
 	return std::make_pair(
-		static_cast<std::size_t>(p_coords % 16),
-		static_cast<std::size_t>(p_coords / 16)
+		p_coords % 16,
+		p_coords / 16
 	);
 }

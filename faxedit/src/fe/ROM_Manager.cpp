@@ -224,3 +224,98 @@ std::pair<byte, byte> fe::ROM_Manager::to_uint16_le(std::size_t p_value) {
 	return std::make_pair(static_cast<byte>(p_value % 0x100),
 		static_cast<byte>(p_value / 0x100));
 }
+
+std::vector<byte> fe::ROM_Manager::encode_game_metadata(const fe::Game& p_game) const {
+
+	std::vector<std::vector<byte>> l_chunk_md;
+
+	// for some reason there is a pointer to the attribute pointer for all chunks
+	// it just points 10 bytes forward in each case, but we need it for alignment
+	// we will update the value of this pointer as we go along, and in the end
+	// we pack all metadata for all chunks in a huge blob with a master
+	// table at the bottom
+
+	std::size_t l_current_rom_offset{ 0xc022 };
+
+	for (std::size_t i{ 0 }; i <= 0; ++i) {
+		const auto& chunk{ p_game.m_chunks[i] };
+
+		l_chunk_md.push_back(std::vector<byte>());
+
+		l_chunk_md.push_back(chunk.get_block_property_bytes());
+		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
+
+		auto l_door_data{ chunk.get_door_bytes() };
+
+		// door data followed by door destination table
+		l_chunk_md.push_back(l_door_data.first);
+		l_chunk_md.push_back(l_door_data.second);
+
+		l_chunk_md.push_back(chunk.get_palette_attribute_bytes());
+
+		l_chunk_md.push_back(chunk.get_metatile_top_left_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_top_right_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_bottom_left_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_bottom_right_bytes());
+	}
+
+	auto l_packed_chunk_md{ build_pointer_table_and_data(l_current_rom_offset, 0xc010, l_chunk_md) };
+
+	auto l_attr_ptr{ to_uint16_le(l_current_rom_offset + 10 - 0xc010) };
+
+	l_packed_chunk_md.at(0) = l_attr_ptr.first;
+	l_packed_chunk_md.at(1) = l_attr_ptr.second;
+
+	return l_packed_chunk_md;
+}
+
+std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_game) const {
+	std::vector<std::vector<byte>> l_all_chunk_meta_data;
+
+	std::size_t l_cur_rom_offset{ 0xc012 + 2 * p_game.m_chunks.size() };
+
+	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
+		std::size_t l_true_chunk_no{ m_chunk_idx[c] };
+		
+		std::vector<std::vector<byte>> l_chunk_md;
+
+		const auto& chunk{ p_game.m_chunks[l_true_chunk_no] };
+
+		// useless pointer to attribute pointer
+		// update value before packing
+		l_chunk_md.push_back(std::vector<byte>());
+
+		l_chunk_md.push_back(chunk.get_block_property_bytes());
+		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
+
+		auto l_door_data{ chunk.get_door_bytes(l_true_chunk_no == 2) };
+
+		// door data followed by door destination table
+		l_chunk_md.push_back(l_door_data.first);
+		l_chunk_md.push_back(l_door_data.second);
+
+		l_chunk_md.push_back(chunk.get_palette_attribute_bytes());
+
+		l_chunk_md.push_back(chunk.get_metatile_top_left_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_top_right_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_bottom_left_bytes());
+		l_chunk_md.push_back(chunk.get_metatile_bottom_right_bytes());
+
+		auto l_data{ build_pointer_table_and_data(
+					l_cur_rom_offset, 0xc010, l_chunk_md) };
+
+		auto l_attr_ptr{ to_uint16_le(l_cur_rom_offset + 10 - 0xc010) };
+
+		l_data.at(0) = l_attr_ptr.first;
+		l_data.at(1) = l_attr_ptr.second;
+
+		l_cur_rom_offset += l_data.size();
+
+		l_all_chunk_meta_data.push_back(std::move(l_data));
+	}
+
+	auto l_all_chunks_w_ptr_table{ build_pointer_table_and_data(
+		0xc012, 0xc010, l_all_chunk_meta_data) };
+
+	return l_all_chunks_w_ptr_table;
+}
