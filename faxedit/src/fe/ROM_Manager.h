@@ -24,6 +24,9 @@ namespace fe {
 		std::pair<std::size_t, std::size_t> m_ptr_sprites;
 		std::vector<std::size_t> m_chunk_idx;
 
+		// constant scalars
+		std::size_t m_chunk_idx_npc_bundles;
+
 	public:
 		ROM_Manager(void);
 
@@ -31,6 +34,7 @@ namespace fe {
 		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
 		std::vector<byte> encode_game_sprite_data(const fe::Game& p_game) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
+
 	};
 
 }

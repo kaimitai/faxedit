@@ -5,7 +5,8 @@ fe::ROM_Manager::ROM_Manager(void) :
 	m_chunk_tilemaps_bank_idx{ c::CHUNK_TILEMAPS_BANK_IDX },
 	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
 	m_chunk_idx{ c::MAP_CHUNK_IDX },
-	m_ptr_sprites{ c::PTR_SPRITE_DATA }
+	m_ptr_sprites{ c::PTR_SPRITE_DATA },
+	m_chunk_idx_npc_bundles{ c::IDX_CHUNK_NPC_BUNDLES }
 {
 }
 
@@ -18,10 +19,15 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Game& p
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 		std::vector<std::vector<byte>> l_screen_sprite_data;
 
-		const auto& chunk{ p_game.m_chunks[m_chunk_idx[c]] };
+		if (m_chunk_idx[c] == m_chunk_idx_npc_bundles) {
+			l_screen_sprite_data = p_game.m_npc_bundles;
+		}
+		else {
+			const auto& chunk{ p_game.m_chunks[m_chunk_idx[c]] };
 
-		for (std::size_t s{ 0 }; s < chunk.m_screens.size(); ++s)
-			l_screen_sprite_data.push_back(chunk.m_screens[s].get_sprite_bytes());
+			for (std::size_t s{ 0 }; s < chunk.m_screens.size(); ++s)
+				l_screen_sprite_data.push_back(chunk.m_screens[s].get_sprite_bytes());
+		}
 
 		auto l_data{ build_pointer_table_and_data(
 	l_cur_rom_offset,
@@ -141,6 +147,7 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data(
 // this function encodes all the sprite data for all chunks and all screens
 // it puts all unique sprite data vectors in a "pool" and the pointers for
 // all chunks draw from this pool of unique data
+// TODO: Inject npc bundles and store it for the buildings chunk
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data(const fe::Game& p_game) const {
 	std::vector<byte> l_result;
 

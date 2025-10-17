@@ -18,7 +18,7 @@ namespace fe {
 		Tilemap m_tilemap;
 		std::vector<fe::Door> m_doors;
 		std::vector<fe::Sprite> m_sprites;
-		std::optional<std::size_t> m_scroll_left, m_scroll_right,
+		std::optional<byte> m_scroll_left, m_scroll_right,
 			m_scroll_up, m_scroll_down;
 		std::optional<fe::InterChunkScroll> m_interchunk_scroll;
 		std::optional<fe::IntraChunkScroll> m_intrachunk_scroll;
@@ -37,7 +37,7 @@ namespace fe {
 		std::vector<byte> get_sprite_bytes(void) const;
 
 	private:
-		std::optional<std::size_t> scroll_property_to_opt(byte p_val) const;
+		std::optional<byte> scroll_property_to_opt(byte p_val) const;
 
 	};
 

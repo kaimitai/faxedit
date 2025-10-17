@@ -34,8 +34,31 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	for (std::size_t i{ 0 }; i < 8; ++i)
 		set_various(i, m_ptr_chunk_metadata);
 	// extract sprites
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		set_sprites(i, m_ptr_chunk_sprite_data);
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		if (m_map_chunk_idx[i] == c::IDX_CHUNK_NPC_BUNDLES) {
+			// this is not regular sprite data, it is the npc bundle masterdata
+			// referred to by the parameter byte in building doors
+			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
+
+			for (std::size_t npcb{ 0 }; npcb < 70; ++npcb) {
+				std::vector<byte> l_bundle_bytes;
+
+				std::size_t l_ptr_to_set{ get_pointer_address(l_ptr_to_bundles + 2 * npcb, 0x24010) };
+				int l_delims{ 0 };
+
+				while (l_delims != 2) {
+					byte b{ m_rom_data.at(l_ptr_to_set++) };
+					if (b == 0xff)
+						++l_delims;
+					l_bundle_bytes.push_back(b);
+				}
+
+				m_npc_bundles.push_back(l_bundle_bytes);
+			}
+		}
+		else
+			set_sprites(i, m_ptr_chunk_sprite_data);
+	}
 	// extract inter-chunk transitions
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		set_interchunk_scrolling(i, m_ptr_chunk_interchunk_transitions);
@@ -151,9 +174,8 @@ void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
 
 	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 
-	m_chunks[l_true_chunk_no].set_block_properties(m_rom_data, l_block_properties, l_metatile_count);
 	m_chunks[l_true_chunk_no].set_screen_scroll_properties(m_rom_data, l_chunk_scroll_data);
-	m_chunks[l_true_chunk_no].add_metatiles(m_rom_data, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_metatile_count);
+	m_chunks[l_true_chunk_no].add_metatiles(m_rom_data, l_metatile_count, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_block_properties);
 
 	// the doors for the town chunk offsets the index by 0x20 (hard coded game logic)
 	// probably to save space since all the doors there go to buildings
@@ -186,7 +208,7 @@ void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 		// hypothesis: 0xff at end of stream seems to be optional
 		// when every sprite has a text byte associated with it
 		std::size_t l_sprite_no{ 0 };
-		
+
 		while (m_rom_data.at(++l_ptr_to_screen) != 0xff) {
 
 			byte l_text_id{ m_rom_data.at(l_ptr_to_screen) };

@@ -189,7 +189,7 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 
 	imgui_text("Position: " + std::to_string(p_sel_x) + "," + std::to_string(p_sel_y));
 
-	imgui_text("Property: " + klib::Bitreader::byte_to_hex(p_game.m_chunks.at(m_sel_chunk).m_block_properties.at(l_metatile_id)));
+	imgui_text("Property: " + klib::Bitreader::byte_to_hex(p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(l_metatile_id).m_block_property));
 
 	ImGui::End();
 

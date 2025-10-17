@@ -48,11 +48,11 @@ std::vector<byte>(13 * 16, 0)
 	m_tilemap = klib::kutil::flat_vec_to_2d(l_screen, 16);
 }
 
-std::optional<std::size_t> fe::Screen::scroll_property_to_opt(byte p_val) const {
+std::optional<byte> fe::Screen::scroll_property_to_opt(byte p_val) const {
 	if (p_val == 255)
 		return std::nullopt;
 	else
-		return static_cast<std::size_t>(p_val);
+		return p_val;
 }
 
 void fe::Screen::set_scroll_properties(const std::vector<byte>& p_rom, std::size_t p_offset) {

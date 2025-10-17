@@ -19,27 +19,23 @@ std::vector<byte> fe::Chunk::extract_bytes(const std::vector<byte>& p_rom,
 	return l_result;
 }
 
-void fe::Chunk::set_block_properties(const std::vector<byte>& p_rom,
-	std::size_t p_offset, std::size_t p_metatile_count) {
-	m_block_properties = extract_bytes(p_rom, p_offset, p_metatile_count);
-}
-
 void fe::Chunk::set_screen_scroll_properties(const std::vector<byte>& p_rom,
 	std::size_t p_offset) {
 	for (std::size_t i{ 0 }; i < m_screens.size(); ++i)
 		m_screens[i].set_scroll_properties(p_rom, p_offset + 4 * i);
 }
 
-void fe::Chunk::add_metatiles(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
-	std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
-	std::size_t p_attributes_offset, std::size_t p_metatile_count) {
+void fe::Chunk::add_metatiles(const std::vector<byte>& p_rom, std::size_t p_metatile_count,
+	std::size_t p_tl_offset, std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
+	std::size_t p_attributes_offset, std::size_t p_properties_offset) {
 
 	for (std::size_t i{ 0 }; i < p_metatile_count; ++i) {
 		m_metatiles.push_back(fe::Metatile(p_rom.at(p_tl_offset + i),
 			p_rom.at(p_tr_offset + i),
 			p_rom.at(p_bl_offset + i),
 			p_rom.at(p_br_offset + i),
-			p_rom.at(p_attributes_offset + i)
+			p_rom.at(p_attributes_offset + i),
+			p_rom.at(p_properties_offset + i)
 		)
 		);
 	}
@@ -78,4 +74,26 @@ void fe::Chunk::add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x,
 void fe::Chunk::set_screen_sprite_text(std::size_t p_screen_no,
 	std::size_t p_sprite_no, byte p_text_id) {
 	m_screens.at(p_screen_no).set_sprite_text(p_sprite_no, p_text_id);
+}
+
+std::vector<byte> fe::Chunk::get_block_property_bytes(void) const {
+	std::vector<byte> l_result;
+
+	for (const auto& mt : m_metatiles)
+		l_result.push_back(mt.m_block_property);
+
+	return l_result;
+}
+
+std::vector<byte> fe::Chunk::get_screen_scroll_bytes(void) const {
+	std::vector<byte> l_result;
+
+	for (const auto& scr : m_screens) {
+		l_result.push_back(scr.m_scroll_left.has_value() ? scr.m_scroll_left.value() : 0xff);
+		l_result.push_back(scr.m_scroll_right.has_value() ? scr.m_scroll_right.value() : 0xff);
+		l_result.push_back(scr.m_scroll_up.has_value() ? scr.m_scroll_up.value() : 0xff);
+		l_result.push_back(scr.m_scroll_down.has_value() ? scr.m_scroll_down.value() : 0xff);
+	}
+
+	return l_result;
 }

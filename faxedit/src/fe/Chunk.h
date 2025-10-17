@@ -17,8 +17,6 @@ namespace fe {
 
 		std::vector<fe::Metatile> m_metatiles;
 		std::vector<fe::Screen> m_screens;
-		// TODO: Incorporate block properties as an attribute of metatiles as their count should be equal
-		std::vector<byte> m_block_properties;
 		byte m_default_palette_no;
 		std::optional<fe::Chunk_door_connections> m_door_connections;
 
@@ -30,13 +28,11 @@ namespace fe {
 
 		void decompress_and_add_screen(const std::vector<byte>& p_rom,
 			std::size_t p_offset);
-		void set_block_properties(const std::vector<byte>& p_rom,
-			std::size_t p_offset, std::size_t p_metatile_count);
 		void set_screen_scroll_properties(const std::vector<byte>& p_rom,
 			std::size_t p_offset);
-		void add_metatiles(const std::vector<byte>& p_rom, std::size_t p_tl_offset,
-			std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
-			std::size_t p_attributes_offset, std::size_t p_metatile_count);
+		void add_metatiles(const std::vector<byte>& p_rom, std::size_t p_metatile_count,
+			std::size_t p_tl_offset, std::size_t p_tr_offset, std::size_t p_bl_offset, std::size_t p_br_offset,
+			std::size_t p_attributes_offset, std::size_t p_properties_offset);
 		void set_screen_doors(const std::vector<byte>& p_rom,
 			std::size_t p_door_offset, std::size_t p_door_param_offset,
 			byte p_param_offset);
@@ -44,6 +40,9 @@ namespace fe {
 		void add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x, byte p_y);
 		void set_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no, byte p_text_id);
 
+		// ROM data
+		std::vector<byte> get_block_property_bytes(void) const;
+		std::vector<byte> get_screen_scroll_bytes(void) const;
 	};
 
 }

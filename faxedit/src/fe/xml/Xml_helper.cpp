@@ -25,7 +25,20 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_palette.append_attribute(c::ATTR_NO);
 		n_palette.attribute(c::ATTR_NO).set_value(i);
 		n_palette.append_attribute(c::ATTR_BYTES);
-		n_palette.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_palettes[i], true).c_str());
+		n_palette.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_palettes[i], true));
+	}
+
+	// for each npc-bundle
+	auto n_bundles{ n_metadata.append_child(c::TAG_NPC_BUNDLES) };
+
+	for (std::size_t i{ 0 }; i < p_game.m_npc_bundles.size(); ++i) {
+		auto n_bundle{ n_bundles.append_child(c::TAG_NPC_BUNDLE) };
+
+		n_bundle.append_attribute(c::ATTR_NO);
+		n_bundle.attribute(c::ATTR_NO).set_value(i);
+		
+		n_bundle.append_attribute(c::ATTR_BYTES);
+		n_bundle.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_npc_bundles[i], true));
 	}
 
 	// for each chunk
@@ -79,7 +92,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 			n_metatile.attribute(c::ATTR_NO).set_value(mt);
 
 			n_metatile.append_attribute(c::ATTR_MT_PROPERTY);
-			n_metatile.attribute(c::ATTR_MT_PROPERTY).set_value(byte_to_hex(lc_chunk.m_block_properties.at(mt)));
+			n_metatile.attribute(c::ATTR_MT_PROPERTY).set_value(byte_to_hex(lc_metatile.m_block_property));
 
 
 			// the metatile tilemap is just 4 tiles, so we just flatten the tilemap and push the bytes

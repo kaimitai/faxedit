@@ -39,6 +39,10 @@ namespace fe {
 		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3ea47 };
 		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3eaac };
 
+		// the npc bundles are stored as sprite data for the buildings chunk
+		// this is a single value and not a vector, since the bundle data is global
+		constexpr std::size_t IDX_CHUNK_NPC_BUNDLES{ 6 };
+
 		// ptrs to the screen data for each of the 8 chunks
 		const std::vector<std::size_t> PTR_CHUNK_SCREEN_DATA{ 0x10, 0x12, 0x14, 0x4010, 0x4012, 0x8010, 0x8012, 0x8014 };
 

@@ -15,6 +15,9 @@ namespace fe {
 	struct Game {
 
 		std::vector<std::vector<klib::NES_tile>> m_tilesets;
+
+		// stored as building chunk sprite data, but is globally referred to
+		std::vector<std::vector<byte>> m_npc_bundles;
 		std::vector<fe::Chunk> m_chunks;
 		std::vector<byte> m_rom_data;
 		std::vector<NES_Palette> m_palettes;
