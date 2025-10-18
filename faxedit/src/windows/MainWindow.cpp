@@ -12,6 +12,7 @@
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
+	m_sel_sprite{ 0 }, m_sel_tile_x{ 0 }, m_sel_tile_y{ 0 },
 	m_gfx{ fe::gfx(p_rnd) },
 	m_atlas_palette_no{ 1 },
 	m_atlas_tileset_no{ 1 },
@@ -178,7 +179,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 		if (l_clicked)
 			p_game.m_chunks[m_sel_chunk].m_screens[m_sel_screen].m_tilemap.at(
 				l_hover_y).at(l_hover_x
-				) = 0x34 - l_hover_y % 2;
+				) = 0x63;
 	}
 
 	draw_control_window(p_rnd, p_game);

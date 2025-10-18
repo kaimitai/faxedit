@@ -160,26 +160,12 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 				n_screen.attribute(c::ATTR_UNKNOWN_SPR_BYTES).set_value(join_bytes(lc_screen.m_unknown_sprite_bytes, true));
 			}
 
-			// inter-chunk scrolling
-			if (lc_screen.m_interchunk_scroll.has_value()) {
+			// intra-chunk scrolling
+			if (lc_screen.m_intrachunk_scroll.has_value()) {
 				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
 
 				n_sinter_s.append_attribute(c::ATTR_CHUNK_ID);
-				n_sinter_s.attribute(c::ATTR_CHUNK_ID).set_value(lc_screen.m_interchunk_scroll.value().m_dest_chunk);
-				n_sinter_s.append_attribute(c::ATTR_DEST_SCREEN_NO);
-				n_sinter_s.attribute(c::ATTR_DEST_SCREEN_NO).set_value(lc_screen.m_interchunk_scroll.value().m_dest_screen);
-				n_sinter_s.append_attribute(c::ATTR_DEST_X);
-				n_sinter_s.attribute(c::ATTR_DEST_X).set_value(lc_screen.m_interchunk_scroll.value().m_dest_x);
-				n_sinter_s.append_attribute(c::ATTR_DEST_Y);
-				n_sinter_s.attribute(c::ATTR_DEST_Y).set_value(lc_screen.m_interchunk_scroll.value().m_dest_y);
-				n_sinter_s.append_attribute(c::ATTR_DEST_PALETTE);
-				n_sinter_s.attribute(c::ATTR_DEST_PALETTE).set_value(lc_screen.m_interchunk_scroll.value().m_palette_id);
-			}
-
-			// intra-chunk scrolling
-			if (lc_screen.m_intrachunk_scroll.has_value()) {
-				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTRACHUNK_TRANSTION) };
-
+				n_sinter_s.attribute(c::ATTR_CHUNK_ID).set_value(lc_screen.m_intrachunk_scroll.value().m_dest_chunk);
 				n_sinter_s.append_attribute(c::ATTR_DEST_SCREEN_NO);
 				n_sinter_s.attribute(c::ATTR_DEST_SCREEN_NO).set_value(lc_screen.m_intrachunk_scroll.value().m_dest_screen);
 				n_sinter_s.append_attribute(c::ATTR_DEST_X);
@@ -188,6 +174,20 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 				n_sinter_s.attribute(c::ATTR_DEST_Y).set_value(lc_screen.m_intrachunk_scroll.value().m_dest_y);
 				n_sinter_s.append_attribute(c::ATTR_DEST_PALETTE);
 				n_sinter_s.attribute(c::ATTR_DEST_PALETTE).set_value(lc_screen.m_intrachunk_scroll.value().m_palette_id);
+			}
+
+			// inter-chunk scrolling
+			if (lc_screen.m_interchunk_scroll.has_value()) {
+				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTRACHUNK_TRANSTION) };
+
+				n_sinter_s.append_attribute(c::ATTR_DEST_SCREEN_NO);
+				n_sinter_s.attribute(c::ATTR_DEST_SCREEN_NO).set_value(lc_screen.m_interchunk_scroll.value().m_dest_screen);
+				n_sinter_s.append_attribute(c::ATTR_DEST_X);
+				n_sinter_s.attribute(c::ATTR_DEST_X).set_value(lc_screen.m_interchunk_scroll.value().m_dest_x);
+				n_sinter_s.append_attribute(c::ATTR_DEST_Y);
+				n_sinter_s.attribute(c::ATTR_DEST_Y).set_value(lc_screen.m_interchunk_scroll.value().m_dest_y);
+				n_sinter_s.append_attribute(c::ATTR_DEST_PALETTE);
+				n_sinter_s.attribute(c::ATTR_DEST_PALETTE).set_value(lc_screen.m_interchunk_scroll.value().m_palette_id);
 			}
 
 			// tilemap

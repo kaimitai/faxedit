@@ -11,14 +11,6 @@ void fe::MainWindow::draw_chunk_window(SDL_Renderer* p_rnd, fe::Game& p_game) {
 		fe::c::LABELS_CHUNKS.at(m_sel_chunk))
 	);
 
-	if (fe::ui::imgui_slider_with_arrows("##ss", std::format("Selected Screen: #{} of {}", m_sel_screen, p_game.m_chunks.at(m_sel_chunk).m_screens.size()),
-		m_sel_screen, static_cast<std::size_t>(0), p_game.m_chunks.at(m_sel_chunk).m_screens.size() - 1)) {
-		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-		m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
-	}
-
-	ImGui::Separator();
-
 	if (ui::collapsing_header("Palette", "")) {
 
 		if (fe::ui::imgui_slider_with_arrows("##cdp",

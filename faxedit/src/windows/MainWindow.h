@@ -14,7 +14,8 @@ namespace fe {
 
 	class MainWindow {
 
-		std::size_t m_sel_chunk, m_sel_screen, m_sel_door;
+		std::size_t m_sel_chunk, m_sel_screen, m_sel_door, m_sel_sprite,
+			m_sel_tile_x, m_sel_tile_y;
 		fe::EditMode m_emode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;

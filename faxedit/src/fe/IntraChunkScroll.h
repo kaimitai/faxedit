@@ -7,9 +7,9 @@ namespace fe {
 
 	struct IntraChunkScroll {
 
-		byte m_dest_screen, m_palette_id, m_dest_x, m_dest_y;
+		byte m_dest_chunk, m_dest_screen, m_palette_id, m_dest_x, m_dest_y;
 
-		IntraChunkScroll(byte p_dest_screen, byte p_dest_coords, byte p_palette_id);
+		IntraChunkScroll(byte p_dest_chunk, byte p_dest_screen, byte p_dest_coords, byte p_palette_id);
 
 	};
 

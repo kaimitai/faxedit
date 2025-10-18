@@ -36,8 +36,8 @@ namespace fe {
 		constexpr std::size_t PTR_CHUNK_DOOR_TO_CHUNK{ 0x3e5f7 };
 		constexpr std::size_t PTR_CHUNK_DOOR_TO_SCREEN{ 0x3e603 };
 		constexpr std::size_t PTR_CHUNK_DOOR_REQUIREMENTS{ 0x3e5eb };
-		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3ea47 };
-		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3eaac };
+		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
+		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3eaac };
 
 		// the npc bundles are stored as sprite data for the buildings chunk
 		// this is a single value and not a vector, since the bundle data is global
@@ -119,6 +119,17 @@ namespace fe {
 			{0x05, "Eolis Magic Shop"},
 			{0x06, "Eolis Martial Arts"},
 			{0x07, "King (early game)"}
+		};
+
+		inline const std::map<byte, std::string> LABELS_SPRITES{
+			{0x2d, "Wyvern (Mattock)"},
+			{0x4f, "Invisible dialogue on touch"},
+			{0x50, "Mattock (25%)"},
+		};
+
+		// placeholder until we dynamically parse this data
+		inline const std::map<byte, std::string> LABELS_DIALOGUE{
+			{0x00, "Welcome message"}
 		};
 
 		// make sure this has the same order in enum fe::DoorType

@@ -224,7 +224,7 @@ void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 	}
 }
 
-void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_interchunk) {
+void fe::Game::set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_interchunk) {
 
 	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_interchunk + 2 * p_chunk_no, 0x30010) };
@@ -232,8 +232,8 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 5) {
 		byte l_screen_id{ m_rom_data.at(l_ptr_to_screens + i) };
 
-		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_interchunk_scroll =
-			fe::InterChunkScroll(
+		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_intrachunk_scroll =
+			fe::IntraChunkScroll(
 				static_cast<byte>(m_map_chunk_idx[m_rom_data.at(l_ptr_to_screens + i + 1)]),
 				m_rom_data.at(l_ptr_to_screens + i + 2),
 				m_rom_data.at(l_ptr_to_screens + i + 3),
@@ -243,15 +243,15 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 
 }
 
-void fe::Game::set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_intrachunk) {
+void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_intrachunk) {
 	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_intrachunk + 2 * p_chunk_no, 0x30010) };
 
 	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 4) {
 		byte l_screen_id{ m_rom_data.at(l_ptr_to_screens + i) };
 
-		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_intrachunk_scroll =
-			fe::IntraChunkScroll(
+		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_interchunk_scroll =
+			fe::InterChunkScroll(
 				m_rom_data.at(l_ptr_to_screens + i + 1),
 				m_rom_data.at(l_ptr_to_screens + i + 2),
 				m_rom_data.at(l_ptr_to_screens + i + 3)
