@@ -41,6 +41,15 @@ fe::Door::Door(byte p_coords, byte p_param, byte p_dest_coords,
 
 }
 
+// set the door type to Buildings by default because it is the only type supported by all chunks
+fe::Door::Door(void) :
+	m_dest_palette_id{ 0 }, m_coords{ std::make_pair(0, 0) },
+	m_dest_coords{ std::make_pair(0, 0) }, m_door_type{ fe::DoorType::Building },
+	m_npc_bundle{ 0 }, m_dest_screen_id{ 0 }, m_requirement{ 0 },
+	m_unknown{ 0 }
+{
+}
+
 std::pair<byte, byte> fe::Door::byte_to_coords(byte p_coords) const {
 	return std::make_pair(
 		p_coords % 16,

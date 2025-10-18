@@ -10,9 +10,12 @@
 
 namespace fe {
 
+	enum EditMode { Tilemap, Sprites, Doors };
+
 	class MainWindow {
 
-		std::size_t m_sel_chunk, m_sel_screen;
+		std::size_t m_sel_chunk, m_sel_screen, m_sel_door;
+		fe::EditMode m_emode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		fe::gfx m_gfx;
@@ -30,16 +33,22 @@ namespace fe {
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
 
 		void draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
-			int& p_hover_x, int& p_hover_y, bool& p_clicked) const;
+			int& p_hover_x, int& p_hover_y, bool& p_clicked);
 		void draw_metatile_info(const fe::Game& p_game,
 			std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);
 
 		void draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+		void draw_game_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 		void draw_chunk_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 		void draw_screen_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 
 		void add_message(const std::string& p_msg);
+
+		std::optional<byte> show_screen_scroll_section(const std::string& p_direction,
+			std::size_t p_screen_count, std::optional<byte> p_scroll_data);
+
+		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
 
 	public:
 

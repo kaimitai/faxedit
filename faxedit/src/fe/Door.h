@@ -1,6 +1,7 @@
 #ifndef FE_DOOR_H
 #define FE_DOOR_H
 
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -33,6 +34,8 @@ namespace fe {
 		Door(byte p_coords, byte p_param, byte p_dest_coords,
 			const std::vector<byte>& p_rom, std::size_t p_door_param_offset,
 			byte p_param_value_offset);
+
+		Door(void);
 
 	};
 

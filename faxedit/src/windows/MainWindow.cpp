@@ -11,12 +11,13 @@
 #include "./../common/klib/Kfile.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
-	m_sel_chunk{ 0 }, m_sel_screen{ 0 },
+	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
 	m_gfx{ fe::gfx(p_rnd) },
 	m_atlas_palette_no{ 1 },
 	m_atlas_tileset_no{ 1 },
 	m_atlas_new_tileset_no{ 0 },
-	m_atlas_new_palette_no{ 0 }
+	m_atlas_new_palette_no{ 0 },
+	m_emode{ fe::EditMode::Tilemap }
 {
 }
 
@@ -30,7 +31,7 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_ga
 }
 
 void fe::MainWindow::draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
-	int& hoverMX, int& hoverMY, bool& clicked) const {
+	int& hoverMX, int& hoverMY, bool& clicked) {
 
 	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
 	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
@@ -139,6 +140,21 @@ void fe::MainWindow::draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_
 	ImGui::SetCursorScreenPos(ImVec2(cursorPos.x + padX, cursorPos.y + padY));
 	ImGui::Dummy(drawSize);  // reserve layout space
 
+	ImGui::SeparatorText("Editing Mode");
+
+	fe::EditMode l_new_mode{ m_emode };
+
+	if (ImGui::RadioButton("Tilemap", m_emode == EditMode::Tilemap))
+		l_new_mode = EditMode::Tilemap;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Sprites", m_emode == EditMode::Sprites))
+		l_new_mode = EditMode::Sprites;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Doors", m_emode == EditMode::Doors))
+		l_new_mode = EditMode::Doors;
+
+	m_emode = l_new_mode;
+
 	ImGui::End();
 }
 
@@ -164,7 +180,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 				l_hover_y).at(l_hover_x
 				) = 0x34 - l_hover_y % 2;
 	}
+
 	draw_control_window(p_rnd, p_game);
+	draw_game_window(p_rnd, p_game);
 	draw_chunk_window(p_rnd, p_game);
 	draw_screen_window(p_rnd, p_game);
 
@@ -241,4 +259,32 @@ std::string fe::MainWindow::get_description(byte p_index,
 		return std::format("{} ({})", p_vec[p_index], klib::Bitreader::byte_to_hex(p_index));
 	else
 		return std::format("Unknown ({})", klib::Bitreader::byte_to_hex(p_index));
+}
+
+void fe::MainWindow::add_message(const std::string& p_msg) {
+	if (m_messages.size() > 50)
+		m_messages.pop_back();
+	m_messages.push_front(p_msg);
+}
+
+// remember to push and pop IDs before calling this function
+std::optional<std::pair<byte, byte>> fe::MainWindow::show_position_slider(byte p_x, byte p_y) {
+
+	byte l_x{ p_x }, l_y{ p_y };
+	bool l_updated{ false };
+
+	imgui_text("x");
+	ImGui::SameLine();
+	if (ui::imgui_slider_with_arrows("pslx", "", l_x, 0, 15))
+		l_updated = true;
+
+	imgui_text("y");
+	ImGui::SameLine();
+	if (ui::imgui_slider_with_arrows("psly", "", l_y, 0, 12))
+		l_updated = true;
+
+	if (l_updated)
+		return std::make_pair(l_x, l_y);
+	else
+		return std::nullopt;
 }

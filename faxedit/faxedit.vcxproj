@@ -167,6 +167,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\windows\Chunk_window.cpp" />
     <ClCompile Include="src\windows\ControlWindow.cpp" />
+    <ClCompile Include="src\windows\Game_window.cpp" />
     <ClCompile Include="src\windows\gfx.cpp" />
     <ClCompile Include="src\windows\imgui_helper.cpp" />
     <ClCompile Include="src\windows\MainWindow.cpp" />

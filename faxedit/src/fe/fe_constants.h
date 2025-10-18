@@ -108,6 +108,28 @@ namespace fe {
 			{0x08, "Strength Trainer"},
 			{0x09, "Magic Trainer"}
 		};
+
+		// placeholder until we dynamically parse this data
+		inline const std::map<byte, std::string> LABELS_NPC_BUNDLES{
+			{0x00, "Eolis Meat Shop"},
+			{0x01, "Eolis House"},
+			{0x02, "Eolis Guru"},
+			{0x03, "Eolis Key Shop"},
+			{0x04, "Eolis Tools Shop"},
+			{0x05, "Eolis Magic Shop"},
+			{0x06, "Eolis Martial Arts"},
+			{0x07, "King (early game)"}
+		};
+
+		// make sure this has the same order in enum fe::DoorType
+		// used for door type dropdowns in the guid
+		inline const char* LABELS_DOOR_TYPES[]{
+			"Same World",
+			"Buildings",
+			"Previous World",
+			"Next World"
+		};
+
 	}
 
 }

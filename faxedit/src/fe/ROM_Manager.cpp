@@ -1,12 +1,17 @@
 #include "ROM_manager.h"
 #include <algorithm>
+#include <stdexcept>
 
 fe::ROM_Manager::ROM_Manager(void) :
 	m_chunk_tilemaps_bank_idx{ c::CHUNK_TILEMAPS_BANK_IDX },
 	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
 	m_chunk_idx{ c::MAP_CHUNK_IDX },
 	m_ptr_sprites{ c::PTR_SPRITE_DATA },
-	m_chunk_idx_npc_bundles{ c::IDX_CHUNK_NPC_BUNDLES }
+	m_chunk_idx_npc_bundles{ c::IDX_CHUNK_NPC_BUNDLES },
+	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
+	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
+	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
+	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS }
 {
 }
 
@@ -276,7 +281,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 		std::size_t l_true_chunk_no{ m_chunk_idx[c] };
-		
+
 		std::vector<std::vector<byte>> l_chunk_md;
 
 		const auto& chunk{ p_game.m_chunks[l_true_chunk_no] };
@@ -318,4 +323,28 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 		0xc012, 0xc010, l_all_chunk_meta_data) };
 
 	return l_all_chunks_w_ptr_table;
+}
+
+// patch ROM in place for the chunk-specific door data
+
+void fe::ROM_Manager::encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+
+		if (p_game.m_chunks[i].m_door_connections.has_value()) {
+			const auto& l_conns{ p_game.m_chunks[i].m_door_connections.value() };
+
+			std::size_t l_chunk_offset_idx{ get_vector_index(m_map_chunk_levels, i) };
+
+			p_rom.at(m_ptr_chunk_door_to_chunk + 2 * l_chunk_offset_idx + 1) = static_cast<byte>(get_vector_index(m_map_chunk_levels, l_conns.m_next_chunk));
+			p_rom.at(m_ptr_chunk_door_to_chunk + 2 * l_chunk_offset_idx) = static_cast<byte>(get_vector_index(m_map_chunk_levels, l_conns.m_prev_chunk));
+
+			p_rom.at(m_ptr_chunk_door_to_screen + 2 * l_chunk_offset_idx + 1) = l_conns.m_next_screen;
+			p_rom.at(m_ptr_chunk_door_to_screen + 2 * l_chunk_offset_idx) = l_conns.m_prev_screen;
+
+			p_rom.at(m_ptr_chunk_door_reqs + 2 * l_chunk_offset_idx + 1) = l_conns.m_next_door_req;
+			p_rom.at(m_ptr_chunk_door_reqs + 2 * l_chunk_offset_idx) = l_conns.m_prev_door_req;
+
+		}
+	}
+
 }

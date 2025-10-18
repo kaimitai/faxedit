@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "fe_constants.h"
 #include <map>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -20,16 +21,28 @@ namespace fe {
 			const std::vector<std::vector<byte>>& p_data) const;
 
 		// pointer variables - check the constants header for descriptions
-		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
+		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset,
+			m_map_chunk_levels;
 		std::pair<std::size_t, std::size_t> m_ptr_sprites;
 		std::vector<std::size_t> m_chunk_idx;
 
 		// constant scalars
-		std::size_t m_chunk_idx_npc_bundles;
+		std::size_t m_chunk_idx_npc_bundles,
+			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen,
+			m_ptr_chunk_door_reqs;
+
+		template<class T, class U = T>
+		std::size_t get_vector_index(const std::vector<T>& p_data, U p_val) const {
+			for (std::size_t i{ 0 }; i < p_data.size(); ++i)
+				if (p_data[i] == static_cast<T>(p_val))
+					return i;
+			throw std::runtime_error("No such element");
+		}
 
 	public:
 		ROM_Manager(void);
 
+		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Game& p_game) const;
 		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
 		std::vector<byte> encode_game_sprite_data(const fe::Game& p_game) const;
@@ -37,6 +50,8 @@ namespace fe {
 		std::vector<byte> encode_game_metadata_all(const fe::Game& p_game) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 
+		// encoding data using a given address and stride-indexed
+		void encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 	};
 
 }

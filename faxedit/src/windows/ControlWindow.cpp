@@ -10,7 +10,7 @@
 
 void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) {
 
-	ui::imgui_screen("Main###gw");
+	ui::imgui_screen("Project Control###pcw");
 
 	if (ImGui::Button("Save XML"))
 		xml::save_xml("c:/temp/out.xml", p_game);
@@ -63,20 +63,30 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		// encode metadata
 		auto l_metadata{ m_rom_manager.encode_game_metadata_all(p_game) };
 		std::copy(begin(l_metadata), end(l_metadata), begin(l_rom) + 0xc012);
+		add_message("Patched metadata (" + std::to_string(l_metadata.size()) + " bytes)");
 
 		// encode all screens
 		for (std::size_t i{ 0 }; i < 3; ++i) {
 			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(p_game, i) };
 			std::copy(begin(l_bank_screen_data), end(l_bank_screen_data), begin(l_rom) + c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(i));
+
+			add_message("Patched screen in bank " +
+				std::to_string(i) + " (" + std::to_string(l_bank_screen_data.size()) + " bytes)");
 		}
 
 		// encode sprites
 		std::vector<byte> l_sprite_data{ m_rom_manager.encode_game_sprite_data_new(p_game) };
 		std::copy(begin(l_sprite_data), end(l_sprite_data),
 			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
+		add_message("Patched sprite data (" + std::to_string(l_sprite_data.size()) + " bytes)");
+
+		m_rom_manager.encode_chunk_door_data(p_game, l_rom);
+		add_message("Patched world door connection data");
 
 		klib::file::write_bytes_to_file(l_rom,
 			"c:/temp/faxanadu-out.nes");
+
+		add_message("File written");
 	}
 
 	ImGui::Separator();

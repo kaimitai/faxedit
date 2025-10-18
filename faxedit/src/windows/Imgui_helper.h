@@ -13,20 +13,36 @@ namespace fe {
 	namespace ui {
 
 		void imgui_screen(const std::string& p_label);
-		bool collapsing_header(const std::string& p_label);
+		bool collapsing_header(const std::string& p_label, const std::string& p_tooltip = std::string());
+		bool imgui_button(const std::string& p_label, const std::string& p_tooltip = std::string());
 
-		template<class T>
-		bool imgui_slider_with_arrows(const char* p_id, const std::string& p_label, T& value,
-			T p_min, T p_max) {
-			static_assert(std::is_integral<T>::value, "imgui_slider_with_arrows takes integral values");
-
-			bool l_result{ false };
-
-			// Convert to int for ImGui
-			int l_temp = static_cast<int>(value);
+		template<class T1, class T2, class T3>
+		bool imgui_slider_with_arrows(const char* p_id, const std::string& p_label, T1& value,
+			T2 p_min, T3 p_max, const std::string& p_tooltip_text = std::string(), bool p_disabled = false) {
+			static_assert(std::is_integral<T1>::value, "imgui_slider_with_arrows takes integral values");
+			static_assert(std::is_integral<T2>::value, "imgui_slider_with_arrows takes integral values");
+			static_assert(std::is_integral<T3>::value, "imgui_slider_with_arrows takes integral values");
 
 			// keep the context unique
 			ImGui::PushID(p_id);
+
+			// draw label and optional tooltip text
+			if (!p_label.empty()) {
+				ImGui::Text(p_label.c_str());
+
+				if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
+					ImGui::BeginTooltip();
+					ImGui::Text(p_tooltip_text.c_str());
+					ImGui::EndTooltip();
+				}
+			}
+			bool l_result{ false };
+
+			if (p_disabled)
+				ImGui::BeginDisabled();
+
+			// Convert to int for ImGui
+			int l_temp = static_cast<int>(value);
 
 			// Left arrow
 			if (ImGui::ArrowButton("##left", ImGuiDir_Left)) {
@@ -38,9 +54,13 @@ namespace fe {
 
 			ImGui::SameLine();
 
+			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
+
 			// Slider
 			if (ImGui::SliderInt("##slider", &l_temp, static_cast<int>(p_min), static_cast<int>(p_max)))
 				l_result = true;
+
+			ImGui::PopItemWidth();
 
 			ImGui::SameLine();
 
@@ -52,14 +72,15 @@ namespace fe {
 				}
 			}
 
-			ImGui::Text(p_label.c_str());
-
 			ImGui::PopID();
 
 			if (l_result)
 				value = l_temp;
 
-			return l_result;
+			if (p_disabled)
+				ImGui::EndDisabled();
+
+			return static_cast<T1>(l_result);
 		}
 
 	}
