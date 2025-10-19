@@ -11,7 +11,9 @@ fe::ROM_Manager::ROM_Manager(void) :
 	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
 	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
 	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
-	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS }
+	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
+	m_ptr_otherworld_trans_table{ c::PTR_OTHERW_TRANS_TABLE },
+	m_ptr_sameworld_trans_table{ c::PTR_SAMEW_TRANS_TABLE }
 {
 }
 
@@ -245,6 +247,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata(const fe::Game& p_game) 
 	for (std::size_t i{ 0 }; i <= 0; ++i) {
 		const auto& chunk{ p_game.m_chunks[i] };
 
+		// add an empty vector here to get a 2 byte space where the ptr to attr-ptr will be
 		l_chunk_md.push_back(std::vector<byte>());
 
 		l_chunk_md.push_back(chunk.get_block_property_bytes());
@@ -347,4 +350,92 @@ void fe::ROM_Manager::encode_chunk_door_data(const fe::Game& p_game, std::vector
 		}
 	}
 
+}
+
+std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Game& p_game) const {
+	std::vector<std::vector<byte>> l_all_sw_trans_data;
+
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		l_all_sw_trans_data.push_back(
+			p_game.m_chunks[m_chunk_idx.at(i)].get_sameworld_transition_bytes()
+		);
+	}
+
+	return build_pointer_table_and_data_aggressive(m_ptr_sameworld_trans_table.first,
+		m_ptr_sameworld_trans_table.second, l_all_sw_trans_data);
+}
+
+
+std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Game& p_game) const {
+	std::vector<std::vector<byte>> l_all_ow_trans_data;
+
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		l_all_ow_trans_data.push_back(
+			p_game.m_chunks[m_chunk_idx.at(i)].get_otherworld_transition_bytes(m_chunk_idx)
+		);
+	}
+
+	return build_pointer_table_and_data_aggressive(m_ptr_otherworld_trans_table.first,
+		m_ptr_otherworld_trans_table.second, l_all_ow_trans_data);
+}
+
+// look for deduplication opportunities by putting the largest data elements
+// first, and then see if any of the smaller are contiguous sub-data of any previous
+// TODO: Make it even more aggressive by using pointer-bytes made so far
+// as data (pointer destinations), if possible
+std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
+	std::size_t p_rom_loc_ptr_table,
+	std::size_t p_ptr_base_rom_offset,
+	const std::vector<std::vector<byte>>& p_data) const {
+
+	struct Entry {
+		const std::vector<byte>* data;
+		std::size_t original_index;
+	};
+
+	// Sort by descending size
+	std::vector<Entry> sorted;
+	sorted.reserve(p_data.size());
+	for (std::size_t i = 0; i < p_data.size(); ++i)
+		sorted.push_back({ &p_data[i], i });
+
+	std::sort(sorted.begin(), sorted.end(), [](const Entry& a, const Entry& b) {
+		return a.data->size() > b.data->size();
+		});
+
+	std::vector<byte> data_section;
+	std::vector<std::size_t> pointers(p_data.size());
+
+	for (const auto& entry : sorted) {
+		const auto& vec = *entry.data;
+		std::size_t offset = std::string::npos;
+
+		// Brute-force search for sub-vector match
+		for (std::size_t i = 0; i + vec.size() <= data_section.size(); ++i) {
+			if (std::equal(vec.begin(), vec.end(), data_section.begin() + i)) {
+				offset = i;
+				break;
+			}
+		}
+
+		if (offset == std::string::npos) {
+			offset = data_section.size();
+			data_section.insert(data_section.end(), vec.begin(), vec.end());
+		}
+
+		std::size_t rom_offset = p_rom_loc_ptr_table + p_data.size() * 2 + offset;
+		pointers[entry.original_index] = rom_offset - p_ptr_base_rom_offset;
+	}
+
+	// Write pointer table
+	std::vector<byte> output(p_data.size() * 2);
+	for (std::size_t i = 0; i < p_data.size(); ++i) {
+		std::size_t ptr = pointers[i];
+		output[i * 2] = static_cast<byte>(ptr & 0xFF);
+		output[i * 2 + 1] = static_cast<byte>((ptr >> 8) & 0xFF);
+	}
+
+	// Append deduplicated data
+	output.insert(output.end(), data_section.begin(), data_section.end());
+	return output;
 }

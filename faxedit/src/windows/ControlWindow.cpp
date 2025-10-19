@@ -83,6 +83,18 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		m_rom_manager.encode_chunk_door_data(p_game, l_rom);
 		add_message("Patched world door connection data");
 
+		auto l_ow_trans{ m_rom_manager.encode_game_otherworld_trans(p_game) };
+		std::copy(begin(l_ow_trans), end(l_ow_trans),
+			begin(l_rom) + p_game.m_ptr_chunk_intrachunk_transitions);
+		add_message("Patched other-world transtion data ("
+		+ std::to_string(l_ow_trans.size()) + " bytes)");
+
+		auto l_sw_trans{ m_rom_manager.encode_game_sameworld_trans(p_game) };
+		std::copy(begin(l_sw_trans), end(l_sw_trans),
+			begin(l_rom) + p_game.m_ptr_chunk_interchunk_transitions);
+		add_message("Patched same-world transtion data ("
+			+ std::to_string(l_sw_trans.size()) + " bytes)");
+
 		klib::file::write_bytes_to_file(l_rom,
 			"c:/temp/faxanadu-out.nes");
 

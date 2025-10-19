@@ -24,6 +24,8 @@ namespace fe {
 
 		// the following pointers are on the form { ROM offset for master ptr table, ROM offset considered 0 by the ptrs }
 		constexpr std::pair<std::size_t, std::size_t> PTR_SPRITE_DATA{ 0x2c220, 0x24010 };
+		constexpr std::pair<std::size_t, std::size_t> PTR_OTHERW_TRANS_TABLE{ 0x3eaac, 0x30010 };
+		constexpr std::pair<std::size_t, std::size_t> PTR_SAMEW_TRANS_TABLE{ 0x3ea47, 0x30010 };
 
 		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
 
