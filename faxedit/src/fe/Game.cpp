@@ -2,6 +2,7 @@
 #include "Metatile.h"
 #include "fe_constants.h"
 #include "Chunk_door_connections.h"
+#include "./../common/klib/Kutil.h"
 #include <algorithm>
 
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
@@ -107,6 +108,15 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		m_palettes.push_back(l_tmp_palette);
 	}
 
+	// get the 8 spawn locations
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		m_spawn_locations.push_back(fe::Spawn_location(
+			static_cast<byte>(m_map_chunk_idx.at(m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i))),
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4
+		));
+	}
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset) const {
@@ -257,4 +267,30 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 				m_rom_data.at(l_ptr_to_screens + i + 3)
 			);
 	}
+}
+
+// find all guru (with spawn point) door entrances
+// and update the spawn location with the door data
+void fe::Game::calculate_spawn_locations_by_guru(const std::vector<std::size_t>& p_chunk_remap) {
+	for (std::size_t c{ 0 }; c < m_chunks.size(); ++c)
+		for (std::size_t s{ 0 }; s < m_chunks[c].m_screens.size(); ++s)
+			for (const auto& l_door : m_chunks[c].m_screens[s].m_doors) {
+				if (l_door.m_door_type == fe::DoorType::Building) {
+					auto iter{ std::find(begin(c::SPAWN_POINT_BUILDING_PARAMS),
+						end(c::SPAWN_POINT_BUILDING_PARAMS), l_door.m_npc_bundle) };
+
+					// if we match, update the spawn points vector with the chunk no,
+					// screen no and door location
+					if (iter != end(c::SPAWN_POINT_BUILDING_PARAMS)) {
+						std::size_t l_spawn_no{ static_cast<std::size_t>(iter - begin(c::SPAWN_POINT_BUILDING_PARAMS)) };
+						m_spawn_locations.at(l_spawn_no) = fe::Spawn_location(
+							static_cast<byte>(klib::kutil::get_vector_index(p_chunk_remap, c)),
+							static_cast<byte>(s),
+							l_door.m_coords.first,
+							l_door.m_coords.second
+						);
+					}
+
+				}
+			}
 }

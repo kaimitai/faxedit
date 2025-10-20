@@ -15,6 +15,9 @@ namespace fe {
 			constexpr char TAG_PALETTES[]{ "palettes" };
 			constexpr char TAG_PALETTE[]{ "palette" };
 
+			constexpr char TAG_SPAWN_POINTS[]{ "spawn_points" };
+			constexpr char TAG_SPAWN_POINT[]{ "spawn_point" };
+
 			constexpr char TAG_NPC_BUNDLES[]{ "npc_bundles" };
 			constexpr char TAG_NPC_BUNDLE[]{ "npc_bundle" };
 

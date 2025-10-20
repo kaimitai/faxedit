@@ -41,6 +41,27 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_bundle.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_npc_bundles[i], true));
 	}
 
+	// for each spawn point
+	auto n_spawns{ n_metadata.append_child(c::TAG_SPAWN_POINTS) };
+
+	for (std::size_t i{ 0 }; i < p_game.m_spawn_locations.size(); ++i) {
+		const auto& l_sl{ p_game.m_spawn_locations[i] };
+
+		auto n_spawn{ n_spawns.append_child(c::TAG_SPAWN_POINT) };
+
+		n_spawn.append_attribute(c::ATTR_NO);
+		n_spawn.attribute(c::ATTR_NO).set_value(i);
+
+		n_spawn.append_attribute(c::ATTR_CHUNK_ID);
+		n_spawn.attribute(c::ATTR_CHUNK_ID).set_value(l_sl.m_world);
+		n_spawn.append_attribute(c::ATTR_SCREEN_ID);
+		n_spawn.attribute(c::ATTR_SCREEN_ID).set_value(l_sl.m_screen);
+		n_spawn.append_attribute(c::ATTR_X);
+		n_spawn.attribute(c::ATTR_X).set_value(l_sl.m_x);
+		n_spawn.append_attribute(c::ATTR_Y);
+		n_spawn.attribute(c::ATTR_Y).set_value(l_sl.m_y);
+	}
+
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
 

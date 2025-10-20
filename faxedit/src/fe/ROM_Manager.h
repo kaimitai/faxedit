@@ -58,8 +58,10 @@ namespace fe {
 		std::vector<byte> encode_game_otherworld_trans(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_sameworld_trans(const fe::Game& p_game) const;
 
-		// encoding data using a given address and stride-indexed
+		// encoding data in-place using a given address and stride-indexed
+		// no need to return anything here as the data is of fixed length
 		void encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		void encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// util
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);

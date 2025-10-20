@@ -2,6 +2,7 @@
 #define KLIB_KUTIL_H
 
 #include <vector>
+#include <stdexcept>
 
 namespace klib {
 	namespace kutil {
@@ -28,17 +29,24 @@ namespace klib {
 		}
 
 		template<class T>
-			std::vector<T> flatten_2d_vec(const std::vector<std::vector<T>>& p_matrix) {
+		std::vector<T> flatten_2d_vec(const std::vector<std::vector<T>>& p_matrix) {
 
-				std::vector<T> l_result;
+			std::vector<T> l_result;
 
-				for (const auto& l_row : p_matrix)
-					l_result.insert(end(l_result), begin(l_row), end(l_row));
+			for (const auto& l_row : p_matrix)
+				l_result.insert(end(l_result), begin(l_row), end(l_row));
 
-				return l_result;
+			return l_result;
 
 		}
 
+		template<class T>
+		std::size_t get_vector_index(const std::vector<T>& p_values, T p_value) {
+			for (std::size_t i{ 0 }; i < p_values.size(); ++i)
+				if (p_values[i] == p_value)
+					return i;
+			throw std::runtime_error("Vector element not found");
+		}
 
 	}
 }

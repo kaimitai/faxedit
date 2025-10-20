@@ -27,6 +27,12 @@ namespace fe {
 		constexpr std::pair<std::size_t, std::size_t> PTR_OTHERW_TRANS_TABLE{ 0x3eaac, 0x30010 };
 		constexpr std::pair<std::size_t, std::size_t> PTR_SAMEW_TRANS_TABLE{ 0x3ea47, 0x30010 };
 
+		// regular offsets with no associated pointer table that we know of
+		constexpr std::size_t OFFSET_SPAWN_LOC_WORLDS{ 0x3ddbd };
+		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ 0x3ddc5 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ 0x3ddcd };
+		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ 0x3dde5 };
+
 		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
 
 		// pointers to chunk data pointer tables
@@ -115,13 +121,24 @@ namespace fe {
 		inline const std::map<byte, std::string> LABELS_NPC_BUNDLES{
 			{0x00, "Eolis Meat Shop"},
 			{0x01, "Eolis House"},
-			{0x02, "Eolis Guru"},
+			{0x02, "Eolis Guru (spawn #0)"},
 			{0x03, "Eolis Key Shop"},
 			{0x04, "Eolis Tools Shop"},
 			{0x05, "Eolis Magic Shop"},
 			{0x06, "Eolis Martial Arts"},
-			{0x07, "King (early game)"}
+			{0x07, "King (early game)"},
+			{0x0b, "Apolune Guru (spawn #1)"},
+			{0x10, "Forepaw Guru (spawn #2)"},
+			{0x1e, "Mist Guru (spawn #3)"},
+			{0x23, "Victim Guru (spawn #4)"},
+			{0x2b, "Conflate Guru (spawn #5)"},
+			{0x33, "Daybreak Guru (spawn #6)"},
+			{0x3c, "Dartmoor Guru (spawn #7)"},
 		};
+
+		// which door commands to look for when automatically generating spawn points
+		inline const std::vector<byte> SPAWN_POINT_BUILDING_PARAMS
+		{ 0x02, 0x0b, 0x10, 0x1e, 0x23, 0x2b, 0x33, 0x3c };
 
 		inline const std::map<byte, std::string> LABELS_SPRITES{
 			{0x2d, "Wyvern (Mattock)"},

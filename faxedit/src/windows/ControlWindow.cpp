@@ -60,6 +60,9 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 	if (ImGui::Button("Patch ROM")) {
 		auto l_rom{ p_game.m_rom_data };
 
+		p_game.calculate_spawn_locations_by_guru(p_game.m_map_chunk_idx);
+		m_rom_manager.encode_spawn_locations(p_game, l_rom);
+
 		// encode metadata
 		auto l_metadata{ m_rom_manager.encode_game_metadata_all(p_game) };
 		std::copy(begin(l_metadata), end(l_metadata), begin(l_rom) + 0xc012);
@@ -87,7 +90,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		std::copy(begin(l_ow_trans), end(l_ow_trans),
 			begin(l_rom) + p_game.m_ptr_chunk_intrachunk_transitions);
 		add_message("Patched other-world transtion data ("
-		+ std::to_string(l_ow_trans.size()) + " bytes)");
+			+ std::to_string(l_ow_trans.size()) + " bytes)");
 
 		auto l_sw_trans{ m_rom_manager.encode_game_sameworld_trans(p_game) };
 		std::copy(begin(l_sw_trans), end(l_sw_trans),

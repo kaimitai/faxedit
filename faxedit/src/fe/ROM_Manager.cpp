@@ -439,3 +439,15 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
 	output.insert(output.end(), data_section.begin(), data_section.end());
 	return output;
 }
+
+void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		const auto& l_sl{ p_game.m_spawn_locations.at(i) };
+
+		p_rom.at(c::OFFSET_SPAWN_LOC_WORLDS + i) = l_sl.m_world;
+		p_rom.at(c::OFFSET_SPAWN_LOC_SCREENS + i) = l_sl.m_screen;
+		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
+		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
+	}
+}
