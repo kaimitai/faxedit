@@ -379,21 +379,36 @@ std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Game& 
 		m_ptr_otherworld_trans_table.second, l_all_ow_trans_data);
 }
 
-// look for deduplication opportunities by putting the largest data elements
-// first, and then see if any of the smaller are contiguous sub-data of any previous
-// TODO: Make it even more aggressive by using pointer-bytes made so far
-// as data (pointer destinations), if possible
+// creates the ptr table and data as one contiguous blob
 std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
 	std::size_t p_rom_loc_ptr_table,
 	std::size_t p_ptr_base_rom_offset,
 	const std::vector<std::vector<byte>>& p_data) const {
+	auto l_data{ build_pointer_table_and_data_aggressive_decoupled(p_rom_loc_ptr_table, p_ptr_base_rom_offset,
+		p_rom_loc_ptr_table + 2 * p_data.size(), p_data) };
 
+	std::vector<byte> l_result(l_data.first);
+	l_result.insert(end(l_result), begin(l_data.second), end(l_data.second));
+
+	return l_result;
+}
+
+// look for deduplication opportunities by putting the largest data elements
+// first, and then see if any of the smaller are contiguous sub-data of any previous
+// TODO: Make it even more aggressive by using pointer-bytes made so far
+// as data (pointer destinations), if possible
+std::pair<std::vector<byte>, std::vector<byte>> fe::ROM_Manager::build_pointer_table_and_data_aggressive_decoupled(
+	std::size_t p_rom_loc_ptr_table,
+	std::size_t p_ptr_base_rom_offset,
+	std::size_t p_rom_loc_data,
+	const std::vector<std::vector<byte>>& p_data) const
+{
 	struct Entry {
 		const std::vector<byte>* data;
 		std::size_t original_index;
 	};
 
-	// Sort by descending size
+	// Step 1: Sort input blocks by descending size for better deduplication
 	std::vector<Entry> sorted;
 	sorted.reserve(p_data.size());
 	for (std::size_t i = 0; i < p_data.size(); ++i)
@@ -403,6 +418,7 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
 		return a.data->size() > b.data->size();
 		});
 
+	// Step 2: Build deduplicated data section and track pointer targets
 	std::vector<byte> data_section;
 	std::vector<std::size_t> pointers(p_data.size());
 
@@ -410,7 +426,7 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
 		const auto& vec = *entry.data;
 		std::size_t offset = std::string::npos;
 
-		// Brute-force search for sub-vector match
+		// Brute-force search for subvector match in already placed data
 		for (std::size_t i = 0; i + vec.size() <= data_section.size(); ++i) {
 			if (std::equal(vec.begin(), vec.end(), data_section.begin() + i)) {
 				offset = i;
@@ -418,26 +434,27 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data_aggressive(
 			}
 		}
 
+		// If no match found, append new data
 		if (offset == std::string::npos) {
 			offset = data_section.size();
 			data_section.insert(data_section.end(), vec.begin(), vec.end());
 		}
 
-		std::size_t rom_offset = p_rom_loc_ptr_table + p_data.size() * 2 + offset;
+		// Compute ROM address of the data block
+		std::size_t rom_offset = p_rom_loc_data + offset;
 		pointers[entry.original_index] = rom_offset - p_ptr_base_rom_offset;
 	}
 
-	// Write pointer table
-	std::vector<byte> output(p_data.size() * 2);
+	// Step 3: Build pointer table (2 bytes per pointer, little-endian)
+	std::vector<byte> pointer_table(p_data.size() * 2);
 	for (std::size_t i = 0; i < p_data.size(); ++i) {
 		std::size_t ptr = pointers[i];
-		output[i * 2] = static_cast<byte>(ptr & 0xFF);
-		output[i * 2 + 1] = static_cast<byte>((ptr >> 8) & 0xFF);
+		pointer_table[i * 2] = static_cast<byte>(ptr & 0xFF);       // Low byte
+		pointer_table[i * 2 + 1] = static_cast<byte>((ptr >> 8) & 0xFF); // High byte
 	}
 
-	// Append deduplicated data
-	output.insert(output.end(), data_section.begin(), data_section.end());
-	return output;
+	// Step 4: Return pointer table and data section separately
+	return { pointer_table, data_section };
 }
 
 void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const {
@@ -450,4 +467,105 @@ void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector
 		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
 		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
 	}
+}
+
+// this function generates pointer tables and data offsets for several pieces of data at once,
+// and generates a vector of <data table number> -> {ptr value, data pointed to}
+// it uses global deduplication across all the data
+std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> fe::ROM_Manager::generate_multi_pointer_tables(
+	const std::vector<std::vector<std::vector<byte>>>& all_data_sets,
+	const std::vector<std::size_t>& pointer_table_offsets,
+	std::size_t rom_zero_address,
+	const std::vector<std::pair<std::size_t, std::size_t>>& p_available
+) {
+
+	// Internal structure to track placed data and its ROM address
+	struct PlacedBlock {
+		std::size_t rom_address;       // ROM offset where this block starts
+		std::vector<byte> data;        // Actual data placed at that address
+	};
+
+	if (all_data_sets.size() != pointer_table_offsets.size()) {
+		throw std::runtime_error("Mismatch between number of data sets and pointer table offsets.");
+	}
+
+	// Flatten all blocks with metadata and sort by descending size
+	struct BlockInfo {
+		std::size_t table_index;
+		std::size_t block_index;
+		std::vector<byte> data;
+	};
+
+	std::vector<BlockInfo> all_blocks;
+	for (std::size_t table_idx = 0; table_idx < all_data_sets.size(); ++table_idx) {
+		const auto& table = all_data_sets[table_idx];
+		for (std::size_t block_idx = 0; block_idx < table.size(); ++block_idx) {
+			all_blocks.push_back({ table_idx, block_idx, table[block_idx] });
+		}
+	}
+
+	std::sort(all_blocks.begin(), all_blocks.end(), [](const BlockInfo& a, const BlockInfo& b) {
+		return a.data.size() > b.data.size(); // Largest blocks first
+		});
+
+	// Result structure: one vector per pointer table
+	std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> result(all_data_sets.size());
+
+	// Track available chunks
+	std::vector<std::pair<std::size_t, std::size_t>> available_chunks = p_available;
+
+	// Track all placed blocks for subvector matching
+	std::vector<PlacedBlock> placed_blocks;
+
+	for (const auto& block_info : all_blocks) {
+		const auto& data = block_info.data;
+
+		// Try to find a subvector match in previously placed blocks
+		bool matched = false;
+		for (const auto& placed : placed_blocks) {
+			auto it = std::search(placed.data.begin(), placed.data.end(), data.begin(), data.end());
+			if (it != placed.data.end()) {
+				// Match found — compute offset and pointer address
+				std::size_t offset_in_block = std::distance(placed.data.begin(), it);
+				std::size_t rom_address = placed.rom_address + offset_in_block;
+				std::size_t pointer_address = rom_address - rom_zero_address;
+
+				// Record pointer and empty data (since it's reused)
+				result[block_info.table_index].emplace_back(pointer_address, std::vector<byte>{});
+				matched = true;
+				break;
+			}
+		}
+
+		if (matched) continue;
+
+		// No match found — allocate full block in available space
+		bool placed = false;
+		for (auto& chunk : available_chunks) {
+			std::size_t& chunk_offset = chunk.first;
+			std::size_t& chunk_remaining = chunk.second;
+
+			if (chunk_remaining >= data.size()) {
+				std::size_t rom_address = chunk_offset;
+				std::size_t pointer_address = rom_address - rom_zero_address;
+
+				// Record placement
+				result[block_info.table_index].emplace_back(pointer_address, data);
+				placed_blocks.push_back({ rom_address, data });
+
+				// Update chunk
+				chunk_offset += data.size();
+				chunk_remaining -= data.size();
+
+				placed = true;
+				break;
+			}
+		}
+
+		if (!placed) {
+			throw std::runtime_error("Not enough space to place all data blocks.");
+		}
+	}
+
+	return result;
 }

@@ -23,8 +23,13 @@ namespace fe {
 		std::vector<byte> build_pointer_table_and_data_aggressive(
 			std::size_t p_rom_loc_ptr_table,
 			std::size_t p_ptr_base_rom_offset,
-			const std::vector<std::vector<byte>>& p_data
-		) const;
+			const std::vector<std::vector<byte>>& p_data) const;
+
+		std::pair<std::vector<byte>, std::vector<byte>>  build_pointer_table_and_data_aggressive_decoupled(
+			std::size_t p_rom_loc_ptr_table,
+			std::size_t p_ptr_base_rom_offset,
+			std::size_t p_rom_loc_data,
+			const std::vector<std::vector<byte>>& p_data) const;
 
 		// pointer variables - check the constants header for descriptions
 		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset,
@@ -45,6 +50,15 @@ namespace fe {
 					return i;
 			throw std::runtime_error("No such element");
 		}
+
+		// this function generates pointer tables and data offsets for several pieces of data at once,
+		// and generates a vector of <data table number> -> {ptr value, data pointed to}
+		// it uses global deduplication across all the data
+		std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> generate_multi_pointer_tables(
+			const std::vector<std::vector<std::vector<byte>>>& all_data_sets,
+			const std::vector<std::size_t>& pointer_table_offsets,
+			std::size_t rom_zero_address,
+			const std::vector<std::pair<std::size_t, std::size_t>>& p_available);
 
 	public:
 		ROM_Manager(void);

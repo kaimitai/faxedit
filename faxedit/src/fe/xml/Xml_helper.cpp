@@ -2,6 +2,181 @@
 #include "Xml_constants.h"
 #include <stdexcept>
 
+fe::Game fe::xml::load_xml(const std::string p_filepath) {
+	fe::Game l_game;
+
+	pugi::xml_document l_doc;
+	if (!l_doc.load_file(p_filepath.c_str()))
+		throw std::runtime_error("Could not load xml file " + p_filepath);
+
+	auto n_root{ l_doc.child(c::TAG_ROOT) };
+
+	// Read version and be backward-compatible when the format chenges
+
+	// extract game-level metadata
+
+	// extract palettes
+	auto n_palettes = n_root.child(c::TAG_PALETTES);
+	for (auto n_palette{ n_palettes.child(c::TAG_PALETTE) }; n_palette;
+		n_palette = n_palette.next_sibling(c::TAG_PALETTE)) {
+		l_game.m_palettes.push_back(parse_byte_list(n_palette.attribute(c::ATTR_BYTES).as_string()));
+	}
+
+	// extract building parameters
+	auto n_bparams = n_root.child(c::TAG_NPC_BUNDLES);
+	for (auto n_bparam{ n_bparams.child(c::TAG_NPC_BUNDLE) }; n_bparam;
+		n_bparam = n_bparam.next_sibling(c::TAG_NPC_BUNDLE)) {
+		l_game.m_npc_bundles.push_back(parse_byte_list(n_bparam.attribute(c::ATTR_BYTES).as_string()));
+	}
+
+	// extract spawn points
+	auto n_spawns = n_root.child(c::TAG_SPAWN_POINTS);
+	for (auto n_spawn{ n_spawns.child(c::TAG_SPAWN_POINT) }; n_spawn;
+		n_spawn = n_spawn.next_sibling(c::TAG_SPAWN_POINT)) {
+		l_game.m_spawn_locations.push_back(fe::Spawn_location(
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_CHUNK_ID).as_string()),
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_SCREEN_ID).as_string()),
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_X).as_string()),
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_Y).as_string())
+		));
+	}
+
+	// extract chunks
+	auto n_chunks = n_root.child(c::TAG_CHUNKS);
+	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
+		n_chunk = n_chunk.next_sibling(c::TAG_CHUNK)) {
+
+		fe::Chunk l_chunk;
+
+		// extract chunk-level metadata
+
+		// chunk default palette
+		l_chunk.set_default_palette_no(parse_numeric_byte(n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).as_string()));
+
+		// chunk door templates
+		auto n_door_conns{ n_chunk.child(c::TAG_CHUNK_DOOR_CONN) };
+		// if it has one, it must have both
+		if (n_door_conns) {
+			auto n_door_nc{ n_door_conns.child(c::TAG_NEXT_CHUNK) };
+			auto n_door_pc{ n_door_conns.child(c::TAG_PREV_CHUNK) };
+
+			l_chunk.m_door_connections = fe::Chunk_door_connections(
+				parse_numeric_byte(n_door_nc.attribute(c::ATTR_CHUNK_ID).as_string()),
+				parse_numeric_byte(n_door_nc.attribute(c::ATTR_SCREEN_ID).as_string()),
+				parse_numeric_byte(n_door_nc.attribute(c::ATTR_REQUIREMENT).as_string()),
+				parse_numeric_byte(n_door_pc.attribute(c::ATTR_CHUNK_ID).as_string()),
+				parse_numeric_byte(n_door_pc.attribute(c::ATTR_SCREEN_ID).as_string()),
+				parse_numeric_byte(n_door_pc.attribute(c::ATTR_REQUIREMENT).as_string()));
+		}
+
+		// chunk metatile definitions
+		auto n_metatiles{ n_chunk.child(c::TAG_METATILES) };
+		for (auto n_metatile{ n_metatiles.child(c::TAG_METATILE) }; n_metatile;
+			n_metatile = n_metatile.next_sibling(c::TAG_METATILE)) {
+			const auto l_tilemap_bytes{ parse_byte_list(n_metatile.attribute(c::TAG_TILEMAP).as_string()) };
+
+			l_chunk.m_metatiles.push_back(fe::Metatile(
+				l_tilemap_bytes.at(0),
+				l_tilemap_bytes.at(1),
+				l_tilemap_bytes.at(2),
+				l_tilemap_bytes.at(3),
+				parse_numeric_byte(n_metatile.attribute(c::ATTR_MT_PAL_TL).as_string()),
+				parse_numeric_byte(n_metatile.attribute(c::ATTR_MT_PAL_TR).as_string()),
+				parse_numeric_byte(n_metatile.attribute(c::ATTR_MT_PAL_BL).as_string()),
+				parse_numeric_byte(n_metatile.attribute(c::ATTR_MT_PAL_BR).as_string()),
+				parse_numeric_byte(n_metatile.attribute(c::ATTR_MT_PROPERTY).as_string())
+			));
+		}
+
+		// parse screens
+
+		auto n_screens{ n_chunk.child(c::TAG_SCREENS) };
+		for (auto n_screen{ n_screens.child(c::TAG_SCREEN) }; n_screen; n_screen = n_screen.next_sibling(c::TAG_SCREEN)) {
+			fe::Screen l_screen;
+
+			// screen metadata
+
+			// scrolling
+			if (n_screen.attribute(c::ATTR_SCREEN_ID_LEFT))
+				l_screen.m_scroll_left = parse_numeric_byte(n_screen.attribute(c::ATTR_SCREEN_ID_LEFT).as_string());
+			if (n_screen.attribute(c::ATTR_SCREEN_ID_RIGHT))
+				l_screen.m_scroll_right = parse_numeric_byte(n_screen.attribute(c::ATTR_SCREEN_ID_RIGHT).as_string());
+			if (n_screen.attribute(c::ATTR_SCREEN_ID_UP))
+				l_screen.m_scroll_up = parse_numeric_byte(n_screen.attribute(c::ATTR_SCREEN_ID_UP).as_string());
+			if (n_screen.attribute(c::ATTR_SCREEN_ID_DOWN))
+				l_screen.m_scroll_down = parse_numeric_byte(n_screen.attribute(c::ATTR_SCREEN_ID_DOWN).as_string());
+
+			// optional command byte originating from the sprite data
+			if (n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE))
+				l_screen.m_sprite_command_byte = parse_numeric_byte(n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).as_string());
+
+			// optional sameworld-transition override
+			auto n_scr_sw_trans{ n_screen.child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
+			if (n_scr_sw_trans)
+				l_screen.m_interchunk_scroll = fe::InterChunkScroll(
+					parse_numeric_byte(n_scr_sw_trans.attribute(c::ATTR_DEST_SCREEN_NO).as_string()),
+					parse_numeric_byte(n_scr_sw_trans.attribute(c::ATTR_DEST_X).as_string()),
+					parse_numeric_byte(n_scr_sw_trans.attribute(c::ATTR_DEST_Y).as_string()),
+					parse_numeric_byte(n_scr_sw_trans.attribute(c::ATTR_DEST_PALETTE).as_string()));
+
+			// optional otherworld-transition override
+			auto n_scr_ow_trans{ n_screen.child(c::TAG_SCREEN_INTRACHUNK_TRANSTION) };
+			if (n_scr_ow_trans)
+				l_screen.m_intrachunk_scroll = fe::IntraChunkScroll(
+					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_CHUNK_ID).as_string()),
+					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_DEST_SCREEN_NO).as_string()),
+					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_DEST_X).as_string()),
+					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_DEST_Y).as_string()),
+					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_DEST_PALETTE).as_string()));
+
+			auto n_scr_tilemap{ n_screen.child(c::TAG_TILEMAP) };
+			for (auto n_scr_tl_col{ n_scr_tilemap.child(c::TAG_COL) }; n_scr_tl_col; n_scr_tl_col = n_scr_tl_col.next_sibling(c::TAG_COL))
+				l_screen.m_tilemap.push_back(parse_byte_list(n_scr_tl_col.attribute(c::ATTR_BYTES).as_string()));
+
+			// screen sprites
+			auto n_sprites{ n_screen.child(c::TAG_SPRITES) };
+			for (auto n_sprite{ n_sprites.child(c::TAG_SPRITE) }; n_sprite; n_sprite = n_sprite.next_sibling(c::TAG_SPRITE)) {
+				if (n_sprite.attribute(c::ATTR_TEXT_ID))
+					l_screen.m_sprites.push_back(fe::Sprite(
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_ID).as_string()),
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_X).as_string()),
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_Y).as_string()),
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_TEXT_ID).as_string())));
+				else
+					l_screen.m_sprites.push_back(fe::Sprite(
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_ID).as_string()),
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_X).as_string()),
+						parse_numeric_byte(n_sprite.attribute(c::ATTR_Y).as_string())
+					));
+			}
+
+			// screen doors
+			auto n_doors{ n_screen.child(c::TAG_DOORS) };
+			for (auto n_door{ n_doors.child(c::TAG_DOOR) }; n_door; n_door = n_door.next_sibling(c::TAG_DOOR)) {
+				fe::DoorType l_sc_door_type{ text_to_doortype(n_door.attribute(c::ATTR_TYPE).as_string()) };
+				byte l_sc_door_x{ parse_numeric_byte(n_door.attribute(c::ATTR_X).as_string()) };
+				byte l_sc_door_y{ parse_numeric_byte(n_door.attribute(c::ATTR_Y).as_string()) };
+				byte l_sc_door_dest_x{ parse_numeric_byte(n_door.attribute(c::ATTR_DEST_X).as_string()) };
+				byte l_sc_door_dest_y{ parse_numeric_byte(n_door.attribute(c::ATTR_DEST_Y).as_string()) };
+				byte l_sc_door_dest_screen{ n_door.attribute(c::ATTR_DEST_SCREEN_NO) ? parse_numeric_byte(n_door.attribute(c::ATTR_DEST_SCREEN_NO).as_string()) : static_cast<byte>(0) };
+				byte l_sc_door_dest_palette{ n_door.attribute(c::ATTR_DEST_PALETTE) ? parse_numeric_byte(n_door.attribute(c::ATTR_DEST_PALETTE).as_string()) : static_cast<byte>(0) };
+				byte l_sc_door_npc_bundle_no{ n_door.attribute(c::ATTR_DEST_PARAM_ID) ? parse_numeric_byte(n_door.attribute(c::ATTR_DEST_PARAM_ID).as_string()) : static_cast<byte>(0) };
+				byte l_sc_door_unk_byte{ n_door.attribute(c::ATTR_UNKNOWN_BYTE) ? parse_numeric_byte(n_door.attribute(c::ATTR_UNKNOWN_BYTE).as_string()) : static_cast<byte>(0) };
+				byte l_sc_door_req{ n_door.attribute(c::ATTR_REQUIREMENT) ? parse_numeric_byte(n_door.attribute(c::ATTR_REQUIREMENT).as_string()) : static_cast<byte>(0) };
+
+				l_screen.m_doors.push_back(fe::Door(l_sc_door_type, l_sc_door_x, l_sc_door_y, l_sc_door_dest_x, l_sc_door_dest_y, l_sc_door_req,
+					l_sc_door_dest_palette, l_sc_door_npc_bundle_no, l_sc_door_dest_screen, l_sc_door_unk_byte));
+			}
+
+			l_chunk.m_screens.push_back(l_screen);
+		}
+
+		l_game.m_chunks.push_back(l_chunk);
+	}
+
+	return l_game;
+}
+
 void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 	// create document object
@@ -36,7 +211,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 		n_bundle.append_attribute(c::ATTR_NO);
 		n_bundle.attribute(c::ATTR_NO).set_value(i);
-		
+
 		n_bundle.append_attribute(c::ATTR_BYTES);
 		n_bundle.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_npc_bundles[i], true));
 	}
@@ -292,6 +467,9 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 						n_door.append_attribute(c::ATTR_DEST_SCREEN_NO);
 						n_door.attribute(c::ATTR_DEST_SCREEN_NO).set_value(lc_door.m_dest_screen_id);
 
+						n_door.append_attribute(c::ATTR_REQUIREMENT);
+						n_door.attribute(c::ATTR_REQUIREMENT).set_value(lc_door.m_requirement);
+
 						if (lc_door.m_door_type == fe::DoorType::SameWorld) {
 							n_door.append_attribute(c::ATTR_DEST_PALETTE);
 							n_door.attribute(c::ATTR_DEST_PALETTE).set_value(byte_to_hex(lc_door.m_dest_palette_id));
@@ -331,10 +509,89 @@ std::string fe::xml::join_bytes(const std::vector<byte>& p_bytes, bool p_hex) {
 	}
 }
 
+std::string  fe::xml::trim_whitespace(const std::string& p_value) {
+	std::size_t start = 0;
+	while (start < p_value.size() && std::isspace(static_cast<unsigned char>(p_value[start]))) ++start;
+
+	std::size_t end = p_value.size();
+	while (end > start && std::isspace(static_cast<unsigned char>(p_value[end - 1])))
+		--end;
+
+	return p_value.substr(start, end - start);
+}
+
+byte fe::xml::parse_numeric_byte(const std::string& p_token) {
+	std::string value = trim_whitespace(p_token);
+	if (value.empty())
+		throw std::runtime_error("Empty value");
+
+	int base = 10;
+	std::string number = value;
+
+	if (value.size() > 2 && (value[0] == '0' && (value[1] == 'x' || value[1] == 'X'))) {
+		base = 16;
+		number = value.substr(2);
+	}
+	else if (value[0] == '$') {
+		base = 16;
+		number = value.substr(1);
+	}
+
+	unsigned long result = 0;
+	for (char c : number) {
+		if (!std::isxdigit(static_cast<unsigned char>(c))) {
+			throw std::runtime_error("Invalid digit in token: " + p_token);
+		}
+
+		int digit = std::isdigit(c) ? c - '0' : std::toupper(c) - 'A' + 10;
+		result = result * base + digit;
+		if (result > 0xFF) throw std::runtime_error("Value exceeds byte range: " + p_token);
+	}
+
+	return static_cast<byte>(result);
+}
+
+std::vector<std::string> fe::xml::split_bytes(const std::string& p_values) {
+	std::vector<std::string> l_result;
+	std::size_t start = 0;
+
+	while (start < p_values.size()) {
+		std::size_t end = p_values.find(',', start);
+		if (end == std::string::npos) end = p_values.size();
+
+		l_result.push_back(trim_whitespace(p_values.substr(start, end - start)));
+		start = end + 1;
+	}
+
+	return l_result;
+}
+
 std::string fe::xml::byte_to_hex(byte p_byte) {
 	constexpr char hex_chars[] = "0123456789abcdef";
 	std::string out = "0x";
 	out += hex_chars[(p_byte >> 4) & 0xF];
 	out += hex_chars[p_byte & 0xF];
 	return out;
+}
+
+// parse comma - separated string (takes decimals, hex, prefixed by 0x, 0X or $, trims whitespace) into vector of bytes
+std::vector<byte> fe::xml::parse_byte_list(const std::string& input) {
+	std::vector<byte> result;
+	for (const auto& token : split_bytes(input)) {
+		result.push_back(parse_numeric_byte(token));
+	}
+	return result;
+}
+
+fe::DoorType fe::xml::text_to_doortype(const std::string& p_str) {
+	if (p_str == c::VAL_DOOR_TYPE_BUILDING)
+		return fe::DoorType::Building;
+	else if (p_str == c::VAL_DOOR_TYPE_INTERCHUNK)
+		return fe::DoorType::SameWorld;
+	else if (p_str == c::VAL_DOOR_TYPE_NEXTCHUNK)
+		return fe::DoorType::NextWorld;
+	else if (p_str == c::VAL_DOOR_TYPE_PREVCHUNK)
+		return fe::DoorType::PrevWorld;
+	else
+		throw std::runtime_error("Invalid door-type given in xml");
 }

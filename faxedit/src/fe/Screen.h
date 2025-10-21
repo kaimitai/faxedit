@@ -28,6 +28,7 @@ namespace fe {
 
 		// constructor that reads ROM data and extracts it
 		Screen(const std::vector<byte>& p_rom, std::size_t p_offset);
+		Screen(void) = default;
 		// procedure that reads scroll properties from rom
 		void set_scroll_properties(const std::vector<byte>& p_rom, std::size_t p_offset);
 		void add_sprite(byte p_id, byte p_x, byte p_y);

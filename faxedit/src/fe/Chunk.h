@@ -26,7 +26,7 @@ namespace fe {
 		std::vector<byte> get_metatile_quadrant_bytes(std::size_t p_x, std::size_t p_y) const;
 
 	public:
-		Chunk(void) = default;
+		Chunk(void);
 
 		void decompress_and_add_screen(const std::vector<byte>& p_rom,
 			std::size_t p_offset);

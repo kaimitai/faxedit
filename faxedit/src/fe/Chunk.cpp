@@ -5,6 +5,11 @@
 #include <map>
 #include <stdexcept>
 
+fe::Chunk::Chunk(void) :
+	m_default_palette_no{ 0 }
+{
+}
+
 void fe::Chunk::decompress_and_add_screen(const std::vector<byte>& p_rom,
 	std::size_t p_offset) {
 	m_screens.push_back(fe::Screen(p_rom, p_offset));

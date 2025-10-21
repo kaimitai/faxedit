@@ -15,6 +15,24 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 	if (ImGui::Button("Save XML"))
 		xml::save_xml("c:/temp/out.xml", p_game);
 
+	ImGui::SameLine();
+
+	if (ImGui::Button("Load XML")) {
+		auto l_rom{ p_game.m_rom_data };
+		p_game = xml::load_xml("c:/temp/out.xml");
+		p_game.m_rom_data = l_rom;
+
+		// extract gfx
+		for (std::size_t c{ 0 }; c < p_game.m_offsets_bg_gfx.size(); ++c) {
+			p_game.m_tilesets.push_back(std::vector<klib::NES_tile>());
+
+			for (std::size_t i{ 0 }; i < 256; ++i) {
+				p_game.m_tilesets[c].push_back(klib::NES_tile::NES_tile(p_game.m_rom_data,
+					p_game.m_offsets_bg_gfx[c] + 16 * i));
+			}
+		}
+	}
+
 	if (ImGui::Button("Test duplicates")) {
 		for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 			std::vector<std::vector<byte>> l_cmpr;

@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include "./common/imgui/imgui.h"
 #include "./common/imgui/imgui_impl_sdl3.h"
@@ -19,8 +20,8 @@ int main(int argc, char** argv) try {
 		throw std::runtime_error(SDL_GetError());
 	else {
 		// create game object
-		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/faxanadu-out.nes"));
-		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (USA) (Rev A).nes"));
+		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/faxanadu-out.nes"));
+		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (U).nes"));
 
 		// Event handler
 		SDL_Event e;
@@ -128,6 +129,15 @@ int main(int argc, char** argv) try {
 	return 0;
 
 }
+catch (const std::runtime_error& p_ex) {
+	std::cerr << p_ex.what();
+	return 1;
+}
+catch (const std::exception& p_ex) {
+	std::cerr << p_ex.what();
+	return 1;
+}
 catch (...) {
+	std::cerr << "Unknown runtime error";
 	return 1;
 }

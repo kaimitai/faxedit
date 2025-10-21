@@ -35,6 +35,10 @@ namespace fe {
 			const std::vector<byte>& p_rom, std::size_t p_door_param_offset,
 			byte p_param_value_offset);
 
+		Door(fe::DoorType p_type, byte p_x, byte p_y, byte p_dest_x, byte p_dest_y,
+			byte p_req = 0, byte p_dest_palette = 0, byte p_npc_bundle = 0,
+			byte p_dest_screen_id = 0, byte p_unknown = 0);
+
 		Door(void);
 
 	};

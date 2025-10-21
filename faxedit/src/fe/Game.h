@@ -28,6 +28,7 @@ namespace fe {
 		std::vector<fe::Spawn_location> m_spawn_locations;
 
 			Game(const std::vector<byte>& p_rom_data);
+			Game(void);
 
 		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_sprite_data, m_ptr_chunk_interchunk_transitions,
 			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes,

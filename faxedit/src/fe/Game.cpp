@@ -5,6 +5,24 @@
 #include "./../common/klib/Kutil.h"
 #include <algorithm>
 
+fe::Game::Game(void) :
+	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
+	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
+	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
+	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
+	m_ptr_chunk_sprite_data{ c::PTR_CHUNK_SPRITE_DATA },
+	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
+	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
+	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
+	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
+	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
+	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
+	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
+	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
+{
+
+}
+
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
 	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
