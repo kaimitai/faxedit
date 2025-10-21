@@ -124,8 +124,20 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 
 	ImGui::Separator();
 
-	for (const auto& msg : m_messages)
-		ImGui::Text(msg.c_str());
+	for (const auto& msg : m_messages) {
+		ImVec4 color;
+		switch (msg.status) {
+		case 0: color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); break;
+		case 1: color = ImVec4(0.2f, 1.0f, 0.2f, 1.0f); break;
+		case 2: color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); break;
+		default:
+			break;
+		}
+
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::TextUnformatted(msg.text.c_str());
+		ImGui::PopStyleColor();
+	}
 
 	ImGui::End();
 }

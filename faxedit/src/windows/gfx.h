@@ -19,6 +19,9 @@ namespace fe {
 		// texture for holding the screen data
 		SDL_Texture* m_screen_texture;
 
+		// cache all metatile definitions
+		std::vector<SDL_Texture*> m_metatile_gfx;
+
 		SDL_Palette* m_nes_palette;
 
 		// surface operations
@@ -28,12 +31,15 @@ namespace fe {
 
 		static const std::vector<std::vector<byte>> NES_PALETTE;
 
+		void delete_texture(SDL_Texture* p_txt);
+
 	public:
 		gfx(SDL_Renderer* p_rnd);
 		~gfx(void);
 
-		// atlast operations
+		// image caching operations
 		void generate_atlas(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles, const std::vector<byte>& p_palette);
+		void generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::vector<byte>>& p_mt_def, std::size_t p_idx, std::size_t p_sub_palette_no);
 
 		// blitting operations
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
@@ -41,6 +47,7 @@ namespace fe {
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 
 		SDL_Texture* get_screen_texture(void) const;
+		SDL_Texture* get_metatile_texture(std::size_t p_mt_no) const;
 	};
 
 }

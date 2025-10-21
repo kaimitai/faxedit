@@ -123,9 +123,6 @@
     <ClCompile Include="src\windows\imgui_helper.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\Screen_window.cpp">
-      <Filter>Source Files\windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\Chunk_window.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
@@ -144,7 +141,7 @@
     <ClCompile Include="src\windows\ControlWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\Game_window.cpp">
+    <ClCompile Include="src\windows\TilemapWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
   </ItemGroup>

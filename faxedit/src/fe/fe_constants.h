@@ -100,8 +100,9 @@ namespace fe {
 			{0x04, "Foreground"},
 			{0x06, "Pushable"},
 			{0x0a, "Transition Ladder"},
-			{0x0b, "Return Exit"},
-			{0x0c, "Inta-World transition"},
+			{0x0b, "Mattock-breakable"},
+			{0x0c, "Other-World/Return"},
+			{0x0d, "Other-World (foreground)"},
 		};
 
 		inline const std::map<byte, std::string> LABELS_BUILDINGS{

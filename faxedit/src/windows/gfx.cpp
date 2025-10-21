@@ -1,12 +1,17 @@
 #include "gfx.h"
 
+constexpr int TILEMAP_SCALE{ 1 };
+
 fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
-	m_screen_texture{ SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
-		SDL_TEXTUREACCESS_TARGET, 16 * 16, 13 * 16) }
+	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) }
 {
+	SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
 	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
+
+	m_screen_texture = SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
+		SDL_TEXTUREACCESS_TARGET, TILEMAP_SCALE * 16 * 16, TILEMAP_SCALE * 13 * 16);
 
 	// generate NES palette
 	SDL_Color out_palette[256] = {};
@@ -20,10 +25,53 @@ fe::gfx::~gfx(void) {
 	if (m_nes_palette != nullptr)
 		SDL_DestroyPalette(m_nes_palette);
 
-	if (m_atlas)
-		SDL_DestroyTexture(m_atlas);
-	if (m_screen_texture)
-		SDL_DestroyTexture(m_screen_texture);
+	delete_texture(m_atlas);
+	delete_texture(m_screen_texture);
+	for (auto& txt : m_metatile_gfx)
+		delete_texture(txt);
+}
+
+void fe::gfx::delete_texture(SDL_Texture* p_txt) {
+	if (p_txt != nullptr)
+		SDL_DestroyTexture(p_txt);
+}
+
+void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::vector<byte>>& p_mt_def,
+	std::size_t p_idx, std::size_t p_sub_palette_no) {
+	SDL_Texture* metatile = SDL_CreateTexture(
+		p_rnd,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET,
+		16, 16);
+
+	SDL_SetTextureBlendMode(metatile, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderTarget(p_rnd, metatile);
+	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, 255); // Transparent background
+	SDL_RenderClear(p_rnd);
+
+	// Draw the 4 tiles from the atlas
+	for (int col = 0; col < 2; ++col) {
+		for (int row = 0; row < 2; ++row) {
+			int tileIndex = p_mt_def[col][row];
+			SDL_FRect src = {
+				static_cast<float>(tileIndex * 8),
+				static_cast<float>(p_sub_palette_no * 8),
+				8.0f, 8.0f
+			};
+			SDL_FRect dst = {
+				static_cast<float>(row * 8),
+				static_cast<float>(col * 8),
+				8.0f, 8.0f
+			};
+			SDL_RenderTexture(p_rnd, m_atlas, &src, &dst);
+		}
+	}
+
+	SDL_SetRenderTarget(p_rnd, nullptr);
+
+	// Store the texture
+	delete_texture(m_metatile_gfx[p_idx]);
+	m_metatile_gfx[p_idx] = metatile;
 }
 
 void fe::gfx::generate_atlas(SDL_Renderer* p_rnd,
@@ -60,6 +108,10 @@ void fe::gfx::generate_atlas(SDL_Renderer* p_rnd,
 
 SDL_Texture* fe::gfx::get_screen_texture(void) const {
 	return m_screen_texture;
+}
+
+SDL_Texture* fe::gfx::get_metatile_texture(std::size_t p_mt_no) const {
+	return m_metatile_gfx.at(p_mt_no);
 }
 
 SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h) const {
@@ -112,10 +164,10 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 	};
 
 	SDL_FRect dst_rect = {
-		static_cast<float>(x * 8),
-		static_cast<float>(y * 8),
-		8.0f,
-		8.0f
+		static_cast<float>(TILEMAP_SCALE * x * 8),
+		static_cast<float>(TILEMAP_SCALE * y * 8),
+		TILEMAP_SCALE * 8.0f,
+		TILEMAP_SCALE * 8.0f
 	};
 
 	SDL_SetRenderTarget(renderer, m_screen_texture);
@@ -125,14 +177,13 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 
 void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
 	int p_x, int p_y, int p_w, int p_h) const {
-
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
 
-	SDL_FRect l_rect(static_cast<float>(16 * p_x),
-		static_cast<float>(16 * p_y),
-		static_cast<float>(p_w * 16),
-		static_cast<float>(p_h * 16));
+	SDL_FRect l_rect(static_cast<float>(TILEMAP_SCALE * 16 * p_x),
+		static_cast<float>(TILEMAP_SCALE * 16 * p_y),
+		static_cast<float>(p_w * TILEMAP_SCALE * 16),
+		static_cast<float>(p_h * TILEMAP_SCALE * 16));
 
 	SDL_RenderRect(p_rnd, &l_rect);
 

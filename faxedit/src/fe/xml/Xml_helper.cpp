@@ -358,7 +358,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 			// intra-chunk scrolling
 			if (lc_screen.m_intrachunk_scroll.has_value()) {
-				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
+				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTRACHUNK_TRANSTION) };
 
 				n_sinter_s.append_attribute(c::ATTR_CHUNK_ID);
 				n_sinter_s.attribute(c::ATTR_CHUNK_ID).set_value(lc_screen.m_intrachunk_scroll.value().m_dest_chunk);
@@ -374,7 +374,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 			// inter-chunk scrolling
 			if (lc_screen.m_interchunk_scroll.has_value()) {
-				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTRACHUNK_TRANSTION) };
+				auto n_sinter_s{ n_screen.append_child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
 
 				n_sinter_s.append_attribute(c::ATTR_DEST_SCREEN_NO);
 				n_sinter_s.attribute(c::ATTR_DEST_SCREEN_NO).set_value(lc_screen.m_interchunk_scroll.value().m_dest_screen);
