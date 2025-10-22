@@ -17,6 +17,20 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 
 	ImGui::SameLine();
 
+	if (ui::imgui_button("Find mattock-breakables", 3)) {
+		for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c)
+			for (std::size_t s{ 0 }; s < p_game.m_chunks[c].m_screens.size(); ++s) {
+				const auto& l_tm{ p_game.m_chunks[c].m_screens[s].m_tilemap };
+
+				for (std::size_t j{ 0 }; j < l_tm.size(); ++j)
+					for (std::size_t i{ 0 }; i < l_tm[j].size(); ++i)
+						if (l_tm[j][i] == (c == 3 ? 0x63 : 0x00))
+							add_message(std::format("World {}, Screen {}, Pos ({},{})",
+								c, s, i, j));
+
+			}
+	}
+
 	if (ImGui::Button("Load XML")) {
 		auto l_rom{ p_game.m_rom_data };
 		p_game = xml::load_xml("c:/temp/out.xml");
@@ -122,7 +136,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		add_message("File written");
 	}
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Output Messages");
 
 	for (const auto& msg : m_messages) {
 		ImVec4 color;

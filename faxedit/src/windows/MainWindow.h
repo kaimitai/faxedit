@@ -11,7 +11,7 @@
 
 namespace fe {
 
-	enum EditMode { Tilemap, Sprites, Doors };
+	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -56,8 +56,6 @@ namespace fe {
 		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
 
-		void draw_tilemap_window(SDL_Renderer* p_rnd, const fe::Game& p_game,
-			int& p_hover_x, int& p_hover_y, bool& p_clicked);
 		void draw_metatile_info(const fe::Game& p_game,
 			std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);
@@ -73,6 +71,7 @@ namespace fe {
 			std::size_t p_screen_count, std::optional<byte> p_scroll_data);
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
+		std::string get_editmode_as_string(void) const;
 
 		Size4 get_selection_dims(void) const;
 		void clipboard_copy(const fe::Game& p_game);

@@ -28,10 +28,24 @@ namespace fe {
 		constexpr std::pair<std::size_t, std::size_t> PTR_SAMEW_TRANS_TABLE{ 0x3ea47, 0x30010 };
 
 		// regular offsets with no associated pointer table that we know of
+		constexpr std::size_t OFFSET_MATTOCK_ANIMATIONS{ 0x3c69f };
 		constexpr std::size_t OFFSET_SPAWN_LOC_WORLDS{ 0x3ddbd };
 		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ 0x3ddc5 };
 		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ 0x3ddcd };
 		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ 0x3dde5 };
+
+		// in game constants used as parameters to assembly instructions
+
+		// path-to-mascon "line-drawing"
+		constexpr std::size_t OFFSET_PTM_WORLD_NO{ 0x3d782 };
+		constexpr std::size_t OFFSET_PTM_SCREEN_NO{ 0x3d788 };
+		constexpr std::size_t OFFSET_PTM_BLOCK_COUNT{ 0x3d745 };
+		constexpr std::size_t OFFSET_PTM_START_POS{ 0x3d749 };
+		// 4 bytes from this location: what tiles to replace the pushable blocks with,
+		// and then which 2 tiles will appear where the blockes were pushed to
+		constexpr std::size_t OFFSET_PTM_REPLACE_TILE_NOS{ 0x3d778 };
+		constexpr std::size_t OFFSET_PTM_POS_DELTA{ 0x3d7b3 };
+		constexpr std::size_t OFFSET_PTM_TILE_NO{ 0x3d7bf };
 
 		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
 

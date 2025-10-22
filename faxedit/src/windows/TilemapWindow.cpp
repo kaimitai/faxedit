@@ -10,9 +10,12 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 	auto& l_screen = l_chunk.m_screens.at(m_sel_screen);
 	auto l_screen_tilemap{ m_gfx.get_screen_texture() };
 
-	const std::string l_win_label{ std::format("{} > Screen {} > Position ({},{})",
+	const std::string l_win_label{ std::format("{} > Screen {} > {}",
 		c::LABELS_CHUNKS[m_sel_chunk], m_sel_screen,
-		m_sel_tile_x, m_sel_tile_y) + "###sms" };
+		get_editmode_as_string()) +
+		(m_emode == fe::EditMode::Tilemap ?
+		std::format(" > Position ({},{})", m_sel_tile_x, m_sel_tile_y) : "")
+	+ "###stmw" };
 
 	ImGui::Begin(l_win_label.c_str());
 
@@ -62,27 +65,67 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 			std::size_t tileX = std::min(static_cast<std::size_t>(localX / tileSize), std::size_t(15));
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
-			if (l_mouse_left_down) {
-				// ctrl + left mouse; color picker
-				if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
-					m_sel_metatile = l_screen.m_tilemap.at(tileY).at(tileX);
+			if (m_emode == fe::EditMode::Tilemap) {
+				if (l_mouse_left_down) {
+					// ctrl + left mouse; color picker
+					if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+						m_sel_metatile = l_screen.m_tilemap.at(tileY).at(tileX);
+					}
+					else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+						m_sel_tile_x2 = tileX;
+						m_sel_tile_y2 = tileY;
+					}
+					// left mouse; select tile coords
+					else {
+						m_sel_tile_x = tileX;
+						m_sel_tile_y = tileY;
+						// clear selection rectangle
+						m_sel_tile_x2 = 16;
+					}
 				}
-				else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
-					m_sel_tile_x2 = tileX;
-					m_sel_tile_y2 = tileY;
-				}
-				// left mouse; select tile coords
-				else {
-					m_sel_tile_x = tileX;
-					m_sel_tile_y = tileY;
-					// clear selection rectangle
-					m_sel_tile_x2 = 16;
-				}
-			}
 
-			else if (l_mouse_right_down) {
-				if (m_sel_metatile < l_metatiles.size())
-					l_screen.m_tilemap.at(tileY).at(tileX) = static_cast<byte>(m_sel_metatile);
+				else if (l_mouse_right_down) {
+					if (m_sel_metatile < l_metatiles.size())
+						l_screen.m_tilemap.at(tileY).at(tileX) = static_cast<byte>(m_sel_metatile);
+				}
+
+			}
+			else {
+				bool l_shift{ ImGui::IsKeyDown(ImGuiKey_LeftShift) };
+
+				if (m_emode == fe::EditMode::Sprites &&
+					l_mouse_left_down) {
+
+					if (l_shift &&
+						m_sel_sprite < l_screen.m_sprites.size()) {
+						l_screen.m_sprites[m_sel_sprite].m_x = static_cast<byte>(tileX);
+						l_screen.m_sprites[m_sel_sprite].m_y = static_cast<byte>(tileY);
+					}
+					else {
+						for (std::size_t s{ 0 }; s < l_screen.m_sprites.size(); ++s)
+							if (tileX == l_screen.m_sprites[s].m_x &&
+								tileY == l_screen.m_sprites[s].m_y) {
+								m_sel_sprite = s;
+								break;
+							}
+					}
+				}
+
+				else if (m_emode == fe::EditMode::Doors &&
+					l_mouse_left_down) {
+					if (l_shift && m_sel_door < l_screen.m_doors.size()) {
+						l_screen.m_doors[m_sel_door].m_coords =
+						{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
+					}
+					else {
+						for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d)
+							if (tileX == l_screen.m_doors[d].m_coords.first &&
+								tileY == l_screen.m_doors[d].m_coords.second) {
+								m_sel_door = d;
+								break;
+							}
+					}
+				}
 			}
 		}
 	}
@@ -93,9 +136,14 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 	if (ImGui::BeginChild("RightScreenPanel", ImVec2(rightPanelWidth, panelHeight), true)) {
 
+		ImGui::PushStyleColor(ImGuiCol_Tab, ui::g_uiStyles[0].normal);
+		ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[2].active);
+		ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[2].hovered);
+
 		if (ImGui::BeginTabBar("ScreenTabs")) {
 			// TAB TILEMAP - BEGIN
 			if (ImGui::BeginTabItem("Tilemap")) {
+				m_emode = fe::EditMode::Tilemap;
 
 				ImGui::SeparatorText("Selected Metatile");
 
@@ -126,6 +174,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 			// TAB SPRITES - BEGIN
 			if (ImGui::BeginTabItem("Sprites")) {
+				m_emode = fe::EditMode::Sprites;
 
 				std::size_t l_sprite_cnt{ l_screen.m_sprites.size() };
 
@@ -198,6 +247,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 			// TAB DOORS - BEGIN
 			if (ImGui::BeginTabItem("Doors")) {
+				m_emode = fe::EditMode::Doors;
 
 				auto& l_doors{ l_screen.m_doors };
 				std::size_t l_door_cnt{ l_doors.size() };
@@ -423,6 +473,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 			// TAB SCROLLING - BEGIN
 
 			if (ImGui::BeginTabItem("Scrolling")) {
+				m_emode = fe::EditMode::Scrolling;
 
 				l_screen.m_scroll_left = show_screen_scroll_section("Left", l_chunk.m_screens.size(), l_screen.m_scroll_left);
 				l_screen.m_scroll_right = show_screen_scroll_section("Right", l_chunk.m_screens.size(), l_screen.m_scroll_right);
@@ -441,6 +492,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 
 			if (ImGui::BeginTabItem("Transitions")) {
+				m_emode = fe::EditMode::Transitions;
 
 				bool l_iwt{ l_screen.m_intrachunk_scroll.has_value() };
 
@@ -557,6 +609,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 			ImGui::EndTabBar();
 		}
+
+		ImGui::PopStyleColor(3);
 	}
 
 	ImGui::EndChild();
