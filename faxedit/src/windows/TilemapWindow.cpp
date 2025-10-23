@@ -154,10 +154,20 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 					get_description(l_metatiles[m_sel_metatile].m_block_property, c::LABELS_BLOCK_PROPERTIES)));
 
 				ImGui::SeparatorText("Metatiles");
-				for (int i = 0; i < l_metatiles.size(); ++i) {
+				for (std::size_t i = 0; i < l_metatiles.size(); ++i) {
 					if (ImGui::ImageButton(std::format("###mt{}", i).c_str(), m_gfx.get_metatile_texture(i), ImVec2(32, 32))) {
 						m_sel_metatile = i;
 					}
+
+					if (i == m_sel_metatile) {
+						ImVec2 button_pos = ImGui::GetItemRectMin();
+						ImVec2 button_end = ImGui::GetItemRectMax();
+						ImGui::GetWindowDrawList()->AddRect(
+							button_pos, button_end,
+							IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f
+						);
+					}
+
 					if ((i + 1) % 10)
 						ImGui::SameLine();
 				}

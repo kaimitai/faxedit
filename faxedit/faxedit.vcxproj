@@ -165,7 +165,7 @@
     <ClCompile Include="src\fe\Sprite.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\windows\Chunk_window.cpp" />
+    <ClCompile Include="src\windows\MetaDataWindow.cpp" />
     <ClCompile Include="src\windows\ControlWindow.cpp" />
     <ClCompile Include="src\windows\gfx.cpp" />
     <ClCompile Include="src\windows\imgui_helper.cpp" />

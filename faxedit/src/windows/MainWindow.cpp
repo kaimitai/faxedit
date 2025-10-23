@@ -22,6 +22,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_atlas_new_palette_no{ 0 },
 	m_sel_metatile{ 0 },
 	m_sel_tilemap_sub_palette{ 0 },
+	m_sel_nes_tile{ 0x80 },
 	m_emode{ fe::EditMode::Tilemap }
 {
 
@@ -133,7 +134,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 
 	draw_screen_tilemap_window(p_rnd, p_game);
 	draw_control_window(p_rnd, p_game);
-	draw_chunk_window(p_rnd, p_game);
+	draw_metadata_window(p_rnd, p_game);
 
 	ImGui::Render();
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);

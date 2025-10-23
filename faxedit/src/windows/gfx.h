@@ -46,6 +46,7 @@ namespace fe {
 		void blit_to_screen(SDL_Renderer* p_rnd, int tile_no, int sub_palette_no, int x, int y) const;
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 
+		SDL_Texture* get_atlas(void) const;
 		SDL_Texture* get_screen_texture(void) const;
 		SDL_Texture* get_metatile_texture(std::size_t p_mt_no) const;
 	};

@@ -106,6 +106,10 @@ void fe::gfx::generate_atlas(SDL_Renderer* p_rnd,
 	m_atlas = surface_to_texture(p_rnd, l_srf);
 }
 
+SDL_Texture* fe::gfx::get_atlas(void) const {
+	return m_atlas;
+}
+
 SDL_Texture* fe::gfx::get_screen_texture(void) const {
 	return m_screen_texture;
 }

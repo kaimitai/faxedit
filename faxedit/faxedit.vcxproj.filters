@@ -123,7 +123,7 @@
     <ClCompile Include="src\windows\imgui_helper.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\Chunk_window.cpp">
+    <ClCompile Include="src\windows\MetaDataWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
     <ClCompile Include="src\common\pugixml\pugixml.cpp">

@@ -34,7 +34,10 @@ namespace fe {
 			m_sel_tile_x, m_sel_tile_y,
 			m_sel_tile_x2, m_sel_tile_y2,
 			// metatile select editor
-			m_sel_metatile, m_sel_tilemap_sub_palette;
+			m_sel_metatile, m_sel_tilemap_sub_palette,
+
+			// metatile definition editor
+			m_sel_nes_tile;
 
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
@@ -63,7 +66,7 @@ namespace fe {
 		void draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 		void draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 
-		void draw_chunk_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+		void draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game);
 
 		void add_message(const std::string& p_msg, int p_status = 0);
 
