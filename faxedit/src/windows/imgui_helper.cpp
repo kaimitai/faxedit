@@ -56,10 +56,3 @@ bool fe::ui::imgui_button(const std::string& p_label, std::size_t p_style,
 
 	return l_result;
 }
-
-bool fe::ui::imgui_tab_bar_item(const std::string& p_label) {
-
-	bool l_result{ ImGui::BeginTabItem(p_label.c_str()) };
-
-	return l_result;
-}

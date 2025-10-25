@@ -60,19 +60,8 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
 
 			for (std::size_t npcb{ 0 }; npcb < 70; ++npcb) {
-				std::vector<byte> l_bundle_bytes;
-
 				std::size_t l_ptr_to_set{ get_pointer_address(l_ptr_to_bundles + 2 * npcb, 0x24010) };
-				int l_delims{ 0 };
-
-				while (l_delims != 2) {
-					byte b{ m_rom_data.at(l_ptr_to_set++) };
-					if (b == 0xff)
-						++l_delims;
-					l_bundle_bytes.push_back(b);
-				}
-
-				m_npc_bundles.push_back(l_bundle_bytes);
+				m_npc_bundles.push_back(extract_sprite_set(m_rom_data, l_ptr_to_set));
 			}
 		}
 		else
@@ -135,6 +124,31 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4
 		));
 	}
+
+	// extract mattock animations
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		m_chunks.at(m_map_chunk_idx.at(i)).m_mattock_animation = {
+			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i),
+			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 1),
+			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 2),
+			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 3)
+		};
+	}
+
+	// extract "push-block" parameters
+	m_push_block = fe::Push_block_parameters(
+		static_cast<byte>(m_map_chunk_idx.at(m_rom_data.at(c::OFFSET_PTM_WORLD_NO))),
+		m_rom_data.at(c::OFFSET_PTM_SCREEN_NO),
+		m_rom_data.at(c::OFFSET_PTM_START_POS) % 16,
+		m_rom_data.at(c::OFFSET_PTM_START_POS) / 16,
+		m_rom_data.at(c::OFFSET_PTM_BLOCK_COUNT),
+		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS),
+		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 1),
+		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 2),
+		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3),
+		m_rom_data.at(c::OFFSET_PTM_POS_DELTA),
+		m_rom_data.at(c::OFFSET_PTM_TILE_NO)
+	);
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset) const {
@@ -220,35 +234,8 @@ void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 	for (std::size_t i{ 0 }; i < m_chunks.at(l_true_chunk).m_screens.size(); ++i) {
 		std::size_t l_ptr_to_screen{ get_pointer_address(l_ptr_to_screens + 2 * i, 0x24010) };
 
-		// firstly: extract sprite data
-		while (m_rom_data.at(l_ptr_to_screen) != 0xff) {
-			byte l_id{ m_rom_data.at(l_ptr_to_screen) };
-			byte l_y{ static_cast<byte>(m_rom_data.at(l_ptr_to_screen + 1) / 16) };
-			byte l_x{ static_cast<byte>(m_rom_data.at(l_ptr_to_screen + 1) % 16) };
-
-			m_chunks.at(l_true_chunk).add_screen_sprite(i, l_id, l_x, l_y);
-			l_ptr_to_screen += 2;
-		}
-
-		auto& l_sprites{ m_chunks[l_true_chunk].m_screens[i].m_sprites };
-
-		// secondly: extract sprite text data
-		// hypothesis: 0xff at end of stream seems to be optional
-		// when every sprite has a text byte associated with it
-		std::size_t l_sprite_no{ 0 };
-
-		while (m_rom_data.at(++l_ptr_to_screen) != 0xff) {
-
-			byte l_text_id{ m_rom_data.at(l_ptr_to_screen) };
-			if (l_sprite_no < l_sprites.size())
-				l_sprites[l_sprite_no++].m_text_id = l_text_id;
-			else
-				m_chunks[l_true_chunk].m_screens[i].m_unknown_sprite_bytes.push_back(l_text_id);
-
-		}
-
-		if (m_rom_data.at(l_ptr_to_screen + 1) == 0x80)
-			m_chunks[l_true_chunk].m_screens[i].m_sprite_command_byte = m_rom_data.at(l_ptr_to_screen + 2);
+		m_chunks[l_true_chunk].m_screens[i].m_sprite_set =
+			extract_sprite_set(m_rom_data, l_ptr_to_screen);
 	}
 }
 
@@ -289,7 +276,7 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 
 // find all guru (with spawn point) door entrances
 // and update the spawn location with the door data
-void fe::Game::calculate_spawn_locations_by_guru(const std::vector<std::size_t>& p_chunk_remap) {
+void fe::Game::calculate_spawn_locations_by_guru(void) {
 	for (std::size_t c{ 0 }; c < m_chunks.size(); ++c)
 		for (std::size_t s{ 0 }; s < m_chunks[c].m_screens.size(); ++s)
 			for (const auto& l_door : m_chunks[c].m_screens[s].m_doors) {
@@ -302,7 +289,7 @@ void fe::Game::calculate_spawn_locations_by_guru(const std::vector<std::size_t>&
 					if (iter != end(c::SPAWN_POINT_BUILDING_PARAMS)) {
 						std::size_t l_spawn_no{ static_cast<std::size_t>(iter - begin(c::SPAWN_POINT_BUILDING_PARAMS)) };
 						m_spawn_locations.at(l_spawn_no) = fe::Spawn_location(
-							static_cast<byte>(klib::kutil::get_vector_index(p_chunk_remap, c)),
+							static_cast<byte>(c),
 							static_cast<byte>(s),
 							l_door.m_coords.first,
 							l_door.m_coords.second
@@ -311,4 +298,135 @@ void fe::Game::calculate_spawn_locations_by_guru(const std::vector<std::size_t>&
 
 				}
 			}
+}
+
+// make sure there are no references to any metatiles in p_mt_to_delete
+void fe::Game::delete_metatiles(std::size_t p_chunk_no,
+	const std::unordered_set<byte>& p_mt_to_delete) {
+	auto& l_chunk{ m_chunks.at(p_chunk_no) };
+	auto& l_mt{ l_chunk.m_metatiles };
+
+	// Step 1: Build index remapping
+	std::vector<int> remap(l_mt.size(), -1);
+	int new_index = 0;
+
+	for (size_t old_index{ 0 }; old_index < l_mt.size(); ++old_index) {
+		if (p_mt_to_delete.count(static_cast<byte>(old_index)) == 0) {
+			remap[old_index] = new_index++;
+		}
+	}
+
+	// Step 2: Remove metatiles
+	std::vector<fe::Metatile> new_metatiles;
+	for (size_t i = 0; i < l_mt.size(); ++i) {
+		if (remap[i] != -1) {
+			new_metatiles.push_back(l_mt[i]);
+		}
+	}
+
+	l_mt = std::move(new_metatiles);
+
+	// re-index screen tilemaps
+	for (auto& scr : l_chunk.m_screens)
+		for (auto& row : scr.m_tilemap)
+			for (byte& b : row)
+				b = static_cast<byte>(remap[b]);
+
+	// re-index mattock animation
+	for (byte& b : l_chunk.m_mattock_animation)
+		b = static_cast<byte>(remap[b]);
+
+	// if the push-block happens on this world, make sure we re-index the tiles involved
+	if (m_push_block.m_world == static_cast<byte>(p_chunk_no)) {
+		m_push_block.m_draw_block = static_cast<byte>(remap[m_push_block.m_draw_block]);
+		m_push_block.m_source_0 = static_cast<byte>(remap[m_push_block.m_source_0]);
+		m_push_block.m_source_1 = static_cast<byte>(remap[m_push_block.m_source_1]);
+		m_push_block.m_target_0 = static_cast<byte>(remap[m_push_block.m_target_0]);
+		m_push_block.m_target_1 = static_cast<byte>(remap[m_push_block.m_target_1]);
+	}
+
+}
+
+std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const {
+	std::set<byte> l_result;
+	const auto& l_chunk{ m_chunks.at(p_chunk_no) };
+
+	// screen tilemaps refer to metatiles of course
+	for (const auto& scr : l_chunk.m_screens)
+		for (const auto& row : scr.m_tilemap)
+			for (byte b : row)
+				l_result.insert(b);
+
+	// mattock animations refer to 4 metatiles
+	for (byte b : l_chunk.m_mattock_animation)
+		l_result.insert(b);
+
+	// the push-block happens on this world, make sure we re-index the tiles involved
+	if (m_push_block.m_world == static_cast<byte>(p_chunk_no)) {
+		l_result.insert(m_push_block.m_draw_block);
+		l_result.insert(m_push_block.m_source_0);
+		l_result.insert(m_push_block.m_source_1);
+		l_result.insert(m_push_block.m_target_0);
+		l_result.insert(m_push_block.m_target_1);
+	}
+
+	return l_result;
+}
+
+bool fe::Game::is_metatile_referenced(std::size_t p_chunk_no,
+	std::size_t p_metatile_no) const {
+
+	const auto l_refs{ get_referenced_metatiles(p_chunk_no) };
+
+	return l_refs.find(static_cast<byte>(p_metatile_no)) != end(l_refs);
+}
+
+std::size_t fe::Game::delete_unreferenced_metatiles(std::size_t p_chunk_no) {
+	auto& l_chunk{ m_chunks.at(p_chunk_no) };
+	std::unordered_set<byte> mts_to_delete;
+	auto l_refs{ get_referenced_metatiles(p_chunk_no) };
+
+	for (std::size_t i{ 0 }; i < l_chunk.m_metatiles.size(); ++i)
+		if (l_refs.find(static_cast<byte>(i)) == end(l_refs))
+			mts_to_delete.insert(static_cast<byte>(i));
+
+	delete_metatiles(p_chunk_no, mts_to_delete);
+
+	return mts_to_delete.size();
+}
+
+fe::Sprite_set fe::Game::extract_sprite_set(const std::vector<byte>& p_rom_data, std::size_t p_offset) const {
+	fe::Sprite_set l_result;
+
+	std::size_t l_offset{ p_offset };
+
+	// firstly: extract sprite data
+	while (m_rom_data.at(l_offset) != 0xff) {
+		byte l_id{ m_rom_data.at(l_offset) };
+		byte l_y{ static_cast<byte>(m_rom_data.at(l_offset + 1) / 16) };
+		byte l_x{ static_cast<byte>(m_rom_data.at(l_offset + 1) % 16) };
+
+		l_result.m_sprites.push_back(fe::Sprite(l_id, l_x, l_y));
+
+		l_offset += 2;
+	}
+
+	// secondly: extract sprite text data
+	std::size_t l_sprite_no{ 0 };
+
+	while (p_rom_data.at(++l_offset) != 0xff) {
+
+		byte l_text_id{ m_rom_data.at(l_offset) };
+
+		// there is one entry in the original data set
+		// that is missing a delimiter after the text bytes so check vector size
+		if (l_sprite_no < l_result.size())
+			l_result.m_sprites[l_sprite_no++].m_text_id = l_text_id;
+	}
+
+	// finally the command byte which is stored with the sprite data for some reason
+	if (m_rom_data.at(l_offset + 1) == 0x80)
+		l_result.m_command_byte = m_rom_data.at(l_offset + 2);
+
+	return l_result;
 }

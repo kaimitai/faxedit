@@ -63,11 +63,11 @@ void fe::Screen::set_scroll_properties(const std::vector<byte>& p_rom, std::size
 }
 
 void fe::Screen::add_sprite(byte p_id, byte p_x, byte p_y) {
-	m_sprites.push_back(fe::Sprite(p_id, p_x, p_y));
+	m_sprite_set.push_back(fe::Sprite(p_id, p_x, p_y));
 }
 
 void fe::Screen::set_sprite_text(std::size_t p_sprite_no, byte p_text) {
-	m_sprites.at(p_sprite_no).set_text(p_text);
+	m_sprite_set.at(p_sprite_no).set_text(p_text);
 }
 
 std::vector<byte> fe::Screen::get_tilemap_bytes(void) const {
@@ -90,52 +90,4 @@ std::vector<byte> fe::Screen::get_tilemap_bytes(void) const {
 	}
 
 	return writer.get_data();
-}
-
-std::vector<byte> fe::Screen::get_sprite_bytes(void) const {
-	std::vector<byte> l_result;
-
-	// if there are both sprites with and without text - put the text ones first
-	std::vector<std::size_t> l_txt_sprites, l_mute_sprites;
-
-	for (std::size_t s{ 0 }; s < m_sprites.size(); ++s) {
-		if (m_sprites[s].m_text_id.has_value())
-			l_txt_sprites.push_back(s);
-		else
-			l_mute_sprites.push_back(s);
-	}
-
-	// hypothesis: we don't really need to end the text portion with 0xff if all the sprites use text
-	// as the game doesn't look for text bytes beyond the actual screen sprite counts
-	for (std::size_t i{ 0 }; i < l_txt_sprites.size(); ++i) {
-		const auto& l_sprite{ m_sprites[l_txt_sprites[i]] };
-		l_result.push_back(l_sprite.m_id);
-		l_result.push_back(l_sprite.m_y * 16 + l_sprite.m_x);
-	}
-
-	for (std::size_t i{ 0 }; i < l_mute_sprites.size(); ++i) {
-		const auto& l_sprite{ m_sprites[l_mute_sprites[i]] };
-		l_result.push_back(l_sprite.m_id);
-		l_result.push_back(l_sprite.m_y * 16 + l_sprite.m_x);
-	}
-
-	l_result.push_back(0xff);
-
-	// add the text bytes
-	for (std::size_t i{ 0 }; i < l_txt_sprites.size(); ++i) {
-		const auto& l_sprite{ m_sprites[l_txt_sprites[i]] };
-		l_result.push_back(l_sprite.m_text_id.value());
-	}
-
-	// is this really necessary if l_txt_sprites.size() == l_mute_sprites.size()
-	// the original game seems to omit this sometimes in these cases
-	l_result.push_back(0xff);
-
-	// add sprite command byte if it exists
-	if (m_sprite_command_byte.has_value()) {
-		l_result.push_back(0x80);
-		l_result.push_back(m_sprite_command_byte.value());
-	}
-
-	return l_result;
 }

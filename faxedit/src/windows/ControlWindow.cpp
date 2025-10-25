@@ -92,9 +92,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 	if (ImGui::Button("Patch ROM")) {
 		auto l_rom{ p_game.m_rom_data };
 
-		p_game.calculate_spawn_locations_by_guru(p_game.m_map_chunk_idx);
-		m_rom_manager.encode_spawn_locations(p_game, l_rom);
-
 		// encode metadata
 		auto l_metadata{ m_rom_manager.encode_game_metadata_all(p_game) };
 		std::copy(begin(l_metadata), end(l_metadata), begin(l_rom) + 0xc012);
@@ -115,9 +112,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
 		add_message("Patched sprite data (" + std::to_string(l_sprite_data.size()) + " bytes)");
 
-		m_rom_manager.encode_chunk_door_data(p_game, l_rom);
-		add_message("Patched world door connection data");
-
 		auto l_ow_trans{ m_rom_manager.encode_game_otherworld_trans(p_game) };
 		std::copy(begin(l_ow_trans), end(l_ow_trans),
 			begin(l_rom) + p_game.m_ptr_chunk_intrachunk_transitions);
@@ -130,10 +124,21 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 		add_message("Patched same-world transtion data ("
 			+ std::to_string(l_sw_trans.size()) + " bytes)");
 
+		m_rom_manager.encode_static_data(p_game, l_rom);
+		add_message("Patched static data");
+
 		klib::file::write_bytes_to_file(l_rom,
 			"c:/temp/faxanadu-out.nes");
 
 		add_message("File written");
+	}
+
+	if (ui::imgui_button("Delete Unreferenced Metatiles", 2)) {
+		std::size_t l_del_cnt{ p_game.delete_unreferenced_metatiles(m_sel_chunk) };
+		add_message(std::format("{} metatiles deleted from world {}",
+			l_del_cnt, m_sel_chunk));
+		if (l_del_cnt > 0)
+			generate_metatile_textures(p_rnd, p_game);
 	}
 
 	ImGui::SeparatorText("Output Messages");

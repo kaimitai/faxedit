@@ -163,6 +163,7 @@
     <ClCompile Include="src\fe\ROM_Manager.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
+    <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\windows\MetaDataWindow.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="src\fe\ROM_Manager.h" />
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
+    <ClInclude Include="src\fe\Sprite_set.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
     <ClInclude Include="src\windows\gfx.h" />

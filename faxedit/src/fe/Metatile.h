@@ -14,6 +14,7 @@ namespace fe {
 			m_block_property;
 		Tilemap m_tilemap;
 
+		Metatile(void);
 		Metatile(byte l_tl, byte l_tr, byte l_bl, byte l_br, byte p_attributes,
 			byte p_block_property);
 		Metatile(byte l_tl, byte l_tr, byte l_bl, byte l_br, byte p_tl_attr, byte p_tr_attr, byte p_bl_attr, byte p_br_attr,

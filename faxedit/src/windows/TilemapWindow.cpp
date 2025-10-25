@@ -97,14 +97,14 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 					l_mouse_left_down) {
 
 					if (l_shift &&
-						m_sel_sprite < l_screen.m_sprites.size()) {
-						l_screen.m_sprites[m_sel_sprite].m_x = static_cast<byte>(tileX);
-						l_screen.m_sprites[m_sel_sprite].m_y = static_cast<byte>(tileY);
+						m_sel_sprite < l_screen.m_sprite_set.size()) {
+						l_screen.m_sprite_set.m_sprites[m_sel_sprite].m_x = static_cast<byte>(tileX);
+						l_screen.m_sprite_set.m_sprites[m_sel_sprite].m_y = static_cast<byte>(tileY);
 					}
 					else {
-						for (std::size_t s{ 0 }; s < l_screen.m_sprites.size(); ++s)
-							if (tileX == l_screen.m_sprites[s].m_x &&
-								tileY == l_screen.m_sprites[s].m_y) {
+						for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s)
+							if (tileX == l_screen.m_sprite_set.m_sprites[s].m_x &&
+								tileY == l_screen.m_sprite_set.m_sprites[s].m_y) {
 								m_sel_sprite = s;
 								break;
 							}
@@ -186,9 +186,16 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 			if (ImGui::BeginTabItem("Sprites")) {
 				m_emode = fe::EditMode::Sprites;
 
-				std::size_t l_sprite_cnt{ l_screen.m_sprites.size() };
+				ImGui::PushID("screensprites");
 
-				auto& l_sprites{ l_screen.m_sprites };
+				show_sprite_screen(l_screen.m_sprite_set, m_sel_sprite);
+
+				ImGui::PopID();
+
+				/*
+				std::size_t l_sprite_cnt{ l_screen.m_sprite_set.size() };
+
+				auto& l_sprites{ l_screen.m_sprite_set.m_sprites };
 
 				if (l_sprites.empty()) {
 					imgui_text("No sprites defined for this screen");
@@ -248,7 +255,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 					l_screen.add_sprite(0x2a, 0, 0);
 					++m_sel_sprite;
 				}
-
+				*/
 				ImGui::EndTabItem();
 			}
 			// TAB SPRITES - END

@@ -19,6 +19,7 @@ namespace fe {
 		std::vector<fe::Screen> m_screens;
 		byte m_default_palette_no;
 		std::optional<fe::Chunk_door_connections> m_door_connections;
+		std::vector<byte> m_mattock_animation;
 
 		std::vector<byte> extract_bytes(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_length) const;

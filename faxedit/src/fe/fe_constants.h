@@ -166,6 +166,12 @@ namespace fe {
 			{0x00, "Welcome message"}
 		};
 
+		inline const std::map<byte, std::string> LABELS_COMMAND_BYTE{
+			{0x00, "Final Spring Opening"},
+			{0x01, "Boss Room"},
+			{0x02, "End-Game Room"}
+		};
+
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid
 		inline const char* LABELS_DOOR_TYPES[]{

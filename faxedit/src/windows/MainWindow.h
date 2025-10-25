@@ -8,6 +8,7 @@
 #include "gfx.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
+#include <set>
 
 namespace fe {
 
@@ -37,7 +38,12 @@ namespace fe {
 			m_sel_metatile, m_sel_tilemap_sub_palette,
 
 			// metatile definition editor
-			m_sel_nes_tile;
+			m_sel_nes_tile,
+			
+			// spawn location editor
+			m_sel_spawn_location,
+			// npc bundles aka building parameters
+			m_sel_npc_bundle, m_sel_npc_bundle_sprite;
 
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
@@ -74,6 +80,8 @@ namespace fe {
 			std::size_t p_screen_count, std::optional<byte> p_scroll_data);
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
+		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
+		
 		std::string get_editmode_as_string(void) const;
 
 		Size4 get_selection_dims(void) const;

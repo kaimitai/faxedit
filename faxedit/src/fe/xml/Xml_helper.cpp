@@ -11,7 +11,7 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 	auto n_root{ l_doc.child(c::TAG_ROOT) };
 
-	// Read version and be backward-compatible when the format chenges
+	// Read version and be backward-compatible when the format changes
 
 	// extract game-level metadata
 
@@ -26,7 +26,28 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 	auto n_bparams = n_root.child(c::TAG_NPC_BUNDLES);
 	for (auto n_bparam{ n_bparams.child(c::TAG_NPC_BUNDLE) }; n_bparam;
 		n_bparam = n_bparam.next_sibling(c::TAG_NPC_BUNDLE)) {
-		l_game.m_npc_bundles.push_back(parse_byte_list(n_bparam.attribute(c::ATTR_BYTES).as_string()));
+
+		fe::Sprite_set l_sprite_set;
+
+		if (n_bparam.attribute(c::ATTR_SPRITE_COMM_BYTE))
+			l_sprite_set.m_command_byte = parse_numeric_byte(n_bparam.attribute(c::ATTR_SPRITE_COMM_BYTE).as_string());
+
+		for (auto n_bld_sprite{ n_bparam.child(c::TAG_SPRITE) }; n_bld_sprite;
+			n_bld_sprite = n_bld_sprite.next_sibling(c::TAG_SPRITE)) {
+
+			fe::Sprite l_sprite(
+				parse_numeric_byte(n_bld_sprite.attribute(c::ATTR_ID).as_string()),
+				parse_numeric_byte(n_bld_sprite.attribute(c::ATTR_X).as_string()),
+				parse_numeric_byte(n_bld_sprite.attribute(c::ATTR_Y).as_string())
+			);
+
+			if (n_bld_sprite.attribute(c::ATTR_TEXT_ID))
+				l_sprite.m_text_id = parse_numeric_byte(n_bld_sprite.attribute(c::ATTR_TEXT_ID).as_string());
+
+			l_sprite_set.m_sprites.push_back(l_sprite);
+		}
+
+		l_game.m_npc_bundles.push_back(l_sprite_set);
 	}
 
 	// extract spawn points
@@ -41,6 +62,23 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		));
 	}
 
+	// extract push-block parameters
+	auto n_push_block{ n_root.child(c::TAG_PUSH_BLOCK) };
+
+	l_game.m_push_block = fe::Push_block_parameters(
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_CHUNK_ID).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_SCREEN_ID).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_X).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_Y).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_BLOCK_COUNT).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_SOURCE_BLOCK0).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_SOURCE_BLOCK1).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_TARGET_BLOCK0).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_TARGET_BLOCK1).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_DELTA_X).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_DRAW_BLOCK).as_string())
+	);
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -52,6 +90,10 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 		// chunk default palette
 		l_chunk.set_default_palette_no(parse_numeric_byte(n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).as_string()));
+
+		// mattock animation
+		l_chunk.m_mattock_animation = parse_byte_list(n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).as_string());
+
 
 		// chunk door templates
 		auto n_door_conns{ n_chunk.child(c::TAG_CHUNK_DOOR_CONN) };
@@ -108,7 +150,7 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 			// optional command byte originating from the sprite data
 			if (n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE))
-				l_screen.m_sprite_command_byte = parse_numeric_byte(n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).as_string());
+				l_screen.m_sprite_set.m_command_byte = parse_numeric_byte(n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).as_string());
 
 			// optional sameworld-transition override
 			auto n_scr_sw_trans{ n_screen.child(c::TAG_SCREEN_INTERCHUNK_TRANSTION) };
@@ -137,13 +179,13 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 			auto n_sprites{ n_screen.child(c::TAG_SPRITES) };
 			for (auto n_sprite{ n_sprites.child(c::TAG_SPRITE) }; n_sprite; n_sprite = n_sprite.next_sibling(c::TAG_SPRITE)) {
 				if (n_sprite.attribute(c::ATTR_TEXT_ID))
-					l_screen.m_sprites.push_back(fe::Sprite(
+					l_screen.m_sprite_set.push_back(fe::Sprite(
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_ID).as_string()),
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_X).as_string()),
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_Y).as_string()),
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_TEXT_ID).as_string())));
 				else
-					l_screen.m_sprites.push_back(fe::Sprite(
+					l_screen.m_sprite_set.push_back(fe::Sprite(
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_ID).as_string()),
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_X).as_string()),
 						parse_numeric_byte(n_sprite.attribute(c::ATTR_Y).as_string())
@@ -209,11 +251,37 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	for (std::size_t i{ 0 }; i < p_game.m_npc_bundles.size(); ++i) {
 		auto n_bundle{ n_bundles.append_child(c::TAG_NPC_BUNDLE) };
 
+		const auto& l_bundle{ p_game.m_npc_bundles[i] };
+
 		n_bundle.append_attribute(c::ATTR_NO);
 		n_bundle.attribute(c::ATTR_NO).set_value(i);
 
-		n_bundle.append_attribute(c::ATTR_BYTES);
-		n_bundle.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_npc_bundles[i], true));
+		if (l_bundle.m_command_byte.has_value()) {
+			n_bundle.append_attribute(c::ATTR_SPRITE_COMM_BYTE);
+			n_bundle.attribute(c::ATTR_SPRITE_COMM_BYTE).set_value(byte_to_hex(l_bundle.m_command_byte.value()));
+		}
+
+		for (std::size_t s{ 0 }; s < l_bundle.m_sprites.size(); ++s) {
+			auto n_bld_sprite{ n_bundle.append_child(c::TAG_SPRITE) };
+
+			n_bld_sprite.append_attribute(c::ATTR_NO);
+			n_bld_sprite.attribute(c::ATTR_NO).set_value(s);
+
+			n_bld_sprite.append_attribute(c::ATTR_ID);
+			n_bld_sprite.attribute(c::ATTR_ID).set_value(l_bundle.m_sprites[s].m_id);
+
+			n_bld_sprite.append_attribute(c::ATTR_X);
+			n_bld_sprite.attribute(c::ATTR_X).set_value(l_bundle.m_sprites[s].m_x);
+
+			n_bld_sprite.append_attribute(c::ATTR_Y);
+			n_bld_sprite.attribute(c::ATTR_Y).set_value(l_bundle.m_sprites[s].m_y);
+
+			if (l_bundle.m_sprites[s].m_text_id.has_value()) {
+				n_bld_sprite.append_attribute(c::ATTR_TEXT_ID);
+				n_bld_sprite.attribute(c::ATTR_TEXT_ID).set_value(l_bundle.m_sprites[s].m_text_id.value());
+			}
+		}
+
 	}
 
 	// for each spawn point
@@ -237,6 +305,31 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_spawn.attribute(c::ATTR_Y).set_value(l_sl.m_y);
 	}
 
+	auto n_push_block{ n_metadata.append_child(c::TAG_PUSH_BLOCK) };
+
+	n_push_block.append_attribute(c::ATTR_CHUNK_ID);
+	n_push_block.attribute(c::ATTR_CHUNK_ID).set_value(p_game.m_push_block.m_world);
+	n_push_block.append_attribute(c::ATTR_SCREEN_ID);
+	n_push_block.attribute(c::ATTR_SCREEN_ID).set_value(p_game.m_push_block.m_screen);
+	n_push_block.append_attribute(c::ATTR_X);
+	n_push_block.attribute(c::ATTR_X).set_value(p_game.m_push_block.m_x);
+	n_push_block.append_attribute(c::ATTR_Y);
+	n_push_block.attribute(c::ATTR_Y).set_value(p_game.m_push_block.m_y);
+	n_push_block.append_attribute(c::ATTR_DRAW_BLOCK);
+	n_push_block.attribute(c::ATTR_DRAW_BLOCK).set_value(byte_to_hex(p_game.m_push_block.m_draw_block));
+	n_push_block.append_attribute(c::ATTR_DELTA_X);
+	n_push_block.attribute(c::ATTR_DELTA_X).set_value(p_game.m_push_block.m_pos_delta);
+	n_push_block.append_attribute(c::ATTR_BLOCK_COUNT);
+	n_push_block.attribute(c::ATTR_BLOCK_COUNT).set_value(p_game.m_push_block.m_block_count);
+	n_push_block.append_attribute(c::ATTR_SOURCE_BLOCK0);
+	n_push_block.attribute(c::ATTR_SOURCE_BLOCK0).set_value(byte_to_hex(p_game.m_push_block.m_source_0));
+	n_push_block.append_attribute(c::ATTR_SOURCE_BLOCK1);
+	n_push_block.attribute(c::ATTR_SOURCE_BLOCK1).set_value(byte_to_hex(p_game.m_push_block.m_source_1));
+	n_push_block.append_attribute(c::ATTR_TARGET_BLOCK0);
+	n_push_block.attribute(c::ATTR_TARGET_BLOCK0).set_value(byte_to_hex(p_game.m_push_block.m_target_0));
+	n_push_block.append_attribute(c::ATTR_TARGET_BLOCK1);
+	n_push_block.attribute(c::ATTR_TARGET_BLOCK1).set_value(byte_to_hex(p_game.m_push_block.m_target_1));
+
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
 
@@ -251,6 +344,10 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		// chunk metadata
 		n_chunk.append_attribute(c::ATTR_DEFAULT_PALETTE);
 		n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).set_value(byte_to_hex(lc_chunk.m_default_palette_no));
+
+		// mattock animation
+		n_chunk.append_attribute(c::ATTR_MATTOCK_ANIMATION);
+		n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).set_value(join_bytes(lc_chunk.m_mattock_animation, true));
 
 		// chunk door connections, if it exists
 		const auto& lc_chunk_door_conns{ lc_chunk.m_door_connections };
@@ -346,14 +443,9 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 				n_screen.attribute(c::ATTR_SCREEN_ID_DOWN).set_value(lc_screen.m_scroll_down.value());
 			}
 
-			if (lc_screen.m_sprite_command_byte.has_value()) {
+			if (lc_screen.m_sprite_set.m_command_byte.has_value()) {
 				n_screen.append_attribute(c::ATTR_SPRITE_COMM_BYTE);
-				n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).set_value(byte_to_hex(lc_screen.m_sprite_command_byte.value()));
-			}
-
-			if (!lc_screen.m_unknown_sprite_bytes.empty()) {
-				n_screen.append_attribute(c::ATTR_UNKNOWN_SPR_BYTES);
-				n_screen.attribute(c::ATTR_UNKNOWN_SPR_BYTES).set_value(join_bytes(lc_screen.m_unknown_sprite_bytes, true));
+				n_screen.attribute(c::ATTR_SPRITE_COMM_BYTE).set_value(byte_to_hex(lc_screen.m_sprite_set.m_command_byte.value()));
 			}
 
 			// intra-chunk scrolling
@@ -400,12 +492,12 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 			}
 
 			// for each sprite, if any
-			if (!p_game.m_chunks[i].m_screens[s].m_sprites.empty()) {
+			if (!p_game.m_chunks[i].m_screens[s].m_sprite_set.empty()) {
 
 				auto n_screen_sprites{ n_screen.append_child(c::TAG_SPRITES) };
 
-				for (std::size_t sp{ 0 }; sp < p_game.m_chunks[i].m_screens[s].m_sprites.size(); ++sp) {
-					const auto& lc_sprite{ p_game.m_chunks[i].m_screens[s].m_sprites[sp] };
+				for (std::size_t sp{ 0 }; sp < p_game.m_chunks[i].m_screens[s].m_sprite_set.size(); ++sp) {
+					const auto& lc_sprite{ p_game.m_chunks[i].m_screens[s].m_sprite_set.m_sprites[sp] };
 
 					auto n_sprite{ n_screen_sprites.append_child(c::TAG_SPRITE) };
 					n_sprite.append_attribute(c::ATTR_NO);

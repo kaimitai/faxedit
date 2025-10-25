@@ -23,6 +23,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_metatile{ 0 },
 	m_sel_tilemap_sub_palette{ 0 },
 	m_sel_nes_tile{ 0x80 },
+	m_sel_spawn_location{ 0 },
+	m_sel_npc_bundle{ 0 },
 	m_emode{ fe::EditMode::Tilemap }
 {
 
@@ -43,7 +45,6 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_ga
 
 void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 	// input handling, move to separate function later
-
 	if (m_emode == fe::EditMode::Tilemap) {
 		if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
 			clipboard_copy(p_game);
@@ -106,8 +107,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
 	}
 	else if (m_emode == fe::EditMode::Sprites) {
 		// draw placeholder rectangles for sprites
-		for (std::size_t s{ 0 }; s < l_screen.m_sprites.size(); ++s) {
-			const auto& l_sprite{ l_screen.m_sprites[s] };
+		for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
+			const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[s] };
 
 			m_gfx.draw_rect_on_screen(p_rnd,
 				SDL_Color(m_sel_sprite == s ? 255 : 0,
@@ -247,6 +248,89 @@ std::optional<std::pair<byte, byte>> fe::MainWindow::show_position_slider(byte p
 		return std::make_pair(l_x, l_y);
 	else
 		return std::nullopt;
+}
+
+void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite) {
+	std::size_t l_sprite_cnt{ p_sprites.size() };
+
+	auto& l_sprites{ p_sprites.m_sprites };
+
+	if (l_sprites.empty()) {
+		imgui_text("No sprites defined");
+	}
+	else {
+		std::size_t l_sprite_cnt{ l_sprites.size() };
+
+		if (p_sel_sprite >= l_sprite_cnt)
+			p_sel_sprite = l_sprite_cnt - 1;
+
+		auto& l_sprite{ l_sprites[p_sel_sprite] };
+
+		ui::imgui_slider_with_arrows("###spritesel",
+			std::format("Selected sprite: #{}/{}", p_sel_sprite, l_sprite_cnt),
+			p_sel_sprite, 0, l_sprite_cnt - 1);
+
+		ImGui::SeparatorText("Sprite ID");
+
+		ui::imgui_slider_with_arrows("###spriteid",
+			"Sprite ID: " + get_description(l_sprite.m_id, c::LABELS_SPRITES),
+			l_sprite.m_id, 0, 100);
+
+		ImGui::SeparatorText("Position");
+
+		auto l_new_pos{ show_position_slider(l_sprite.m_x, l_sprite.m_y) };
+
+		if (l_new_pos.has_value()) {
+			l_sprite.m_x = l_new_pos.value().first;
+			l_sprite.m_y = l_new_pos.value().second;
+		}
+
+		ImGui::SeparatorText("Script");
+
+		if (!l_sprite.m_text_id.has_value()) {
+			imgui_text("No script defined");
+
+			if (ui::imgui_button("Add script", 2, "Define a script for the sprite"))
+				l_sprite.m_text_id = 0;
+		}
+		else {
+			ui::imgui_slider_with_arrows("###sprdiag",
+				"Script: " + get_description(l_sprite.m_text_id.value(), c::LABELS_DIALOGUE),
+				l_sprite.m_text_id.value(), 0, 0x50);
+
+			if (ui::imgui_button("Remove script", 1))
+				l_sprite.m_text_id.reset();
+		}
+
+		ImGui::Separator();
+	}
+
+	ImGui::SeparatorText("Add or remove sprites");
+
+	if (ui::imgui_button("Add sprite", 2))
+		p_sprites.push_back(fe::Sprite(0x2a, 0, 0));
+
+	if (!p_sprites.empty()) {
+		ImGui::SameLine();
+
+		if (ui::imgui_button("Remove sprite", 1))
+			l_sprites.erase(begin(l_sprites) + p_sel_sprite--);
+	}
+
+	ImGui::SeparatorText("Command Byte");
+	auto& l_cb{ p_sprites.m_command_byte };
+
+	if (l_cb.has_value()) {
+		ui::imgui_slider_with_arrows("###sscb",
+			std::format("Value: {}", get_description(l_cb.value(), c::LABELS_COMMAND_BYTE)),
+			p_sprites.m_command_byte.value(), 0, 2, "Special events for the screen");
+		if (ui::imgui_button("Delete command byte", 2))
+			p_sprites.m_command_byte.reset();
+	}
+	else {
+		if (ui::imgui_button("Add command byte", 2))
+			p_sprites.m_command_byte = 0x01;
+	}
 }
 
 std::string fe::MainWindow::get_editmode_as_string(void) const {

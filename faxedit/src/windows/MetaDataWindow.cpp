@@ -87,7 +87,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					for (std::size_t i = 0x80; i <= 0xff; ++i) {
 						// Compute UVs for tile i
 						float u0 = (i * 8.0f) / (float)l_atlas->w;
-						float v0 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette);
+						float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
 						float u1 = ((i + 1) * 8.0f) / (float)l_atlas->w;
 						float v1 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
 
@@ -123,6 +123,29 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						l_mt_def.m_attr_bl, 0, 3);
 					ui::imgui_slider_with_arrows("mtdefbr", "Bottom-Right",
 						l_mt_def.m_attr_br, 0, 3);
+
+					ImGui::Separator();
+
+					if (ui::imgui_button("Add metatile", 2)) {
+						l_chunk.m_metatiles.push_back(fe::Metatile());
+						generate_metatile_textures(p_rnd, p_game);
+					}
+
+					ImGui::SameLine();
+
+					if (ui::imgui_button("Delete metatile", 1)) {
+						if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
+							if (p_game.is_metatile_referenced(m_sel_chunk,
+								m_sel_metatile))
+								add_message("Metatile is in use", 1);
+							else {
+								p_game.delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
+								generate_metatile_textures(p_rnd, p_game);
+							}
+						}
+						else
+							add_message("Hold shift to delete metatile");
+					}
 
 					ImGui::EndTabItem();
 				}
@@ -218,11 +241,41 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 				// CHUNK - PALETTE - END
 
+				// CHUNK - MATTOCK ANIMATION - BEGIN
+
 				if (ImGui::BeginTabItem("Mattock Animation")) {
+					auto& l_ma{ l_chunk.m_mattock_animation };
+
+					ImGui::Text("Define the four blocks cycled through when using the mattock");
+
+					ui::imgui_slider_with_arrows("ma0", "Breakable block",
+						l_ma.at(0), 0, l_chunk.m_metatiles.size() - 1, "");
+
+					ImGui::SameLine();
+					ImGui::Image(m_gfx.get_metatile_texture(l_ma.at(0)), ImVec2(32, 32));
+
+					ui::imgui_slider_with_arrows("ma1", "Intermedite block #1",
+						l_ma.at(1), 0, l_chunk.m_metatiles.size() - 1, "");
+
+					ImGui::SameLine();
+					ImGui::Image(m_gfx.get_metatile_texture(l_ma.at(1)), ImVec2(32, 32));
+
+					ui::imgui_slider_with_arrows("ma2", "Intermedite block #2",
+						l_ma.at(2), 0, l_chunk.m_metatiles.size() - 1, "");
+
+					ImGui::SameLine();
+					ImGui::Image(m_gfx.get_metatile_texture(l_ma.at(2)), ImVec2(32, 32));
+
+					ui::imgui_slider_with_arrows("ma3", "Destination block",
+						l_ma.at(3), 0, l_chunk.m_metatiles.size() - 1, "");
+
+					ImGui::SameLine();
+					ImGui::Image(m_gfx.get_metatile_texture(l_ma.at(3)), ImVec2(32, 32));
 
 					ImGui::EndTabItem();
 				}
 
+				// CHUNK - MATTOCK ANIMATION - END
 
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
@@ -240,15 +293,139 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 				if (ImGui::BeginTabItem("Spawns")) {
 
+					ImGui::SeparatorText("Spawn locations after dying or talking to a spawn-setting Guru");
+
+					ui::imgui_slider_with_arrows("spawnloc", "",
+						m_sel_spawn_location, 0, 7);
+
+					ImGui::SeparatorText(std::format("Location for spawn point #{}", m_sel_spawn_location).c_str());
+
+					auto& l_spawn{ p_game.m_spawn_locations.at(m_sel_spawn_location) };
+
+					ui::imgui_slider_with_arrows("spawnworld",
+						std::format("World: {}", c::LABELS_CHUNKS.at(l_spawn.m_world)),
+						l_spawn.m_world, 0, 7);
+
+					ui::imgui_slider_with_arrows("spawnscr", "Screen",
+						l_spawn.m_screen, 0, p_game.m_chunks.at(m_sel_chunk).m_screens.size() - 1);
+
+					auto l_newpos = show_position_slider(l_spawn.m_x, l_spawn.m_y);
+
+					if (l_newpos.has_value()) {
+						l_spawn.m_x = l_newpos.value().first;
+						l_spawn.m_y = l_newpos.value().second;
+					}
+
+					ImGui::SeparatorText("Automatic Deduction");
+
+					if (ui::imgui_button("Deduce", 3, "Try to deduce spawn locations by spawn-setting Guru door entrances"))
+						p_game.calculate_spawn_locations_by_guru();
+
 					ImGui::EndTabItem();
 				}
 
 				if (ImGui::BeginTabItem("Building Parameters")) {
 
+					ImGui::SeparatorText(std::format("Building Parameter: {})",
+						get_description(static_cast<byte>(m_sel_npc_bundle), c::LABELS_NPC_BUNDLES)).c_str());
+
+					ui::imgui_slider_with_arrows("###npcbsel", "", m_sel_npc_bundle,
+						0, p_game.m_npc_bundles.size() - 1);
+
+					ImGui::SeparatorText("Building Parameter Sprites");
+
+					ImGui::PushID("###bldparam");
+
+					show_sprite_screen(p_game.m_npc_bundles.at(m_sel_npc_bundle),
+						m_sel_npc_bundle_sprite);
+
+					ImGui::PopID();
+
 					ImGui::EndTabItem();
 				}
 
 				if (ImGui::BeginTabItem("Push-Block")) {
+					auto& l_pb{ p_game.m_push_block };
+					bool l_sameworld{ m_sel_chunk == l_pb.m_world };
+
+					ImGui::Text("The parameters for the tilemap change when\nyou push blocks and open the last spring.");
+					ImGui::Text("Navigate to the world where the push-blocks reside to see metatile previews");
+
+					ImGui::SeparatorText("World and screen for the event");
+
+					ui::imgui_slider_with_arrows("pbw",
+						std::format("World: {}", c::LABELS_CHUNKS.at(l_pb.m_world)), l_pb.m_world, 0, 7, "");
+
+					ui::imgui_slider_with_arrows("pbs",
+						"Screen", l_pb.m_screen, 0, p_game.m_chunks.at(l_pb.m_world).m_screens.size());
+
+					ImGui::SeparatorText("Line-drawing function");
+
+					ImGui::Text("Start position");
+					auto l_newpos{ show_position_slider(
+						l_pb.m_x, l_pb.m_y) };
+					if (l_newpos.has_value()) {
+						l_pb.m_x = l_newpos.value().first;
+						l_pb.m_y = l_newpos.value().second;
+					}
+
+					ui::imgui_slider_with_arrows("pbdelta",
+						"Delta-x", l_pb.m_pos_delta, 0, 255, "Change in x-position per block. Make sure you don't draw off screen. 255 and below are negative deltas. ");
+
+					ui::imgui_slider_with_arrows("pbblock", "Draw-block",
+						l_pb.m_draw_block, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						"The block that will be used to draw the line");
+
+					if (l_sameworld) {
+						ImGui::SameLine();
+						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_draw_block), ImVec2(32, 32));
+					}
+
+					ImGui::SeparatorText("Pushable Blocks Transformation - Source");
+
+					ui::imgui_slider_with_arrows("pbs0", "Source Top",
+						l_pb.m_source_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						"The block that will replace the top of the pushed block");
+
+					if (l_sameworld) {
+						ImGui::SameLine();
+						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_source_0), ImVec2(32, 32));
+					}
+
+					ui::imgui_slider_with_arrows("pbs1", "Source Bottom",
+						l_pb.m_source_1, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						"The block that will replace the bottom of the pushed block");
+
+					if (l_sameworld) {
+						ImGui::SameLine();
+						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_source_1), ImVec2(32, 32));
+					}
+
+					ImGui::SeparatorText("Pushable Blocks Transformation - Target");
+
+					ui::imgui_slider_with_arrows("pbt0", "Source Top",
+						l_pb.m_target_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						"The block that will replace the top of the destination of the pushed block");
+
+					if (l_sameworld) {
+						ImGui::SameLine();
+						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_0), ImVec2(32, 32));
+					}
+
+					ui::imgui_slider_with_arrows("pbt1", "Source Bottom",
+						l_pb.m_target_1, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						"The block that will replace the bottom of the destination of the pushed block");
+
+					if (l_sameworld) {
+						ImGui::SameLine();
+						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_1), ImVec2(32, 32));
+					}
+
+					ImGui::SeparatorText("Deduce world and screen");
+
+					if (ui::imgui_button("Deduce", 1, "Find the world and screens with the pushable blocks (takes first match)")) {
+
+					}
 
 					ImGui::EndTabItem();
 				}
@@ -266,134 +443,3 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 	ImGui::End();
 }
-
-
-/*
-if (ImGui::Button("Check")) {
-	std::string l_output;
-
-	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i)
-		for (std::size_t j{ 0 }; j < p_game.m_chunks[i].m_screens.size(); ++j)
-			for (std::size_t s{ 0 }; s < p_game.m_chunks[i].m_screens[j].m_doors.size(); ++s) {
-
-				const auto& l_door{ p_game.m_chunks[i].m_screens[j].m_doors[s] };
-
-				if (l_door.m_door_type == fe::DoorType::Building ||
-					l_door.m_door_type == fe::DoorType::SameWorld)
-					l_output += "Chunk=" + std::to_string(i) +
-					",Screen=" + std::to_string(j) +
-					",Door=" + std::to_string(s) +
-					",Requirement=" + std::to_string(l_door.m_requirement)
-					+ "\n";
-			}
-
-}
-
-ImGui::Separator();
-
-const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
-
-if (ImGui::Button("Left") && l_screen.m_scroll_left.has_value())
-	m_sel_screen = l_screen.m_scroll_left.value();
-if (ImGui::Button("Right") && l_screen.m_scroll_right.has_value())
-	m_sel_screen = l_screen.m_scroll_right.value();
-if (ImGui::Button("Up") && l_screen.m_scroll_up.has_value())
-	m_sel_screen = l_screen.m_scroll_up.value();
-if (ImGui::Button("Down") && l_screen.m_scroll_down.has_value())
-	m_sel_screen = l_screen.m_scroll_down.value();
-
-std::size_t l_sprite_count{ l_screen.m_sprites.size() };
-
-imgui_text("Screen sprite count: " + std::to_string(l_sprite_count));
-
-for (std::size_t i{ 0 }; i < l_sprite_count; ++i) {
-	const auto& l_sprite{ l_screen.m_sprites[i] };
-
-	byte l_id{ l_sprite.m_id };
-	byte l_x{ l_sprite.m_x };
-	byte l_y{ l_sprite.m_y };
-	std::string l_text{ l_sprite.m_text_id.has_value() ?
-		klib::Bitreader::byte_to_hex(l_sprite.m_text_id.value()) :
-		"None"
-	};
-
-	imgui_text("Sprite #" + std::to_string(i) +
-		" [ID=" + klib::Bitreader::byte_to_hex(l_id) +
-		"] - coords=("
-		+ std::to_string(l_x) + "," + std::to_string(l_y) + "), Text: " + l_text);
-}
-
-ImGui::Separator();
-
-if (l_screen.m_interchunk_scroll.has_value()) {
-	const auto& l_is{ l_screen.m_interchunk_scroll };
-
-	ImGui::Text("Inter-world scroll transition");
-	imgui_text("Destination world=" + std::to_string(l_is.value().m_dest_chunk)
-		+ ", screen=" + std::to_string(l_is.value().m_dest_screen)
-		+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
-		+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
-		+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
-	);
-}
-
-ImGui::Separator();
-
-if (l_screen.m_intrachunk_scroll.has_value()) {
-	const auto& l_is{ l_screen.m_intrachunk_scroll };
-
-	ImGui::Text("Intra-world scroll transition");
-	imgui_text("Destination screen=" + std::to_string(l_is.value().m_dest_screen)
-		+ ", pos=(" + std::to_string(l_is.value().m_dest_x)
-		+ "," + std::to_string(l_is.value().m_dest_y) + "), palette="
-		+ klib::Bitreader::byte_to_hex(l_is.value().m_palette_id)
-	);
-}
-
-ImGui::Separator();
-
-const auto& l_cconn{ p_game.m_chunks.at(m_sel_chunk).m_door_connections };
-
-if (l_cconn.has_value()) {
-	imgui_text("Next chunk and screen: " + std::to_string(l_cconn.value().m_next_chunk) + ", " + std::to_string(l_cconn.value().m_next_screen) +
-		" - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_next_door_req));
-	imgui_text("Prev chunk and screen: " + std::to_string(l_cconn.value().m_prev_chunk) + ", " + std::to_string(l_cconn.value().m_prev_screen)
-		+ " - req: " + klib::Bitreader::byte_to_hex(l_cconn.value().m_prev_door_req));
-}
-else
-	imgui_text("This world has no concept of next and previous world");
-
-ImGui::Separator();
-
-imgui_text("Door count: " + std::to_string(l_screen.m_doors.size()));
-
-for (std::size_t i{ 0 }; i < l_screen.m_doors.size(); ++i) {
-	const auto& l_door{ l_screen.m_doors[i] };
-
-	std::string l_doortxt{ "Door #" + std::to_string(i) + " at ("
-	+ std::to_string(l_door.m_coords.first) + ","
-		+ std::to_string(l_door.m_coords.second) + "), dest=("
-
-	+ std::to_string(l_door.m_dest_coords.first) + ","
-		+ std::to_string(l_door.m_dest_coords.second) + "), unknown="
-		+ klib::Bitreader::byte_to_hex(l_door.m_unknown)
-		+ ",type="
-	};
-
-	if (l_door.m_door_type == fe::DoorType::NextWorld)
-		l_doortxt += "Next World";
-	else if (l_door.m_door_type == fe::DoorType::PrevWorld)
-		l_doortxt += "Previous World";
-	else if (l_door.m_door_type == fe::DoorType::Building)
-		l_doortxt += "Building, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
-		+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
-		+ ", NPC bundle=" + klib::Bitreader::byte_to_hex(l_door.m_npc_bundle);
-	else
-		l_doortxt += "IntraChunk, req=" + klib::Bitreader::byte_to_hex(l_door.m_requirement)
-		+ "\nDest screen=" + std::to_string(l_door.m_dest_screen_id)
-		+ ", Palette=" + klib::Bitreader::byte_to_hex(l_door.m_dest_palette_id);
-
-
-	imgui_text(l_doortxt);
-}
-*/

@@ -144,6 +144,9 @@
     <ClCompile Include="src\windows\TilemapWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\fe\Sprite_set.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -237,6 +240,9 @@
       <Filter>Header Files\common\klib</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\ROM_Manager.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Sprite_set.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>

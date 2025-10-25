@@ -3,6 +3,7 @@
 
 #include "Game.h"
 #include "fe_constants.h"
+#include "./../common/klib/NES_tile.h"
 #include <map>
 #include <stdexcept>
 #include <utility>
@@ -14,6 +15,8 @@ using PtrDef = std::pair<std::size_t, std::size_t>;
 namespace fe {
 
 	class ROM_Manager {
+		
+		std::vector<std::vector<std::vector<klib::NES_tile>>> m_sprite_tiles;
 
 		std::vector<byte> build_pointer_table_and_data(
 			std::size_t p_rom_loc_ptr_table,
@@ -60,8 +63,14 @@ namespace fe {
 			std::size_t rom_zero_address,
 			const std::vector<std::pair<std::size_t, std::size_t>>& p_available);
 
+		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+			std::size_t p_ptr_offset,
+			std::size_t p_zero_addr) const;
+
 	public:
 		ROM_Manager(void);
+
+		// void extract_sprite_data(const std::vector<byte>& p_rom);
 
 		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Game& p_game) const;
@@ -74,11 +83,17 @@ namespace fe {
 
 		// encoding data in-place using a given address and stride-indexed
 		// no need to return anything here as the data is of fixed length
+		void encode_static_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+
+		void encode_chunk_palette_no(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		void encode_mattock_animations(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		void encode_push_block(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// util
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
+		static std::size_t from_uint16_le(const std::pair<byte, byte>& p_value);
 	};
 
 }

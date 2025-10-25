@@ -21,8 +21,19 @@ namespace fe {
 			constexpr char TAG_NPC_BUNDLES[]{ "npc_bundles" };
 			constexpr char TAG_NPC_BUNDLE[]{ "npc_bundle" };
 
+			constexpr char TAG_PUSH_BLOCK[]{ "push_block" };
+			constexpr char ATTR_BLOCK_COUNT[]{ "block_count" };
+			constexpr char ATTR_DELTA_X[]{ "delta_x" };
+			constexpr char ATTR_SOURCE_BLOCK0[]{ "source_0" };
+			constexpr char ATTR_SOURCE_BLOCK1[]{ "source_1" };
+			constexpr char ATTR_TARGET_BLOCK0[]{ "target_0" };
+			constexpr char ATTR_TARGET_BLOCK1[]{ "target_1" };
+			constexpr char ATTR_DRAW_BLOCK[]{ "draw_block" };
+
 			constexpr char TAG_METATILES[]{ "metatiles" };
 			constexpr char TAG_METATILE[]{ "metatile" };
+
+			constexpr char ATTR_MATTOCK_ANIMATION[]{ "mattock_animation" };
 
 			constexpr char TAG_CHUNKS[]{ "chunks" };
 			constexpr char TAG_CHUNK[]{ "chunk" };

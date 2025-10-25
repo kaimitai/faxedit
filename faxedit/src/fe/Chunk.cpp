@@ -119,10 +119,10 @@ std::vector<byte> fe::Chunk::get_palette_attribute_bytes(void) const {
 
 	for (const auto& mt : m_metatiles)
 		l_result.push_back(
-			(mt.m_attr_tl << 6) +
-			(mt.m_attr_tr << 4) +
-			(mt.m_attr_bl << 2) +
-			mt.m_attr_br
+			(mt.m_attr_tl) +
+			(mt.m_attr_tr << 2) +
+			(mt.m_attr_bl << 4) +
+			(mt.m_attr_br << 6)
 		);
 
 	return l_result;
