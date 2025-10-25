@@ -90,47 +90,41 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 	}
 
 	if (ImGui::Button("Patch ROM")) {
-		auto l_rom{ p_game.m_rom_data };
+		bool l_good{ true };
+		std::size_t l_dyndata_bytes{ 0 };
 
-		// encode metadata
-		auto l_metadata{ m_rom_manager.encode_game_metadata_all(p_game) };
-		std::copy(begin(l_metadata), end(l_metadata), begin(l_rom) + 0xc012);
-		add_message("Patched metadata (" + std::to_string(l_metadata.size()) + " bytes)");
+		auto x_rom{ p_game.m_rom_data };
 
-		// encode all screens
+		m_rom_manager.encode_static_data(p_game, x_rom);
+		add_message("Patched static data", 2);
+
+		auto l_bret{ m_rom_manager.encode_transitions(p_game, x_rom) };
+		l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
+
+		l_bret = m_rom_manager.encode_sprite_data(p_game, x_rom);
+		l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
+
 		for (std::size_t i{ 0 }; i < 3; ++i) {
-			auto l_bank_screen_data{ m_rom_manager.encode_bank_screen_data(p_game, i) };
-			std::copy(begin(l_bank_screen_data), end(l_bank_screen_data), begin(l_rom) + c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(i));
-
-			add_message("Patched screen in bank " +
-				std::to_string(i) + " (" + std::to_string(l_bank_screen_data.size()) + " bytes)");
+			l_bret = m_rom_manager.encode_bank_tilemaps(p_game, x_rom, i);
+			l_good &= check_patched_size(std::format("Batch {} Tilemaps", i + 1), l_bret.first, l_bret.second);
+			l_dyndata_bytes += l_bret.first;
 		}
 
-		// encode sprites
-		std::vector<byte> l_sprite_data{ m_rom_manager.encode_game_sprite_data_new(p_game) };
-		std::copy(begin(l_sprite_data), end(l_sprite_data),
-			begin(l_rom) + p_game.m_ptr_chunk_sprite_data);
-		add_message("Patched sprite data (" + std::to_string(l_sprite_data.size()) + " bytes)");
+		l_bret = m_rom_manager.encode_metadata(p_game, x_rom);
+		l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
 
-		auto l_ow_trans{ m_rom_manager.encode_game_otherworld_trans(p_game) };
-		std::copy(begin(l_ow_trans), end(l_ow_trans),
-			begin(l_rom) + p_game.m_ptr_chunk_intrachunk_transitions);
-		add_message("Patched other-world transtion data ("
-			+ std::to_string(l_ow_trans.size()) + " bytes)");
+		if (l_good) {
+			klib::file::write_bytes_to_file(x_rom,
+				"c:/temp/faxanadu-out.nes");
 
-		auto l_sw_trans{ m_rom_manager.encode_game_sameworld_trans(p_game) };
-		std::copy(begin(l_sw_trans), end(l_sw_trans),
-			begin(l_rom) + p_game.m_ptr_chunk_interchunk_transitions);
-		add_message("Patched same-world transtion data ("
-			+ std::to_string(l_sw_trans.size()) + " bytes)");
-
-		m_rom_manager.encode_static_data(p_game, l_rom);
-		add_message("Patched static data");
-
-		klib::file::write_bytes_to_file(l_rom,
-			"c:/temp/faxanadu-out.nes");
-
-		add_message("File written");
+			add_message(std::format("NES-file written ({} dynamic bytes)",
+				l_dyndata_bytes), 2);
+		}
+		else
+			add_message("NES-file could not be written", 1);
 	}
 
 	if (ui::imgui_button("Delete Unreferenced Metatiles", 2)) {
@@ -141,22 +135,35 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game) 
 			generate_metatile_textures(p_rnd, p_game);
 	}
 
-	ImGui::SeparatorText("Output Messages");
+	ImGui::SameLine();
 
-	for (const auto& msg : m_messages) {
-		ImVec4 color;
-		switch (msg.status) {
-		case 0: color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); break;
-		case 1: color = ImVec4(0.2f, 1.0f, 0.2f, 1.0f); break;
-		case 2: color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f); break;
-		default:
-			break;
+	if (ui::imgui_button("Delete Unreferenced Screens", 2)) {
+		if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS) {
+			add_message("Can not delete screens from the Buildings word");
 		}
+		else {
+			std::size_t l_del_cnt{ p_game.delete_unreferenced_screens(m_sel_chunk) };
+			add_message(std::format("{} screens deleted from world {}",
+				l_del_cnt, m_sel_chunk), 2);
+			if (m_sel_screen >= p_game.m_chunks.at(m_sel_chunk).m_screens.size())
+				m_sel_screen = p_game.m_chunks.at(m_sel_chunk).m_screens.size() - 1;
+		}
+	}
 
-		ImGui::PushStyleColor(ImGuiCol_Text, color);
+	if (ui::imgui_button("Find unused screens")) {
+		for (std::size_t i{ 0 }; i < 8; ++i) {
+			auto l_scr{ p_game.get_referenced_screens(i) };
+			add_message(std::format("World {}: {} unreferenced screens",
+				i, p_game.m_chunks.at(i).m_screens.size() - l_scr.size()
+			));
+		}
+	}
+
+	ImGui::SeparatorText("Output Messages");
+	for (const auto& msg : m_messages) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ui::g_uiStyles[msg.status].active);
 		ImGui::TextUnformatted(msg.text.c_str());
 		ImGui::PopStyleColor();
 	}
-
 	ImGui::End();
 }

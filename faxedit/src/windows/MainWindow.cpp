@@ -29,9 +29,9 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 {
 
 	add_message(std::format("Build date: {} {} CET",
-		__DATE__, __TIME__));
-	add_message("https://github.com/faxedit", 1);
-	add_message("Welcome to Echoes of Eolis by Kai E. Froeland", 1);
+		__DATE__, __TIME__), 4);
+	add_message("https://github.com/faxedit", 2);
+	add_message("Welcome to Echoes of Eolis by Kai E. Froeland", 2);
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
@@ -400,4 +400,16 @@ void fe::MainWindow::clipboard_paste(fe::Game& p_game) {
 
 		add_message("Clipboard data pasted");
 	}
+}
+
+bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size) {
+	bool l_ok{ p_patch_data_size <= p_max_data_size };
+
+	add_message(std::format("Patching {} {}: Used {} of {} available bytes ({:.2f}%)",
+		p_data_type,
+		(l_ok ? "succeeded" : "failed"),
+		p_patch_data_size, p_max_data_size,
+		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? 2 : 1);
+
+	return l_ok;
 }

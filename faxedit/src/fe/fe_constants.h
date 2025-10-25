@@ -61,6 +61,15 @@ namespace fe {
 		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
 		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3eaac };
 
+		// dynamic size limits
+		// TODO: Check, this could be totally wrong
+		inline const std::vector<std::size_t> SIZE_LIMITS_BANK_TILEMAPS{
+			0x4000, 0x4000, 0x4000
+		};
+		constexpr std::size_t SIZE_LIMT_SPRITE_DATA{ 0x30010 - PTR_CHUNK_SPRITE_DATA };
+		constexpr std::size_t SIZE_LIMT_METADATA{ 0xf010 - PTR_CHUNK_METADATA };
+		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
+
 		// the npc bundles are stored as sprite data for the buildings chunk
 		// this is a single value and not a vector, since the bundle data is global
 		constexpr std::size_t IDX_CHUNK_NPC_BUNDLES{ 6 };
@@ -92,7 +101,11 @@ namespace fe {
 		};
 
 		// a label of all the chunks, in ROM-order
-		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Mist", "Towns", "Overworld", "Branches", "Dartmoor", "Buildings", "Evil Lair" };
+		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Mist", "Towns", "Trunk", "Branches", "Dartmoor", "Buildings", "Evil Lair" };
+
+		// chunks with special meaning in some contexts
+		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x02 };
+		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x06 };
 
 		inline const std::map<byte, std::string> LABELS_DOOR_REQS{
 			{0x00, "None"},

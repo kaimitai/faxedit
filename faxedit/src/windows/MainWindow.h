@@ -82,6 +82,8 @@ namespace fe {
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
 		
+		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
+
 		std::string get_editmode_as_string(void) const;
 
 		Size4 get_selection_dims(void) const;

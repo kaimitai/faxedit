@@ -347,6 +347,93 @@ void fe::Game::delete_metatiles(std::size_t p_chunk_no,
 
 }
 
+void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete) {
+	auto& l_chunk{ m_chunks.at(p_chunk_no) };
+	auto& lr_scr{ l_chunk.m_screens };
+
+	// Step 1: Build index remapping
+	std::vector<int> remap(lr_scr.size(), -1);
+	int new_index = 0;
+
+	for (size_t old_index{ 0 }; old_index < lr_scr.size(); ++old_index) {
+		if (p_scr_to_delete.count(static_cast<byte>(old_index)) == 0) {
+			remap[old_index] = new_index++;
+		}
+	}
+
+	// Step 2: Remove screens
+	std::vector<fe::Screen> new_screens;
+	for (size_t i = 0; i < lr_scr.size(); ++i) {
+		if (remap[i] != -1) {
+			new_screens.push_back(lr_scr[i]);
+		}
+	}
+
+	lr_scr = std::move(new_screens);
+
+	// re-index screens
+
+	// game metadata - push blocks
+	if (m_push_block.m_world == p_chunk_no)
+		m_push_block.m_screen = remap[m_push_block.m_screen];
+
+	// spawn locations
+	for (std::size_t i{ 0 }; i < 8; ++i)
+		if (m_spawn_locations.at(i).m_world == p_chunk_no)
+			m_spawn_locations[i].m_screen = remap[m_spawn_locations[i].m_screen];
+
+	for (std::size_t c{ 0 }; c < 8; ++c) {
+
+		// chunk metadata
+		if (m_chunks[c].m_door_connections.has_value()) {
+			auto& l_dc{ m_chunks[c].m_door_connections.value()};
+
+			if (l_dc.m_next_chunk == p_chunk_no)
+				l_dc.m_next_screen = remap[l_dc.m_next_screen];
+			if (l_dc.m_prev_chunk == p_chunk_no)
+				l_dc.m_prev_screen = remap[l_dc.m_prev_screen];
+		}
+
+		auto& l_scr{ m_chunks[c].m_screens };
+		for (std::size_t s{ 0 }; s < l_scr.size(); ++s) {
+
+			// for current chunk screens check scrolling and sameworld-transitions
+			if (c == p_chunk_no) {
+
+				if (l_scr[s].m_scroll_left.has_value())
+					l_scr[s].m_scroll_left = remap[l_scr[s].m_scroll_left.value()];
+				if (l_scr[s].m_scroll_right.has_value())
+					l_scr[s].m_scroll_right = remap[l_scr[s].m_scroll_right.value()];
+				if (l_scr[s].m_scroll_up.has_value())
+					l_scr[s].m_scroll_up = remap[l_scr[s].m_scroll_up.value()];
+				if (l_scr[s].m_scroll_down.has_value())
+					l_scr[s].m_scroll_down = remap[l_scr[s].m_scroll_down.value()];
+
+				// re-index same-world door destinations
+				for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
+					if (l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
+						l_scr[s].m_doors[d].m_dest_screen_id = remap[l_scr[s].m_doors[d].m_dest_screen_id];
+				}
+
+				// re-index same-world transitions
+				if (l_scr[s].m_interchunk_scroll.has_value()) {
+					l_scr[s].m_interchunk_scroll.value().m_dest_screen =
+						remap[l_scr[s].m_interchunk_scroll.value().m_dest_screen];
+				}
+
+			}
+
+			// re-index same-world transitions
+			if (l_scr[s].m_intrachunk_scroll.has_value() &&
+				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == p_chunk_no) {
+				l_scr[s].m_intrachunk_scroll.value().m_dest_screen =
+					remap[l_scr[s].m_intrachunk_scroll.value().m_dest_screen];
+			}
+		}
+
+	}
+}
+
 std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const {
 	std::set<byte> l_result;
 	const auto& l_chunk{ m_chunks.at(p_chunk_no) };
@@ -373,12 +460,83 @@ std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const 
 	return l_result;
 }
 
+std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
+	std::set<byte> l_result;
+
+	// handle metadata
+
+	// push-block
+	if (m_push_block.m_world == p_chunk_no)
+		l_result.insert(m_push_block.m_screen);
+
+	// spawn locations
+	for (std::size_t i{ 0 }; i < 8; ++i)
+		if (m_spawn_locations.at(i).m_world == p_chunk_no)
+			l_result.insert(m_spawn_locations[i].m_screen);
+
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+
+		// door metadata templates
+		if (m_chunks.at(i).m_door_connections.has_value()) {
+			const auto& l_dc{ m_chunks.at(i).m_door_connections.value() };
+			if (l_dc.m_next_chunk == p_chunk_no)
+				l_result.insert(l_dc.m_next_screen);
+			if (l_dc.m_prev_chunk == p_chunk_no)
+				l_result.insert(l_dc.m_prev_screen);
+		}
+
+		const auto& l_scr{ m_chunks[i].m_screens };
+
+		for (std::size_t s{ 0 }; s < l_scr.size(); ++s) {
+
+			if (i == p_chunk_no) {
+				// handle screens in the same world
+
+				// scrolling refs
+				if (l_scr[s].m_scroll_left.has_value())
+					l_result.insert(l_scr[s].m_scroll_left.value());
+				if (l_scr[s].m_scroll_right.has_value())
+					l_result.insert(l_scr[s].m_scroll_right.value());
+				if (l_scr[s].m_scroll_up.has_value())
+					l_result.insert(l_scr[s].m_scroll_up.value());
+				if (l_scr[s].m_scroll_down.has_value())
+					l_result.insert(l_scr[s].m_scroll_down.value());
+
+				// same-world transition ref
+				if (l_scr[s].m_interchunk_scroll.has_value())
+					l_result.insert(l_scr[s].m_interchunk_scroll.value().m_dest_screen);
+
+				// door refs - only need to check same-world
+				// we don't delete building screens, and other-world doors
+				// are defined in chunk metadata
+				for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d)
+					if (l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
+						l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
+			}
+
+			// other-world transitions - could possibly come from the same world
+			// if user wants to waste a byte
+			if (l_scr[s].m_intrachunk_scroll.has_value() &&
+				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == i)
+				l_result.insert(l_scr[s].m_intrachunk_scroll.value().m_dest_screen);
+		}
+
+	}
+
+	return l_result;
+}
+
 bool fe::Game::is_metatile_referenced(std::size_t p_chunk_no,
 	std::size_t p_metatile_no) const {
-
 	const auto l_refs{ get_referenced_metatiles(p_chunk_no) };
 
 	return l_refs.find(static_cast<byte>(p_metatile_no)) != end(l_refs);
+}
+
+bool fe::Game::is_screen_referenced(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	const auto l_refs{ get_referenced_screens(p_chunk_no) };
+
+	return l_refs.find(static_cast<byte>(p_screen_no)) != end(l_refs);
 }
 
 std::size_t fe::Game::delete_unreferenced_metatiles(std::size_t p_chunk_no) {
@@ -393,6 +551,20 @@ std::size_t fe::Game::delete_unreferenced_metatiles(std::size_t p_chunk_no) {
 	delete_metatiles(p_chunk_no, mts_to_delete);
 
 	return mts_to_delete.size();
+}
+
+std::size_t fe::Game::delete_unreferenced_screens(std::size_t p_chunk_no) {
+	auto& l_chunk{ m_chunks.at(p_chunk_no) };
+	std::unordered_set<byte> scrs_to_delete;
+	auto l_refs{ get_referenced_screens(p_chunk_no) };
+
+	for (std::size_t i{ 0 }; i < l_chunk.m_screens.size(); ++i)
+		if (l_refs.find(static_cast<byte>(i)) == end(l_refs))
+			scrs_to_delete.insert(static_cast<byte>(i));
+
+	delete_screens(p_chunk_no, scrs_to_delete);
+
+	return scrs_to_delete.size();
 }
 
 fe::Sprite_set fe::Game::extract_sprite_set(const std::vector<byte>& p_rom_data, std::size_t p_offset) const {

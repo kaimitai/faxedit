@@ -81,6 +81,12 @@ namespace fe {
 		std::vector<byte> encode_game_otherworld_trans(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_sameworld_trans(const fe::Game& p_game) const;
 
+		// encode in place and return a pair of used size and max size
+		std::pair<std::size_t, std::size_t> encode_bank_tilemaps(const fe::Game& p_game, std::vector<byte>& p_rom, std::size_t p_bank_no) const;
+		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+
 		// encoding data in-place using a given address and stride-indexed
 		// no need to return anything here as the data is of fixed length
 		void encode_static_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
@@ -92,6 +98,7 @@ namespace fe {
 		void encode_push_block(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// util
+		void patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 		static std::size_t from_uint16_le(const std::pair<byte, byte>& p_value);
 	};

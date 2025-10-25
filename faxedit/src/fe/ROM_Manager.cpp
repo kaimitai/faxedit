@@ -287,6 +287,10 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data(const fe::Game& p_gam
 	return l_result;
 }
 
+void fe::ROM_Manager::patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const {
+	std::copy(begin(p_source), end(p_source), begin(p_target) + p_target_offset);
+}
+
 std::pair<byte, byte> fe::ROM_Manager::to_uint16_le(std::size_t p_value) {
 	return std::make_pair(static_cast<byte>(p_value % 0x100),
 		static_cast<byte>(p_value / 0x100));
@@ -391,6 +395,68 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 		0xc012, 0xc010, l_all_chunk_meta_data) };
 
 	return l_all_chunks_w_ptr_table;
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_tilemaps(const fe::Game& p_game,
+	std::vector<byte>& p_rom, std::size_t p_bank_no) const {
+	auto l_bank_screen_data{ encode_bank_screen_data(p_game, p_bank_no) };
+
+	if (l_bank_screen_data.size() <= c::SIZE_LIMITS_BANK_TILEMAPS.at(p_bank_no))
+		patch_bytes(l_bank_screen_data, p_rom, c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(p_bank_no));
+
+	return std::make_pair(l_bank_screen_data.size(), c::SIZE_LIMITS_BANK_TILEMAPS.at(p_bank_no));
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	auto l_metadata{ encode_game_metadata_all(p_game) };
+	if (l_metadata.size() <= c::SIZE_LIMT_METADATA)
+		patch_bytes(l_metadata, p_rom, c::PTR_CHUNK_METADATA + 2);
+	return std::make_pair(l_metadata.size(), c::SIZE_LIMT_METADATA);
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	auto l_sprite_data{ encode_game_sprite_data_new(p_game) };
+	if (l_sprite_data.size() <= c::SIZE_LIMT_SPRITE_DATA)
+		patch_bytes(l_sprite_data, p_rom, c::PTR_CHUNK_SPRITE_DATA );
+	return std::make_pair(l_sprite_data.size(), c::SIZE_LIMT_SPRITE_DATA);
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	constexpr std::size_t FREE_SPACE_OFFSET{ 0x3fced };
+	constexpr std::size_t FREE_SPACE_SIZE{ 313 };
+
+	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
+
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		l_all_sw_trans_data.push_back(p_game.m_chunks[m_chunk_idx.at(i)].get_sameworld_transition_bytes());
+		l_all_ow_trans_data.push_back(p_game.m_chunks[m_chunk_idx.at(i)].get_otherworld_transition_bytes(m_chunk_idx));
+	}
+
+	// generate same-world ptr table and data
+	auto l_sw_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
+		m_ptr_sameworld_trans_table.first,
+		m_ptr_sameworld_trans_table.second,
+		FREE_SPACE_OFFSET, l_all_sw_trans_data) };
+
+	// std::size_t l_ow_data_rel_offset{ FREE_SPACE_SIZE + l_sw_trans_encoded.second.size() };
+
+	// generate other-world ptr table and data
+	// let this data start immediately after the same-world data
+	auto l_ow_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
+	m_ptr_otherworld_trans_table.first,
+	m_ptr_otherworld_trans_table.second,
+	FREE_SPACE_OFFSET + l_sw_trans_encoded.second.size(), l_all_ow_trans_data) };
+
+	std::size_t l_total_size{ l_sw_trans_encoded.second.size() + l_ow_trans_encoded.second.size() };
+
+	if (l_total_size <= FREE_SPACE_SIZE) {
+		patch_bytes(l_sw_trans_encoded.first, p_rom, m_ptr_sameworld_trans_table.first);
+		patch_bytes(l_sw_trans_encoded.second, p_rom, FREE_SPACE_OFFSET);
+		patch_bytes(l_ow_trans_encoded.first, p_rom, m_ptr_otherworld_trans_table.first);
+		patch_bytes(l_ow_trans_encoded.second, p_rom, FREE_SPACE_OFFSET + l_sw_trans_encoded.second.size());
+	}
+
+	return std::make_pair(l_total_size, FREE_SPACE_SIZE);
 }
 
 // all static data patching
@@ -579,6 +645,7 @@ void fe::ROM_Manager::encode_push_block(const fe::Game& p_game, std::vector<byte
 // this function generates pointer tables and data offsets for several pieces of data at once,
 // and generates a vector of <data table number> -> {ptr value, data pointed to}
 // it uses global deduplication across all the data
+// TODO: Test and actually use this
 std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> fe::ROM_Manager::generate_multi_pointer_tables(
 	const std::vector<std::vector<std::vector<byte>>>& all_data_sets,
 	const std::vector<std::size_t>& pointer_table_offsets,

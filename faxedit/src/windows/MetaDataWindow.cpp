@@ -348,10 +348,14 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					auto& l_pb{ p_game.m_push_block };
 					bool l_sameworld{ m_sel_chunk == l_pb.m_world };
 
-					ImGui::Text("The parameters for the tilemap change when\nyou push blocks and open the last spring.");
-					ImGui::Text("Navigate to the world where the push-blocks reside to see metatile previews");
+					ImGui::Text("The parameters for the tilemap change when you push blocks and open the last spring.");
+					ImGui::Text("Navigate to the world where the push-blocks reside to see metatile previews.");
+					ImGui::Text("Don't forget to set the command-byte to 0 for the screens where you want");
+					ImGui::Text("the animation to trigger automatically after quest completion.");
+					ImGui::NewLine();
+					ImGui::Text("Be careful about using it on different worlds, as the metatile indexes might be out of bounds elsewhere.");
 
-					ImGui::SeparatorText("World and screen for the event");
+					ImGui::SeparatorText("World and screen where the quest-flag will be set when pusing blocks.");
 
 					ui::imgui_slider_with_arrows("pbw",
 						std::format("World: {}", c::LABELS_CHUNKS.at(l_pb.m_world)), l_pb.m_world, 0, 7, "");
@@ -381,7 +385,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_draw_block), ImVec2(32, 32));
 					}
 
-					ImGui::SeparatorText("Pushable Blocks Transformation - Source");
+					ImGui::SeparatorText("Pushable Blocks Animation - Source");
 
 					ui::imgui_slider_with_arrows("pbs0", "Source Top",
 						l_pb.m_source_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
@@ -401,9 +405,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_source_1), ImVec2(32, 32));
 					}
 
-					ImGui::SeparatorText("Pushable Blocks Transformation - Target");
+					ImGui::SeparatorText("Pushable Blocks Animation - Target");
 
-					ui::imgui_slider_with_arrows("pbt0", "Source Top",
+					ui::imgui_slider_with_arrows("pbt0", "Target Top",
 						l_pb.m_target_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
 						"The block that will replace the top of the destination of the pushed block");
 
@@ -412,7 +416,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_0), ImVec2(32, 32));
 					}
 
-					ui::imgui_slider_with_arrows("pbt1", "Source Bottom",
+					ui::imgui_slider_with_arrows("pbt1", "Target Bottom",
 						l_pb.m_target_1, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
 						"The block that will replace the bottom of the destination of the pushed block");
 
