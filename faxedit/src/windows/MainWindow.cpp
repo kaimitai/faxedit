@@ -199,7 +199,7 @@ std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::
 std::size_t fe::MainWindow::get_default_palette_no(const fe::Game& p_game,
 	std::size_t p_chunk_no, std::size_t p_screen_no) const {
 
-	if (p_chunk_no == 6)
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
 		return p_screen_no + 17;
 	else
 		return p_game.m_chunks.at(p_chunk_no).m_default_palette_no;

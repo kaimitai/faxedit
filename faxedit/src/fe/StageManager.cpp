@@ -16,7 +16,7 @@ fe::StageManager::StageManager(const std::vector<byte>& p_rom_data, std::size_t 
 	// the game has six stages
 	for (std::size_t i{ 0 }; i < 6; ++i) {
 		m_stages.push_back(fe::Stage(
-			c::MAP_CHUNK_IDX.at(p_rom_data.at(p_offset_world_mappings + i)),
+			p_rom_data.at(p_offset_world_mappings + i),
 			p_rom_data.at(p_offset_stage_links + 2 * i),
 			p_rom_data.at(p_offset_stage_links + 2 * i + 1),
 			p_rom_data.at(p_offset_stage_screens + 2 * i),

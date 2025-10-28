@@ -52,7 +52,7 @@ namespace fe {
 		std::vector<byte> get_metatile_bottom_right_bytes(void) const;
 
 		std::vector<byte> get_sameworld_transition_bytes(void) const;
-		std::vector<byte> get_otherworld_transition_bytes(const std::vector<std::size_t>& p_chunk_remap) const;
+		std::vector<byte> get_otherworld_transition_bytes(void) const;
 	};
 
 }

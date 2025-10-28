@@ -3,9 +3,7 @@
 #include <stdexcept>
 
 fe::ROM_Manager::ROM_Manager(void) :
-	m_chunk_tilemaps_bank_idx{ c::CHUNK_TILEMAPS_BANK_IDX },
 	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
-	m_chunk_idx{ c::MAP_CHUNK_IDX },
 	m_ptr_sprites{ c::PTR_SPRITE_DATA },
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
@@ -83,12 +81,12 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Game& p
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 		std::vector<std::vector<byte>> l_screen_sprite_data;
 
-		if (m_chunk_idx[c] == c::CHUNK_IDX_BUILDINGS) {
+		if (c == c::CHUNK_IDX_BUILDINGS) {
 			for (const auto& bundle : p_game.m_npc_bundles)
 				l_screen_sprite_data.push_back(bundle.get_bytes());
 		}
 		else {
-			const auto& chunk{ p_game.m_chunks[m_chunk_idx[c]] };
+			const auto& chunk{ p_game.m_chunks[c] };
 
 			for (std::size_t s{ 0 }; s < chunk.m_screens.size(); ++s)
 				l_screen_sprite_data.push_back(chunk.m_screens[s].m_sprite_set.get_bytes());
@@ -117,12 +115,7 @@ m_ptr_sprites.first,
 
 // this function encodes the screen data for a given bank
 std::vector<byte> fe::ROM_Manager::encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const {
-
-	// extract all chunk nos for this bank
-	std::vector<std::size_t> l_chunks_this_bank;
-	for (std::size_t i{ 0 }; i < m_chunk_tilemaps_bank_idx.size(); ++i)
-		if (p_bank_no == m_chunk_tilemaps_bank_idx[i])
-			l_chunks_this_bank.push_back(i);
+	const auto& l_chunks_this_bank{ c::MAP_BANK_TO_WORLD_TILEMAPS[p_bank_no] };
 
 	// l_chunks_this_bank now holds all the chunk numbers in the correct order - create ROM data for these chunk tilemaps
 	std::vector<std::vector<byte>> l_all_screen_data_chunks;
@@ -247,14 +240,13 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data(const fe::Game& p_gam
 		}
 	}
 
-	// Step 2: Precompute chunk table offsets using m_chunk_idx remapping
+	// Step 2: Precompute chunk table offsets
 	std::vector<std::size_t> chunk_table_offsets(p_game.m_chunks.size());
 	std::size_t chunk_table_start = m_ptr_sprites.first + master_table_size;
 	std::size_t current_chunk_offset = chunk_table_start;
 
 	for (std::size_t rom_chunk_idx = 0; rom_chunk_idx < p_game.m_chunks.size(); ++rom_chunk_idx) {
-		std::size_t logical_chunk_idx = m_chunk_idx[rom_chunk_idx];
-		std::size_t table_size = p_game.m_chunks[logical_chunk_idx].m_screens.size() * 2;
+		std::size_t table_size = p_game.m_chunks[rom_chunk_idx].m_screens.size() * 2;
 		chunk_table_offsets[rom_chunk_idx] = current_chunk_offset;
 		current_chunk_offset += table_size;
 	}
@@ -262,8 +254,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data(const fe::Game& p_gam
 	// Step 3: Build chunk pointer tables
 	std::vector<byte> chunk_pointer_tables;
 	for (std::size_t rom_chunk_idx = 0; rom_chunk_idx < p_game.m_chunks.size(); ++rom_chunk_idx) {
-		std::size_t logical_chunk_idx = m_chunk_idx[rom_chunk_idx];
-		const auto& screen_offsets = screen_data_offsets[logical_chunk_idx];
+		const auto& screen_offsets = screen_data_offsets[rom_chunk_idx];
 		for (std::size_t screen_offset : screen_offsets) {
 			std::size_t relative = screen_offset - m_ptr_sprites.second;
 			chunk_pointer_tables.push_back(relative & 0xFF);
@@ -350,11 +341,10 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 	std::size_t l_cur_rom_offset{ 0xc012 + 2 * p_game.m_chunks.size() };
 
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
-		std::size_t l_true_chunk_no{ m_chunk_idx[c] };
 
 		std::vector<std::vector<byte>> l_chunk_md;
 
-		const auto& chunk{ p_game.m_chunks[l_true_chunk_no] };
+		const auto& chunk{ p_game.m_chunks[c] };
 
 		// useless pointer to attribute pointer
 		// update value before packing
@@ -363,7 +353,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 		l_chunk_md.push_back(chunk.get_block_property_bytes());
 		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
 
-		auto l_door_data{ chunk.get_door_bytes(l_true_chunk_no == 2) };
+		auto l_door_data{ chunk.get_door_bytes(c == c::CHUNK_IDX_TOWNS) };
 
 		// door data followed by door destination table
 		l_chunk_md.push_back(l_door_data.first);
@@ -426,8 +416,8 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe
 	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
-		l_all_sw_trans_data.push_back(p_game.m_chunks[m_chunk_idx.at(i)].get_sameworld_transition_bytes());
-		l_all_ow_trans_data.push_back(p_game.m_chunks[m_chunk_idx.at(i)].get_otherworld_transition_bytes(m_chunk_idx));
+		l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
+		l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
 	}
 
 	// generate same-world ptr table and data
@@ -468,7 +458,7 @@ void fe::ROM_Manager::encode_static_data(const fe::Game& p_game, std::vector<byt
 
 void fe::ROM_Manager::encode_chunk_palette_no(const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		p_rom.at(c::PTR_CHUNK_DEFAULT_PALETTE_IDX + get_vector_index(m_chunk_idx, i)) =
+		p_rom.at(c::PTR_CHUNK_DEFAULT_PALETTE_IDX + i) =
 			p_game.m_chunks.at(i).m_default_palette_no;
 	}
 }
@@ -487,7 +477,7 @@ void fe::ROM_Manager::encode_stage_data(const fe::Game& p_game, std::vector<byte
 		p_rom.at(c::OFFSET_STAGE_SCREENS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_screen);
 		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i) = static_cast<byte>(l_stage.m_prev_requirement);
 		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_requirement);
-		p_rom.at(c::OFFSET_STAGE_TO_WORLD + i) = static_cast<byte>(get_vector_index(c::MAP_CHUNK_IDX, l_stage.m_world_id));
+		p_rom.at(c::OFFSET_STAGE_TO_WORLD + i) = static_cast<byte>(l_stage.m_world_id);
 	}
 
 	// start data 
@@ -501,7 +491,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Game& p
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
 		l_all_sw_trans_data.push_back(
-			p_game.m_chunks[m_chunk_idx.at(i)].get_sameworld_transition_bytes()
+			p_game.m_chunks[i].get_sameworld_transition_bytes()
 		);
 	}
 
@@ -515,7 +505,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Game& 
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
 		l_all_ow_trans_data.push_back(
-			p_game.m_chunks[m_chunk_idx.at(i)].get_otherworld_transition_bytes(m_chunk_idx)
+			p_game.m_chunks[i].get_otherworld_transition_bytes()
 		);
 	}
 
@@ -606,7 +596,7 @@ void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		const auto& l_sl{ p_game.m_spawn_locations.at(i) };
 
-		p_rom.at(c::OFFSET_SPAWN_LOC_WORLDS + i) = static_cast<byte>(get_vector_index(m_chunk_idx, l_sl.m_world));
+		p_rom.at(c::OFFSET_SPAWN_LOC_WORLDS + i) = static_cast<byte>(l_sl.m_world);
 		p_rom.at(c::OFFSET_SPAWN_LOC_SCREENS + i) = l_sl.m_screen;
 		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
 		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
@@ -616,10 +606,8 @@ void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector
 
 void fe::ROM_Manager::encode_mattock_animations(const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		std::size_t l_true_chunk{ get_vector_index(m_chunk_idx, i) };
-
 		for (std::size_t m{ 0 }; m < 4; ++m)
-			p_rom.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * l_true_chunk + m) =
+			p_rom.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + m) =
 			p_game.m_chunks.at(i).m_mattock_animation.at(m);
 	}
 }

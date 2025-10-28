@@ -11,16 +11,18 @@ namespace fe {
 
 	namespace c {
 
-		// START - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
-
 		// the start of the pointer table for each chunks's tilemaps
 		// the start of the data (ptr table + data for each chunk) follows immediately after this outer pointer table
 		inline const std::vector<std::size_t> PTR_TILEMAPS_BANK_ROM_OFFSET{ 0x10, 0x4010, 0x8010 };
+		// game order tilemaps {{bank, chunk idx} -> game world idx}
+		inline const std::vector<std::vector<std::size_t>> MAP_BANK_TO_WORLD_TILEMAPS{
+			{0, 2, 3},
+			   {1, 5},
+			{6, 4, 7} };
 
-		// a map from chunk no (vector index) to bank number - this defines how we order the chunks in the application
-		// if you change this, the remap tables also have to be recalculated
-		// the size of this vector also define the number of chunks in the game - which is indeed 8 in the original game and can't be changed easily
-		inline const std::vector<std::size_t> CHUNK_TILEMAPS_BANK_IDX{ 0, 0, 0, 1, 1, 2, 2, 2 };
+		// chunks with special meaning in some contexts
+		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
+		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 
 		// the following pointers are on the form { ROM offset for master ptr table, ROM offset considered 0 by the ptrs }
 		constexpr std::pair<std::size_t, std::size_t> PTR_SPRITE_DATA{ 0x2c220, 0x24010 };
@@ -83,31 +85,24 @@ namespace fe {
 		// ptrs to the screen data for each of the 8 chunks
 		const std::vector<std::size_t> PTR_CHUNK_SCREEN_DATA{ 0x10, 0x12, 0x14, 0x4010, 0x4012, 0x8010, 0x8012, 0x8014 };
 
-		// a map from our chunk indexing to the indexing used by the ROM pointer tables
-		inline const std::vector<std::size_t> MAP_CHUNK_IDX{ 0, 3, 1, 2, 6, 4, 5, 7 };
-
 		// map to background gfx start locations - treated as immutable
 		// when extracting the 256 nes tiles starting at any of these locations, the chunk tilemap indexes will match
 		// special care needed for chunk 6 which uses different tilesets depending on screen id
 		inline const std::vector<std::size_t> OFFSETS_BG_GFX{
 			0xf810,   // eolis
+			0x10010,  // trunk
 			0x10810,  // mist
 			0x11810,  // town
-			0x10010,  // road to apolune, towers, springs and screen outside forepaw and apolune
+			0x11e10,  // guru, king and hospital screens
 			0x11010,  // branches
 			0x13010,  // dartmoor + evil fortress
-			0x11e10,  // guru, king and hospital screens
 			0x13010,  // dartmoor + evil fortress
 			0x12410,  // set used for the shop and building interior screens
 			0x12a10   // set used for the training shops
 		};
 
 		// a label of all the chunks, in ROM-order
-		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Mist", "Towns", "Trunk", "Branches", "Dartmoor", "Buildings", "Evil Lair" };
-
-		// chunks with special meaning in some contexts
-		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x02 };
-		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x06 };
+		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Dartmoor Castle", "Evil Lair" };
 
 		inline const std::map<byte, std::string> LABELS_DOOR_REQS{
 			{0x00, "None"},

@@ -38,7 +38,6 @@ namespace fe {
 		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
 		std::pair<std::size_t, std::size_t> m_ptr_sprites, m_ptr_sameworld_trans_table,
 			m_ptr_otherworld_trans_table;
-		std::vector<std::size_t> m_chunk_idx;
 
 		// constant scalars
 		std::size_t m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen,

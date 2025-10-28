@@ -244,20 +244,15 @@ std::vector<byte> fe::Chunk::get_sameworld_transition_bytes(void) const {
 }
 
 // need to know the chunk remapping to generate this data
-std::vector<byte> fe::Chunk::get_otherworld_transition_bytes(const std::vector<std::size_t>& p_chunk_remap) const {
+std::vector<byte> fe::Chunk::get_otherworld_transition_bytes(void) const {
 	std::vector<byte> l_result;
 
 	for (std::size_t i{ 0 }; i < m_screens.size(); ++i) {
 		if (m_screens[i].m_intrachunk_scroll.has_value()) {
 			const auto& l_val{ m_screens[i].m_intrachunk_scroll.value() };
 
-			std::size_t l_remapped_dest_chunk{ p_chunk_remap.size() };
-			for (std::size_t remap{ 0 }; remap < p_chunk_remap.size(); ++remap)
-				if (p_chunk_remap[remap] == l_val.m_dest_chunk)
-					l_remapped_dest_chunk = remap;
-
 			l_result.push_back(static_cast<byte>(i));
-			l_result.push_back(static_cast<byte>(l_remapped_dest_chunk));
+			l_result.push_back(static_cast<byte>(l_val.m_dest_chunk));
 			l_result.push_back(l_val.m_dest_screen);
 			l_result.push_back(l_val.m_dest_y * 16 + l_val.m_dest_x);
 			l_result.push_back(l_val.m_palette_id);

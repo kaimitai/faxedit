@@ -3,6 +3,7 @@
 #include "fe_constants.h"
 #include "./../common/klib/Kutil.h"
 #include <algorithm>
+#include <utility>
 
 fe::Game::Game(void) :
 	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
@@ -12,7 +13,6 @@ fe::Game::Game(void) :
 	m_ptr_chunk_sprite_data{ c::PTR_CHUNK_SPRITE_DATA },
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
-	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
 	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
@@ -29,20 +29,27 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_ptr_chunk_sprite_data{ c::PTR_CHUNK_SPRITE_DATA },
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
-	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
 	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
 	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
 {
-	// extract screens for all chunks
-	for (std::size_t i{ 0 }; i < m_ptr_chunk_screen_data.size(); ++i) {
-		m_chunks.push_back(fe::Chunk());
 
-		auto l_os{ get_screen_pointers(m_ptr_chunk_screen_data, i) };
+	// extract all tilemaps in the correct ordering
+	for (std::size_t l_current_tilemap{ 0 }; l_current_tilemap < 8; ++l_current_tilemap) {
+		// search the tilemap bank rom for the next world index
+		for (std::size_t b{ 0 }; b < c::MAP_BANK_TO_WORLD_TILEMAPS.size(); ++b)
+			for (std::size_t idx{ 0 }; idx < c::MAP_BANK_TO_WORLD_TILEMAPS[b].size(); ++idx)
+				if (c::MAP_BANK_TO_WORLD_TILEMAPS[b][idx] == l_current_tilemap) {
+					m_chunks.push_back(fe::Chunk());
 
-		for (auto l_idx : l_os)
-			m_chunks.back().decompress_and_add_screen(p_rom_data, l_idx);
+					// we have the bank and the world ptr index in the bank - extract
+					std::size_t l_master_ptr{ c::PTR_TILEMAPS_BANK_ROM_OFFSET[b] + 2 * idx };
+					auto l_screen_ptrs{ get_screen_pointers(l_master_ptr) };
+
+					for (auto l_idx : l_screen_ptrs)
+						m_chunks.back().decompress_and_add_screen(p_rom_data, l_idx);
+				}
 	}
 
 	// extract various
@@ -50,7 +57,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		set_various(i, m_ptr_chunk_metadata);
 	// extract sprites
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		if (m_map_chunk_idx[i] == c::CHUNK_IDX_BUILDINGS) {
+		if (i == c::CHUNK_IDX_BUILDINGS) {
 			// this is not regular sprite data, it is the npc bundle masterdata
 			// referred to by the parameter byte in building doors
 			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
@@ -87,7 +94,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 
 	// set default palette indexes for each chunk
 	for (std::size_t i{ 0 }; i < 8; ++i)
-		m_chunks.at(m_map_chunk_idx.at(i)).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx + i));
+		m_chunks.at(i).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx + i));
 
 	for (std::size_t i{ 0 }; i < 31; ++i) {
 		NES_Palette l_tmp_palette;
@@ -100,7 +107,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	// get the 8 spawn locations
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		m_spawn_locations.push_back(fe::Spawn_location(
-			static_cast<byte>(m_map_chunk_idx.at(m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i))),
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_STAGES + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
@@ -110,7 +117,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 
 	// extract mattock animations
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		m_chunks.at(m_map_chunk_idx.at(i)).m_mattock_animation = {
+		m_chunks.at(i).m_mattock_animation = {
 			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i),
 			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 1),
 			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 2),
@@ -152,8 +159,27 @@ std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_re
 	return l_total_offset + l_value;
 }
 
-std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const {
+std::vector<std::size_t> fe::Game::get_screen_pointers(std::size_t p_world_ptr) const {
+	std::vector<std::size_t> l_result;
 
+	std::size_t l_ptr{ get_pointer_address(p_world_ptr) };
+	std::size_t l_start_dest_offset{ get_pointer_address(l_ptr) };
+	std::size_t l_offset{ l_start_dest_offset };
+
+	// we don't know a priori how many screens are defined
+	// but the screen layout data begins immediately after the pointer table
+	while (l_ptr < l_start_dest_offset) {
+		l_result.push_back(l_offset);
+		l_ptr += 2;
+		l_offset = get_pointer_address(l_ptr);
+	}
+
+	return l_result;
+}
+
+std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const {
+	return get_screen_pointers(p_offsets[p_chunk_no]);
+	/*
 	std::vector<std::size_t> l_result;
 
 	std::size_t l_ptr{ get_pointer_address(p_offsets[p_chunk_no]) };
@@ -169,6 +195,7 @@ std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<std::si
 	}
 
 	return l_result;
+	*/
 }
 
 void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
@@ -199,42 +226,37 @@ void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
 	// the meta-tile definition counts seem to vary between chunks
 	std::size_t l_metatile_count{ l_tsa_top_right - l_tsa_top_left };
 
-	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
-
-	m_chunks[l_true_chunk_no].set_screen_scroll_properties(m_rom_data, l_chunk_scroll_data);
-	m_chunks[l_true_chunk_no].add_metatiles(m_rom_data, l_metatile_count, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_block_properties);
+	m_chunks[p_chunk_no].set_screen_scroll_properties(m_rom_data, l_chunk_scroll_data);
+	m_chunks[p_chunk_no].add_metatiles(m_rom_data, l_metatile_count, l_tsa_top_left, l_tsa_top_right, l_tsa_bottom_left, l_tsa_bottom_right, l_chunk_palette_attr, l_block_properties);
 
 	// the doors for the town chunk offsets the index by 0x20 (hard coded game logic)
 	// probably to save space since all the doors there go to buildings
-	m_chunks[l_true_chunk_no].set_screen_doors(m_rom_data, l_chunk_door_data, l_chunk_door_dest_data,
-		l_true_chunk_no == 2 ? 0x20 : 0x00);
+	m_chunks[p_chunk_no].set_screen_doors(m_rom_data, l_chunk_door_data, l_chunk_door_dest_data,
+		p_chunk_no == c::CHUNK_IDX_TOWNS ? 0x20 : 0x00);
 }
 
 void fe::Game::set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites) {
 
-	std::size_t l_true_chunk = m_map_chunk_idx[p_chunk_no];
-
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_sprites + 2 * p_chunk_no, 0x24010) };
 
-	for (std::size_t i{ 0 }; i < m_chunks.at(l_true_chunk).m_screens.size(); ++i) {
+	for (std::size_t i{ 0 }; i < m_chunks.at(p_chunk_no).m_screens.size(); ++i) {
 		std::size_t l_ptr_to_screen{ get_pointer_address(l_ptr_to_screens + 2 * i, 0x24010) };
 
-		m_chunks[l_true_chunk].m_screens[i].m_sprite_set =
+		m_chunks[p_chunk_no].m_screens[i].m_sprite_set =
 			extract_sprite_set(m_rom_data, l_ptr_to_screen);
 	}
 }
 
 void fe::Game::set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_interchunk) {
 
-	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_interchunk + 2 * p_chunk_no, 0x30010) };
 
 	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 5) {
 		byte l_screen_id{ m_rom_data.at(l_ptr_to_screens + i) };
 
-		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_intrachunk_scroll =
+		m_chunks.at(p_chunk_no).m_screens.at(l_screen_id).m_intrachunk_scroll =
 			fe::IntraChunkScroll(
-				static_cast<byte>(m_map_chunk_idx[m_rom_data.at(l_ptr_to_screens + i + 1)]),
+				m_rom_data.at(l_ptr_to_screens + i + 1),
 				m_rom_data.at(l_ptr_to_screens + i + 2),
 				m_rom_data.at(l_ptr_to_screens + i + 3),
 				m_rom_data.at(l_ptr_to_screens + i + 4)
@@ -244,13 +266,12 @@ void fe::Game::set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 }
 
 void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_intrachunk) {
-	std::size_t l_true_chunk_no{ m_map_chunk_idx[p_chunk_no] };
 	std::size_t l_ptr_to_screens{ get_pointer_address(pt_to_intrachunk + 2 * p_chunk_no, 0x30010) };
 
 	for (std::size_t i{ 0 }; m_rom_data.at(l_ptr_to_screens + i) != 0xff; i += 4) {
 		byte l_screen_id{ m_rom_data.at(l_ptr_to_screens + i) };
 
-		m_chunks.at(l_true_chunk_no).m_screens.at(l_screen_id).m_interchunk_scroll =
+		m_chunks.at(p_chunk_no).m_screens.at(l_screen_id).m_interchunk_scroll =
 			fe::InterChunkScroll(
 				m_rom_data.at(l_ptr_to_screens + i + 1),
 				m_rom_data.at(l_ptr_to_screens + i + 2),
