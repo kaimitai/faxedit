@@ -25,6 +25,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 	m_sel_nes_tile{ 0x80 },
 	m_sel_spawn_location{ 0 },
 	m_sel_npc_bundle{ 0 },
+	m_sel_stage{ 0 },
 	m_emode{ fe::EditMode::Tilemap }
 {
 
@@ -189,7 +190,7 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd, const fe::G
 }
 
 std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	if (p_chunk_no == 6 && p_screen_no >= 3)
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS && p_screen_no >= 3)
 		return p_screen_no >= 8 ? 9 : 8;
 	else
 		return p_chunk_no;

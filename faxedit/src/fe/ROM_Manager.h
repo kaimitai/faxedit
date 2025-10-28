@@ -35,15 +35,13 @@ namespace fe {
 			const std::vector<std::vector<byte>>& p_data) const;
 
 		// pointer variables - check the constants header for descriptions
-		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset,
-			m_map_chunk_levels;
+		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
 		std::pair<std::size_t, std::size_t> m_ptr_sprites, m_ptr_sameworld_trans_table,
 			m_ptr_otherworld_trans_table;
 		std::vector<std::size_t> m_chunk_idx;
 
 		// constant scalars
-		std::size_t m_chunk_idx_npc_bundles,
-			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen,
+		std::size_t m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen,
 			m_ptr_chunk_door_reqs;
 
 		template<class T, class U = T>
@@ -92,7 +90,7 @@ namespace fe {
 		void encode_static_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		void encode_chunk_palette_no(const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		void encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		void encode_stage_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_mattock_animations(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_push_block(const fe::Game& p_game, std::vector<byte>& p_rom) const;

@@ -7,11 +7,9 @@ fe::ROM_Manager::ROM_Manager(void) :
 	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
 	m_chunk_idx{ c::MAP_CHUNK_IDX },
 	m_ptr_sprites{ c::PTR_SPRITE_DATA },
-	m_chunk_idx_npc_bundles{ c::IDX_CHUNK_NPC_BUNDLES },
-	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
-	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
-	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
-	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
+	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
+	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
+	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
 	m_ptr_otherworld_trans_table{ c::PTR_OTHERW_TRANS_TABLE },
 	m_ptr_sameworld_trans_table{ c::PTR_SAMEW_TRANS_TABLE }
 {
@@ -85,7 +83,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Game& p
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 		std::vector<std::vector<byte>> l_screen_sprite_data;
 
-		if (m_chunk_idx[c] == m_chunk_idx_npc_bundles) {
+		if (m_chunk_idx[c] == c::CHUNK_IDX_BUILDINGS) {
 			for (const auto& bundle : p_game.m_npc_bundles)
 				l_screen_sprite_data.push_back(bundle.get_bytes());
 		}
@@ -417,7 +415,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::G
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	auto l_sprite_data{ encode_game_sprite_data_new(p_game) };
 	if (l_sprite_data.size() <= c::SIZE_LIMT_SPRITE_DATA)
-		patch_bytes(l_sprite_data, p_rom, c::PTR_CHUNK_SPRITE_DATA );
+		patch_bytes(l_sprite_data, p_rom, c::PTR_CHUNK_SPRITE_DATA);
 	return std::make_pair(l_sprite_data.size(), c::SIZE_LIMT_SPRITE_DATA);
 }
 
@@ -462,7 +460,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe
 // all static data patching
 void fe::ROM_Manager::encode_static_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	encode_chunk_palette_no(p_game, p_rom);
-	encode_chunk_door_data(p_game, p_rom);
+	encode_stage_data(p_game, p_rom);
 	encode_spawn_locations(p_game, p_rom);
 	encode_mattock_animations(p_game, p_rom);
 	encode_push_block(p_game, p_rom);
@@ -475,27 +473,27 @@ void fe::ROM_Manager::encode_chunk_palette_no(const fe::Game& p_game, std::vecto
 	}
 }
 
-// patch ROM in place for the chunk-specific door data
-void fe::ROM_Manager::encode_chunk_door_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+// patch ROM in place for the stage data
+void fe::ROM_Manager::encode_stage_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	const auto& l_stages{ p_game.m_stages };
 
-		if (p_game.m_chunks[i].m_door_connections.has_value()) {
-			const auto& l_conns{ p_game.m_chunks[i].m_door_connections.value() };
+	// the stage data itself
+	for (std::size_t i{ 0 }; i < 6; ++i) {
+		const auto& l_stage{ l_stages.m_stages[i] };
 
-			std::size_t l_chunk_offset_idx{ get_vector_index(m_map_chunk_levels, i) };
-
-			p_rom.at(m_ptr_chunk_door_to_chunk + 2 * l_chunk_offset_idx + 1) = static_cast<byte>(get_vector_index(m_map_chunk_levels, l_conns.m_next_chunk));
-			p_rom.at(m_ptr_chunk_door_to_chunk + 2 * l_chunk_offset_idx) = static_cast<byte>(get_vector_index(m_map_chunk_levels, l_conns.m_prev_chunk));
-
-			p_rom.at(m_ptr_chunk_door_to_screen + 2 * l_chunk_offset_idx + 1) = l_conns.m_next_screen;
-			p_rom.at(m_ptr_chunk_door_to_screen + 2 * l_chunk_offset_idx) = l_conns.m_prev_screen;
-
-			p_rom.at(m_ptr_chunk_door_reqs + 2 * l_chunk_offset_idx + 1) = l_conns.m_next_door_req;
-			p_rom.at(m_ptr_chunk_door_reqs + 2 * l_chunk_offset_idx) = l_conns.m_prev_door_req;
-
-		}
+		p_rom.at(c::OFFSET_STAGE_CONNECTIONS + 2 * i) = static_cast<byte>(l_stage.m_prev_stage);
+		p_rom.at(c::OFFSET_STAGE_CONNECTIONS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_stage);
+		p_rom.at(c::OFFSET_STAGE_SCREENS + 2 * i) = static_cast<byte>(l_stage.m_prev_screen);
+		p_rom.at(c::OFFSET_STAGE_SCREENS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_screen);
+		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i) = static_cast<byte>(l_stage.m_prev_requirement);
+		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_requirement);
+		p_rom.at(c::OFFSET_STAGE_TO_WORLD + i) = static_cast<byte>(get_vector_index(c::MAP_CHUNK_IDX, l_stage.m_world_id));
 	}
 
+	// start data 
+	p_rom.at(c::OFFSET_GAME_START_SCREEN) = static_cast<byte>(l_stages.m_start_screen);
+	p_rom.at(c::OFFSET_GAME_START_POS) = l_stages.m_start_x + (l_stages.m_start_y << 4);
+	p_rom.at(c::OFFSET_GAME_START_HP) = l_stages.m_start_hp;
 }
 
 std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Game& p_game) const {
@@ -612,6 +610,7 @@ void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector
 		p_rom.at(c::OFFSET_SPAWN_LOC_SCREENS + i) = l_sl.m_screen;
 		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
 		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
+		p_rom.at(c::OFFSET_SPAWN_LOC_STAGES + i) = l_sl.m_stage;
 	}
 }
 
@@ -628,9 +627,7 @@ void fe::ROM_Manager::encode_mattock_animations(const fe::Game& p_game, std::vec
 void fe::ROM_Manager::encode_push_block(const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	const auto& l_pb{ p_game.m_push_block };
 
-	byte l_true_chunk{ static_cast<byte>(get_vector_index(m_chunk_idx, l_pb.m_world)) };
-
-	p_rom.at(c::OFFSET_PTM_WORLD_NO) = l_true_chunk;
+	p_rom.at(c::OFFSET_PTM_STAGE_NO) = l_pb.m_stage;
 	p_rom.at(c::OFFSET_PTM_SCREEN_NO) = l_pb.m_screen;
 	p_rom.at(c::OFFSET_PTM_START_POS) = (l_pb.m_y << 4) + l_pb.m_x;
 	p_rom.at(c::OFFSET_PTM_POS_DELTA) = l_pb.m_pos_delta;
@@ -640,6 +637,7 @@ void fe::ROM_Manager::encode_push_block(const fe::Game& p_game, std::vector<byte
 	p_rom.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3) = l_pb.m_target_1;
 	p_rom.at(c::OFFSET_PTM_TILE_NO) = l_pb.m_draw_block;
 	p_rom.at(c::OFFSET_PTM_BLOCK_COUNT) = l_pb.m_block_count;
+	p_rom.at(c::OFFSET_PTM_COVER_POS) = (l_pb.m_cover_y << 4) + l_pb.m_cover_x;
 }
 
 // this function generates pointer tables and data offsets for several pieces of data at once,

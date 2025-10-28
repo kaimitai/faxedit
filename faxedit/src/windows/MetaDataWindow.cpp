@@ -15,7 +15,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 		ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[4].active);
 		ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[4].hovered);
 
-		if (ImGui::BeginTabItem(std::format("{} Metadata###wmdtabi", c::LABELS_CHUNKS[m_sel_chunk]).c_str())) {
+		if (ImGui::BeginTabItem(std::format("World {} ({}) Metadata###wmdtabi", m_sel_chunk, c::LABELS_CHUNKS[m_sel_chunk]).c_str())) {
 
 			if (ImGui::BeginTabBar("WorldMetaTabs")) {
 
@@ -151,81 +151,6 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 				}
 				// CHUNK - METATILES - BEGIN
 
-				// CHUNK - DOOR META - BEGIN
-				if (ImGui::BeginTabItem("Door Metadata")) {
-
-					if (l_chunk.m_door_connections.has_value()) {
-
-						auto& l_conns{ l_chunk.m_door_connections.value() };
-
-						ImGui::SeparatorText("Next-World door parameters");
-
-						// next world chunk
-
-						// generate allowed destinations
-						std::vector<const char*> allowed_labels;
-						for (std::size_t i{ 0 }; i < c::LABELS_CHUNKS.size(); ++i)
-							allowed_labels.push_back(c::LABELS_CHUNKS[i].c_str());
-
-						int selected_index = static_cast<int>(
-							l_conns.m_next_chunk);
-
-						ImGui::Combo("World###nxtw", &selected_index, allowed_labels.data(), static_cast<int>(allowed_labels.size()));
-
-						bool l_allowed{ false };
-						for (std::size_t lvl_no : c::MAP_CHUNK_LEVELS)
-							if (lvl_no == static_cast<std::size_t>(selected_index)) {
-								l_allowed = true;
-								break;
-							}
-
-						if (l_allowed)
-							l_conns.m_next_chunk = static_cast<byte>(selected_index);
-						else
-							add_message("Invalid destination world");
-
-						ui::imgui_slider_with_arrows("nwdcs", "Screen",
-							l_conns.m_next_screen, 0, p_game.m_chunks.at(l_conns.m_next_chunk).m_screens.size() - 1);
-
-						ui::imgui_slider_with_arrows("nwdrq", "Requirement: " + get_description(l_conns.m_next_door_req, c::LABELS_DOOR_REQS),
-							l_conns.m_next_door_req, 0, c::LABELS_DOOR_REQS.size() - 1);
-
-						// previous chunk door connection
-
-						ImGui::SeparatorText("Previous-World door parameters");
-
-						selected_index = static_cast<int>(
-							l_conns.m_prev_chunk);
-
-						ImGui::Combo("World###prvw", &selected_index, allowed_labels.data(), static_cast<int>(allowed_labels.size()));
-
-						l_allowed = false;
-						for (std::size_t lvl_no : c::MAP_CHUNK_LEVELS)
-							if (lvl_no == static_cast<std::size_t>(selected_index)) {
-								l_allowed = true;
-								break;
-							}
-
-						if (l_allowed)
-							l_conns.m_prev_chunk = static_cast<byte>(selected_index);
-						else
-							add_message("Invalid destination world");
-
-						ui::imgui_slider_with_arrows("pwdcs", "Screen",
-							l_conns.m_prev_screen, 0, p_game.m_chunks.at(l_conns.m_prev_chunk).m_screens.size() - 1);
-
-						ui::imgui_slider_with_arrows("pwdrq", "Requirement: " + get_description(l_conns.m_prev_door_req, c::LABELS_DOOR_REQS),
-							l_conns.m_prev_door_req, 0, c::LABELS_DOOR_REQS.size() - 1);
-
-					}
-					else
-						ImGui::Text("No door metadata for this world");
-
-					ImGui::EndTabItem();
-				}
-
-				// CHUNK - DOOR META - BEGIN
-
 				// CHUNK - PALETTE - BEGIN
 				if (ImGui::BeginTabItem("Palette")) {
 					if (fe::ui::imgui_slider_with_arrows("##cdp",
@@ -291,6 +216,11 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 				ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[2].active);
 				ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[2].hovered);
 
+				if (ImGui::BeginTabItem("Stages")) {
+					show_stages_data(p_game);
+					ImGui::EndTabItem();
+				}
+
 				if (ImGui::BeginTabItem("Spawns")) {
 
 					ImGui::SeparatorText("Spawn locations after dying or talking to a spawn-setting Guru");
@@ -316,10 +246,20 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						l_spawn.m_y = l_newpos.value().second;
 					}
 
+					ImGui::SeparatorText("Stage Number");
+
+					ui::imgui_slider_with_arrows("spawnstage", "The number of next-world doors traversed before this spawn",
+						l_spawn.m_stage, 0, 5);
+
 					ImGui::SeparatorText("Automatic Deduction");
 
-					if (ui::imgui_button("Deduce", 3, "Try to deduce spawn locations by spawn-setting Guru door entrances"))
-						p_game.calculate_spawn_locations_by_guru();
+					if (ui::imgui_button("Deduce", 3, "Try to deduce spawn locations by spawn-setting Guru door entrances")) {
+						bool l_deduced_spawns{ p_game.calculate_spawn_locations_by_guru() };
+						if (l_deduced_spawns)
+							add_message("All spawn point data deduced OK", 2);
+						else
+							add_message("Unable to deduce all spawn points", 1);
+					}
 
 					ImGui::EndTabItem();
 				}
@@ -346,26 +286,35 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 				if (ImGui::BeginTabItem("Push-Block")) {
 					auto& l_pb{ p_game.m_push_block };
-					bool l_sameworld{ m_sel_chunk == l_pb.m_world };
 
 					ImGui::Text("The parameters for the tilemap change when you push blocks and open the last spring.");
 					ImGui::Text("Navigate to the world where the push-blocks reside to see metatile previews.");
 					ImGui::Text("Don't forget to set the command-byte to 0 for the screens where you want");
 					ImGui::Text("the animation to trigger automatically after quest completion.");
 					ImGui::NewLine();
-					ImGui::Text("Be careful about using it on different worlds, as the metatile indexes might be out of bounds elsewhere.");
+					ImGui::Text("Be careful about adding pushable blocks to different worlds,");
+					ImGui::Text("as the metatile indexes might be out of bounds elsewhere.");
 
-					ImGui::SeparatorText("World and screen where the quest-flag will be set when pusing blocks.");
+					ImGui::SeparatorText("Stage and screen where the quest-flag will be set when pusing blocks.");
 
-					ui::imgui_slider_with_arrows("pbw",
-						std::format("World: {}", c::LABELS_CHUNKS.at(l_pb.m_world)), l_pb.m_world, 0, 7, "");
+					auto l_world{ p_game.m_stages.m_stages.at(l_pb.m_stage).m_world_id };
+					bool l_sameworld{ m_sel_chunk == l_world };
+					std::size_t l_mt_count{ p_game.m_chunks[l_world].m_metatiles.size() };
+
+					ui::imgui_slider_with_arrows("###pbstage",
+						std::format("Stage {} ({})",
+							l_pb.m_stage, c::LABELS_CHUNKS[l_world]),
+						l_pb.m_stage, 0, 5, "");
 
 					ui::imgui_slider_with_arrows("pbs",
-						"Screen", l_pb.m_screen, 0, p_game.m_chunks.at(l_pb.m_world).m_screens.size());
+						"Screen", l_pb.m_screen, 0, p_game.m_chunks.at(l_pb.m_stage).m_screens.size());
 
 					ImGui::SeparatorText("Line-drawing function");
 
 					ImGui::Text("Start position");
+
+					ImGui::PushID("pbsp");
+
 					auto l_newpos{ show_position_slider(
 						l_pb.m_x, l_pb.m_y) };
 					if (l_newpos.has_value()) {
@@ -373,34 +322,52 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						l_pb.m_y = l_newpos.value().second;
 					}
 
+					ImGui::PopID();
+
 					ui::imgui_slider_with_arrows("pbdelta",
-						"Delta-x", l_pb.m_pos_delta, 0, 255, "Change in x-position per block. Make sure you don't draw off screen. 255 and below are negative deltas. ");
+						"Delta-x", l_pb.m_pos_delta, 0, 255, "Change in x-position per block. Make sure you don't draw off screen. 255 and just below are negative deltas.");
+
+					ui::imgui_slider_with_arrows("pbdcount",
+						"Draw Count", l_pb.m_block_count, 0, 100, "Number of blocks to draw");
 
 					ui::imgui_slider_with_arrows("pbblock", "Draw-block",
-						l_pb.m_draw_block, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						l_pb.m_draw_block, 0, l_mt_count - 1,
 						"The block that will be used to draw the line");
 
-					if (l_sameworld) {
+					if (l_sameworld && l_pb.m_draw_block < l_mt_count) {
 						ImGui::SameLine();
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_draw_block), ImVec2(32, 32));
 					}
 
+					ImGui::SeparatorText("Fountain Cover Position");
+
+					ImGui::PushID("fctcp");
+
+					auto l_newcoverpos{ show_position_slider(
+						l_pb.m_cover_x, l_pb.m_cover_y) };
+					if (l_newcoverpos.has_value()) {
+						l_pb.m_cover_x = l_newcoverpos.value().first;
+						l_pb.m_cover_y = l_newcoverpos.value().second;
+					}
+
+					ImGui::PopID();
+
 					ImGui::SeparatorText("Pushable Blocks Animation - Source");
 
 					ui::imgui_slider_with_arrows("pbs0", "Source Top",
-						l_pb.m_source_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						l_pb.m_source_0, 0, p_game.m_chunks.at(l_pb.m_stage).m_metatiles.size() - 1,
 						"The block that will replace the top of the pushed block");
 
-					if (l_sameworld) {
+					if (l_sameworld && l_pb.m_source_0 < l_mt_count) {
 						ImGui::SameLine();
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_source_0), ImVec2(32, 32));
 					}
 
 					ui::imgui_slider_with_arrows("pbs1", "Source Bottom",
-						l_pb.m_source_1, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						l_pb.m_source_1, 0, l_mt_count - 1,
 						"The block that will replace the bottom of the pushed block");
 
-					if (l_sameworld) {
+					if (l_sameworld && l_pb.m_source_1 < l_mt_count) {
 						ImGui::SameLine();
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_source_1), ImVec2(32, 32));
 					}
@@ -408,26 +375,26 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					ImGui::SeparatorText("Pushable Blocks Animation - Target");
 
 					ui::imgui_slider_with_arrows("pbt0", "Target Top",
-						l_pb.m_target_0, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						l_pb.m_target_0, 0, l_mt_count - 1,
 						"The block that will replace the top of the destination of the pushed block");
 
-					if (l_sameworld) {
+					if (l_sameworld && l_pb.m_target_0 < l_mt_count) {
 						ImGui::SameLine();
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_0), ImVec2(32, 32));
 					}
 
 					ui::imgui_slider_with_arrows("pbt1", "Target Bottom",
-						l_pb.m_target_1, 0, p_game.m_chunks.at(l_pb.m_world).m_metatiles.size() - 1,
+						l_pb.m_target_1, 0, l_mt_count - 1,
 						"The block that will replace the bottom of the destination of the pushed block");
 
-					if (l_sameworld) {
+					if (l_sameworld && l_pb.m_target_1 < l_mt_count) {
 						ImGui::SameLine();
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_1), ImVec2(32, 32));
 					}
 
 					ImGui::SeparatorText("Deduce world and screen");
 
-					if (ui::imgui_button("Deduce", 1, "Find the world and screens with the pushable blocks (takes first match)")) {
+					if (ui::imgui_button("Deduce", 1, "Find the stage and screen with the pushable blocks (takes first match) and deduce as much information as possible")) {
 
 					}
 
@@ -446,4 +413,76 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 	}
 
 	ImGui::End();
+}
+
+void fe::MainWindow::show_stages_data(fe::Game& p_game) {
+	auto& l_stages{ p_game.m_stages };
+
+	ImGui::SeparatorText("Stage Data");
+
+	ui::imgui_slider_with_arrows("###stagesel",
+		std::format("Selected Stage: ", m_sel_stage),
+		m_sel_stage, 0, 5);
+
+	ImGui::Separator();
+
+	auto& l_stage{ l_stages.m_stages[m_sel_stage] };
+
+	std::size_t l_world_no{ l_stage.m_world_id };
+
+	if (ui::imgui_slider_with_arrows("###stedw",
+		std::format("Stage World: {} ({})", l_world_no,
+			c::LABELS_CHUNKS[l_world_no]),
+		l_world_no, 0, 7,
+		"Mapping from stage to world - currently the stage 0 world cannot be edited",
+		m_sel_stage == 0))
+		l_stages.set_stage_world(m_sel_stage, l_world_no);
+
+	ImGui::SeparatorText("Next Stage Parameters");
+
+	ui::imgui_slider_with_arrows("###stens",
+		std::format("Next Stage: {} ({})",
+		l_stage.m_next_stage,
+			c::LABELS_CHUNKS[l_stages.m_stages[l_stage.m_next_stage].m_world_id]),
+		l_stage.m_next_stage, 0, 5);
+	ui::imgui_slider_with_arrows("###stenscr", "Next Screen",
+		l_stage.m_next_screen, 0, p_game.m_chunks.at(
+			l_stages.m_stages[l_stage.m_next_stage].m_world_id
+		).m_screens.size() - 1);
+	ui::imgui_slider_with_arrows("###stenr", std::format("Next-Stage Door Requirement: {}",
+		get_description(l_stage.m_next_requirement, c::LABELS_DOOR_REQS)),
+		l_stage.m_next_requirement, 0, c::LABELS_DOOR_REQS.size() - 1);
+
+	ImGui::SeparatorText("Previous Stage Parameters");
+
+	ui::imgui_slider_with_arrows("###steps",
+		std::format("Previous Stage: {} ({})",
+			l_stage.m_prev_stage,
+			c::LABELS_CHUNKS[l_stages.m_stages[l_stage.m_prev_stage].m_world_id]),
+		l_stage.m_prev_stage, 0, 5);
+	ui::imgui_slider_with_arrows("###stepscr", "Previous Screen",
+		l_stage.m_prev_screen, 0, p_game.m_chunks.at(
+			l_stages.m_stages[l_stage.m_prev_stage].m_world_id
+		).m_screens.size() - 1);
+	ui::imgui_slider_with_arrows("###stepr", std::format("Previous-Stage Door Requirement: {}",
+		get_description(l_stage.m_prev_requirement, c::LABELS_DOOR_REQS)),
+		l_stage.m_prev_requirement, 0, c::LABELS_DOOR_REQS.size() - 1);
+
+	ImGui::SeparatorText("Start Parameters");
+
+	ui::imgui_slider_with_arrows("###stestascr", "Start Screen",
+		l_stages.m_start_screen, 0, p_game.m_chunks.at(
+			l_stages.m_stages[0].m_world_id
+		).m_screens.size() - 1);
+
+	ImGui::PushID("###stestapos");
+	auto l_startpos{ show_position_slider(l_stages.m_start_x, l_stages.m_start_y) };
+	if (l_startpos.has_value()) {
+		l_stages.m_start_x = l_startpos.value().first;
+		l_stages.m_start_y = l_startpos.value().second;
+	}
+	ImGui::PopID();
+
+	ui::imgui_slider_with_arrows("###stestahp", "Starting Health",
+		l_stages.m_start_hp, 0, 255);
 }

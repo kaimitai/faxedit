@@ -5,7 +5,6 @@
 #include <vector>
 #include "Screen.h"
 #include "Metatile.h"
-#include "Chunk_door_connections.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -18,7 +17,6 @@ namespace fe {
 		std::vector<fe::Metatile> m_metatiles;
 		std::vector<fe::Screen> m_screens;
 		byte m_default_palette_no;
-		std::optional<fe::Chunk_door_connections> m_door_connections;
 		std::vector<byte> m_mattock_animation;
 
 		std::vector<byte> extract_bytes(const std::vector<byte>& p_rom,

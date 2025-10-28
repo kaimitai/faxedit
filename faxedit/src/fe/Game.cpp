@@ -1,7 +1,6 @@
 #include "Game.h"
 #include "Metatile.h"
 #include "fe_constants.h"
-#include "Chunk_door_connections.h"
 #include "./../common/klib/Kutil.h"
 #include <algorithm>
 
@@ -14,13 +13,11 @@ fe::Game::Game(void) :
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
 	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
-	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
-	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
-	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
-	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
+	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
+	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
+	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
 	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
 {
-
 }
 
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
@@ -33,10 +30,9 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
 	m_map_chunk_idx{ c::MAP_CHUNK_IDX },
-	m_map_chunk_levels{ c::MAP_CHUNK_LEVELS },
-	m_ptr_chunk_door_to_chunk{ c::PTR_CHUNK_DOOR_TO_CHUNK },
-	m_ptr_chunk_door_to_screen{ c::PTR_CHUNK_DOOR_TO_SCREEN },
-	m_ptr_chunk_door_reqs{ c::PTR_CHUNK_DOOR_REQUIREMENTS },
+	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
+	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
+	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
 	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
 {
 	// extract screens for all chunks
@@ -54,7 +50,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		set_various(i, m_ptr_chunk_metadata);
 	// extract sprites
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		if (m_map_chunk_idx[i] == c::IDX_CHUNK_NPC_BUNDLES) {
+		if (m_map_chunk_idx[i] == c::CHUNK_IDX_BUILDINGS) {
 			// this is not regular sprite data, it is the npc bundle masterdata
 			// referred to by the parameter byte in building doors
 			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
@@ -73,25 +69,11 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		set_intrachunk_scrolling(i, m_ptr_chunk_intrachunk_transitions);
 	}
 
-	// extract inter-chunk connections when using "next level" and "last level" doors
-	// not all chunks have this, so consult the mapping table
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		const auto iter{ std::find(begin(m_map_chunk_levels), end(m_map_chunk_levels), i) };
-
-		// found a match for this chunk id - extract the data
-		if (iter != end(m_map_chunk_levels)) {
-			std::size_t l_true_chunk{ static_cast<std::size_t>(iter - begin(m_map_chunk_levels)) };
-
-			m_chunks.at(i).m_door_connections = fe::Chunk_door_connections(
-				static_cast<byte>(m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk + 1))),
-				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk + 1),
-				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk + 1),
-				static_cast<byte>(m_map_chunk_levels.at(m_rom_data.at(m_ptr_chunk_door_to_chunk + 2 * l_true_chunk))),
-				m_rom_data.at(m_ptr_chunk_door_to_screen + 2 * l_true_chunk),
-				m_rom_data.at(m_ptr_chunk_door_reqs + 2 * l_true_chunk)
-			);
-		}
-	}
+	m_stages = fe::StageManager(p_rom_data,
+		c::OFFSET_STAGE_TO_WORLD, c::OFFSET_STAGE_CONNECTIONS,
+		c::OFFSET_STAGE_SCREENS, c::OFFSET_STAGE_REQUIREMENTS,
+		c::OFFSET_GAME_START_SCREEN, c::OFFSET_GAME_START_POS,
+		c::OFFSET_GAME_START_HP);
 
 	// extract gfx
 	for (std::size_t c{ 0 }; c < m_offsets_bg_gfx.size(); ++c) {
@@ -120,6 +102,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		m_spawn_locations.push_back(fe::Spawn_location(
 			static_cast<byte>(m_map_chunk_idx.at(m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i))),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_STAGES + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4
 		));
@@ -137,7 +120,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 
 	// extract "push-block" parameters
 	m_push_block = fe::Push_block_parameters(
-		static_cast<byte>(m_map_chunk_idx.at(m_rom_data.at(c::OFFSET_PTM_WORLD_NO))),
+		m_rom_data.at(c::OFFSET_PTM_STAGE_NO),
 		m_rom_data.at(c::OFFSET_PTM_SCREEN_NO),
 		m_rom_data.at(c::OFFSET_PTM_START_POS) % 16,
 		m_rom_data.at(c::OFFSET_PTM_START_POS) / 16,
@@ -147,7 +130,9 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 2),
 		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3),
 		m_rom_data.at(c::OFFSET_PTM_POS_DELTA),
-		m_rom_data.at(c::OFFSET_PTM_TILE_NO)
+		m_rom_data.at(c::OFFSET_PTM_TILE_NO),
+		m_rom_data.at(c::OFFSET_PTM_COVER_POS) % 16,
+		m_rom_data.at(c::OFFSET_PTM_COVER_POS) / 16
 	);
 }
 
@@ -276,7 +261,9 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 
 // find all guru (with spawn point) door entrances
 // and update the spawn location with the door data
-void fe::Game::calculate_spawn_locations_by_guru(void) {
+bool fe::Game::calculate_spawn_locations_by_guru(void) {
+	int l_cnt{ 0 };
+
 	for (std::size_t c{ 0 }; c < m_chunks.size(); ++c)
 		for (std::size_t s{ 0 }; s < m_chunks[c].m_screens.size(); ++s)
 			for (const auto& l_door : m_chunks[c].m_screens[s].m_doors) {
@@ -287,17 +274,75 @@ void fe::Game::calculate_spawn_locations_by_guru(void) {
 					// if we match, update the spawn points vector with the chunk no,
 					// screen no and door location
 					if (iter != end(c::SPAWN_POINT_BUILDING_PARAMS)) {
-						std::size_t l_spawn_no{ static_cast<std::size_t>(iter - begin(c::SPAWN_POINT_BUILDING_PARAMS)) };
-						m_spawn_locations.at(l_spawn_no) = fe::Spawn_location(
-							static_cast<byte>(c),
-							static_cast<byte>(s),
-							l_door.m_coords.first,
-							l_door.m_coords.second
-						);
+						std::optional<byte> l_stage_id;
+
+						const auto l_stage_idx{ m_stages.get_stage_idx_from_world(c) };
+
+						if (l_stage_idx.has_value())
+							l_stage_id = static_cast<byte>(l_stage_idx.value());
+						else {
+							// try to deduce the stage id if the world to stage is null
+							const auto& scr{ m_chunks[c].m_screens };
+
+							// traverse the area left and right until we get an other-world transition
+							// then get the exit world from the transition and remap to stage
+							// TODO: Do a bigger search, but this one will work for the original data set
+							std::size_t l_screen_left{ s };
+							std::size_t l_screen_right{ s };
+
+							do {
+								if (scr[l_screen_left].m_intrachunk_scroll.has_value()) {
+									std::size_t l_world_no{
+									static_cast<std::size_t>(scr[l_screen_left].m_intrachunk_scroll.value().m_dest_chunk)
+									};
+
+									auto l_left_stage{ m_stages.get_stage_idx_from_world(l_world_no) };
+									if (l_left_stage.has_value())
+										l_stage_id = static_cast<byte>(l_left_stage.value());
+									break;
+								}
+								else if (scr[l_screen_left].m_scroll_right.has_value())
+									l_screen_left = scr[l_screen_left].m_scroll_left.value();
+
+							} while (scr[l_screen_left].m_scroll_left.has_value());
+
+							if (!l_stage_id.has_value()) {
+								do {
+									if (scr[l_screen_right].m_intrachunk_scroll.has_value()) {
+										std::size_t l_world_no{
+										static_cast<std::size_t>(scr[l_screen_right].m_intrachunk_scroll.value().m_dest_chunk)
+										};
+
+										auto l_right_stage{ m_stages.get_stage_idx_from_world(l_world_no) };
+										if (l_right_stage.has_value())
+											l_stage_id = static_cast<byte>(l_right_stage.value());
+										break;
+									}
+									else if (scr[l_screen_right].m_scroll_right.has_value())
+										l_screen_right = scr[l_screen_right].m_scroll_right.value();
+
+								} while (scr[l_screen_right].m_scroll_right.has_value());
+							}
+
+						}
+
+						if (l_stage_id.has_value()) {
+							std::size_t l_spawn_no{ static_cast<std::size_t>(iter - begin(c::SPAWN_POINT_BUILDING_PARAMS)) };
+							m_spawn_locations.at(l_spawn_no) = fe::Spawn_location(
+								static_cast<byte>(c),
+								static_cast<byte>(s),
+								l_stage_id.value(),
+								l_door.m_coords.first,
+								l_door.m_coords.second
+							);
+							++l_cnt;
+						}
 					}
 
 				}
 			}
+
+	return (l_cnt == 8);
 }
 
 // make sure there are no references to any metatiles in p_mt_to_delete
@@ -337,7 +382,7 @@ void fe::Game::delete_metatiles(std::size_t p_chunk_no,
 		b = static_cast<byte>(remap[b]);
 
 	// if the push-block happens on this world, make sure we re-index the tiles involved
-	if (m_push_block.m_world == static_cast<byte>(p_chunk_no)) {
+	if (m_push_block.m_stage == static_cast<byte>(p_chunk_no)) {
 		m_push_block.m_draw_block = static_cast<byte>(remap[m_push_block.m_draw_block]);
 		m_push_block.m_source_0 = static_cast<byte>(remap[m_push_block.m_source_0]);
 		m_push_block.m_source_1 = static_cast<byte>(remap[m_push_block.m_source_1]);
@@ -374,7 +419,7 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 	// re-index screens
 
 	// game metadata - push blocks
-	if (m_push_block.m_world == p_chunk_no)
+	if (m_stages.m_stages[m_push_block.m_stage].m_world_id == p_chunk_no)
 		m_push_block.m_screen = remap[m_push_block.m_screen];
 
 	// spawn locations
@@ -382,18 +427,19 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 		if (m_spawn_locations.at(i).m_world == p_chunk_no)
 			m_spawn_locations[i].m_screen = remap[m_spawn_locations[i].m_screen];
 
+	// stage screens
+	for (auto& l_stage : m_stages.m_stages) {
+		if (m_stages.m_stages[l_stage.m_next_stage].m_world_id == p_chunk_no)
+			l_stage.m_next_screen = remap[l_stage.m_next_screen];
+		if (m_stages.m_stages[l_stage.m_prev_stage].m_world_id == p_chunk_no)
+			l_stage.m_prev_screen = remap[l_stage.m_prev_screen];
+	}
+
+	// start screen
+	if (m_stages.m_stages[0].m_world_id == p_chunk_no)
+		m_stages.m_start_screen = remap[m_stages.m_start_screen];
+
 	for (std::size_t c{ 0 }; c < 8; ++c) {
-
-		// chunk metadata
-		if (m_chunks[c].m_door_connections.has_value()) {
-			auto& l_dc{ m_chunks[c].m_door_connections.value()};
-
-			if (l_dc.m_next_chunk == p_chunk_no)
-				l_dc.m_next_screen = remap[l_dc.m_next_screen];
-			if (l_dc.m_prev_chunk == p_chunk_no)
-				l_dc.m_prev_screen = remap[l_dc.m_prev_screen];
-		}
-
 		auto& l_scr{ m_chunks[c].m_screens };
 		for (std::size_t s{ 0 }; s < l_scr.size(); ++s) {
 
@@ -449,7 +495,7 @@ std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const 
 		l_result.insert(b);
 
 	// the push-block happens on this world, make sure we re-index the tiles involved
-	if (m_push_block.m_world == static_cast<byte>(p_chunk_no)) {
+	if (m_push_block.m_stage == static_cast<byte>(p_chunk_no)) {
 		l_result.insert(m_push_block.m_draw_block);
 		l_result.insert(m_push_block.m_source_0);
 		l_result.insert(m_push_block.m_source_1);
@@ -466,7 +512,7 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 	// handle metadata
 
 	// push-block
-	if (m_push_block.m_world == p_chunk_no)
+	if (m_push_block.m_stage == p_chunk_no)
 		l_result.insert(m_push_block.m_screen);
 
 	// spawn locations
@@ -474,16 +520,19 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 		if (m_spawn_locations.at(i).m_world == p_chunk_no)
 			l_result.insert(m_spawn_locations[i].m_screen);
 
-	for (std::size_t i{ 0 }; i < 8; ++i) {
+	// stage screens
+	for (const auto& l_stage : m_stages.m_stages) {
+		if (m_stages.m_stages[l_stage.m_next_stage].m_world_id == static_cast<byte>(p_chunk_no))
+			l_result.insert(static_cast<byte>(l_stage.m_next_screen));
+		if (m_stages.m_stages[l_stage.m_prev_stage].m_world_id == static_cast<byte>(p_chunk_no))
+			l_result.insert(static_cast<byte>(l_stage.m_prev_screen));
+	}
 
-		// door metadata templates
-		if (m_chunks.at(i).m_door_connections.has_value()) {
-			const auto& l_dc{ m_chunks.at(i).m_door_connections.value() };
-			if (l_dc.m_next_chunk == p_chunk_no)
-				l_result.insert(l_dc.m_next_screen);
-			if (l_dc.m_prev_chunk == p_chunk_no)
-				l_result.insert(l_dc.m_prev_screen);
-		}
+	// start screen
+	if (m_stages.m_stages[0].m_world_id == p_chunk_no)
+		l_result.insert(static_cast<byte>(m_stages.m_start_screen));
+
+	for (std::size_t i{ 0 }; i < 8; ++i) {
 
 		const auto& l_scr{ m_chunks[i].m_screens };
 

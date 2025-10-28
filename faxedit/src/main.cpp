@@ -22,7 +22,7 @@ int main(int argc, char** argv) try {
 		// create game object
 		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/faxanadu-out.nes"));
 		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (U).nes"));
-
+		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (USA) (Rev A).nes"));
 		// Event handler
 		SDL_Event e;
 

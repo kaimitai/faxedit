@@ -117,9 +117,6 @@
     <ClCompile Include="src\fe\IntraChunkScroll.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\Chunk_door_connections.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\imgui_helper.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
@@ -145,6 +142,9 @@
       <Filter>Source Files\windows</Filter>
     </ClCompile>
     <ClCompile Include="src\fe\Sprite_set.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\StageManager.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -218,9 +218,6 @@
     <ClInclude Include="src\fe\IntraChunkScroll.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\Chunk_door_connections.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows\Imgui_helper.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
@@ -243,6 +240,9 @@
       <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\Sprite_set.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\StageManager.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>

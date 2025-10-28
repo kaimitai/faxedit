@@ -15,6 +15,32 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 	// extract game-level metadata
 
+	// stage definitions
+	auto n_stages{ n_root.child(c::TAG_STAGES) };
+	{
+		byte l_start_scr{ parse_numeric_byte(n_stages.attribute(c::ATTR_SCREEN_ID).as_string()) };
+		byte l_start_x{ parse_numeric_byte(n_stages.attribute(c::ATTR_X).as_string()) };
+		byte l_start_y{ parse_numeric_byte(n_stages.attribute(c::ATTR_Y).as_string()) };
+		byte l_start_hp{ parse_numeric_byte(n_stages.attribute(c::ATTR_HP).as_string()) };
+
+		std::vector<fe::Stage> l_stages;
+		for (auto n_stage{ n_stages.child(c::TAG_STAGE) }; n_stage;
+			n_stage = n_stage.next_sibling(c::TAG_STAGE)) {
+			l_stages.push_back(fe::Stage(
+				parse_numeric_byte(n_stage.attribute(c::ATTR_CHUNK_ID).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_PREV_STAGE).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_NEXT_STAGE).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_PREV_SCREEN).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_NEXT_SCREEN).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_PREV_REQ).as_string()),
+				parse_numeric_byte(n_stage.attribute(c::ATTR_NEXT_REQ).as_string())
+			));
+		}
+
+		l_game.m_stages = fe::StageManager(l_start_scr, l_start_x, l_start_y,
+			l_start_hp, l_stages);
+	}
+
 	// extract palettes
 	auto n_palettes = n_root.child(c::TAG_PALETTES);
 	for (auto n_palette{ n_palettes.child(c::TAG_PALETTE) }; n_palette;
@@ -57,6 +83,7 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		l_game.m_spawn_locations.push_back(fe::Spawn_location(
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_CHUNK_ID).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_SCREEN_ID).as_string()),
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_STAGE_ID).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_X).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_Y).as_string())
 		));
@@ -66,7 +93,7 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 	auto n_push_block{ n_root.child(c::TAG_PUSH_BLOCK) };
 
 	l_game.m_push_block = fe::Push_block_parameters(
-		parse_numeric_byte(n_push_block.attribute(c::ATTR_CHUNK_ID).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_STAGE_ID).as_string()),
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_SCREEN_ID).as_string()),
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_X).as_string()),
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_Y).as_string()),
@@ -76,7 +103,9 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_TARGET_BLOCK0).as_string()),
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_TARGET_BLOCK1).as_string()),
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_DELTA_X).as_string()),
-		parse_numeric_byte(n_push_block.attribute(c::ATTR_DRAW_BLOCK).as_string())
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_DRAW_BLOCK).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_COVER_X).as_string()),
+		parse_numeric_byte(n_push_block.attribute(c::ATTR_COVER_Y).as_string())
 	);
 
 	// extract chunks
@@ -93,23 +122,6 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 		// mattock animation
 		l_chunk.m_mattock_animation = parse_byte_list(n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).as_string());
-
-
-		// chunk door templates
-		auto n_door_conns{ n_chunk.child(c::TAG_CHUNK_DOOR_CONN) };
-		// if it has one, it must have both
-		if (n_door_conns) {
-			auto n_door_nc{ n_door_conns.child(c::TAG_NEXT_CHUNK) };
-			auto n_door_pc{ n_door_conns.child(c::TAG_PREV_CHUNK) };
-
-			l_chunk.m_door_connections = fe::Chunk_door_connections(
-				parse_numeric_byte(n_door_nc.attribute(c::ATTR_CHUNK_ID).as_string()),
-				parse_numeric_byte(n_door_nc.attribute(c::ATTR_SCREEN_ID).as_string()),
-				parse_numeric_byte(n_door_nc.attribute(c::ATTR_REQUIREMENT).as_string()),
-				parse_numeric_byte(n_door_pc.attribute(c::ATTR_CHUNK_ID).as_string()),
-				parse_numeric_byte(n_door_pc.attribute(c::ATTR_SCREEN_ID).as_string()),
-				parse_numeric_byte(n_door_pc.attribute(c::ATTR_REQUIREMENT).as_string()));
-		}
 
 		// chunk metatile definitions
 		auto n_metatiles{ n_chunk.child(c::TAG_METATILES) };
@@ -234,6 +246,38 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 	// game metadata
 
+	// for each stage
+	auto n_stages = n_metadata.append_child(c::TAG_STAGES);
+
+	n_stages.append_attribute(c::ATTR_SCREEN_ID);
+	n_stages.attribute(c::ATTR_SCREEN_ID).set_value(p_game.m_stages.m_start_screen);
+	n_stages.append_attribute(c::ATTR_X);
+	n_stages.attribute(c::ATTR_X).set_value(p_game.m_stages.m_start_x);
+	n_stages.append_attribute(c::ATTR_Y);
+	n_stages.attribute(c::ATTR_Y).set_value(p_game.m_stages.m_start_y);
+	n_stages.append_attribute(c::ATTR_HP);
+	n_stages.attribute(c::ATTR_HP).set_value(p_game.m_stages.m_start_hp);
+
+	for (std::size_t i{ 0 }; i < p_game.m_stages.m_stages.size(); ++i) {
+		auto n_stage = n_stages.append_child(c::TAG_STAGE);
+		n_stage.append_attribute(c::ATTR_NO);
+		n_stage.attribute(c::ATTR_NO).set_value(i);
+		n_stage.append_attribute(c::ATTR_CHUNK_ID);
+		n_stage.attribute(c::ATTR_CHUNK_ID).set_value(p_game.m_stages.m_stages[i].m_world_id);
+		n_stage.append_attribute(c::ATTR_PREV_STAGE);
+		n_stage.attribute(c::ATTR_PREV_STAGE).set_value(p_game.m_stages.m_stages[i].m_prev_stage);
+		n_stage.append_attribute(c::ATTR_PREV_SCREEN);
+		n_stage.attribute(c::ATTR_PREV_SCREEN).set_value(p_game.m_stages.m_stages[i].m_prev_screen);
+		n_stage.append_attribute(c::ATTR_PREV_REQ);
+		n_stage.attribute(c::ATTR_PREV_REQ).set_value(byte_to_hex(p_game.m_stages.m_stages[i].m_prev_requirement));
+		n_stage.append_attribute(c::ATTR_NEXT_STAGE);
+		n_stage.attribute(c::ATTR_NEXT_STAGE).set_value(p_game.m_stages.m_stages[i].m_next_stage);
+		n_stage.append_attribute(c::ATTR_NEXT_SCREEN);
+		n_stage.attribute(c::ATTR_NEXT_SCREEN).set_value(p_game.m_stages.m_stages[i].m_next_screen);
+		n_stage.append_attribute(c::ATTR_NEXT_REQ);
+		n_stage.attribute(c::ATTR_NEXT_REQ).set_value(byte_to_hex(p_game.m_stages.m_stages[i].m_next_requirement));
+	}
+
 	// for each palette
 	auto n_palettes{ n_metadata.append_child(c::TAG_PALETTES) };
 
@@ -297,6 +341,8 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 		n_spawn.append_attribute(c::ATTR_CHUNK_ID);
 		n_spawn.attribute(c::ATTR_CHUNK_ID).set_value(l_sl.m_world);
+		n_spawn.append_attribute(c::ATTR_STAGE_ID);
+		n_spawn.attribute(c::ATTR_STAGE_ID).set_value(l_sl.m_stage);
 		n_spawn.append_attribute(c::ATTR_SCREEN_ID);
 		n_spawn.attribute(c::ATTR_SCREEN_ID).set_value(l_sl.m_screen);
 		n_spawn.append_attribute(c::ATTR_X);
@@ -307,8 +353,8 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 	auto n_push_block{ n_metadata.append_child(c::TAG_PUSH_BLOCK) };
 
-	n_push_block.append_attribute(c::ATTR_CHUNK_ID);
-	n_push_block.attribute(c::ATTR_CHUNK_ID).set_value(p_game.m_push_block.m_world);
+	n_push_block.append_attribute(c::ATTR_STAGE_ID);
+	n_push_block.attribute(c::ATTR_STAGE_ID).set_value(p_game.m_push_block.m_stage);
 	n_push_block.append_attribute(c::ATTR_SCREEN_ID);
 	n_push_block.attribute(c::ATTR_SCREEN_ID).set_value(p_game.m_push_block.m_screen);
 	n_push_block.append_attribute(c::ATTR_X);
@@ -329,6 +375,10 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	n_push_block.attribute(c::ATTR_TARGET_BLOCK0).set_value(byte_to_hex(p_game.m_push_block.m_target_0));
 	n_push_block.append_attribute(c::ATTR_TARGET_BLOCK1);
 	n_push_block.attribute(c::ATTR_TARGET_BLOCK1).set_value(byte_to_hex(p_game.m_push_block.m_target_1));
+	n_push_block.append_attribute(c::ATTR_COVER_X);
+	n_push_block.attribute(c::ATTR_COVER_X).set_value(p_game.m_push_block.m_cover_x);
+	n_push_block.append_attribute(c::ATTR_COVER_Y);
+	n_push_block.attribute(c::ATTR_COVER_Y).set_value(p_game.m_push_block.m_cover_y);
 
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
@@ -349,32 +399,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_chunk.append_attribute(c::ATTR_MATTOCK_ANIMATION);
 		n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).set_value(join_bytes(lc_chunk.m_mattock_animation, true));
 
-		// chunk door connections, if it exists
-		const auto& lc_chunk_door_conns{ lc_chunk.m_door_connections };
-
-		if (lc_chunk_door_conns.has_value()) {
-
-			auto n_door_conns{ n_chunk.append_child(c::TAG_CHUNK_DOOR_CONN) };
-
-			auto n_next_chunk{ n_door_conns.append_child(c::TAG_NEXT_CHUNK) };
-			n_next_chunk.append_attribute(c::ATTR_CHUNK_ID);
-			n_next_chunk.attribute(c::ATTR_CHUNK_ID).set_value(byte_to_hex(lc_chunk_door_conns.value().m_next_chunk));
-			n_next_chunk.append_attribute(c::ATTR_SCREEN_ID);
-			n_next_chunk.attribute(c::ATTR_SCREEN_ID).set_value(byte_to_hex(lc_chunk_door_conns.value().m_next_screen));
-			n_next_chunk.append_attribute(c::ATTR_REQUIREMENT);
-			n_next_chunk.attribute(c::ATTR_REQUIREMENT).set_value(byte_to_hex(lc_chunk_door_conns.value().m_next_door_req));
-
-			auto n_prev_chunk{ n_door_conns.append_child(c::TAG_PREV_CHUNK) };
-			n_prev_chunk.append_attribute(c::ATTR_CHUNK_ID);
-			n_prev_chunk.attribute(c::ATTR_CHUNK_ID).set_value(byte_to_hex(lc_chunk_door_conns.value().m_prev_chunk));
-			n_prev_chunk.append_attribute(c::ATTR_SCREEN_ID);
-			n_prev_chunk.attribute(c::ATTR_SCREEN_ID).set_value(byte_to_hex(lc_chunk_door_conns.value().m_prev_screen));
-			n_prev_chunk.append_attribute(c::ATTR_REQUIREMENT);
-			n_prev_chunk.attribute(c::ATTR_REQUIREMENT).set_value(byte_to_hex(lc_chunk_door_conns.value().m_prev_door_req));
-		}
-
 		// for each metatile
-
 		auto n_metatiles{ n_chunk.append_child(c::TAG_METATILES) };
 
 		for (std::size_t mt{ 0 }; mt < lc_chunk.m_metatiles.size(); ++mt) {

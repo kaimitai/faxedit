@@ -12,6 +12,16 @@ namespace fe {
 			constexpr char VAL_ROOT_VERSION[]{ "beta-0.1" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
+			constexpr char TAG_STAGES[]{ "stages" };
+			constexpr char TAG_STAGE[]{ "stage" };
+			constexpr char ATTR_NEXT_STAGE[]{ "next_stage" };
+			constexpr char ATTR_PREV_STAGE[]{ "prev_stage" };
+			constexpr char ATTR_NEXT_SCREEN[]{ "next_screen" };
+			constexpr char ATTR_PREV_SCREEN[]{ "prev_screen" };
+			constexpr char ATTR_NEXT_REQ[]{ "next_req" };
+			constexpr char ATTR_PREV_REQ[]{ "prev_req" };
+			constexpr char ATTR_HP[]{ "hp" };
+
 			constexpr char TAG_PALETTES[]{ "palettes" };
 			constexpr char TAG_PALETTE[]{ "palette" };
 
@@ -29,6 +39,8 @@ namespace fe {
 			constexpr char ATTR_TARGET_BLOCK0[]{ "target_0" };
 			constexpr char ATTR_TARGET_BLOCK1[]{ "target_1" };
 			constexpr char ATTR_DRAW_BLOCK[]{ "draw_block" };
+			constexpr char ATTR_COVER_X[]{ "cover_x" };
+			constexpr char ATTR_COVER_Y[]{ "cover_y" };
 
 			constexpr char TAG_METATILES[]{ "metatiles" };
 			constexpr char TAG_METATILE[]{ "metatile" };
@@ -52,6 +64,7 @@ namespace fe {
 
 			constexpr char ATTR_CHUNK_ID[]{ "chunk_no" };
 			constexpr char ATTR_SCREEN_ID[]{ "screen_no" };
+			constexpr char ATTR_STAGE_ID[]{ "stage_no" };
 			constexpr char ATTR_REQUIREMENT[]{ "requirement" };
 
 			constexpr char TAG_TILEMAP[]{ "tilemap" };

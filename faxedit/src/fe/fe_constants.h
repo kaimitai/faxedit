@@ -33,11 +33,12 @@ namespace fe {
 		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ 0x3ddc5 };
 		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ 0x3ddcd };
 		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ 0x3dde5 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_STAGES{ 0x3dddd };
 
 		// in game constants used as parameters to assembly instructions
 
 		// path-to-mascon "line-drawing"
-		constexpr std::size_t OFFSET_PTM_WORLD_NO{ 0x3d782 };
+		constexpr std::size_t OFFSET_PTM_STAGE_NO{ 0x3d782 };
 		constexpr std::size_t OFFSET_PTM_SCREEN_NO{ 0x3d788 };
 		constexpr std::size_t OFFSET_PTM_BLOCK_COUNT{ 0x3d745 };
 		constexpr std::size_t OFFSET_PTM_START_POS{ 0x3d749 };
@@ -46,6 +47,9 @@ namespace fe {
 		constexpr std::size_t OFFSET_PTM_REPLACE_TILE_NOS{ 0x3d778 };
 		constexpr std::size_t OFFSET_PTM_POS_DELTA{ 0x3d7b3 };
 		constexpr std::size_t OFFSET_PTM_TILE_NO{ 0x3d7bf };
+		// the position of the fountain cover
+		// is used when you re-enter the screen after having already pushed
+		constexpr std::size_t OFFSET_PTM_COVER_POS{ 0x3ef8a };
 
 		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
 
@@ -55,11 +59,17 @@ namespace fe {
 		constexpr std::size_t PTR_CHUNK_PALETTES{ 0x2c010 };
 		constexpr std::size_t PTR_CHUNK_SPRITE_DATA{ 0x2c220 };
 		constexpr std::size_t PTR_CHUNK_DEFAULT_PALETTE_IDX{ 0x3df5c };
-		constexpr std::size_t PTR_CHUNK_DOOR_TO_CHUNK{ 0x3e5f7 };
-		constexpr std::size_t PTR_CHUNK_DOOR_TO_SCREEN{ 0x3e603 };
-		constexpr std::size_t PTR_CHUNK_DOOR_REQUIREMENTS{ 0x3e5eb };
 		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
 		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3eaac };
+
+		// stage metadata offsets
+		constexpr std::size_t OFFSET_STAGE_CONNECTIONS{ 0x3e5f7 };
+		constexpr std::size_t OFFSET_STAGE_SCREENS{ 0x3e603 };
+		constexpr std::size_t OFFSET_STAGE_REQUIREMENTS{ 0x3e5eb };
+		constexpr std::size_t OFFSET_STAGE_TO_WORLD{ 0x3db0e };
+		constexpr std::size_t OFFSET_GAME_START_POS{ 0x3deff };
+		constexpr std::size_t OFFSET_GAME_START_SCREEN{ 0x3dedb };
+		constexpr std::size_t OFFSET_GAME_START_HP{ 0x3debf };
 
 		// dynamic size limits
 		// TODO: Check, this could be totally wrong
@@ -70,19 +80,11 @@ namespace fe {
 		constexpr std::size_t SIZE_LIMT_METADATA{ 0xf010 - PTR_CHUNK_METADATA };
 		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
 
-		// the npc bundles are stored as sprite data for the buildings chunk
-		// this is a single value and not a vector, since the bundle data is global
-		constexpr std::size_t IDX_CHUNK_NPC_BUNDLES{ 6 };
-
 		// ptrs to the screen data for each of the 8 chunks
 		const std::vector<std::size_t> PTR_CHUNK_SCREEN_DATA{ 0x10, 0x12, 0x14, 0x4010, 0x4012, 0x8010, 0x8012, 0x8014 };
 
 		// a map from our chunk indexing to the indexing used by the ROM pointer tables
 		inline const std::vector<std::size_t> MAP_CHUNK_IDX{ 0, 3, 1, 2, 6, 4, 5, 7 };
-
-		// a map from our chunk indexes to the world indexes given in the chunk-linker table
-		// missing values (town and buildings) are invalid indexes into that table
-		inline const std::vector<std::size_t> MAP_CHUNK_LEVELS{ 0, 3, 1, 4, 5, 7 };
 
 		// map to background gfx start locations - treated as immutable
 		// when extracting the 256 nes tiles starting at any of these locations, the chunk tilemap indexes will match
@@ -132,19 +134,6 @@ namespace fe {
 			{0x0d, "Other-World (foreground)"},
 		};
 
-		inline const std::map<byte, std::string> LABELS_BUILDINGS{
-			{0x00, "King"},
-			{0x01, "Guru"},
-			{0x02, "Hospital"},
-			{0x03, "Pub"},
-			{0x04, "Weapon Shop"},
-			{0x05, "Key Shop"},
-			{0x06, "House"},
-			{0x07, "Meat Shop"},
-			{0x08, "Strength Trainer"},
-			{0x09, "Magic Trainer"}
-		};
-
 		// placeholder until we dynamically parse this data
 		inline const std::map<byte, std::string> LABELS_NPC_BUNDLES{
 			{0x00, "Eolis Meat Shop"},
@@ -165,8 +154,36 @@ namespace fe {
 		};
 
 		// which door commands to look for when automatically generating spawn points
+		// TODO: Use the script bytes that set spawn points instead
 		inline const std::vector<byte> SPAWN_POINT_BUILDING_PARAMS
 		{ 0x02, 0x0b, 0x10, 0x1e, 0x23, 0x2b, 0x33, 0x3c };
+
+		inline const std::vector<std::string> LABELS_BUILDINGS{
+			"King Room", "Guru Room", "Hospital", "Pub", "Tool Shop",
+			"Key Shop", "House", "Meat Shop", "Martial Arts", "Magic Trainer"
+		};
+
+		inline const std::map<byte, std::string> LABELS_PALETTES{
+			{0x00, "Eolis"},
+			{0x06, "Trunk"},
+			{0x07, "Trunk Towers"},
+			{0x08, "Branches"},
+			{0x0a, "Mist"},
+			{0x0b, "Mist Towers"},
+			{0x0c, "Dartmoor"},
+			{0x0f, "Evil Lair"},
+			{0x11, LABELS_BUILDINGS.at(0)},
+			{0x12, LABELS_BUILDINGS.at(1)},
+			{0x13, LABELS_BUILDINGS.at(2)},
+			{0x14, LABELS_BUILDINGS.at(3)},
+			{0x15, LABELS_BUILDINGS.at(4)},
+			{0x16, LABELS_BUILDINGS.at(5)},
+			{0x17, LABELS_BUILDINGS.at(6)},
+			{0x18, LABELS_BUILDINGS.at(7)},
+			{0x19, LABELS_BUILDINGS.at(8)},
+			{0x1a, LABELS_BUILDINGS.at(9)},
+			{0x1b, "Towns"}
+		};
 
 		inline const std::map<byte, std::string> LABELS_SPRITES{
 			{0x2d, "Wyvern (Mattock)"},
@@ -189,9 +206,9 @@ namespace fe {
 		// used for door type dropdowns in the guid
 		inline const char* LABELS_DOOR_TYPES[]{
 			"Same World",
-			"Buildings",
-			"Previous World",
-			"Next World"
+			"Building",
+			"Previous Stage",
+			"Next Stage"
 		};
 
 	}

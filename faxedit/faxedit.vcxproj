@@ -154,7 +154,6 @@
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
-    <ClCompile Include="src\fe\Chunk_door_connections.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
@@ -164,6 +163,7 @@
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
+    <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\windows\MetaDataWindow.cpp" />
@@ -190,7 +190,6 @@
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\fe\Chunk.h" />
-    <ClInclude Include="src\fe\Chunk_door_connections.h" />
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
@@ -201,6 +200,7 @@
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />
+    <ClInclude Include="src\fe\StageManager.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
     <ClInclude Include="src\windows\gfx.h" />

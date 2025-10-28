@@ -43,7 +43,9 @@ namespace fe {
 			// spawn location editor
 			m_sel_spawn_location,
 			// npc bundles aka building parameters
-			m_sel_npc_bundle, m_sel_npc_bundle_sprite;
+			m_sel_npc_bundle, m_sel_npc_bundle_sprite,
+			// selected stage
+			m_sel_stage;
 
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
@@ -81,7 +83,9 @@ namespace fe {
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
-		
+		void show_stage_door_data(fe::Game& p_game, fe::Door& p_door);
+		void show_stages_data(fe::Game& p_game);
+
 		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
 
 		std::string get_editmode_as_string(void) const;

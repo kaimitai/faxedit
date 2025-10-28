@@ -219,8 +219,7 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p
 	l_tmp_sw_bytes.insert(end(l_tmp_sw_bytes),
 		begin(l_tmp_bld_bytes), end(l_tmp_bld_bytes));
 
-	// the game puts and 0xff here, but the doors should be defines such
-	// that there always is a match. could save 8 ROM bytes! :)
+	// 0xff delimiter
 	l_door_bytes.push_back(0xff);
 
 	return std::make_pair(std::move(l_door_bytes), std::move(l_tmp_sw_bytes));
