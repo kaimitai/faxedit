@@ -546,6 +546,37 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p
 
 
 	}
+
+	ImGui::SeparatorText("Navigation");
+
+	scroll_left_button(l_screen);
+	ImGui::SameLine();
+	scroll_right_button(l_screen);
+	ImGui::SameLine();
+	scroll_up_button(l_screen);
+	ImGui::SameLine();
+	scroll_down_button(l_screen);
+
+	ImGui::SameLine();
+
+	ImGui::Spacing();
+
+	ImGui::SameLine();
+
+	enter_door_button(p_game, l_screen);
+
+	ImGui::SameLine();
+
+	ImGui::Spacing();
+
+	ImGui::SameLine();
+
+	transition_sw_button(l_screen);
+
+	ImGui::SameLine();
+
+	transition_ow_button(p_game, l_screen);
+
 	ImGui::EndChild();
 
 	ImGui::End();
@@ -627,5 +658,80 @@ void fe::MainWindow::show_stage_door_data(fe::Game& p_game, fe::Door& p_door) {
 		ImGui::Text(std::format("Destination palette: {}",
 			get_description(p_game.m_chunks.at(l_dest_world).m_default_palette_no,
 				c::LABELS_PALETTES)).c_str());
+	}
+}
+
+void fe::MainWindow::scroll_button(std::string p_button_text, std::optional<byte> p_scroll_dest) {
+	if (ui::imgui_button(p_button_text, 4, "", !p_scroll_dest.has_value()))
+		m_sel_screen = p_scroll_dest.value();
+}
+
+void fe::MainWindow::scroll_left_button(const fe::Screen& p_screen) {
+	scroll_button("Scroll Left", p_screen.m_scroll_left);
+}
+
+void fe::MainWindow::scroll_right_button(const fe::Screen& p_screen) {
+	scroll_button("Scroll Right", p_screen.m_scroll_right);
+}
+
+void fe::MainWindow::scroll_up_button(const fe::Screen& p_screen) {
+	scroll_button("Scroll Up", p_screen.m_scroll_up);
+}
+
+void fe::MainWindow::scroll_down_button(const fe::Screen& p_screen) {
+	scroll_button("Scroll Down", p_screen.m_scroll_down);
+}
+
+void fe::MainWindow::enter_door_button(const fe::Game& p_game, const fe::Screen& p_screen) {
+	if (ui::imgui_button("Enter Door", 4, "",
+		m_sel_door >= p_screen.m_doors.size())) {
+
+		const auto& l_door{ p_screen.m_doors[m_sel_door] };
+
+		if (l_door.m_door_type == fe::SameWorld) {
+			m_sel_screen = l_door.m_dest_screen_id;
+			m_atlas_new_palette_no = l_door.m_dest_palette_id;
+		}
+		else if (l_door.m_door_type == fe::Building) {
+			m_sel_screen = l_door.m_dest_screen_id;
+			m_sel_chunk = c::CHUNK_IDX_BUILDINGS;
+			m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
+			m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+		}
+		else {
+			const auto& l_stage{ p_game.m_stages.get_stage_from_world(m_sel_chunk) };
+
+			if (!l_stage.has_value())
+				add_message("Could not deduce stage number from current world", 1);
+			else {
+				bool l_next{ l_door.m_door_type == fe::NextWorld };
+				std::size_t l_dest_stage{ l_next ? l_stage.value()->m_next_stage :
+				l_stage.value()->m_prev_stage };
+
+				m_sel_chunk = p_game.m_stages.m_stages[l_dest_stage].m_world_id;
+				m_sel_screen = (l_next ? l_stage.value()->m_next_screen : l_stage.value()->m_prev_screen);
+				m_atlas_new_palette_no = get_default_palette_no(p_game, m_sel_chunk, m_sel_screen);
+				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+			}
+		}
+
+	}
+}
+
+void fe::MainWindow::transition_sw_button(const fe::Screen& p_screen) {
+	if (ui::imgui_button("Transition (SW)", 4, "Same-World",
+		!p_screen.m_interchunk_scroll.has_value())) {
+		m_sel_screen = p_screen.m_interchunk_scroll.value().m_dest_screen;
+		m_atlas_new_palette_no = p_screen.m_interchunk_scroll.value().m_palette_id;
+	}
+}
+
+void fe::MainWindow::transition_ow_button(const fe::Game& p_game, const fe::Screen& p_screen) {
+	if (ui::imgui_button("Transition (OW)", 4, "Other-World",
+		!p_screen.m_intrachunk_scroll.has_value())) {
+		m_sel_chunk = p_screen.m_intrachunk_scroll.value().m_dest_chunk;
+		m_sel_screen = p_screen.m_intrachunk_scroll.value().m_dest_screen;
+		m_atlas_new_palette_no = p_screen.m_intrachunk_scroll.value().m_palette_id;
+		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
 	}
 }

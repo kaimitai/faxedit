@@ -94,6 +94,15 @@ namespace fe {
 		void clipboard_copy(const fe::Game& p_game);
 		void clipboard_paste(fe::Game& p_game);
 
+		void scroll_button(std::string p_button_text, std::optional<byte> p_scroll_dest);
+		void scroll_left_button(const fe::Screen& p_screen);
+		void scroll_right_button(const fe::Screen& p_screen);
+		void scroll_up_button(const fe::Screen& p_screen);
+		void scroll_down_button(const fe::Screen& p_screen);
+		void enter_door_button(const fe::Game& p_game, const fe::Screen& p_screen);
+		void transition_sw_button(const fe::Screen& p_game);
+		void transition_ow_button(const fe::Game& p_game, const fe::Screen& p_screen);
+
 	public:
 
 		MainWindow(SDL_Renderer* p_rnd);

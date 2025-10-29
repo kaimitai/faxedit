@@ -1,4 +1,5 @@
 #include "Imgui_helper.h"
+#include "../common/imgui/imgui_internal.h"
 
 std::vector<fe::ui::UIStyle> fe::ui::g_uiStyles = {
 	// Default (neutral blue from ImGui dark theme, slightly darkened)
@@ -36,7 +37,7 @@ bool fe::ui::collapsing_header(const std::string& p_label, const std::string& p_
 }
 
 bool fe::ui::imgui_button(const std::string& p_label, std::size_t p_style,
-	const std::string& p_tooltip_text) {
+	const std::string& p_tooltip_text, bool p_disabled) {
 
 	const UIStyle& style = g_uiStyles[p_style];
 
@@ -44,7 +45,17 @@ bool fe::ui::imgui_button(const std::string& p_label, std::size_t p_style,
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, style.hovered);
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, style.active);
 
+	if (p_disabled) {
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+
 	bool l_result{ ImGui::Button(p_label.c_str()) };
+
+	if (p_disabled) {
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
+	}
 
 	if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
 		ImGui::BeginTooltip();

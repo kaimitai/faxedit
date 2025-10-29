@@ -23,7 +23,7 @@ namespace fe {
 
 		void imgui_screen(const std::string& p_label);
 		bool collapsing_header(const std::string& p_label, const std::string& p_tooltip = std::string());
-		bool imgui_button(const std::string& p_label, std::size_t p_style = 0, const std::string& p_tooltip = std::string());
+		bool imgui_button(const std::string& p_label, std::size_t p_style = 0, const std::string& p_tooltip = std::string(), bool p_disabled = false);
 
 		template<class T1, class T2, class T3>
 		bool imgui_slider_with_arrows(const char* p_id, const std::string& p_label, T1& value,
