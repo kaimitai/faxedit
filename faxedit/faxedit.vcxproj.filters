@@ -55,6 +55,12 @@
     <Filter Include="Source Files\fe\xml">
       <UniqueIdentifier>{1f70b568-2e08-4b3d-882e-193f744c61a6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common\imguifiledialog">
+      <UniqueIdentifier>{35c76d64-38c9-4e1d-a346-fe81e255cb87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\imguifiledialog">
+      <UniqueIdentifier>{899f9339-c7c9-4a63-a3a0-a4fbf03b6845}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -146,6 +152,9 @@
     </ClCompile>
     <ClCompile Include="src\fe\StageManager.cpp">
       <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\imguifiledialog\ImGuiFileDialog.cpp">
+      <Filter>Source Files\common\imguifiledialog</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -244,6 +253,12 @@
     </ClInclude>
     <ClInclude Include="src\fe\StageManager.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialog.h">
+      <Filter>Header Files\common\imguifiledialog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialogConfig.h">
+      <Filter>Header Files\common\imguifiledialog</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

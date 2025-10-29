@@ -3,12 +3,13 @@
 
 #include <SDL3/SDL.h>
 #include <deque>
+#include <filesystem>
 #include <map>
+#include <set>
 #include <string>
 #include "gfx.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
-#include <set>
 
 namespace fe {
 
@@ -25,6 +26,10 @@ namespace fe {
 
 	class MainWindow {
 
+		// file info
+		std::filesystem::path m_path;
+		std::string m_filename;
+
 		std::size_t
 			// world, screen
 			m_sel_chunk, m_sel_screen,
@@ -39,7 +44,7 @@ namespace fe {
 
 			// metatile definition editor
 			m_sel_nes_tile,
-			
+
 			// spawn location editor
 			m_sel_spawn_location,
 			// npc bundles aka building parameters
@@ -53,28 +58,33 @@ namespace fe {
 		fe::EditMode m_emode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
+		std::optional<fe::Game> m_game;
 		fe::gfx m_gfx;
 		std::deque<fe::Message> m_messages;
 		fe::ROM_Manager m_rom_manager;
 
 		void imgui_text(const std::string& p_str);
-		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
-			const fe::Game& p_game);
+		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
+		void load_rom(const std::string& p_filepath);
+		std::string get_xml_path(void) const;
+		std::string get_nes_path(void) const;
+		std::string get_filepath(const std::string& p_ext, bool p_add_out = false) const;
 
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
-		std::size_t get_default_palette_no(const fe::Game& p_game,
-			std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
 
-		void draw_metatile_info(const fe::Game& p_game,
-			std::size_t p_sel_chunk, std::size_t p_sel_screen,
+		void draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);
 
-		void draw_control_window(SDL_Renderer* p_rnd, fe::Game& p_game);
-		void draw_screen_tilemap_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+		void draw_control_window(SDL_Renderer* p_rnd);
+		void draw_screen_tilemap_window(SDL_Renderer* p_rnd);
 
-		void draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game);
+		void draw_metadata_window(SDL_Renderer* p_rnd);
+
+		void draw_filepicker_window(SDL_Renderer* p_rnd);
+		void show_output_messages(void) const;
 
 		void add_message(const std::string& p_msg, int p_status = 0);
 
@@ -83,32 +93,32 @@ namespace fe {
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
-		void show_stage_door_data(fe::Game& p_game, fe::Door& p_door);
-		void show_stages_data(fe::Game& p_game);
+		void show_stage_door_data(fe::Door& p_door);
+		void show_stages_data(void);
 
 		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
 
 		std::string get_editmode_as_string(void) const;
 
 		Size4 get_selection_dims(void) const;
-		void clipboard_copy(const fe::Game& p_game);
-		void clipboard_paste(fe::Game& p_game);
+		void clipboard_copy(void);
+		void clipboard_paste(void);
 
 		void scroll_button(std::string p_button_text, std::optional<byte> p_scroll_dest);
 		void scroll_left_button(const fe::Screen& p_screen);
 		void scroll_right_button(const fe::Screen& p_screen);
 		void scroll_up_button(const fe::Screen& p_screen);
 		void scroll_down_button(const fe::Screen& p_screen);
-		void enter_door_button(const fe::Game& p_game, const fe::Screen& p_screen);
-		void transition_sw_button(const fe::Screen& p_game);
-		void transition_ow_button(const fe::Game& p_game, const fe::Screen& p_screen);
+		void enter_door_button(const fe::Screen& p_screen);
+		void transition_sw_button(const fe::Screen& p_screen);
+		void transition_ow_button(const fe::Screen& p_screen);
 
 	public:
 
-		MainWindow(SDL_Renderer* p_rnd);
-		void generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game);
-		void generate_metatile_textures(SDL_Renderer* p_rnd, const fe::Game& p_game);
-		void draw(SDL_Renderer* p_rnd, fe::Game& p_game);
+		MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath = std::string());
+		void generate_textures(SDL_Renderer* p_rnd);
+		void generate_metatile_textures(SDL_Renderer* p_rnd);
+		void draw(SDL_Renderer* p_rnd);
 	};
 
 }

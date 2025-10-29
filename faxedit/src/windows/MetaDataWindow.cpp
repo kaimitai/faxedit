@@ -3,9 +3,9 @@
 #include "./../common/klib/Bitreader.h"
 #include "./../fe/fe_constants.h"
 
-void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game) {
+void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
-	auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
+	auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
 
 	fe::ui::imgui_screen("World and Game Settings###cw");
 
@@ -50,7 +50,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 							if (hovered && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
 								l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
-								generate_metatile_textures(p_rnd, p_game);
+								generate_metatile_textures(p_rnd);
 							}
 							else if (hovered && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 								m_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
@@ -128,19 +128,19 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 					if (ui::imgui_button("Add metatile", 2)) {
 						l_chunk.m_metatiles.push_back(fe::Metatile());
-						generate_metatile_textures(p_rnd, p_game);
+						generate_metatile_textures(p_rnd);
 					}
 
 					ImGui::SameLine();
 
 					if (ui::imgui_button("Delete metatile", 1)) {
 						if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
-							if (p_game.is_metatile_referenced(m_sel_chunk,
+							if (m_game->is_metatile_referenced(m_sel_chunk,
 								m_sel_metatile))
 								add_message("Metatile is in use", 1);
 							else {
-								p_game.delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
-								generate_metatile_textures(p_rnd, p_game);
+								m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
+								generate_metatile_textures(p_rnd);
 							}
 						}
 						else
@@ -156,7 +156,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					if (fe::ui::imgui_slider_with_arrows("##cdp",
 						std::format("Default Palette #{}", l_chunk.m_default_palette_no),
 						l_chunk.m_default_palette_no, 0,
-						p_game.m_palettes.size() - 1,
+						m_game->m_palettes.size() - 1,
 						"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
 						m_atlas_new_palette_no = l_chunk.m_default_palette_no;
 					}
@@ -217,7 +217,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 				ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[2].hovered);
 
 				if (ImGui::BeginTabItem("Stages")) {
-					show_stages_data(p_game);
+					show_stages_data();
 					ImGui::EndTabItem();
 				}
 
@@ -230,14 +230,14 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 					ImGui::SeparatorText(std::format("Location for spawn point #{}", m_sel_spawn_location).c_str());
 
-					auto& l_spawn{ p_game.m_spawn_locations.at(m_sel_spawn_location) };
+					auto& l_spawn{ m_game->m_spawn_locations.at(m_sel_spawn_location) };
 
 					ui::imgui_slider_with_arrows("spawnworld",
 						std::format("World: {}", c::LABELS_CHUNKS.at(l_spawn.m_world)),
 						l_spawn.m_world, 0, 7);
 
 					ui::imgui_slider_with_arrows("spawnscr", "Screen",
-						l_spawn.m_screen, 0, p_game.m_chunks.at(m_sel_chunk).m_screens.size() - 1);
+						l_spawn.m_screen, 0, m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1);
 
 					auto l_newpos = show_position_slider(l_spawn.m_x, l_spawn.m_y);
 
@@ -254,7 +254,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					ImGui::SeparatorText("Automatic Deduction");
 
 					if (ui::imgui_button("Deduce", 3, "Try to deduce spawn locations by spawn-setting Guru door entrances")) {
-						bool l_deduced_spawns{ p_game.calculate_spawn_locations_by_guru() };
+						bool l_deduced_spawns{ m_game->calculate_spawn_locations_by_guru() };
 						if (l_deduced_spawns)
 							add_message("All spawn point data deduced OK", 2);
 						else
@@ -270,13 +270,13 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						get_description(static_cast<byte>(m_sel_npc_bundle), c::LABELS_NPC_BUNDLES)).c_str());
 
 					ui::imgui_slider_with_arrows("###npcbsel", "", m_sel_npc_bundle,
-						0, p_game.m_npc_bundles.size() - 1);
+						0, m_game->m_npc_bundles.size() - 1);
 
 					ImGui::SeparatorText("Building Parameter Sprites");
 
 					ImGui::PushID("###bldparam");
 
-					show_sprite_screen(p_game.m_npc_bundles.at(m_sel_npc_bundle),
+					show_sprite_screen(m_game->m_npc_bundles.at(m_sel_npc_bundle),
 						m_sel_npc_bundle_sprite);
 
 					ImGui::PopID();
@@ -285,7 +285,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 				}
 
 				if (ImGui::BeginTabItem("Push-Block")) {
-					auto& l_pb{ p_game.m_push_block };
+					auto& l_pb{ m_game->m_push_block };
 
 					ImGui::Text("The parameters for the tilemap change when you push blocks and open the last spring.");
 					ImGui::Text("Navigate to the world where the push-blocks reside to see metatile previews.");
@@ -297,9 +297,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 
 					ImGui::SeparatorText("Stage and screen where the quest-flag will be set when pusing blocks.");
 
-					auto l_world{ p_game.m_stages.m_stages.at(l_pb.m_stage).m_world_id };
+					auto l_world{ m_game->m_stages.m_stages.at(l_pb.m_stage).m_world_id };
 					bool l_sameworld{ m_sel_chunk == l_world };
-					std::size_t l_mt_count{ p_game.m_chunks[l_world].m_metatiles.size() };
+					std::size_t l_mt_count{ m_game->m_chunks[l_world].m_metatiles.size() };
 
 					ui::imgui_slider_with_arrows("###pbstage",
 						std::format("Stage {} ({})",
@@ -307,7 +307,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 						l_pb.m_stage, 0, 5, "");
 
 					ui::imgui_slider_with_arrows("pbs",
-						"Screen", l_pb.m_screen, 0, p_game.m_chunks.at(l_pb.m_stage).m_screens.size());
+						"Screen", l_pb.m_screen, 0, m_game->m_chunks.at(l_pb.m_stage).m_screens.size());
 
 					ImGui::SeparatorText("Line-drawing function");
 
@@ -355,7 +355,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 					ImGui::SeparatorText("Pushable Blocks Animation - Source");
 
 					ui::imgui_slider_with_arrows("pbs0", "Source Top",
-						l_pb.m_source_0, 0, p_game.m_chunks.at(l_pb.m_stage).m_metatiles.size() - 1,
+						l_pb.m_source_0, 0, m_game->m_chunks.at(l_pb.m_stage).m_metatiles.size() - 1,
 						"The block that will replace the top of the pushed block");
 
 					if (l_sameworld && l_pb.m_source_0 < l_mt_count) {
@@ -415,8 +415,8 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd, fe::Game& p_game)
 	ImGui::End();
 }
 
-void fe::MainWindow::show_stages_data(fe::Game& p_game) {
-	auto& l_stages{ p_game.m_stages };
+void fe::MainWindow::show_stages_data(void) {
+	auto& l_stages{ m_game->m_stages };
 
 	ImGui::SeparatorText("Stage Data");
 
@@ -446,7 +446,7 @@ void fe::MainWindow::show_stages_data(fe::Game& p_game) {
 			c::LABELS_CHUNKS[l_stages.m_stages[l_stage.m_next_stage].m_world_id]),
 		l_stage.m_next_stage, 0, 5);
 	ui::imgui_slider_with_arrows("###stenscr", "Next Screen",
-		l_stage.m_next_screen, 0, p_game.m_chunks.at(
+		l_stage.m_next_screen, 0, m_game->m_chunks.at(
 			l_stages.m_stages[l_stage.m_next_stage].m_world_id
 		).m_screens.size() - 1);
 	ui::imgui_slider_with_arrows("###stenr", std::format("Next-Stage Door Requirement: {}",
@@ -461,7 +461,7 @@ void fe::MainWindow::show_stages_data(fe::Game& p_game) {
 			c::LABELS_CHUNKS[l_stages.m_stages[l_stage.m_prev_stage].m_world_id]),
 		l_stage.m_prev_stage, 0, 5);
 	ui::imgui_slider_with_arrows("###stepscr", "Previous Screen",
-		l_stage.m_prev_screen, 0, p_game.m_chunks.at(
+		l_stage.m_prev_screen, 0, m_game->m_chunks.at(
 			l_stages.m_stages[l_stage.m_prev_stage].m_world_id
 		).m_screens.size() - 1);
 	ui::imgui_slider_with_arrows("###stepr", std::format("Previous-Stage Door Requirement: {}",
@@ -471,7 +471,7 @@ void fe::MainWindow::show_stages_data(fe::Game& p_game) {
 	ImGui::SeparatorText("Start Parameters");
 
 	ui::imgui_slider_with_arrows("###stestascr", "Start Screen",
-		l_stages.m_start_screen, 0, p_game.m_chunks.at(
+		l_stages.m_start_screen, 0, m_game->m_chunks.at(
 			l_stages.m_stages[0].m_world_id
 		).m_screens.size() - 1);
 

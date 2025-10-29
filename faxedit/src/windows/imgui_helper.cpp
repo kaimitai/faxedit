@@ -15,7 +15,10 @@ std::vector<fe::ui::UIStyle> fe::ui::g_uiStyles = {
 	{ ImVec4(0.15f, 0.15f, 0.45f, 1.0f), ImVec4(0.20f, 0.20f, 0.60f, 1.0f), ImVec4(0.25f, 0.25f, 0.75f, 1.0f) },
 
 	// Yellow (dark amber tones)
-	{ ImVec4(0.45f, 0.35f, 0.05f, 1.0f), ImVec4(0.60f, 0.45f, 0.10f, 1.0f), ImVec4(0.75f, 0.55f, 0.15f, 1.0f) }
+	{ ImVec4(0.45f, 0.35f, 0.05f, 1.0f), ImVec4(0.60f, 0.45f, 0.10f, 1.0f), ImVec4(0.75f, 0.55f, 0.15f, 1.0f) },
+
+	// White-Ish
+	{ ImVec4(0.95f, 0.95f, 0.95f, 1.00f), ImVec4(0.98f, 0.96f, 0.92f, 1.00f), ImVec4(0.92f, 0.94f, 0.97f, 1.00f) }
 };
 
 void fe::ui::imgui_screen(const std::string& p_label) {

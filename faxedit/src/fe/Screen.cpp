@@ -21,15 +21,15 @@ std::vector<byte>(13 * 16, 0)
 		switch (l_control) {
 
 		case 0:
-			l_tile_val = l_screen[idx - 1];
+			l_tile_val = l_screen.at(idx - 1);
 			break;
 
 		case 1:
-			l_tile_val = l_screen[idx - 16];
+			l_tile_val = l_screen.at(idx - 16);
 			break;
 
 		case 2:
-			l_tile_val = l_screen[idx - 17];
+			l_tile_val = l_screen.at(idx - 17);
 			break;
 
 		case 3:
@@ -46,6 +46,11 @@ std::vector<byte>(13 * 16, 0)
 	}
 
 	m_tilemap = klib::kutil::flat_vec_to_2d(l_screen, 16);
+}
+
+fe::Screen::Screen(void) :
+	m_tilemap{ std::vector<std::vector<byte>>(13, std::vector<byte>(16, 0)) }
+{
 }
 
 std::optional<byte> fe::Screen::scroll_property_to_opt(byte p_val) const {

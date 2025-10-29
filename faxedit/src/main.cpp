@@ -7,7 +7,6 @@
 #include "./common/imgui/imgui_impl_sdl3.h"
 #include "./common/imgui/imgui_impl_sdlrenderer3.h"
 #include "./common/klib/Kfile.h"
-#include "./fe/Game.h"
 #include "./windows/MainWindow.h"
 
 int main(int argc, char** argv) try {
@@ -19,11 +18,6 @@ int main(int argc, char** argv) try {
 	if (!SDL_Init(SDL_INIT_VIDEO))
 		throw std::runtime_error(SDL_GetError());
 	else {
-		// create game object
-		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/faxanadu-out.nes"));
-		fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (U).nes"));
-		// fe::Game l_game(klib::file::read_file_as_bytes("c:/temp/Faxanadu (USA) (Rev A).nes"));
-		// Event handler
 		SDL_Event e;
 
 		l_window = SDL_CreateWindow("Echoes of Eolis", 1280, 720, SDL_WINDOW_RESIZABLE);
@@ -54,14 +48,12 @@ int main(int argc, char** argv) try {
 			ImGui::GetIO().IniFilename = l_ini_filename.c_str();
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
-			fe::MainWindow l_main_window(l_rnd);
-			l_main_window.generate_textures(l_rnd, l_game);
+			fe::MainWindow l_main_window(l_rnd, argc > 1 ? argv[1]: "");
 			// main_window.set_application_icon(l_window);
 
 			// input handler
-			// klib::User_input input;
-			int mouse_wheel_y{ 0 };
-			bool mw_used{ false };
+			// int mouse_wheel_y{ 0 };
+			// bool mw_used{ false };
 
 			uint64_t last_logic_time = SDL_GetTicks() - 1;
 			uint64_t last_draw_time = SDL_GetTicks() - 17;
@@ -79,7 +71,7 @@ int main(int argc, char** argv) try {
 				delta = tick_time - last_logic_time;
 				int32_t mw_y{ 0 };
 
-				mw_used = false;
+				// mw_used = false;
 				SDL_PumpEvents();
 
 				if (SDL_PollEvent(&e) != 0) {
@@ -87,10 +79,12 @@ int main(int argc, char** argv) try {
 
 					if (e.type == SDL_EVENT_QUIT)
 						l_exit = true;
+					/*
 					else if (e.type == SDL_EVENT_MOUSE_WHEEL) {
 						mw_used = true;
 						mouse_wheel_y = static_cast<int>(e.wheel.y);
 					}
+					*/
 				}
 
 				if (delta != 0) {
@@ -105,7 +99,7 @@ int main(int argc, char** argv) try {
 				}
 
 				if (deltaDraw >= 25) { // capped frame rate of ~40 is ok
-					l_main_window.draw(l_rnd, l_game);
+					l_main_window.draw(l_rnd);
 					last_draw_time = SDL_GetTicks();
 
 					//Update screen

@@ -3,7 +3,9 @@
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
+#include "./../common/imguifiledialog/ImGuiFileDialog.h"
 #include <algorithm>
+#include <filesystem>
 #include <map>
 #include "./../common/klib/Bitreader.h"
 #include "Imgui_helper.h"
@@ -11,7 +13,7 @@
 #include "./../fe/xml/Xml_helper.h"
 #include "./../common/klib/Kfile.h"
 
-fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
+fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
 	m_sel_sprite{ 0 }, m_sel_tile_x{ 0 }, m_sel_tile_y{ 0 },
 	m_sel_tile_x2{ 16 }, m_sel_tile_y2{ 0 },
@@ -30,127 +32,144 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd) :
 {
 
 	add_message(std::format("Build date: {} {} CET",
-		__DATE__, __TIME__), 4);
+		__DATE__, __TIME__), 5);
 	add_message("https://github.com/faxedit", 2);
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland", 2);
+
+	if (!p_filepath.empty())
+		load_rom(p_filepath);
 }
 
-void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
+void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
 
 	// ensure the atlas will be generated
 	m_atlas_new_tileset_no = get_default_tileset_no(0, 0);
-	m_atlas_new_palette_no = get_default_palette_no(p_game, 0, 0);
+	m_atlas_new_palette_no = get_default_palette_no(0, 0);
 
 	// TODO: generate sprite textures
 }
 
-void fe::MainWindow::draw(SDL_Renderer* p_rnd, fe::Game& p_game) {
-	// input handling, move to separate function later
-	if (m_emode == fe::EditMode::Tilemap) {
-		if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
-			clipboard_copy(p_game);
+void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
+	if (m_game.has_value()) {
+
+		// input handling, move to separate function later
+		if (m_emode == fe::EditMode::Tilemap) {
+			if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
+				clipboard_copy();
+			}
+			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
+				clipboard_paste();
+			}
 		}
-		else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
-			clipboard_paste(p_game);
+
+		// input handling end
+
+		regenerate_atlas_if_needed(p_rnd);
+
+		SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
+		SDL_RenderClear(p_rnd);
+
+		ImGui_ImplSDLRenderer3_NewFrame();
+		ImGui_ImplSDL3_NewFrame();
+		ImGui::NewFrame();
+
+		const auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
+		const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
+		const auto& l_tilemap{ l_screen.m_tilemap };
+		std::size_t l_tileset{ get_default_tileset_no(m_sel_chunk, m_sel_screen) };
+
+		for (int y{ 0 }; y < 13; ++y)
+			for (int x{ 0 }; x < 16; ++x) {
+
+				byte mt_no = l_tilemap.at(y).at(x);
+
+				// don't know if this should ever happen
+				if (mt_no >= m_game->m_chunks.at(m_sel_chunk).m_metatiles.size())
+					mt_no = 0;
+
+				const auto& l_metatile{ m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
+				const auto& l_mt_tilemap{ l_metatile.m_tilemap };
+				byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
+
+				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(0), l_pal_no, 2 * x, 2 * y);
+				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * x + 1, 2 * y);
+				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * x, 2 * y + 1);
+				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
+			}
+
+		// draw selected rectangle
+
+		if (m_emode == fe::EditMode::Tilemap) {
+			if (m_sel_tile_x2 < 16) {
+				const auto l_rect{ get_selection_dims() };
+
+				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 120, 0, 255),
+					static_cast<int>(l_rect.x), static_cast<int>(l_rect.y),
+					static_cast<int>(l_rect.w), static_cast<int>(l_rect.h));
+			}
+			else {
+				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 255, 0, 255),
+					static_cast<int>(m_sel_tile_x),
+					static_cast<int>(m_sel_tile_y), 1, 1);
+			}
 		}
+		else if (m_emode == fe::EditMode::Sprites) {
+			// draw placeholder rectangles for sprites
+			for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
+				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[s] };
+
+				m_gfx.draw_rect_on_screen(p_rnd,
+					SDL_Color(m_sel_sprite == s ? 255 : 0,
+						255, 0, 255),
+					l_sprite.m_x, l_sprite.m_y,
+					1, 1
+				);
+
+			}
+		}
+		else if (m_emode == fe::EditMode::Doors) {
+			// draw placeholder rectangles for doors
+			for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d) {
+				const auto& l_door{ l_screen.m_doors[d] };
+
+				m_gfx.draw_rect_on_screen(p_rnd,
+					SDL_Color(d == m_sel_door ? 255 : 0, 255, 0, 255),
+					l_door.m_coords.first, l_door.m_coords.second,
+					1, 1
+				);
+
+			}
+		}
+
+		draw_screen_tilemap_window(p_rnd);
+		draw_control_window(p_rnd);
+		draw_metadata_window(p_rnd);
+
+		ImGui::Render();
+		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 	}
-
-	// input handling end
-
-	regenerate_atlas_if_needed(p_rnd, p_game);
-
-	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
-	SDL_RenderClear(p_rnd);
-
-	ImGui_ImplSDLRenderer3_NewFrame();
-	ImGui_ImplSDL3_NewFrame();
-	ImGui::NewFrame();
-
-	const auto& l_chunk{ p_game.m_chunks.at(m_sel_chunk) };
-	const auto& l_screen{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
-	const auto& l_tilemap{ l_screen.m_tilemap };
-	std::size_t l_tileset{ get_default_tileset_no(m_sel_chunk, m_sel_screen) };
-
-	for (int y{ 0 }; y < 13; ++y)
-		for (int x{ 0 }; x < 16; ++x) {
-
-			byte mt_no = l_tilemap.at(y).at(x);
-
-			// don't know if this should ever happen
-			if (mt_no >= p_game.m_chunks.at(m_sel_chunk).m_metatiles.size())
-				mt_no = 0;
-
-			const auto& l_metatile{ p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
-			const auto& l_mt_tilemap{ l_metatile.m_tilemap };
-			byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
-
-			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(0), l_pal_no, 2 * x, 2 * y);
-			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * x + 1, 2 * y);
-			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * x, 2 * y + 1);
-			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
-		}
-
-	// draw selected rectangle
-
-	if (m_emode == fe::EditMode::Tilemap) {
-		if (m_sel_tile_x2 < 16) {
-			const auto l_rect{ get_selection_dims() };
-
-			m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 120, 0, 255),
-				static_cast<int>(l_rect.x), static_cast<int>(l_rect.y),
-				static_cast<int>(l_rect.w), static_cast<int>(l_rect.h));
-		}
-		else {
-			m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 255, 0, 255),
-				static_cast<int>(m_sel_tile_x),
-				static_cast<int>(m_sel_tile_y), 1, 1);
-		}
+	else {
+		draw_filepicker_window(p_rnd);
 	}
-	else if (m_emode == fe::EditMode::Sprites) {
-		// draw placeholder rectangles for sprites
-		for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
-			const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[s] };
-
-			m_gfx.draw_rect_on_screen(p_rnd,
-				SDL_Color(m_sel_sprite == s ? 255 : 0,
-					255, 0, 255),
-				l_sprite.m_x, l_sprite.m_y,
-				1, 1
-			);
-
-		}
-	}
-	else if (m_emode == fe::EditMode::Doors) {
-		// draw placeholder rectangles for doors
-		for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d) {
-			const auto& l_door{ l_screen.m_doors[d] };
-
-			m_gfx.draw_rect_on_screen(p_rnd,
-				SDL_Color(d == m_sel_door ? 255 : 0, 255, 0, 255),
-				l_door.m_coords.first, l_door.m_coords.second,
-				1, 1
-			);
-
-		}
-	}
-
-	draw_screen_tilemap_window(p_rnd, p_game);
-	draw_control_window(p_rnd, p_game);
-	draw_metadata_window(p_rnd, p_game);
-
-	ImGui::Render();
-	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 }
 
 void fe::MainWindow::imgui_text(const std::string& p_str) {
 	ImGui::Text(p_str.c_str());
 }
 
-void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
-	std::size_t p_sel_chunk, std::size_t p_sel_screen,
+void fe::MainWindow::show_output_messages(void) const {
+	ImGui::SeparatorText("Output Messages");
+	for (const auto& msg : m_messages) {
+		ImGui::PushStyleColor(ImGuiCol_Text, ui::g_uiStyles[msg.status].active);
+		ImGui::TextUnformatted(msg.text.c_str());
+		ImGui::PopStyleColor();
+	}
+}
+
+void fe::MainWindow::draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_sel_screen,
 	std::size_t p_sel_x, std::size_t p_sel_y) {
 
-	byte l_metatile_id{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap.at(p_sel_y).at(p_sel_x) };
+	byte l_metatile_id{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap.at(p_sel_y).at(p_sel_x) };
 
 	ImGui::Begin("Metatile##mt");
 
@@ -159,21 +178,20 @@ void fe::MainWindow::draw_metatile_info(const fe::Game& p_game,
 
 	imgui_text("Position: " + std::to_string(p_sel_x) + "," + std::to_string(p_sel_y));
 
-	imgui_text("Property: " + klib::Bitreader::byte_to_hex(p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(l_metatile_id).m_block_property));
+	imgui_text("Property: " + klib::Bitreader::byte_to_hex(m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(l_metatile_id).m_block_property));
 
 	ImGui::End();
 
 }
 
-void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
-	const fe::Game& p_game) {
+void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
 
 	if (m_atlas_new_tileset_no != m_atlas_tileset_no ||
 		m_atlas_new_palette_no != m_atlas_palette_no) {
 
-		m_gfx.generate_atlas(p_rnd, p_game.m_tilesets.at(m_atlas_new_tileset_no),
-			p_game.m_palettes.at(m_atlas_new_palette_no));
-		generate_metatile_textures(p_rnd, p_game);
+		m_gfx.generate_atlas(p_rnd, m_game->m_tilesets.at(m_atlas_new_tileset_no),
+			m_game->m_palettes.at(m_atlas_new_palette_no));
+		generate_metatile_textures(p_rnd);
 
 		m_atlas_tileset_no = m_atlas_new_tileset_no;
 		m_atlas_palette_no = m_atlas_new_palette_no;
@@ -182,10 +200,10 @@ void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd,
 }
 
 // can be regenerated independently of the atlas
-void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd, const fe::Game& p_game) {
-	for (std::size_t i{ 0 }; i < p_game.m_chunks.at(m_sel_chunk).m_metatiles.size(); ++i)
+void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd) {
+	for (std::size_t i{ 0 }; i < m_game->m_chunks.at(m_sel_chunk).m_metatiles.size(); ++i)
 		m_gfx.generate_mt_texture(p_rnd,
-			p_game.m_chunks.at(m_sel_chunk).m_metatiles.at(i).m_tilemap,
+			m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(i).m_tilemap,
 			i, m_sel_tilemap_sub_palette);
 }
 
@@ -196,13 +214,12 @@ std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::
 		return p_chunk_no;
 }
 
-std::size_t fe::MainWindow::get_default_palette_no(const fe::Game& p_game,
-	std::size_t p_chunk_no, std::size_t p_screen_no) const {
+std::size_t fe::MainWindow::get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
 
 	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
 		return p_screen_no + 17;
 	else
-		return p_game.m_chunks.at(p_chunk_no).m_default_palette_no;
+		return m_game->m_chunks.at(p_chunk_no).m_default_palette_no;
 }
 
 std::string fe::MainWindow::get_description(byte p_index,
@@ -361,9 +378,9 @@ fe::Size4 fe::MainWindow::get_selection_dims(void) const {
 		);
 }
 
-void fe::MainWindow::clipboard_copy(const fe::Game& p_game) {
+void fe::MainWindow::clipboard_copy(void) {
 	const auto l_rect{ get_selection_dims() };
-	const auto& l_tm{ p_game.m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap };
+	const auto& l_tm{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen).m_tilemap };
 
 	std::vector<std::vector<byte>> l_clip;
 
@@ -382,7 +399,7 @@ void fe::MainWindow::clipboard_copy(const fe::Game& p_game) {
 		l_clip.at(0).size(), l_clip.size(), m_sel_chunk));
 }
 
-void fe::MainWindow::clipboard_paste(fe::Game& p_game) {
+void fe::MainWindow::clipboard_paste(void) {
 	const auto& l_clip{ m_clipboard[m_sel_chunk] };
 
 	if (l_clip.empty())
@@ -394,7 +411,7 @@ void fe::MainWindow::clipboard_paste(fe::Game& p_game) {
 	else {
 		for (std::size_t j{ 0 }; j < l_clip.size(); ++j)
 			for (std::size_t i{ 0 }; i < l_clip.at(j).size(); ++i)
-				p_game.m_chunks.at(m_sel_chunk).
+				m_game->m_chunks.at(m_sel_chunk).
 				m_screens.at(m_sel_screen).
 				m_tilemap.at(m_sel_tile_y + j).at(m_sel_tile_x + i) =
 				l_clip[j][i];
@@ -413,4 +430,105 @@ bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::siz
 		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? 2 : 1);
 
 	return l_ok;
+}
+
+void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
+	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
+	SDL_RenderClear(p_rnd);
+
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+	ImGui::Begin("ROM Selector");
+
+	if (ui::imgui_button("Load nes ROM file", 4, "Load Faxanadu (U).nes")) {
+		IGFD::FileDialogConfig config;
+		config.path = ".";
+		config.flags = ImGuiFileDialogFlags_HideColumnDate;
+
+		ImGuiFileDialog::Instance()->SetFileStyle(
+			IGFD_FileStyleByTypeDir, "", ImVec4(0.4f, 0.7f, 1.0f, 1.0f) // Light blue for folders
+		);
+
+		ImGuiFileDialog::Instance()->SetFileStyle(
+			IGFD_FileStyleByTypeFile, ".nes", ImVec4(1.0f, 0.6f, 0.2f, 1.0f) // Orange for .nes files
+		);
+
+		ImGuiFileDialog::Instance()->OpenDialog(
+			"ChooseROM",
+			"Choose a .nes file",
+			".nes", config
+		);
+	}
+
+	ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+
+	if (ImGuiFileDialog::Instance()->Display("ChooseROM")) {
+		if (ImGuiFileDialog::Instance()->IsOk()) {
+			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+			load_rom(filePath);
+		}
+		ImGuiFileDialog::Instance()->Close();
+	}
+
+	show_output_messages();
+
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
+}
+
+void fe::MainWindow::load_rom(const std::string& p_filepath) {
+	add_message("Attempting to load file " + p_filepath, 5);
+
+	// Load file as bytes and create game
+	try {
+		auto bytes = klib::file::read_file_as_bytes(p_filepath);
+		m_game = fe::Game(bytes);
+
+		std::filesystem::path romPath(p_filepath);
+
+		m_path = romPath.parent_path();
+		m_filename = romPath.stem().string();
+
+		add_message("Loaded " + p_filepath, 1);
+	}
+	catch (const std::runtime_error& ex) {
+		add_message(ex.what(), 1);
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), 1);
+	}
+	catch (...) {
+		add_message("Unknown error occurred", 1);
+	}
+
+}
+
+std::string fe::MainWindow::get_xml_path(void) const {
+	return get_filepath("xml", false);
+}
+
+std::string fe::MainWindow::get_nes_path(void) const {
+	return get_filepath("nes", true);
+}
+
+std::string fe::MainWindow::get_filepath(const std::string& p_ext, bool p_add_out) const {
+	std::string stemLower = m_filename;
+	std::transform(stemLower.begin(), stemLower.end(), stemLower.begin(), ::tolower);
+
+	std::filesystem::path outputPath;
+
+	if (!p_add_out || stemLower.ends_with("-out")) {
+		outputPath = m_path / (m_filename + "." + p_ext); // already in correct format
+	}
+	else {
+		outputPath = m_path / (m_filename + "-out" + "." + p_ext);
+	}
+
+	return outputPath.string();
 }
