@@ -8,6 +8,8 @@
 #include "./common/imgui/imgui_impl_sdlrenderer3.h"
 #include "./common/klib/Kfile.h"
 #include "./windows/MainWindow.h"
+#include "./fe/fe_app_constants.h"
+#include "./windows/gfx.h"
 
 int main(int argc, char** argv) try {
 
@@ -39,7 +41,6 @@ int main(int argc, char** argv) try {
 
 			// Setup Dear ImGui style
 			ImGui::StyleColorsDark();
-			//ImGui::StyleColorsLight();
 
 			// Setup Platform/Renderer backends
 			ImGui_ImplSDL3_InitForSDLRenderer(l_window, l_rnd);
@@ -48,12 +49,9 @@ int main(int argc, char** argv) try {
 			ImGui::GetIO().IniFilename = l_ini_filename.c_str();
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
-			fe::MainWindow l_main_window(l_rnd, argc > 1 ? argv[1]: "");
-			// main_window.set_application_icon(l_window);
+			fe::gfx::set_app_icon(l_window, fe::c::APP_ICON);
 
-			// input handler
-			// int mouse_wheel_y{ 0 };
-			// bool mw_used{ false };
+			fe::MainWindow l_main_window(l_rnd, argc > 1 ? argv[1] : "");
 
 			uint64_t last_logic_time = SDL_GetTicks() - 1;
 			uint64_t last_draw_time = SDL_GetTicks() - 17;
@@ -71,7 +69,6 @@ int main(int argc, char** argv) try {
 				delta = tick_time - last_logic_time;
 				int32_t mw_y{ 0 };
 
-				// mw_used = false;
 				SDL_PumpEvents();
 
 				if (SDL_PollEvent(&e) != 0) {
@@ -79,21 +76,11 @@ int main(int argc, char** argv) try {
 
 					if (e.type == SDL_EVENT_QUIT)
 						l_exit = true;
-					/*
-					else if (e.type == SDL_EVENT_MOUSE_WHEEL) {
-						mw_used = true;
-						mouse_wheel_y = static_cast<int>(e.wheel.y);
-					}
-					*/
 				}
 
 				if (delta != 0) {
 					uint64_t realDelta = std::min(delta, static_cast<uint64_t>(5));
 					SDL_GetWindowSize(l_window, &l_w, &l_h);
-
-					// input.move(realDelta, mw_used ? mouse_wheel_y : 0);
-					//main_window.move(realDelta, input, config, l_w, l_h);
-					// main_window.move(realDelta, input, l_config, l_h);
 
 					last_logic_time = tick_time;
 				}

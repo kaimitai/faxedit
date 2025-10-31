@@ -151,6 +151,7 @@
     <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
     <ClCompile Include="src\common\klib\Bitwriter.cpp" />
+    <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="src\common\imgui\imstb_truetype.h" />
     <ClInclude Include="src\common\klib\Bitreader.h" />
     <ClInclude Include="src\common\klib\Bitwriter.h" />
+    <ClInclude Include="src\common\klib\IPS_Patch.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
@@ -194,6 +196,7 @@
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Door.h" />
+    <ClInclude Include="src\fe\fe_app_constants.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
     <ClInclude Include="src\fe\InterChunkScroll.h" />

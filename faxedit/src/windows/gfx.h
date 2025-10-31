@@ -26,7 +26,7 @@ namespace fe {
 
 		// surface operations
 		SDL_Surface* create_sdl_surface(int p_w, int p_h) const;
-		void put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index);
+		void put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index) const;
 		SDL_Texture* surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf, bool p_destroy_surface = true);
 
 		static const std::vector<std::vector<byte>> NES_PALETTE;
@@ -49,6 +49,8 @@ namespace fe {
 		SDL_Texture* get_atlas(void) const;
 		SDL_Texture* get_screen_texture(void) const;
 		SDL_Texture* get_metatile_texture(std::size_t p_mt_no) const;
+
+		static void set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels);
 	};
 
 }

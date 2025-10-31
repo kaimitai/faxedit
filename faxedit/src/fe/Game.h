@@ -53,10 +53,13 @@ namespace fe {
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_chunk_no) const;
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;
+
 		bool is_metatile_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
 		bool is_screen_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
+		
 		void delete_metatiles(std::size_t p_chunk_no, const std::unordered_set<byte>& p_mt_to_delete);
 		void delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete);
+		
 		std::size_t delete_unreferenced_metatiles(std::size_t p_chunk_no);
 		std::size_t delete_unreferenced_screens(std::size_t p_chunk_no);
 

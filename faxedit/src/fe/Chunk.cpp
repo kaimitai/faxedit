@@ -51,9 +51,11 @@ void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 	std::size_t p_offset, std::size_t p_door_param_offset,
 	byte p_param_offset) {
 
-	for (std::size_t i{ p_offset }; i < p_door_param_offset && p_rom.at(i) != 0xff; i += 4) {
+	for (std::size_t i{ p_offset }; p_rom.at(i) != 0xff; i += 4) {
 
 		std::size_t l_screen_id{ p_rom.at(i) };
+		if (l_screen_id >= m_screens.size())
+			return;
 
 		m_screens.at(l_screen_id).m_doors.push_back(
 			fe::Door(

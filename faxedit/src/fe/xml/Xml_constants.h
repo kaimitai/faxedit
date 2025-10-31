@@ -28,8 +28,8 @@ namespace fe {
 			constexpr char TAG_SPAWN_POINTS[]{ "spawn_points" };
 			constexpr char TAG_SPAWN_POINT[]{ "spawn_point" };
 
-			constexpr char TAG_NPC_BUNDLES[]{ "npc_bundles" };
-			constexpr char TAG_NPC_BUNDLE[]{ "npc_bundle" };
+			constexpr char TAG_NPC_BUNDLES[]{ "building_params" };
+			constexpr char TAG_NPC_BUNDLE[]{ "building_param" };
 
 			constexpr char TAG_PUSH_BLOCK[]{ "push_block" };
 			constexpr char ATTR_BLOCK_COUNT[]{ "block_count" };
@@ -47,22 +47,18 @@ namespace fe {
 
 			constexpr char ATTR_MATTOCK_ANIMATION[]{ "mattock_animation" };
 
-			constexpr char TAG_CHUNKS[]{ "chunks" };
-			constexpr char TAG_CHUNK[]{ "chunk" };
+			constexpr char TAG_CHUNKS[]{ "worlds" };
+			constexpr char TAG_CHUNK[]{ "world" };
 
 			constexpr char ATTR_DEFAULT_PALETTE[]{ "default_palette" };
 
 			constexpr char ATTR_MT_PROPERTY[]{ "property" };
-			constexpr char ATTR_MT_PAL_TL[]{ "pal_top_left" };
-			constexpr char ATTR_MT_PAL_TR[]{ "pal_top_right" };
-			constexpr char ATTR_MT_PAL_BL[]{ "pal_bottom_left" };
-			constexpr char ATTR_MT_PAL_BR[]{ "pal_bottom_right" };
+			constexpr char ATTR_MT_PAL_TL[]{ "pal_tl" };
+			constexpr char ATTR_MT_PAL_TR[]{ "pal_tr" };
+			constexpr char ATTR_MT_PAL_BL[]{ "pal_bl" };
+			constexpr char ATTR_MT_PAL_BR[]{ "pal_br" };
 
-			constexpr char TAG_CHUNK_DOOR_CONN[]{ "chunk_door_connections" };
-			constexpr char TAG_NEXT_CHUNK[]{ "next_chunk" };
-			constexpr char TAG_PREV_CHUNK[]{ "previous_chunk" };
-
-			constexpr char ATTR_CHUNK_ID[]{ "chunk_no" };
+			constexpr char ATTR_CHUNK_ID[]{ "world_no" };
 			constexpr char ATTR_SCREEN_ID[]{ "screen_no" };
 			constexpr char ATTR_STAGE_ID[]{ "stage_no" };
 			constexpr char ATTR_REQUIREMENT[]{ "requirement" };
@@ -85,12 +81,12 @@ namespace fe {
 			constexpr char ATTR_SCREEN_ID_UP[]{ "screen_id_up" };
 			constexpr char ATTR_SCREEN_ID_DOWN[]{ "screen_id_down" };
 
-			constexpr char TAG_SCREEN_INTERCHUNK_TRANSTION[]{ "inter_chunk_transition" };
-			constexpr char TAG_SCREEN_INTRACHUNK_TRANSTION[]{ "intra_chunk_transition" };
+			constexpr char TAG_SCREEN_INTERCHUNK_TRANSTION[]{ "sameworld_transition" };
+			constexpr char TAG_SCREEN_INTRACHUNK_TRANSTION[]{ "otherworld_transition" };
 
 			constexpr char ATTR_NO[]{ "no" };
 			constexpr char ATTR_ID[]{ "id" };
-			constexpr char ATTR_TEXT_ID[]{ "text_id" };
+			constexpr char ATTR_TEXT_ID[]{ "script_index" };
 			constexpr char ATTR_X[]{ "x" };
 			constexpr char ATTR_Y[]{ "y" };
 			constexpr char ATTR_DEST_X[]{ "destination_x" };
@@ -100,15 +96,15 @@ namespace fe {
 			constexpr char ATTR_DEST_PARAM_ID[]{ "destination_parameter" };
 			constexpr char ATTR_UNKNOWN_BYTE[]{ "unknown_byte" };
 			constexpr char ATTR_SPRITE_COMM_BYTE[]{ "sprite_command_byte" };
-			constexpr char ATTR_UNKNOWN_SPR_BYTES[]{ "unknown_sprite_bytes" };
+
 			constexpr char ATTR_BYTES[]{ "bytes" };
 			constexpr char ATTR_ROW[]{ "row" };
 			constexpr char ATTR_TYPE[]{ "type" };
 
-			constexpr char VAL_DOOR_TYPE_INTERCHUNK[]{ "inter_chunk" };
+			constexpr char VAL_DOOR_TYPE_INTERCHUNK[]{ "sameworld" };
 			constexpr char VAL_DOOR_TYPE_BUILDING[]{ "building" };
-			constexpr char VAL_DOOR_TYPE_NEXTCHUNK[]{ "next_chunk" };
-			constexpr char VAL_DOOR_TYPE_PREVCHUNK[]{ "previous_chunk" };
+			constexpr char VAL_DOOR_TYPE_NEXTCHUNK[]{ "next_stage" };
+			constexpr char VAL_DOOR_TYPE_PREVCHUNK[]{ "previous_stage" };
 		}
 
 	}

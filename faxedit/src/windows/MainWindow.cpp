@@ -10,6 +10,7 @@
 #include "./../common/klib/Bitreader.h"
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
+#include "./../fe/fe_app_constants.h"
 #include "./../fe/xml/Xml_helper.h"
 #include "./../common/klib/Kfile.h"
 
@@ -28,13 +29,20 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_sel_spawn_location{ 0 },
 	m_sel_npc_bundle{ 0 },
 	m_sel_stage{ 0 },
-	m_emode{ fe::EditMode::Tilemap }
+	m_emode{ fe::EditMode::Tilemap },
+	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
+	m_pulse_time{ 0.0f }
 {
 
+	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
+	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
+	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
+	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), 5);
+	add_message(std::format("Version: {}", c::APP_VERSION), 5);
 	add_message("https://github.com/faxedit", 2);
-	add_message("Welcome to Echoes of Eolis by Kai E. Froeland", 2);
+	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	if (!p_filepath.empty())
 		load_rom(p_filepath);
@@ -52,6 +60,18 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
 void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 	if (m_game.has_value()) {
 
+		const SDL_Color lc_pulse_start{ 153, 153, 0, 255 };   // dark yellow
+		const SDL_Color lc_pulse_end{ 255, 255, 102, 255 }; // light yellow
+
+		// update pulsating color
+		m_pulse_time += ImGui::GetIO().DeltaTime;
+		float t = 0.5f * (1.0f + sinf(m_pulse_time * 5.0f));
+
+		m_pulse_color.r = static_cast<Uint8>(lc_pulse_start.r + (lc_pulse_end.r - lc_pulse_start.r) * t);
+		m_pulse_color.g = static_cast<Uint8>(lc_pulse_start.g + (lc_pulse_end.g - lc_pulse_start.g) * t);
+		m_pulse_color.b = static_cast<Uint8>(lc_pulse_start.b + (lc_pulse_end.b - lc_pulse_start.b) * t);
+		m_pulse_color.a = 255;
+
 		// input handling, move to separate function later
 		if (m_emode == fe::EditMode::Tilemap) {
 			if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
@@ -66,7 +86,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 		regenerate_atlas_if_needed(p_rnd);
 
-		SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
+		SDL_SetRenderDrawColor(p_rnd, 0, 33, 71, 0);
 		SDL_RenderClear(p_rnd);
 
 		ImGui_ImplSDLRenderer3_NewFrame();
@@ -119,8 +139,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[s] };
 
 				m_gfx.draw_rect_on_screen(p_rnd,
-					SDL_Color(m_sel_sprite == s ? 255 : 0,
-						255, 0, 255),
+					s == m_sel_sprite ? m_pulse_color : SDL_Color(0, 255, 0, 255),
 					l_sprite.m_x, l_sprite.m_y,
 					1, 1
 				);
@@ -133,7 +152,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				const auto& l_door{ l_screen.m_doors[d] };
 
 				m_gfx.draw_rect_on_screen(p_rnd,
-					SDL_Color(d == m_sel_door ? 255 : 0, 255, 0, 255),
+					d == m_sel_door ? m_pulse_color : SDL_Color(0, 255, 0, 255),
 					l_door.m_coords.first, l_door.m_coords.second,
 					1, 1
 				);
@@ -286,7 +305,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 		ui::imgui_slider_with_arrows("###spritesel",
 			std::format("Selected sprite: #{}/{}", p_sel_sprite, l_sprite_cnt),
-			p_sel_sprite, 0, l_sprite_cnt - 1);
+			p_sel_sprite, 0, l_sprite_cnt - 1, "", false, true);
 
 		ImGui::SeparatorText("Sprite ID");
 
@@ -313,7 +332,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		}
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
-				"Script: " + get_description(l_sprite.m_text_id.value(), c::LABELS_DIALOGUE),
+				"Script: " + get_description(l_sprite.m_text_id.value(), c::LABELS_SCRIPTS),
 				l_sprite.m_text_id.value(), 0, 0x50);
 
 			if (ui::imgui_button("Remove script", 1))
@@ -325,7 +344,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	ImGui::SeparatorText("Add or remove sprites");
 
-	if (ui::imgui_button("Add sprite", 2))
+	if (ui::imgui_button("Add sprite", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_sprites.size() == 0xff))
 		p_sprites.push_back(fe::Sprite(0x2a, 0, 0));
 
 	if (!p_sprites.empty()) {
@@ -346,7 +365,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 			p_sprites.m_command_byte.reset();
 	}
 	else {
-		if (ui::imgui_button("Add command byte", 2))
+		if (ui::imgui_button("Add command byte", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS))
 			p_sprites.m_command_byte = 0x01;
 	}
 }
@@ -433,14 +452,15 @@ bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::siz
 }
 
 void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
-	SDL_SetRenderDrawColor(p_rnd, 126, 126, 255, 0);
+	SDL_SetRenderDrawColor(p_rnd, 96, 96, 255, 0);
 	SDL_RenderClear(p_rnd);
 
 	ImGui_ImplSDLRenderer3_NewFrame();
 	ImGui_ImplSDL3_NewFrame();
 	ImGui::NewFrame();
 
-	ImGui::Begin("ROM Selector");
+	ui::imgui_screen("ROM select", c::WIN_CONTROLS_X, c::WIN_CONTROLS_Y, c::WIN_CONTROLS_W, c::WIN_CONTROLS_H,
+		4);
 
 	if (ui::imgui_button("Load nes ROM file", 4, "Load Faxanadu (U).nes")) {
 		IGFD::FileDialogConfig config;
@@ -462,8 +482,8 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 		);
 	}
 
-	ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos(ImVec2(static_cast<float>(c::WIN_ROM_X), static_cast<float>(c::WIN_ROM_Y)), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(static_cast<float>(c::WIN_ROM_W), static_cast<float>(c::WIN_ROM_H)), ImGuiCond_FirstUseEver);
 
 	if (ImGuiFileDialog::Instance()->Display("ChooseROM")) {
 		if (ImGuiFileDialog::Instance()->IsOk()) {
@@ -495,7 +515,7 @@ void fe::MainWindow::load_rom(const std::string& p_filepath) {
 		m_path = romPath.parent_path();
 		m_filename = romPath.stem().string();
 
-		add_message("Loaded " + p_filepath, 1);
+		add_message("Loaded " + p_filepath, 2);
 	}
 	catch (const std::runtime_error& ex) {
 		add_message(ex.what(), 1);
@@ -507,6 +527,10 @@ void fe::MainWindow::load_rom(const std::string& p_filepath) {
 		add_message("Unknown error occurred", 1);
 	}
 
+}
+
+std::string fe::MainWindow::get_ips_path(void) const {
+	return get_filepath("ips", false);
 }
 
 std::string fe::MainWindow::get_xml_path(void) const {

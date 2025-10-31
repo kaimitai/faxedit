@@ -10,6 +10,9 @@
 #include "gfx.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
+#include "./../common/imgui/imgui.h"
+#include "./../common/imgui/imgui_impl_sdl3.h"
+#include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 
 namespace fe {
 
@@ -63,9 +66,16 @@ namespace fe {
 		std::deque<fe::Message> m_messages;
 		fe::ROM_Manager m_rom_manager;
 
+		// oscillating color for selected object
+		SDL_Color m_pulse_color;
+		float m_pulse_time;
+
 		void imgui_text(const std::string& p_str);
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(const std::string& p_filepath);
+		std::optional<std::vector<byte>> patch_rom(void);
+
+		std::string get_ips_path(void) const;
 		std::string get_xml_path(void) const;
 		std::string get_nes_path(void) const;
 		std::string get_filepath(const std::string& p_ext, bool p_add_out = false) const;
@@ -95,6 +105,9 @@ namespace fe {
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
 		void show_stage_door_data(fe::Door& p_door);
 		void show_stages_data(void);
+		void show_screen_scroll_data(void);
+
+		void show_sprite_set_contents(std::size_t p_sprite_set);
 
 		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
 

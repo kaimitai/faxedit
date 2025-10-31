@@ -322,7 +322,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 			if (l_bundle.m_sprites[s].m_text_id.has_value()) {
 				n_bld_sprite.append_attribute(c::ATTR_TEXT_ID);
-				n_bld_sprite.attribute(c::ATTR_TEXT_ID).set_value(l_bundle.m_sprites[s].m_text_id.value());
+				n_bld_sprite.attribute(c::ATTR_TEXT_ID).set_value(byte_to_hex(l_bundle.m_sprites[s].m_text_id.value()));
 			}
 		}
 

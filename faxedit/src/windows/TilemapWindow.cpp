@@ -3,6 +3,7 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
+#include "./../fe/fe_app_constants.h"
 
 void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	auto& l_chunk = m_game->m_chunks.at(m_sel_chunk);
@@ -17,7 +18,20 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 		std::format(" > Position ({},{})", m_sel_tile_x, m_sel_tile_y) : "")
 	+ "###stmw" };
 
-	ImGui::Begin(l_win_label.c_str());
+	// set window color to indicate a command byte
+	int l_wstyle{ 0 };
+	if (l_screen.m_sprite_set.m_command_byte.has_value()) {
+		byte l_cbyte{ l_screen.m_sprite_set.m_command_byte.value() };
+		if (l_cbyte == 0x00)
+			l_wstyle = 2;
+		else if (l_cbyte == 1)
+			l_wstyle = 1;
+		else if (l_cbyte == 2)
+			l_wstyle = 4;
+	}
+
+	ui::imgui_screen(l_win_label, c::WIN_TILEMAP_X, c::WIN_TILEMAP_Y, c::WIN_TILEMAP_W, c::WIN_TILEMAP_H,
+		l_wstyle);
 
 	// Layout constants
 	const float rightPanelWidth = 500.0f;
@@ -217,7 +231,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					// screen door selection
 					ui::imgui_slider_with_arrows("###sdoorsel",
 						std::format("Selected door: #{}/{}", m_sel_door, l_door_cnt),
-						m_sel_door, 0, l_door_cnt - 1);
+						m_sel_door, 0, l_door_cnt - 1, "", false, true);
 
 					ImGui::Separator();
 
@@ -241,6 +255,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 							if (ImGui::Selectable(c::LABELS_DOOR_TYPES[i], is_selected) && !is_disabled) {
 								l_door.m_door_type = static_cast<fe::DoorType>(i);
+								l_door.m_dest_screen_id = 0;
 							}
 
 							if (is_disabled) ImGui::EndDisabled();
@@ -294,14 +309,13 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							l_dest_world = static_cast<byte>(m_sel_chunk);
 							l_dest_tooltip = "Same-World door";
 						}
-
+						/*
 						ui::imgui_slider_with_arrows("doordestchunk",
 							"Destination world", l_dest_world, 0, m_game->m_chunks.size() - 1,
 							l_dest_tooltip, true);
+							*/
 
-
-
-						// now to the same for destination screens
+							// now do the same for destination screens
 						byte l_dest_screen;
 						l_dest_tooltip.clear();
 
@@ -309,7 +323,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						if (ui::imgui_slider_with_arrows("doordestscreen",
 							l_door.m_door_type == fe::DoorType::Building ?
-							c::LABELS_BUILDINGS[l_dest_screen] : "Destination Screen"
+							"Destination Screen: " + c::LABELS_BUILDINGS[l_dest_screen] : "Destination Screen"
 							, l_dest_screen, 0, m_game->m_chunks.at(l_dest_world).m_screens.size() - 1,
 							l_dest_tooltip))
 							l_door.m_dest_screen_id = l_dest_screen;
@@ -320,51 +334,51 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						if (l_dtype == fe::DoorType::Building) {
 							l_dest_palette = static_cast<byte>(get_default_palette_no(c::CHUNK_IDX_BUILDINGS, l_door.m_dest_screen_id));
-							l_dest_tooltip = "Defined by destination screen";
 						}
 						else {
 							l_dest_palette = l_door.m_dest_palette_id;
 						}
 
-						if (ui::imgui_slider_with_arrows("doordestpal",
-							std::format("Destination palette/music: {}",
-								get_description(l_dest_palette, c::LABELS_PALETTES)), l_dest_palette, 0, 30,
-							l_dest_tooltip))
-							l_door.m_dest_palette_id = l_dest_palette;
-
-						if (l_dtype == fe::DoorType::Building)
+						if (l_dtype == fe::DoorType::SameWorld) {
+							if (ui::imgui_slider_with_arrows("doordestpal",
+								std::format("Destination palette/music: {}",
+									get_description(l_dest_palette, c::LABELS_PALETTES)), l_dest_palette, 0, 30,
+								l_dest_tooltip, true))
+								l_door.m_dest_palette_id = l_dest_palette;
+						}
+						else if (l_dtype == fe::DoorType::Building) {
 							ui::imgui_slider_with_arrows("doornpcs",
-								"NPCs: " + get_description(l_door.m_npc_bundle, c::LABELS_NPC_BUNDLES),
-								l_door.m_npc_bundle, 0, 70 - 1,
+								std::format("Sprite set {}", l_door.m_npc_bundle),
+								l_door.m_npc_bundle, 0, m_game->m_npc_bundles.size() - 1,
 								"A paramater defining which sprites appear inside the building");
+
+							ImGui::SeparatorText("Sprite Set content");
+
+							show_sprite_set_contents(l_door.m_npc_bundle);
+						}
 
 						ImGui::Separator();
 
 						// trigger a possible redraw of the gfx atlas
-						if (ui::imgui_button("Enter door", 4, "Takes you to the door destination screen with the corresponding palette")) {
-							/*
-							m_sel_chunk = l_dest_world;
-							m_sel_screen = l_dest_screen;
-							m_atlas_new_palette_no = l_dest_palette;
-							m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-							*/
-						}
+						enter_door_button(l_screen);
 					}
 
-					ImGui::Separator();
-
-					if (ui::imgui_button("Delete door###delseldoor", 1, "Delete current door")) {
-						l_doors.erase(begin(l_doors) + m_sel_door);
-						--m_sel_door;
-					}
 				}
 
-				ImGui::Separator();
+				ImGui::SeparatorText("Add or remove door");
 
 				if (ui::imgui_button("Add door###adddoor", 2, "Add a new door to this screen")) {
 					l_screen.m_doors.push_back(fe::Door());
 
 					m_sel_door = l_screen.m_doors.size() - 1;
+				}
+
+				ImGui::SameLine();
+
+				if (ui::imgui_button("Delete door###delseldoor", 1, "Delete current door",
+					m_sel_door >= l_door_cnt)) {
+					l_doors.erase(begin(l_doors) + m_sel_door);
+					--m_sel_door;
 				}
 
 				ImGui::EndTabItem();
@@ -376,12 +390,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 			if (ImGui::BeginTabItem("Scrolling")) {
 				m_emode = fe::EditMode::Scrolling;
-
-				l_screen.m_scroll_left = show_screen_scroll_section("Left", l_chunk.m_screens.size(), l_screen.m_scroll_left);
-				l_screen.m_scroll_right = show_screen_scroll_section("Right", l_chunk.m_screens.size(), l_screen.m_scroll_right);
-				l_screen.m_scroll_up = show_screen_scroll_section("Up", l_chunk.m_screens.size(), l_screen.m_scroll_up);
-				l_screen.m_scroll_down = show_screen_scroll_section("Down", l_chunk.m_screens.size(), l_screen.m_scroll_down);
-
+				show_screen_scroll_data();
 				ImGui::EndTabItem();
 			}
 
@@ -544,7 +553,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
 		}
 
-
 	}
 
 	ImGui::SeparatorText("Navigation");
@@ -576,6 +584,29 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	ImGui::SameLine();
 
 	transition_ow_button(l_screen);
+
+	ImGui::SeparatorText("Add / Remove Screens");
+
+	if (ui::imgui_button("Add Screen", 2, "", l_chunk.m_screens.size() == 0xff)) {
+		l_chunk.m_screens.push_back(fe::Screen());
+		l_chunk.m_screens.back().initialize_tilemap();
+		m_sel_screen = l_chunk.m_screens.size() - 1;
+	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Delete Screen", 1, "",
+		l_chunk.m_screens.size() == 1 || m_sel_chunk == c::CHUNK_IDX_BUILDINGS ||
+		!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+		if (m_game->is_screen_referenced(m_sel_chunk,
+			m_sel_screen))
+			add_message("Screen has references", 1);
+		else {
+			m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
+			if (m_sel_screen >= l_chunk.m_screens.size())
+				--m_sel_screen;
+		}
+	}
 
 	ImGui::EndChild();
 
@@ -683,7 +714,7 @@ void fe::MainWindow::scroll_down_button(const fe::Screen& p_screen) {
 }
 
 void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
-	if (ui::imgui_button("Enter Door", 4, "",
+	if (ui::imgui_button("Enter Door###ed", 4, "",
 		m_sel_door >= p_screen.m_doors.size())) {
 
 		const auto& l_door{ p_screen.m_doors[m_sel_door] };
@@ -733,5 +764,22 @@ void fe::MainWindow::transition_ow_button(const fe::Screen& p_screen) {
 		m_sel_screen = p_screen.m_intrachunk_scroll.value().m_dest_screen;
 		m_atlas_new_palette_no = p_screen.m_intrachunk_scroll.value().m_palette_id;
 		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+	}
+}
+
+void fe::MainWindow::show_sprite_set_contents(std::size_t p_sprite_set) {
+	std::size_t l_spr_count{ m_game->m_npc_bundles.at(p_sprite_set).m_sprites.size() };
+	for (std::size_t s{ 0 }; s < l_spr_count; ++s) {
+		const auto& sprite{ m_game->m_npc_bundles.at(p_sprite_set).m_sprites[s] };
+
+		imgui_text(std::format("Sprite: {}", get_description(sprite.m_id, c::LABELS_SPRITES)));
+
+		if (sprite.m_text_id.has_value()) {
+			imgui_text(std::format("Script: {}", get_description(
+				sprite.m_text_id.value(), c::LABELS_SCRIPTS)));
+		}
+
+		if (l_spr_count - s != 1)
+			ImGui::Separator();
 	}
 }

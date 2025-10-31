@@ -2,12 +2,15 @@
 #include "Imgui_helper.h"
 #include "./../common/klib/Bitreader.h"
 #include "./../fe/fe_constants.h"
+#include "./../fe/fe_app_constants.h"
+#include <unordered_map>
 
 void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 	auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
 
-	fe::ui::imgui_screen("World and Game Settings###cw");
+	fe::ui::imgui_screen("World and Game Settings###cw", c::WIN_METADATA_X, c::WIN_METADATA_Y,
+		c::WIN_METADATA_W, c::WIN_METADATA_H, 3);
 
 	if (ImGui::BeginTabBar("Metadata")) {
 
@@ -67,12 +70,10 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						}
 					}
 
-
-
 					ImGui::SeparatorText(std::format("Selected metatile: {}", m_sel_metatile).c_str());
 
 					ui::imgui_slider_with_arrows("Metatile###mtdef", "", m_sel_metatile, 0,
-						l_chunk.m_metatiles.size() - 1);
+						l_chunk.m_metatiles.size() - 1, "", false, true);
 
 					ImGui::SeparatorText(std::format("Block property: {}",
 						get_description(l_mt_def.m_block_property,
@@ -202,6 +203,31 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				// CHUNK - MATTOCK ANIMATION - END
 
+				if (ImGui::BeginTabItem("Cleanup")) {
+
+					ImGui::SeparatorText("Remove unused assets");
+
+					if (ui::imgui_button("Delete Unreferenced Metatiles", 1, "",
+						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+						std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
+						add_message(std::format("{} metatiles deleted from world {}",
+							l_del_cnt, m_sel_chunk), 5);
+						if (l_del_cnt > 0)
+							generate_metatile_textures(p_rnd);
+					}
+
+					if (ui::imgui_button("Delete Unreferenced Screens", 1, "",
+						m_sel_chunk == c::CHUNK_IDX_BUILDINGS || !ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+						std::size_t l_del_cnt{ m_game->delete_unreferenced_screens(m_sel_chunk) };
+						add_message(std::format("{} screens deleted from world {}",
+							l_del_cnt, m_sel_chunk), 5);
+						if (m_sel_screen >= m_game->m_chunks.at(m_sel_chunk).m_screens.size())
+							m_sel_screen = m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1;
+					}
+
+					ImGui::EndTabItem();
+				}
+
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
 			}
@@ -226,7 +252,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::SeparatorText("Spawn locations after dying or talking to a spawn-setting Guru");
 
 					ui::imgui_slider_with_arrows("spawnloc", "",
-						m_sel_spawn_location, 0, 7);
+						m_sel_spawn_location, 0, 7, "", false, true);
 
 					ImGui::SeparatorText(std::format("Location for spawn point #{}", m_sel_spawn_location).c_str());
 
@@ -248,7 +274,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ImGui::SeparatorText("Stage Number");
 
-					ui::imgui_slider_with_arrows("spawnstage", "The number of next-world doors traversed before this spawn",
+					ui::imgui_slider_with_arrows("spawnstage", "",
 						l_spawn.m_stage, 0, 5);
 
 					ImGui::SeparatorText("Automatic Deduction");
@@ -264,13 +290,16 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("Building Parameters")) {
+				if (ImGui::BeginTabItem("Building Sprite Sets")) {
 
-					ImGui::SeparatorText(std::format("Building Parameter: {})",
-						get_description(static_cast<byte>(m_sel_npc_bundle), c::LABELS_NPC_BUNDLES)).c_str());
+					auto l_bset{ m_game->m_npc_bundles };
+					if (m_sel_npc_bundle >= l_bset.size())
+						m_sel_npc_bundle = l_bset.size() - 1;
+
+					ImGui::SeparatorText(std::format("Building Sprite Set: {}", m_sel_npc_bundle).c_str());
 
 					ui::imgui_slider_with_arrows("###npcbsel", "", m_sel_npc_bundle,
-						0, m_game->m_npc_bundles.size() - 1);
+						0, l_bset.size() - 1, "", false, true);
 
 					ImGui::SeparatorText("Building Parameter Sprites");
 
@@ -279,7 +308,39 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					show_sprite_screen(m_game->m_npc_bundles.at(m_sel_npc_bundle),
 						m_sel_npc_bundle_sprite);
 
+					auto sbp{ c::LABELS_SPECIAL_BUNDLES.find(static_cast<byte>(m_sel_npc_bundle)) };
+
+					if (sbp != end(c::LABELS_SPECIAL_BUNDLES)) {
+						ImGui::Separator();
+						imgui_text(std::format("Special Significance: {}", sbp->second));
+					}
+
 					ImGui::PopID();
+
+					ImGui::SeparatorText("Add or Remove Building Sprite Sets");
+
+					if (ui::imgui_button("Add Sprite Set", 2, "", l_bset.size() == 0xff))
+						m_game->m_npc_bundles.push_back(fe::Sprite_set());
+
+					ImGui::SameLine();
+
+					// don't delete below 70 - there are some hard coded references in the game code
+					if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift)
+						|| l_bset.size() <= 70)) {
+
+						bool l_bset_used{ false };
+						for (const auto& chunk : m_game->m_chunks)
+							for (const auto& scr : chunk.m_screens)
+								for (const auto& door : scr.m_doors)
+									if (door.m_door_type == fe::DoorType::Building &&
+										door.m_npc_bundle == m_sel_npc_bundle)
+										l_bset_used = true;
+
+						if (l_bset_used)
+							add_message("Building Sprite Set has references", 1);
+						else
+							m_game->m_npc_bundles.erase(begin(m_game->m_npc_bundles) + m_sel_npc_bundle);
+					}
 
 					ImGui::EndTabItem();
 				}
@@ -422,7 +483,7 @@ void fe::MainWindow::show_stages_data(void) {
 
 	ui::imgui_slider_with_arrows("###stagesel",
 		std::format("Selected Stage: ", m_sel_stage),
-		m_sel_stage, 0, 5);
+		m_sel_stage, 0, 5, "", false, true);
 
 	ImGui::Separator();
 
@@ -442,7 +503,7 @@ void fe::MainWindow::show_stages_data(void) {
 
 	ui::imgui_slider_with_arrows("###stens",
 		std::format("Next Stage: {} ({})",
-		l_stage.m_next_stage,
+			l_stage.m_next_stage,
 			c::LABELS_CHUNKS[l_stages.m_stages[l_stage.m_next_stage].m_world_id]),
 		l_stage.m_next_stage, 0, 5);
 	ui::imgui_slider_with_arrows("###stenscr", "Next Screen",
@@ -484,5 +545,65 @@ void fe::MainWindow::show_stages_data(void) {
 	ImGui::PopID();
 
 	ui::imgui_slider_with_arrows("###stestahp", "Starting Health",
-		l_stages.m_start_hp, 0, 255);
+		l_stages.m_start_hp, 0, 80);
+}
+
+void fe::MainWindow::show_screen_scroll_data(void) {
+	auto& l_screen{ m_game->m_chunks[m_sel_chunk].m_screens[m_sel_screen] };
+	std::size_t l_scr_count{ m_game->m_chunks[m_sel_chunk].m_screens.size() };
+
+	const std::vector<std::string> lc_dirs{ "Left", "Right", "Up", "Down" };
+	std::map<std::size_t, std::optional<byte>&> l_conns{
+		{0, l_screen.m_scroll_left},
+		{1, l_screen.m_scroll_right},
+		{2, l_screen.m_scroll_up},
+		{3, l_screen.m_scroll_down}
+	};
+
+	ImGui::SeparatorText("Screen-scroll connections");
+
+	if (ImGui::BeginTable("ScrollTable", 3, ImGuiTableFlags_Borders)) {
+		ImGui::TableSetupColumn("Direction", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+		ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+		ImGui::TableSetupColumn("Destination Screen");
+		ImGui::TableHeadersRow();
+
+		for (auto& kv : l_conns) {
+			ImGui::PushID(std::format("###scrdef{}", kv.first).c_str());
+
+			ImGui::TableNextRow();
+
+			ImGui::TableSetColumnIndex(0);
+			ImGui::Text(lc_dirs[kv.first].c_str());
+
+			ImGui::TableSetColumnIndex(1);
+			if (kv.second.has_value()) {
+
+				if (ImGui::IsKeyDown(ImGuiKey_ModCtrl)) {
+					if (ui::imgui_button("Go To", 4)) {
+						m_sel_screen = kv.second.value();
+					}
+				}
+				else if (ui::imgui_button("Delete", 1))
+					kv.second = std::nullopt;
+			}
+			else {
+				if (ui::imgui_button("Add", 2)) {
+					kv.second = 0;
+				}
+			}
+
+			ImGui::TableSetColumnIndex(2);
+			if (kv.second.has_value()) {
+				ui::imgui_slider_with_arrows("###scrolldef", "", kv.second.value(), 0, l_scr_count - 1);
+			}
+			else {
+				ImGui::Text("Undefined");
+			}
+
+			ImGui::PopID();
+		}
+
+		ImGui::EndTable();
+	}
 }

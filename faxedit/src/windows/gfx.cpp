@@ -132,7 +132,7 @@ SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h) const {
 	return l_bmp;
 }
 
-void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index) {
+void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index) const {
 	SDL_Color l_col{ m_nes_palette->colors[p_palette_index] };
 	SDL_WriteSurfacePixel(srf, x, y, l_col.r, l_col.g, l_col.b, l_col.a);
 }
@@ -192,6 +192,41 @@ void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
 	SDL_RenderRect(p_rnd, &l_rect);
 
 	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
+void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) {
+	constexpr uint32_t lc_palette[4] = {
+		0x00000000, // transparent
+		0xFFB0B0B0, // lighter medium gray
+		0xFF006400, // dark green
+		0xFF800080  // purple
+	};
+
+	SDL_Surface* l_icon{ SDL_CreateSurface(16, 16, SDL_PIXELFORMAT_RGBA32) };
+	if (!l_icon)
+		return;
+	if (!SDL_LockSurface(l_icon)) {
+		SDL_DestroySurface(l_icon);
+		return;
+	}
+
+	uint32_t* pixels = static_cast<uint32_t*>(l_icon->pixels);
+
+	for (int i = 0; i < 64; ++i) {
+		unsigned char byte = p_pixels[i];
+		for (int j = 0; j < 4; ++j) {
+			int pixel_index = i * 4 + j;
+			int x = pixel_index % 16;
+			int y = pixel_index / 16;
+
+			uint8_t index = (byte >> ((3 - j) * 2)) & 0x03;
+			pixels[y * 16 + x] = lc_palette[index];
+		}
+	}
+
+	SDL_UnlockSurface(l_icon);
+	SDL_SetWindowIcon(p_window, l_icon);
+	SDL_DestroySurface(l_icon);
 }
 
 const std::vector<std::vector<byte>> fe::gfx::NES_PALETTE = {

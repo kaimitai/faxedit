@@ -55,15 +55,25 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	// extract various
 	for (std::size_t i{ 0 }; i < 8; ++i)
 		set_various(i, m_ptr_chunk_metadata);
+
 	// extract sprites
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		if (i == c::CHUNK_IDX_BUILDINGS) {
 			// this is not regular sprite data, it is the npc bundle masterdata
 			// referred to by the parameter byte in building doors
+			// read until we reach another master pointer value, that may not come
+			// in increasing order! (we assume tightly packed data however)
+			// the original game places this data last of all just to be nasty to us,
+			// so we fall back to stop parsing if we get an empty sprite set
 			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
+			std::size_t l_ptr_to_data{ get_pointer_address(l_ptr_to_bundles, 0x24010) };
 
-			for (std::size_t npcb{ 0 }; npcb < 70; ++npcb) {
+			for (std::size_t npcb{ 0 }; ; ++npcb) {
 				std::size_t l_ptr_to_set{ get_pointer_address(l_ptr_to_bundles + 2 * npcb, 0x24010) };
+
+				if (l_ptr_to_bundles + 2 * npcb == l_ptr_to_data)
+					break;
+
 				m_npc_bundles.push_back(extract_sprite_set(m_rom_data, l_ptr_to_set));
 			}
 		}

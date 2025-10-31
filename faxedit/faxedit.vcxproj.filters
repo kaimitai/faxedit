@@ -156,6 +156,9 @@
     <ClCompile Include="src\common\imguifiledialog\ImGuiFileDialog.cpp">
       <Filter>Source Files\common\imguifiledialog</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\klib\IPS_Patch.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -259,6 +262,12 @@
     </ClInclude>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialogConfig.h">
       <Filter>Header Files\common\imguifiledialog</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\IPS_Patch.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\fe_app_constants.h">
+      <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

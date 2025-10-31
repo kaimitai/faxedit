@@ -48,9 +48,8 @@ std::vector<byte>(13 * 16, 0)
 	m_tilemap = klib::kutil::flat_vec_to_2d(l_screen, 16);
 }
 
-fe::Screen::Screen(void) :
-	m_tilemap{ std::vector<std::vector<byte>>(13, std::vector<byte>(16, 0)) }
-{
+void fe::Screen::initialize_tilemap(void) {
+	m_tilemap = std::vector<std::vector<byte>>(13, std::vector<byte>(16, 0));
 }
 
 std::optional<byte> fe::Screen::scroll_property_to_opt(byte p_val) const {
@@ -95,4 +94,8 @@ std::vector<byte> fe::Screen::get_tilemap_bytes(void) const {
 	}
 
 	return writer.get_data();
+}
+
+byte fe::Screen::get_mt_at_pos(std::size_t x, std::size_t y) const {
+	return m_tilemap.at(y).at(x);
 }
