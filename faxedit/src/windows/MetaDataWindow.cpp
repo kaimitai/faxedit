@@ -155,7 +155,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				// CHUNK - PALETTE - BEGIN
 				if (ImGui::BeginTabItem("Palette")) {
 					if (fe::ui::imgui_slider_with_arrows("##cdp",
-						std::format("Default Palette #{}", l_chunk.m_default_palette_no),
+						std::format("Default Palette: {}", get_description(l_chunk.m_default_palette_no, c::LABELS_PALETTES)),
 						l_chunk.m_default_palette_no, 0,
 						m_game->m_palettes.size() - 1,
 						"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
