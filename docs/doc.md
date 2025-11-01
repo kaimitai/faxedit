@@ -34,7 +34,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Screen Sprites](#screen-sprites)
   - [Screen Doors](#screen-doors)
   - [Screen Scrolling](#screen-scrolling)
-  - [Screen Transtions](#screen-transtions)
+  - [Screen Transitions](#screen-transitions)
 
 <hr>
 
@@ -47,7 +47,7 @@ This is the screen used for file operations and data analysis.
 * Save xml: Saves the project as an xml-file, the recommended master data format
 * Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes
 * Save ips: Generates an ips patch file
-* Data Integrity Analsysis: Does some checking on whether there is problems in your data
+* Data Integrity Analysis: Does some checking on whether there is problems in your data
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Output Messages: The messages from the editor
 
@@ -57,14 +57,13 @@ The tilemaps are stored in three different regions in ROM. If you run into size 
 * Group 2: Trunk, Branches
 * Group 3: Dartmoor Castle, Buildings, Evil Lair
 
-
 <hr>
 
 # Game Metadata
 
 ## Stages
 
-In addition to the worlds in the game, there is a concept of "stage". The game defines six stages, and each of these is associated with a world. When the game starts both your world and stage are set to zero. Each stage is associated with a next stage and a previous stage, and your stage value is updated whenever you pass through a next-stage or previous-stage door. The links between stages can get a little confusing because the stage number doesn't simply increase or decreace as you go back and forth between stages, your current stage is used as an index into the stage metadata to determine your next stage number. In the original game the stages are increasing and consistent backward and forward, but this doesn't have to be the case. If you want to keep things simple, you can only edit the worlds for each stage, as well as the door requirements, and leave the rest.
+In addition to the worlds in the game, there is a concept of "stage". The game defines six stages, and each of these is associated with a world. When the game starts both your world and stage are set to zero. Each stage is associated with a next stage and a previous stage, and your stage value is updated whenever you pass through a next-stage or previous-stage door. Stage transitions can be a bit confusing - the stage number doesn’t simply increase or decrease as you move between them. Instead, your current stage acts as an index into the stage metadata to determine the next stage. In the original game the stages are increasing and consistent backward and forward, but this doesn't have to be the case. If you want to keep things simple, you can only edit the worlds for each stage, as well as the door requirements, and leave the rest.
 
 ![Stages](./img/win_metadata_game_stages.png)
 
@@ -115,7 +114,7 @@ This data is on the exact same format as screen sprite sets, but we have to trea
 * (x, y): Position of the sprite in the room
 * Script: A script-index used by an NPC. Optional. Can be added or deleted.
 * Add or Remove sprite: Adds or Removes the selected sprite from the sprite set
-* Command-byte: A value which determins the following based on its value:
+* Command-byte: A value which determines the following based on its value:
   * 0 - Automatically initiate the push-block animation when entering
   * 1 - Play boss music if a boss sprite is on screen, until the boss is dead
   * 2 - Play boss music if a boss sprite is on screen, until the boss is dead. Also starts the end-game sequence once all sprites are gone.
@@ -149,11 +148,11 @@ Then come the line-drawing parameters
 * Draw Count: The number of metatiles that will be drawn. (iteration count)
 * Draw-block: The block that will be drawn on these positions, forming a line.
 
-Be careful when you set these parameters, that your (x, y) position for drawing can't hit off screen-positions (where y>12 without wrapping around) as that means you are writing to other RAM values.
+Be careful when setting these parameters — if your (x, y) drawing position goes off-screen (e.g., y > 12), it may overwrite unrelated RAM values.
 
 * Fountain Cover Pos (x, y): The position for the top of the pushable blocks. When you push the blocks for the first time, the game takes your current position and uses that, but when you enter the screen and the animation happens automatically it needs to get this position from somewhere.
 * Pushable block animations source and target: Four metatiles which animates the pushable blocks themselves. The source tiles are what the pushed block will be replaced with, and the target tiles are what the tiles at the pushed-to location will be replaced with.
-* Deduce: Will search the game for two pushable blocks on top of eachother, and fill out as much of the information here automatically as it can.
+* Deduce: Will search the game for two pushable blocks on top of each other, and fill out as much of the information here automatically as it can.
 
 <hr>
 
@@ -188,7 +187,7 @@ The other things you can change for a metatile are the following:
 
 Missing values here have no meaning as far as I can tell, although based on game data it looks like property 11 at one point in the development cycle of the game meant "mattock-breakable" - but this is handled differently in the actual game.
 
-Property 5 (jump-on) is referenced in the game code, but no metatiles in the actual game are defined with this property. What this does exactly I do not know.
+Property 5 (jump-on) is referenced in the game code, but no metatiles in the original game use it. Its exact behavior remains unknown to me.
 
 Property 6 (pushable) is only used for the two push-blocks in the entire original game, but you are free to put them on other screens.
 
@@ -238,7 +237,7 @@ In both these cases, after deletion - the remaining references are re-index to s
 
 The Screen window consists of three parts. On the left part is the screen tilemap itself, which can be edited. The right side defines the editing mode, which will be described below. The bottom part has sliders for selecting current world and screen, as well as some navigation buttons that will take you to destinations defined by the screen. These buttons will take palette into account, which cannot easily be done when cycling through screens using the slider.
 
-If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. Any change to selected screen via the slider will revert to the defaul palette for that world.
+If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. Any change to selected screen via the slider will revert to the default palette for that world.
 
 Finally you can add or remove (hold shift to use button) screens for all worlds apart from Buildings. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
 
@@ -302,11 +301,11 @@ These parameters are common to all door types. The rest of the parameters depend
 
 ### Next-stage and previous-stage doors
 
-These doors get their destination world and screen via the stage configuration, and is common for all doors of this type for all screens in the world. If the world is defined to be used for exactly one stage, as it is in the original game, the editor will show the destination world, screen and entry requirements here - but you need to actually edit them in the stage metadata if you want to change them.
+These doors get their destination world and screen via the stage configuration, and is shared across all doors of this type within the world. If the world is defined to be used for exactly one stage, as it is in the original game, the editor will show the destination world, screen and entry requirements here - but you need to actually edit them in the stage metadata if you want to change them.
 
 ### Door to building
 
-These doors go the a room in the Buildings world. The parameters they take are:
+These doors go to a room in the Buildings world. The parameters they take are:
 
 * Requirement: Entry-requirement to use the door (none, key or ring)
 * Destination screen: The building room it goes to
@@ -338,7 +337,7 @@ The screens in a world are connected to each other via regular scrolling. When y
 
 In this tab you can define the scroll-connection for a screen in all four directions. Connections are optional data and can be added and deleted at will. The destination screen slider lets you set the destination screen number for any direction.
 
-## Screen Transtions
+## Screen Transitions
 
 Transitions are optional screen data. You can define transitions between screens that don't use regular scrolling. There are two types: Same-world transitions and other-world transitions.
 
@@ -364,6 +363,6 @@ To trigger an other-world transition, you need to clip a metatile with block pro
 
 In the original game all other-world transitions are defined from overworld-screens into town screens, and from town-screens back to the overworld.
 
-You can define these transitions between any two world (apart from the Buildings world probably), but one important thing to note is that it allows you to change world without changing your stage. This can allow players to reach stage-doors in several ways, and since the stage-door destinations will change depending on the stage number you could have a door with different destinations depending on how you got to that door.
+You can define these transitions between any two worlds (apart from the Buildings world probably), but one important thing to note is that it allows you to change world without changing your stage. This can allow players to reach stage-doors in several ways, and since the stage-door destinations will change depending on the stage number you could have a door with different destinations depending on how you got to that door.
 
 When in Transitions-editing mode, Shift+left Click moves the other-world destination position to the clicked position on the tilemap. Ctrl+Left Click moves the same-world destination position.
