@@ -79,6 +79,14 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			std::size_t tileX = std::min(static_cast<std::size_t>(localX / tileSize), std::size_t(15));
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
+			/*
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				ImGui::Text(std::format("({}, {})", tileX, tileY).c_str());
+				ImGui::EndTooltip();
+			}
+			*/
+
 			if (m_emode == fe::EditMode::Tilemap) {
 				if (l_mouse_left_down) {
 					// ctrl + left mouse; color picker
@@ -106,6 +114,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			}
 			else {
 				bool l_shift{ ImGui::IsKeyDown(ImGuiKey_LeftShift) };
+				bool l_ctrl{ ImGui::IsKeyDown(ImGuiKey_LeftCtrl) };
 
 				if (m_emode == fe::EditMode::Sprites &&
 					l_mouse_left_down) {
@@ -131,6 +140,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						l_screen.m_doors[m_sel_door].m_coords =
 						{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
 					}
+					else if (l_ctrl && m_sel_door < l_screen.m_doors.size()) {
+						l_screen.m_doors[m_sel_door].m_dest_coords =
+						{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
+					}
 					else {
 						for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d)
 							if (tileX == l_screen.m_doors[d].m_coords.first &&
@@ -139,6 +152,19 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 								break;
 							}
 					}
+				}
+				else if (m_emode == fe::EditMode::Transitions &&
+					l_mouse_left_down) {
+
+					if (l_ctrl && l_screen.m_interchunk_scroll.has_value()) {
+						l_screen.m_interchunk_scroll->m_dest_x = static_cast<byte>(tileX);
+						l_screen.m_interchunk_scroll->m_dest_y = static_cast<byte>(tileY);
+					}
+					else if (l_shift && l_screen.m_intrachunk_scroll.has_value()) {
+						l_screen.m_intrachunk_scroll->m_dest_x = static_cast<byte>(tileX);
+						l_screen.m_intrachunk_scroll->m_dest_y = static_cast<byte>(tileY);
+					}
+
 				}
 			}
 		}
@@ -343,7 +369,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							if (ui::imgui_slider_with_arrows("doordestpal",
 								std::format("Destination palette/music: {}",
 									get_description(l_dest_palette, c::LABELS_PALETTES)), l_dest_palette, 0, 30,
-								l_dest_tooltip, true))
+								l_dest_tooltip))
 								l_door.m_dest_palette_id = l_dest_palette;
 						}
 						else if (l_dtype == fe::DoorType::Building) {
@@ -358,12 +384,11 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						}
 
 						ImGui::Separator();
-
-						// trigger a possible redraw of the gfx atlas
-						enter_door_button(l_screen);
 					}
 
 				}
+
+				enter_door_button(l_screen);
 
 				ImGui::SeparatorText("Add or remove door");
 
@@ -436,26 +461,22 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						}
 
 						ui::imgui_slider_with_arrows("###sintrap",
-							"Destination palette/music", l_iwt_data.m_palette_id,
+							std::format("Destination palette: {}",
+								get_description(l_iwt_data.m_palette_id, c::LABELS_PALETTES)),
+							l_iwt_data.m_palette_id,
 							0, m_game->m_palettes.size());
 
 						ImGui::Separator();
 
-						if (ui::imgui_button("Go To###intracgo")) {
-							m_atlas_new_palette_no = l_iwt_data.m_palette_id;
-							m_sel_chunk = l_iwt_data.m_dest_chunk;
-							m_sel_screen = l_iwt_data.m_dest_screen;
-							m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk,
-								m_sel_screen);
-						}
+						transition_ow_button(l_screen);
 
 						ImGui::Separator();
 
-						if (ImGui::Button("Remove Transition###owiwtdel"))
+						if (ui::imgui_button("Remove Transition###owiwtdel", 1))
 							l_screen.m_intrachunk_scroll.reset();
 					}
 					else {
-						if (ImGui::Button("Add Transition###owiwtadd"))
+						if (ui::imgui_button("Add Transition###owiwtadd", 2))
 							l_screen.m_intrachunk_scroll = fe::IntraChunkScroll(
 								0, 0, 0, 0
 							);
@@ -492,23 +513,22 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						}
 
 						ui::imgui_slider_with_arrows("###sinterp",
-							"Destination palette/music", l_ict_data.m_palette_id,
+							std::format("Destination palette: {}",
+								get_description(l_ict_data.m_palette_id, c::LABELS_PALETTES)),
+							l_ict_data.m_palette_id,
 							0, m_game->m_palettes.size());
 
 						ImGui::Separator();
 
-						if (ui::imgui_button("Go To###intercgo")) {
-							m_atlas_new_palette_no = l_ict_data.m_palette_id;
-							m_sel_screen = l_ict_data.m_dest_screen;
-						}
+						transition_sw_button(l_screen);
 
 						ImGui::Separator();
 
-						if (ImGui::Button("Remove Transition###swiwtdel"))
+						if (ui::imgui_button("Remove Transition###swiwtdel", 1))
 							l_screen.m_interchunk_scroll.reset();
 					}
 					else {
-						if (ImGui::Button("Add Transition###swiwtadd"))
+						if (ui::imgui_button("Add Transition###swiwtadd", 2))
 							l_screen.m_interchunk_scroll = fe::InterChunkScroll(
 								0, 0, l_chunk.m_default_palette_no
 							);
@@ -587,7 +607,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SeparatorText("Add / Remove Screens");
 
-	if (ui::imgui_button("Add Screen", 2, "", l_chunk.m_screens.size() == 0xff)) {
+	if (ui::imgui_button("Add Screen", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_chunk.m_screens.size() == 0xff)) {
 		l_chunk.m_screens.push_back(fe::Screen());
 		l_chunk.m_screens.back().initialize_tilemap();
 		m_sel_screen = l_chunk.m_screens.size() - 1;
@@ -715,7 +735,8 @@ void fe::MainWindow::scroll_down_button(const fe::Screen& p_screen) {
 
 void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 	if (ui::imgui_button("Enter Door###ed", 4, "",
-		m_sel_door >= p_screen.m_doors.size())) {
+		m_sel_door >= p_screen.m_doors.size() ||
+		p_screen.m_doors[m_sel_door].m_door_type == fe::DoorType::Building)) {
 
 		const auto& l_door{ p_screen.m_doors[m_sel_door] };
 

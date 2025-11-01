@@ -34,6 +34,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_pulse_time{ 0.0f }
 {
 
+	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
@@ -79,6 +80,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			}
 			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste();
+			}
+			else if (ImGui::IsKeyDown(ImGuiMod_Shift) && ImGui::IsKeyPressed(ImGuiKey_V)) {
+				clipboard_paste(false);
 			}
 		}
 
@@ -418,7 +422,7 @@ void fe::MainWindow::clipboard_copy(void) {
 		l_clip.at(0).size(), l_clip.size(), m_sel_chunk));
 }
 
-void fe::MainWindow::clipboard_paste(void) {
+void fe::MainWindow::clipboard_paste(bool l_update_data) {
 	const auto& l_clip{ m_clipboard[m_sel_chunk] };
 
 	if (l_clip.empty())
@@ -426,14 +430,19 @@ void fe::MainWindow::clipboard_paste(void) {
 	else if (m_sel_tile_y + l_clip.size() > 13 ||
 		m_sel_tile_x + l_clip[0].size() > 16)
 		add_message("Clipboard data does not fit.");
-	// all good, paste
+	// all good, paste or at least show selection rectangle
 	else {
-		for (std::size_t j{ 0 }; j < l_clip.size(); ++j)
-			for (std::size_t i{ 0 }; i < l_clip.at(j).size(); ++i)
-				m_game->m_chunks.at(m_sel_chunk).
-				m_screens.at(m_sel_screen).
-				m_tilemap.at(m_sel_tile_y + j).at(m_sel_tile_x + i) =
-				l_clip[j][i];
+		if (l_update_data) {
+			for (std::size_t j{ 0 }; j < l_clip.size(); ++j)
+				for (std::size_t i{ 0 }; i < l_clip.at(j).size(); ++i)
+					m_game->m_chunks.at(m_sel_chunk).
+					m_screens.at(m_sel_screen).
+					m_tilemap.at(m_sel_tile_y + j).at(m_sel_tile_x + i) =
+					l_clip[j][i];
+		}
+
+		m_sel_tile_x2 = m_sel_tile_x + l_clip[0].size() - 1;
+		m_sel_tile_y2 = m_sel_tile_y + l_clip.size() - 1;
 
 		add_message("Clipboard data pasted");
 	}

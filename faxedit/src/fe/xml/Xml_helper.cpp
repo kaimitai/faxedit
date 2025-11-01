@@ -486,7 +486,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 				n_sinter_s.append_attribute(c::ATTR_DEST_Y);
 				n_sinter_s.attribute(c::ATTR_DEST_Y).set_value(lc_screen.m_intrachunk_scroll.value().m_dest_y);
 				n_sinter_s.append_attribute(c::ATTR_DEST_PALETTE);
-				n_sinter_s.attribute(c::ATTR_DEST_PALETTE).set_value(lc_screen.m_intrachunk_scroll.value().m_palette_id);
+				n_sinter_s.attribute(c::ATTR_DEST_PALETTE).set_value(byte_to_hex(lc_screen.m_intrachunk_scroll.value().m_palette_id));
 			}
 
 			// inter-chunk scrolling

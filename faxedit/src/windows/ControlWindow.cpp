@@ -102,8 +102,26 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 							c, s), 1);
 				}
 
+				// check that defined same-world transitions can be used
+				if (scr.m_interchunk_scroll.has_value()) {
+					bool l_sw_block{ false };
+					for (const auto& row : scr.m_tilemap)
+						for (byte b : row)
+							if (m_game->m_chunks[c].m_metatiles.at(b).m_block_property == 0x0a) {
+								l_sw_block = true;
+								break;
+							}
+
+					if (!l_sw_block)
+						add_message(std::format("World {}, Screen {}: Same-world transition is defined, but no metatiles with transition ladder is used",
+							c, s), 1);
+				}
+
 				// check that doors are correctly placed
-				for (std::size_t d{ 0 }; d < scr.m_doors.size(); ++d) {
+				std::set<std::pair<byte, byte>> unique_door_pos;
+				std::size_t doorcnt{ scr.m_doors.size() };
+
+				for (std::size_t d{ 0 }; d < doorcnt; ++d) {
 					if (m_game->m_chunks[c].m_metatiles.at(
 						scr.get_mt_at_pos(scr.m_doors[d].m_coords.first,
 							scr.m_doors[d].m_coords.second)).m_block_property
@@ -111,9 +129,11 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 						add_message(std::format("World {}, Screen {}, Door {}: Not placed on door-type metatile",
 							c, s, d), 1);
 					}
-
-
+					unique_door_pos.insert(scr.m_doors[d].m_coords);
 				}
+
+				if (unique_door_pos.size() != doorcnt)
+					add_message(std::format("World {}, Screen {}: Several doors defined at the same position", c, s), 1);
 			}
 		}
 
@@ -145,7 +165,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 	}
 	*/
 
-	if (ui::imgui_button("Load xml", 2)) {
+	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) {
 
 		try {
 			add_message("Attempting to load xml " + get_xml_path(), 5);

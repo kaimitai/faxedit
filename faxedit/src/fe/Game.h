@@ -50,6 +50,7 @@ namespace fe {
 		std::vector<std::size_t> m_ptr_chunk_screen_data, m_offsets_bg_gfx;
 
 		bool calculate_spawn_locations_by_guru(void);
+		bool calculate_push_block_parameters(void);
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_chunk_no) const;
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;

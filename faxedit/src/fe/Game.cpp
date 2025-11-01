@@ -317,11 +317,13 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 
 							// traverse the area left and right until we get an other-world transition
 							// then get the exit world from the transition and remap to stage
-							// TODO: Do a bigger search, but this one will work for the original data set
+							// TODO: Do a proper flood-fill search
 							std::size_t l_screen_left{ s };
 							std::size_t l_screen_right{ s };
+							int l_loops{ 0 };
 
 							do {
+								++l_loops;
 								if (scr[l_screen_left].m_intrachunk_scroll.has_value()) {
 									std::size_t l_world_no{
 									static_cast<std::size_t>(scr[l_screen_left].m_intrachunk_scroll.value().m_dest_chunk)
@@ -335,10 +337,11 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 								else if (scr[l_screen_left].m_scroll_right.has_value())
 									l_screen_left = scr[l_screen_left].m_scroll_left.value();
 
-							} while (scr[l_screen_left].m_scroll_left.has_value());
+							} while (scr[l_screen_left].m_scroll_left.has_value() && l_loops < 50);
 
 							if (!l_stage_id.has_value()) {
 								do {
+									++l_loops;
 									if (scr[l_screen_right].m_intrachunk_scroll.has_value()) {
 										std::size_t l_world_no{
 										static_cast<std::size_t>(scr[l_screen_right].m_intrachunk_scroll.value().m_dest_chunk)
@@ -352,7 +355,7 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 									else if (scr[l_screen_right].m_scroll_right.has_value())
 										l_screen_right = scr[l_screen_right].m_scroll_right.value();
 
-								} while (scr[l_screen_right].m_scroll_right.has_value());
+								} while (scr[l_screen_right].m_scroll_right.has_value() && l_loops < 50);
 							}
 
 						}
@@ -374,6 +377,44 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 			}
 
 	return (l_cnt == 8);
+}
+
+bool fe::Game::calculate_push_block_parameters(void) {
+	bool l_ok{ false };
+
+	for (std::size_t w{ 0 }; w < m_chunks.size(); ++w) {
+		const auto& stage{ m_stages.get_stage_idx_from_world(w) };
+
+		// if this world is uniquely mapped to by a stage we can possibly match
+		if (stage.has_value()) {
+			const auto& world{ m_chunks[w] };
+
+			for (std::size_t s{ 0 }; s < world.m_screens.size(); ++s) {
+				const auto& screen{ world.m_screens[s] };
+
+				for (std::size_t y{ 0 }; y < 12; ++y)
+					for (std::size_t x{ 0 }; x < 15; ++x) {
+						// we have two push-blocks on top of each other here
+						if (world.m_metatiles.at(screen.get_mt_at_pos(x, y)).m_block_property == 0x06 &&
+							world.m_metatiles.at(screen.get_mt_at_pos(x, y + 1)).m_block_property == 0x06) {
+
+							m_push_block.m_stage = static_cast<byte>(stage.value());
+							m_push_block.m_cover_x = static_cast<byte>(x);
+							m_push_block.m_cover_y = static_cast<byte>(y);
+							m_push_block.m_screen = static_cast<byte>(s);
+							m_push_block.m_source_0 = screen.get_mt_at_pos(x + 1, y);
+							m_push_block.m_source_1 = screen.get_mt_at_pos(x + 1, y + 1);
+							m_push_block.m_target_0 = screen.get_mt_at_pos(x, y);
+							m_push_block.m_target_1 = screen.get_mt_at_pos(x, y + 1);
+							l_ok = true;
+							break;
+						}
+					}
+			}
+		}
+	}
+
+	return l_ok;
 }
 
 // make sure there are no references to any metatiles in p_mt_to_delete

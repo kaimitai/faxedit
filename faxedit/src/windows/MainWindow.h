@@ -115,7 +115,7 @@ namespace fe {
 
 		Size4 get_selection_dims(void) const;
 		void clipboard_copy(void);
-		void clipboard_paste(void);
+		void clipboard_paste(bool l_update_data = true);
 
 		void scroll_button(std::string p_button_text, std::optional<byte> p_scroll_dest);
 		void scroll_left_button(const fe::Screen& p_screen);

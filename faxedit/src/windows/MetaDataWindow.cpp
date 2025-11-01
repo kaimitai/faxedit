@@ -249,7 +249,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				if (ImGui::BeginTabItem("Spawns")) {
 
-					ImGui::SeparatorText("Spawn locations after dying or talking to a spawn-setting Guru");
+					ImGui::SeparatorText("Spawn locations after dying or restoring from mantra");
 
 					ui::imgui_slider_with_arrows("spawnloc", "",
 						m_sel_spawn_location, 0, 7, "", false, true);
@@ -279,7 +279,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ImGui::SeparatorText("Automatic Deduction");
 
-					if (ui::imgui_button("Deduce", 3, "Try to deduce spawn locations by spawn-setting Guru door entrances")) {
+					if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
 						bool l_deduced_spawns{ m_game->calculate_spawn_locations_by_guru() };
 						if (l_deduced_spawns)
 							add_message("All spawn point data deduced OK", 2);
@@ -453,10 +453,13 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						ImGui::Image(m_gfx.get_metatile_texture(l_pb.m_target_1), ImVec2(32, 32));
 					}
 
-					ImGui::SeparatorText("Deduce world and screen");
+					ImGui::SeparatorText("Deduce");
 
-					if (ui::imgui_button("Deduce", 1, "Find the stage and screen with the pushable blocks (takes first match) and deduce as much information as possible")) {
-
+					if (ui::imgui_button("Deduce", 4, "Try to deduce as many parameters as possible")) {
+						if (m_game->calculate_push_block_parameters())
+							add_message("Push-block parameters deduced", 2);
+						else
+							add_message("Could not deduce Push-block parameters", 1);
 					}
 
 					ImGui::EndTabItem();
