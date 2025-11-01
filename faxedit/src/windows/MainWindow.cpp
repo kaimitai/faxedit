@@ -38,7 +38,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
-	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
+	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), 5);
 	add_message(std::format("Version: {}", c::APP_VERSION), 5);
@@ -337,7 +337,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
 				"Script: " + get_description(l_sprite.m_text_id.value(), c::LABELS_SCRIPTS),
-				l_sprite.m_text_id.value(), 0, 0x50);
+				l_sprite.m_text_id.value(), 0, 151); // looks like the scripts ptr table can only point to 152 different addresses
 
 			if (ui::imgui_button("Remove script", 1))
 				l_sprite.m_text_id.reset();
@@ -552,12 +552,10 @@ std::string fe::MainWindow::get_nes_path(void) const {
 
 std::string fe::MainWindow::get_filepath(const std::string& p_ext, bool p_add_out) const {
 	std::string stemLower = m_filename;
-	std::transform(stemLower.begin(), stemLower.end(), stemLower.begin(), ::tolower);
-
 	std::filesystem::path outputPath;
 
-	if (!p_add_out || stemLower.ends_with("-out")) {
-		outputPath = m_path / (m_filename + "." + p_ext); // already in correct format
+	if (!p_add_out) {
+		outputPath = m_path / (m_filename + "." + p_ext);
 	}
 	else {
 		outputPath = m_path / (m_filename + "-out" + "." + p_ext);

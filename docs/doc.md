@@ -51,6 +51,13 @@ This is the screen used for file operations and data analysis.
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Output Messages: The messages from the editor
 
+The tilemaps are stored in three different regions in ROM. If you run into size problems and need to cut down somewhere, know that the tilemaps for the worlds are stored in 3 different groups:
+
+* Group 1: Eolis, Mist, Towns
+* Group 2: Trunk, Branches
+* Group 3: Dartmoor Castle, Buildings, Evil Lair
+
+
 <hr>
 
 # Game Metadata
@@ -151,6 +158,8 @@ Be careful when you set these parameters, that your (x, y) position for drawing 
 <hr>
 
 # World Metadata
+
+The metadata for the currently selected World in the main window can be edited in these tabs.
 
 ## Metatile Definitions
 
