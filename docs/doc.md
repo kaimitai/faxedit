@@ -65,6 +65,8 @@ The tilemaps are stored in three different regions in ROM. If you run into size 
 
 In addition to the worlds in the game, there is a concept of "stage". The game defines six stages, and each of these is associated with a world. When the game starts both your world and stage are set to zero. Each stage is associated with a next stage and a previous stage, and your stage value is updated whenever you pass through a next-stage or previous-stage door. Stage transitions can be a bit confusing - the stage number doesn’t simply increase or decrease as you move between them. Instead, your current stage acts as an index into the stage metadata to determine the next stage. In the original game the stages are increasing and consistent backward and forward, but this doesn't have to be the case. If you want to keep things simple, you can only edit the worlds for each stage, as well as the door requirements, and leave the rest.
 
+We do not allow changing the world for stage 0, as the game code seems to ignore the stage to world mapping when starting the game.
+
 ![Stages](./img/win_metadata_game_stages.png)
 
 * Selected Stage: Slider which selects the stage you are editing
