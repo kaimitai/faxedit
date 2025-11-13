@@ -42,7 +42,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), 5);
 	add_message(std::format("Version: {}", c::APP_VERSION), 5);
-	add_message("https://github.com/faxedit", 2);
+	add_message("https://github.com/kaimitai/faxedit", 2);
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	if (!p_filepath.empty())
