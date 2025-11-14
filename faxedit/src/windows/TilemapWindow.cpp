@@ -79,14 +79,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			std::size_t tileX = std::min(static_cast<std::size_t>(localX / tileSize), std::size_t(15));
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
-			/*
-			if (ImGui::IsItemHovered()) {
-				ImGui::BeginTooltip();
-				ImGui::Text(std::format("({}, {})", tileX, tileY).c_str());
-				ImGui::EndTooltip();
-			}
-			*/
-
 			if (m_emode == fe::EditMode::Tilemap) {
 				if (l_mouse_left_down) {
 					// ctrl + left mouse; color picker
@@ -125,12 +117,19 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						l_screen.m_sprite_set.m_sprites[m_sel_sprite].m_y = static_cast<byte>(tileY);
 					}
 					else {
-						for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s)
-							if (tileX == l_screen.m_sprite_set.m_sprites[s].m_x &&
-								tileY == l_screen.m_sprite_set.m_sprites[s].m_y) {
+						for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
+							const auto& chksprite{ l_screen.m_sprite_set.m_sprites[s] };
+							// need to look for hit with pixel precision as some sprites
+							// can be narrower than a metatile
+
+							if (localX >= 16.0f * chksprite.m_x &&
+								localX < 16.0f * chksprite.m_x + 8.0f * m_sprite_sizes[chksprite.m_id].first &&
+								localY >= 16.0f * chksprite.m_y &&
+								localY < 16.0f * chksprite.m_y + 8.0f * m_sprite_sizes[chksprite.m_id].second) {
 								m_sel_sprite = s;
 								break;
 							}
+						}
 					}
 				}
 

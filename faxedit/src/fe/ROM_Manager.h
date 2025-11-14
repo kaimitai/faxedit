@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "fe_constants.h"
 #include "./../common/klib/NES_tile.h"
+#include "./../fe/Sprite_definitions.h"
 #include <map>
 #include <stdexcept>
 #include <utility>
@@ -16,8 +17,6 @@ namespace fe {
 
 	class ROM_Manager {
 		
-		std::vector<std::vector<std::vector<klib::NES_tile>>> m_sprite_tiles;
-
 		std::vector<byte> build_pointer_table_and_data(
 			std::size_t p_rom_loc_ptr_table,
 			std::size_t p_ptr_base_rom_offset,
@@ -98,6 +97,10 @@ namespace fe {
 		void patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 		static std::size_t from_uint16_le(const std::pair<byte, byte>& p_value);
+
+		// gfx
+		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(
+		const std::vector<byte>& p_rom) const;
 	};
 
 }

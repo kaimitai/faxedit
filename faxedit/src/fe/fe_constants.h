@@ -104,6 +104,8 @@ namespace fe {
 		// a label of all the chunks, in ROM-order
 		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Dartmoor Castle", "Evil Lair" };
 
+		constexpr std::size_t SPRITE_COUNT{ 101 };
+
 		inline const std::map<byte, std::string> LABELS_DOOR_REQS{
 			{0x00, "None"},
 			{0x01, "Key A"},
@@ -125,7 +127,7 @@ namespace fe {
 			{0x05, "Jump-On (experimental)"},
 			{0x06, "Pushable" },
 			{0x0a, "Transition Ladder"},
-			{0x0b, "Mattock-breakable"},
+			{0x0b, "Unknown (originally breakable)"},
 			{0x0c, "Other-World/Return"},
 			{0x0d, "Other-World (foreground)"},
 		};

@@ -55,6 +55,9 @@ namespace fe {
 			// selected stage
 			m_sel_stage;
 
+		// sprite sizes, for determining the size of the selection rectangles
+		std::vector<std::pair<std::size_t, std::size_t>> m_sprite_sizes;
+
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
 
@@ -72,7 +75,7 @@ namespace fe {
 
 		void imgui_text(const std::string& p_str);
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
-		void load_rom(const std::string& p_filepath);
+		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath);
 		std::optional<std::vector<byte>> patch_rom(void);
 
 		std::string get_ips_path(void) const;

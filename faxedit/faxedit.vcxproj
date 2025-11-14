@@ -164,6 +164,7 @@
     <ClCompile Include="src\fe\ROM_Manager.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
+    <ClCompile Include="src\fe\Sprite_definitions.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
@@ -205,6 +206,7 @@
     <ClInclude Include="src\fe\ROM_Manager.h" />
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
+    <ClInclude Include="src\fe\Sprite_definitions.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />
     <ClInclude Include="src\fe\StageManager.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />

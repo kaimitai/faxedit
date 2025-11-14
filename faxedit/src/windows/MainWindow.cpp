@@ -31,7 +31,9 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_sel_stage{ 0 },
 	m_emode{ fe::EditMode::Tilemap },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
-	m_pulse_time{ 0.0f }
+	m_pulse_time{ 0.0f },
+	m_sprite_sizes{ std::vector<std::pair<std::size_t, std::size_t>>(c::SPRITE_COUNT,
+		std::make_pair(0, 0)) }
 {
 
 	add_message("It is recommended to read the documentation for usage tips", 5);
@@ -46,7 +48,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	if (!p_filepath.empty())
-		load_rom(p_filepath);
+		load_rom(p_rnd, p_filepath);
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
@@ -87,7 +89,6 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		}
 
 		// input handling end
-
 		regenerate_atlas_if_needed(p_rnd);
 
 		SDL_SetRenderDrawColor(p_rnd, 0, 33, 71, 0);
@@ -138,16 +139,21 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			}
 		}
 		else if (m_emode == fe::EditMode::Sprites) {
-			// draw placeholder rectangles for sprites
-			for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
-				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[s] };
+			// draw sprites
+			const auto& drawspr{ l_screen.m_sprite_set.m_sprites };
+			for (std::size_t i{ 0 }; i < drawspr.size(); ++i)
+				m_gfx.draw_sprite_on_screen(p_rnd,
+					drawspr[i].m_id, drawspr[i].m_x, drawspr[i].m_y);
 
-				m_gfx.draw_rect_on_screen(p_rnd,
-					s == m_sel_sprite ? m_pulse_color : SDL_Color(0, 255, 0, 255),
-					l_sprite.m_x, l_sprite.m_y,
-					1, 1
+			// draw rectangle for selected sprite
+			if (m_sel_sprite < l_screen.m_sprite_set.size()) {
+				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[m_sel_sprite] };
+
+				m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
+					16 * static_cast<int>(l_sprite.m_x), 16 * static_cast<int>(l_sprite.m_y),
+					8 * static_cast<int>(m_sprite_sizes[l_sprite.m_id].first),
+					8 * static_cast<int>(m_sprite_sizes[l_sprite.m_id].second)
 				);
-
 			}
 		}
 		else if (m_emode == fe::EditMode::Doors) {
@@ -315,7 +321,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 		ui::imgui_slider_with_arrows("###spriteid",
 			"Sprite ID: " + get_description(l_sprite.m_id, c::LABELS_SPRITES),
-			l_sprite.m_id, 0, 100);
+			l_sprite.m_id, 0, c::SPRITE_COUNT - 1);
 
 		ImGui::SeparatorText("Position");
 
@@ -498,7 +504,7 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 		if (ImGuiFileDialog::Instance()->IsOk()) {
 			std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
 
-			load_rom(filePath);
+			load_rom(p_rnd, filePath);
 		}
 		ImGuiFileDialog::Instance()->Close();
 	}
@@ -511,7 +517,7 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 }
 
-void fe::MainWindow::load_rom(const std::string& p_filepath) {
+void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath) {
 	add_message("Attempting to load file " + p_filepath, 5);
 
 	// Load file as bytes and create game
@@ -523,6 +529,19 @@ void fe::MainWindow::load_rom(const std::string& p_filepath) {
 
 		m_path = romPath.parent_path();
 		m_filename = romPath.stem().string();
+
+		// extract sprite definitions
+		const auto& gfx_def{ m_rom_manager.extract_sprite_data(bytes) };
+
+		// use it to extract sprite sizes before it is sent off and discarded
+		// sprite sizes are given here in nes tiles, not metatiles
+		for (const auto& kv : gfx_def)
+			m_sprite_sizes.at(kv.first) =
+			std::make_pair(static_cast<std::size_t>(kv.second.m_frame.m_w),
+				static_cast<std::size_t>(kv.second.m_frame.m_h));
+
+		// pass it on the gfx handler to make sprite textures
+		m_gfx.gen_sprites(p_rnd, gfx_def);
 
 		add_message("Loaded " + p_filepath, 2);
 	}

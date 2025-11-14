@@ -5,7 +5,8 @@ constexpr int TILEMAP_SCALE{ 1 };
 fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
-	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) }
+	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) },
+	HOT_PINK_TRANSPARENT{ 0xff69b400 }
 {
 	SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
 	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
@@ -118,23 +119,49 @@ SDL_Texture* fe::gfx::get_metatile_texture(std::size_t p_mt_no) const {
 	return m_metatile_gfx.at(p_mt_no);
 }
 
-SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h) const {
+void fe::gfx::draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
+	const klib::NES_tile& tile, const std::vector<byte>& p_palette,
+	bool p_transparent, bool h_flip, bool v_flip) const {
+
+	for (int y = 0; y < 8; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			int src_x = h_flip ? 7 - x : x;
+			int src_y = v_flip ? 7 - y : y;
+
+			byte color = tile.get_color(src_x, src_y);
+			byte palette_index = p_palette.at(color);
+
+			put_nes_pixel(p_srf, dst_x + x, dst_y + y, palette_index,
+				p_transparent && (color == 0));
+		}
+	}
+
+}
+
+SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h, bool p_transparent) const {
 	SDL_Surface* l_bmp = SDL_CreateSurface(p_w, p_h, SDL_PIXELFORMAT_ABGR8888);
 
-	SDL_Palette* l_palette = SDL_CreatePalette(256);
-	SDL_Color l_out_palette[256] = {};
-
-	for (std::size_t i{ 0 }; i < NES_PALETTE.size(); ++i)
-		l_out_palette[i] = { NES_PALETTE[i][0], NES_PALETTE[i][1], NES_PALETTE[i][2], 255 };
-
-	SDL_SetPaletteColors(l_palette, l_out_palette, 0, 256);
+	if (p_transparent) {
+		SDL_FillSurfaceRect(l_bmp, nullptr, HOT_PINK_TRANSPARENT);
+		SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
+	}
 
 	return l_bmp;
 }
 
-void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index) const {
+void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index,
+	bool p_transparent) const {
 	SDL_Color l_col{ m_nes_palette->colors[p_palette_index] };
-	SDL_WriteSurfacePixel(srf, x, y, l_col.r, l_col.g, l_col.b, l_col.a);
+
+	if (!p_transparent)
+		SDL_WriteSurfacePixel(srf, x, y, l_col.r, l_col.g, l_col.b, l_col.a);
+	else
+		SDL_WriteSurfacePixel(srf, x, y,
+			(HOT_PINK_TRANSPARENT >> 24) & 0xff,
+			(HOT_PINK_TRANSPARENT >> 16) & 0xff,
+			(HOT_PINK_TRANSPARENT >> 8) & 0xff,
+			HOT_PINK_TRANSPARENT & 0xff
+		);
 }
 
 SDL_Texture* fe::gfx::surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf, bool p_destroy_surface) {
@@ -179,19 +206,38 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 	SDL_SetRenderTarget(renderer, nullptr);
 }
 
-void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
-	int p_x, int p_y, int p_w, int p_h) const {
+void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, int x, int y) const {
+	auto iter{ m_sprite_gfx.find(p_sprite_no) };
+	if (iter == end(m_sprite_gfx))
+		return;
+	else {
+		float w, h;
+		SDL_GetTextureSize(iter->second, &w, &h);
+		SDL_FRect dst_rect = { static_cast<float>(16 * x), static_cast<float>(16 * y),
+			w, h };
+
+		SDL_SetRenderTarget(p_rnd, m_screen_texture);
+		SDL_RenderTexture(p_rnd, iter->second, nullptr, &dst_rect);
+		SDL_SetRenderTarget(p_rnd, nullptr);
+	}
+}
+
+void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
 
-	SDL_FRect l_rect(static_cast<float>(TILEMAP_SCALE * 16 * p_x),
-		static_cast<float>(TILEMAP_SCALE * 16 * p_y),
-		static_cast<float>(p_w * TILEMAP_SCALE * 16),
-		static_cast<float>(p_h * TILEMAP_SCALE * 16));
+	SDL_FRect l_rect(static_cast<float>(TILEMAP_SCALE * pixel_x),
+		static_cast<float>(TILEMAP_SCALE * pixel_y),
+		static_cast<float>(pixel_w * TILEMAP_SCALE),
+		static_cast<float>(pixel_h * TILEMAP_SCALE));
 
 	SDL_RenderRect(p_rnd, &l_rect);
-
 	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
+void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
+	int p_x, int p_y, int p_w, int p_h) const {
+	draw_pixel_rect_on_screen(p_rnd, p_color, p_x * 16, p_y * 16, p_w * 16, p_h * 16);
 }
 
 void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) {
@@ -227,6 +273,46 @@ void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) 
 	SDL_UnlockSurface(l_icon);
 	SDL_SetWindowIcon(p_window, l_icon);
 	SDL_DestroySurface(l_icon);
+}
+
+void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
+	const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs) {
+	for (auto& kv : m_sprite_gfx)
+		delete_texture(kv.second);
+	m_sprite_gfx.clear();
+
+	for (const auto& kv : p_defs) {
+		const auto& l_sprpal{ kv.second.m_sprite_palette };
+		const auto& frame{ kv.second.m_frame };
+		std::size_t w{ static_cast<std::size_t>(frame.m_w) };
+		std::size_t h{ static_cast<std::size_t>(frame.m_h) };
+
+		const auto& tiles{ kv.second.m_nes_tiles };
+
+		auto srf{ create_sdl_surface(static_cast<int>(8 * w),
+			static_cast<int>(8 * h), true) };
+
+		for (int y{ 0 }; y < h; ++y)
+			for (int x{ 0 }; x < w; ++x) {
+				const auto& opttile{ frame.m_tilemap.at(y).at(x) };
+
+				if (opttile.has_value() &&
+					opttile.value().first < tiles.size()) {
+					byte tile_ctrl{ opttile.value().second };
+
+					draw_nes_tile_on_surface(
+						srf, static_cast<int>(8 * x),
+						static_cast<int>(8 * y),
+						tiles[opttile.value().first],
+						l_sprpal.at(tile_ctrl & 0b11),
+						true,
+						tile_ctrl & 0x40,
+						tile_ctrl & 0x80);
+				}
+			}
+
+		m_sprite_gfx[kv.first] = surface_to_texture(p_rnd, srf);
+	}
 }
 
 const std::vector<std::vector<byte>> fe::gfx::NES_PALETTE = {

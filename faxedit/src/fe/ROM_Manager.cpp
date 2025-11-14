@@ -22,56 +22,6 @@ std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_ro
 	return p_zero_addr + l_rel_addr;
 }
 
-// TODO: Extract sprite metadata from the ROM itself
-/*
-void fe::ROM_Manager::extract_sprite_data(const std::vector<byte>& p_rom) {
-	constexpr std::size_t OFFSET_SPRITE_HSIZES{ 0x3b4e1 };
-	constexpr std::size_t OFFSET_SPRITE_VSIZES{ 0x3b4e8 };
-	constexpr std::size_t OFFSET_SPRITE_SIZE_IDX{ 0x3b4ef };
-	constexpr std::size_t OFFSET_SPRITE_TILE_COUNTS{ 0x3ce2b };
-
-	constexpr std::size_t PTR_TABLE_SPRITE_DATA_0{ 0x18010 };
-	constexpr std::size_t PTR_TABLE_SPRITE_DATA_1{ 0x1c010 };
-
-	constexpr std::size_t SPRITE_COUNT{ 101 };
-
-	std::vector<byte> l_hsizes;
-	std::vector<byte> l_vsizes;
-	std::vector<byte> l_size_idx;
-	std::vector<byte> l_tile_cnt;
-
-	for (std::size_t i{ 0 }; i < 7; ++i) {
-		l_hsizes.push_back((p_rom.at(OFFSET_SPRITE_HSIZES + i) + 1) >> 3);
-		l_vsizes.push_back((p_rom.at(OFFSET_SPRITE_VSIZES + i) + 1) >> 3);
-	}
-
-	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i) {
-		l_tile_cnt.push_back(p_rom.at(OFFSET_SPRITE_TILE_COUNTS + i));
-		l_size_idx.push_back(p_rom.at(OFFSET_SPRITE_SIZE_IDX + i));
-	}
-
-	std::vector<std::vector<byte>> l_all_spr_tiles;
-
-	// first 0x37 sprites data is in one bank
-	// the rest in another
-	for (std::size_t i{ 0 }; i < 101; ++i) {
-		std::size_t idx{ i >= 0x37 ? i - 0x37 : i };
-
-		std::size_t l_data_offset{
-	get_ptr_to_rom_offset(p_rom,
-		2 * idx + (i >= 0x37 ? PTR_TABLE_SPRITE_DATA_1 : PTR_TABLE_SPRITE_DATA_0),
-		2 * idx + (i >= 0x37 ? PTR_TABLE_SPRITE_DATA_1 : PTR_TABLE_SPRITE_DATA_0))
-		};
-
-		std::vector<byte> l_spr_tiles;
-		for (std::size_t j{ 0 }; j < l_tile_cnt.at(i); ++j) {
-			l_spr_tiles.push_back(p_rom.at(l_data_offset + j));
-		}
-
-		l_all_spr_tiles.push_back(l_spr_tiles);
-	}
-}
-*/
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Game& p_game) const {
 	std::vector<std::vector<byte>> l_all_screen_sprite_data;
@@ -725,6 +675,108 @@ std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> fe::ROM_Mana
 		if (!placed) {
 			throw std::runtime_error("Not enough space to place all data blocks.");
 		}
+	}
+
+	return result;
+}
+
+// gfx functions
+const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_sprite_data(
+	const std::vector<byte>& p_rom
+) const {
+	constexpr std::size_t SPRITE_DATA_BANK6{ 0x18082 };
+	constexpr std::size_t SPRITE_DATA_BANK6_END{ 0x1be22 };
+	constexpr std::size_t SPRITE_DATA_BANK7{ 0x1c076 };
+	constexpr std::size_t SPRITE_DATA_BANK7_END{ 0x1d046 };
+	constexpr std::size_t SPRITE_DATA_BANK6_0ADDR{ 0x18010 };
+	constexpr std::size_t SPRITE_DATA_BANK_6_PTR{ 0x18012 };
+	constexpr std::size_t SPRITE_DATA_BANK_6_PTR_COUNT{ 55 };
+	constexpr std::size_t SPRITE_DATA_BANK7_0ADDR{ 0x1c010 };
+	constexpr std::size_t SPRITE_DATA_BANK_7_PTR{ 0x1c01c };
+	constexpr std::size_t SPRITE_DATA_BANK_7_PTR_COUNT{ 45 };
+	constexpr std::size_t SPRITE_PPU_TILE_COUNT_OFFSET{ 0x3ce2b };
+	constexpr std::size_t SPRITE_PHASE_IDX_OFFSET{ 0x38caf };
+	constexpr std::size_t SPRITE_PALETTE_OFFSET{ 0x2c1d0 };
+	constexpr std::size_t SPRITE_TOTAL_COUNT{ SPRITE_DATA_BANK_6_PTR_COUNT + SPRITE_DATA_BANK_7_PTR_COUNT };
+
+	const auto sprite_rom_offset = [&p_rom](std::size_t p_sprite_no) -> std::size_t {
+		const bool is_bank7 = p_sprite_no >= SPRITE_DATA_BANK_6_PTR_COUNT;
+		const std::size_t bank_offset = is_bank7 ? SPRITE_DATA_BANK_7_PTR : SPRITE_DATA_BANK_6_PTR;
+		const std::size_t chr_base = is_bank7 ? SPRITE_DATA_BANK7_0ADDR : SPRITE_DATA_BANK6_0ADDR;
+
+		const std::size_t ptr_index = is_bank7 ? p_sprite_no - SPRITE_DATA_BANK_6_PTR_COUNT : p_sprite_no;
+		const std::size_t ptr_offset = bank_offset + 2 * ptr_index;
+
+		const std::size_t ptr_value = from_uint16_le(std::make_pair(
+			p_rom.at(ptr_offset),
+			p_rom.at(ptr_offset + 1)
+		));
+
+		return chr_base + ptr_value;
+		};
+
+	// extract the palette first
+	std::vector<std::vector<byte>> l_sprite_palette;
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		std::vector<byte> sub_palette;
+		for (std::size_t j{ 0 }; j < 4; ++j)
+			sub_palette.push_back(p_rom.at(SPRITE_PALETTE_OFFSET + 4 * i + j));
+		l_sprite_palette.push_back(sub_palette);
+	}
+
+	std::map<std::size_t, fe::Sprite_gfx_definiton> result;
+
+	std::vector<std::size_t> phase_offsets;
+	constexpr std::size_t SPRITE_PHASE_COUNT{ 252 };
+	constexpr std::size_t SPRITE_PHASE_PTR_OFFSET{ 0x1d046 };
+
+	for (std::size_t i{ 0 }; i < SPRITE_PHASE_COUNT; ++i) {
+		phase_offsets.push_back(from_uint16_le(std::make_pair(
+			p_rom.at(SPRITE_PHASE_PTR_OFFSET + 2 * i),
+			p_rom.at(SPRITE_PHASE_PTR_OFFSET + 2 * i + 1))) +
+			SPRITE_DATA_BANK7_0ADDR
+		);
+	}
+
+	std::vector<size_t> sprite_nos;
+	for (std::size_t i{ 0 }; i <= SPRITE_TOTAL_COUNT; ++i)
+		sprite_nos.push_back(i);
+
+	for (std::size_t sprite_no : sprite_nos) {
+		std::size_t tile_count{ p_rom.at(SPRITE_PPU_TILE_COUNT_OFFSET + sprite_no) };
+
+		std::size_t l_ptr{ sprite_rom_offset(sprite_no) };
+
+		std::vector<klib::NES_tile> tiles;
+		for (std::size_t i{ 0 }; i < tile_count; ++i)
+			tiles.push_back(klib::NES_tile(p_rom, l_ptr + 16 * i));
+
+		// find the phase definition index
+		std::size_t phase_def_no{ p_rom.at(SPRITE_PHASE_IDX_OFFSET + sprite_no) };
+
+		// get the frames from the animation start address itself
+		std::size_t phase_addr{ phase_offsets.at(phase_def_no) };
+
+		std::vector<fe::AnimationFrame> frames;
+		while (true) {
+			frames.push_back(fe::AnimationFrame(p_rom, phase_addr));
+			// TODO: How can we know a sprite's animation frame count?
+			if (frames.back().m_offset_y == 0)
+				break;
+		}
+
+		// TODO: hard coded workaround until we know how to deduce frame counts
+		// we're animating some sprites with the wrong anim def and need to
+		// correct here
+		std::size_t l_anim_no{
+			sprite_no == 0x32
+			|| sprite_no == 54
+			? 0 : frames.size() - 1 };
+
+		const auto& anim{ frames[l_anim_no] };
+
+		fe::Sprite_gfx_definiton gfxdef(tiles, l_sprite_palette, anim);
+		result.insert(std::make_pair(sprite_no, gfxdef));
 	}
 
 	return result;
