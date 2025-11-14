@@ -474,7 +474,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::Text("Define the four blocks cycled through when jumping on breakable floors");
 					ImGui::Text("Breakable floors are metatiles with property code 5");
 					ImGui::Separator();
-					ImGui::Text("These are defined game-wide - adverse effects can occurr if using this");
+					ImGui::Text("These are defined game-wide - adverse effects can occur if using this");
 					ImGui::Text("on a world where not all these metatiles are defined.");
 					ImGui::Separator();
 					ImGui::Text("Rendering metatiles with metatiles from currently selected world");
