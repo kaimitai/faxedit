@@ -24,6 +24,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Spawn Points](#spawn-points)
   - [Building Sprite Sets](#building-sprite-sets)
   - [Push-Block](#push-block)
+  - [Jump-On Animation](#jump-on-animation)
 - [World Metadata](#world-metadata)
   - [Metatile Definitions](#metatile-definitions)
   - [Palette](#palette)
@@ -156,6 +157,16 @@ Be careful when setting these parameters — if your (x, y) drawing position goe
 * Pushable block animations source and target: Four metatiles which animates the pushable blocks themselves. The source tiles are what the pushed block will be replaced with, and the target tiles are what the tiles at the pushed-to location will be replaced with.
 * Deduce: Will search the game for two pushable blocks on top of each other, and fill out as much of the information here automatically as it can.
 
+## jump-On Animation
+
+Blocks with property 5 will morph into other blocks when jumped or walked on. This is a feature supported by the game engine, but it was never used in the original game.
+
+It is similar to the Mattock Animation in that it defines a 4-block animation cycle with a destination metatile. The mattock animations are set per world however, whereas the jump-on animation is game-wide. In other words, when you define the animation you define it for all worlds simultaneously.
+
+![Jump-On Animation](./img/win_metadata_jump_on_animations.png)
+
+Set the four metatiles here. The metatiles will be rendered based on the available metatiles in the selected World - as long as the metatile index is within bounds fo that world. Using jump-on with undefined metatiles will probably result in garbled graphics showing up in the game.
+
 <hr>
 
 # World Metadata
@@ -189,7 +200,7 @@ The other things you can change for a metatile are the following:
 
 Missing values here have no meaning as far as I can tell, although based on game data it looks like property 11 at one point in the development cycle of the game meant "mattock-breakable" - but this is handled differently in the actual game.
 
-Property 5 (jump-on) is referenced in the game code, but no metatiles in the original game use it. Its exact behavior remains unknown to me.
+Property 5 (jump-on) is referenced in the game code, but no metatiles in the original game use it.
 
 Property 6 (pushable) is only used for the two push-blocks in the entire original game, but you are free to put them on other screens.
 
@@ -284,7 +295,7 @@ The add and remove sprite buttons are always active. You can delete sprites with
 
 The command-byte is screen specific, and the values are the same as for building sprite-sets: 0 is block-push animation, 1 is boss-room and 2 is endgame-room.
 
-All sprites currently show as rectangles, although we hope to import actual sprite graphics soon. The description of the sprites will help you, and you can move the selected sprite on the tilemap by holding shift and clicking at the desired position.
+The selected sprite will be enclosed by a bounded rectangle according to its size, and you can move it on the tilemap by holding shift and clicking at the desired position.
 
 ## Screen Doors
 
