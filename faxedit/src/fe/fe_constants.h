@@ -37,6 +37,9 @@ namespace fe {
 		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ 0x3dde5 };
 		constexpr std::size_t OFFSET_SPAWN_LOC_STAGES{ 0x3dddd };
 
+		// jump-on metatile animation
+		constexpr std::size_t OFFSET_JUMP_ON_ANIMATION{ 0x3d6ff };
+
 		// in game constants used as parameters to assembly instructions
 
 		// path-to-mascon "line-drawing"

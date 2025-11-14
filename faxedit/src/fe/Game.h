@@ -40,6 +40,7 @@ namespace fe {
 		std::vector<NES_Palette> m_palettes;
 		std::vector<fe::Spawn_location> m_spawn_locations;
 		fe::Push_block_parameters m_push_block;
+		std::vector<byte> m_jump_on_animation;
 
 		Game(const std::vector<byte>& p_rom_data);
 		Game(void);

@@ -16,7 +16,8 @@ fe::Game::Game(void) :
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
 	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
-	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
+	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX },
+	m_jump_on_animation{ 0x34, 0x2c, 0x5c, 0x13 }
 {
 }
 
@@ -151,6 +152,10 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 		m_rom_data.at(c::OFFSET_PTM_COVER_POS) % 16,
 		m_rom_data.at(c::OFFSET_PTM_COVER_POS) / 16
 	);
+
+	// extract "jump-on" animation
+	for (std::size_t i{ 0 }; i < 4; ++i)
+		m_jump_on_animation.push_back(m_rom_data.at(c::OFFSET_JUMP_ON_ANIMATION + i));
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset) const {

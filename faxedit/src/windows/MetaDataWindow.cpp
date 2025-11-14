@@ -465,6 +465,42 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::EndTabItem();
 				}
 
+
+				// GAME - JUMP-ON ANIMATION - BEGIN
+
+				if (ImGui::BeginTabItem("Jump-On Animation")) {
+					auto& l_jo{ m_game->m_jump_on_animation };
+
+					ImGui::Text("Define the four blocks cycled through when jumping on breakable floors");
+					ImGui::Text("Breakable floors are metatiles with property code 5");
+					ImGui::Separator();
+					ImGui::Text("These are defined game-wide - adverse effects can occurr if using this");
+					ImGui::Text("on a world where not all these metatiles are defined.");
+					ImGui::Separator();
+					ImGui::Text("Rendering metatiles with metatiles from currently selected world");
+					ImGui::Separator();
+					for (std::size_t i{ 0 }; i < l_jo.size(); ++i) {
+						ImGui::PushID(std::format("jo###{}", i).c_str());
+
+						ui::imgui_slider_with_arrows("", std::format("Animation tile {}", i + 1),
+							l_jo.at(i), 0, 255, "");
+
+						if (l_jo.at(i) < l_chunk.m_metatiles.size()) {
+							ImGui::SameLine();
+							ImGui::Image(m_gfx.get_metatile_texture(l_jo.at(i)), ImVec2(32, 32));
+						}
+						else {
+							ImGui::Text("Metatile not defined for currently selected world");
+						}
+
+						ImGui::PopID();
+					}
+
+					ImGui::EndTabItem();
+				}
+
+				// GAME - JUMP-ON ANIMATION - END
+
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
 			}

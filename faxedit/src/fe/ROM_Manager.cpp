@@ -404,6 +404,7 @@ void fe::ROM_Manager::encode_static_data(const fe::Game& p_game, std::vector<byt
 	encode_spawn_locations(p_game, p_rom);
 	encode_mattock_animations(p_game, p_rom);
 	encode_push_block(p_game, p_rom);
+	encode_jump_on_tiles(p_game, p_rom);
 }
 
 void fe::ROM_Manager::encode_chunk_palette_no(const fe::Game& p_game, std::vector<byte>& p_rom) const {
@@ -576,6 +577,11 @@ void fe::ROM_Manager::encode_push_block(const fe::Game& p_game, std::vector<byte
 	p_rom.at(c::OFFSET_PTM_TILE_NO) = l_pb.m_draw_block;
 	p_rom.at(c::OFFSET_PTM_BLOCK_COUNT) = l_pb.m_block_count;
 	p_rom.at(c::OFFSET_PTM_COVER_POS) = (l_pb.m_cover_y << 4) + l_pb.m_cover_x;
+}
+
+void fe::ROM_Manager::encode_jump_on_tiles(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	for (std::size_t i{ 0 }; i < p_game.m_jump_on_animation.size() && i < 4; ++i)
+		p_rom.at(c::OFFSET_JUMP_ON_ANIMATION + i) = p_game.m_jump_on_animation[i];
 }
 
 // this function generates pointer tables and data offsets for several pieces of data at once,

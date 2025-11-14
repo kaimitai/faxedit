@@ -108,6 +108,14 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		parse_numeric_byte(n_push_block.attribute(c::ATTR_COVER_Y).as_string())
 	);
 
+	// check if attribute exists, to be backward compatible with beta-1
+	// we make sure the default constructor populates the vector if not
+	auto n_jump_on = n_root.child(c::TAG_JUMP_ON_ANIMATION);
+	if (n_jump_on)
+		l_game.m_jump_on_animation = parse_byte_list(
+			n_jump_on.attribute(c::TAG_METATILES).as_string()
+		);
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -379,6 +387,12 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	n_push_block.attribute(c::ATTR_COVER_X).set_value(p_game.m_push_block.m_cover_x);
 	n_push_block.append_attribute(c::ATTR_COVER_Y);
 	n_push_block.attribute(c::ATTR_COVER_Y).set_value(p_game.m_push_block.m_cover_y);
+
+	auto n_jump_on{ n_metadata.append_child(c::TAG_JUMP_ON_ANIMATION) };
+	n_jump_on.append_attribute(c::TAG_METATILES);
+	n_jump_on.attribute(c::TAG_METATILES).set_value(
+		join_bytes(p_game.m_jump_on_animation, true)
+	);
 
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
