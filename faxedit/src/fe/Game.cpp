@@ -101,6 +101,9 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			m_tilesets[c].push_back(klib::NES_tile::NES_tile(p_rom_data,
 				m_offsets_bg_gfx[c] + 16 * i));
 		}
+		// set the 0th entry to be a blank tile
+		// this will make everything render correctly
+		m_tilesets[c][0] = klib::NES_tile();
 	}
 
 	// set default palette indexes for each chunk

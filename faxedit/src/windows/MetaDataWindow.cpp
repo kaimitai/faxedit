@@ -85,7 +85,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::BeginChild("TilePicker", ImVec2(0, 400), true); // scrollable area
 					auto l_atlas{ m_gfx.get_atlas() };
 
-					for (std::size_t i = 0x80; i <= 0xff; ++i) {
+					for (std::size_t i = 0; i <= 0xff; i += (i == 0 ? 0x80 : 1)) {
 						// Compute UVs for tile i
 						float u0 = (i * 8.0f) / (float)l_atlas->w;
 						float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
@@ -108,7 +108,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						}
 
 						// Layout: 8 buttons per row
-						if ((i + 1) % 16 != 0)
+						if ((i + 1) % 16 != 0 && i != 0)
 							ImGui::SameLine();
 					}
 

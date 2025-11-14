@@ -13,6 +13,7 @@ namespace klib {
 
 	public:
 		NES_tile(const std::vector<byte>& p_rom_data, std::size_t p_offset);
+		NES_tile(void);
 
 		std::size_t w(void) const;
 		std::size_t h(void) const;

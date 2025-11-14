@@ -30,6 +30,8 @@ fe::gfx::~gfx(void) {
 	delete_texture(m_screen_texture);
 	for (auto& txt : m_metatile_gfx)
 		delete_texture(txt);
+	for (auto& kv : m_sprite_gfx)
+		delete_texture(kv.second);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
