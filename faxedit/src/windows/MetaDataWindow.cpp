@@ -85,20 +85,22 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::BeginChild("TilePicker", ImVec2(0, 400), true); // scrollable area
 					auto l_atlas{ m_gfx.get_atlas() };
 
-					for (std::size_t i = 0; i <= 0xff; i += (i == 0 ? 0x80 : 1)) {
+					for (std::size_t i{ 0x80 }; i <= 0x100; ++i) {
+						std::size_t truetile{ i == 0x100 ? 0 : i };
+
 						// Compute UVs for tile i
-						float u0 = (i * 8.0f) / (float)l_atlas->w;
+						float u0 = (truetile * 8.0f) / (float)l_atlas->w;
 						float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
-						float u1 = ((i + 1) * 8.0f) / (float)l_atlas->w;
+						float u1 = ((truetile + 1) * 8.0f) / (float)l_atlas->w;
 						float v1 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
 
-						if (ImGui::ImageButton(std::format("###stile{}", i).c_str(),
+						if (ImGui::ImageButton(std::format("###stile{}", truetile).c_str(),
 							l_atlas, ImVec2(32.0f, 32.0f), ImVec2(u0, v0), ImVec2(u1, v1))) {
-							m_sel_nes_tile = i;
+							m_sel_nes_tile = truetile;
 						}
 
 						// Highlight if selected
-						if (i == m_sel_nes_tile) {
+						if (truetile == m_sel_nes_tile) {
 							ImVec2 button_pos = ImGui::GetItemRectMin();
 							ImVec2 button_end = ImGui::GetItemRectMax();
 							ImGui::GetWindowDrawList()->AddRect(
@@ -108,7 +110,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						}
 
 						// Layout: 8 buttons per row
-						if ((i + 1) % 16 != 0 && i != 0)
+						if ((i + 1) % 16 != 0)
 							ImGui::SameLine();
 					}
 

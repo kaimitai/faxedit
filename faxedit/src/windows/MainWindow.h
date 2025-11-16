@@ -22,6 +22,15 @@ namespace fe {
 		std::size_t x, y, w, h;
 	};
 
+	struct AnimationGUIData {
+		// w and h for the sprite
+		int w, h;
+		// sprite category
+		fe::SpriteCategory m_cat;
+		// x and y offsets per frame
+		std::vector<std::pair<int, int>> offsets;
+	};
+
 	struct Message {
 		std::string text;
 		int status; // 0=neutral, 1=good, 2=bad
@@ -55,11 +64,15 @@ namespace fe {
 			// selected stage
 			m_sel_stage;
 
-		// sprite sizes, for determining the size of the selection rectangles
-		std::vector<std::pair<std::size_t, std::size_t>> m_sprite_sizes;
+		// sprite dimensions; holding sprite size and
+		// cartesian offsets per animation frame
+		std::vector<fe::AnimationGUIData> m_sprite_dims;
 
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
+
+		// rendering options
+		bool m_animate;
 
 		fe::EditMode m_emode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
@@ -71,9 +84,10 @@ namespace fe {
 
 		// oscillating color for selected object
 		SDL_Color m_pulse_color;
-		float m_pulse_time;
+		float m_pulse_time, m_anim_time;
+		std::size_t m_anim_frame;
 
-		void imgui_text(const std::string& p_str);
+		void imgui_text(const std::string& p_str) const;
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath);
 		std::optional<std::vector<byte>> patch_rom(void);
@@ -87,6 +101,7 @@ namespace fe {
 		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
+		std::string get_sprite_label(std::size_t p_sprite_id) const;
 
 		void draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);

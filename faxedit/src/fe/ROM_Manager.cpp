@@ -2,6 +2,10 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include <format>
+#include "./../common/klib/Kfile.h"
+#include "fe_constants.h"
+
 fe::ROM_Manager::ROM_Manager(void) :
 	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
 	m_ptr_sprites{ c::PTR_SPRITE_DATA },
@@ -686,10 +690,65 @@ std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> fe::ROM_Mana
 	return result;
 }
 
+/*
+static void replace_with_scantily_clad_woman(std::vector<byte>& rom_data,
+	std::size_t sprite_id) {
+	constexpr std::size_t SPRITE_PPU_TILE_COUNT_OFFSET{ 0x3ce2b };
+	// offset to first chr of scw
+	constexpr std::size_t CHR_SCW_OFFSET{ 0x19852 };
+	// map from sprite no to anim frame ptr in the table below
+	constexpr std::size_t SPRITE_PHASE_IDX_OFFSET{ 0x38caf };
+	// ptr table for animation frames
+	constexpr std::size_t SPRITE_PHASE_PTR_OFFSET{ 0x1d046 };
+	// chr data in bank 7
+	constexpr std::size_t SPRITE_DATA_BANK_7_PTR{ 0x1c01c };
+	// zero-addr of bank 7
+	constexpr std::size_t SPRITE_DATA_BANK7_0ADDR{ 0x1c010 };
+
+	// set the ppu tile count for the sprite to be 11 - the number of tiles
+	// used in this animation
+	rom_data[SPRITE_PPU_TILE_COUNT_OFFSET + sprite_id] = 12;
+
+	// copy chr to our sprite which is assumed to be in bank7 (as all s-frame npc's are)
+	// copy 11 tiles to target
+	const std::size_t chr_target_address = fe::ROM_Manager::from_uint16_le(std::make_pair(
+		rom_data.at(SPRITE_DATA_BANK_7_PTR + 2 * (sprite_id - 55)),
+		rom_data.at(SPRITE_DATA_BANK_7_PTR + 2 * (sprite_id - 55) + 1)
+	)) + SPRITE_DATA_BANK7_0ADDR;
+
+	for (std::size_t i{ 0 }; i < 12 * 16; ++i) {
+		rom_data.at(chr_target_address + i) = rom_data.at(CHR_SCW_OFFSET + i);
+	}
+
+	// update the 2 animations of the npc to render the tiles in the correct order
+	std::size_t ptr_idx{ rom_data[SPRITE_PHASE_IDX_OFFSET + sprite_id] };
+
+	// extract ptr address and then the bank rom offset
+	std::size_t anim_ptr{
+	fe::ROM_Manager::from_uint16_le(std::make_pair(
+			rom_data.at(SPRITE_PHASE_PTR_OFFSET + 2 * ptr_idx),
+			rom_data.at(SPRITE_PHASE_PTR_OFFSET + 2 * ptr_idx + 1))) +
+			SPRITE_DATA_BANK7_0ADDR
+	};
+
+	for (std::size_t i{ 0 }; i < 8; ++i)
+		rom_data.at(anim_ptr + 4 + 2 * i) = static_cast<byte>(i);
+	anim_ptr += 20;
+	for (std::size_t i{ 0 }; i < 7; ++i)
+		rom_data.at(anim_ptr + 4 + 2 * i) = static_cast<byte>(i > 3 ? i + 4 : i);
+
+	rom_data.at(anim_ptr + 18) = 0xff;
+	rom_data.at(anim_ptr + 19) = 0xff;
+
+	klib::file::write_bytes_to_file(rom_data, "c:/temp/lollers.nes");
+}
+*/
+
 // gfx functions
 const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_sprite_data(
 	const std::vector<byte>& p_rom
 ) const {
+	auto romrom{ p_rom };
 	constexpr std::size_t SPRITE_DATA_BANK6{ 0x18082 };
 	constexpr std::size_t SPRITE_DATA_BANK6_END{ 0x1be22 };
 	constexpr std::size_t SPRITE_DATA_BANK7{ 0x1c076 };
@@ -704,6 +763,9 @@ const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_s
 	constexpr std::size_t SPRITE_PHASE_IDX_OFFSET{ 0x38caf };
 	constexpr std::size_t SPRITE_PALETTE_OFFSET{ 0x2c1d0 };
 	constexpr std::size_t SPRITE_TOTAL_COUNT{ SPRITE_DATA_BANK_6_PTR_COUNT + SPRITE_DATA_BANK_7_PTR_COUNT };
+	constexpr std::size_t SPRITE_CATEGORY_OFFSET{ 0x3b554 };
+
+	const std::size_t PPU_STATIC_GFX_OFFSET{ 0x20814 };
 
 	const auto sprite_rom_offset = [&p_rom](std::size_t p_sprite_no) -> std::size_t {
 		const bool is_bank7 = p_sprite_no >= SPRITE_DATA_BANK_6_PTR_COUNT;
@@ -721,17 +783,22 @@ const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_s
 		return chr_base + ptr_value;
 		};
 
-	// extract the palette first
-	std::vector<std::vector<byte>> l_sprite_palette;
-	for (std::size_t i{ 0 }; i < 4; ++i) {
-		std::vector<byte> sub_palette;
-		for (std::size_t j{ 0 }; j < 4; ++j)
-			sub_palette.push_back(p_rom.at(SPRITE_PALETTE_OFFSET + 4 * i + j));
-		l_sprite_palette.push_back(sub_palette);
-	}
+	const auto use_ppu_tiles = [](std::size_t p_sprite_no,
+		const std::vector<fe::SpriteCategory>& p_cats) -> bool {
+			const std::set<std::size_t> SPRING_SPRITE_NOS{ 0x52,97,98,99 };
 
-	std::map<std::size_t, fe::Sprite_gfx_definiton> result;
+			auto spr_cat{ p_cats[p_sprite_no] };
 
+			return spr_cat == SpriteCategory::DroppedItem ||
+				spr_cat == SpriteCategory::GameTrigger ||
+				(spr_cat == SpriteCategory::MagicEffect &&
+					p_sprite_no != 0x0a) ||
+				(spr_cat == SpriteCategory::SpecialEffect &&
+					SPRING_SPRITE_NOS.find(p_sprite_no) == end(SPRING_SPRITE_NOS)
+					);
+		};
+
+	// extract offsets to all animation frames
 	std::vector<std::size_t> phase_offsets;
 	constexpr std::size_t SPRITE_PHASE_COUNT{ 252 };
 	constexpr std::size_t SPRITE_PHASE_PTR_OFFSET{ 0x1d046 };
@@ -744,46 +811,213 @@ const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_s
 		);
 	}
 
-	std::vector<size_t> sprite_nos;
+	// extract sprite categories
+	std::vector<fe::SpriteCategory> spr_cats;
 	for (std::size_t i{ 0 }; i <= SPRITE_TOTAL_COUNT; ++i)
-		sprite_nos.push_back(i);
+		spr_cats.push_back(fe::SpriteCategory(
+			p_rom.at(SPRITE_CATEGORY_OFFSET + i)
+		));
 
-	for (std::size_t sprite_no : sprite_nos) {
-		std::size_t tile_count{ p_rom.at(SPRITE_PPU_TILE_COUNT_OFFSET + sprite_no) };
+	// TEST - get animation frame counts per sprite - BEGIN
 
-		std::size_t l_ptr{ sprite_rom_offset(sprite_no) };
+	// animation frame count per sprite
+	std::vector<std::size_t> sprite_anim_frame_cnt;
+	// get map of animation ptr table index -> vector of all sprites using this idx
+	// keep this for dump to file
+	std::map<std::size_t, std::vector<std::size_t>> anim_ptr_to_sprite_ids;
+
+	// intermediate calculations
+	{
+		// get map of animation ptr table index -> vector of all sprites using this idx
+		for (std::size_t i{ 0 }; i < SPRITE_TOTAL_COUNT + 1; ++i)
+			anim_ptr_to_sprite_ids[p_rom.at(SPRITE_PHASE_IDX_OFFSET + i)].push_back(i);
+
+		// map sprite id -> anim frame count
+		std::map<std::size_t, std::size_t> sprite_anim_frame_cnt_map;
+
+		// loop over the map and assign frame counts to each sprite, assuming that
+		// the frames are not scattered across several sprites
+		// it will be hard to verify dynamically as the offset tables are all stored
+		// within each sprite's update handler
+
+		for (auto it = anim_ptr_to_sprite_ids.begin(); it != anim_ptr_to_sprite_ids.end(); ++it) {
+			std::size_t currentKey = it->first;
+			std::size_t nextKey;
+
+			auto nextIt = std::next(it);
+			if (nextIt != anim_ptr_to_sprite_ids.end()) {
+				nextKey = nextIt->first;
+			}
+			else {
+				nextKey = SPRITE_PHASE_COUNT; // End of animation pointer table
+			}
+
+			std::size_t dist = nextKey - currentKey;
+
+			for (auto spr_id : it->second) {
+				sprite_anim_frame_cnt_map[spr_id] = dist;
+			}
+		}
+
+		// turn it into a vector
+		for (const auto& kv : sprite_anim_frame_cnt_map)
+			sprite_anim_frame_cnt.push_back(kv.second);
+	}
+
+	/*
+	// let's parse all animation frames and dump them too
+	std::vector<fe::AnimationFrame> dumpframes;
+	for (std::size_t i{ 0 }; i < 252; ++i) {
+		std::size_t phase_addr{ phase_offsets.at(i) };
+		dumpframes.push_back(fe::AnimationFrame(p_rom, phase_addr));
+	}
+
+	// dump all data
+	std::string fileout;
+	for (std::size_t i{ 0 }; i < dumpframes.size(); ++i) {
+		fileout += std::format("\n\nAnimation frame: {}\n", i);
+		auto aiter{ anim_ptr_to_sprite_ids.find(i) };
+		if (aiter != end(anim_ptr_to_sprite_ids)) {
+			//fileout += "Entry point for sprites:";
+			for (auto sprno : aiter->second)
+				fileout += std::format(" ; ${:02x}: {} ({})\n",
+					sprno,
+					c::LABELS_SPRITES.find(sprno) != end(c::LABELS_SPRITES) ?
+					c::LABELS_SPRITES.at(sprno) : "Unknown",
+					fe::Sprite_gfx_definiton::SpriteCatToString(spr_cats.at(sprno))
+				);
+			fileout += "\n";
+		}
+
+		const auto& animz{ dumpframes[i] };
+		fileout += std::format("Header: w={}, h={}, x={}, y={}, control=${:02x}\n",
+			animz.m_w, animz.m_h,
+			static_cast<int>(animz.m_offset_x),
+			static_cast<int>(animz.m_offset_y),
+			animz.m_hdr_control_byte
+		);
+
+		for (const auto& col : animz.m_tilemap) {
+			fileout += "\n";
+			for (const auto& row : col) {
+				if (row.has_value()) {
+					fileout += std::format("({:02} ${:02x})",
+						row.value().first, row.value().second);
+				}
+				else
+					fileout += "(______)";
+			}
+		}
+	}
+
+	klib::file::write_string_to_file(fileout, "animdump.txt");
+	*/
+	// TEST - get animation frame counts per sprite - BEGIN
+
+	// extract the palette first
+	std::vector<std::vector<byte>> l_sprite_palette;
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		std::vector<byte> sub_palette;
+		for (std::size_t j{ 0 }; j < 4; ++j)
+			sub_palette.push_back(p_rom.at(SPRITE_PALETTE_OFFSET + 4 * i + j));
+		l_sprite_palette.push_back(sub_palette);
+	}
+
+	// extract static ppu tiles
+	std::vector<klib::NES_tile> static_ppu_tiles;
+	for (std::size_t i{ 0 }; i < 256; ++i)
+		static_ppu_tiles.push_back(klib::NES_tile(p_rom,
+			PPU_STATIC_GFX_OFFSET + 16 * i));
+
+	std::map<std::size_t, fe::Sprite_gfx_definiton> result;
+
+	for (std::size_t sprite_no{ 0 }; sprite_no <= SPRITE_TOTAL_COUNT; ++sprite_no) {
+		// map tile count and ptr for sprite 3 (Zorugeriru rock) to Zorugeriru
+		std::size_t tile_count{ p_rom.at(SPRITE_PPU_TILE_COUNT_OFFSET +
+			(sprite_no == 3 ? 49 : sprite_no)) };
+		std::size_t l_ptr{ sprite_rom_offset(sprite_no == 3 ? 49 : sprite_no) };
 
 		std::vector<klib::NES_tile> tiles;
-		for (std::size_t i{ 0 }; i < tile_count; ++i)
-			tiles.push_back(klib::NES_tile(p_rom, l_ptr + 16 * i));
+
+		if (use_ppu_tiles(sprite_no, spr_cats)) {
+			tiles = static_ppu_tiles;
+			l_ptr = PPU_STATIC_GFX_OFFSET;
+		}
+		else {
+			for (std::size_t i{ 0 }; i < tile_count; ++i)
+				tiles.push_back(klib::NES_tile(p_rom, l_ptr + 16 * i));
+		}
 
 		// find the phase definition index
 		std::size_t phase_def_no{ p_rom.at(SPRITE_PHASE_IDX_OFFSET + sprite_no) };
-
 		// get the frames from the animation start address itself
 		std::size_t phase_addr{ phase_offsets.at(phase_def_no) };
 
-		std::vector<fe::AnimationFrame> frames;
-		while (true) {
-			frames.push_back(fe::AnimationFrame(p_rom, phase_addr));
-			// TODO: How can we know a sprite's animation frame count?
-			if (frames.back().m_offset_y == 0)
-				break;
-		}
-
-		// TODO: hard coded workaround until we know how to deduce frame counts
-		// we're animating some sprites with the wrong anim def and need to
-		// correct here
-		std::size_t l_anim_no{
-			sprite_no == 0x32
-			|| sprite_no == 54
-			? 0 : frames.size() - 1 };
-
-		const auto& anim{ frames[l_anim_no] };
-
-		fe::Sprite_gfx_definiton gfxdef(tiles, l_sprite_palette, anim);
+		fe::Sprite_gfx_definiton gfxdef(tiles, l_sprite_palette, spr_cats[sprite_no]);
+		for (std::size_t i{ 0 }; i < sprite_anim_frame_cnt[sprite_no]; ++i)
+			gfxdef.add_frame(fe::AnimationFrame(p_rom, phase_addr));
 		result.insert(std::make_pair(sprite_no, gfxdef));
 	}
+
+	// some hard codings we can't easily get dynamically as the sprite update
+	// handlers in the game are not modularized
+
+	// remove the "unused woman" I discovered while working on animation frames
+	// hidden within the maskman chr data and animation frames
+	result.at(32).disable_frame(2);
+	result.at(32).disable_frame(3);
+
+	// lilith with garbage frames at the end
+	result.at(9).disable_frame(2);
+	result.at(9).disable_frame(3);
+	result.at(9).disable_frame(4);
+
+	// Zorugeriru rocks minus Zorugeriru
+	result.at(3).disable_frame(0);
+	result.at(3).disable_frame(1);
+	result.at(3).disable_frame(2);
+
+	// Zorugeriru minus rocks
+	result.at(49).disable_frame(3);
+	result.at(49).disable_frame(4);
+	result.at(49).disable_frame(5);
+
+	// mattocks
+	result.at(80).disable_frame(1);
+	result.at(80).disable_frame(2);
+	result.at(80).disable_frame(3);
+	result.at(80).disable_frame(4);
+
+	result.at(91).disable_frame(1);
+	result.at(91).disable_frame(2);
+	result.at(91).disable_frame(3);
+	result.at(91).disable_frame(4);
+
+	// remove first frame of all death effects
+	result.at(19).disable_frame(4);
+	result.at(20).disable_frame(4);
+	result.at(100).disable_frame(4);
+
+	// add deltas for the springs to they look aligned
+	// probably hard coded in the game
+	result.at(0x52).add_offsets(8);
+	result.at(0x61).add_offsets(8);
+	result.at(0x62).add_offsets(8);
+	result.at(0x63).add_offsets(8);
+
+	// fix the unused snake boss
+	result.at(18).stack_snake();
+
+	// mark the glitched entries
+	// magic effects and Zorugeriru rock
+	result.at(3).m_category = fe::SpriteCategory::Glitched;
+	result.at(10).m_category = fe::SpriteCategory::Glitched;
+	result.at(81).m_category = fe::SpriteCategory::Glitched;
+	result.at(83).m_category = fe::SpriteCategory::Glitched;
+	result.at(84).m_category = fe::SpriteCategory::Glitched;
+
+	for (auto& kv : result)
+		kv.second.calc_bounding_rect();
 
 	return result;
 }

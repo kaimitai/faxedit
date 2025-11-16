@@ -123,9 +123,9 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							// can be narrower than a metatile
 
 							if (localX >= 16.0f * chksprite.m_x &&
-								localX < 16.0f * chksprite.m_x + 8.0f * m_sprite_sizes[chksprite.m_id].first &&
+								localX < 16.0f * chksprite.m_x + m_sprite_dims[chksprite.m_id].w &&
 								localY >= 16.0f * chksprite.m_y &&
-								localY < 16.0f * chksprite.m_y + 8.0f * m_sprite_sizes[chksprite.m_id].second) {
+								localY < 16.0f * chksprite.m_y + m_sprite_dims[chksprite.m_id].h) {
 								m_sel_sprite = s;
 								break;
 							}
@@ -792,7 +792,7 @@ void fe::MainWindow::show_sprite_set_contents(std::size_t p_sprite_set) {
 	for (std::size_t s{ 0 }; s < l_spr_count; ++s) {
 		const auto& sprite{ m_game->m_npc_bundles.at(p_sprite_set).m_sprites[s] };
 
-		imgui_text(std::format("Sprite: {}", get_description(sprite.m_id, c::LABELS_SPRITES)));
+		imgui_text(get_sprite_label(sprite.m_id));
 
 		if (sprite.m_text_id.has_value()) {
 			imgui_text(std::format("Script: {}", get_description(

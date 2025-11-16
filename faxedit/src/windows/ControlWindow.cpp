@@ -192,6 +192,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		}
 	}
 
+	// ImGui::Checkbox("Animate", &m_animate);
+
 	/*
 	if (ImGui::Button("Unused metatiles?")) {
 

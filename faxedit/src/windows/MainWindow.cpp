@@ -32,8 +32,11 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_emode{ fe::EditMode::Tilemap },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
 	m_pulse_time{ 0.0f },
-	m_sprite_sizes{ std::vector<std::pair<std::size_t, std::size_t>>(c::SPRITE_COUNT,
-		std::make_pair(0, 0)) }
+	m_anim_time{ 0.0f },
+	m_anim_frame{ 0 },
+	m_sprite_dims{ std::vector<fe::AnimationGUIData>(c::SPRITE_COUNT,
+		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched)) },
+	m_animate{ true }
 {
 
 	add_message("It is recommended to read the documentation for usage tips", 5);
@@ -66,9 +69,15 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		const SDL_Color lc_pulse_start{ 153, 153, 0, 255 };   // dark yellow
 		const SDL_Color lc_pulse_end{ 255, 255, 102, 255 }; // light yellow
 
-		// update pulsating color
-		m_pulse_time += ImGui::GetIO().DeltaTime;
+		// update pulsating color and animation frame counter
+		float deltatime{ ImGui::GetIO().DeltaTime };
+		m_pulse_time += deltatime;
+		m_anim_time += deltatime;
 		float t = 0.5f * (1.0f + sinf(m_pulse_time * 5.0f));
+		if (m_anim_time > 0.25f) {
+			m_anim_time = 0;
+			++m_anim_frame;
+		}
 
 		m_pulse_color.r = static_cast<Uint8>(lc_pulse_start.r + (lc_pulse_end.r - lc_pulse_start.r) * t);
 		m_pulse_color.g = static_cast<Uint8>(lc_pulse_start.g + (lc_pulse_end.g - lc_pulse_start.g) * t);
@@ -141,18 +150,32 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		else if (m_emode == fe::EditMode::Sprites) {
 			// draw sprites
 			const auto& drawspr{ l_screen.m_sprite_set.m_sprites };
-			for (std::size_t i{ 0 }; i < drawspr.size(); ++i)
+			for (std::size_t i{ 0 }; i < drawspr.size(); ++i) {
+				std::size_t l_anim_frame{ m_animate ?
+					m_anim_frame % m_gfx.get_anim_frame_count(drawspr[i].m_id) :
+					m_gfx.get_anim_frame_count(drawspr[i].m_id) - 1
+				};
+				std::size_t l_spriteid{ static_cast<std::size_t>(drawspr[i].m_id) };
+
 				m_gfx.draw_sprite_on_screen(p_rnd,
-					drawspr[i].m_id, drawspr[i].m_x, drawspr[i].m_y);
+					l_spriteid,
+					l_anim_frame,
+					16 * static_cast<int>(drawspr[i].m_x) +
+					m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
+					16 * static_cast<int>(drawspr[i].m_y) +
+					m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
+				);
+			}
 
 			// draw rectangle for selected sprite
 			if (m_sel_sprite < l_screen.m_sprite_set.size()) {
 				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[m_sel_sprite] };
 
 				m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
-					16 * static_cast<int>(l_sprite.m_x), 16 * static_cast<int>(l_sprite.m_y),
-					8 * static_cast<int>(m_sprite_sizes[l_sprite.m_id].first),
-					8 * static_cast<int>(m_sprite_sizes[l_sprite.m_id].second)
+					16 * static_cast<int>(l_sprite.m_x),
+					16 * static_cast<int>(l_sprite.m_y),
+					m_sprite_dims[l_sprite.m_id].w,
+					m_sprite_dims[l_sprite.m_id].h
 				);
 			}
 		}
@@ -182,7 +205,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 	}
 }
 
-void fe::MainWindow::imgui_text(const std::string& p_str) {
+void fe::MainWindow::imgui_text(const std::string& p_str) const {
 	ImGui::Text(p_str.c_str());
 }
 
@@ -269,6 +292,12 @@ std::string fe::MainWindow::get_description(byte p_index,
 		return std::format("Unknown ({})", klib::Bitreader::byte_to_hex(p_index));
 }
 
+std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
+	return std::format("{} ({})",
+		c::LABELS_SPRITES[p_sprite_id],
+		fe::Sprite_gfx_definiton::SpriteCatToString(m_sprite_dims[p_sprite_id].m_cat));
+}
+
 void fe::MainWindow::add_message(const std::string& p_msg, int p_status) {
 	if (m_messages.size() > 50)
 		m_messages.pop_back();
@@ -320,7 +349,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		ImGui::SeparatorText("Sprite ID");
 
 		ui::imgui_slider_with_arrows("###spriteid",
-			"Sprite ID: " + get_description(l_sprite.m_id, c::LABELS_SPRITES),
+			"Sprite ID: " + get_sprite_label(l_sprite.m_id),
 			l_sprite.m_id, 0, c::SPRITE_COUNT - 1);
 
 		ImGui::SeparatorText("Position");
@@ -450,7 +479,8 @@ void fe::MainWindow::clipboard_paste(bool l_update_data) {
 		m_sel_tile_x2 = m_sel_tile_x + l_clip[0].size() - 1;
 		m_sel_tile_y2 = m_sel_tile_y + l_clip.size() - 1;
 
-		add_message("Clipboard data pasted");
+		if (l_update_data)
+			add_message("Clipboard data pasted");
 	}
 }
 
@@ -535,10 +565,23 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		// use it to extract sprite sizes before it is sent off and discarded
 		// sprite sizes are given here in nes tiles, not metatiles
-		for (const auto& kv : gfx_def)
-			m_sprite_sizes.at(kv.first) =
-			std::make_pair(static_cast<std::size_t>(kv.second.m_frame.m_w),
-				static_cast<std::size_t>(kv.second.m_frame.m_h));
+		for (const auto& kv : gfx_def) {
+			std::vector<std::pair<int, int>> l_frame_offsets;
+			for (const auto& frame : kv.second.m_frames) {
+				if (frame.m_disabled)
+					continue;
+
+				l_frame_offsets.push_back(std::make_pair(
+					static_cast<int>(frame.m_offset_x),
+					static_cast<int>(frame.m_offset_y)
+				));
+			}
+
+			m_sprite_dims.at(kv.first).w = kv.second.w;
+			m_sprite_dims[kv.first].h = kv.second.h;
+			m_sprite_dims[kv.first].offsets = l_frame_offsets;
+			m_sprite_dims[kv.first].m_cat = kv.second.m_category;
+		}
 
 		// pass it on the gfx handler to make sprite textures
 		m_gfx.gen_sprites(p_rnd, gfx_def);

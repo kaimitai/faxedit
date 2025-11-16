@@ -31,7 +31,8 @@ fe::gfx::~gfx(void) {
 	for (auto& txt : m_metatile_gfx)
 		delete_texture(txt);
 	for (auto& kv : m_sprite_gfx)
-		delete_texture(kv.second);
+		for (auto& txt : kv.second)
+			delete_texture(txt);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -121,6 +122,14 @@ SDL_Texture* fe::gfx::get_metatile_texture(std::size_t p_mt_no) const {
 	return m_metatile_gfx.at(p_mt_no);
 }
 
+std::size_t fe::gfx::get_anim_frame_count(std::size_t p_sprite_no) const {
+	auto iter{ m_sprite_gfx.find(p_sprite_no) };
+	if (iter == end(m_sprite_gfx))
+		return 0;
+	else
+		return iter->second.size();
+}
+
 void fe::gfx::draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
 	const klib::NES_tile& tile, const std::vector<byte>& p_palette,
 	bool p_transparent, bool h_flip, bool v_flip) const {
@@ -208,18 +217,20 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 	SDL_SetRenderTarget(renderer, nullptr);
 }
 
-void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, int x, int y) const {
+void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no,
+	std::size_t p_frame_no,
+	int x, int y) const {
 	auto iter{ m_sprite_gfx.find(p_sprite_no) };
 	if (iter == end(m_sprite_gfx))
 		return;
 	else {
 		float w, h;
-		SDL_GetTextureSize(iter->second, &w, &h);
-		SDL_FRect dst_rect = { static_cast<float>(16 * x), static_cast<float>(16 * y),
+		SDL_GetTextureSize(iter->second[p_frame_no], &w, &h);
+		SDL_FRect dst_rect = { static_cast<float>(x), static_cast<float>(y),
 			w, h };
 
 		SDL_SetRenderTarget(p_rnd, m_screen_texture);
-		SDL_RenderTexture(p_rnd, iter->second, nullptr, &dst_rect);
+		SDL_RenderTexture(p_rnd, iter->second[p_frame_no], nullptr, &dst_rect);
 		SDL_SetRenderTarget(p_rnd, nullptr);
 	}
 }
@@ -280,40 +291,45 @@ void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) 
 void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
 	const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs) {
 	for (auto& kv : m_sprite_gfx)
-		delete_texture(kv.second);
+		for (auto& txt : kv.second)
+			delete_texture(txt);
 	m_sprite_gfx.clear();
 
 	for (const auto& kv : p_defs) {
 		const auto& l_sprpal{ kv.second.m_sprite_palette };
-		const auto& frame{ kv.second.m_frame };
-		std::size_t w{ static_cast<std::size_t>(frame.m_w) };
-		std::size_t h{ static_cast<std::size_t>(frame.m_h) };
-
 		const auto& tiles{ kv.second.m_nes_tiles };
 
-		auto srf{ create_sdl_surface(static_cast<int>(8 * w),
-			static_cast<int>(8 * h), true) };
+		for (const auto& frame : kv.second.m_frames) {
+			if (frame.m_disabled)
+				continue;
 
-		for (int y{ 0 }; y < h; ++y)
-			for (int x{ 0 }; x < w; ++x) {
-				const auto& opttile{ frame.m_tilemap.at(y).at(x) };
+			std::size_t w{ static_cast<std::size_t>(frame.m_w) };
+			std::size_t h{ static_cast<std::size_t>(frame.m_h) };
 
-				if (opttile.has_value() &&
-					opttile.value().first < tiles.size()) {
-					byte tile_ctrl{ opttile.value().second };
+			auto srf{ create_sdl_surface(static_cast<int>(8 * w),
+				static_cast<int>(8 * h), true) };
 
-					draw_nes_tile_on_surface(
-						srf, static_cast<int>(8 * x),
-						static_cast<int>(8 * y),
-						tiles[opttile.value().first],
-						l_sprpal.at(tile_ctrl & 0b11),
-						true,
-						tile_ctrl & 0x40,
-						tile_ctrl & 0x80);
+			for (int y{ 0 }; y < h; ++y)
+				for (int x{ 0 }; x < w; ++x) {
+					const auto& opttile{ frame.m_tilemap.at(y).at(x) };
+
+					if (opttile.has_value() &&
+						opttile.value().first < tiles.size()) {
+						byte tile_ctrl{ opttile.value().second };
+
+						draw_nes_tile_on_surface(
+							srf, static_cast<int>(8 * x),
+							static_cast<int>(8 * y),
+							tiles[opttile.value().first],
+							l_sprpal.at(tile_ctrl & 0b11),
+							true,
+							tile_ctrl & 0x40,
+							tile_ctrl & 0x80);
+					}
 				}
-			}
 
-		m_sprite_gfx[kv.first] = surface_to_texture(p_rnd, srf);
+			m_sprite_gfx[kv.first].push_back(surface_to_texture(p_rnd, srf));
+		}
 	}
 }
 

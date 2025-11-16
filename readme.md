@@ -47,6 +47,19 @@ This editor was built during a few intense weeks of development, and is being re
 * Narrow down safe output data sizes with certainty
 * General UI improvements
 
+<hr>
+
+### Upcoming changes
+
+These are improvements that have already been implemented, and will be part of the next release:
+
+* Sprite animations - Sprites can be rendered using all of their animation frames
+* Made some internal adjustments to sprites which have different positional offsets in the game data versus how they are actually rendered
+* Improved sprite descriptions and categories by verifying the animations in the editor versus actual in-game rendering and behavior
+* Screen tilemap rendering - Some screens in the Buildings world and Mist were rendering slightly incorrectly due to a NES tile mismatch between the editor and the actual game
+* Will not show message "clipboard data pasted" when only showing the selection rectangle
+<hr>
+
 ### Known bugs and limitations
 
 * Some screens are not perfectly rendered due to NES-tile mismatches
@@ -75,3 +88,15 @@ Special thanks to the following contributors and fellow digital archaeologists:
 [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data
 
 [ChipX86/Christian Hammond](http://chipx86.com/) - For helping with some nitty-gritty details surrounding hard-coded game logic and providing us with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project
+
+<hr>
+
+### Curiosa
+
+In order to animate sprites in the editor, I had to investigate and map out the animation frame format. I rendered all the animation frames with the tilesets most likely to be associated with each frame, and to my surprise the third and fourth frames of the Maskman enemy (sprite with id 32) showed a walking female NPC never seen before.
+
+The character data for this NPC is stored in the middle of the character data for Maskman, and the animation frames are similarly entangled. The fact that no ID is associated with this sprite is probably the reason it remained undiscovered for so long.
+
+Here is the animation:
+
+![Unused female NPC](./docs/img/unused_female_npc.png)
