@@ -275,5 +275,8 @@
     <ClInclude Include="src\fe\Sprite_definitions.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\stb_image.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

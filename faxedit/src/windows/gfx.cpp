@@ -1,4 +1,7 @@
 #include "gfx.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "./../common/stb_image.h"
+#include <stdexcept>
 
 constexpr int TILEMAP_SCALE{ 1 };
 
@@ -33,6 +36,8 @@ fe::gfx::~gfx(void) {
 	for (auto& kv : m_sprite_gfx)
 		for (auto& txt : kv.second)
 			delete_texture(txt);
+	for (auto& txt : m_icon_overlays)
+		delete_texture(txt);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -76,6 +81,54 @@ void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::ve
 	// Store the texture
 	delete_texture(m_metatile_gfx[p_idx]);
 	m_metatile_gfx[p_idx] = metatile;
+}
+
+void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
+	int width, height, channels;
+	unsigned char* rgbaPixels = stbi_load("./assets/icon_overlays.png", &width, &height, &channels, 4);
+	if (!rgbaPixels) {
+		throw std::runtime_error("Could not make icon overlays");
+	}
+
+	unsigned char transp_r{ (HOT_PINK_TRANSPARENT >> 24) & 0xff };
+	unsigned char transp_g{ (HOT_PINK_TRANSPARENT >> 16) & 0xff };
+	unsigned char transp_b{ (HOT_PINK_TRANSPARENT >> 8) & 0xff };
+
+	for (int i = 0; i < width * height; ++i) {
+		for (int i = 0; i < width * height; ++i) {
+			int idx = i * 4;
+			unsigned char r = rgbaPixels[idx + 0];
+			unsigned char g = rgbaPixels[idx + 1];
+			unsigned char b = rgbaPixels[idx + 2];
+
+			if (r == transp_r && g == transp_g && b == transp_b) {
+				rgbaPixels[idx + 3] = 0; // make transparent
+			}
+		}
+	}
+
+	SDL_Surface* fullSurface = SDL_CreateSurfaceFrom(
+		width, height,
+		SDL_PIXELFORMAT_RGBA32, // correct first argument
+		rgbaPixels,              // pixel data
+		width * 4                  // pitch (bytes per row)
+	);
+	if (!fullSurface)
+		throw std::runtime_error("bad boi!");
+
+	for (int i = 0; i < width / 16; ++i) {
+		SDL_Rect srcRect = { i * 16, 0, 16, 16 };
+		SDL_Surface* iconSurface = SDL_CreateSurface(16, 16, SDL_PIXELFORMAT_RGBA32);
+		SDL_BlitSurface(fullSurface, &srcRect, iconSurface, nullptr);
+
+		SDL_Texture* iconTex = SDL_CreateTextureFromSurface(p_rnd, iconSurface);
+		m_icon_overlays.push_back(iconTex);
+
+		SDL_DestroySurface(iconSurface);
+	}
+
+	stbi_image_free(rgbaPixels);
+	SDL_DestroySurface(fullSurface);
 }
 
 void fe::gfx::generate_atlas(SDL_Renderer* p_rnd,
@@ -235,6 +288,21 @@ void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no
 	}
 }
 
+void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const {
+
+	float w, h;
+	SDL_GetTextureSize(m_icon_overlays[block_property], &w, &h);
+	SDL_FRect dst_rect = { 16.0f * static_cast<float>(x),
+		16.0f * static_cast<float>(y),
+	w, h };
+
+	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	SDL_RenderTexture(p_rnd, m_icon_overlays[block_property],
+		nullptr,
+		&dst_rect);
+	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
 void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
@@ -309,8 +377,8 @@ void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
 			auto srf{ create_sdl_surface(static_cast<int>(8 * w),
 				static_cast<int>(8 * h), true) };
 
-			for (int y{ 0 }; y < h; ++y)
-				for (int x{ 0 }; x < w; ++x) {
+			for (int y{ 0 }; y < frame.m_tilemap.size(); ++y)
+				for (int x{ 0 }; x < frame.m_tilemap.at(y).size(); ++x) {
 					const auto& opttile{ frame.m_tilemap.at(y).at(x) };
 
 					if (opttile.has_value() &&

@@ -954,8 +954,11 @@ const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_s
 		std::size_t phase_addr{ phase_offsets.at(phase_def_no) };
 
 		fe::Sprite_gfx_definiton gfxdef(tiles, l_sprite_palette, spr_cats[sprite_no]);
-		for (std::size_t i{ 0 }; i < sprite_anim_frame_cnt[sprite_no]; ++i)
+
+		for (std::size_t i{ 0 }; i < (spr_cats[sprite_no] == fe::SpriteCategory::Item ? 1 :
+			sprite_anim_frame_cnt[sprite_no]); ++i) {
 			gfxdef.add_frame(fe::AnimationFrame(p_rom, phase_addr));
+		}
 		result.insert(std::make_pair(sprite_no, gfxdef));
 	}
 

@@ -195,6 +195,7 @@
     <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
+    <ClInclude Include="src\common\stb_image.h" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\fe_app_constants.h" />

@@ -81,3 +81,21 @@ bool fe::ui::imgui_button(const std::string& p_label, std::size_t p_style,
 
 	return l_result;
 }
+
+void fe::ui::imgui_checkbox(const std::string& p_label, bool& p_val,
+	const std::string& p_tooltip) {
+
+	ImGui::Checkbox(p_label.c_str(), &p_val);
+
+	if (!p_tooltip.empty() && ImGui::IsItemHovered()) {
+		ImGui::SetTooltip(p_tooltip.c_str());
+	}
+
+}
+
+void fe::ui::imgui_checkbox(const std::string& p_label, char& p_val,
+	const std::string& p_tooltip) {
+	bool l_val{ static_cast<bool>(p_val) };
+	imgui_checkbox(p_label, l_val, p_tooltip);
+	p_val = static_cast<char>(l_val);
+}

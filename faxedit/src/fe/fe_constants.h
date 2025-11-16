@@ -127,12 +127,13 @@ namespace fe {
 			{0x02, "Ladder"},
 			{0x03, "Door"},
 			{0x04, "Foreground"},
-			{0x05, "Jump-On (experimental)"},
+			{0x05, "Jump-On"},
 			{0x06, "Pushable" },
-			{0x0a, "Transition Ladder"},
-			{0x0b, "Unknown (originally breakable)"},
-			{0x0c, "Other-World/Return"},
-			{0x0d, "Other-World (foreground)"},
+			{0x09, "SW-Transition (fg)" },
+			{0x0a, "SW-Transition Ladder"},
+			{0x0b, "Unknown (orig. breakable)"},
+			{0x0c, "OW/Return"},
+			{0x0d, "OW/Return (fg)"},
 		};
 
 		// placeholder until we dynamically parse this data

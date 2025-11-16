@@ -550,83 +550,112 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	ImGui::EndChild();
 
 	// --- Bottom Panel ---
+	ImVec2 availbottom = ImGui::GetContentRegionAvail();
 
-	ImGui::SeparatorText(std::format("Selected World: {} (#{} of {})",
-		c::LABELS_CHUNKS.at(m_sel_chunk),
-		m_sel_chunk, m_game->m_chunks.size()).c_str());
+	if (ImGui::BeginChild("BottomAll", ImVec2(0.0f, sharedHeight), true)) {
 
-	if (fe::ui::imgui_slider_with_arrows("##ws", "",
-		m_sel_chunk, static_cast<std::size_t>(0), m_game->m_chunks.size() - 1)) {
-		m_sel_screen = 0;
-		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-		m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
-	}
+		if (ImGui::BeginChild("SharedBottom", ImVec2(availbottom.x * 0.7f, 0.0f), true)) {
 
-	if (ImGui::BeginChild("SharedBottom", ImVec2(availableWidth, sharedHeight), false)) {
+			ImGui::SeparatorText(std::format("Selected World: {} (#{} of {})",
+				c::LABELS_CHUNKS.at(m_sel_chunk),
+				m_sel_chunk, m_game->m_chunks.size()).c_str());
 
-		ImGui::SeparatorText(std::format("Selected Screen: #{} of {}", m_sel_screen, m_game->m_chunks.at(m_sel_chunk).m_screens.size()).c_str());
+			if (fe::ui::imgui_slider_with_arrows("##ws", "",
+				m_sel_chunk, static_cast<std::size_t>(0), m_game->m_chunks.size() - 1)) {
+				m_sel_screen = 0;
+				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+			}
 
-		if (fe::ui::imgui_slider_with_arrows("##ss", "",
-			m_sel_screen, static_cast<std::size_t>(0), m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1)) {
-			m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-			m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+			ImGui::SeparatorText(std::format("Selected Screen: #{} of {}", m_sel_screen, m_game->m_chunks.at(m_sel_chunk).m_screens.size()).c_str());
+
+			if (fe::ui::imgui_slider_with_arrows("##ss", "",
+				m_sel_screen, static_cast<std::size_t>(0), m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1)) {
+				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+			}
+
+			ImGui::SeparatorText("Navigation");
+
+			scroll_left_button(l_screen);
+			ImGui::SameLine();
+			scroll_right_button(l_screen);
+			ImGui::SameLine();
+			scroll_up_button(l_screen);
+			ImGui::SameLine();
+			scroll_down_button(l_screen);
+
+			ImGui::SameLine();
+
+			ImGui::Spacing();
+
+			ImGui::SameLine();
+
+			enter_door_button(l_screen);
+
+			ImGui::SameLine();
+
+			ImGui::Spacing();
+
+			ImGui::SameLine();
+
+			transition_sw_button(l_screen);
+
+			ImGui::SameLine();
+
+			transition_ow_button(l_screen);
+
+			ImGui::SeparatorText("Add / Remove Screens");
+
+			if (ui::imgui_button("Add Screen", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_chunk.m_screens.size() == 0xff)) {
+				l_chunk.m_screens.push_back(fe::Screen());
+				l_chunk.m_screens.back().initialize_tilemap();
+				m_sel_screen = l_chunk.m_screens.size() - 1;
+			}
+
+			ImGui::SameLine();
+
+			if (ui::imgui_button("Delete Screen", 1, "",
+				l_chunk.m_screens.size() == 1 || m_sel_chunk == c::CHUNK_IDX_BUILDINGS ||
+				!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+				if (m_game->is_screen_referenced(m_sel_chunk,
+					m_sel_screen))
+					add_message("Screen has references", 1);
+				else {
+					m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
+					if (m_sel_screen >= l_chunk.m_screens.size())
+						--m_sel_screen;
+				}
+			}
+
 		}
+		ImGui::EndChild();
 
-	}
+		ImGui::SameLine();
 
-	ImGui::SeparatorText("Navigation");
+		if (ImGui::BeginChild("Renderoptions", ImVec2(0.0f, 0.0f), true)) {
 
-	scroll_left_button(l_screen);
-	ImGui::SameLine();
-	scroll_right_button(l_screen);
-	ImGui::SameLine();
-	scroll_up_button(l_screen);
-	ImGui::SameLine();
-	scroll_down_button(l_screen);
+			ui::imgui_checkbox("Animate Sprites", m_animate);
 
-	ImGui::SameLine();
+			ImGui::SeparatorText("Block-Property Icon Overlays");
 
-	ImGui::Spacing();
+			for (std::size_t j{ 0 }; j < 2; ++j) {
 
-	ImGui::SameLine();
+				for (std::size_t i{ 0 }; i < 8; ++i) {
+					ui::imgui_checkbox(std::format("###io{}", j * 8 + i),
+						m_overlays[j * 8 + i],
+						get_description(static_cast<byte>(j * 8 + i),
+							c::LABELS_BLOCK_PROPERTIES));
+					ImGui::SameLine();
+				}
+				ImGui::NewLine();
+			}
 
-	enter_door_button(l_screen);
+			ui::imgui_checkbox("Mattock-Breakable", m_mattock_overlay);
 
-	ImGui::SameLine();
-
-	ImGui::Spacing();
-
-	ImGui::SameLine();
-
-	transition_sw_button(l_screen);
-
-	ImGui::SameLine();
-
-	transition_ow_button(l_screen);
-
-	ImGui::SeparatorText("Add / Remove Screens");
-
-	if (ui::imgui_button("Add Screen", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_chunk.m_screens.size() == 0xff)) {
-		l_chunk.m_screens.push_back(fe::Screen());
-		l_chunk.m_screens.back().initialize_tilemap();
-		m_sel_screen = l_chunk.m_screens.size() - 1;
-	}
-
-	ImGui::SameLine();
-
-	if (ui::imgui_button("Delete Screen", 1, "",
-		l_chunk.m_screens.size() == 1 || m_sel_chunk == c::CHUNK_IDX_BUILDINGS ||
-		!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
-		if (m_game->is_screen_referenced(m_sel_chunk,
-			m_sel_screen))
-			add_message("Screen has references", 1);
-		else {
-			m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
-			if (m_sel_screen >= l_chunk.m_screens.size())
-				--m_sel_screen;
 		}
+		ImGui::EndChild();
 	}
-
 	ImGui::EndChild();
 
 	ImGui::End();

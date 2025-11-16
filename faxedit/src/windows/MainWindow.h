@@ -72,7 +72,8 @@ namespace fe {
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
 
 		// rendering options
-		bool m_animate;
+		bool m_animate, m_mattock_overlay;
+		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,

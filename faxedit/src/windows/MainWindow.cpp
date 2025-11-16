@@ -36,9 +36,10 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_anim_frame{ 0 },
 	m_sprite_dims{ std::vector<fe::AnimationGUIData>(c::SPRITE_COUNT,
 		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched)) },
-	m_animate{ true }
+	m_animate{ true },
+	m_mattock_overlay{ false },
+	m_overlays{ std::vector<char>(16, false) }
 {
-
 	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
@@ -52,6 +53,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 
 	if (!p_filepath.empty())
 		load_rom(p_rnd, p_filepath);
+
+	m_gfx.generate_icon_overlays(p_rnd);
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
@@ -111,15 +114,13 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
 		const auto& l_tilemap{ l_screen.m_tilemap };
 		std::size_t l_tileset{ get_default_tileset_no(m_sel_chunk, m_sel_screen) };
+		byte mattock_mt_id{ l_chunk.m_mattock_animation.at(0) };
 
 		for (int y{ 0 }; y < 13; ++y)
 			for (int x{ 0 }; x < 16; ++x) {
 
 				byte mt_no = l_tilemap.at(y).at(x);
-
-				// don't know if this should ever happen
-				if (mt_no >= m_game->m_chunks.at(m_sel_chunk).m_metatiles.size())
-					mt_no = 0;
+				byte blockprop{ l_chunk.m_metatiles[mt_no].m_block_property };
 
 				const auto& l_metatile{ m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
 				const auto& l_mt_tilemap{ l_metatile.m_tilemap };
@@ -129,6 +130,12 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * x + 1, 2 * y);
 				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * x, 2 * y + 1);
 				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
+
+				// draw overlay
+				if (m_overlays[blockprop])
+					m_gfx.draw_icon_overlay(p_rnd, x, y, blockprop);
+				if (mt_no == mattock_mt_id && m_mattock_overlay)
+					m_gfx.draw_icon_overlay(p_rnd, x, y, 16);
 			}
 
 		// draw selected rectangle
@@ -346,10 +353,10 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 			std::format("Selected sprite: #{}/{}", p_sel_sprite, l_sprite_cnt),
 			p_sel_sprite, 0, l_sprite_cnt - 1, "", false, true);
 
-		ImGui::SeparatorText("Sprite ID");
+		ImGui::SeparatorText(std::format("Sprite ID: {}", l_sprite.m_id).c_str());
 
 		ui::imgui_slider_with_arrows("###spriteid",
-			"Sprite ID: " + get_sprite_label(l_sprite.m_id),
+			get_sprite_label(l_sprite.m_id),
 			l_sprite.m_id, 0, c::SPRITE_COUNT - 1);
 
 		ImGui::SeparatorText("Position");

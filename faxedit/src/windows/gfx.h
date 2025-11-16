@@ -39,6 +39,8 @@ namespace fe {
 
 		static const std::vector<std::vector<byte>> NES_PALETTE;
 
+		std::vector<SDL_Texture*> m_icon_overlays;
+
 		void delete_texture(SDL_Texture* p_txt);
 
 	public:
@@ -48,6 +50,7 @@ namespace fe {
 		// image caching operations
 		void generate_atlas(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles, const std::vector<byte>& p_palette);
 		void generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::vector<byte>>& p_mt_def, std::size_t p_idx, std::size_t p_sub_palette_no);
+		void generate_icon_overlays(SDL_Renderer* p_rnd);
 
 		// blitting operations
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
@@ -55,6 +58,7 @@ namespace fe {
 		void draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const;
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 		void draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, std::size_t p_frame_no, int x, int y) const;
+		void draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const;
 
 		SDL_Texture* get_atlas(void) const;
 		SDL_Texture* get_screen_texture(void) const;
