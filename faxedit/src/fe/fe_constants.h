@@ -32,10 +32,11 @@ namespace fe {
 		// regular offsets with no associated pointer table that we know of
 		constexpr std::size_t OFFSET_MATTOCK_ANIMATIONS{ 0x3c69f };
 		constexpr std::size_t OFFSET_SPAWN_LOC_WORLDS{ 0x3ddbd };
-		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ 0x3ddc5 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ 0x3ddcd };
-		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ 0x3dde5 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_STAGES{ 0x3dddd };
+		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ OFFSET_SPAWN_LOC_WORLDS + 8 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ OFFSET_SPAWN_LOC_X_POS + 8 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_BPM{ OFFSET_SPAWN_LOC_Y_POS + 8 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_STAGES{ OFFSET_SPAWN_LOC_BPM + 8 };
+		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ OFFSET_SPAWN_LOC_STAGES + 8 };
 
 		// jump-on metatile animation
 		constexpr std::size_t OFFSET_JUMP_ON_ANIMATION{ 0x3d6ff };
@@ -142,11 +143,6 @@ namespace fe {
 			{0x44, "End-Game Sprite Set"}
 		};
 
-		// which door commands to look for when automatically generating spawn points
-		// TODO: Use the script bytes that set spawn points instead
-		inline const std::vector<byte> SPAWN_POINT_BUILDING_PARAMS
-		{ 0x02, 0x0b, 0x10, 0x1e, 0x23, 0x2b, 0x33, 0x3c };
-
 		inline const std::vector<std::string> LABELS_BUILDINGS{
 			"King Room", "Guru Room", "Hospital", "Pub", "Tool Shop",
 			"Key Shop", "House", "Meat Shop", "Martial Arts", "Magic Trainer"
@@ -235,7 +231,7 @@ namespace fe {
 			"Child",
 			"Armor Salesman",
 			"Martial Arts",
-			"Priest",
+			"Guru",
 			"King",
 			"Magic Teacher / Wise Man",
 			"Key Salesman",

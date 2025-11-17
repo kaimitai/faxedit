@@ -16,7 +16,8 @@ using NES_Palette = std::vector<byte>;
 namespace fe {
 
 	struct Spawn_location {
-		byte m_world, m_screen, m_stage, m_x, m_y;
+		byte m_world, m_screen, m_stage, m_x, m_y,
+			m_sprite_set;
 	};
 
 	struct Push_block_parameters {
@@ -50,7 +51,11 @@ namespace fe {
 			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen, m_ptr_chunk_door_reqs;
 		std::vector<std::size_t> m_ptr_chunk_screen_data, m_offsets_bg_gfx;
 
-		bool calculate_spawn_locations_by_guru(void);
+		// map from spawn point no to iscript no
+		// the script in which the spawn is set to the key
+		std::map<byte, byte> m_spawn_to_script_no;
+
+		int calculate_spawn_locations_by_guru(void);
 		bool calculate_push_block_parameters(void);
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_chunk_no) const;

@@ -644,6 +644,8 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 					add_message(std::format("Unable to parse iScript #{}", i));
 				}
 			}
+
+			m_game->m_spawn_to_script_no = loader.m_spawn_scripts;
 		}
 		catch (...) {
 			add_message("Malformed script section", 1);

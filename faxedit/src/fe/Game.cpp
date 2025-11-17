@@ -125,7 +125,8 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_STAGES + i),
 			m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4,
+			m_rom_data.at(c::OFFSET_SPAWN_LOC_BPM + i)
 		));
 	}
 
@@ -300,19 +301,36 @@ void fe::Game::set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_t
 
 // find all guru (with spawn point) door entrances
 // and update the spawn location with the door data
-bool fe::Game::calculate_spawn_locations_by_guru(void) {
+int fe::Game::calculate_spawn_locations_by_guru(void) {
 	int l_cnt{ 0 };
+
+	std::map<byte, byte> script_to_spawn;
+	// reverse the map
+	for (const auto& kv : m_spawn_to_script_no)
+		script_to_spawn[kv.second] = kv.first;
 
 	for (std::size_t c{ 0 }; c < m_chunks.size(); ++c)
 		for (std::size_t s{ 0 }; s < m_chunks[c].m_screens.size(); ++s)
 			for (const auto& l_door : m_chunks[c].m_screens[s].m_doors) {
 				if (l_door.m_door_type == fe::DoorType::Building) {
-					auto iter{ std::find(begin(c::SPAWN_POINT_BUILDING_PARAMS),
-						end(c::SPAWN_POINT_BUILDING_PARAMS), l_door.m_npc_bundle) };
+					const auto& spriteset{ m_npc_bundles.at(l_door.m_npc_bundle) };
+
+					// check if any sprite in this sprite set sets a spawn point
+					bool l_sprite_found{ false };
+					byte l_spawn_no{ 0 };
+
+					for (const auto& sprite : spriteset.m_sprites)
+						if (sprite.m_text_id.has_value() &&
+							script_to_spawn.find(sprite.m_text_id.value()) !=
+							end(script_to_spawn)) {
+							l_sprite_found = true;
+							l_spawn_no = script_to_spawn[sprite.m_text_id.value()];
+							break;
+						}
 
 					// if we match, update the spawn points vector with the chunk no,
 					// screen no and door location
-					if (iter != end(c::SPAWN_POINT_BUILDING_PARAMS)) {
+					if (l_sprite_found) {
 						std::optional<byte> l_stage_id;
 
 						const auto l_stage_idx{ m_stages.get_stage_idx_from_world(c) };
@@ -369,13 +387,13 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 						}
 
 						if (l_stage_id.has_value()) {
-							std::size_t l_spawn_no{ static_cast<std::size_t>(iter - begin(c::SPAWN_POINT_BUILDING_PARAMS)) };
 							m_spawn_locations.at(l_spawn_no) = fe::Spawn_location(
 								static_cast<byte>(c),
 								static_cast<byte>(s),
 								l_stage_id.value(),
 								l_door.m_coords.first,
-								l_door.m_coords.second
+								l_door.m_coords.second,
+								l_door.m_npc_bundle
 							);
 							++l_cnt;
 						}
@@ -384,7 +402,7 @@ bool fe::Game::calculate_spawn_locations_by_guru(void) {
 				}
 			}
 
-	return (l_cnt == 8);
+	return l_cnt;
 }
 
 bool fe::Game::calculate_push_block_parameters(void) {

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <format>
 
+using byte = unsigned char;
+
 fi::IScriptLoader::IScriptLoader(const std::vector<byte>& p_rom) {
 	parse_strings(p_rom);
 
@@ -18,7 +20,7 @@ std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte
 
 	parse_blob_from_entrypoint(p_rom, m_ptr_table[p_script_no], true);
 
-	return get_asm_code();
+	return get_asm_code(p_script_no);
 }
 
 void fi::IScriptLoader::parse_strings(const std::vector<byte>& p_rom) {
@@ -139,14 +141,14 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 			cursor = temp_cursor;
 		}
 
-		if (op.flow == Flow::End || opcode_byte == 0x17)
+		if (op.ends_stream)
 			break;
 
 	}
 }
 
 // return the script as vector of asm token to be parsed by the renderer
-std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(void) const {
+std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_no) {
 	std::vector<fi::AsmToken> result;
 	std::map<std::size_t, std::string> labels;
 	int last_label{ 0 };
@@ -199,6 +201,11 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(void) const {
 					result.push_back(fi::AsmToken(get_define(op.domain, static_cast<byte>(opval)), 5, false));
 				else
 					result.push_back(fi::AsmToken(std::format("{}", opval), 5, false));
+
+				// extract possible setspawns here to use for
+				// spawn point deduction later
+				if (instr.opcode_byte == c::OPCODE_SET_SPAWN)
+					m_spawn_scripts[static_cast<byte>(opval)] = static_cast<byte>(p_script_no);
 			}
 
 			if (op.flow == fi::Flow::Jump) {

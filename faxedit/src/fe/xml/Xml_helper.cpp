@@ -78,15 +78,31 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 	// extract spawn points
 	auto n_spawns = n_root.child(c::TAG_SPAWN_POINTS);
+
+	// remain backward compatible and set building sprite set
+	// value here if missing (beta-2 and earlier did not have this parameter)
+	const std::vector<byte> lc_spawn_sprite_sets{
+		0x02, 0x0b, 0x10, 0x1e, 0x23, 0x2b, 0x33, 0x3c
+	};
+	std::size_t spawnspritesetno{ 0 };
+
 	for (auto n_spawn{ n_spawns.child(c::TAG_SPAWN_POINT) }; n_spawn;
 		n_spawn = n_spawn.next_sibling(c::TAG_SPAWN_POINT)) {
+
+		byte l_sprite_set{ n_spawn.attribute(c::TAG_NPC_BUNDLE) ?
+			parse_numeric_byte(n_spawn.attribute(c::TAG_NPC_BUNDLE).as_string()) :
+			lc_spawn_sprite_sets.at(spawnspritesetno)
+		};
+
 		l_game.m_spawn_locations.push_back(fe::Spawn_location(
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_CHUNK_ID).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_SCREEN_ID).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_STAGE_ID).as_string()),
 			parse_numeric_byte(n_spawn.attribute(c::ATTR_X).as_string()),
-			parse_numeric_byte(n_spawn.attribute(c::ATTR_Y).as_string())
+			parse_numeric_byte(n_spawn.attribute(c::ATTR_Y).as_string()),
+			l_sprite_set
 		));
+		++spawnspritesetno;
 	}
 
 	// extract push-block parameters
@@ -357,6 +373,8 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_spawn.attribute(c::ATTR_X).set_value(l_sl.m_x);
 		n_spawn.append_attribute(c::ATTR_Y);
 		n_spawn.attribute(c::ATTR_Y).set_value(l_sl.m_y);
+		n_spawn.append_attribute(c::TAG_NPC_BUNDLE);
+		n_spawn.attribute(c::TAG_NPC_BUNDLE).set_value(l_sl.m_sprite_set);
 	}
 
 	auto n_push_block{ n_metadata.append_child(c::TAG_PUSH_BLOCK) };

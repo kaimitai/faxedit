@@ -155,6 +155,8 @@ namespace fi {
 			20  // What would you like?
 		};
 
+		constexpr byte OPCODE_SET_SPAWN{ 0x06 };
+
 	}
 
 }

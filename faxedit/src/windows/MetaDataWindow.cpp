@@ -279,14 +279,19 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ui::imgui_slider_with_arrows("spawnstage", "",
 						l_spawn.m_stage, 0, 5);
 
+					ImGui::SeparatorText("Building Sprite Set for the spawn's Guru room");
+
+					ui::imgui_slider_with_arrows("spawnspriteset", "",
+						l_spawn.m_sprite_set, 0, m_game->m_npc_bundles.size() - 1);
+
+					show_sprite_set_contents(l_spawn.m_sprite_set);
+
 					ImGui::SeparatorText("Automatic Deduction");
 
 					if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
-						bool l_deduced_spawns{ m_game->calculate_spawn_locations_by_guru() };
-						if (l_deduced_spawns)
-							add_message("All spawn point data deduced OK", 2);
-						else
-							add_message("Unable to deduce all spawn points", 1);
+						add_message(std::format("Fully deduced {} of 8 spawn points",
+							m_game->calculate_spawn_locations_by_guru()),
+							4);
 					}
 
 					ImGui::EndTabItem();

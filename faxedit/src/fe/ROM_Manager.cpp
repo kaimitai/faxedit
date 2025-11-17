@@ -556,6 +556,7 @@ void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector
 		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
 		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
 		p_rom.at(c::OFFSET_SPAWN_LOC_STAGES + i) = l_sl.m_stage;
+		p_rom.at(c::OFFSET_SPAWN_LOC_BPM + i) = l_sl.m_sprite_set;
 	}
 }
 
