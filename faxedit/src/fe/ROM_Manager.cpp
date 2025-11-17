@@ -1024,3 +1024,88 @@ const std::map<std::size_t, fe::Sprite_gfx_definiton> fe::ROM_Manager::extract_s
 
 	return result;
 }
+
+fe::Sprite_gfx_definiton fe::ROM_Manager::extract_door_req_gfx(
+	const std::vector<byte>& p_rom) const {
+
+	constexpr std::size_t REQ_GFX_OFFSET{ 0x28550 };
+	constexpr std::size_t SPRITE_PALETTE_OFFSET{ 0x2c1d0 };
+
+	std::vector<klib::NES_tile> req_tiles;
+
+	// extract all gfx we need
+	for (std::size_t i{ 0 }; i < 115; ++i)
+		req_tiles.push_back(klib::NES_tile(p_rom, REQ_GFX_OFFSET + 16 * i));
+
+	// extract palettes
+	std::vector<std::vector<byte>> l_sprite_palette;
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		std::vector<byte> sub_palette;
+		for (std::size_t j{ 0 }; j < 4; ++j)
+			sub_palette.push_back(p_rom.at(SPRITE_PALETTE_OFFSET + 4 * i + j));
+		l_sprite_palette.push_back(sub_palette);
+	}
+
+	fe::Sprite_gfx_definiton result(req_tiles, l_sprite_palette, fe::SpriteCategory::Item);
+
+	fe::AnimationFrame PATTERN_FRAME(2, 2, 0, 0, 4, false);
+
+	fe::AnimationFrame key_a{ PATTERN_FRAME };
+	key_a.m_tilemap = {
+		{std::make_pair(34, 3), std::make_pair(35,3)},
+		{std::make_pair(36, 3), std::make_pair(37,3)}
+	};
+
+	fe::AnimationFrame key_k{ PATTERN_FRAME };
+	key_k.m_tilemap = {
+		{std::make_pair(38, 3), std::make_pair(35,3)},
+		{std::make_pair(39, 3), std::make_pair(37,3)}
+	};
+
+	fe::AnimationFrame key_q{ PATTERN_FRAME };
+	key_q.m_tilemap = {
+		{std::make_pair(109, 3), std::make_pair(35,3)},
+		{std::make_pair(110, 3), std::make_pair(37,3)}
+	};
+
+	fe::AnimationFrame key_j{ PATTERN_FRAME };
+	key_j.m_tilemap = {
+		{std::make_pair(111, 3), std::make_pair(35,3)},
+		{std::make_pair(112, 3), std::make_pair(37,3)}
+	};
+
+	fe::AnimationFrame key_jo{ PATTERN_FRAME };
+	key_jo.m_tilemap = {
+		{std::make_pair(113, 3), std::make_pair(35,3)},
+		{std::make_pair(114, 3), std::make_pair(37,3)}
+	};
+
+	fe::AnimationFrame ring_elf{ PATTERN_FRAME };
+	ring_elf.m_tilemap = {
+		{std::make_pair(6, 1), std::make_pair(7,1)},
+		{std::make_pair(8, 1), std::make_pair(9,1)}
+	};
+
+	fe::AnimationFrame ring_dwarf{ PATTERN_FRAME };
+	ring_dwarf.m_tilemap = {
+		{std::make_pair(2, 0), std::make_pair(3,0)},
+		{std::make_pair(8, 0), std::make_pair(9,0)}
+	};
+
+	fe::AnimationFrame ring_demon{ PATTERN_FRAME };
+	ring_demon.m_tilemap = {
+		{std::make_pair(0, 3), std::make_pair(1,3)},
+		{std::make_pair(8, 3), std::make_pair(9,3)}
+	};
+
+	result.add_frame(key_a);
+	result.add_frame(key_k);
+	result.add_frame(key_q);
+	result.add_frame(key_j);
+	result.add_frame(key_jo);
+	result.add_frame(ring_elf);
+	result.add_frame(ring_dwarf);
+	result.add_frame(ring_demon);
+
+	return result;
+}

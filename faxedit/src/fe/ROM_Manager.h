@@ -102,6 +102,7 @@ namespace fe {
 		// gfx
 		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(
 		const std::vector<byte>& p_rom) const;
+		fe::Sprite_gfx_definiton extract_door_req_gfx(const std::vector<byte>& p_rom) const;
 	};
 
 }

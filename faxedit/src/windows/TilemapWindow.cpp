@@ -652,6 +652,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			}
 
 			ui::imgui_checkbox("Mattock-Breakable", m_mattock_overlay);
+			ui::imgui_checkbox("Door Requirements", m_door_req_overlay);
 
 		}
 		ImGui::EndChild();
@@ -717,7 +718,7 @@ void fe::MainWindow::show_stage_door_data(fe::Door& p_door) {
 
 	if (!l_unique_stage) {
 		imgui_text(std::format(
-			"Stage ID for world {} can not be deduced. Can not show metadata.",
+			"Stage ID for world {} can not be deduced.\nCan not show metadata.",
 			c::LABELS_CHUNKS[m_sel_chunk]).c_str());
 	}
 	else {
@@ -795,6 +796,11 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 			}
 		}
 
+	}
+
+	if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size()) {
+		add_message("Invalid door destination", 1);
+		m_sel_screen = 0;
 	}
 }
 

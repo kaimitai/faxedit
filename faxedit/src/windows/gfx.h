@@ -22,7 +22,7 @@ namespace fe {
 		SDL_Texture* m_screen_texture;
 
 		// cache all metatile definitions
-		std::vector<SDL_Texture*> m_metatile_gfx;
+		std::vector<SDL_Texture*> m_metatile_gfx, m_door_req_gfx;
 		std::map<std::size_t, std::vector<SDL_Texture*>> m_sprite_gfx;
 
 		SDL_Palette* m_nes_palette;
@@ -59,6 +59,7 @@ namespace fe {
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 		void draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, std::size_t p_frame_no, int x, int y) const;
 		void draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const;
+		void draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const;
 
 		SDL_Texture* get_atlas(void) const;
 		SDL_Texture* get_screen_texture(void) const;
@@ -73,6 +74,12 @@ namespace fe {
 
 		void gen_sprites(SDL_Renderer* p_rnd,
 			const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs);
+		void gen_door_req_gfx(SDL_Renderer* p_rnd,
+			const fe::Sprite_gfx_definiton& p_def);
+		SDL_Texture* anim_frame_to_texture(SDL_Renderer* p_rnd,
+			const fe::AnimationFrame& p_frame,
+			const std::vector<klib::NES_tile>& p_tiles,
+			const std::vector<std::vector<byte>>& p_palette);
 	};
 
 }

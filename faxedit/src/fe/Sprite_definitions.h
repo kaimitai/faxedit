@@ -34,6 +34,7 @@ namespace fe {
 			m_tilemap;
 
 		AnimationFrame(const std::vector<byte>& p_rom_data, std::size_t& p_offset);
+		AnimationFrame(byte p_w, byte p_h, byte p_hdr_byte, char p_x, char p_y, bool p_disabled);
 	};
 
 	struct Sprite_gfx_definiton {

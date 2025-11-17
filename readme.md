@@ -53,6 +53,8 @@ This editor was built during a few intense weeks of development, and is being re
 
 These are improvements that have already been implemented, and will be part of the next release:
 
+* Block Property icon overlays - We can toggle icon overlay rendering for each block property. Currently I am using my own placeholder graphics, but I hope to replace them with something nicer-looking before the next release
+* Door Requirement icon overlays - We can toggle overlays for door requirements too (keys and rings)
 * Sprite animations - Sprites can be rendered using all of their animation frames
 * Made some internal adjustments to sprites which have different positional offsets in the game data versus how they are actually rendered
 * Improved sprite descriptions and categories by verifying the animations in the editor versus actual in-game rendering and behavior

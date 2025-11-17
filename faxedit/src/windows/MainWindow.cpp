@@ -38,6 +38,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched)) },
 	m_animate{ true },
 	m_mattock_overlay{ false },
+	m_door_req_overlay{ true },
 	m_overlays{ std::vector<char>(16, false) }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
@@ -192,10 +193,31 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				const auto& l_door{ l_screen.m_doors[d] };
 
 				m_gfx.draw_rect_on_screen(p_rnd,
-					d == m_sel_door ? m_pulse_color : SDL_Color(0, 255, 0, 255),
+					d == m_sel_door ? m_pulse_color : SDL_Color(70, 100, 160, 255),
 					l_door.m_coords.first, l_door.m_coords.second,
 					1, 1
 				);
+
+				// draw requirement
+				if (m_door_req_overlay) {
+					byte l_dreq{ 0 };
+					if (l_door.m_door_type == fe::DoorType::Building ||
+						l_door.m_door_type == fe::DoorType::SameWorld) {
+						l_dreq = l_door.m_requirement;
+					}
+					else {
+						auto l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };
+						if (l_stage.has_value()) {
+							if (l_door.m_door_type == fe::DoorType::NextWorld)
+								l_dreq = l_stage.value()->m_next_requirement;
+							else
+								l_dreq = l_stage.value()->m_prev_requirement;
+						}
+					}
+
+					m_gfx.draw_door_req(p_rnd, l_door.m_coords.first,
+						l_door.m_coords.second, l_dreq);
+				}
 
 			}
 		}
@@ -592,6 +614,10 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		// pass it on the gfx handler to make sprite textures
 		m_gfx.gen_sprites(p_rnd, gfx_def);
+
+		// extract door requirement gfx
+		auto req_gfx{ m_rom_manager.extract_door_req_gfx(bytes) };
+		m_gfx.gen_door_req_gfx(p_rnd, req_gfx);
 
 		add_message("Loaded " + p_filepath, 2);
 	}

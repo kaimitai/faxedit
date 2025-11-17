@@ -38,6 +38,8 @@ fe::gfx::~gfx(void) {
 			delete_texture(txt);
 	for (auto& txt : m_icon_overlays)
 		delete_texture(txt);
+	for (auto& txt : m_door_req_gfx)
+		delete_texture(txt);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -303,6 +305,25 @@ void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_pr
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
+void fe::gfx::draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const {
+	if (p_req >= m_door_req_gfx.size() ||
+		m_door_req_gfx[p_req] == nullptr)
+		return;
+	else {
+		float w, h;
+		SDL_GetTextureSize(m_door_req_gfx[p_req], &w, &h);
+		SDL_FRect dst_rect = { 16.0f * static_cast<float>(x),
+			16.0f * static_cast<float>(y),
+		w, h };
+
+		SDL_SetRenderTarget(p_rnd, m_screen_texture);
+		SDL_RenderTexture(p_rnd, m_door_req_gfx[p_req],
+			nullptr,
+			&dst_rect);
+		SDL_SetRenderTarget(p_rnd, nullptr);
+	}
+}
+
 void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
@@ -370,35 +391,57 @@ void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
 		for (const auto& frame : kv.second.m_frames) {
 			if (frame.m_disabled)
 				continue;
-
-			std::size_t w{ static_cast<std::size_t>(frame.m_w) };
-			std::size_t h{ static_cast<std::size_t>(frame.m_h) };
-
-			auto srf{ create_sdl_surface(static_cast<int>(8 * w),
-				static_cast<int>(8 * h), true) };
-
-			for (int y{ 0 }; y < frame.m_tilemap.size(); ++y)
-				for (int x{ 0 }; x < frame.m_tilemap.at(y).size(); ++x) {
-					const auto& opttile{ frame.m_tilemap.at(y).at(x) };
-
-					if (opttile.has_value() &&
-						opttile.value().first < tiles.size()) {
-						byte tile_ctrl{ opttile.value().second };
-
-						draw_nes_tile_on_surface(
-							srf, static_cast<int>(8 * x),
-							static_cast<int>(8 * y),
-							tiles[opttile.value().first],
-							l_sprpal.at(tile_ctrl & 0b11),
-							true,
-							tile_ctrl & 0x40,
-							tile_ctrl & 0x80);
-					}
-				}
-
-			m_sprite_gfx[kv.first].push_back(surface_to_texture(p_rnd, srf));
+			m_sprite_gfx[kv.first].push_back(
+				anim_frame_to_texture(p_rnd, frame, tiles, l_sprpal)
+			);
 		}
 	}
+}
+
+void fe::gfx::gen_door_req_gfx(SDL_Renderer* p_rnd,
+	const fe::Sprite_gfx_definiton& p_def) {
+	const auto& l_sprpal{ p_def.m_sprite_palette };
+	const auto& tiles{ p_def.m_nes_tiles };
+
+	m_door_req_gfx.push_back(nullptr); // req "None"
+	for (std::size_t i{ 0 }; i < p_def.m_frames.size(); ++i)
+		m_door_req_gfx.push_back(
+			anim_frame_to_texture(p_rnd, p_def.m_frames[i],
+				p_def.m_nes_tiles, p_def.m_sprite_palette)
+		);
+}
+
+SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
+	const fe::AnimationFrame& p_frame,
+	const std::vector<klib::NES_tile>& p_tiles,
+	const std::vector<std::vector<byte>>& p_palette) {
+
+	std::size_t w{ static_cast<std::size_t>(p_frame.m_w) };
+	std::size_t h{ static_cast<std::size_t>(p_frame.m_h) };
+
+	auto srf{ create_sdl_surface(static_cast<int>(8 * w),
+		static_cast<int>(8 * h), true) };
+
+	for (int y{ 0 }; y < p_frame.m_tilemap.size(); ++y)
+		for (int x{ 0 }; x < p_frame.m_tilemap.at(y).size(); ++x) {
+			const auto& opttile{ p_frame.m_tilemap.at(y).at(x) };
+
+			if (opttile.has_value() &&
+				opttile.value().first < p_tiles.size()) {
+				byte tile_ctrl{ opttile.value().second };
+
+				draw_nes_tile_on_surface(
+					srf, static_cast<int>(8 * x),
+					static_cast<int>(8 * y),
+					p_tiles[opttile.value().first],
+					p_palette.at(tile_ctrl & 0b11),
+					true,
+					tile_ctrl & 0x40,
+					tile_ctrl & 0x80);
+			}
+		}
+
+	return surface_to_texture(p_rnd, srf);
 }
 
 const std::vector<std::vector<byte>> fe::gfx::NES_PALETTE = {

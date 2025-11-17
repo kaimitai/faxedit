@@ -33,6 +33,16 @@ fe::AnimationFrame::AnimationFrame(const std::vector<byte>& p_rom, std::size_t& 
 	}
 }
 
+fe::AnimationFrame::AnimationFrame(byte p_w, byte p_h, byte p_hdr_byte, char p_x, char p_y, bool p_disabled) :
+	m_w{ p_w },
+	m_h{ p_h },
+	m_hdr_control_byte{ p_hdr_byte },
+	m_offset_x{ p_x },
+	m_offset_y{ p_y },
+	m_disabled{ p_disabled }
+{
+}
+
 fe::Sprite_gfx_definiton::Sprite_gfx_definiton(
 	const std::vector<klib::NES_tile>& p_tiles,
 	const std::vector<std::vector<byte>>& p_palette,
