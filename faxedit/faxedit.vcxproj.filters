@@ -61,6 +61,12 @@
     <Filter Include="Source Files\common\imguifiledialog">
       <UniqueIdentifier>{899f9339-c7c9-4a63-a3a0-a4fbf03b6845}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fi">
+      <UniqueIdentifier>{84a203e5-2de9-4a33-b232-307c106def2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fi">
+      <UniqueIdentifier>{8f6fdbd5-b442-4233-a226-0f9f6981f425}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -161,6 +167,21 @@
     </ClCompile>
     <ClCompile Include="src\fe\Sprite_definitions.cpp">
       <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\FaxString.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\IScriptLoader.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\Opcode.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\Shop.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\IScriptWindow.cpp">
+      <Filter>Source Files\windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -277,6 +298,21 @@
     </ClInclude>
     <ClInclude Include="src\common\stb_image.h">
       <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\FaxString.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\fi_constants.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\IScriptLoader.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\Opcode.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\Shop.h">
+      <Filter>Header Files\fi</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

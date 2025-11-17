@@ -168,7 +168,12 @@
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
+    <ClCompile Include="src\fi\FaxString.cpp" />
+    <ClCompile Include="src\fi\IScriptLoader.cpp" />
+    <ClCompile Include="src\fi\Opcode.cpp" />
+    <ClCompile Include="src\fi\Shop.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\windows\IScriptWindow.cpp" />
     <ClCompile Include="src\windows\MetaDataWindow.cpp" />
     <ClCompile Include="src\windows\ControlWindow.cpp" />
     <ClCompile Include="src\windows\gfx.cpp" />
@@ -212,6 +217,11 @@
     <ClInclude Include="src\fe\StageManager.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
+    <ClInclude Include="src\fi\FaxString.h" />
+    <ClInclude Include="src\fi\fi_constants.h" />
+    <ClInclude Include="src\fi\IScriptLoader.h" />
+    <ClInclude Include="src\fi\Opcode.h" />
+    <ClInclude Include="src\fi\Shop.h" />
     <ClInclude Include="src\windows\gfx.h" />
     <ClInclude Include="src\windows\Imgui_helper.h" />
     <ClInclude Include="src\windows\MainWindow.h" />

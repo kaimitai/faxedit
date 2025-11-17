@@ -21,6 +21,15 @@ std::vector<fe::ui::UIStyle> fe::ui::g_uiStyles = {
 	{ ImVec4(0.95f, 0.95f, 0.95f, 1.00f), ImVec4(0.98f, 0.96f, 0.92f, 1.00f), ImVec4(0.92f, 0.94f, 0.97f, 1.00f) }
 };
 
+std::vector<ImVec4> fe::ui::asmColors = {
+	ImVec4(1.0f, 0.4f, 0.4f, 1.0f),  // directive: light red
+	ImVec4(1.0f, 1.0f, 0.4f, 1.0f),  // label: yellow
+	ImVec4(0.8f, 0.8f, 0.8f, 1.0f),  // comment: light gray
+	ImVec4(1.0f, 1.0f, 1.0f, 1.0f),  // text: white
+	ImVec4(0.6f, 0.8f, 1.0f, 1.0f),  // opcode: light blue
+	ImVec4(0.6f, 1.0f, 0.6f, 1.0f)   // operand: light green
+};
+
 void fe::ui::imgui_screen(const std::string& p_label, int p_first_x, int p_first_y, int p_first_w, int p_first_h,
 	int p_style) {
 

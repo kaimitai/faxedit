@@ -830,8 +830,14 @@ void fe::MainWindow::show_sprite_set_contents(std::size_t p_sprite_set) {
 		imgui_text(get_sprite_label(sprite.m_id));
 
 		if (sprite.m_text_id.has_value()) {
-			imgui_text(std::format("Script: {}", get_description(
-				sprite.m_text_id.value(), c::LABELS_SCRIPTS)));
+			ImGui::SameLine();
+			if (ui::imgui_button(
+				std::format("Script: {}", sprite.m_text_id.value()), 4,
+				"View Script")) {
+				m_sel_iscript = sprite.m_text_id.value();
+				m_iscript_window = true;
+				m_iscript_win_set_focus = true;
+			}
 		}
 
 		if (l_spr_count - s != 1)

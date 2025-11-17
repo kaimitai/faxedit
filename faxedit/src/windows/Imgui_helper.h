@@ -20,6 +20,7 @@ namespace fe {
 		};
 
 		extern std::vector<UIStyle> g_uiStyles;
+		extern std::vector<ImVec4> asmColors;
 
 		void imgui_screen(const std::string& p_label, int p_first_x, int p_first_y, int p_first_w, int p_first_h,
 			int p_style = 0);

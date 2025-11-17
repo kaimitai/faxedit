@@ -10,6 +10,7 @@
 #include "gfx.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
+#include "./../fi/IScriptLoader.h"
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
@@ -62,7 +63,9 @@ namespace fe {
 			// npc bundles aka building parameters
 			m_sel_npc_bundle, m_sel_npc_bundle_sprite,
 			// selected stage
-			m_sel_stage;
+			m_sel_stage,
+			// selected iscript
+			m_sel_iscript;
 
 		// sprite dimensions; holding sprite size and
 		// cartesian offsets per animation frame
@@ -72,7 +75,8 @@ namespace fe {
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
 
 		// rendering options
-		bool m_animate, m_mattock_overlay, m_door_req_overlay;
+		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
+			m_iscript_win_set_focus;
 		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
@@ -82,6 +86,7 @@ namespace fe {
 		fe::gfx m_gfx;
 		std::deque<fe::Message> m_messages;
 		fe::ROM_Manager m_rom_manager;
+		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
 
 		// oscillating color for selected object
 		SDL_Color m_pulse_color;
@@ -109,10 +114,10 @@ namespace fe {
 
 		void draw_control_window(SDL_Renderer* p_rnd);
 		void draw_screen_tilemap_window(SDL_Renderer* p_rnd);
-
 		void draw_metadata_window(SDL_Renderer* p_rnd);
-
+		void draw_iscript_window(SDL_Renderer* p_rnd);
 		void draw_filepicker_window(SDL_Renderer* p_rnd);
+
 		void show_output_messages(void) const;
 
 		void add_message(const std::string& p_msg, int p_status = 0);

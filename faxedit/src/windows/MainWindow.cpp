@@ -29,6 +29,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_sel_spawn_location{ 0 },
 	m_sel_npc_bundle{ 0 },
 	m_sel_stage{ 0 },
+	m_sel_iscript{ 0 },
 	m_emode{ fe::EditMode::Tilemap },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
 	m_pulse_time{ 0.0f },
@@ -36,12 +37,15 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	m_anim_frame{ 0 },
 	m_sprite_dims{ std::vector<fe::AnimationGUIData>(c::SPRITE_COUNT,
 		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched)) },
+	m_iscript_window{ false },
+	m_iscript_win_set_focus{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
 	m_door_req_overlay{ true },
 	m_overlays{ std::vector<char>(16, false) }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
+	add_message("For iScript editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
@@ -226,6 +230,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		draw_control_window(p_rnd);
 		draw_metadata_window(p_rnd);
 
+		if (m_iscript_window)
+			draw_iscript_window(p_rnd);
+
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 	}
@@ -400,9 +407,15 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		}
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
-				"Script: " + get_description(l_sprite.m_text_id.value(), c::LABELS_SCRIPTS),
-				l_sprite.m_text_id.value(), 0, 151); // looks like the scripts ptr table can only point to 152 different addresses
+				std::format("Script: {}", l_sprite.m_text_id.value()),
+				l_sprite.m_text_id.value(), 0, c::ISCRIPT_COUNT);
 
+			if (ui::imgui_button("View script", 4)) {
+				m_sel_iscript = l_sprite.m_text_id.value();
+				m_iscript_window = true;
+				m_iscript_win_set_focus = true;
+			}
+			ImGui::SameLine();
 			if (ui::imgui_button("Remove script", 1))
 				l_sprite.m_text_id.reset();
 		}
@@ -618,6 +631,23 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		// extract door requirement gfx
 		auto req_gfx{ m_rom_manager.extract_door_req_gfx(bytes) };
 		m_gfx.gen_door_req_gfx(p_rnd, req_gfx);
+
+		// extract scripts
+		try {
+			fi::IScriptLoader loader(bytes);
+
+			for (std::size_t i{ 0 }; i < c::ISCRIPT_COUNT; ++i) {
+				try {
+					m_iscripts[i] = loader.parse_script(bytes, i);
+				}
+				catch (...) {
+					add_message(std::format("Unable to parse iScript #{}", i));
+				}
+			}
+		}
+		catch (...) {
+			add_message("Malformed script section", 1);
+		}
 
 		add_message("Loaded " + p_filepath, 2);
 	}
