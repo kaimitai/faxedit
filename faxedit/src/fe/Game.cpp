@@ -7,7 +7,6 @@
 #include <utility>
 
 fe::Game::Game(void) :
-	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
 	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
 	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
@@ -22,7 +21,6 @@ fe::Game::Game(void) :
 
 fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
-	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
 	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
 	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
 	m_ptr_chunk_default_palette_idx{ c::PTR_CHUNK_DEFAULT_PALETTE_IDX },
@@ -51,7 +49,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 
 	// extract various
 	for (std::size_t i{ 0 }; i < 8; ++i)
-		set_various(i, m_ptr_chunk_metadata);
+		set_various(p_config, i);
 
 	// extract sprites
 	auto l_sprite_ptr{ p_config.pointer(c::ID_SPRITE_PTR) };
@@ -163,7 +161,8 @@ void fe::Game::generate_tilesets(const fe::Config& p_config) {
 	}
 }
 
-std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset) const {
+std::size_t fe::Game::get_pointer_address(std::size_t p_offset,
+	std::size_t p_zero_addr_rom_offset) const {
 
 	std::size_t l_value{
 	static_cast<std::size_t>(m_rom_data.at(p_offset + 1)) * 256 +
@@ -171,9 +170,9 @@ std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_re
 	};
 
 	std::size_t l_total_offset{
-		p_relative_offset == 0 ?
+		p_zero_addr_rom_offset == 0 ?
 		0x10 + (p_offset / 0x4000) * 0x4000 :
-		p_relative_offset
+		p_zero_addr_rom_offset
 	};
 
 	return l_total_offset + l_value;
@@ -218,9 +217,11 @@ std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<std::si
 	*/
 }
 
-void fe::Game::set_various(std::size_t p_chunk_no, std::size_t pt_to_various) {
+void fe::Game::set_various(const fe::Config& p_config, std::size_t p_chunk_no) {
+	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
+
 	// get address from the 16-bit metatable relating to the chunk we want
-	std::size_t l_table_offset{ get_pointer_address(pt_to_various) + 2 * p_chunk_no };
+	std::size_t l_table_offset{ get_pointer_address(l_md_ptr.first) + 2 * p_chunk_no };
 	// go to the metadata pointer table for our chunk
 	std::size_t l_chunk_offset{ get_pointer_address(l_table_offset) };
 

@@ -14,9 +14,11 @@ namespace fe {
 		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
 
 		// pointers
+		constexpr char ID_METADATA_PTR[]{ "metadata_ptr" };
 		constexpr char ID_SPRITE_PTR[]{ "sprite_ptr" };
 
 		// end offsets
+		constexpr char ID_METADATA_END[]{ "metadata_end" };
 		constexpr char ID_SPRITE_DATA_END[]{ "sprite_data_end" };
 
 		// map IDs
@@ -83,7 +85,6 @@ namespace fe {
 
 		// pointers to chunk data pointer tables
 		// indexed by chunk no (offet address by (2 * chunk no) to get the ptr to the chunk we're interested in)
-		constexpr std::size_t PTR_CHUNK_METADATA{ 0xc010 };
 		constexpr std::size_t PTR_CHUNK_PALETTES{ 0x2c010 };
 		constexpr std::size_t PTR_CHUNK_DEFAULT_PALETTE_IDX{ 0x3df5c };
 		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
@@ -104,7 +105,6 @@ namespace fe {
 			0x4000, 0x4000, 0x4000
 		};
 
-		constexpr std::size_t SIZE_LIMT_METADATA{ 0xf010 - PTR_CHUNK_METADATA };
 		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
 
 		// make sure this has the same order in enum fe::DoorType

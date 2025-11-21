@@ -18,7 +18,7 @@ namespace fe {
 	class Config;
 
 	class ROM_Manager {
-		
+
 		std::vector<byte> build_pointer_table_and_data(
 			std::size_t p_rom_loc_ptr_table,
 			std::size_t p_ptr_base_rom_offset,
@@ -29,7 +29,7 @@ namespace fe {
 			std::size_t p_ptr_base_rom_offset,
 			const std::vector<std::vector<byte>>& p_data) const;
 
-		std::pair<std::vector<byte>, std::vector<byte>>  build_pointer_table_and_data_aggressive_decoupled(
+		std::pair<std::vector<byte>, std::vector<byte>> build_pointer_table_and_data_aggressive_decoupled(
 			std::size_t p_rom_loc_ptr_table,
 			std::size_t p_ptr_base_rom_offset,
 			std::size_t p_rom_loc_data,
@@ -73,14 +73,13 @@ namespace fe {
 		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
-		std::vector<byte> encode_game_metadata(const fe::Game& p_game) const;
-		std::vector<byte> encode_game_metadata_all(const fe::Game& p_game) const;
+		std::vector<byte> encode_game_metadata_all(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_game_otherworld_trans(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_sameworld_trans(const fe::Game& p_game) const;
 
 		// encode in place and return a pair of used size and max size
 		std::pair<std::size_t, std::size_t> encode_bank_tilemaps(const fe::Game& p_game, std::vector<byte>& p_rom, std::size_t p_bank_no) const;
-		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
@@ -102,7 +101,7 @@ namespace fe {
 
 		// gfx
 		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(
-		const std::vector<byte>& p_rom) const;
+			const std::vector<byte>& p_rom) const;
 		fe::Sprite_gfx_definiton extract_door_req_gfx(const std::vector<byte>& p_rom) const;
 	};
 

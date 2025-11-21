@@ -173,55 +173,12 @@ std::size_t fe::ROM_Manager::from_uint16_le(const std::pair<byte, byte>& p_value
 		256 * static_cast<std::size_t>(p_value.second);
 }
 
-std::vector<byte> fe::ROM_Manager::encode_game_metadata(const fe::Game& p_game) const {
-
-	std::vector<std::vector<byte>> l_chunk_md;
-
-	// for some reason there is a pointer to the attribute pointer for all chunks
-	// it just points 10 bytes forward in each case, but we need it for alignment
-	// we will update the value of this pointer as we go along, and in the end
-	// we pack all metadata for all chunks in a huge blob with a master
-	// table at the bottom
-
-	std::size_t l_current_rom_offset{ 0xc022 };
-
-	for (std::size_t i{ 0 }; i <= 0; ++i) {
-		const auto& chunk{ p_game.m_chunks[i] };
-
-		// add an empty vector here to get a 2 byte space where the ptr to attr-ptr will be
-		l_chunk_md.push_back(std::vector<byte>());
-
-		l_chunk_md.push_back(chunk.get_block_property_bytes());
-		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
-
-		auto l_door_data{ chunk.get_door_bytes() };
-
-		// door data followed by door destination table
-		l_chunk_md.push_back(l_door_data.first);
-		l_chunk_md.push_back(l_door_data.second);
-
-		l_chunk_md.push_back(chunk.get_palette_attribute_bytes());
-
-		l_chunk_md.push_back(chunk.get_metatile_top_left_bytes());
-		l_chunk_md.push_back(chunk.get_metatile_top_right_bytes());
-		l_chunk_md.push_back(chunk.get_metatile_bottom_left_bytes());
-		l_chunk_md.push_back(chunk.get_metatile_bottom_right_bytes());
-	}
-
-	auto l_packed_chunk_md{ build_pointer_table_and_data(l_current_rom_offset, 0xc010, l_chunk_md) };
-
-	auto l_attr_ptr{ to_uint16_le(l_current_rom_offset + 10 - 0xc010) };
-
-	l_packed_chunk_md.at(0) = l_attr_ptr.first;
-	l_packed_chunk_md.at(1) = l_attr_ptr.second;
-
-	return l_packed_chunk_md;
-}
-
-std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_game) const {
+std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_config,
+	const fe::Game& p_game) const {
 	std::vector<std::vector<byte>> l_all_chunk_meta_data;
+	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
 
-	std::size_t l_cur_rom_offset{ 0xc012 + 2 * p_game.m_chunks.size() };
+	std::size_t l_cur_rom_offset{ l_md_ptr.first + 2 + 2 * p_game.m_chunks.size() };
 
 	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
 
@@ -250,9 +207,9 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 		l_chunk_md.push_back(chunk.get_metatile_bottom_right_bytes());
 
 		auto l_data{ build_pointer_table_and_data(
-					l_cur_rom_offset, 0xc010, l_chunk_md) };
+					l_cur_rom_offset, l_md_ptr.first, l_chunk_md) };
 
-		auto l_attr_ptr{ to_uint16_le(l_cur_rom_offset + 10 - 0xc010) };
+		auto l_attr_ptr{ to_uint16_le(l_cur_rom_offset + 10 - l_md_ptr.first) };
 
 		l_data.at(0) = l_attr_ptr.first;
 		l_data.at(1) = l_attr_ptr.second;
@@ -263,7 +220,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Game& p_ga
 	}
 
 	auto l_all_chunks_w_ptr_table{ build_pointer_table_and_data(
-		0xc012, 0xc010, l_all_chunk_meta_data) };
+		l_md_ptr.first + 2, l_md_ptr.second, l_all_chunk_meta_data) };
 
 	return l_all_chunks_w_ptr_table;
 }
@@ -278,11 +235,20 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_tilemaps(const 
 	return std::make_pair(l_bank_screen_data.size(), c::SIZE_LIMITS_BANK_TILEMAPS.at(p_bank_no));
 }
 
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	auto l_metadata{ encode_game_metadata_all(p_game) };
-	if (l_metadata.size() <= c::SIZE_LIMT_METADATA)
-		patch_bytes(l_metadata, p_rom, c::PTR_CHUNK_METADATA + 2);
-	return std::make_pair(l_metadata.size(), c::SIZE_LIMT_METADATA);
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+
+	// add 2 to the ptr since we actually don't encode the first two bytes
+	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
+	std::size_t l_md_end{ p_config.constant(c::ID_METADATA_END) };
+	std::size_t l_md_size{ l_md_end - (l_md_ptr.first + 2) };
+
+	auto l_metadata{ encode_game_metadata_all(p_config, p_game) };
+
+	if (l_metadata.size() <= l_md_size)
+		patch_bytes(l_metadata, p_rom, l_md_ptr.first + 2);
+	return std::make_pair(l_metadata.size(), l_md_size);
 }
 
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe::Config& p_config,

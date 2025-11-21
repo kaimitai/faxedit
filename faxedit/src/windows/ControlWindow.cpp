@@ -276,7 +276,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 		l_dyndata_bytes += l_bret.first;
 	}
 
-	l_bret = m_rom_manager.encode_metadata(m_game.value(), x_rom);
+	l_bret = m_rom_manager.encode_metadata(m_config, m_game.value(), x_rom);
 	l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second);
 	l_dyndata_bytes += l_bret.first;
 
