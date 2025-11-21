@@ -13,6 +13,12 @@ namespace fe {
 
 		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
 
+		// pointers
+		constexpr char ID_SPRITE_PTR[]{ "sprite_ptr" };
+
+		// end offsets
+		constexpr char ID_SPRITE_DATA_END[]{ "sprite_data_end" };
+
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
 		constexpr char ID_SPRITE_LABELS[]{ "sprite_labels" };
@@ -42,7 +48,6 @@ namespace fe {
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 
 		// the following pointers are on the form { ROM offset for master ptr table, ROM offset considered 0 by the ptrs }
-		constexpr std::pair<std::size_t, std::size_t> PTR_SPRITE_DATA{ 0x2c220, 0x24010 };
 		constexpr std::pair<std::size_t, std::size_t> PTR_OTHERW_TRANS_TABLE{ 0x3eaac, 0x30010 };
 		constexpr std::pair<std::size_t, std::size_t> PTR_SAMEW_TRANS_TABLE{ 0x3ea47, 0x30010 };
 
@@ -80,7 +85,6 @@ namespace fe {
 		// indexed by chunk no (offet address by (2 * chunk no) to get the ptr to the chunk we're interested in)
 		constexpr std::size_t PTR_CHUNK_METADATA{ 0xc010 };
 		constexpr std::size_t PTR_CHUNK_PALETTES{ 0x2c010 };
-		constexpr std::size_t PTR_CHUNK_SPRITE_DATA{ 0x2c220 };
 		constexpr std::size_t PTR_CHUNK_DEFAULT_PALETTE_IDX{ 0x3df5c };
 		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
 		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3eaac };
@@ -99,7 +103,7 @@ namespace fe {
 		inline const std::vector<std::size_t> SIZE_LIMITS_BANK_TILEMAPS{
 			0x4000, 0x4000, 0x4000
 		};
-		constexpr std::size_t SIZE_LIMT_SPRITE_DATA{ 0x30010 - PTR_CHUNK_SPRITE_DATA };
+
 		constexpr std::size_t SIZE_LIMT_METADATA{ 0xf010 - PTR_CHUNK_METADATA };
 		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
 

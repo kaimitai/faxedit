@@ -627,7 +627,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_config.load_config_data(l_config_xml_path);
 		cache_config_variables();
 
-		m_game = fe::Game(bytes);
+		m_game = fe::Game(m_config, bytes);
 		m_game->generate_tilesets(m_config);
 
 		std::filesystem::path romPath(p_filepath);

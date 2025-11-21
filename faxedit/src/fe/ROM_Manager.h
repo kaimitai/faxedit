@@ -15,6 +15,8 @@ using PtrDef = std::pair<std::size_t, std::size_t>;
 
 namespace fe {
 
+	class Config;
+
 	class ROM_Manager {
 		
 		std::vector<byte> build_pointer_table_and_data(
@@ -35,7 +37,7 @@ namespace fe {
 
 		// pointer variables - check the constants header for descriptions
 		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
-		std::pair<std::size_t, std::size_t> m_ptr_sprites, m_ptr_sameworld_trans_table,
+		std::pair<std::size_t, std::size_t> m_ptr_sameworld_trans_table,
 			m_ptr_otherworld_trans_table;
 
 		// constant scalars
@@ -69,9 +71,8 @@ namespace fe {
 		// void extract_sprite_data(const std::vector<byte>& p_rom);
 
 		// encoding data with variable locations, needing pointer tables
-		std::vector<byte> encode_game_sprite_data_new(const fe::Game& p_game) const;
+		std::vector<byte> encode_game_sprite_data_new(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
-		std::vector<byte> encode_game_sprite_data(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_metadata(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_metadata_all(const fe::Game& p_game) const;
 		std::vector<byte> encode_game_otherworld_trans(const fe::Game& p_game) const;
@@ -80,7 +81,7 @@ namespace fe {
 		// encode in place and return a pair of used size and max size
 		std::pair<std::size_t, std::size_t> encode_bank_tilemaps(const fe::Game& p_game, std::vector<byte>& p_rom, std::size_t p_bank_no) const;
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// encoding data in-place using a given address and stride-indexed

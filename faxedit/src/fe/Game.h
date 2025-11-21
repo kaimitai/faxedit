@@ -45,10 +45,10 @@ namespace fe {
 		fe::Push_block_parameters m_push_block;
 		std::vector<byte> m_jump_on_animation;
 
-		Game(const std::vector<byte>& p_rom_data);
+		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);
 
-		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_sprite_data, m_ptr_chunk_interchunk_transitions,
+		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_interchunk_transitions,
 			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes,
 			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen, m_ptr_chunk_door_reqs;
 
@@ -78,7 +78,7 @@ namespace fe {
 		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;
 		std::vector<std::size_t> get_screen_pointers(std::size_t p_world_ptr) const;
 		void set_various(std::size_t p_chunk_no, std::size_t pt_to_various);
-		void set_sprites(std::size_t p_chunk_no, std::size_t pt_to_sprites);
+		void set_sprites(size_t p_chunk_no, std::pair<std::size_t, std::size_t> pt_to_sprites);
 		void set_interchunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_interchunk);
 		void set_intrachunk_scrolling(std::size_t p_chunk_no, std::size_t pt_to_intrachunk);
 
