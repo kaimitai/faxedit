@@ -183,6 +183,9 @@
     <ClCompile Include="src\windows\IScriptWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\fe\Config.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -313,6 +316,9 @@
     </ClInclude>
     <ClInclude Include="src\fi\Shop.h">
       <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Config.h">
+      <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -14,7 +14,8 @@
 #include "./../fe/xml/Xml_helper.h"
 #include "./../common/klib/Kfile.h"
 
-fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
+fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
+	const std::string& p_region) :
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
 	m_sel_sprite{ 0 }, m_sel_tile_x{ 0 }, m_sel_tile_y{ 0 },
 	m_sel_tile_x2{ 16 }, m_sel_tile_y2{ 0 },
@@ -57,7 +58,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath) :
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	if (!p_filepath.empty())
-		load_rom(p_rnd, p_filepath);
+		load_rom(p_rnd, p_filepath, p_region);
 
 	m_gfx.generate_icon_overlays(p_rnd);
 }
@@ -589,12 +590,41 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 }
 
-void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath) {
+void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
+	const std::string& p_region) {
+	std::string l_config_xml_path;
+
+	const char* basePath{ SDL_GetBasePath() };
+	if (!basePath) {
+		l_config_xml_path = "./";
+	}
+	else {
+		l_config_xml_path = basePath;
+	}
+
+	l_config_xml_path += c::CONFIG_FILE_NAME;
+
 	add_message("Attempting to load file " + p_filepath, 5);
 
 	// Load file as bytes and create game
 	try {
 		auto bytes = klib::file::read_file_as_bytes(p_filepath);
+
+		m_config.clear();
+		m_config.load_definitions(l_config_xml_path);
+
+		if (p_region.empty()) {
+			m_config.determine_region(bytes);
+			add_message(std::format("ROM region detected: '{}'",
+				m_config.get_region()), 4);
+		}
+		else {
+			add_message(std::format("Region specified as '{}'", p_region));
+			m_config.set_region(p_region);
+		}
+
+		m_config.load_config_data(l_config_xml_path);
+
 		m_game = fe::Game(bytes);
 
 		std::filesystem::path romPath(p_filepath);
@@ -634,7 +664,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		// extract scripts
 		try {
-			fi::IScriptLoader loader(bytes);
+			fi::IScriptLoader loader(m_config, bytes);
 
 			for (std::size_t i{ 0 }; i < c::ISCRIPT_COUNT; ++i) {
 				try {

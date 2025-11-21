@@ -11,6 +11,8 @@ namespace fe {
 
 	namespace c {
 
+		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
+
 		// the start of the pointer table for each chunks's tilemaps
 		// the start of the data (ptr table + data for each chunk) follows immediately after this outer pointer table
 		inline const std::vector<std::size_t> PTR_TILEMAPS_BANK_ROM_OFFSET{ 0x10, 0x4010, 0x8010 };

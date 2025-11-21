@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include "gfx.h"
+#include "./../fe/Config.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
 #include "./../fi/IScriptLoader.h"
@@ -38,6 +39,9 @@ namespace fe {
 	};
 
 	class MainWindow {
+
+		// config
+		fe::Config m_config;
 
 		// file info
 		std::filesystem::path m_path;
@@ -95,7 +99,8 @@ namespace fe {
 
 		void imgui_text(const std::string& p_str) const;
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
-		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath);
+		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
+			const std::string& p_region = std::string());
 		std::optional<std::vector<byte>> patch_rom(void);
 
 		std::string get_ips_path(void) const;
@@ -152,7 +157,9 @@ namespace fe {
 
 	public:
 
-		MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath = std::string());
+		MainWindow(SDL_Renderer* p_rnd,
+			const std::string& p_filepath = std::string(),
+			const std::string& p_region = std::string());
 		void generate_textures(SDL_Renderer* p_rnd);
 		void generate_metatile_textures(SDL_Renderer* p_rnd);
 		void draw(SDL_Renderer* p_rnd);

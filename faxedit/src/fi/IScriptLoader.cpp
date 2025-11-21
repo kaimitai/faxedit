@@ -5,13 +5,23 @@
 
 using byte = unsigned char;
 
-fi::IScriptLoader::IScriptLoader(const std::vector<byte>& p_rom) {
-	parse_strings(p_rom);
+fi::IScriptLoader::IScriptLoader(const fe::Config& p_config,
+	const std::vector<byte>& p_rom) {
+	parse_strings(p_config, p_rom);
 
-	for (std::size_t i{ 0 }; i < c::ISCRIPT_COUNT; ++i)
-		m_ptr_table.push_back(static_cast<std::size_t>(p_rom.at(c::ISCRIPT_ADDR_LO + i))
-			+ 256 * static_cast<std::size_t>(p_rom.at(c::ISCRIPT_ADDR_HI + i))
-			+ c::ISCRIPT_PTR_ZERO_ADDR);
+	std::size_t l_iscript_count{ p_config.constant(c::ID_ISCRIPT_COUNT) };
+	auto l_iscript_ptr{ p_config.pointer(c::ID_ISCRIPT_PTR_LO) };
+
+	m_ptr_zero_addr = l_iscript_ptr.second;
+	m_defines_item = p_config.bmap(c::ID_DEFINES_ITEM);
+	m_defines_quest = p_config.bmap(c::ID_DEFINES_QUEST);
+	m_defines_rank = p_config.bmap(c::ID_DEFINES_RANK);
+	m_defines_textbox = p_config.bmap(c::ID_DEFINES_TEXTBOX);
+
+	for (std::size_t i{ 0 }; i < l_iscript_count; ++i)
+		m_ptr_table.push_back(static_cast<std::size_t>(p_rom.at(l_iscript_ptr.first + i))
+			+ 256 * static_cast<std::size_t>(p_rom.at(l_iscript_ptr.first + l_iscript_count + i))
+			+ l_iscript_ptr.second);
 }
 
 std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no) {
@@ -23,11 +33,15 @@ std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte
 	return get_asm_code(p_script_no);
 }
 
-void fi::IScriptLoader::parse_strings(const std::vector<byte>& p_rom) {
+void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vector<byte>& p_rom) {
+	auto l_char_map{ p_config.bmap(c::ID_STRING_CHAR_MAP) };
+	std::size_t l_string_offset{ p_config.constant(c::ID_STRING_DATA_START) };
+	std::size_t l_string_end{ p_config.constant(c::ID_STRING_DATA_END) };
+
 	m_strings.clear();
 	std::string encodedstring;
 
-	for (std::size_t i{ c::OFFSET_STRINGS }; i < c::OFFSET_STRINGS + c::SIZE_STRINGS; ++i) {
+	for (std::size_t i{ l_string_offset }; i < l_string_end; ++i) {
 
 		if (p_rom.at(i) == 0xff) {
 			m_strings.push_back(encodedstring);
@@ -35,8 +49,8 @@ void fi::IScriptLoader::parse_strings(const std::vector<byte>& p_rom) {
 		}
 		else {
 			byte b{ p_rom.at(i) };
-			auto iter{ c::FAXSTRING_CHARS.find(b) };
-			if (iter == end(c::FAXSTRING_CHARS))
+			auto iter{ l_char_map.find(b) };
+			if (iter == end(l_char_map))
 				encodedstring += std::format("<${:02x}>", b);
 			else
 				encodedstring += iter->second;
@@ -96,7 +110,7 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 		// track jump targets, extract shops
 		if (op.flow == Flow::Jump || op.flow == Flow::Read) {
 			target_addr = static_cast<std::size_t>(read_short(p_rom, cursor))
-				+ c::ISCRIPT_PTR_ZERO_ADDR;
+				+ m_ptr_zero_addr;
 
 			if (op.flow == Flow::Jump)
 				m_jump_targets.insert(target_addr.value());
@@ -232,13 +246,13 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_n
 
 std::string fi::IScriptLoader::get_define(fi::ArgDomain domain, byte arg) const {
 	if (domain == fi::ArgDomain::Item)
-		return get_define(c::DEFINES_ITEMS, arg);
+		return get_define(m_defines_item, arg);
 	else if (domain == fi::ArgDomain::Quest)
-		return get_define(c::DEFINES_QUESTS, arg);
+		return get_define(m_defines_quest, arg);
 	else if (domain == fi::ArgDomain::Rank)
-		return get_define(c::DEFINES_RANKS, arg);
+		return get_define(m_defines_rank, arg);
 	else if (domain == fi::ArgDomain::TextBox)
-		return get_define(c::DEFINES_TEXTBOX, arg);
+		return get_define(m_defines_textbox, arg);
 	else
 		return std::format("{}", arg);
 }

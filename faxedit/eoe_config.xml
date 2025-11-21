@@ -1,0 +1,509 @@
+<!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
+<!-- Only make changes to this file if you are confident in what you are doing! (and keep backups even then) -->
+<eoe_config app_version="beta-3">
+	<regions>
+		<!-- determine region by ROM signature - will take first match -->
+		<!-- make sure to use identifiers that will not change via ROM editing -->
+		<region name="en-transl" file_size="524304">
+			<!-- look for "Dialogue" left behind after dialogue section relocation -->
+			<signature no="0" offset="0x35f50" values="$44,$69,$61,$6c,$6f,$67,$75,$65" />
+		</region>
+		<region name="randum">
+			<!-- look for "RANDUMIZER" -->
+			<signature no="0" offset="0x31ddc" values="$f1,$e0,$ed,$e3,$f4,$ec,$e8,$f9,$e4,$f1" />
+		</region>
+		<region name="us">
+			<!-- look for address of script ptr table -->
+			<signature no="0" offset="0x3025d" values="$6b,$9f" />
+		</region>
+		<!-- look for address of script ptr table -->
+		<region name="eu">
+			<signature no="0" offset="0x3025d" values="$b6,$9f" />
+		</region>
+		<!-- look for address of script ptr table -->
+		<region name="jp">
+			<signature no="0" offset="0x3025d" values="$67,$a3" />
+		</region>
+	</regions>
+
+	<!-- all constants needed by the applications, looked up by region name -->
+	<!-- ensure all constants will be resolved uniquely for any given region -->
+
+	<!-- constants used by the scripting engine -->
+	<!-- addresses to pointer table start -->
+	<pointers>
+		<!-- ROM offset of iScript pointer table lo bytes; combined with iscript_count we can dedude hi byte offset and script data start -->
+		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
+		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
+		<pointer name="iscript_ptr_lo" region="eu" value="0x31fc6" zero_addr="0x28010" />
+	</pointers>
+	<!-- contant addresses and counts -->
+	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
+	<consts>
+		<const name="iscript_count" value="152" />
+		<const name="string_data_start" region="eu,us,randum" value="0x34310" />
+		<const name="string_data_start" region="jp" value="0x35f50" />
+		<const name="string_data_end" region="eu,us,randum" value="0x38010" />
+		<const name="string_data_end" region="jp" value="0x37a50" />
+
+		<!-- byte-size of the script data in the original region; everything following the end of the ptr table -->
+		<const name="iscript_data_rg1_size" value="1581" />
+
+		<!-- secondary region for script data -->
+		<const name="iscript_data_rg2_start" region="us,randum" value="0x32d9b" />
+		<const name="iscript_data_rg2_start" region="eu" value="0x32de5" />
+		<const name="iscript_data_rg2_start" region="jp" value="0x33196" />
+
+		<!-- secondary script data necessarily ends within bank 12 -->
+		<const name="iscript_data_rg2_end" value="0x34010" />
+
+	</consts>
+	<!-- value sets -->
+	<sets>
+		<!-- reserved string indexes - will not be re-indexed or discarded by the assembler -->
+		<!-- strings called directly from the action handler; like "You can't carry any more." -->
+		<set name="reserved_script_string_indexes" values="3,6,16,18,19,20" />
+	</sets>
+
+	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
+	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
+	<!-- &lt; is less-than and &gt; is greater-than - used here for escaping xml syntax -->
+	<byte_to_string_maps>
+		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum">
+			<!-- printable characters -->
+			<entry byte="$21" str="!" />
+			<entry byte="$27" str="'" />
+			<entry byte="$2c" str="," />
+			<entry byte="$2d" str="-" />
+			<entry byte="$2e" str="." />
+			<entry byte="$3f" str="?" />
+			<entry byte="$5f" str="_" />
+			<!-- letters and numbers -->
+			<entry byte="$30" str="0" />
+			<entry byte="$31" str="1" />
+			<entry byte="$32" str="2" />
+			<entry byte="$33" str="3" />
+			<entry byte="$34" str="4" />
+			<entry byte="$35" str="5" />
+			<entry byte="$36" str="6" />
+			<entry byte="$37" str="7" />
+			<entry byte="$38" str="8" />
+			<entry byte="$39" str="9" />
+			<entry byte="$41" str="A" />
+			<entry byte="$42" str="B" />
+			<entry byte="$43" str="C" />
+			<entry byte="$44" str="D" />
+			<entry byte="$45" str="E" />
+			<entry byte="$46" str="F" />
+			<entry byte="$47" str="G" />
+			<entry byte="$48" str="H" />
+			<entry byte="$49" str="I" />
+			<entry byte="$4a" str="J" />
+			<entry byte="$4b" str="K" />
+			<entry byte="$4c" str="L" />
+			<entry byte="$4d" str="M" />
+			<entry byte="$4e" str="N" />
+			<entry byte="$4f" str="O" />
+			<entry byte="$50" str="P" />
+			<entry byte="$51" str="Q" />
+			<entry byte="$52" str="R" />
+			<entry byte="$53" str="S" />
+			<entry byte="$54" str="T" />
+			<entry byte="$55" str="U" />
+			<entry byte="$56" str="V" />
+			<entry byte="$57" str="W" />
+			<entry byte="$58" str="X" />
+			<entry byte="$59" str="Y" />
+			<entry byte="$5a" str="Z" />
+			<entry byte="$61" str="a" />
+			<entry byte="$62" str="b" />
+			<entry byte="$63" str="c" />
+			<entry byte="$64" str="d" />
+			<entry byte="$65" str="e" />
+			<entry byte="$66" str="f" />
+			<entry byte="$67" str="g" />
+			<entry byte="$68" str="h" />
+			<entry byte="$69" str="i" />
+			<entry byte="$6a" str="j" />
+			<entry byte="$6b" str="k" />
+			<entry byte="$6c" str="l" />
+			<entry byte="$6d" str="m" />
+			<entry byte="$6e" str="n" />
+			<entry byte="$6f" str="o" />
+			<entry byte="$70" str="p" />
+			<entry byte="$71" str="q" />
+			<entry byte="$72" str="r" />
+			<entry byte="$73" str="s" />
+			<entry byte="$74" str="t" />
+			<entry byte="$75" str="u" />
+			<entry byte="$76" str="v" />
+			<entry byte="$77" str="w" />
+			<entry byte="$78" str="x" />
+			<entry byte="$79" str="y" />
+			<entry byte="$7a" str="z" />
+			<!-- glyphs -->
+			<entry byte="$60" str="&lt;block&gt;" />
+			<entry byte="$7b" str="&lt;short_bar_right&gt;" />
+			<entry byte="$7c" str="&lt;long_bar&gt;" />
+			<entry byte="$7d" str="&lt;arrow_right&gt;" />
+			<entry byte="$7e" str="&lt;arrow_left&gt;" />
+			<entry byte="$7f" str="&lt;short_bar_left&gt;" />
+			<!-- command characters -->
+			<entry byte="$fb" str="&lt;title&gt;" />
+			<entry byte="$fc" str="&lt;p&gt;" />
+			<entry byte="$fd" str=" " />
+			<entry byte="$fe" str="&lt;n&gt;" />
+			<!-- assembly string escape character (quote) -->
+			<entry byte="$22" str="&lt;q&gt;" />
+		</byte_to_string_map>
+		<!-- japanese characters -->
+		<!-- "h_" - hiragana, "sh_" small hiragana -->
+		<!-- "k_" - katakana, "sk_" small katakana -->
+		<!-- "c_" - chinese character (kanji) -->
+		<byte_to_string_map name="iscript_string_characters" region="jp">
+			<entry byte="$00" str="&lt;sh_a&gt;" info="ぁ"  />
+			<entry byte="$01" str="&lt;h_a&gt;" info="あ"  />
+			<entry byte="$02" str="&lt;sh_i&gt;" info="ぃ"  />
+			<entry byte="$03" str="&lt;h_i&gt;" info="い"  />
+			<entry byte="$04" str="&lt;sh_u&gt;" info="ぅ"  />
+			<entry byte="$05" str="&lt;h_u&gt;" info="う"  />
+			<entry byte="$06" str="&lt;sh_e&gt;" info="ぇ"  />
+			<entry byte="$07" str="&lt;h_e&gt;" info="え"  />
+			<entry byte="$08" str="&lt;sh_o&gt;" info="ぉ"  />
+			<entry byte="$09" str="&lt;h_o&gt;" info="お"  />
+			<entry byte="$0a" str="&lt;h_ka&gt;" info="か"  />
+			<entry byte="$0b" str="&lt;h_ga&gt;" info="が"  />
+			<entry byte="$0c" str="&lt;h_ki&gt;" info="き"  />
+			<entry byte="$0d" str="&lt;h_gi&gt;" info="ぎ"  />
+			<entry byte="$0e" str="&lt;h_ku&gt;" info="く"  />
+			<entry byte="$0f" str="&lt;h_gu&gt;" info="ぐ"  />
+			<entry byte="$10" str="&lt;h_ke&gt;" info="け" />
+			<entry byte="$11" str="&lt;h_ge&gt;" info="げ" />
+			<entry byte="$12" str="&lt;h_ko&gt;" info="こ" />
+			<entry byte="$13" str="&lt;h_go&gt;" info="ご" />
+			<entry byte="$14" str="&lt;h_sa&gt;" info="さ" />
+			<entry byte="$15" str="&lt;h_za&gt;" info="ざ" />
+			<entry byte="$16" str="&lt;h_si&gt;" info="し" />
+			<entry byte="$17" str="&lt;h_ji&gt;" info="じ" />
+			<entry byte="$18" str="&lt;h_su&gt;" info="す" />
+			<entry byte="$19" str="&lt;h_zu&gt;" info="ず" />
+			<entry byte="$1a" str="&lt;h_se&gt;" info="せ" />
+			<entry byte="$1b" str="&lt;h_ze&gt;" info="ぜ" />
+			<entry byte="$1c" str="&lt;h_so&gt;" info="そ" />
+			<entry byte="$1d" str="&lt;h_zo&gt;" info="ぞ" />
+			<entry byte="$1e" str="&lt;h_ta&gt;" info="た" />
+			<entry byte="$1f" str="&lt;h_da&gt;" info="だ" />
+			<entry byte="$20" str="&lt;h_ti&gt;" info="ち" />
+			<entry byte="$21" str="&lt;h_di&gt;" info="ぢ" />
+			<entry byte="$22" str="&lt;sh_tu&gt;" info="っ" />
+			<entry byte="$23" str="&lt;h_tu&gt;" info="つ" />
+			<entry byte="$24" str="&lt;h_du&gt;" info="づ" />
+			<entry byte="$25" str="&lt;h_te&gt;" info="て" />
+			<entry byte="$26" str="&lt;h_de&gt;" info="で" />
+			<entry byte="$27" str="&lt;h_to&gt;" info="と" />
+			<entry byte="$28" str="&lt;h_do&gt;" info="ど" />
+			<entry byte="$29" str="&lt;h_na&gt;" info="な" />
+			<entry byte="$2a" str="&lt;h_ni&gt;" info="に" />
+			<entry byte="$2b" str="&lt;h_nu&gt;" info="ぬ" />
+			<entry byte="$2c" str="&lt;h_ne&gt;" info="ね" />
+			<entry byte="$2d" str="&lt;h_no&gt;" info="の" />
+			<entry byte="$2e" str="&lt;h_ha&gt;" info="は" />
+			<entry byte="$2f" str="&lt;h_ba&gt;" info="ば" />
+			<entry byte="$30" str="&lt;h_pa&gt;" info="ぱ" />
+			<entry byte="$31" str="&lt;h_hi&gt;" info="ひ" />
+			<entry byte="$32" str="&lt;h_bi&gt;" info="び" />
+			<entry byte="$33" str="&lt;h_pi&gt;" info="ぴ" />
+			<entry byte="$34" str="&lt;h_fu&gt;" info="ふ" />
+			<entry byte="$35" str="&lt;h_bu&gt;" info="ぶ" />
+			<entry byte="$36" str="&lt;h_pu&gt;" info="ぷ" />
+			<entry byte="$37" str="&lt;h_he&gt;" info="へ" />
+			<entry byte="$38" str="&lt;h_be&gt;" info="べ" />
+			<entry byte="$39" str="&lt;h_pe&gt;" info="ぺ" />
+			<entry byte="$3a" str="&lt;h_ho&gt;" info="ほ" />
+			<entry byte="$3b" str="&lt;h_bo&gt;" info="ぼ" />
+			<entry byte="$3c" str="&lt;h_po&gt;" info="ぽ" />
+			<entry byte="$3d" str="&lt;h_ma&gt;" info="ま" />
+			<entry byte="$3e" str="&lt;h_mi&gt;" info="み" />
+			<entry byte="$3f" str="&lt;h_mu&gt;" info="む" />
+			<entry byte="$40" str="&lt;h_me&gt;" info="め" />
+			<entry byte="$41" str="&lt;h_mo&gt;" info="も" />
+			<entry byte="$42" str="&lt;sh_ya&gt;" info="ゃ" />
+			<entry byte="$43" str="&lt;h_ya&gt;" info="や" />
+			<entry byte="$44" str="&lt;sh_yu&gt;" info="ゅ" />
+			<entry byte="$45" str="&lt;h_yu&gt;" info="ゆ" />
+			<entry byte="$46" str="&lt;sh_yo&gt;" info="ょ" />
+			<entry byte="$47" str="&lt;h_yo&gt;" info="よ" />
+			<entry byte="$48" str="&lt;h_ra&gt;" info="ら" />
+			<entry byte="$49" str="&lt;h_ri&gt;" info="り" />
+			<entry byte="$4a" str="&lt;h_ru&gt;" info="る" />
+			<entry byte="$4b" str="&lt;h_re&gt;" info="れ" />
+			<entry byte="$4c" str="&lt;h_ro&gt;" info="ろ" />
+			<entry byte="$4d" str="&lt;sh_wa&gt;" info="ゎ" />
+			<entry byte="$4e" str="&lt;h_wa&gt;" info="わ" />
+			<entry byte="$4f" str="&lt;h_wo&gt;" info="を" />
+			<entry byte="$50" str="&lt;h_n&gt;" info="ん" />
+			<entry byte="$51" str="&lt;sk_a&gt;" info="ァ" />
+			<entry byte="$52" str="&lt;k_a&gt;" info="ア" />
+			<entry byte="$53" str="&lt;sk_i&gt;" info="ィ" />
+			<entry byte="$54" str="&lt;k_i&gt;" info="イ" />
+			<entry byte="$55" str="&lt;sk_u&gt;" info="ゥ" />
+			<entry byte="$56" str="&lt;k_u&gt;" info="ウ" />
+			<entry byte="$57" str="&lt;sk_e&gt;" info="ェ" />
+			<entry byte="$58" str="&lt;k_e&gt;" info="エ" />
+			<entry byte="$59" str="&lt;sk_o&gt;" info="ォ" />
+			<entry byte="$5a" str="&lt;k_o&gt;" info="オ" />
+			<entry byte="$5b" str="&lt;k_ka&gt;" info="カ" />
+			<entry byte="$5c" str="&lt;k_ga&gt;" info="ガ" />
+			<entry byte="$5d" str="&lt;k_ki&gt;" info="キ" />
+			<entry byte="$5e" str="&lt;k_gi&gt;" info="ギ" />
+			<entry byte="$5f" str="&lt;k_ku&gt;" info="ク" />
+			<entry byte="$60" str="&lt;k_gu&gt;" info="グ" />
+			<entry byte="$61" str="&lt;k_ke&gt;" info="ケ" />
+			<entry byte="$62" str="&lt;k_ge&gt;" info="ゲ" />
+			<entry byte="$63" str="&lt;k_ko&gt;" info="コ" />
+			<entry byte="$64" str="&lt;k_go&gt;" info="ゴ" />
+			<entry byte="$65" str="&lt;k_sa&gt;" info="サ" />
+			<entry byte="$66" str="&lt;k_za&gt;" info="ザ" />
+			<entry byte="$67" str="&lt;k_si&gt;" info="シ" />
+			<entry byte="$68" str="&lt;k_ji&gt;" info="ジ" />
+			<entry byte="$69" str="&lt;k_su&gt;" info="ス" />
+			<entry byte="$6a" str="&lt;k_zu&gt;" info="ズ" />
+			<entry byte="$6b" str="&lt;k_se&gt;" info="セ" />
+			<entry byte="$6c" str="&lt;k_ze&gt;" info="ゼ" />
+			<entry byte="$6d" str="&lt;k_so&gt;" info="ソ" />
+			<entry byte="$6e" str="&lt;k_zo&gt;" info="ゾ" />
+			<entry byte="$6f" str="&lt;k_ta&gt;" info="タ" />
+			<entry byte="$70" str="&lt;k_da&gt;" info="ダ" />
+			<entry byte="$71" str="&lt;k_ti&gt;" info="チ" />
+			<entry byte="$72" str="&lt;k_di&gt;" info="ヂ" />
+			<entry byte="$73" str="&lt;sk_tu&gt;" info="ッ" />
+			<entry byte="$74" str="&lt;k_tu&gt;" info="ツ" />
+			<entry byte="$75" str="&lt;k_du&gt;" info="ヅ" />
+			<entry byte="$76" str="&lt;k_te&gt;" info="テ" />
+			<entry byte="$77" str="&lt;k_de&gt;" info="デ" />
+			<entry byte="$78" str="&lt;k_to&gt;" info="ト" />
+			<entry byte="$79" str="&lt;k_do&gt;" info="ド" />
+			<entry byte="$7a" str="&lt;k_na&gt;" info="ナ" />
+			<entry byte="$7b" str="&lt;k_ni&gt;" info="ニ" />
+			<entry byte="$7c" str="&lt;k_nu&gt;" info="ヌ" />
+			<entry byte="$7d" str="&lt;k_ne&gt;" info="ネ" />
+			<entry byte="$7e" str="&lt;k_no&gt;" info="ノ" />
+			<entry byte="$7f" str="&lt;k_ha&gt;" info="ハ" />
+			<entry byte="$80" str="&lt;k_ba&gt;" info="バ" />
+			<entry byte="$81" str="&lt;k_pa&gt;" info="パ" />
+			<entry byte="$82" str="&lt;k_hi&gt;" info="ヒ" />
+			<entry byte="$83" str="&lt;k_bi&gt;" info="ビ" />
+			<entry byte="$84" str="&lt;k_pi&gt;" info="ピ" />
+			<entry byte="$85" str="&lt;k_fu&gt;" info="フ" />
+			<entry byte="$86" str="&lt;k_bu&gt;" info="ブ" />
+			<entry byte="$87" str="&lt;k_pu&gt;" info="プ" />
+			<entry byte="$88" str="&lt;k_he&gt;" info="ヘ" />
+			<entry byte="$89" str="&lt;k_be&gt;" info="ベ" />
+			<entry byte="$8a" str="&lt;k_pe&gt;" info="ペ" />
+			<entry byte="$8b" str="&lt;k_ho&gt;" info="ホ" />
+			<entry byte="$8c" str="&lt;k_bo&gt;" info="ボ" />
+			<entry byte="$8d" str="&lt;k_po&gt;" info="ポ" />
+			<entry byte="$8e" str="&lt;k_ma&gt;" info="マ" />
+			<entry byte="$8f" str="&lt;k_mi&gt;" info="ミ" />
+			<entry byte="$90" str="&lt;k_mu&gt;" info="ム" />
+			<entry byte="$91" str="&lt;k_me&gt;" info="メ" />
+			<entry byte="$92" str="&lt;k_mo&gt;" info="モ" />
+			<entry byte="$93" str="&lt;sk_ya&gt;" info="ャ" />
+			<entry byte="$94" str="&lt;k_ya&gt;" info="ヤ" />
+			<entry byte="$95" str="&lt;sk_yu&gt;" info="ュ" />
+			<entry byte="$96" str="&lt;k_yu&gt;" info="ユ" />
+			<entry byte="$97" str="&lt;sk_yo&gt;" info="ョ" />
+			<entry byte="$98" str="&lt;k_yo&gt;" info="ヨ" />
+			<entry byte="$99" str="&lt;k_ra&gt;" info="ラ" />
+			<entry byte="$9a" str="&lt;k_ri&gt;" info="リ" />
+			<entry byte="$9b" str="&lt;k_ru&gt;" info="ル" />
+			<entry byte="$9c" str="&lt;k_re&gt;" info="レ" />
+			<entry byte="$9d" str="&lt;k_ro&gt;" info="ロ" />
+			<entry byte="$9e" str="&lt;sk_wa&gt;" info="ヮ" />
+			<entry byte="$9f" str="&lt;k_wa&gt;" info="ワ" />
+			<entry byte="$a0" str="&lt;k_wo&gt;" info="ヲ" />
+			<entry byte="$a1" str="&lt;k_n&gt;" info="ン" />
+			<entry byte="$a2" str="&lt;c_na&gt;" info="名" />
+			<entry byte="$a3" str="&lt;c_mae&gt;" info="前" />
+			<entry byte="$a4" str="&lt;c_noboru&gt;" info="登" />
+			<entry byte="$a5" str="&lt;c_roku&gt;" info="録" />
+			<entry byte="$a6" str="&lt;c_hairu&gt;" info="入" />
+			<entry byte="$a7" str="&lt;c_tikara&gt;" info="力" />
+			<entry byte="$a8" str="&lt;c_iti&gt;" info="一" />
+			<entry byte="$a9" str="&lt;c_kesu&gt;" info="消" />
+			<entry byte="$aa" str="&lt;c_owaru&gt;" info="終" />
+			<entry byte="$ab" str="&lt;c_tigau&gt;" info="違" />
+			<entry byte="$ac" str="&lt;dot&gt;" info="・" />
+			<entry byte="$ad" str="?" info="？" />
+			<entry byte="$ae" str="!" info="！" />
+			<entry byte="$af" str="0" info="０" />
+			<entry byte="$b0" str="1" info="１" />
+			<entry byte="$b1" str="2" info="２" />
+			<entry byte="$b2" str="3" info="３" />
+			<entry byte="$b3" str="5" info="５" />
+			<entry byte="$b4" str="8" info="８" />
+			<entry byte="$b5" str="&lt;c_i&gt;" info="井" />
+			<entry byte="$b6" str="&lt;c_sirusu&gt;" info="印" />
+			<entry byte="$b7" str="&lt;c_kage&gt;" info="影" />
+			<entry byte="$b8" str="&lt;c_ou&gt;" info="王" />
+			<entry byte="$b9" str="&lt;c_ya&gt;" info="屋" />
+			<entry byte="$ba" str="&lt;c_au&gt;" info="会" />
+			<entry byte="$bb" str="&lt;c_kai&gt;" info="界" />
+			<entry byte="$bc" str="&lt;c_yoroi&gt;" info="鎧" />
+			<entry byte="$bd" str="&lt;c_utuwa&gt;" info="器" />
+			<entry byte="$be" str="&lt;c_inoru&gt;" info="祈" />
+			<entry byte="$bf" str="&lt;c_oka&gt;" info="丘" />
+			<entry byte="$c0" str="&lt;c_osieru&gt;" info="教" />
+			<entry byte="$c1" str="&lt;c_kane&gt;" info="金" />
+			<entry byte="$c2" str="&lt;c_gu&gt;" info="具" />
+			<entry byte="$c3" str="&lt;c_sora&gt;" info="空" />
+			<entry byte="$c4" str="&lt;c_tu&gt;" info="撃" />
+			<entry byte="$c5" str="&lt;c_ken&gt;" info="剣" />
+			<entry byte="$c6" str="&lt;c_kagi&gt;" info="鍵" />
+			<entry byte="$c7" str="&lt;c_to&gt;" info="戸" />
+			<entry byte="$c8" str="&lt;c_semeru&gt;" info="攻" />
+			<entry byte="$c9" str="&lt;c_gou&gt;" info="号" />
+			<entry byte="$ca" str="&lt;c_fusagu&gt;" info="塞" />
+			<entry byte="$cb" str="&lt;c_yubi&gt;" info="指" />
+			<entry byte="$cc" str="&lt;c_sake&gt;" info="酒" />
+			<entry byte="$cd" str="&lt;c_ukeru&gt;" info="受" />
+			<entry byte="$ce" str="&lt;c_ki&gt;" info="樹" />
+			<entry byte="$cf" str="&lt;c_tate&gt;" info="盾" />
+			<entry byte="$d0" str="&lt;c_shou&gt;" info="称" />
+			<entry byte="$d1" str="&lt;c_siro&gt;" info="城" />
+			<entry byte="$d2" str="&lt;c_ba&gt;" info="場" />
+			<entry byte="$d3" str="&lt;c_kokoro&gt;" info="心" />
+			<entry byte="$d4" str="&lt;c_kami&gt;" info="神" />
+			<entry byte="$d5" str="&lt;c_hito&gt;" info="人" />
+			<entry byte="$d6" str="&lt;c_mizu&gt;" info="水" />
+			<entry byte="$d7" str="&lt;c_se&gt;" info="世" />
+			<entry byte="$d8" str="&lt;c_isi&gt;" info="石" />
+			<entry byte="$d9" str="&lt;c_tatakau&gt;" info="戦" />
+			<entry byte="$da" str="&lt;c_izumi&gt;" info="泉" />
+			<entry byte="$db" str="&lt;c_zoku&gt;" info="族" />
+			<entry byte="$dc" str="&lt;c_karada&gt;" info="体" />
+			<entry byte="$dd" str="&lt;c_otoko&gt;" info="男" />
+			<entry byte="$de" str="&lt;c_naka&gt;" info="中" />
+			<entry byte="$df" str="&lt;c_mati&gt;" info="町" />
+			<entry byte="$e0" str="&lt;c_koeru&gt;" info="(超)" />
+			<entry byte="$e1" str="&lt;c_miyako&gt;" info="都" />
+			<entry byte="$e2" str="&lt;c_tou&gt;" info="塔" />
+			<entry byte="$e3" str="&lt;c_miti&gt;" info="道" />
+			<entry byte="$e4" str="&lt;c_doku&gt;" info="毒" />
+			<entry byte="$e5" str="&lt;c_kanarazu&gt;" info="必" />
+			<entry byte="$e6" str="&lt;c_titi&gt;" info="父" />
+			<entry byte="$e7" str="&lt;c_makeru&gt;" info="負" />
+			<entry byte="$e8" str="&lt;c_bu&gt;" info="武" />
+			<entry byte="$e9" str="&lt;c_fun&gt;" info="噴" />
+			<entry byte="$ea" str="&lt;c_taira&gt;" info="平" />
+			<entry byte="$eb" str="&lt;c_kabe&gt;" info="壁" />
+			<entry byte="$ec" str="&lt;c_hou&gt;" info="法" />
+			<entry byte="$ed" str="&lt;c_ma&gt;" info="魔" />
+			<entry byte="$ee" str="&lt;c_kiri&gt;" info="霧" />
+			<entry byte="$ef" str="&lt;c_inoti&gt;" info="命" />
+			<entry byte="$f0" str="&lt;c_mon&gt;" info="門" />
+			<entry byte="$f1" str="&lt;c_kusuri&gt;" info="薬" />
+			<entry byte="$f2" str="&lt;c_sama&gt;" info="様" />
+			<entry byte="$f3" str="&lt;c_iru&gt;" info="要" />
+			<entry byte="$f4" str="&lt;c_tabi&gt;" info="旅" />
+			<entry byte="$f5" str="&lt;c_rin&gt;" info="輪" />
+			<entry byte="$f6" str="&lt;c_fumoto&gt;" info="麓" />
+			<entry byte="$f7" str="&lt;c_wa&gt;" info="和" />
+			<entry byte="$f8" str="&lt;c_hanasi&gt;" info="話" />
+			<entry byte="$f9" str="&lt;c_in&gt;" info="隕" />
+			<entry byte="$fa" str="&lt;garbled&gt;" />
+			<entry byte="$fb" str="&lt;title&gt;" />
+			<entry byte="$fc" str="&lt;name&gt;" />
+			<entry byte="$fd" str=" " />
+			<entry byte="$fe" str="&lt;n&gt;" />
+		</byte_to_string_map>
+		<!-- define constants will be automatically injected by the disassembler, grouped by type -->
+		<byte_to_string_map name="defines_textbox">
+			<entry byte="$00" str="GENERIC" />
+			<entry byte="$80" str="KING" />
+			<entry byte="$81" str="GURU" />
+			<entry byte="$82" str="MARTIAL_ARTIST" />
+			<entry byte="$83" str="MAGICIAN" />
+			<entry byte="$84" str="DOCTOR" />
+			<entry byte="$85" str="NURSE" />
+			<entry byte="$86" str="PINK_SHIRT" />
+			<entry byte="$87" str="SMOKER" />
+			<entry byte="$88" str="MEAT_SALESMAN" />
+			<entry byte="$89" str="TOOLS_SALESMAN" />
+			<entry byte="$8a" str="KEY_SALESMAN" />
+		</byte_to_string_map>
+		<byte_to_string_map name="defines_item">
+			<entry byte="$00" str="WEAPON_HAND_DAGGER" />
+			<entry byte="$01" str="WEAPON_LONG_SWORD" />
+			<entry byte="$02" str="WEAPON_GIANT_BLADE" />
+			<entry byte="$03" str="WEAPON_DRAGON_SLAYER" />
+			<entry byte="$20" str="ARMOR_LEATHER" />
+			<entry byte="$21" str="ARMOR_STUDDED_MAIL" />
+			<entry byte="$22" str="ARMOR_FULL_PLATE" />
+			<entry byte="$23" str="ARMOR_BATTLE_SUIT" />
+			<entry byte="$40" str="SHIELD_SMALL" />
+			<entry byte="$41" str="SHIELD_LARGE" />
+			<entry byte="$42" str="SHIELD_MAGIC" />
+			<entry byte="$43" str="SHIELD_BATTLE_HELMET" />
+			<entry byte="$60" str="MAGIC_DELUGE" />
+			<entry byte="$61" str="MAGIC_THUNDER" />
+			<entry byte="$62" str="MAGIC_FIRE" />
+			<entry byte="$63" str="MAGIC_DEATH" />
+			<entry byte="$64" str="MAGIC_TILTE" />
+			<entry byte="$80" str="SPECIAL_RING_OF_ELF" />
+			<entry byte="$81" str="SPECIAL_RING_OF_RUBY" />
+			<entry byte="$82" str="SPECIAL_RING_OF_DWORF" />
+			<entry byte="$83" str="SPECIAL_DEMONS_RING" />
+			<entry byte="$84" str="KEY_A" />
+			<entry byte="$85" str="KEY_K" />
+			<entry byte="$86" str="KEY_Q" />
+			<entry byte="$87" str="KEY_J" />
+			<entry byte="$88" str="KEY_JO" />
+			<entry byte="$89" str="MATTOCK" />
+			<entry byte="$8a" str="SPECIAL_MAGICAL_ROD" />
+			<entry byte="$8b" str="UNUSED_CRYSTAL" />
+			<entry byte="$8c" str="UNUSED_LAMP" />
+			<entry byte="$8d" str="ITEM_HOUR_GLASS" />
+			<entry byte="$8e" str="UNUSED_BOOK" />
+			<entry byte="$8f" str="ITEM_WING_BOOTS" />
+			<entry byte="$90" str="ITEM_RED_POTION" />
+			<entry byte="$91" str="ITEM_POISON" />
+			<entry byte="$92" str="SPECIAL_ELIXIR" />
+			<entry byte="$93" str="SPECIAL_PENDANT" />
+			<entry byte="$94" str="SPECIAL_BLACK_ONYX" />
+			<entry byte="$95" str="SPECIAL_FIRE_CRYSTAL" />
+		</byte_to_string_map>
+		<byte_to_string_map name="defines_quest">
+			<!-- 0000 0001 -->
+			<entry byte="$01" str="QUEST_TOWER_SPRING" />
+			<!-- 0000 0010 -->
+			<entry byte="$02" str="QUEST_SKY_SPRING" />
+			<!-- 0000 0100 -->
+			<entry byte="$03" str="QUEST_DUNGEON_SPRING" />
+			<!-- 0001 0000 -->
+			<entry byte="$4f" str="QUEST_WYVERN_MATTOCK" />
+			<!-- 0010 0000 -->
+			<entry byte="$04" str="QUEST_PATH_TO_MASCON" />
+			<!-- 0100 1000: not a clean power of two but will not overlap with the others -->
+			<entry byte="$24" str="QUEST_EXTRA" />
+		</byte_to_string_map>
+		<byte_to_string_map name="defines_rank">
+			<entry byte="$00" str="RANK_NOVICE" />
+			<entry byte="$01" str="RANK_ASPIRANT" />
+			<entry byte="$02" str="RANK_BATTLER" />
+			<entry byte="$03" str="RANK_FIGHTER" />
+			<entry byte="$04" str="RANK_ADEPT" />
+			<entry byte="$05" str="RANK_CHEVALIER" />
+			<entry byte="$06" str="RANK_VETERAN" />
+			<entry byte="$07" str="RANK_WARRIOR" />
+			<entry byte="$08" str="RANK_SWORDMAN" />
+			<entry byte="$09" str="RANK_HERO" />
+			<entry byte="$0a" str="RANK_SOLDIER" />
+			<entry byte="$0b" str="RANK_MYRMIDON" />
+			<entry byte="$0c" str="RANK_CHAMPION" />
+			<entry byte="$0d" str="RANK_SUPERHERO" />
+			<entry byte="$0e" str="RANK_PALADIN" />
+			<entry byte="$0f" str="RANK_LORD" />
+		</byte_to_string_map>
+	</byte_to_string_maps>
+</eoe_config>

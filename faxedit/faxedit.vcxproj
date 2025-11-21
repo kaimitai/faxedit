@@ -156,6 +156,7 @@
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
+    <ClCompile Include="src\fe\Config.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\common\stb_image.h" />
     <ClInclude Include="src\fe\Chunk.h" />
+    <ClInclude Include="src\fe\Config.h" />
     <ClInclude Include="src\fe\Door.h" />
     <ClInclude Include="src\fe\fe_app_constants.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
