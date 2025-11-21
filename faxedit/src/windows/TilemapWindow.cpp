@@ -12,7 +12,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	auto l_screen_tilemap{ m_gfx.get_screen_texture() };
 
 	const std::string l_win_label{ std::format("{} > Screen {} > {}",
-		c::LABELS_CHUNKS[m_sel_chunk], m_sel_screen,
+		m_labels_worlds[m_sel_chunk], m_sel_screen,
 		get_editmode_as_string()) +
 		(m_emode == fe::EditMode::Tilemap ?
 		std::format(" > Position ({},{})", m_sel_tile_x, m_sel_tile_y) : "")
@@ -190,7 +190,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					m_sel_metatile = 0;
 
 				imgui_text(std::format("Metatile #{} with property: {}", m_sel_metatile,
-					get_description(l_metatiles[m_sel_metatile].m_block_property, c::LABELS_BLOCK_PROPERTIES)));
+					get_description(l_metatiles[m_sel_metatile].m_block_property, m_labels_block_props)));
 
 				ImGui::SeparatorText("Metatiles");
 				for (std::size_t i = 0; i < l_metatiles.size(); ++i) {
@@ -318,8 +318,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						byte l_req{ l_door.m_requirement };
 
 						(ui::imgui_slider_with_arrows("doorreqs",
-							std::format("Requirement: {0}", get_description(l_req, c::LABELS_DOOR_REQS)),
-							l_door.m_requirement, 0, c::LABELS_DOOR_REQS.size() - 1));
+							std::format("Requirement: {0}", get_description(l_req, m_labels_door_reqs)),
+							l_door.m_requirement, 0, m_labels_door_reqs.size() - 1));
 
 						// destination world, can never be edited from here
 						// but we show it with a tooltip
@@ -348,7 +348,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						if (ui::imgui_slider_with_arrows("doordestscreen",
 							l_door.m_door_type == fe::DoorType::Building ?
-							"Destination Screen: " + c::LABELS_BUILDINGS[l_dest_screen] : "Destination Screen"
+							"Destination Screen: " + m_labels_buildings[l_dest_screen] : "Destination Screen"
 							, l_dest_screen, 0, m_game->m_chunks.at(l_dest_world).m_screens.size() - 1,
 							l_dest_tooltip))
 							l_door.m_dest_screen_id = l_dest_screen;
@@ -367,7 +367,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						if (l_dtype == fe::DoorType::SameWorld) {
 							if (ui::imgui_slider_with_arrows("doordestpal",
 								std::format("Destination palette/music: {}",
-									get_description(l_dest_palette, c::LABELS_PALETTES)), l_dest_palette, 0, 30,
+									get_description(l_dest_palette, m_labels_palettes)), l_dest_palette, 0, 30,
 								l_dest_tooltip))
 								l_door.m_dest_palette_id = l_dest_palette;
 						}
@@ -441,7 +441,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						auto& l_iwt_data{ l_screen.m_intrachunk_scroll.value() };
 
 						ui::imgui_slider_with_arrows("###cintrat",
-							"Destination world: " + c::LABELS_CHUNKS.at(l_iwt_data.m_dest_chunk), l_iwt_data.m_dest_chunk,
+							"Destination world: " + m_labels_worlds.at(l_iwt_data.m_dest_chunk), l_iwt_data.m_dest_chunk,
 							0, 7);
 
 						ui::imgui_slider_with_arrows("###sintrat",
@@ -461,7 +461,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						ui::imgui_slider_with_arrows("###sintrap",
 							std::format("Destination palette: {}",
-								get_description(l_iwt_data.m_palette_id, c::LABELS_PALETTES)),
+								get_description(l_iwt_data.m_palette_id, m_labels_palettes)),
 							l_iwt_data.m_palette_id,
 							0, m_game->m_palettes.size());
 
@@ -513,7 +513,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						ui::imgui_slider_with_arrows("###sinterp",
 							std::format("Destination palette: {}",
-								get_description(l_ict_data.m_palette_id, c::LABELS_PALETTES)),
+								get_description(l_ict_data.m_palette_id, m_labels_palettes)),
 							l_ict_data.m_palette_id,
 							0, m_game->m_palettes.size());
 
@@ -557,7 +557,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 		if (ImGui::BeginChild("SharedBottom", ImVec2(availbottom.x * 0.7f, 0.0f), true)) {
 
 			ImGui::SeparatorText(std::format("Selected World: {} (#{} of {})",
-				c::LABELS_CHUNKS.at(m_sel_chunk),
+				m_labels_worlds.at(m_sel_chunk),
 				m_sel_chunk, m_game->m_chunks.size()).c_str());
 
 			if (fe::ui::imgui_slider_with_arrows("##ws", "",
@@ -645,7 +645,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					ui::imgui_checkbox(std::format("###io{}", j * 8 + i),
 						m_overlays[j * 8 + i],
 						get_description(static_cast<byte>(j * 8 + i),
-							c::LABELS_BLOCK_PROPERTIES));
+							m_labels_block_props));
 					ImGui::SameLine();
 				}
 				ImGui::NewLine();
@@ -719,7 +719,7 @@ void fe::MainWindow::show_stage_door_data(fe::Door& p_door) {
 	if (!l_unique_stage) {
 		imgui_text(std::format(
 			"Stage ID for world {} can not be deduced.\nCan not show metadata.",
-			c::LABELS_CHUNKS[m_sel_chunk]).c_str());
+			m_labels_worlds[m_sel_chunk]).c_str());
 	}
 	else {
 		bool l_next{ p_door.m_door_type == fe::DoorType::NextWorld };
@@ -730,14 +730,14 @@ void fe::MainWindow::show_stage_door_data(fe::Door& p_door) {
 		byte l_dest_req{ l_next ? l_stg->m_next_requirement : l_stg->m_prev_requirement };
 
 		ImGui::Text(std::format("Requirement: {}",
-			get_description(l_dest_req, c::LABELS_DOOR_REQS)).c_str());
+			get_description(l_dest_req, m_labels_door_reqs)).c_str());
 		ImGui::Text(std::format("Destination stage: {} ({})",
-			l_dest_stage, c::LABELS_CHUNKS[l_dest_world]).c_str());
+			l_dest_stage, m_labels_worlds[l_dest_world]).c_str());
 		ImGui::Text(std::format("Destination screen: {}",
 			l_dest_screen).c_str());
 		ImGui::Text(std::format("Destination palette: {}",
 			get_description(m_game->m_chunks.at(l_dest_world).m_default_palette_no,
-				c::LABELS_PALETTES)).c_str());
+				m_labels_palettes)).c_str());
 	}
 }
 

@@ -2,11 +2,11 @@
 #include "Metatile.h"
 #include "fe_constants.h"
 #include "./../common/klib/Kutil.h"
+#include "Config.h"
 #include <algorithm>
 #include <utility>
 
 fe::Game::Game(void) :
-	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
 	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
 	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
 	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
@@ -16,14 +16,12 @@ fe::Game::Game(void) :
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
 	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
-	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX },
 	m_jump_on_animation{ 0x34, 0x2c, 0x5c, 0x13 }
 {
 }
 
 fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
-	m_ptr_chunk_screen_data{ c::PTR_CHUNK_SCREEN_DATA },
 	m_ptr_chunk_metadata{ c::PTR_CHUNK_METADATA },
 	m_ptr_chunk_interchunk_transitions{ c::PTR_CHUNK_INTERCHUNK_TRANSITIONS },
 	m_ptr_chunk_intrachunk_transitions{ c::PTR_CHUNK_INTRACHUNK_TRANSITIONS },
@@ -32,8 +30,7 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 	m_ptr_chunk_palettes{ c::PTR_CHUNK_PALETTES },
 	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
 	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
-	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
-	m_offsets_bg_gfx{ c::OFFSETS_BG_GFX }
+	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS }
 {
 
 	// extract all tilemaps in the correct ordering
@@ -53,113 +50,117 @@ fe::Game::Game(const std::vector<byte>& p_rom_data) :
 				}
 	}
 
-	// extract various
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		set_various(i, m_ptr_chunk_metadata);
+// extract various
+for (std::size_t i{ 0 }; i < 8; ++i)
+	set_various(i, m_ptr_chunk_metadata);
 
-	// extract sprites
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		if (i == c::CHUNK_IDX_BUILDINGS) {
-			// this is not regular sprite data, it is the npc bundle masterdata
-			// referred to by the parameter byte in building doors
-			// read until we reach another master pointer value, that may not come
-			// in increasing order! (we assume tightly packed data however)
-			// the original game places this data last of all just to be nasty to us,
-			// so we fall back to stop parsing if we get an empty sprite set
-			std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
-			std::size_t l_ptr_to_data{ get_pointer_address(l_ptr_to_bundles, 0x24010) };
+// extract sprites
+for (std::size_t i{ 0 }; i < 8; ++i) {
+	if (i == c::CHUNK_IDX_BUILDINGS) {
+		// this is not regular sprite data, it is the npc bundle masterdata
+		// referred to by the parameter byte in building doors
+		// read until we reach another master pointer value, that may not come
+		// in increasing order! (we assume tightly packed data however)
+		// the original game places this data last of all just to be nasty to us,
+		// so we fall back to stop parsing if we get an empty sprite set
+		std::size_t l_ptr_to_bundles{ get_pointer_address(m_ptr_chunk_sprite_data + 2 * i, 0x24010) };
+		std::size_t l_ptr_to_data{ get_pointer_address(l_ptr_to_bundles, 0x24010) };
 
-			for (std::size_t npcb{ 0 }; ; ++npcb) {
-				std::size_t l_ptr_to_set{ get_pointer_address(l_ptr_to_bundles + 2 * npcb, 0x24010) };
+		for (std::size_t npcb{ 0 }; ; ++npcb) {
+			std::size_t l_ptr_to_set{ get_pointer_address(l_ptr_to_bundles + 2 * npcb, 0x24010) };
 
-				if (l_ptr_to_bundles + 2 * npcb == l_ptr_to_data)
-					break;
+			if (l_ptr_to_bundles + 2 * npcb == l_ptr_to_data)
+				break;
 
-				m_npc_bundles.push_back(extract_sprite_set(m_rom_data, l_ptr_to_set));
-			}
+			m_npc_bundles.push_back(extract_sprite_set(m_rom_data, l_ptr_to_set));
 		}
-		else
-			set_sprites(i, m_ptr_chunk_sprite_data);
 	}
-	// extract inter-chunk transitions
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		set_interchunk_scrolling(i, m_ptr_chunk_interchunk_transitions);
-		set_intrachunk_scrolling(i, m_ptr_chunk_intrachunk_transitions);
-	}
+	else
+		set_sprites(i, m_ptr_chunk_sprite_data);
+}
+// extract inter-chunk transitions
+for (std::size_t i{ 0 }; i < 8; ++i) {
+	set_interchunk_scrolling(i, m_ptr_chunk_interchunk_transitions);
+	set_intrachunk_scrolling(i, m_ptr_chunk_intrachunk_transitions);
+}
 
-	m_stages = fe::StageManager(p_rom_data,
-		c::OFFSET_STAGE_TO_WORLD, c::OFFSET_STAGE_CONNECTIONS,
-		c::OFFSET_STAGE_SCREENS, c::OFFSET_STAGE_REQUIREMENTS,
-		c::OFFSET_GAME_START_SCREEN, c::OFFSET_GAME_START_POS,
-		c::OFFSET_GAME_START_HP);
+m_stages = fe::StageManager(p_rom_data,
+	c::OFFSET_STAGE_TO_WORLD, c::OFFSET_STAGE_CONNECTIONS,
+	c::OFFSET_STAGE_SCREENS, c::OFFSET_STAGE_REQUIREMENTS,
+	c::OFFSET_GAME_START_SCREEN, c::OFFSET_GAME_START_POS,
+	c::OFFSET_GAME_START_HP);
 
-	// extract gfx
-	for (std::size_t c{ 0 }; c < m_offsets_bg_gfx.size(); ++c) {
+// set default palette indexes for each chunk
+for (std::size_t i{ 0 }; i < 8; ++i)
+	m_chunks.at(i).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx + i));
+
+for (std::size_t i{ 0 }; i < 31; ++i) {
+	NES_Palette l_tmp_palette;
+	for (std::size_t pidx{ m_ptr_chunk_palettes + 16 * i }; pidx < m_ptr_chunk_palettes + 16 * i + 16; ++pidx)
+		l_tmp_palette.push_back(p_rom_data[pidx]);
+
+	m_palettes.push_back(l_tmp_palette);
+}
+
+// get the 8 spawn locations
+for (std::size_t i{ 0 }; i < 8; ++i) {
+	m_spawn_locations.push_back(fe::Spawn_location(
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i),
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_STAGES + i),
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4,
+		m_rom_data.at(c::OFFSET_SPAWN_LOC_BPM + i)
+	));
+}
+
+// extract mattock animations
+for (std::size_t i{ 0 }; i < 8; ++i) {
+	m_chunks.at(i).m_mattock_animation = {
+		m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i),
+		m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 1),
+		m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 2),
+		m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 3)
+	};
+}
+
+// extract "push-block" parameters
+m_push_block = fe::Push_block_parameters(
+	m_rom_data.at(c::OFFSET_PTM_STAGE_NO),
+	m_rom_data.at(c::OFFSET_PTM_SCREEN_NO),
+	m_rom_data.at(c::OFFSET_PTM_START_POS) % 16,
+	m_rom_data.at(c::OFFSET_PTM_START_POS) / 16,
+	m_rom_data.at(c::OFFSET_PTM_BLOCK_COUNT),
+	m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS),
+	m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 1),
+	m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 2),
+	m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3),
+	m_rom_data.at(c::OFFSET_PTM_POS_DELTA),
+	m_rom_data.at(c::OFFSET_PTM_TILE_NO),
+	m_rom_data.at(c::OFFSET_PTM_COVER_POS) % 16,
+	m_rom_data.at(c::OFFSET_PTM_COVER_POS) / 16
+);
+
+// extract "jump-on" animation
+for (std::size_t i{ 0 }; i < 4; ++i)
+	m_jump_on_animation.push_back(m_rom_data.at(c::OFFSET_JUMP_ON_ANIMATION + i));
+}
+
+void fe::Game::generate_tilesets(const fe::Config& p_config) {
+	const auto bg_offsets{ p_config.bmap_as_numeric_vec(c::ID_BG_CHR_ROM_OFFSETS, 10) };
+
+	for (std::size_t c{ 0 }; c < bg_offsets.size(); ++c) {
 		m_tilesets.push_back(std::vector<klib::NES_tile>());
 
 		for (std::size_t i{ 0 }; i < 256; ++i) {
-			m_tilesets[c].push_back(klib::NES_tile::NES_tile(p_rom_data,
-				m_offsets_bg_gfx[c] + 16 * i));
+			m_tilesets[c].push_back(klib::NES_tile::NES_tile(m_rom_data,
+				bg_offsets[c] + 16 * i));
 		}
+
 		// set the 0th entry to be a blank tile
 		// this will make everything render correctly
 		m_tilesets[c][0] = klib::NES_tile();
 	}
-
-	// set default palette indexes for each chunk
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		m_chunks.at(i).set_default_palette_no(m_rom_data.at(m_ptr_chunk_default_palette_idx + i));
-
-	for (std::size_t i{ 0 }; i < 31; ++i) {
-		NES_Palette l_tmp_palette;
-		for (std::size_t pidx{ m_ptr_chunk_palettes + 16 * i }; pidx < m_ptr_chunk_palettes + 16 * i + 16; ++pidx)
-			l_tmp_palette.push_back(p_rom_data[pidx]);
-
-		m_palettes.push_back(l_tmp_palette);
-	}
-
-	// get the 8 spawn locations
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		m_spawn_locations.push_back(fe::Spawn_location(
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_WORLDS + i),
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_SCREENS + i),
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_STAGES + i),
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_X_POS + i) >> 4,
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_Y_POS + i) >> 4,
-			m_rom_data.at(c::OFFSET_SPAWN_LOC_BPM + i)
-		));
-	}
-
-	// extract mattock animations
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		m_chunks.at(i).m_mattock_animation = {
-			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i),
-			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 1),
-			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 2),
-			m_rom_data.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + 3)
-		};
-	}
-
-	// extract "push-block" parameters
-	m_push_block = fe::Push_block_parameters(
-		m_rom_data.at(c::OFFSET_PTM_STAGE_NO),
-		m_rom_data.at(c::OFFSET_PTM_SCREEN_NO),
-		m_rom_data.at(c::OFFSET_PTM_START_POS) % 16,
-		m_rom_data.at(c::OFFSET_PTM_START_POS) / 16,
-		m_rom_data.at(c::OFFSET_PTM_BLOCK_COUNT),
-		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS),
-		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 1),
-		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 2),
-		m_rom_data.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3),
-		m_rom_data.at(c::OFFSET_PTM_POS_DELTA),
-		m_rom_data.at(c::OFFSET_PTM_TILE_NO),
-		m_rom_data.at(c::OFFSET_PTM_COVER_POS) % 16,
-		m_rom_data.at(c::OFFSET_PTM_COVER_POS) / 16
-	);
-
-	// extract "jump-on" animation
-	for (std::size_t i{ 0 }; i < 4; ++i)
-		m_jump_on_animation.push_back(m_rom_data.at(c::OFFSET_JUMP_ON_ANIMATION + i));
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset) const {

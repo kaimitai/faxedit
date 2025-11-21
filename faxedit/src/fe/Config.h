@@ -45,6 +45,8 @@ namespace fe {
 		std::set<byte> vset_as_set(const std::string& p_id) const;
 		const std::map<byte, std::string>& bmap(const std::string& p_id) const;
 		std::map<std::string, byte> bmap_reverse(const std::string& p_id) const;
+		std::vector<std::string> bmap_as_vec(const std::string& p_id, std::size_t p_size) const;
+		std::vector<std::size_t> bmap_as_numeric_vec(const std::string& p_id, std::size_t p_size) const;
 	};
 
 }

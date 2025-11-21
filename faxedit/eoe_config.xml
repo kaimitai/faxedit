@@ -40,23 +40,20 @@
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
 	<consts>
+		<const name="sprite_count" value="101" />
 		<const name="iscript_count" value="152" />
 		<const name="string_data_start" region="eu,us,randum" value="0x34310" />
 		<const name="string_data_start" region="jp" value="0x35f50" />
 		<const name="string_data_end" region="eu,us,randum" value="0x38010" />
 		<const name="string_data_end" region="jp" value="0x37a50" />
-
 		<!-- byte-size of the script data in the original region; everything following the end of the ptr table -->
 		<const name="iscript_data_rg1_size" value="1581" />
-
 		<!-- secondary region for script data -->
 		<const name="iscript_data_rg2_start" region="us,randum" value="0x32d9b" />
 		<const name="iscript_data_rg2_start" region="eu" value="0x32de5" />
 		<const name="iscript_data_rg2_start" region="jp" value="0x33196" />
-
 		<!-- secondary script data necessarily ends within bank 12 -->
 		<const name="iscript_data_rg2_end" value="0x34010" />
-
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -69,6 +66,220 @@
 	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
 	<!-- &lt; is less-than and &gt; is greater-than - used here for escaping xml syntax -->
 	<byte_to_string_maps>
+		<!-- labels for worlds -->
+		<byte_to_string_map name="world_labels">
+			<entry byte="$00" str="Eolis" />
+			<entry byte="$01" str="Trunk" />
+			<entry byte="$02" str="Mist" />
+			<entry byte="$03" str="Towns" />
+			<entry byte="$04" str="Buildings" />
+			<entry byte="$05" str="Branches" />
+			<entry byte="$06" str="Dartmoor Castle" />
+			<entry byte="$07" str="Zenis" />
+		</byte_to_string_map>
+		<!-- labels for buildings -->
+		<byte_to_string_map name="building_labels">
+			<entry byte="$00" str="King Room" />
+			<entry byte="$01" str="Guru Room" />
+			<entry byte="$02" str="Hospital" />
+			<entry byte="$03" str="Pub" />
+			<entry byte="$04" str="Tool Shop" />
+			<entry byte="$05" str="Key Shop" />
+			<entry byte="$06" str="House" />
+			<entry byte="$07" str="Meat Shop" />
+			<entry byte="$08" str="Martial Arts" />
+			<entry byte="$09" str="Magic Trainer" />
+		</byte_to_string_map>
+		<!-- labels for block properties -->
+		<byte_to_string_map name="block_property_labels">
+			<entry byte="$00" str="Air" />
+			<entry byte="$01" str="Solid" />
+			<entry byte="$02" str="Ladder" />
+			<entry byte="$03" str="Door" />
+			<entry byte="$04" str="Foreground" />
+			<entry byte="$05" str="Jump-On" />
+			<entry byte="$06" str="Pushable" />
+			<entry byte="$09" str="SW-Transition (fg)" />
+			<entry byte="$0a" str="SW-Transition Ladder" />
+			<entry byte="$0b" str="Unknown (orig. breakable)" />
+			<entry byte="$0c" str="OW/Return" />
+			<entry byte="$0d" str="OW/Return (fg)" />
+		</byte_to_string_map>
+		<!-- labels for door requirements -->
+		<byte_to_string_map name="door_requirement_labels">
+			<entry byte="$00" str="None" />
+			<entry byte="$01" str="Key A" />
+			<entry byte="$02" str="Key K" />
+			<entry byte="$03" str="Key Q" />
+			<entry byte="$04" str="Key J" />
+			<entry byte="$05" str="Key Jo" />
+			<entry byte="$06" str="Ring of Elf" />
+			<entry byte="$07" str="Ring of Dwarf" />
+			<entry byte="$08" str="Demon's Ring" />
+		</byte_to_string_map>
+		<!-- labels for sprites -->
+		<byte_to_string_map name="sprite_labels">
+			<entry byte="$00" str="Invisible, No-Damage" />
+			<entry byte="$01" str="Bread" />
+			<entry byte="$02" str="Coin" />
+			<entry byte="$03" str="Zorugeriru Rock" />
+			<entry byte="$04" str="Raiden" />
+			<entry byte="$05" str="Necron Aides" />
+			<entry byte="$06" str="Zombie" />
+			<entry byte="$07" str="Hornet" />
+			<entry byte="$08" str="Bihoruda" />
+			<entry byte="$09" str="Lilith" />
+			<entry byte="$0a" str="Magic Effect #1" />
+			<entry byte="$0b" str="Yuinaru" />
+			<entry byte="$0c" str="Snowman" />
+			<entry byte="$0d" str="Nash" />
+			<entry byte="$0e" str="Fire Giant" />
+			<entry byte="$0f" str="Ishiisu" />
+			<entry byte="$10" str="Execution Hood" />
+			<entry byte="$11" str="Rokusutahn" />
+			<entry byte="$12" str="Unused $12" />
+			<entry byte="$13" str="Enemy Death" />
+			<entry byte="$14" str="Lightning Ball" />
+			<entry byte="$15" str="Charron" />
+			<entry byte="$16" str="Invisble, Stationary" />
+			<entry byte="$17" str="Geributa" />
+			<entry byte="$18" str="Sugata" />
+			<entry byte="$19" str="Grimlock" />
+			<entry byte="$1a" str="Giant Bees" />
+			<entry byte="$1b" str="Myconid" />
+			<entry byte="$1c" str="Naga" />
+			<entry byte="$1d" str="Unused $1d" />
+			<entry byte="$1e" str="Giant Strider" />
+			<entry byte="$1f" str="Sir Gawaine" />
+			<entry byte="$20" str="Maskman" />
+			<entry byte="$21" str="Wolfman" />
+			<entry byte="$22" str="Yareeka" />
+			<entry byte="$23" str="Magman" />
+			<entry byte="$24" str="Unused $24" />
+			<entry byte="$25" str="Invisible, Stationary #2" />
+			<entry byte="$26" str="Ikeda" />
+			<entry byte="$27" str="Unused $27" />
+			<entry byte="$28" str="Lamprey" />
+			<entry byte="$29" str="Invisible, stationary #3" />
+			<entry byte="$2a" str="Monodron" />
+			<entry byte="$2b" str="Unused $2b" />
+			<entry byte="$2c" str="Tamazutsu" />
+			<entry byte="$2d" str="Ripasheiku" />
+			<entry byte="$2e" str="Zoradohna" />
+			<entry byte="$2f" str="Borabohra" />
+			<entry byte="$30" str="Pakukame" />
+			<entry byte="$31" str="Zorugeriru" />
+			<entry byte="$32" str="King Grieve" />
+			<entry byte="$33" str="Shadow Eura" />
+			<entry byte="$34" str="Walking man 1" />
+			<entry byte="$35" str="Blue Lady" />
+			<entry byte="$36" str="Child" />
+			<entry byte="$37" str="Armor Salesman" />
+			<entry byte="$38" str="Martial Arts" />
+			<entry byte="$39" str="Guru" />
+			<entry byte="$3a" str="King" />
+			<entry byte="$3b" str="Magic Teacher / Wise Man" />
+			<entry byte="$3c" str="Key Salesman" />
+			<entry byte="$3d" str="Smoking Man" />
+			<entry byte="$3e" str="Doctor" />
+			<entry byte="$3f" str="Sitting Man 1" />
+			<entry byte="$40" str="Meat Salesman" />
+			<entry byte="$41" str="Lady in blue dress with cup" />
+			<entry byte="$42" str="King's Guard" />
+			<entry byte="$43" str="Man in Chair" />
+			<entry byte="$44" str="Walking Woman" />
+			<entry byte="$45" str="Walking Woman #2" />
+			<entry byte="$46" str="Eyeball" />
+			<entry byte="$47" str="Zozura" />
+			<entry byte="$48" str="Glove" />
+			<entry byte="$49" str="Black Onyx" />
+			<entry byte="$4a" str="Pendant" />
+			<entry byte="$4b" str="Red Potion" />
+			<entry byte="$4c" str="Poison" />
+			<entry byte="$4d" str="Elixir" />
+			<entry byte="$4e" str="Ointment" />
+			<entry byte="$4f" str="Invisible Dialogue" />
+			<entry byte="$50" str="Mattock" />
+			<entry byte="$51" str="Magic Effect #2" />
+			<entry byte="$52" str="Final Fountain" />
+			<entry byte="$53" str="Magic Effect #3" />
+			<entry byte="$54" str="Magic Effect #4" />
+			<entry byte="$55" str="Wing Boots" />
+			<entry byte="$56" str="Hour Glass" />
+			<entry byte="$57" str="Magical Rod" />
+			<entry byte="$58" str="Battle Suit" />
+			<entry byte="$59" str="Battle Helmet" />
+			<entry byte="$5a" str="Dragon Slayer" />
+			<entry byte="$5b" str="Mattock (for quest)" />
+			<entry byte="$5c" str="Wing Boots (for quest)" />
+			<entry byte="$5d" str="Red Potion #2" />
+			<entry byte="$5e" str="Poison #2" />
+			<entry byte="$5f" str="Glove #2" />
+			<entry byte="$60" str="Ointment #2" />
+			<entry byte="$61" str="Tower Spring" />
+			<entry byte="$62" str="Sky Spring" />
+			<entry byte="$63" str="Dungeon Spring" />
+			<entry byte="$64" str="Boss Death" />
+		</byte_to_string_map>
+		<!-- labels for palettes -->
+		<byte_to_string_map name="palette_labels">
+			<entry byte="$00" str="Eolis" />
+			<entry byte="$06" str="Trunk" />
+			<entry byte="$07" str="Trunk Towers" />
+			<entry byte="$08" str="Branches" />
+			<entry byte="$09" str="Branches (green)" />
+			<entry byte="$0a" str="Mist" />
+			<entry byte="$0b" str="Mist Towers" />
+			<entry byte="$0c" str="Dartmoor Castle" />
+			<entry byte="$0d" str="Fraternal Castle" />
+			<entry byte="$0e" str="King Grieve's Room" />
+			<entry byte="$0f" str="Zenis" />
+			<entry byte="$11" str="King Room" />
+			<entry byte="$12" str="Guru Room" />
+			<entry byte="$13" str="Hospital" />
+			<entry byte="$14" str="Pub" />
+			<entry byte="$15" str="Tool Shop" />
+			<entry byte="$16" str="Key Shop" />
+			<entry byte="$17" str="House" />
+			<entry byte="$18" str="Meat Shop" />
+			<entry byte="$19" str="Martial Arts" />
+			<entry byte="$1a" str="Magic Trainer" />
+			<entry byte="$1b" str="Towns" />
+		</byte_to_string_map>
+		<!-- labels for building sprite sets with special significance in game code -->
+		<byte_to_string_map name="special_sprite_set_labels">
+			<entry byte="$44" str="End-Game Sprite Set" />
+		</byte_to_string_map>
+		<!-- labels for sprite command bytes -->
+		<byte_to_string_map name="command_byte_labels">
+			<entry byte="$00" str="Final Spring Opening" />
+			<entry byte="$01" str="Boss Room" />
+			<entry byte="$02" str="End-Game Room" />
+		</byte_to_string_map>
+		<!-- background tile ROM offsets -->
+		<byte_to_string_map name="bg_chr_rom_offsets">
+			<!-- Eolis -->
+			<entry byte="$00" str="0xf810" />
+			<!-- Trunk -->
+			<entry byte="$01" str="0x10010" />
+			<!-- Mist -->
+			<entry byte="$02" str="0x10810" />
+			<!-- Towns -->
+			<entry byte="$03" str="0x11810" />
+			<!-- King, Guru and Hospital -->
+			<entry byte="$04" str="0x11e10" />
+			<!-- Branches -->
+			<entry byte="$05" str="0x11010" />
+			<!-- Dartmoor Castle -->
+			<entry byte="$06" str="0x13010" />
+			<!-- Zenis -->
+			<entry byte="$07" str="0x13010" />
+			<!-- Shops and House -->
+			<entry byte="$08" str="0x12410" />
+			<!-- Training Shops -->
+			<entry byte="$09" str="0x12a10" />
+		</byte_to_string_map>
+		<!-- string mapping used by the iScript assembler and disassembler -->
 		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum">
 			<!-- printable characters -->
 			<entry byte="$21" str="!" />

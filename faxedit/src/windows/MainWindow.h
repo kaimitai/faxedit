@@ -43,6 +43,15 @@ namespace fe {
 		// config
 		fe::Config m_config;
 
+		// config values we will cache
+		std::map<byte, std::string> m_labels_cmd_byte,
+			m_labels_door_reqs, m_labels_block_props,
+			m_labels_palettes, m_labels_spec_sprite_sets;
+		std::vector<std::string> m_labels_worlds, m_labels_sprites,
+			m_labels_buildings;
+
+		std::size_t m_sprite_count, m_iscript_count;
+
 		// file info
 		std::filesystem::path m_path;
 		std::string m_filename;
@@ -101,6 +110,7 @@ namespace fe {
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 			const std::string& p_region = std::string());
+		void cache_config_variables(void);
 		std::optional<std::vector<byte>> patch_rom(void);
 
 		std::string get_ips_path(void) const;

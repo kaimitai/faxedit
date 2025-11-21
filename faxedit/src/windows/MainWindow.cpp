@@ -36,14 +36,15 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_pulse_time{ 0.0f },
 	m_anim_time{ 0.0f },
 	m_anim_frame{ 0 },
-	m_sprite_dims{ std::vector<fe::AnimationGUIData>(c::SPRITE_COUNT,
-		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched)) },
 	m_iscript_window{ false },
 	m_iscript_win_set_focus{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
 	m_door_req_overlay{ true },
-	m_overlays{ std::vector<char>(16, false) }
+	m_overlays{ std::vector<char>(16, false) },
+	// config variables, will be loaded with the config xml
+	m_sprite_count{ 0 },
+	m_iscript_count{ 0 }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("For iScript editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
@@ -331,7 +332,7 @@ std::string fe::MainWindow::get_description(byte p_index,
 
 std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 	return std::format("{} ({})",
-		c::LABELS_SPRITES[p_sprite_id],
+		m_labels_sprites[p_sprite_id],
 		fe::Sprite_gfx_definiton::SpriteCatToString(m_sprite_dims[p_sprite_id].m_cat));
 }
 
@@ -387,7 +388,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 		ui::imgui_slider_with_arrows("###spriteid",
 			get_sprite_label(l_sprite.m_id),
-			l_sprite.m_id, 0, c::SPRITE_COUNT - 1);
+			l_sprite.m_id, 0, m_sprite_count - 1);
 
 		ImGui::SeparatorText("Position");
 
@@ -409,7 +410,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
 				std::format("Script: {}", l_sprite.m_text_id.value()),
-				l_sprite.m_text_id.value(), 0, c::ISCRIPT_COUNT);
+				l_sprite.m_text_id.value(), 0, m_iscript_count);
 
 			if (ui::imgui_button("View script", 4)) {
 				m_sel_iscript = l_sprite.m_text_id.value();
@@ -441,7 +442,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	if (l_cb.has_value()) {
 		ui::imgui_slider_with_arrows("###sscb",
-			std::format("Value: {}", get_description(l_cb.value(), c::LABELS_COMMAND_BYTE)),
+			std::format("Value: {}", get_description(l_cb.value(), m_labels_cmd_byte)),
 			p_sprites.m_command_byte.value(), 0, 2, "Special events for the screen");
 		if (ui::imgui_button("Delete command byte", 2))
 			p_sprites.m_command_byte.reset();
@@ -624,8 +625,10 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		}
 
 		m_config.load_config_data(l_config_xml_path);
+		cache_config_variables();
 
 		m_game = fe::Game(bytes);
+		m_game->generate_tilesets(m_config);
 
 		std::filesystem::path romPath(p_filepath);
 
@@ -666,7 +669,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		try {
 			fi::IScriptLoader loader(m_config, bytes);
 
-			for (std::size_t i{ 0 }; i < c::ISCRIPT_COUNT; ++i) {
+			for (std::size_t i{ 0 }; i < m_iscript_count; ++i) {
 				try {
 					m_iscripts[i] = loader.parse_script(bytes, i);
 				}
@@ -693,6 +696,30 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		add_message("Unknown error occurred", 1);
 	}
 
+}
+
+// copy some config vars to the GUI so we don't need to look them up
+// every draw frame
+void fe::MainWindow::cache_config_variables(void) {
+	// maps that can be sparse or even empty
+	m_labels_cmd_byte = m_config.bmap(c::ID_CMD_BYTE_LABELS);
+	m_labels_door_reqs = m_config.bmap(c::ID_DOOR_REQ_LABELS);
+	m_labels_block_props = m_config.bmap(c::ID_BLOCK_PROP_LABELS);
+	m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
+	m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
+
+	// constants
+	m_iscript_count = m_config.constant(c::ID_ISCRIPT_COUNT);
+	m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
+
+	// maps we convert to vectors
+	m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
+	m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_sprite_count);
+	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, 10);
+
+	// need sprite count to populate the sprite dimension metadata
+	m_sprite_dims = std::vector<fe::AnimationGUIData>(m_sprite_count,
+		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched));
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {

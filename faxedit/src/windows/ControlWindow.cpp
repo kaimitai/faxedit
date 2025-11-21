@@ -174,14 +174,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game->m_rom_data = l_rom;
 
 			// extract gfx
-			for (std::size_t c{ 0 }; c < m_game->m_offsets_bg_gfx.size(); ++c) {
-				m_game->m_tilesets.push_back(std::vector<klib::NES_tile>());
-
-				for (std::size_t i{ 0 }; i < 256; ++i) {
-					m_game->m_tilesets[c].push_back(klib::NES_tile::NES_tile(m_game->m_rom_data,
-						m_game->m_offsets_bg_gfx[c] + 16 * i));
-				}
-			}
+			m_game->generate_tilesets(m_config);
 			add_message("Loaded xml file " + get_xml_path(), 2);
 		}
 		catch (const std::runtime_error& p_ex) {

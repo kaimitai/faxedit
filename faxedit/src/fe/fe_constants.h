@@ -13,6 +13,21 @@ namespace fe {
 
 		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
 
+		// map IDs
+		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
+		constexpr char ID_SPRITE_LABELS[]{ "sprite_labels" };
+		constexpr char ID_BUILDING_LABELS[]{ "building_labels" };
+		constexpr char ID_BLOCK_PROP_LABELS[]{ "block_property_labels" };
+		constexpr char ID_DOOR_REQ_LABELS[]{ "door_requirement_labels" };
+		constexpr char ID_PALETTE_LABELS[]{ "palette_labels" };
+		constexpr char ID_SPECIAL_SPRITE_SET_LABELS[]{ "special_sprite_set_labels" };
+		constexpr char ID_CMD_BYTE_LABELS[]{ "command_byte_labels" };
+		constexpr char ID_BG_CHR_ROM_OFFSETS[]{ "bg_chr_rom_offsets" };
+
+		// counts
+		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
+		constexpr char ID_ISCRIPT_COUNT[]{ "iscript_count" };
+
 		// the start of the pointer table for each chunks's tilemaps
 		// the start of the data (ptr table + data for each chunk) follows immediately after this outer pointer table
 		inline const std::vector<std::size_t> PTR_TILEMAPS_BANK_ROM_OFFSET{ 0x10, 0x4010, 0x8010 };
@@ -87,203 +102,6 @@ namespace fe {
 		constexpr std::size_t SIZE_LIMT_SPRITE_DATA{ 0x30010 - PTR_CHUNK_SPRITE_DATA };
 		constexpr std::size_t SIZE_LIMT_METADATA{ 0xf010 - PTR_CHUNK_METADATA };
 		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
-
-		// ptrs to the screen data for each of the 8 chunks
-		const std::vector<std::size_t> PTR_CHUNK_SCREEN_DATA{ 0x10, 0x12, 0x14, 0x4010, 0x4012, 0x8010, 0x8012, 0x8014 };
-
-		// map to background gfx start locations - treated as immutable
-		// when extracting the 256 nes tiles starting at any of these locations, the chunk tilemap indexes will match
-		// special care needed for chunk 6 which uses different tilesets depending on screen id
-		inline const std::vector<std::size_t> OFFSETS_BG_GFX{
-			0xf810,   // eolis
-			0x10010,  // trunk
-			0x10810,  // mist
-			0x11810,  // town
-			0x11e10,  // guru, king and hospital screens
-			0x11010,  // branches
-			0x13010,  // dartmoor + evil fortress
-			0x13010,  // dartmoor + evil fortress
-			0x12410,  // set used for the shop and building interior screens
-			0x12a10   // set used for the training shops
-		};
-
-		// a label of all the chunks, in ROM-order
-		inline const std::vector<std::string> LABELS_CHUNKS{ "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Dartmoor Castle", "Evil Lair" };
-
-		constexpr std::size_t SPRITE_COUNT{ 101 };
-		constexpr std::size_t ISCRIPT_COUNT{ 152 };
-
-		inline const std::map<byte, std::string> LABELS_DOOR_REQS{
-			{0x00, "None"},
-			{0x01, "Key A"},
-			{0x02, "Key K"},
-			{0x03, "Key Q"},
-			{0x04, "Key J"},
-			{0x05, "Key Jo"},
-			{0x06, "Ring of Elf"},
-			{0x07, "Ring of Dwarf"},
-			{0x08, "Demon's Ring"}
-		};
-
-		inline const std::map<byte, std::string> LABELS_BLOCK_PROPERTIES{
-			{0x00, "Air"},
-			{0x01, "Solid"},
-			{0x02, "Ladder"},
-			{0x03, "Door"},
-			{0x04, "Foreground"},
-			{0x05, "Jump-On"},
-			{0x06, "Pushable" },
-			{0x09, "SW-Transition (fg)" },
-			{0x0a, "SW-Transition Ladder"},
-			{0x0b, "Unknown (orig. breakable)"},
-			{0x0c, "OW/Return"},
-			{0x0d, "OW/Return (fg)"},
-		};
-
-		// placeholder until we dynamically parse this data
-		inline const std::map<byte, std::string> LABELS_SPECIAL_BUNDLES{
-			{0x44, "End-Game Sprite Set"}
-		};
-
-		inline const std::vector<std::string> LABELS_BUILDINGS{
-			"King Room", "Guru Room", "Hospital", "Pub", "Tool Shop",
-			"Key Shop", "House", "Meat Shop", "Martial Arts", "Magic Trainer"
-		};
-
-		inline const std::map<byte, std::string> LABELS_PALETTES{
-			{0x00, "Eolis"},
-			{0x06, "Trunk"},
-			{0x07, "Trunk Towers"},
-			{0x08, "Branches"},
-			{0x09, "Branches (green)"},
-			{0x0a, "Mist"},
-			{0x0b, "Mist Towers"},
-			{0x0c, "Dartmoor"},
-			{0x0d, "Fraternal Castle"},
-			{0x0e, "King Grieve's Room"},
-			{0x0f, "Evil Lair"},
-			{0x11, LABELS_BUILDINGS.at(0)},
-			{0x12, LABELS_BUILDINGS.at(1)},
-			{0x13, LABELS_BUILDINGS.at(2)},
-			{0x14, LABELS_BUILDINGS.at(3)},
-			{0x15, LABELS_BUILDINGS.at(4)},
-			{0x16, LABELS_BUILDINGS.at(5)},
-			{0x17, LABELS_BUILDINGS.at(6)},
-			{0x18, LABELS_BUILDINGS.at(7)},
-			{0x19, LABELS_BUILDINGS.at(8)},
-			{0x1a, LABELS_BUILDINGS.at(9)},
-			{0x1b, "Towns"}
-		};
-
-		inline const std::vector<std::string> LABELS_SPRITES{
-			"Invisible, No-Damage",
-			"Bread",
-			"Coin",
-			"Zorugeriru Rock",
-			"Raiden",
-			"Necron Aides",
-			"Zombie",
-			"Hornet",
-			"Bihoruda",
-			"Lilith",
-			"Magic Effect #1",
-			"Yuinaru",
-			"Snowman",
-			"Nash",
-			"Fire Giant",
-			"Ishiisu",
-			"Execution Hood",
-			"Rokusutahn",
-			"Unused $12",
-			"Enemy Death",
-			"Lightning Ball",
-			"Charron",
-			"Invisble, Stationary",
-			"Geributa",
-			"Sugata",
-			"Grimlock",
-			"Giant Bees",
-			"Myconid",
-			"Naga",
-			"Unused $1d",
-			"Giant Strider",
-			"Sir Gawaine",
-			"Maskman",
-			"Wolfman",
-			"Yareeka",
-			"Magman",
-			"Unused $24",
-			"Invisible, Stationary #2",
-			"Ikeda",
-			"Unused $27",
-			"Lamprey",
-			"Invisible, stationary #3",
-			"Monodron",
-			"Unused $2b",
-			"Tamazutsu",
-			"Ripasheiku",
-			"Zoradohna",
-			"Borabohra",
-			"Pakukame",
-			"Zorugeriru",
-			"King Grieve",
-			"Shadow Eura",
-			"Walking man 1",
-			"Blue Lady",
-			"Child",
-			"Armor Salesman",
-			"Martial Arts",
-			"Guru",
-			"King",
-			"Magic Teacher / Wise Man",
-			"Key Salesman",
-			"Smoking Man",
-			"Doctor",
-			"Sitting Man 1",
-			"Meat Salesman",
-			"Lady in blue dress with cup",
-			"King's Guard",
-			"Man in Chair",
-			"Walking Woman",
-			"Walking Woman #2",
-			"Eyeball",
-			"Zozura",
-			"Glove",
-			"Black Onyx",
-			"Pendant",
-			"Red Potion",
-			"Poison",
-			"Elixir",
-			"Ointment",
-			"Invisible Dialogue",
-			"Mattock",
-			"Magic Effect #2",
-			"Final Fountain",
-			"Magic Effect #3",
-			"Magic Effect #4",
-			"Wing Boots",
-			"Hour Glass",
-			"Magical Rod",
-			"Battle Suit",
-			"Battle Helmet",
-			"Dragon Slayer",
-			"Mattock (for quest)",
-			"Wing Boots (for quest)",
-			"Red Potion #2",
-			"Poison #2",
-			"Glove #2",
-			"Ointment #2",
-			"Tower Spring",
-			"Sky Spring",
-			"Dungeon Spring",
-			"Boss Death"
-		};
-
-		inline const std::map<byte, std::string> LABELS_COMMAND_BYTE{
-			{0x00, "Final Spring Opening"},
-			{0x01, "Boss Room"},
-			{0x02, "End-Game Room"}
-		};
 
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid

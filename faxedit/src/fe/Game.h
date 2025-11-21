@@ -28,6 +28,8 @@ namespace fe {
 			m_cover_x, m_cover_y;
 	};
 
+	class Config;
+
 	struct Game {
 
 		std::vector<std::vector<klib::NES_tile>> m_tilesets;
@@ -49,7 +51,6 @@ namespace fe {
 		std::size_t m_ptr_chunk_metadata, m_ptr_chunk_sprite_data, m_ptr_chunk_interchunk_transitions,
 			m_ptr_chunk_intrachunk_transitions, m_ptr_chunk_default_palette_idx, m_ptr_chunk_palettes,
 			m_ptr_chunk_door_to_chunk, m_ptr_chunk_door_to_screen, m_ptr_chunk_door_reqs;
-		std::vector<std::size_t> m_ptr_chunk_screen_data, m_offsets_bg_gfx;
 
 		// map from spawn point no to iscript no
 		// the script in which the spawn is set to the key
@@ -63,12 +64,14 @@ namespace fe {
 
 		bool is_metatile_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
 		bool is_screen_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
-		
+
 		void delete_metatiles(std::size_t p_chunk_no, const std::unordered_set<byte>& p_mt_to_delete);
 		void delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete);
-		
+
 		std::size_t delete_unreferenced_metatiles(std::size_t p_chunk_no);
 		std::size_t delete_unreferenced_screens(std::size_t p_chunk_no);
+
+		void generate_tilesets(const fe::Config& p_config);
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_relative_offset = 0) const;

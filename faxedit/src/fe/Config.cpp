@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "./xml/Xml_helper.h"
+#include <format>
 #include <stdexcept>
 
 void fe::Config::load_definitions(const std::string& p_config_xml) {
@@ -46,7 +47,7 @@ std::set<byte> fe::Config::vset_as_set(const std::string& p_id) const {
 
 const std::map<byte, std::string>& fe::Config::bmap(const std::string& p_id) const {
 	static const std::map<byte, std::string> empty_map;
-	
+
 	if (m_byte_maps.find(p_id) == end(m_byte_maps))
 		return empty_map;
 	else
@@ -59,6 +60,34 @@ std::map<std::string, byte> fe::Config::bmap_reverse(const std::string& p_id) co
 
 	for (const auto& kv : l_bmap)
 		result.insert(std::make_pair(kv.second, kv.first));
+
+	return result;
+}
+
+std::vector<std::string> fe::Config::bmap_as_vec(const std::string& p_id,
+	std::size_t p_size) const {
+	const auto& l_map{ bmap(p_id) };
+
+	std::vector<std::string> result;
+
+	for (std::size_t i{ 0 }; i < (p_size > 0 ? p_size : 256); ++i) {
+		auto iter{ l_map.find(static_cast<byte>(i)) };
+		if (iter == end(l_map))
+			throw std::runtime_error(std::format("Map with ID '{}' is missing value for index {}",
+				p_id, i));
+		else
+			result.push_back(iter->second);
+	}
+
+	return result;
+}
+
+std::vector<std::size_t> fe::Config::bmap_as_numeric_vec(const std::string& p_id,
+	std::size_t p_size) const {
+	const auto vec{ bmap_as_vec(p_id, p_size) };
+	std::vector<std::size_t> result;
+	for (const auto& str : vec)
+		result.push_back(xml::parse_numeric(str));
 
 	return result;
 }
