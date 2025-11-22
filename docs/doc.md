@@ -1,16 +1,20 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
-We currently only support editing the US version of the nes-ROM. You can start the editor with a filename parameter to make the editor load a given ROM, or use the file picker that appears if no ROM is loaded at startup, to select a file to load. The editor depends on a ROM being loaded and cannot be used without one.
+You can start the editor with a filename parameter to make the editor load a given ROM, or use the file picker that appears if no ROM is loaded at startup, to select a file to load. The editor depends on a ROM being loaded and cannot be used without one.
+
+It also depends on configuration file eoe_config.xml being present, as this file contains necessary constants per ROM region.
+
+The editor will automatically deduce the ROM region, unless you specify it as a command-line parameter following a ROM-filename.
 
 We use some conventions in the editor:
 
 * Hold down shift to use some buttons which make big changes to your data; loading xml and deleting screens and such
 * Yellow sliders are selection sliders to navigate to objects within a container; these will not make any changes to your data, only select it.
-* Faxanadu is divided into what has come to be commonly known as "worlds", of which there are eight. We label them - in order - as "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Darmoor Castle" and "Evil Lair". All worlds are modeled pretty much in the same way, but worlds "Towns" and "Buildings" are associated with some special handling. More on that in the various sections below.
+* Faxanadu is divided into what has come to be commonly known as "worlds", of which there are eight. We label them - in order - as "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Darmoor Castle" and "Zenis". All worlds are modeled pretty much in the same way, but worlds "Towns" and "Buildings" are associated with some special handling. More on that in the various sections below.
 
 The main window for file operations is [Project Control]("project-control).
 
@@ -43,10 +47,10 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
 
 This is the screen used for file operations and data analysis.
 
-![The editor in action](./img/win_project_control.png)
+![Project control](./img/win_project_control.png)
 
 * Save xml: Saves the project as an xml-file, the recommended master data format
-* Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes
+* Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes (hold shift to patch the ROM in-place)
 * Save ips: Generates an ips patch file
 * Data Integrity Analysis: Does some checking on whether there is problems in your data
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
@@ -252,11 +256,20 @@ The Screen window consists of three parts. On the left part is the screen tilema
 
 If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. Any change to selected screen via the slider will revert to the default palette for that world.
 
-Finally you can add or remove (hold shift to use button) screens for all worlds apart from Buildings. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
+You can add or remove (hold shift to use button) screens for all worlds apart from Buildings. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
+
+This tab also has some checkboxes for adding icon overlays to:
+* Block properties (0-15)
+* Mattock-breakable blocks
+* Door requirements
+
+In addition there is a checkbox to turn on or off sprite animations.
 
 If two screens on a world are using the exact same tilemap, you do not need more than two bytes of data to store it in ROM as the pointer will be deduplicated. The tilemaps are stored separately from all other screen data, so these screens could still have different sprites, doors and so on. This could be a way to cheaply increase the world size, and maybe use different palettes for the two screens.
 
 In the original game there are some screen pointers pointing to the same data, so there are duplicate screens - but none of these duplicates are ever used.
+
+The screen tilemap data is compressed using a simple algorithm. You save bytes by using a metatile which is the same as the one immediately preceding it, one sixteen tiles before it or seventeen tiles before it. (when traversing row-wise from top left to bottom right)
 
 ## Screen Tilemap
 
@@ -341,6 +354,8 @@ You can add or remove doors of all types at any time. No reference check is nece
 When in Door-editing mode, Shift+Click moves the door entry position to the clicked position on the tilemap. Ctrl+Click moves the exit position.
 
 If the door is not of building-type, and the door destination is unambiguous, an "Enter Door"-button will let you go to the door destination while taking palette setting into account. (we do not go to buildings since the screens are templated)
+
+Note: The "Towns" world does not support same-world doors due to special handling in the game's logic.
 
 ## Screen Scrolling
 

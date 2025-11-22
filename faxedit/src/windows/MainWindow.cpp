@@ -684,6 +684,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			add_message("Malformed script section", 1);
 		}
 
+		if (m_game->m_chunks.size() > 0)
+			m_atlas_new_palette_no = m_game->m_chunks[0].m_default_palette_no;
+
 		add_message("Loaded " + p_filepath, 2);
 	}
 	catch (const std::runtime_error& ex) {
