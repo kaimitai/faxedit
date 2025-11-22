@@ -8,12 +8,7 @@
 #include "fe_constants.h"
 
 fe::ROM_Manager::ROM_Manager(void) :
-	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET },
-	m_ptr_chunk_door_to_chunk{ c::OFFSET_STAGE_CONNECTIONS },
-	m_ptr_chunk_door_to_screen{ c::OFFSET_STAGE_SCREENS },
-	m_ptr_chunk_door_reqs{ c::OFFSET_STAGE_REQUIREMENTS },
-	m_ptr_otherworld_trans_table{ c::PTR_OTHERW_TRANS_TABLE },
-	m_ptr_sameworld_trans_table{ c::PTR_SAMEW_TRANS_TABLE }
+	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET }
 {
 }
 
@@ -266,9 +261,11 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 	return std::make_pair(l_sprite_data.size(), l_sprite_data_size);
 }
 
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	constexpr std::size_t FREE_SPACE_OFFSET{ 0x3fced };
-	constexpr std::size_t FREE_SPACE_SIZE{ 313 };
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	std::size_t l_free_space_offset{ p_config.constant(c::ID_TRANS_DATA_START) };
+	std::size_t l_free_space_size{ p_config.constant(c::ID_TRANS_DATA_END) -
+	l_free_space_offset };
 
 	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
 
@@ -278,73 +275,77 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe
 	}
 
 	// generate same-world ptr table and data
+	auto l_sameworld_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
 	auto l_sw_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
-		m_ptr_sameworld_trans_table.first,
-		m_ptr_sameworld_trans_table.second,
-		FREE_SPACE_OFFSET, l_all_sw_trans_data) };
-
-	// std::size_t l_ow_data_rel_offset{ FREE_SPACE_SIZE + l_sw_trans_encoded.second.size() };
+		l_sameworld_ptr.first,
+		l_sameworld_ptr.second,
+		l_free_space_offset, l_all_sw_trans_data) };
 
 	// generate other-world ptr table and data
 	// let this data start immediately after the same-world data
+	auto l_otherworld_ptr{ p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR) };
 	auto l_ow_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
-	m_ptr_otherworld_trans_table.first,
-	m_ptr_otherworld_trans_table.second,
-	FREE_SPACE_OFFSET + l_sw_trans_encoded.second.size(), l_all_ow_trans_data) };
+	l_otherworld_ptr.first,
+	l_otherworld_ptr.second,
+	l_free_space_offset + l_sw_trans_encoded.second.size(), l_all_ow_trans_data) };
 
 	std::size_t l_total_size{ l_sw_trans_encoded.second.size() + l_ow_trans_encoded.second.size() };
 
-	if (l_total_size <= FREE_SPACE_SIZE) {
-		patch_bytes(l_sw_trans_encoded.first, p_rom, m_ptr_sameworld_trans_table.first);
-		patch_bytes(l_sw_trans_encoded.second, p_rom, FREE_SPACE_OFFSET);
-		patch_bytes(l_ow_trans_encoded.first, p_rom, m_ptr_otherworld_trans_table.first);
-		patch_bytes(l_ow_trans_encoded.second, p_rom, FREE_SPACE_OFFSET + l_sw_trans_encoded.second.size());
+	if (l_total_size <= l_free_space_size) {
+		patch_bytes(l_sw_trans_encoded.first, p_rom, l_sameworld_ptr.first);
+		patch_bytes(l_sw_trans_encoded.second, p_rom, l_free_space_offset);
+		patch_bytes(l_ow_trans_encoded.first, p_rom, l_otherworld_ptr.first);
+		patch_bytes(l_ow_trans_encoded.second, p_rom, l_free_space_offset + l_sw_trans_encoded.second.size());
 	}
 
-	return std::make_pair(l_total_size, FREE_SPACE_SIZE);
+	return std::make_pair(l_total_size, l_free_space_size);
 }
 
 // all static data patching
-void fe::ROM_Manager::encode_static_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	encode_chunk_palette_no(p_game, p_rom);
-	encode_stage_data(p_game, p_rom);
-	encode_spawn_locations(p_game, p_rom);
-	encode_mattock_animations(p_game, p_rom);
-	encode_push_block(p_game, p_rom);
-	encode_jump_on_tiles(p_game, p_rom);
+void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	encode_chunk_palette_no(p_config, p_game, p_rom);
+	encode_stage_data(p_config, p_game, p_rom);
+	encode_spawn_locations(p_config, p_game, p_rom);
+	encode_mattock_animations(p_config, p_game, p_rom);
+	encode_push_block(p_config, p_game, p_rom);
+	encode_jump_on_tiles(p_config, p_game, p_rom);
 }
 
-void fe::ROM_Manager::encode_chunk_palette_no(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_chunk_palette_no(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	std::size_t l_def_palette_offset{ p_config.constant(c::ID_DEFAULT_PALETTE_OFFSET) };
 	for (std::size_t i{ 0 }; i < 8; ++i) {
-		p_rom.at(c::PTR_CHUNK_DEFAULT_PALETTE_IDX + i) =
+		p_rom.at(l_def_palette_offset + i) =
 			p_game.m_chunks.at(i).m_default_palette_no;
 	}
 }
 
 // patch ROM in place for the stage data
-void fe::ROM_Manager::encode_stage_data(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_stage_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	const auto& l_stages{ p_game.m_stages };
 
 	// the stage data itself
 	for (std::size_t i{ 0 }; i < 6; ++i) {
 		const auto& l_stage{ l_stages.m_stages[i] };
 
-		p_rom.at(c::OFFSET_STAGE_CONNECTIONS + 2 * i) = static_cast<byte>(l_stage.m_prev_stage);
-		p_rom.at(c::OFFSET_STAGE_CONNECTIONS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_stage);
-		p_rom.at(c::OFFSET_STAGE_SCREENS + 2 * i) = static_cast<byte>(l_stage.m_prev_screen);
-		p_rom.at(c::OFFSET_STAGE_SCREENS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_screen);
-		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i) = static_cast<byte>(l_stage.m_prev_requirement);
-		p_rom.at(c::OFFSET_STAGE_REQUIREMENTS + 2 * i + 1) = static_cast<byte>(l_stage.m_next_requirement);
-		p_rom.at(c::OFFSET_STAGE_TO_WORLD + i) = static_cast<byte>(l_stage.m_world_id);
+		p_rom.at(p_config.constant(c::ID_STAGE_CONN_OFFSET) + 2 * i) = static_cast<byte>(l_stage.m_prev_stage);
+		p_rom.at(p_config.constant(c::ID_STAGE_CONN_OFFSET) + 2 * i + 1) = static_cast<byte>(l_stage.m_next_stage);
+		p_rom.at(p_config.constant(c::ID_STAGE_SCREEN_OFFSET) + 2 * i) = static_cast<byte>(l_stage.m_prev_screen);
+		p_rom.at(p_config.constant(c::ID_STAGE_SCREEN_OFFSET) + 2 * i + 1) = static_cast<byte>(l_stage.m_next_screen);
+		p_rom.at(p_config.constant(c::ID_STAGE_REQ_OFFSET) + 2 * i) = static_cast<byte>(l_stage.m_prev_requirement);
+		p_rom.at(p_config.constant(c::ID_STAGE_REQ_OFFSET) + 2 * i + 1) = static_cast<byte>(l_stage.m_next_requirement);
+		p_rom.at(p_config.constant(c::ID_STAGE_TO_WORLD_OFFSET) + i) = static_cast<byte>(l_stage.m_world_id);
 	}
 
 	// start data 
-	p_rom.at(c::OFFSET_GAME_START_SCREEN) = static_cast<byte>(l_stages.m_start_screen);
-	p_rom.at(c::OFFSET_GAME_START_POS) = l_stages.m_start_x + (l_stages.m_start_y << 4);
-	p_rom.at(c::OFFSET_GAME_START_HP) = l_stages.m_start_hp;
+	p_rom.at(p_config.constant(c::ID_GAME_START_SCREEN_OFFSET)) = static_cast<byte>(l_stages.m_start_screen);
+	p_rom.at(p_config.constant(c::ID_GAME_START_POS_OFFSET)) = l_stages.m_start_x + (l_stages.m_start_y << 4);
+	p_rom.at(p_config.constant(c::ID_GAME_START_HP_OFFSET)) = l_stages.m_start_hp;
 }
 
-std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Game& p_game) const {
+std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Config& p_config,
+	const fe::Game& p_game) const {
+	auto l_sw_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
+
 	std::vector<std::vector<byte>> l_all_sw_trans_data;
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
@@ -353,12 +354,14 @@ std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Game& p
 		);
 	}
 
-	return build_pointer_table_and_data_aggressive(m_ptr_sameworld_trans_table.first,
-		m_ptr_sameworld_trans_table.second, l_all_sw_trans_data);
+	return build_pointer_table_and_data_aggressive(l_sw_ptr.first,
+		l_sw_ptr.second, l_all_sw_trans_data);
 }
 
 
-std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Game& p_game) const {
+std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Config& p_config,
+	const fe::Game& p_game) const {
+	auto l_ow_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
 	std::vector<std::vector<byte>> l_all_ow_trans_data;
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
@@ -367,8 +370,8 @@ std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Game& 
 		);
 	}
 
-	return build_pointer_table_and_data_aggressive(m_ptr_otherworld_trans_table.first,
-		m_ptr_otherworld_trans_table.second, l_all_ow_trans_data);
+	return build_pointer_table_and_data_aggressive(l_ow_ptr.first,
+		l_ow_ptr.second, l_all_ow_trans_data);
 }
 
 // creates the ptr table and data as one contiguous blob
@@ -449,47 +452,54 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::ROM_Manager::build_pointer_t
 	return { pointer_table, data_section };
 }
 
-void fe::ROM_Manager::encode_spawn_locations(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_spawn_locations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	std::size_t l_spawn_loc_data_start{ p_config.constant(c::ID_SPAWN_LOC_DATA_START) };
 
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		const auto& l_sl{ p_game.m_spawn_locations.at(i) };
 
-		p_rom.at(c::OFFSET_SPAWN_LOC_WORLDS + i) = static_cast<byte>(l_sl.m_world);
-		p_rom.at(c::OFFSET_SPAWN_LOC_SCREENS + i) = l_sl.m_screen;
-		p_rom.at(c::OFFSET_SPAWN_LOC_X_POS + i) = l_sl.m_x << 4;
-		p_rom.at(c::OFFSET_SPAWN_LOC_Y_POS + i) = l_sl.m_y << 4;
-		p_rom.at(c::OFFSET_SPAWN_LOC_STAGES + i) = l_sl.m_stage;
-		p_rom.at(c::OFFSET_SPAWN_LOC_BPM + i) = l_sl.m_sprite_set;
+		p_rom.at(l_spawn_loc_data_start + i) = static_cast<byte>(l_sl.m_world);
+		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(5 * 8) + i) = l_sl.m_screen;
+		p_rom.at(l_spawn_loc_data_start + 8 + i) = l_sl.m_x << 4;
+		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(2 * 8) + i) = l_sl.m_y << 4;
+		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(4 * 8) + i) = l_sl.m_stage;
+		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(3 * 8) + i) = l_sl.m_sprite_set;
 	}
 }
 
-void fe::ROM_Manager::encode_mattock_animations(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_mattock_animations(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+
+	std::size_t l_mattock_anim_offset{ p_config.constant(c::ID_MATTOCK_ANIM_OFFSET) };
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		for (std::size_t m{ 0 }; m < 4; ++m)
-			p_rom.at(c::OFFSET_MATTOCK_ANIMATIONS + 4 * i + m) =
+			p_rom.at(l_mattock_anim_offset + 4 * i + m) =
 			p_game.m_chunks.at(i).m_mattock_animation.at(m);
 	}
 }
 
-void fe::ROM_Manager::encode_push_block(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_push_block(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	const auto& l_pb{ p_game.m_push_block };
 
-	p_rom.at(c::OFFSET_PTM_STAGE_NO) = l_pb.m_stage;
-	p_rom.at(c::OFFSET_PTM_SCREEN_NO) = l_pb.m_screen;
-	p_rom.at(c::OFFSET_PTM_START_POS) = (l_pb.m_y << 4) + l_pb.m_x;
-	p_rom.at(c::OFFSET_PTM_POS_DELTA) = l_pb.m_pos_delta;
-	p_rom.at(c::OFFSET_PTM_REPLACE_TILE_NOS) = l_pb.m_source_0;
-	p_rom.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 1) = l_pb.m_source_1;
-	p_rom.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 2) = l_pb.m_target_0;
-	p_rom.at(c::OFFSET_PTM_REPLACE_TILE_NOS + 3) = l_pb.m_target_1;
-	p_rom.at(c::OFFSET_PTM_TILE_NO) = l_pb.m_draw_block;
-	p_rom.at(c::OFFSET_PTM_BLOCK_COUNT) = l_pb.m_block_count;
-	p_rom.at(c::OFFSET_PTM_COVER_POS) = (l_pb.m_cover_y << 4) + l_pb.m_cover_x;
+	p_rom.at(p_config.constant(c::ID_PTM_STAGE_NO_OFFSET)) = l_pb.m_stage;
+	p_rom.at(p_config.constant(c::ID_PTM_SCREEN_NO_OFFSET)) = l_pb.m_screen;
+	p_rom.at(p_config.constant(c::ID_PTM_START_POS_OFFSET)) = (l_pb.m_y << 4) + l_pb.m_x;
+	p_rom.at(p_config.constant(c::ID_PTM_POS_DELTA_OFFSET)) = l_pb.m_pos_delta;
+	p_rom.at(p_config.constant(c::ID_PTM_REPLACE_TILE_OFFSET)) = l_pb.m_source_0;
+	p_rom.at(p_config.constant(c::ID_PTM_REPLACE_TILE_OFFSET) + 1) = l_pb.m_source_1;
+	p_rom.at(p_config.constant(c::ID_PTM_REPLACE_TILE_OFFSET) + 2) = l_pb.m_target_0;
+	p_rom.at(p_config.constant(c::ID_PTM_REPLACE_TILE_OFFSET) + 3) = l_pb.m_target_1;
+	p_rom.at(p_config.constant(c::ID_PTM_TILE_NO_OFFSET)) = l_pb.m_draw_block;
+	p_rom.at(p_config.constant(c::ID_PTM_BLOCK_COUNT_OFFSET)) = l_pb.m_block_count;
+	p_rom.at(p_config.constant(c::ID_PTM_COVER_POS_OFFSET)) = (l_pb.m_cover_y << 4) + l_pb.m_cover_x;
 }
 
-void fe::ROM_Manager::encode_jump_on_tiles(const fe::Game& p_game, std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::encode_jump_on_tiles(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	std::size_t l_jump_on_anim_offset{ p_config.constant(c::ID_JUMP_ON_ANIM_OFFSET) };
 	for (std::size_t i{ 0 }; i < p_game.m_jump_on_animation.size() && i < 4; ++i)
-		p_rom.at(c::OFFSET_JUMP_ON_ANIMATION + i) = p_game.m_jump_on_animation[i];
+		p_rom.at(l_jump_on_anim_offset + i) = p_game.m_jump_on_animation[i];
 }
 
 // this function generates pointer tables and data offsets for several pieces of data at once,

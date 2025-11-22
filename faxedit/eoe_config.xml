@@ -32,6 +32,10 @@
 	<!-- constants used by the scripting engine -->
 	<!-- addresses to pointer table start -->
 	<pointers>
+		<pointer name="metadata_ptr" value="0xc010" zero_addr="0xc010" />
+		<pointer name="sprite_ptr" value="0x2c220" zero_addr="0x24010" />
+		<pointer name="sameworld_trans_ptr" value="0x3ea47" zero_addr="0x30010" />
+		<pointer name="otherworld_trans_ptr" value="0x3eaac" zero_addr="0x30010" />
 		<!-- ROM offset of iScript pointer table lo bytes; combined with iscript_count we can dedude hi byte offset and script data start -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
@@ -40,6 +44,45 @@
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
 	<consts>
+		<!-- end offsets for dynamic data -->
+		<const name="metadata_end" value="0xf010" />
+		<const name="sprite_data_end" value="0x30010" />
+		<const name="spawn_loc_data_start" value="0x3ddbd" />
+
+		<!-- randumizer uses free space for functions, we need to keep the original limits -->
+		<const name="sameworld_trans_data_start" region="randum" value="0x3ea57" />
+		<const name="sameworld_trans_data_end" region="randum" value="0x3ea60" />
+		<const name="otherworld_trans_data_start" region="randum" value="0x3eabc" />
+		<const name="otherworld_trans_data_end" region="randum" value="0x3eb3f" />
+		<!-- we combine same-world and other-world transition data if we use the bank15 free space -->
+		<const name="transition_data_start" region="en-transl" value="0x3fe0a" />
+		<const name="transition_data_start" region="jp" value="0x3fdc2" />
+		<const name="transition_data_start" region="eu,us" value="0x3fcdd" />
+		<const name="transition_data_end" value="0x3fff0" />
+		<!-- palettes -->
+		<const name="palette_offset" value="0x2c010" />
+		<const name="default_palette_offset" value="0x3df5c" />
+		<!-- stages and start data -->
+		<const name="stage_conn_offset" value="0x3e5f7" />
+		<const name="stage_screen_offset" value="0x3e603" />
+		<const name="stage_req_offset" value="0x3e5eb" />
+		<const name="stage_to_world_offset" value="0x3db0e" />
+		<const name="game_start_pos_offset" value="0x3deff" />
+		<const name="game_start_screen_offset" value="0x3dedb" />
+		<const name="game_start_hp_offset" value="0x3debf" />
+		<!-- various -->
+		<const name="mattock_animations_offset" value="0x3c69f" />
+		<const name="jump_on_animation_offset" value="0x3d6ff" />
+		<!-- path to mascon line-drawing constants -->
+		<const name="ptm_stage_no_offset" value="0x3d782" />
+		<const name="ptm_screen_no_offset" value="0x3d788" />
+		<const name="ptm_block_count_offset" value="0x3d745" />
+		<const name="ptm_start_pos_offset" value="0x3d749" />
+		<const name="ptm_replace_tile_offset" value="0x3d778" />
+		<const name="ptm_pos_delta_offset" value="0x3d7b3" />
+		<const name="ptm_tile_no_offset" value="0x3d7bf" />
+		<const name="ptm_cover_pos_offset" value="0x3ef8a" />
+		<!-- counts -->
 		<const name="sprite_count" value="101" />
 		<const name="iscript_count" value="152" />
 		<const name="string_data_start" region="eu,us,randum" value="0x34310" />

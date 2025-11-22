@@ -16,10 +16,43 @@ namespace fe {
 		// pointers
 		constexpr char ID_METADATA_PTR[]{ "metadata_ptr" };
 		constexpr char ID_SPRITE_PTR[]{ "sprite_ptr" };
+		constexpr char ID_SAMEWORLD_TRANS_PTR[]{ "sameworld_trans_ptr" };
+		constexpr char ID_OTHERWORLD_TRANS_PTR[]{ "otherworld_trans_ptr" };
 
-		// end offsets
+		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
 		constexpr char ID_SPRITE_DATA_END[]{ "sprite_data_end" };
+		// combined transition data
+		constexpr char ID_TRANS_DATA_START[]{ "transition_data_start" };
+		constexpr char ID_TRANS_DATA_END[]{ "transition_data_end" };
+		// individual transition data
+		constexpr char ID_SW_TRANS_DATA_START[]{ "sameworld_trans_data_start" };
+		constexpr char ID_SW_TRANS_DATA_END[]{ "sameworld_trans_data_end" };
+		constexpr char ID_OW_TRANS_DATA_START[]{ "otherworld_trans_data_start" };
+		constexpr char ID_OW_TRANS_DATA_END[]{ "otherworld_trans_data_end" };
+
+		// constant offsets
+		constexpr char ID_PALETTE_OFFSET[]{ "palette_offset" };
+		constexpr char ID_DEFAULT_PALETTE_OFFSET[]{ "default_palette_offset" };
+		constexpr char ID_SPAWN_LOC_DATA_START[]{ "spawn_loc_data_start" };
+		constexpr char ID_STAGE_CONN_OFFSET[]{ "stage_conn_offset" };
+		constexpr char ID_STAGE_SCREEN_OFFSET[]{ "stage_screen_offset" };
+		constexpr char ID_STAGE_REQ_OFFSET[]{ "stage_req_offset" };
+		constexpr char ID_STAGE_TO_WORLD_OFFSET[]{ "stage_to_world_offset" };
+		constexpr char ID_GAME_START_POS_OFFSET[]{ "game_start_pos_offset" };
+		constexpr char ID_GAME_START_SCREEN_OFFSET[]{ "game_start_screen_offset" };
+		constexpr char ID_GAME_START_HP_OFFSET[]{ "game_start_hp_offset" };
+		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
+		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
+		// path to mascon parameter offsets
+		constexpr char ID_PTM_STAGE_NO_OFFSET[]{ "ptm_stage_no_offset" };
+		constexpr char ID_PTM_SCREEN_NO_OFFSET[]{ "ptm_screen_no_offset" };
+		constexpr char ID_PTM_BLOCK_COUNT_OFFSET[]{ "ptm_block_count_offset" };
+		constexpr char ID_PTM_START_POS_OFFSET[]{ "ptm_start_pos_offset" };
+		constexpr char ID_PTM_REPLACE_TILE_OFFSET[]{ "ptm_replace_tile_offset" };
+		constexpr char ID_PTM_POS_DELTA_OFFSET[]{ "ptm_pos_delta_offset" };
+		constexpr char ID_PTM_TILE_NO_OFFSET[]{ "ptm_tile_no_offset" };
+		constexpr char ID_PTM_COVER_POS_OFFSET[]{ "ptm_cover_pos_offset" };
 
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
@@ -49,63 +82,11 @@ namespace fe {
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 
-		// the following pointers are on the form { ROM offset for master ptr table, ROM offset considered 0 by the ptrs }
-		constexpr std::pair<std::size_t, std::size_t> PTR_OTHERW_TRANS_TABLE{ 0x3eaac, 0x30010 };
-		constexpr std::pair<std::size_t, std::size_t> PTR_SAMEW_TRANS_TABLE{ 0x3ea47, 0x30010 };
-
-		// regular offsets with no associated pointer table that we know of
-		constexpr std::size_t OFFSET_MATTOCK_ANIMATIONS{ 0x3c69f };
-		constexpr std::size_t OFFSET_SPAWN_LOC_WORLDS{ 0x3ddbd };
-		constexpr std::size_t OFFSET_SPAWN_LOC_X_POS{ OFFSET_SPAWN_LOC_WORLDS + 8 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_Y_POS{ OFFSET_SPAWN_LOC_X_POS + 8 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_BPM{ OFFSET_SPAWN_LOC_Y_POS + 8 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_STAGES{ OFFSET_SPAWN_LOC_BPM + 8 };
-		constexpr std::size_t OFFSET_SPAWN_LOC_SCREENS{ OFFSET_SPAWN_LOC_STAGES + 8 };
-
-		// jump-on metatile animation
-		constexpr std::size_t OFFSET_JUMP_ON_ANIMATION{ 0x3d6ff };
-
-		// in game constants used as parameters to assembly instructions
-
-		// path-to-mascon "line-drawing"
-		constexpr std::size_t OFFSET_PTM_STAGE_NO{ 0x3d782 };
-		constexpr std::size_t OFFSET_PTM_SCREEN_NO{ 0x3d788 };
-		constexpr std::size_t OFFSET_PTM_BLOCK_COUNT{ 0x3d745 };
-		constexpr std::size_t OFFSET_PTM_START_POS{ 0x3d749 };
-		// 4 bytes from this location: what tiles to replace the pushable blocks with,
-		// and then which 2 tiles will appear where the blockes were pushed to
-		constexpr std::size_t OFFSET_PTM_REPLACE_TILE_NOS{ 0x3d778 };
-		constexpr std::size_t OFFSET_PTM_POS_DELTA{ 0x3d7b3 };
-		constexpr std::size_t OFFSET_PTM_TILE_NO{ 0x3d7bf };
-		// the position of the fountain cover
-		// is used when you re-enter the screen after having already pushed
-		constexpr std::size_t OFFSET_PTM_COVER_POS{ 0x3ef8a };
-
-		// END - Rework constants while we move the pointer data into the ROM_Manager-class instead of the Game-class
-
-		// pointers to chunk data pointer tables
-		// indexed by chunk no (offet address by (2 * chunk no) to get the ptr to the chunk we're interested in)
-		constexpr std::size_t PTR_CHUNK_PALETTES{ 0x2c010 };
-		constexpr std::size_t PTR_CHUNK_DEFAULT_PALETTE_IDX{ 0x3df5c };
-		constexpr std::size_t PTR_CHUNK_INTERCHUNK_TRANSITIONS{ 0x3ea47 };
-		constexpr std::size_t PTR_CHUNK_INTRACHUNK_TRANSITIONS{ 0x3eaac };
-
-		// stage metadata offsets
-		constexpr std::size_t OFFSET_STAGE_CONNECTIONS{ 0x3e5f7 };
-		constexpr std::size_t OFFSET_STAGE_SCREENS{ 0x3e603 };
-		constexpr std::size_t OFFSET_STAGE_REQUIREMENTS{ 0x3e5eb };
-		constexpr std::size_t OFFSET_STAGE_TO_WORLD{ 0x3db0e };
-		constexpr std::size_t OFFSET_GAME_START_POS{ 0x3deff };
-		constexpr std::size_t OFFSET_GAME_START_SCREEN{ 0x3dedb };
-		constexpr std::size_t OFFSET_GAME_START_HP{ 0x3debf };
-
 		// dynamic size limits
 		// TODO: Check, this could be totally wrong
 		inline const std::vector<std::size_t> SIZE_LIMITS_BANK_TILEMAPS{
 			0x4000, 0x4000, 0x4000
 		};
-
-		constexpr std::size_t SIZE_LIMT_TRANSITION_DATA{ 313 };
 
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid

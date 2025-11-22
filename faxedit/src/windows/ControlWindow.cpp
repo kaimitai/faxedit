@@ -259,10 +259,10 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 
 	auto x_rom{ m_game->m_rom_data };
 
-	m_rom_manager.encode_static_data(m_game.value(), x_rom);
+	m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
 	add_message("Patched static data", 2);
 
-	auto l_bret{ m_rom_manager.encode_transitions(m_game.value(), x_rom) };
+	auto l_bret{ m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom) };
 	l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
 	l_dyndata_bytes += l_bret.first;
 
