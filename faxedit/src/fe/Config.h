@@ -32,6 +32,8 @@ namespace fe {
 		void set_region(const std::string& p_region_name);
 		void clear(void);
 
+		bool has_constant(const std::string& p_id) const;
+
 		// first, load all definitions from xml
 		void load_definitions(const std::string& p_config_xml);
 		// then, determine the region for our ROM

@@ -76,6 +76,8 @@ namespace fe {
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_sw_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		std::pair<std::size_t, std::size_t> encode_ow_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// encoding data in-place using a given address and stride-indexed
 		// no need to return anything here as the data is of fixed length

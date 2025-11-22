@@ -261,6 +261,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 	return std::make_pair(l_sprite_data.size(), l_sprite_data_size);
 }
 
+// call this if you want to pack both transition types together in free space
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	std::size_t l_free_space_offset{ p_config.constant(c::ID_TRANS_DATA_START) };
@@ -299,6 +300,34 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe
 	}
 
 	return std::make_pair(l_total_size, l_free_space_size);
+}
+
+// call this if you want to pack same-world transitions in the original location
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sw_transitions(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	auto l_sw_trans_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
+	std::size_t l_sw_data_size{ p_config.constant(c::ID_SW_TRANS_DATA_END) -
+	l_sw_trans_ptr.first };
+
+	const auto l_sw_trans_data{ encode_game_sameworld_trans(p_config, p_game) };
+
+	if (l_sw_trans_data.size() <= l_sw_data_size)
+		patch_bytes(l_sw_trans_data, p_rom, l_sw_trans_ptr.first);
+	return std::make_pair(l_sw_trans_data.size(), l_sw_data_size);
+}
+
+// call this if you want to pack other-world transitions in the original location
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_ow_transitions(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	auto l_ow_trans_ptr{ p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR) };
+	std::size_t l_ow_data_size{ p_config.constant(c::ID_OW_TRANS_DATA_END) -
+	l_ow_trans_ptr.first };
+
+	const auto l_ow_trans_data{ encode_game_otherworld_trans(p_config, p_game) };
+
+	if (l_ow_trans_data.size() <= l_ow_data_size)
+		patch_bytes(l_ow_trans_data, p_rom, l_ow_trans_ptr.first);
+	return std::make_pair(l_ow_trans_data.size(), l_ow_data_size);
 }
 
 // all static data patching
@@ -361,7 +390,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_sameworld_trans(const fe::Config&
 
 std::vector<byte> fe::ROM_Manager::encode_game_otherworld_trans(const fe::Config& p_config,
 	const fe::Game& p_game) const {
-	auto l_ow_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
+	auto l_ow_ptr{ p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR) };
 	std::vector<std::vector<byte>> l_all_ow_trans_data;
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {

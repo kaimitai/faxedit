@@ -25,10 +25,9 @@ namespace fe {
 		// combined transition data
 		constexpr char ID_TRANS_DATA_START[]{ "transition_data_start" };
 		constexpr char ID_TRANS_DATA_END[]{ "transition_data_end" };
-		// individual transition data
-		constexpr char ID_SW_TRANS_DATA_START[]{ "sameworld_trans_data_start" };
+		// individual transition data; if used, the data start is immediately
+		// following each pointer table
 		constexpr char ID_SW_TRANS_DATA_END[]{ "sameworld_trans_data_end" };
-		constexpr char ID_OW_TRANS_DATA_START[]{ "otherworld_trans_data_start" };
 		constexpr char ID_OW_TRANS_DATA_END[]{ "otherworld_trans_data_end" };
 
 		// constant offsets

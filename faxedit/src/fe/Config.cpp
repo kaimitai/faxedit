@@ -144,6 +144,10 @@ void fe::Config::clear(void) {
 	m_sets.clear();
 }
 
+bool fe::Config::has_constant(const std::string& p_id) const {
+	return m_constants.find(p_id) != end(m_constants);
+}
+
 bool fe::Config::is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
 	const std::vector<byte>& p_vals) const {
 	if (p_rom.size() < (p_offset + p_vals.size()))

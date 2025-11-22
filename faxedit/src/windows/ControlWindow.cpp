@@ -30,13 +30,19 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Patch nes ROM", 2, "Patch loaded ROM file")) {
+	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+
+	if (ui::imgui_button("Patch nes ROM",
+		l_shift ? 4 : 2,
+		"Patch loaded ROM file")) {
 		auto l_patched_rom{ patch_rom() };
 
 		if (l_patched_rom.has_value()) {
+			std::string l_out_file{ l_shift ? get_filepath("nes") : get_nes_path() };
+
 			try {
-				klib::file::write_bytes_to_file(l_patched_rom.value(), get_nes_path());
-				add_message("ROM file written to " + get_nes_path(), 2);
+				klib::file::write_bytes_to_file(l_patched_rom.value(), l_out_file);
+				add_message("ROM file written to " + l_out_file, 2);
 			}
 			catch (const std::runtime_error& ex) {
 				add_message(ex.what(), 1);
@@ -140,31 +146,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		add_message("Integrity analysis completed", 4);
 	}
 
-	/*
-	ImGui::SameLine();
-
-
-	if (ui::imgui_button("Count Block Properties")) {
-		std::map<byte, int> l_bc_counts;
-
-		for (std::size_t c{ 0 }; c < m_game->m_chunks.size(); ++c) {
-			for (std::size_t s{ 0 }; s < m_game->m_chunks[c].m_screens.size(); ++s) {
-				const auto& scr{ m_game->m_chunks[c].m_screens[s] };
-
-				for (const auto& row : scr.m_tilemap)
-					for (byte b : row)
-						++l_bc_counts[m_game->m_chunks[c].m_metatiles.at(b).m_block_property];
-			}
-		}
-
-		for (const auto& kv : l_bc_counts) {
-			add_message(std::format("Blocks with property {}: {}",
-				get_description(kv.first, c::LABELS_BLOCK_PROPERTIES),
-				kv.second), 5);
-		}
-	}
-	*/
-
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) {
 
 		try {
@@ -185,69 +166,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		}
 	}
 
-	// ImGui::Checkbox("Animate", &m_animate);
-
-	/*
-	if (ImGui::Button("Unused metatiles?")) {
-
-		for (std::size_t i{ 0 }; i < 8; ++i) {
-			std::map<byte, int> l_count;
-
-			for (std::size_t s{ 0 }; s < m_game->m_chunks[i].m_screens.size(); ++s) {
-
-				const auto& tm{ m_game->m_chunks[i].m_screens[s].m_tilemap };
-
-				for (const auto& row : tm)
-					for (byte b : row)
-						++l_count[b];
-
-			}
-
-			int l_unused_cnt{ 0 };
-
-			for (std::size_t b{ 0 }; b < m_game->m_chunks[i].m_metatiles.size(); ++b) {
-				if (l_count.find(static_cast<byte>(b)) == end(l_count))
-					++l_unused_cnt;
-			}
-
-			add_message(std::format("Chunk {} unused metatiles: {}", i, l_unused_cnt));
-		}
-
-	}
-
-	if (ui::imgui_button("Delete Unreferenced Metatiles", 2)) {
-		std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
-		add_message(std::format("{} metatiles deleted from world {}",
-			l_del_cnt, m_sel_chunk));
-		if (l_del_cnt > 0)
-			generate_metatile_textures(p_rnd);
-	}
-
-	ImGui::SameLine();
-
-	if (ui::imgui_button("Delete Unreferenced Screens", 2)) {
-		if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS) {
-			add_message("Can not delete screens from the Buildings word");
-		}
-		else {
-			std::size_t l_del_cnt{ m_game->delete_unreferenced_screens(m_sel_chunk) };
-			add_message(std::format("{} screens deleted from world {}",
-				l_del_cnt, m_sel_chunk), 2);
-			if (m_sel_screen >= m_game->m_chunks.at(m_sel_chunk).m_screens.size())
-				m_sel_screen = m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1;
-		}
-	}
-
-	if (ui::imgui_button("Find unused screens")) {
-		for (std::size_t i{ 0 }; i < 8; ++i) {
-			auto l_scr{ m_game->get_referenced_screens(i) };
-			add_message(std::format("World {}: {} unreferenced screens",
-				i, m_game->m_chunks.at(i).m_screens.size() - l_scr.size()
-			));
-		}
-	}
-	*/
-
 	show_output_messages();
 
 	ImGui::End();
@@ -262,9 +180,22 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 	m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
 	add_message("Patched static data", 2);
 
-	auto l_bret{ m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom) };
-	l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
-	l_dyndata_bytes += l_bret.first;
+	std::pair<std::size_t, std::size_t> l_bret(0, 0);
+
+	if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
+		l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);
+		l_good &= check_patched_size("Same-World Transition Data", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
+
+		l_bret = m_rom_manager.encode_ow_transitions(m_config, m_game.value(), x_rom);
+		l_good &= check_patched_size("Other-World Transition Data", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
+	}
+	else {
+		l_bret = m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom);
+		l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
+		l_dyndata_bytes += l_bret.first;
+	}
 
 	l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);
 	l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);

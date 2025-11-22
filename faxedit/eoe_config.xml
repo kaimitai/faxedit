@@ -50,11 +50,11 @@
 		<const name="spawn_loc_data_start" value="0x3ddbd" />
 
 		<!-- randumizer uses free space for functions, we need to keep the original limits -->
-		<const name="sameworld_trans_data_start" region="randum" value="0x3ea57" />
+		<!-- if these constants are defined for a region we keep original limits -->
+		<!-- otherwise we use transition_data_start and transition_data_end -->
 		<const name="sameworld_trans_data_end" region="randum" value="0x3ea60" />
-		<const name="otherworld_trans_data_start" region="randum" value="0x3eabc" />
 		<const name="otherworld_trans_data_end" region="randum" value="0x3eb3f" />
-		<!-- we combine same-world and other-world transition data if we use the bank15 free space -->
+		<!-- we combine same-world and other-world transition data if we use the bank 15 free space -->
 		<const name="transition_data_start" region="en-transl" value="0x3fe0a" />
 		<const name="transition_data_start" region="jp" value="0x3fdc2" />
 		<const name="transition_data_start" region="eu,us" value="0x3fcdd" />
@@ -86,9 +86,9 @@
 		<const name="sprite_count" value="101" />
 		<const name="iscript_count" value="152" />
 		<const name="string_data_start" region="eu,us,randum" value="0x34310" />
-		<const name="string_data_start" region="jp" value="0x35f50" />
+		<const name="string_data_start" region="jp,en-transl" value="0x35f50" />
 		<const name="string_data_end" region="eu,us,randum" value="0x38010" />
-		<const name="string_data_end" region="jp" value="0x37a50" />
+		<const name="string_data_end" region="jp,en-transl" value="0x37a50" />
 		<!-- byte-size of the script data in the original region; everything following the end of the ptr table -->
 		<const name="iscript_data_rg1_size" value="1581" />
 		<!-- secondary region for script data -->
