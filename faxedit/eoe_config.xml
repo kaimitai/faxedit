@@ -45,8 +45,12 @@
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
 	<consts>
+		<!-- mappings from world to tilemap bank, followed by mapping to ptr index -->
+		<const name="world_tilemap_metadata" value="0x3df44" />
+		<!-- max size screen tilemaps can occupy within a bank -->
+		<const name="world_tilemap_max_size" value="0x4000" />
 		<!-- end offsets for dynamic data -->
-		<const name="metadata_end" value="0xf010" />
+		<const name="metadata_end" value="0x10010" />
 		<const name="sprite_data_end" value="0x30010" />
 		<!-- randumizer uses free space for functions, we need to keep the original limits -->
 		<!-- if these constants are defined for a region we keep original limits -->
@@ -300,6 +304,18 @@
 			<entry byte="$00" str="Final Spring Opening" />
 			<entry byte="$01" str="Boss Room" />
 			<entry byte="$02" str="End-Game Room" />
+		</byte_to_string_map>
+		<!-- world tilemaps bank ROM offsets -->
+		<byte_to_string_map name="tilemap_bank_offsets">
+			<entry byte="$00" str="0x0010" />
+			<entry byte="$01" str="0x4010" />
+			<entry byte="$02" str="0x8010" />
+			<entry byte="$09" str="0x24010" />
+		</byte_to_string_map>
+		<!-- world tilemaps to predefined bank -->
+		<byte_to_string_map name="world_tilemap_to_predefined_bank">
+			<!-- due to a bug in the game code, world 0 tilemaps must be in bank 0 -->
+			<entry byte="$00" str="$00" />
 		</byte_to_string_map>
 		<!-- background tile ROM offsets -->
 		<byte_to_string_map name="bg_chr_rom_offsets">

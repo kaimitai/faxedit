@@ -16,21 +16,25 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	m_rom_data{ p_rom_data }
 {
 
-	// extract all tilemaps in the correct ordering
-	for (std::size_t l_current_tilemap{ 0 }; l_current_tilemap < 8; ++l_current_tilemap) {
-		// search the tilemap bank rom for the next world index
-		for (std::size_t b{ 0 }; b < c::MAP_BANK_TO_WORLD_TILEMAPS.size(); ++b)
-			for (std::size_t idx{ 0 }; idx < c::MAP_BANK_TO_WORLD_TILEMAPS[b].size(); ++idx)
-				if (c::MAP_BANK_TO_WORLD_TILEMAPS[b][idx] == l_current_tilemap) {
-					m_chunks.push_back(fe::Chunk());
+	// start of 8-byte map from world to bank no
+	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
+	// start of 8-byte map from world to ptr in that bank
+	std::size_t l_world_to_bank_ptr_idx{ l_world_to_bank + 8 };
+	// map of bank number to ROM offset
+	auto l_ptr_tilebamp_bank_rom_offsets{ p_config.bmap_numeric(c::ID_TILEMAP_BANK_OFFSETS) };
 
-					// we have the bank and the world ptr index in the bank - extract
-					std::size_t l_master_ptr{ c::PTR_TILEMAPS_BANK_ROM_OFFSET[b] + 2 * idx };
-					auto l_screen_ptrs{ get_screen_pointers(l_master_ptr) };
+	// extract all tilemaps for each world
+	for (std::size_t world{ 0 }; world < 8; ++world) {
+		m_chunks.push_back(fe::Chunk());
+		std::size_t l_master_ptr{
+			l_ptr_tilebamp_bank_rom_offsets.at(p_rom_data.at(l_world_to_bank + world)) +
+			static_cast<std::size_t>(p_rom_data.at(l_world_to_bank_ptr_idx + world) * 2) };
 
-					for (auto l_idx : l_screen_ptrs)
-						m_chunks.back().decompress_and_add_screen(p_rom_data, l_idx);
-				}
+		auto l_screen_ptrs{ get_screen_pointers(l_master_ptr) };
+
+		for (auto l_idx : l_screen_ptrs)
+			m_chunks.back().decompress_and_add_screen(p_rom_data, l_idx);
+
 	}
 
 	// extract various

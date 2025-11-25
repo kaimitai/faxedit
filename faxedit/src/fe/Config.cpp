@@ -54,6 +54,16 @@ const std::map<byte, std::string>& fe::Config::bmap(const std::string& p_id) con
 		return m_byte_maps.at(p_id);
 }
 
+const std::map<byte, std::size_t> fe::Config::bmap_numeric(const std::string& p_id) const {
+	std::map<byte, std::size_t> result;
+	const auto& l_bmap{ bmap(p_id) };
+
+	for (const auto& kv : l_bmap)
+		result.insert(std::make_pair(kv.first, xml::parse_numeric(kv.second)));
+
+	return result;
+}
+
 std::map<std::string, byte> fe::Config::bmap_reverse(const std::string& p_id) const {
 	std::map<std::string, byte> result;
 	const auto& l_bmap{ bmap(p_id) };

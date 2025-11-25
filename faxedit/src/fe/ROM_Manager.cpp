@@ -7,9 +7,181 @@
 #include "./../common/klib/Kfile.h"
 #include "fe_constants.h"
 
-fe::ROM_Manager::ROM_Manager(void) :
-	m_ptr_tilemaps_bank_rom_offset{ c::PTR_TILEMAPS_BANK_ROM_OFFSET }
-{
+fe::ROM_Manager::ROM_Manager(void) {
+}
+
+// this function will extract all tilemaps and try to pack them across the 3
+// tilemap banks, and update the tilemap metadata
+fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config& p_config,
+	std::vector<byte>& p_rom, const fe::Game& p_game) const {
+
+	auto l_ptr_tilebamp_bank_rom_offsets{ p_config.bmap_numeric(c::ID_TILEMAP_BANK_OFFSETS) };
+	auto l_predef{ p_config.bmap_numeric(c::ID_TILEMAP_TO_PREDEFINED_BANK) };
+	std::size_t l_max_bank_size{ p_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
+
+	// calculate all world tilemap data total size (all ptrs + data)
+
+	// initialize the size with 2, as each world ptr consumes 2 bytes
+	std::vector<std::size_t> l_world_tilemap_sizes(8, 2);
+
+	for (std::size_t world{ 0 }; world < 8; ++world) {
+		// keep a set of all unique tilemaps in case we have duplicates
+		std::set<std::vector<byte>> l_unique_tilemaps;
+
+		for (const auto& screen : p_game.m_chunks.at(world).m_screens) {
+			const auto l_scr_tilemap{ screen.get_tilemap_bytes() };
+
+			// add the screen tilemap size plus the two pointers it consumes
+			if (l_unique_tilemaps.find(l_scr_tilemap) == end(l_unique_tilemaps)) {
+				l_world_tilemap_sizes[world] += 2 + l_scr_tilemap.size();
+				l_unique_tilemaps.insert(l_scr_tilemap);
+			}
+			else
+				l_world_tilemap_sizes[world] += 2;
+		}
+	}
+
+	// we now have all the total sizes, let us recurse and assign everything
+	std::vector<int> l_assignments(8, -1);
+	std::map<byte, std::size_t> l_used_sizes;
+
+	// initialize the used sizes map with the banks we will use
+	for (const auto& kv : l_ptr_tilebamp_bank_rom_offsets)
+		l_used_sizes[kv.first] = 0;
+
+	// let us add the predefined assignments
+	for (const auto& kv : l_predef) {
+		l_used_sizes[static_cast<byte>(kv.second)] += l_world_tilemap_sizes[kv.first];
+		l_assignments[kv.first] = static_cast<int>(kv.second);
+	}
+
+	// ensure we did not already cross the size limits
+	// with the pre-defined placements
+	bool l_predef_within_limits{ true };
+	for (const auto& kv : l_used_sizes)
+		if (kv.second > l_max_bank_size)
+			l_predef_within_limits = false;
+
+	// let us try to pack everything
+	bool l_success{ l_predef_within_limits &&
+		pack_tilemaps_recursively(l_world_tilemap_sizes, 0,
+		l_used_sizes, l_assignments, l_max_bank_size) };
+
+	std::map<std::size_t, std::vector<std::size_t>> l_assign_map;
+
+	// we found a possible packing, execute it
+	if (l_success) {
+		// turn our vector of assignments into a map from bank no
+		// to vector of all world nos living here
+		for (std::size_t w{ 0 }; w < l_assignments.size(); ++w)
+			l_assign_map[static_cast<std::size_t>(l_assignments[w])].push_back(w);
+
+		for (const auto& kv : l_assign_map) {
+
+			auto l_bank_tm_data{ encode_bank_tilemap_data(p_game,
+				l_ptr_tilebamp_bank_rom_offsets.at(static_cast<byte>(kv.first)),
+				kv.first, kv.second) };
+
+			patch_bytes(l_bank_tm_data, p_rom,
+				l_ptr_tilebamp_bank_rom_offsets.at(static_cast<byte>(kv.first)));
+		}
+
+		// and patch the world to bank/ptr metadata in ROM as well
+		std::size_t lc_md_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
+		std::size_t lc_md_world_to_ptr{ lc_md_world_to_bank + 8 };
+
+		std::vector<std::size_t> l_md_world_to_ptr(8, 0);
+		std::map<std::size_t, std::size_t> l_md_bank_to_ptr;
+
+		for (const auto& kv : l_assign_map) {
+			byte l_ptr_no{ 0 };
+			for (std::size_t i{ 0 }; i < kv.second.size(); ++i) {
+				p_rom.at(lc_md_world_to_bank + kv.second[i]) = static_cast<byte>(kv.first);
+				p_rom.at(lc_md_world_to_ptr + kv.second[i]) = l_ptr_no++;
+			}
+		}
+	}
+
+	return fe::TileMapPackingResult(l_success,
+		l_assign_map, l_world_tilemap_sizes);
+}
+
+std::vector<byte> fe::ROM_Manager::encode_bank_tilemap_data(const fe::Game& p_game,
+	std::size_t p_bank_offset,
+	std::size_t p_bank_no,
+	const std::vector<std::size_t>& p_worlds) const {
+
+	// offset + 2 bytes per world pointer
+	std::size_t l_cur_rom_offset{
+		p_bank_offset +
+		p_worlds.size() * 2 };
+
+	std::vector<std::vector<byte>> l_all_screen_data_chunks;
+
+	for (std::size_t i{ 0 }; i < p_worlds.size(); ++i) {
+		std::vector<std::vector<byte>> l_cmpr_scr;
+
+		for (std::size_t s{ 0 }; s < p_game.m_chunks[p_worlds[i]].m_screens.size(); ++s)
+			l_cmpr_scr.push_back(p_game.m_chunks[p_worlds[i]].m_screens[s].get_tilemap_bytes());
+
+		auto l_data{
+		build_pointer_table_and_data(
+			l_cur_rom_offset,
+			p_bank_offset,
+			l_cmpr_scr)
+		};
+
+		l_cur_rom_offset += l_data.size();
+
+		l_all_screen_data_chunks.push_back(std::move(l_data));
+
+	}
+
+	// ptr table start and zero addr are the same here since the ptr table
+	// start at the very beginning of each bank
+	auto l_all_screens_w_ptr_table{ build_pointer_table_and_data(
+		p_bank_offset,
+		p_bank_offset,
+		l_all_screen_data_chunks
+	) };
+
+	return l_all_screens_w_ptr_table;
+}
+
+bool fe::ROM_Manager::pack_tilemaps_recursively(const std::vector<std::size_t>& p_sizes,
+	std::size_t p_index,
+	std::map<byte, std::size_t>& p_used_bank_bytes,
+	std::vector<int>& p_bank_assignments,
+	std::size_t p_bank_max_size) const {
+
+	if (p_index == p_sizes.size())
+		return true;
+	else if (p_bank_assignments[p_index] != -1) {
+		return pack_tilemaps_recursively(p_sizes, p_index + 1,
+			p_used_bank_bytes,
+			p_bank_assignments,
+			p_bank_max_size);
+	}
+	else {
+
+		for (auto& kv : p_used_bank_bytes) {
+			if (kv.second + p_sizes[p_index] <= p_bank_max_size) {
+				p_bank_assignments[p_index] = kv.first;
+				kv.second += p_sizes[p_index];
+				if (pack_tilemaps_recursively(p_sizes, p_index + 1, p_used_bank_bytes,
+					p_bank_assignments, p_bank_max_size))
+					return true;
+				else {
+					kv.second -= p_sizes[p_index];
+					p_bank_assignments[p_index] = -1;
+				}
+			}
+		}
+
+	}
+
+	return false;
+
 }
 
 std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
@@ -63,42 +235,6 @@ l_sprite_ptr.first,
 
 	return l_all_screens_w_ptr_table;
 
-}
-
-// this function encodes the screen data for a given bank
-std::vector<byte> fe::ROM_Manager::encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const {
-	const auto& l_chunks_this_bank{ c::MAP_BANK_TO_WORLD_TILEMAPS[p_bank_no] };
-
-	// l_chunks_this_bank now holds all the chunk numbers in the correct order - create ROM data for these chunk tilemaps
-	std::vector<std::vector<byte>> l_all_screen_data_chunks;
-	std::size_t l_cur_rom_offset{ m_ptr_tilemaps_bank_rom_offset.at(p_bank_no) + 2 * l_chunks_this_bank.size() };
-
-	for (std::size_t i{ 0 }; i < l_chunks_this_bank.size(); ++i) {
-		std::vector<std::vector<byte>> l_cmpr_scr;
-
-		for (std::size_t s{ 0 }; s < p_game.m_chunks[l_chunks_this_bank[i]].m_screens.size(); ++s)
-			l_cmpr_scr.push_back(p_game.m_chunks[l_chunks_this_bank[i]].m_screens[s].get_tilemap_bytes());
-
-		auto l_data{
-		build_pointer_table_and_data(
-			l_cur_rom_offset,
-			m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
-			l_cmpr_scr)
-		};
-
-		l_cur_rom_offset += l_data.size();
-
-		l_all_screen_data_chunks.push_back(std::move(l_data));
-
-	}
-
-	auto l_all_screens_w_ptr_table{ build_pointer_table_and_data(
-	m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
-		m_ptr_tilemaps_bank_rom_offset.at(p_bank_no),
-		l_all_screen_data_chunks
-	) };
-
-	return l_all_screens_w_ptr_table;
 }
 
 // this function takes a vector of contiguous data elements
@@ -219,17 +355,6 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_
 
 	return l_all_chunks_w_ptr_table;
 }
-
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_tilemaps(const fe::Game& p_game,
-	std::vector<byte>& p_rom, std::size_t p_bank_no) const {
-	auto l_bank_screen_data{ encode_bank_screen_data(p_game, p_bank_no) };
-
-	if (l_bank_screen_data.size() <= c::SIZE_LIMITS_BANK_TILEMAPS.at(p_bank_no))
-		patch_bytes(l_bank_screen_data, p_rom, c::PTR_TILEMAPS_BANK_ROM_OFFSET.at(p_bank_no));
-
-	return std::make_pair(l_bank_screen_data.size(), c::SIZE_LIMITS_BANK_TILEMAPS.at(p_bank_no));
-}
-
 
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom) const {

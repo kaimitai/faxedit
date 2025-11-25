@@ -18,7 +18,10 @@ std::vector<fe::ui::UIStyle> fe::ui::g_uiStyles = {
 	{ ImVec4(0.45f, 0.35f, 0.05f, 1.0f), ImVec4(0.60f, 0.45f, 0.10f, 1.0f), ImVec4(0.75f, 0.55f, 0.15f, 1.0f) },
 
 	// White-Ish
-	{ ImVec4(0.95f, 0.95f, 0.95f, 1.00f), ImVec4(0.98f, 0.96f, 0.92f, 1.00f), ImVec4(0.92f, 0.94f, 0.97f, 1.00f) }
+	{ ImVec4(0.95f, 0.95f, 0.95f, 1.00f), ImVec4(0.98f, 0.96f, 0.92f, 1.00f), ImVec4(0.92f, 0.94f, 0.97f, 1.00f) },
+
+	// Yellow
+	{ ImVec4(1.0f, 1.0f, 0.0f, 1.0f), ImVec4(1.0f, 1.0f, 0.3f, 1.0f), ImVec4(1.0f, 0.9f, 0.0f, 1.0f) }
 };
 
 std::vector<ImVec4> fe::ui::asmColors = {

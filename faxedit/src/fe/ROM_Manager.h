@@ -17,6 +17,12 @@ namespace fe {
 
 	class Config;
 
+	struct TileMapPackingResult {
+		bool m_result;
+		std::map<std::size_t, std::vector<std::size_t>> m_assignments;
+		std::vector<std::size_t> m_sizes;
+	};
+
 	class ROM_Manager {
 
 		std::vector<byte> build_pointer_table_and_data(
@@ -34,9 +40,6 @@ namespace fe {
 			std::size_t p_ptr_base_rom_offset,
 			std::size_t p_rom_loc_data,
 			const std::vector<std::vector<byte>>& p_data) const;
-
-		// pointer variables - check the constants header for descriptions
-		std::vector<std::size_t> m_chunk_tilemaps_bank_idx, m_ptr_tilemaps_bank_rom_offset;
 
 		template<class T, class U = T>
 		std::size_t get_vector_index(const std::vector<T>& p_data, U p_val) const {
@@ -62,17 +65,28 @@ namespace fe {
 	public:
 		ROM_Manager(void);
 
-		// void extract_sprite_data(const std::vector<byte>& p_rom);
+		// encode tilemaps, ensure a packing if found if any is possible
+		fe::TileMapPackingResult encode_game_tilemaps(const fe::Config& p_config,
+			std::vector<byte>& p_rom, const fe::Game& p_game) const;
+		// given an assignment vector and bank no, pack
+		std::vector<byte> encode_bank_tilemap_data(const fe::Game& p_game,
+			std::size_t p_bank_offset,
+			std::size_t p_bank_no,
+			const std::vector<std::size_t>& p_worlds) const;
+		// recursive function used to find a tilemap packing
+		bool pack_tilemaps_recursively(const std::vector<std::size_t>& p_sizes,
+			std::size_t p_index,
+			std::map<byte, std::size_t>& p_used_bank_bytes,
+			std::vector<int>& p_bank_assignments,
+			std::size_t p_bank_max_size) const;
 
 		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Config& p_config, const fe::Game& p_game) const;
-		std::vector<byte> encode_bank_screen_data(const fe::Game& p_game, std::size_t p_bank_no) const;
 		std::vector<byte> encode_game_metadata_all(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_game_otherworld_trans(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_game_sameworld_trans(const fe::Config& p_config, const fe::Game& p_game) const;
 
 		// encode in place and return a pair of used size and max size
-		std::pair<std::size_t, std::size_t> encode_bank_tilemaps(const fe::Game& p_game, std::vector<byte>& p_rom, std::size_t p_bank_no) const;
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;

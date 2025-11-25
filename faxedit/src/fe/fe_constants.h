@@ -30,7 +30,11 @@ namespace fe {
 		constexpr char ID_SW_TRANS_DATA_END[]{ "sameworld_trans_data_end" };
 		constexpr char ID_OW_TRANS_DATA_END[]{ "otherworld_trans_data_end" };
 
+		// constant sizes
+		constexpr char ID_WORLD_TILEMAP_MAX_SIZE[]{ "world_tilemap_max_size" };
+
 		// constant offsets
+		constexpr char ID_WORLD_TILEMAP_MD[]{ "world_tilemap_metadata" };
 		constexpr char ID_PALETTE_OFFSET[]{ "palette_offset" };
 		constexpr char ID_DEFAULT_PALETTE_OFFSET[]{ "default_palette_offset" };
 		constexpr char ID_SPAWN_LOC_DATA_START[]{ "spawn_loc_data_start" };
@@ -62,30 +66,18 @@ namespace fe {
 		constexpr char ID_PALETTE_LABELS[]{ "palette_labels" };
 		constexpr char ID_SPECIAL_SPRITE_SET_LABELS[]{ "special_sprite_set_labels" };
 		constexpr char ID_CMD_BYTE_LABELS[]{ "command_byte_labels" };
+		constexpr char ID_TILEMAP_BANK_OFFSETS[]{ "tilemap_bank_offsets" };
+		constexpr char ID_TILEMAP_TO_PREDEFINED_BANK[]{ "world_tilemap_to_predefined_bank" };
 		constexpr char ID_BG_CHR_ROM_OFFSETS[]{ "bg_chr_rom_offsets" };
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
 		constexpr char ID_ISCRIPT_COUNT[]{ "iscript_count" };
 
-		// the start of the pointer table for each chunks's tilemaps
-		// the start of the data (ptr table + data for each chunk) follows immediately after this outer pointer table
-		inline const std::vector<std::size_t> PTR_TILEMAPS_BANK_ROM_OFFSET{ 0x10, 0x4010, 0x8010 };
-		// game order tilemaps {{bank, chunk idx} -> game world idx}
-		inline const std::vector<std::vector<std::size_t>> MAP_BANK_TO_WORLD_TILEMAPS{
-			{0, 2, 3},
-			   {1, 5},
-			{6, 4, 7} };
 
 		// chunks with special meaning in some contexts
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
-
-		// dynamic size limits
-		// TODO: Check, this could be totally wrong
-		inline const std::vector<std::size_t> SIZE_LIMITS_BANK_TILEMAPS{
-			0x4000, 0x4000, 0x4000
-		};
 
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid

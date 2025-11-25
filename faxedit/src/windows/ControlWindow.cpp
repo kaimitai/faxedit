@@ -201,10 +201,42 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 	l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);
 	l_dyndata_bytes += l_bret.first;
 
-	for (std::size_t i{ 0 }; i < 3; ++i) {
-		l_bret = m_rom_manager.encode_bank_tilemaps(m_game.value(), x_rom, i);
-		l_good &= check_patched_size(std::format("Batch {} Tilemaps", i + 1), l_bret.first, l_bret.second);
-		l_dyndata_bytes += l_bret.first;
+	auto l_tm_result{ m_rom_manager.encode_game_tilemaps(m_config, x_rom,
+		m_game.value()) };
+	l_good &= l_tm_result.m_result;
+
+	std::size_t l_max_tm_byte_size{ m_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
+
+	if (l_tm_result.m_result) {
+
+		for (const auto& kv : l_tm_result.m_assignments) {
+			std::size_t l_bank_byte_size{ 0 };
+			std::string l_bank_output;
+
+			for (std::size_t w : kv.second) {
+				std::size_t l_byte_size{ l_tm_result.m_sizes[w] };
+				l_bank_byte_size += l_byte_size;
+				l_dyndata_bytes += l_byte_size;
+				l_bank_output += std::format("({} {} bytes) ",
+					m_labels_worlds[w], l_byte_size);
+			}
+
+			add_message(std::format("Bank {}: {}- total bytes: {}/{} ({:.2f}%)",
+				kv.first, l_bank_output, l_bank_byte_size, l_max_tm_byte_size,
+				100.0f * static_cast<float>(l_bank_byte_size) / static_cast<float>(l_max_tm_byte_size)),
+				6);
+		}
+
+		add_message("Tilemaps patched!", 2);
+	}
+	else {
+		add_message(std::format("Could not pack all world tilemaps across the banks, each of byte size {}",
+			l_max_tm_byte_size), 1);
+		for (std::size_t i{ 0 }; i < 8; ++i) {
+			add_message(std::format("Byte size for {}: {}",
+				m_labels_worlds[i],
+				l_tm_result.m_sizes[i]), 6);
+		}
 	}
 
 	l_bret = m_rom_manager.encode_metadata(m_config, m_game.value(), x_rom);
