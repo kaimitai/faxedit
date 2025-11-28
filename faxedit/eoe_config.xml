@@ -859,5 +859,71 @@
 			<entry byte="$0e" str="RANK_PALADIN" />
 			<entry byte="$0f" str="RANK_LORD" />
 		</byte_to_string_map>
+		<byte_to_string_map name="nes_palette">
+			<entry byte="$00" str="$666666" />
+			<entry byte="$01" str="$002a88" />
+			<entry byte="$02" str="$1412a7" />
+			<entry byte="$03" str="$3b00a4" />
+			<entry byte="$04" str="$5c007e" />
+			<entry byte="$05" str="$6e0040" />
+			<entry byte="$06" str="$6c0700" />
+			<entry byte="$07" str="$561d00" />
+			<entry byte="$08" str="$333500" />
+			<entry byte="$09" str="$0c4800" />
+			<entry byte="$0a" str="$005200" />
+			<entry byte="$0b" str="$004f08" />
+			<entry byte="$0c" str="$00404d" />
+			<entry byte="$0d" str="$000000" />
+			<entry byte="$0e" str="$000000" />
+			<entry byte="$0f" str="$000000" />
+			<entry byte="$10" str="$adadad" />
+			<entry byte="$11" str="$155fd9" />
+			<entry byte="$12" str="$4240ff" />
+			<entry byte="$13" str="$7527fe" />
+			<entry byte="$14" str="$a01acc" />
+			<entry byte="$15" str="$b71e7b" />
+			<entry byte="$16" str="$b53120" />
+			<entry byte="$17" str="$994e00" />
+			<entry byte="$18" str="$6b6d00" />
+			<entry byte="$19" str="$388700" />
+			<entry byte="$1a" str="$0d9300" />
+			<entry byte="$1b" str="$008f32" />
+			<entry byte="$1c" str="$007c8d" />
+			<entry byte="$1d" str="$000000" />
+			<entry byte="$1e" str="$000000" />
+			<entry byte="$1f" str="$000000" />
+			<entry byte="$20" str="$ffffff" />
+			<entry byte="$21" str="$64b0ff" />
+			<entry byte="$22" str="$9290ff" />
+			<entry byte="$23" str="$c676ff" />
+			<entry byte="$24" str="$f26aff" />
+			<entry byte="$25" str="$ff6ecc" />
+			<entry byte="$26" str="$ff8170" />
+			<entry byte="$27" str="$ea9e22" />
+			<entry byte="$28" str="$bcbe00" />
+			<entry byte="$29" str="$88d800" />
+			<entry byte="$2a" str="$5ce430" />
+			<entry byte="$2b" str="$45e082" />
+			<entry byte="$2c" str="$48cdde" />
+			<entry byte="$2d" str="$4f4f4f" />
+			<entry byte="$2e" str="$000000" />
+			<entry byte="$2f" str="$000000" />
+			<entry byte="$30" str="$ffffff" />
+			<entry byte="$31" str="$c0dfff" />
+			<entry byte="$32" str="$d3d2ff" />
+			<entry byte="$33" str="$e8c8ff" />
+			<entry byte="$34" str="$fac2ff" />
+			<entry byte="$35" str="$ffc4ea" />
+			<entry byte="$36" str="$ffccc5" />
+			<entry byte="$37" str="$f7d8a5" />
+			<entry byte="$38" str="$e4e594" />
+			<entry byte="$39" str="$cfef96" />
+			<entry byte="$3a" str="$bdf4ab" />
+			<entry byte="$3b" str="$b3f3cc" />
+			<entry byte="$3c" str="$b5ebf2" />
+			<entry byte="$3d" str="$b8b8b8" />
+			<entry byte="$3e" str="$000000" />
+			<entry byte="$3f" str="$000000" />
+		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>

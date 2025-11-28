@@ -68,8 +68,9 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 		bool l_mouse_left_down{ ImGui::IsMouseDown(ImGuiMouseButton_Left) };
 		bool l_mouse_right_down{ ImGui::IsMouseDown(ImGuiMouseButton_Right) };
+		bool l_win_active{ ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) };
 
-		if (insideImage && (l_mouse_left_down || l_mouse_right_down)) {
+		if (insideImage) {
 			float scaleX = imageSize.x / tilemapPixelWidth;
 			float scaleY = imageSize.y / tilemapPixelHeight;
 
@@ -79,91 +80,120 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			std::size_t tileX = std::min(static_cast<std::size_t>(localX / tileSize), std::size_t(15));
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
-			if (m_emode == fe::EditMode::Tilemap) {
-				if (l_mouse_left_down) {
-					// ctrl + left mouse; color picker
-					if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
-						m_sel_metatile = l_screen.m_tilemap.at(tileY).at(tileX);
+			// show tile position as tooltip - begin
+			ImGui::SetNextWindowPos(ImVec2(5, 5));
+			ImGui::Begin("TilemapTooltip", nullptr,
+				ImGuiWindowFlags_NoDecoration |
+				ImGuiWindowFlags_AlwaysAutoResize |
+				ImGuiWindowFlags_NoSavedSettings |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_Tooltip);
+			ImGui::Text("(%d, %d)", tileX, tileY);
+			ImGui::End();
+			// show tile position as tooltip - end
+
+			if (l_win_active && (l_mouse_left_down || l_mouse_right_down)) {
+
+				if (m_emode == fe::EditMode::Tilemap) {
+					if (l_mouse_left_down) {
+						// ctrl + left mouse; color picker
+						if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+							m_sel_metatile = l_screen.m_tilemap.at(tileY).at(tileX);
+						}
+						else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+							m_sel_tile_x2 = tileX;
+							m_sel_tile_y2 = tileY;
+						}
+						// left mouse; select tile coords
+						else {
+							m_sel_tile_x = tileX;
+							m_sel_tile_y = tileY;
+							// clear selection rectangle
+							m_sel_tile_x2 = 16;
+						}
 					}
-					else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
-						m_sel_tile_x2 = tileX;
-						m_sel_tile_y2 = tileY;
+
+					else if (l_mouse_right_down) {
+						if (m_sel_metatile < l_metatiles.size())
+							l_screen.m_tilemap.at(tileY).at(tileX) = static_cast<byte>(m_sel_metatile);
 					}
-					// left mouse; select tile coords
-					else {
-						m_sel_tile_x = tileX;
-						m_sel_tile_y = tileY;
-						// clear selection rectangle
-						m_sel_tile_x2 = 16;
-					}
+
 				}
+				else {
+					bool l_shift{ ImGui::IsKeyDown(ImGuiKey_LeftShift) };
+					bool l_ctrl{ ImGui::IsKeyDown(ImGuiKey_LeftCtrl) };
 
-				else if (l_mouse_right_down) {
-					if (m_sel_metatile < l_metatiles.size())
-						l_screen.m_tilemap.at(tileY).at(tileX) = static_cast<byte>(m_sel_metatile);
-				}
+					bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
+					bool l_allow_sprite_edit{ !l_building || m_show_sprite_sets_in_buildings };
 
-			}
-			else {
-				bool l_shift{ ImGui::IsKeyDown(ImGuiKey_LeftShift) };
-				bool l_ctrl{ ImGui::IsKeyDown(ImGuiKey_LeftCtrl) };
+					if (l_allow_sprite_edit &&
+						m_emode == fe::EditMode::Sprites &&
+						l_mouse_left_down) {
 
-				if (m_emode == fe::EditMode::Sprites &&
-					l_mouse_left_down) {
+						std::size_t l_spr_index{ l_building ?
+						m_sel_npc_bundle_sprite : m_sel_sprite };
+						fe::Sprite_set& l_spr_set{ l_building ?
+						m_game->m_npc_bundles.at(m_sel_npc_bundle) :
+						l_screen.m_sprite_set };
 
-					if (l_shift &&
-						m_sel_sprite < l_screen.m_sprite_set.size()) {
-						l_screen.m_sprite_set.m_sprites[m_sel_sprite].m_x = static_cast<byte>(tileX);
-						l_screen.m_sprite_set.m_sprites[m_sel_sprite].m_y = static_cast<byte>(tileY);
-					}
-					else {
-						for (std::size_t s{ 0 }; s < l_screen.m_sprite_set.size(); ++s) {
-							const auto& chksprite{ l_screen.m_sprite_set.m_sprites[s] };
-							// need to look for hit with pixel precision as some sprites
-							// can be narrower than a metatile
+						if (l_shift &&
+							l_spr_index < l_spr_set.size()) {
+							l_spr_set.m_sprites[l_spr_index].m_x = static_cast<byte>(tileX);
+							l_spr_set.m_sprites[l_spr_index].m_y = static_cast<byte>(tileY);
+						}
+						else {
+							for (std::size_t s{ 0 }; s < l_spr_set.size(); ++s) {
+								const auto& chksprite{ l_spr_set.m_sprites[s] };
+								// need to look for hit with pixel precision as some sprites
+								// can be narrower than a metatile
 
-							if (localX >= 16.0f * chksprite.m_x &&
-								localX < 16.0f * chksprite.m_x + m_sprite_dims[chksprite.m_id].w &&
-								localY >= 16.0f * chksprite.m_y &&
-								localY < 16.0f * chksprite.m_y + m_sprite_dims[chksprite.m_id].h) {
-								m_sel_sprite = s;
-								break;
+								if (localX >= 16.0f * chksprite.m_x &&
+									localX < 16.0f * chksprite.m_x + m_sprite_dims[chksprite.m_id].w &&
+									localY >= 16.0f * chksprite.m_y &&
+									localY < 16.0f * chksprite.m_y + m_sprite_dims[chksprite.m_id].h) {
+
+									if (l_building)
+										m_sel_npc_bundle_sprite = s;
+									else
+										m_sel_sprite = s;
+									break;
+								}
 							}
 						}
 					}
-				}
 
-				else if (m_emode == fe::EditMode::Doors &&
-					l_mouse_left_down) {
-					if (l_shift && m_sel_door < l_screen.m_doors.size()) {
-						l_screen.m_doors[m_sel_door].m_coords =
-						{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
+					else if (m_emode == fe::EditMode::Doors &&
+						l_mouse_left_down) {
+						if (l_shift && m_sel_door < l_screen.m_doors.size()) {
+							l_screen.m_doors[m_sel_door].m_coords =
+							{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
+						}
+						else if (l_ctrl && m_sel_door < l_screen.m_doors.size()) {
+							l_screen.m_doors[m_sel_door].m_dest_coords =
+							{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
+						}
+						else {
+							for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d)
+								if (tileX == l_screen.m_doors[d].m_coords.first &&
+									tileY == l_screen.m_doors[d].m_coords.second) {
+									m_sel_door = d;
+									break;
+								}
+						}
 					}
-					else if (l_ctrl && m_sel_door < l_screen.m_doors.size()) {
-						l_screen.m_doors[m_sel_door].m_dest_coords =
-						{ static_cast<byte>(tileX), static_cast<byte>(tileY) };
-					}
-					else {
-						for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d)
-							if (tileX == l_screen.m_doors[d].m_coords.first &&
-								tileY == l_screen.m_doors[d].m_coords.second) {
-								m_sel_door = d;
-								break;
-							}
-					}
-				}
-				else if (m_emode == fe::EditMode::Transitions &&
-					l_mouse_left_down) {
+					else if (m_emode == fe::EditMode::Transitions &&
+						l_mouse_left_down) {
 
-					if (l_ctrl && l_screen.m_interchunk_scroll.has_value()) {
-						l_screen.m_interchunk_scroll->m_dest_x = static_cast<byte>(tileX);
-						l_screen.m_interchunk_scroll->m_dest_y = static_cast<byte>(tileY);
-					}
-					else if (l_shift && l_screen.m_intrachunk_scroll.has_value()) {
-						l_screen.m_intrachunk_scroll->m_dest_x = static_cast<byte>(tileX);
-						l_screen.m_intrachunk_scroll->m_dest_y = static_cast<byte>(tileY);
-					}
+						if (l_ctrl && l_screen.m_interchunk_scroll.has_value()) {
+							l_screen.m_interchunk_scroll->m_dest_x = static_cast<byte>(tileX);
+							l_screen.m_interchunk_scroll->m_dest_y = static_cast<byte>(tileY);
+						}
+						else if (l_shift && l_screen.m_intrachunk_scroll.has_value()) {
+							l_screen.m_intrachunk_scroll->m_dest_x = static_cast<byte>(tileX);
+							l_screen.m_intrachunk_scroll->m_dest_y = static_cast<byte>(tileY);
+						}
 
+					}
 				}
 			}
 		}
@@ -227,9 +257,16 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 				ImGui::PushID("screensprites");
 
-				show_sprite_screen(l_screen.m_sprite_set, m_sel_sprite);
+				if (m_sel_chunk != c::CHUNK_IDX_BUILDINGS)
+					show_sprite_screen(l_screen.m_sprite_set, m_sel_sprite);
+				else if (m_show_sprite_sets_in_buildings)
+					show_sprite_npc_bundle_screen();
 
 				ImGui::PopID();
+
+				ui::imgui_checkbox("Edit Building Sprite Sets (advanced)",
+					m_show_sprite_sets_in_buildings,
+					"Check the documentation before using this functionality");
 
 				ImGui::EndTabItem();
 			}
@@ -572,7 +609,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			if (fe::ui::imgui_slider_with_arrows("##ss", "",
 				m_sel_screen, static_cast<std::size_t>(0), m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1)) {
 				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-				m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+				if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
+					m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
 			}
 
 			ImGui::SeparatorText("Navigation");
@@ -636,6 +674,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 		if (ImGui::BeginChild("Renderoptions", ImVec2(0.0f, 0.0f), true)) {
 
 			ui::imgui_checkbox("Animate Sprites", m_animate);
+			ImGui::SameLine();
+			ui::imgui_checkbox("Show Grid", m_show_grid);
 
 			ImGui::SeparatorText("Block-Property Icon Overlays");
 
@@ -764,8 +804,7 @@ void fe::MainWindow::scroll_down_button(const fe::Screen& p_screen) {
 
 void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 	if (ui::imgui_button("Enter Door###ed", 4, "",
-		m_sel_door >= p_screen.m_doors.size() ||
-		p_screen.m_doors[m_sel_door].m_door_type == fe::DoorType::Building)) {
+		m_sel_door >= p_screen.m_doors.size())) {
 
 		const auto& l_door{ p_screen.m_doors[m_sel_door] };
 
@@ -778,6 +817,7 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 			m_sel_chunk = c::CHUNK_IDX_BUILDINGS;
 			m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
 			m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+			m_sel_npc_bundle = l_door.m_npc_bundle;
 		}
 		else {
 			const auto& l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };

@@ -69,6 +69,7 @@ namespace fe {
 		constexpr char ID_TILEMAP_BANK_OFFSETS[]{ "tilemap_bank_offsets" };
 		constexpr char ID_TILEMAP_TO_PREDEFINED_BANK[]{ "world_tilemap_to_predefined_bank" };
 		constexpr char ID_BG_CHR_ROM_OFFSETS[]{ "bg_chr_rom_offsets" };
+		constexpr char ID_NES_PALETTE[]{ "nes_palette" };
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };

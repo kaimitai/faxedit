@@ -37,15 +37,17 @@ namespace fe {
 		SDL_Texture* surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf,
 			bool p_destroy_surface = true);
 
-		static const std::vector<std::vector<byte>> NES_PALETTE;
-
 		std::vector<SDL_Texture*> m_icon_overlays;
 
+		SDL_Color uint24_to_SDL_Color(std::size_t l_col) const;
 		void delete_texture(SDL_Texture* p_txt);
 
 	public:
 		gfx(SDL_Renderer* p_rnd);
 		~gfx(void);
+
+		// set NES palette
+		void set_nes_palette(const std::vector<std::size_t>& p_palette);
 
 		// image caching operations
 		void generate_atlas(SDL_Renderer* p_rnd, const std::vector<klib::NES_tile>& p_tiles, const std::vector<byte>& p_palette);
@@ -56,6 +58,7 @@ namespace fe {
 		void blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y) const;
 		void blit_to_screen(SDL_Renderer* p_rnd, int tile_no, int sub_palette_no, int x, int y) const;
 		void draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const;
+		void draw_gridlines_on_screen(SDL_Renderer* p_rnd) const;
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 		void draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, std::size_t p_frame_no, int x, int y) const;
 		void draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const;

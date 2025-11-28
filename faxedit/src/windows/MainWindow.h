@@ -89,7 +89,11 @@ namespace fe {
 
 		// rendering options
 		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
-			m_iscript_win_set_focus;
+			m_show_grid, m_iscript_win_set_focus;
+
+		// functionality toggles
+		bool m_show_sprite_sets_in_buildings;
+
 		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
@@ -142,6 +146,7 @@ namespace fe {
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
+		void show_sprite_npc_bundle_screen(void);
 		void show_stage_door_data(fe::Door& p_door);
 		void show_stages_data(void);
 		void show_screen_scroll_data(void);
@@ -164,6 +169,11 @@ namespace fe {
 		void enter_door_button(const fe::Screen& p_screen);
 		void transition_sw_button(const fe::Screen& p_screen);
 		void transition_ow_button(const fe::Screen& p_screen);
+
+		// screen element draw functions
+		void draw_sprites(SDL_Renderer* p_rnd,
+			const std::vector<fe::Sprite>& p_sprites,
+			std::size_t p_sel_sprite_no) const;
 
 	public:
 

@@ -27,13 +27,15 @@ fe::gfx::gfx(SDL_Renderer* p_rnd) :
 
 	m_screen_texture = SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
 		SDL_TEXTUREACCESS_TARGET, TILEMAP_SCALE * 16 * 16, TILEMAP_SCALE * 13 * 16);
+}
 
-	// generate NES palette
-	SDL_Color out_palette[256] = {};
-	for (std::size_t i = 0; i < NES_PALETTE.size(); ++i) {
-		out_palette[i] = { NES_PALETTE[i][0], NES_PALETTE[i][1], NES_PALETTE[i][2], 255 };
-	}
-	SDL_SetPaletteColors(m_nes_palette, out_palette, 0, 256);
+SDL_Color fe::gfx::uint24_to_SDL_Color(std::size_t p_col) const {
+	return SDL_Color{
+		static_cast<byte>((p_col >> 16) & 0xff),
+		static_cast<byte>((p_col >> 8) & 0xff),
+		static_cast<byte>((p_col) & 0xff),
+		static_cast<byte>(0xff)
+	};
 }
 
 fe::gfx::~gfx(void) {
@@ -56,6 +58,15 @@ fe::gfx::~gfx(void) {
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
 	if (p_txt != nullptr)
 		SDL_DestroyTexture(p_txt);
+}
+
+void fe::gfx::set_nes_palette(const std::vector<std::size_t>& p_palette) {
+	SDL_Color out_palette[256] = {};
+	for (std::size_t i{ 0 }; i < p_palette.size(); ++i) {
+		out_palette[i] = uint24_to_SDL_Color(p_palette[i]);
+	}
+
+	SDL_SetPaletteColors(m_nes_palette, out_palette, 0, 256);
 }
 
 void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::vector<byte>>& p_mt_def,
@@ -352,6 +363,33 @@ void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, 
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
+void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd) const {
+	// Set render target to your texture
+	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+
+	// Choose grid line color (semi-transparent gray)
+	SDL_SetRenderDrawColor(p_rnd, 200, 200, 200, 128);
+
+	// Vertical lines (skip x=0 and x=texW-1)
+	for (int x = 16; x < 16 * 16 - 1; x += 16) {
+		SDL_RenderLine(p_rnd, static_cast<float>(x),
+			0.0f,
+			static_cast<float>(x),
+			16.0f * 13.0f - 1.0f);
+	}
+
+	// Horizontal lines (skip y=0 and y=texH-1)
+	for (int y = 16; y < 16 * 13 - 1; y += 16) {
+		SDL_RenderLine(p_rnd, 0.0f,
+			static_cast<float>(y),
+			16.0f * 16.0f - 1.0f,
+			static_cast<float>(y));
+	}
+
+	// Reset render target back to default (the window)
+	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
 void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,
 	int p_x, int p_y, int p_w, int p_h) const {
 	draw_pixel_rect_on_screen(p_rnd, p_color, p_x * 16, p_y * 16, p_w * 16, p_h * 16);
@@ -458,25 +496,3 @@ SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
 
 	return surface_to_texture(p_rnd, srf);
 }
-
-const std::vector<std::vector<byte>> fe::gfx::NES_PALETTE = {
-	{84, 84, 84},   {0, 30, 116},   {8, 16, 144},  {48, 0, 136},
-	{68, 0, 100},   {92, 0, 48},    {84, 4, 0},    {60, 24, 0},
-	{32, 42, 0},    {8, 58, 0},     {0, 64, 0},    {0, 60, 0},
-	{0, 50, 60},    {0, 0, 0},      {0, 0, 0},     {0, 0, 0},
-
-	{152, 150, 152}, {8, 76, 196},  {48, 50, 236}, {92, 30, 228},
-	{136, 20, 176},  {160, 20, 100},{152, 34, 32}, {120, 60, 0},
-	{84, 90, 0},     {40, 114, 0},  {8, 124, 0},   {0, 118, 40},
-	{0, 102, 120},   {0, 0, 0},     {0, 0, 0},     {0, 0, 0},
-
-	{236, 238, 236}, {76, 154, 236}, {120, 124, 236}, {176, 98, 236},
-	{228, 84, 236},  {236, 88, 180}, {236, 106, 100}, {212, 136, 32},
-	{160, 170, 0},   {116, 196, 0},  {76, 208, 32},   {56, 204, 108},
-	{56, 180, 204},  {60, 60, 60},   {0, 0, 0},      {0, 0, 0},
-
-	{236, 238, 236}, {168, 204, 236}, {188, 188, 236}, {212, 178, 236},
-	{236, 174, 236}, {236, 174, 212}, {236, 180, 176}, {228, 196, 144},
-	{204, 210, 120}, {180, 222, 120}, {168, 226, 144}, {152, 226, 180},
-	{160, 214, 228}, {160, 162, 160}, {0, 0, 0},       {0, 0, 0}
-};

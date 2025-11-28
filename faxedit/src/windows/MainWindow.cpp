@@ -41,7 +41,9 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_animate{ true },
 	m_mattock_overlay{ false },
 	m_door_req_overlay{ true },
+	m_show_grid{ false },
 	m_overlays{ std::vector<char>(16, false) },
+	m_show_sprite_sets_in_buildings{ false },
 	// config variables, will be loaded with the config xml
 	m_sprite_count{ 0 },
 	m_iscript_count{ 0 }
@@ -145,6 +147,10 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 					m_gfx.draw_icon_overlay(p_rnd, x, y, 16);
 			}
 
+		// draw grid if enabled
+		if (m_show_grid)
+			m_gfx.draw_gridlines_on_screen(p_rnd);
+
 		// draw selected rectangle
 
 		if (m_emode == fe::EditMode::Tilemap) {
@@ -162,36 +168,13 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			}
 		}
 		else if (m_emode == fe::EditMode::Sprites) {
-			// draw sprites
-			const auto& drawspr{ l_screen.m_sprite_set.m_sprites };
-			for (std::size_t i{ 0 }; i < drawspr.size(); ++i) {
-				std::size_t l_anim_frame{ m_animate ?
-					m_anim_frame % m_gfx.get_anim_frame_count(drawspr[i].m_id) :
-					m_gfx.get_anim_frame_count(drawspr[i].m_id) - 1
-				};
-				std::size_t l_spriteid{ static_cast<std::size_t>(drawspr[i].m_id) };
+			bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
+			bool l_showsprites{ !l_building || m_show_sprite_sets_in_buildings };
 
-				m_gfx.draw_sprite_on_screen(p_rnd,
-					l_spriteid,
-					l_anim_frame,
-					16 * static_cast<int>(drawspr[i].m_x) +
-					m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
-					16 * static_cast<int>(drawspr[i].m_y) +
-					m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
-				);
-			}
-
-			// draw rectangle for selected sprite
-			if (m_sel_sprite < l_screen.m_sprite_set.size()) {
-				const auto& l_sprite{ l_screen.m_sprite_set.m_sprites[m_sel_sprite] };
-
-				m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
-					16 * static_cast<int>(l_sprite.m_x),
-					16 * static_cast<int>(l_sprite.m_y),
-					m_sprite_dims[l_sprite.m_id].w,
-					m_sprite_dims[l_sprite.m_id].h
-				);
-			}
+			if (l_showsprites)
+				draw_sprites(p_rnd,
+					l_building ? m_game->m_npc_bundles.at(m_sel_npc_bundle).m_sprites : l_screen.m_sprite_set.m_sprites,
+					l_building ? m_sel_npc_bundle_sprite : m_sel_sprite);
 		}
 		else if (m_emode == fe::EditMode::Doors) {
 			// draw placeholder rectangles for doors
@@ -427,7 +410,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	ImGui::SeparatorText("Add or remove sprites");
 
-	if (ui::imgui_button("Add sprite", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_sprites.size() == 0xff))
+	if (ui::imgui_button("Add sprite", 2, "", l_sprites.size() == 0xff))
 		p_sprites.push_back(fe::Sprite(0x2a, 0, 0));
 
 	if (!p_sprites.empty()) {
@@ -448,8 +431,65 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 			p_sprites.m_command_byte.reset();
 	}
 	else {
-		if (ui::imgui_button("Add command byte", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS))
+		if (ui::imgui_button("Add command byte", 2, ""))
 			p_sprites.m_command_byte = 0x01;
+	}
+}
+
+void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
+	auto l_bset{ m_game->m_npc_bundles };
+	if (m_sel_npc_bundle >= l_bset.size())
+		m_sel_npc_bundle = l_bset.size() - 1;
+
+	ImGui::SeparatorText(std::format("Building Sprite Set: {}", m_sel_npc_bundle).c_str());
+
+	ui::imgui_slider_with_arrows("###npcbsel", "", m_sel_npc_bundle,
+		0, l_bset.size() - 1, "", false, true);
+
+	ImGui::SeparatorText("Building Parameter Sprites");
+
+	ImGui::PushID("###bldparam");
+
+	show_sprite_screen(m_game->m_npc_bundles.at(m_sel_npc_bundle),
+		m_sel_npc_bundle_sprite);
+
+	auto sbp{ m_labels_spec_sprite_sets.find(static_cast<byte>(m_sel_npc_bundle)) };
+
+	if (sbp != end(m_labels_spec_sprite_sets)) {
+		ImGui::Separator();
+		imgui_text(std::format("Special Significance: {}", sbp->second));
+	}
+
+	ImGui::PopID();
+
+	ImGui::SeparatorText("Add or Remove Building Sprite Sets");
+
+	if (ui::imgui_button("Add Sprite Set", 2, "", l_bset.size() == 0xff))
+		m_game->m_npc_bundles.push_back(fe::Sprite_set());
+
+	ImGui::SameLine();
+
+	// don't delete below 70 - there are some hard coded references in the game code
+	if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift)
+		|| l_bset.size() <= 70)) {
+
+		bool l_bset_used{ false };
+		for (const auto& chunk : m_game->m_chunks)
+			for (const auto& scr : chunk.m_screens)
+				for (const auto& door : scr.m_doors)
+					if (door.m_door_type == fe::DoorType::Building &&
+						door.m_npc_bundle == m_sel_npc_bundle)
+						l_bset_used = true;
+
+		if (l_bset_used)
+			add_message("Building Sprite Set has references", 1);
+		else {
+			m_game->m_npc_bundles.erase(begin(m_game->m_npc_bundles) + m_sel_npc_bundle);
+			if (m_sel_npc_bundle >= m_game->m_npc_bundles.size())
+				m_sel_npc_bundle = m_game->m_npc_bundles.size() - 1;
+			if (m_sel_npc_bundle_sprite >= m_game->m_npc_bundles.at(m_sel_npc_bundle).size())
+				m_sel_npc_bundle_sprite = m_game->m_npc_bundles.at(m_sel_npc_bundle).size() - 1;
+		}
 	}
 }
 
@@ -658,6 +698,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_sprite_dims[kv.first].m_cat = kv.second.m_category;
 		}
 
+		// gen NES palette
+		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
+
 		// pass it on the gfx handler to make sprite textures
 		m_gfx.gen_sprites(p_rnd, gfx_def);
 
@@ -749,4 +792,40 @@ std::string fe::MainWindow::get_filepath(const std::string& p_ext, bool p_add_ou
 	}
 
 	return outputPath.string();
+}
+
+// screen element draw routines
+void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
+	const std::vector<fe::Sprite>& p_sprites,
+	std::size_t p_sel_sprite_no) const {
+
+	for (std::size_t i{ 0 }; i < p_sprites.size(); ++i) {
+		std::size_t l_anim_frame{ m_animate ?
+			m_anim_frame % m_gfx.get_anim_frame_count(p_sprites[i].m_id) :
+			m_gfx.get_anim_frame_count(p_sprites[i].m_id) - 1
+		};
+		std::size_t l_spriteid{ static_cast<std::size_t>(p_sprites[i].m_id) };
+
+		m_gfx.draw_sprite_on_screen(p_rnd,
+			l_spriteid,
+			l_anim_frame,
+			16 * static_cast<int>(p_sprites[i].m_x) +
+			m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
+			16 * static_cast<int>(p_sprites[i].m_y) +
+			m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
+		);
+	}
+
+	// draw rectangle for selected sprite
+	if (p_sel_sprite_no < p_sprites.size()) {
+		const auto& l_sprite{ p_sprites[p_sel_sprite_no] };
+
+		m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
+			16 * static_cast<int>(l_sprite.m_x),
+			16 * static_cast<int>(l_sprite.m_y),
+			m_sprite_dims[l_sprite.m_id].w,
+			m_sprite_dims[l_sprite.m_id].h
+		);
+	}
+
 }

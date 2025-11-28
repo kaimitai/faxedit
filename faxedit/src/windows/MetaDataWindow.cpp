@@ -299,55 +299,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				if (ImGui::BeginTabItem("Building Sprite Sets")) {
 
-					auto l_bset{ m_game->m_npc_bundles };
-					if (m_sel_npc_bundle >= l_bset.size())
-						m_sel_npc_bundle = l_bset.size() - 1;
-
-					ImGui::SeparatorText(std::format("Building Sprite Set: {}", m_sel_npc_bundle).c_str());
-
-					ui::imgui_slider_with_arrows("###npcbsel", "", m_sel_npc_bundle,
-						0, l_bset.size() - 1, "", false, true);
-
-					ImGui::SeparatorText("Building Parameter Sprites");
-
-					ImGui::PushID("###bldparam");
-
-					show_sprite_screen(m_game->m_npc_bundles.at(m_sel_npc_bundle),
-						m_sel_npc_bundle_sprite);
-
-					auto sbp{ m_labels_spec_sprite_sets.find(static_cast<byte>(m_sel_npc_bundle)) };
-
-					if (sbp != end(m_labels_spec_sprite_sets)) {
-						ImGui::Separator();
-						imgui_text(std::format("Special Significance: {}", sbp->second));
-					}
-
-					ImGui::PopID();
-
-					ImGui::SeparatorText("Add or Remove Building Sprite Sets");
-
-					if (ui::imgui_button("Add Sprite Set", 2, "", l_bset.size() == 0xff))
-						m_game->m_npc_bundles.push_back(fe::Sprite_set());
-
-					ImGui::SameLine();
-
-					// don't delete below 70 - there are some hard coded references in the game code
-					if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift)
-						|| l_bset.size() <= 70)) {
-
-						bool l_bset_used{ false };
-						for (const auto& chunk : m_game->m_chunks)
-							for (const auto& scr : chunk.m_screens)
-								for (const auto& door : scr.m_doors)
-									if (door.m_door_type == fe::DoorType::Building &&
-										door.m_npc_bundle == m_sel_npc_bundle)
-										l_bset_used = true;
-
-						if (l_bset_used)
-							add_message("Building Sprite Set has references", 1);
-						else
-							m_game->m_npc_bundles.erase(begin(m_game->m_npc_bundles) + m_sel_npc_bundle);
-					}
+					show_sprite_npc_bundle_screen();
 
 					ImGui::EndTabItem();
 				}
