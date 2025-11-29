@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -169,6 +169,8 @@
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
+    <ClCompile Include="src\fg\AnimationFrame.cpp" />
+    <ClCompile Include="src\fg\GraphicsManager.cpp" />
     <ClCompile Include="src\fi\FaxString.cpp" />
     <ClCompile Include="src\fi\IScriptLoader.cpp" />
     <ClCompile Include="src\fi\Opcode.cpp" />
@@ -219,6 +221,10 @@
     <ClInclude Include="src\fe\StageManager.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
+    <ClInclude Include="src\fg\AnimationFrame.h" />
+    <ClInclude Include="src\fg\GraphicsCollection.h" />
+    <ClInclude Include="src\fg\GraphicsManager.h" />
+    <ClInclude Include="src\fg\ObjectAnimation.h" />
     <ClInclude Include="src\fi\FaxString.h" />
     <ClInclude Include="src\fi\fi_constants.h" />
     <ClInclude Include="src\fi\IScriptLoader.h" />

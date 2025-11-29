@@ -6,6 +6,7 @@
 #include <vector>
 #include "./../common/klib/NES_tile.h"
 #include "./../fe/Sprite_definitions.h"
+#include "./../fg/GraphicsCollection.h"
 
 using byte = unsigned char;
 using NES_Palette = std::vector<byte>;
@@ -31,7 +32,8 @@ namespace fe {
 
 		// surface operations
 		SDL_Surface* create_sdl_surface(int p_w, int p_h,
-			bool p_transparent = false) const;
+			bool p_transparent = false,
+			bool p_set_colormod_if_transp = true) const;
 		void put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index,
 			bool p_transparent = false) const;
 		SDL_Texture* surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf,
@@ -83,6 +85,11 @@ namespace fe {
 			const fe::AnimationFrame& p_frame,
 			const std::vector<klib::NES_tile>& p_tiles,
 			const std::vector<std::vector<byte>>& p_palette);
+
+		// bmp functions
+		void generate_bmp_files(const fg::GraphicsCollection& p_coll,
+			const std::string& p_folder,
+			const std::string& p_prefix) const;
 	};
 
 }

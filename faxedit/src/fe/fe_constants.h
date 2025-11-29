@@ -19,6 +19,15 @@ namespace fe {
 		constexpr char ID_SAMEWORLD_TRANS_PTR[]{ "sameworld_trans_ptr" };
 		constexpr char ID_OTHERWORLD_TRANS_PTR[]{ "otherworld_trans_ptr" };
 
+		// gfx pointers
+		constexpr char ID_GFX_PLAYER_LOOKUP_TABLE_PTR[]{ "gfx_player_tile_index_table_ptr" };
+		constexpr char ID_GFX_PLAYER_CHR_PTR[]{ "gfx_player_chr_data_ptr" };
+		constexpr char ID_GFX_PLAYER_ANIM_FRAME_PTR[]{ "gfx_player_anim_frame_ptr" };
+
+		constexpr char ID_GFX_PORTRAIT_LOOKUP_TABLE_PTR[]{ "gfx_portrait_tile_index_table_ptr" };
+		constexpr char ID_GFX_PORTRAIT_CHR_PTR[]{ "gfx_portrait_chr_data_ptr" };
+		constexpr char ID_GFX_PORTRAIT_ANIM_FRAME_PTR[]{ "gfx_portrait_anim_frame_ptr" };
+
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
 		constexpr char ID_SPRITE_DATA_END[]{ "sprite_data_end" };
@@ -32,6 +41,17 @@ namespace fe {
 
 		// constant sizes
 		constexpr char ID_WORLD_TILEMAP_MAX_SIZE[]{ "world_tilemap_max_size" };
+
+		// gfx constants
+		constexpr char ID_GFX_PLAYER_COUNT[]{ "gfx_player_count" };
+		constexpr char ID_GFX_PLAYER_CHR_TILE_COUNT[]{ "gfx_player_chr_tile_count" };
+		constexpr char ID_GFX_PLAYER_TOTAL_FRAME_COUNT[]{ "gfx_player_total_frame_count" };
+
+		constexpr char ID_GFX_PORTRAIT_COUNT[]{ "gfx_portrait_count" };
+		constexpr char ID_GFX_PORTRAIT_CHR_TILE_COUNT[]{ "gfx_portrait_chr_tile_count" };
+		constexpr char ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT[]{ "gfx_portrait_total_frame_count" };
+		constexpr char ID_GFX_SPRITE_PAL_OFFSET[]{ "gfx_sprite_palette_offset" };
+		constexpr char ID_GFX_BUILDING_SPRITE_PAL_OFFSET[]{ "gfx_building_sprite_palette_offset" };
 
 		// constant offsets
 		constexpr char ID_WORLD_TILEMAP_MD[]{ "world_tilemap_metadata" };

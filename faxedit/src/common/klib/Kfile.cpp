@@ -1,4 +1,5 @@
 #include "Kfile.h"
+#include <filesystem>
 #include <fstream>
 #include <stdexcept>
 
@@ -37,4 +38,10 @@ void klib::file::write_string_to_file(const std::string& p_data, const std::stri
 		throw std::runtime_error("Failed to open file: " + p_filename);
 	else
 		outputFile << p_data;
+}
+
+void klib::file::create_folder_if_not_exists(const std::string& p_folder) {
+	if (!std::filesystem::exists(p_folder)) {
+		std::filesystem::create_directories(p_folder);
+	}
 }

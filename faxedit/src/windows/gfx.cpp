@@ -1,6 +1,8 @@
 #include "gfx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "./../common/stb_image.h"
+#include "./../common/klib/Kfile.h"
+#include <format>
 #include <stdexcept>
 
 constexpr int TILEMAP_SCALE{ 1 };
@@ -20,7 +22,7 @@ fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
 	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) },
-	HOT_PINK_TRANSPARENT{ 0xff69b400 }
+	HOT_PINK_TRANSPARENT{ 0xffb469ff }
 {
 	SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
 	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
@@ -228,12 +230,14 @@ void fe::gfx::draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
 
 }
 
-SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h, bool p_transparent) const {
+SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h, bool p_transparent,
+	bool p_set_colormod_if_transp) const {
 	SDL_Surface* l_bmp = SDL_CreateSurface(p_w, p_h, SDL_PIXELFORMAT_ABGR8888);
 
 	if (p_transparent) {
 		SDL_FillSurfaceRect(l_bmp, nullptr, HOT_PINK_TRANSPARENT);
-		SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
+		if (p_set_colormod_if_transp)
+			SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
 	}
 
 	return l_bmp;
@@ -247,10 +251,10 @@ void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index
 		SDL_WriteSurfacePixel(srf, x, y, l_col.r, l_col.g, l_col.b, l_col.a);
 	else
 		SDL_WriteSurfacePixel(srf, x, y,
-			(HOT_PINK_TRANSPARENT >> 24) & 0xff,
-			(HOT_PINK_TRANSPARENT >> 16) & 0xff,
+			HOT_PINK_TRANSPARENT & 0xff,
 			(HOT_PINK_TRANSPARENT >> 8) & 0xff,
-			HOT_PINK_TRANSPARENT & 0xff
+			(HOT_PINK_TRANSPARENT >> 16) & 0xff,
+			(HOT_PINK_TRANSPARENT >> 24) & 0xff
 		);
 }
 
@@ -495,4 +499,51 @@ SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
 		}
 
 	return surface_to_texture(p_rnd, srf);
+}
+
+void fe::gfx::generate_bmp_files(const fg::GraphicsCollection& p_coll,
+	const std::string& p_folder, const std::string& p_prefix) const {
+
+	klib::file::create_folder_if_not_exists(p_folder);
+
+	const auto& tiles{ p_coll.m_nes_tiles };
+	const auto& palette{ p_coll.m_palette };
+
+	for (std::size_t i{ 0 }; i < p_coll.m_obj_anims.size(); ++i) {
+		const auto& lookup{ p_coll.m_obj_anims[i].m_tile_lookup };
+
+		for (std::size_t j{ 0 }; j < p_coll.m_obj_anims[i].m_frames.size();
+			++j) {
+
+			const auto& frame{ p_coll.m_obj_anims[i].m_frames[j] };
+
+			auto srf{ create_sdl_surface(
+				static_cast<int>(8 * frame.m_w),
+				static_cast<int>(8 * frame.m_h), true, false) };
+
+			for (int y{ 0 }; y < frame.m_tilemap.size(); ++y)
+				for (int x{ 0 }; x < frame.m_tilemap.at(y).size(); ++x) {
+					const auto& opttile{ frame.m_tilemap.at(y).at(x) };
+
+					if (opttile.has_value()) {
+
+						draw_nes_tile_on_surface(
+							srf, static_cast<int>(8 * x),
+							static_cast<int>(8 * y),
+							tiles.at(lookup.at(opttile->m_tile_idx)),
+							palette.at(opttile->m_sub_palette),
+							true,
+							opttile->m_hflip,
+							opttile->m_vflip);
+					}
+				}
+
+			std::string l_outfile{
+				std::format("./{}/{}-{}-{}.bmp",
+					p_folder, p_prefix, i, j) };
+
+			SDL_SaveBMP(srf, l_outfile.c_str());
+			SDL_DestroySurface(srf);
+		}
+	}
 }

@@ -67,6 +67,12 @@
     <Filter Include="Source Files\fi">
       <UniqueIdentifier>{8f6fdbd5-b442-4233-a226-0f9f6981f425}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\fg">
+      <UniqueIdentifier>{ff9ccc92-8adc-41ea-8fd2-c9a2d06c2704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fg">
+      <UniqueIdentifier>{53331a59-04c6-4e10-9467-422eb6593312}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -185,6 +191,12 @@
     </ClCompile>
     <ClCompile Include="src\fe\Config.cpp">
       <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fg\GraphicsManager.cpp">
+      <Filter>Source Files\fg</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fg\AnimationFrame.cpp">
+      <Filter>Source Files\fg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -319,6 +331,18 @@
     </ClInclude>
     <ClInclude Include="src\fe\Config.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fg\AnimationFrame.h">
+      <Filter>Header Files\fg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fg\GraphicsManager.h">
+      <Filter>Header Files\fg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fg\ObjectAnimation.h">
+      <Filter>Header Files\fg</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fg\GraphicsCollection.h">
+      <Filter>Header Files\fg</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

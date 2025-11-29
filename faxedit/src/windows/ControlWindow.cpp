@@ -146,6 +146,11 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		add_message("Integrity analysis completed", 4);
 	}
 
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Extract gfx", 4, "Extract game graphics"))
+		extract_game_gfx(p_rnd);
+
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) {
 
 		try {
@@ -253,4 +258,75 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 		add_message("Could not patch ROM data", 1);
 		return std::nullopt;
 	}
+}
+
+void fe::MainWindow::extract_game_gfx(SDL_Renderer* p_rnd) {
+	const auto& rom{ m_game->m_rom_data };
+
+	auto l_portrait_lookup_offsets{
+	m_rom_manager.get_rom_offsets_from_master_ptr(rom,
+		m_config.pointer(c::ID_GFX_PORTRAIT_LOOKUP_TABLE_PTR),
+		m_config.constant(c::ID_GFX_PORTRAIT_COUNT))
+	};
+
+	auto l_portrait_anim_frame_offsets{
+	m_rom_manager.get_rom_offsets_from_master_ptr(rom,
+	m_config.pointer(c::ID_GFX_PORTRAIT_ANIM_FRAME_PTR),
+	m_config.constant(c::ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT))
+	};
+
+	m_gfx_manager.extract_graphics_collection(m_gfx_manager.m_portraits,
+		rom,
+		m_config.constant(c::ID_GFX_PORTRAIT_COUNT),
+		m_config.constant(c::ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT),
+		m_rom_manager.get_ptr_to_rom_offset(rom, m_config.pointer(c::ID_GFX_PORTRAIT_CHR_PTR)),
+		m_config.constant(c::ID_GFX_PORTRAIT_CHR_TILE_COUNT),
+		l_portrait_lookup_offsets,
+		l_portrait_anim_frame_offsets,
+		m_config.constant(c::ID_GFX_BUILDING_SPRITE_PAL_OFFSET),
+		5
+	);
+
+	// player - start
+
+	// can be read from PRG15:ed95
+	// armor lookup table sizes for all 8 configurations
+	std::vector<std::size_t> l_player_lookup_table_sizes{
+		0x34, 0x28, 0x34, 0x28, 0x35, 0x29, 0x33, 0x33
+	};
+
+	auto l_player_lookup_offsets{
+	m_rom_manager.get_rom_offsets_from_master_ptr(rom,
+	m_config.pointer(c::ID_GFX_PLAYER_LOOKUP_TABLE_PTR),
+	m_config.constant(c::ID_GFX_PLAYER_COUNT))
+	};
+
+	auto l_player_anim_frame_offsets{
+	m_rom_manager.get_rom_offsets_from_master_ptr(rom,
+	m_config.pointer(c::ID_GFX_PLAYER_ANIM_FRAME_PTR),
+	m_config.constant(c::ID_GFX_PLAYER_TOTAL_FRAME_COUNT))
+	};
+
+	m_gfx_manager.extract_graphics_collection(m_gfx_manager.m_player,
+		rom,
+		m_config.constant(c::ID_GFX_PLAYER_COUNT),
+		m_config.constant(c::ID_GFX_PLAYER_TOTAL_FRAME_COUNT),
+		m_rom_manager.get_ptr_to_rom_offset(rom, m_config.pointer(c::ID_GFX_PLAYER_CHR_PTR)),
+		m_config.constant(c::ID_GFX_PLAYER_CHR_TILE_COUNT),
+		l_player_lookup_offsets,
+		l_player_anim_frame_offsets,
+		m_config.constant(c::ID_GFX_SPRITE_PAL_OFFSET),
+		10,
+		l_player_lookup_table_sizes
+	);
+
+	// player - end
+	m_gfx.generate_bmp_files(m_gfx_manager.m_portraits,
+		m_filename + "-bmp",
+		"portrait");
+		/*
+	m_gfx.generate_bmp_files(m_gfx_manager.m_player,
+		m_filename + "-bmp",
+		"player");
+		*/
 }

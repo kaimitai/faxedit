@@ -58,10 +58,6 @@ namespace fe {
 			std::size_t rom_zero_address,
 			const std::vector<std::pair<std::size_t, std::size_t>>& p_available);
 
-		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
-			std::size_t p_ptr_offset,
-			std::size_t p_zero_addr) const;
-
 	public:
 		ROM_Manager(void);
 
@@ -105,6 +101,14 @@ namespace fe {
 		void encode_jump_on_tiles(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// util
+		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+			std::size_t p_ptr_offset,
+			std::size_t p_zero_addr) const;
+		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+			std::pair<std::size_t, std::size_t> p_ptr) const;
+		std::vector<std::size_t> get_rom_offsets_from_master_ptr(const std::vector<byte>& p_rom,
+			std::pair<std::size_t, std::size_t> p_master_ptr,
+			std::size_t p_ptr_count) const;
 		void patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 		static std::size_t from_uint16_le(const std::pair<byte, byte>& p_value);

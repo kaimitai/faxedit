@@ -11,6 +11,7 @@
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
+#include "./../fg/GraphicsManager.h"
 #include "./../fi/IScriptLoader.h"
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
@@ -35,7 +36,7 @@ namespace fe {
 
 	struct Message {
 		std::string text;
-		int status; // 0=neutral, 1=good, 2=bad
+		int status;
 	};
 
 	class MainWindow {
@@ -103,6 +104,7 @@ namespace fe {
 		fe::gfx m_gfx;
 		std::deque<fe::Message> m_messages;
 		fe::ROM_Manager m_rom_manager;
+		fg::GraphicsManager m_gfx_manager;
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
 
 		// oscillating color for selected object
@@ -169,6 +171,9 @@ namespace fe {
 		void enter_door_button(const fe::Screen& p_screen);
 		void transition_sw_button(const fe::Screen& p_screen);
 		void transition_ow_button(const fe::Screen& p_screen);
+
+		// extract graphis from rom - portrait, player gfx, sprites etc
+		void extract_game_gfx(SDL_Renderer* p_rnd);
 
 		// screen element draw functions
 		void draw_sprites(SDL_Renderer* p_rnd,

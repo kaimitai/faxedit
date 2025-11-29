@@ -41,6 +41,13 @@
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="eu" value="0x31fc6" zero_addr="0x28010" />
+		<!-- graphics pointers -->
+		<pointer name="gfx_player_tile_index_table_ptr" value="0x20010" zero_addr="0x20010" />
+		<pointer name="gfx_player_chr_data_ptr" value="0x20014" zero_addr="0x20010" />
+		<pointer name="gfx_player_anim_frame_ptr" value="0x1c018" zero_addr="0x1c010" />
+		<pointer name="gfx_portrait_tile_index_table_ptr" value="0x2001e" zero_addr="0x20010" />
+		<pointer name="gfx_portrait_chr_data_ptr" value="0x20020" zero_addr="0x20010" />
+		<pointer name="gfx_portrait_anim_frame_ptr" value="0x1c01a" zero_addr="0x1c010" />
 	</pointers>
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
@@ -103,6 +110,18 @@
 		<const name="iscript_data_rg2_start" region="jp,en-transl" value="0x33196" />
 		<!-- secondary script data necessarily ends within bank 12 -->
 		<const name="iscript_data_rg2_end" value="0x34010" />
+		<!-- gfx constants: player -->
+		<const name="gfx_player_count" value="8" />
+		<const name="gfx_player_chr_tile_count" value="143" />
+		<const name="gfx_player_total_frame_count" value="107" />
+		<!-- gfx constants: portraits -->
+		<const name="gfx_portrait_count" value="11" />
+		<const name="gfx_portrait_chr_tile_count" value="255" />
+		<const name="gfx_portrait_total_frame_count" value="55" />
+		<!-- palette offsets -->
+		<const name="gfx_sprite_palette_offset" value="0x2c1d0" />
+		<!-- TOD: sprite palettes actually differ by building -->
+		<const name="gfx_building_sprite_palette_offset" value="0x2c1e0" />
 	</consts>
 	<!-- value sets -->
 	<sets>

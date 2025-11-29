@@ -193,6 +193,11 @@ std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_ro
 	return p_zero_addr + l_rel_addr;
 }
 
+std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+	std::pair<std::size_t, std::size_t> p_ptr) const {
+	return get_ptr_to_rom_offset(p_rom, p_ptr.first, p_ptr.second);
+}
+
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Config& p_config,
 	const fe::Game& p_game) const {
@@ -288,6 +293,21 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data(
 	l_result.insert(end(l_result), begin(l_rom_data), end(l_rom_data));
 
 	return l_result;
+}
+
+std::vector<std::size_t> fe::ROM_Manager::get_rom_offsets_from_master_ptr(const std::vector<byte>& p_rom,
+	std::pair<std::size_t, std::size_t> p_master_ptr,
+	std::size_t p_ptr_count) const {
+	std::vector<std::size_t> result;
+
+	std::size_t l_ptr_table_rom_offset{ get_ptr_to_rom_offset(p_rom,
+		p_master_ptr.first, p_master_ptr.second) };
+
+	for (std::size_t i{ 0 }; i < p_ptr_count; ++i)
+		result.push_back(get_ptr_to_rom_offset(p_rom,
+			l_ptr_table_rom_offset + 2 * i, p_master_ptr.second));
+
+	return result;
 }
 
 void fe::ROM_Manager::patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const {
