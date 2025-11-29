@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Only make changes to this file if you are confident in what you are doing! (and keep backups even then) -->
-<eoe_config app_version="beta-3">
+<eoe_config app_version="beta-4">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->

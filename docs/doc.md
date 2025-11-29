@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-4), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
@@ -37,6 +37,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
 - [Screen Metadata](#screen-metadata)
   - [Screen Tilemap](#screen-tilemap)
   - [Screen Sprites](#screen-sprites)
+    - [Building Sprite Set visualization](#building-sprite-set-visualization)
   - [Screen Doors](#screen-doors)
   - [Screen Scrolling](#screen-scrolling)
   - [Screen Transitions](#screen-transitions)
@@ -56,11 +57,7 @@ This is the screen used for file operations and data analysis.
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Output Messages: The messages from the editor
 
-The tilemaps are stored in three different regions in ROM. If you run into size problems and need to cut down somewhere, know that the tilemaps for the worlds are stored in 3 different groups:
-
-* Group 1: Eolis, Mist, Towns
-* Group 2: Trunk, Branches
-* Group 3: Dartmoor Castle, Buildings, Evil Lair
+The tilemaps are stored in four different banks in ROM, but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
 
 <hr>
 
@@ -254,7 +251,7 @@ In both these cases, after deletion - the remaining references are re-index to s
 
 The Screen window consists of three parts. On the left part is the screen tilemap itself, which can be edited. The right side defines the editing mode, which will be described below. The bottom part has sliders for selecting current world and screen, as well as some navigation buttons that will take you to destinations defined by the screen. These buttons will take palette into account, which cannot easily be done when cycling through screens using the slider.
 
-If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. Any change to selected screen via the slider will revert to the default palette for that world.
+If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. If you navigate to another world, the default palette will be used again.
 
 You can add or remove (hold shift to use button) screens for all worlds apart from Buildings. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
 
@@ -263,7 +260,7 @@ This tab also has some checkboxes for adding icon overlays to:
 * Mattock-breakable blocks
 * Door requirements
 
-In addition there is a checkbox to turn on or off sprite animations.
+In addition there is a checkbox to turn on or off sprite animations, and a checkbox to turn on or off gridlines.
 
 If two screens on a world are using the exact same tilemap, you do not need more than two bytes of data to store it in ROM as the pointer will be deduplicated. The tilemaps are stored separately from all other screen data, so these screens could still have different sprites, doors and so on. This could be a way to cheaply increase the world size, and maybe use different palettes for the two screens.
 
@@ -309,6 +306,14 @@ The add and remove sprite buttons are always active. You can delete sprites with
 The command-byte is screen specific, and the values are the same as for building sprite-sets: 0 is block-push animation, 1 is boss-room and 2 is endgame-room.
 
 The selected sprite will be enclosed by a bounded rectangle according to its size, and you can move it on the tilemap by holding shift and clicking at the desired position.
+
+### Building Sprite Set visualization
+
+When you are in world 4 (Buildings), sprites cannot be placed directly in the screens. The sprites used for the building rooms are determined by a combination of screen number (room) and building sprite set given by a door to building.
+
+We allow editing building sprite sets when you are in the buildings world, but be aware that what you are editing are not sprite sets for any particular screen. This feature is available only to make it easier to visualize what the building sprite sets will look like when you attach it to a building-door.
+
+If you use this feature, make sure to define your sprite set when navigated to the screen you ultimately want your door to point to.
 
 ## Screen Doors
 
