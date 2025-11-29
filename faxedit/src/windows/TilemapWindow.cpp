@@ -81,15 +81,17 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
 			// show tile position as tooltip - begin
-			ImGui::SetNextWindowPos(ImVec2(5, 5));
-			ImGui::Begin("TilemapTooltip", nullptr,
-				ImGuiWindowFlags_NoDecoration |
-				ImGuiWindowFlags_AlwaysAutoResize |
-				ImGuiWindowFlags_NoSavedSettings |
-				ImGuiWindowFlags_NoMove |
-				ImGuiWindowFlags_Tooltip);
-			ImGui::Text("(%d, %d)", tileX, tileY);
-			ImGui::End();
+			if (m_emode != fe::EditMode::Tilemap) {
+				ImGui::SetNextWindowPos(ImVec2(5, 5));
+				ImGui::Begin("TilemapTooltip", nullptr,
+					ImGuiWindowFlags_NoDecoration |
+					ImGuiWindowFlags_AlwaysAutoResize |
+					ImGuiWindowFlags_NoSavedSettings |
+					ImGuiWindowFlags_NoMove |
+					ImGuiWindowFlags_Tooltip);
+				ImGui::Text("(%d, %d)", tileX, tileY);
+				ImGui::End();
+			}
 			// show tile position as tooltip - end
 
 			if (l_win_active && (l_mouse_left_down || l_mouse_right_down)) {
