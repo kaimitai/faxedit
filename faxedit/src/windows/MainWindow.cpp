@@ -32,6 +32,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_stage{ 0 },
 	m_sel_iscript{ 0 },
 	m_emode{ fe::EditMode::Tilemap },
+	m_chr_picker_mode{ fe::ChrPickerMode::Default },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
 	m_pulse_time{ 0.0f },
 	m_anim_time{ 0.0f },
@@ -281,10 +282,10 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd) {
 }
 
 std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS && p_screen_no >= 3)
-		return p_screen_no >= 8 ? 9 : 8;
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
+		return m_building_rooms_tileset_idx.at(m_sel_screen);
 	else
-		return p_chunk_no;
+		return m_world_tileset_idx.at(m_sel_chunk);
 }
 
 std::size_t fe::MainWindow::get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
@@ -427,7 +428,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		ui::imgui_slider_with_arrows("###sscb",
 			std::format("Value: {}", get_description(l_cb.value(), m_labels_cmd_byte)),
 			p_sprites.m_command_byte.value(), 0, 2, "Special events for the screen");
-		if (ui::imgui_button("Delete command byte", 2))
+		if (ui::imgui_button("Delete command byte", 1))
 			p_sprites.m_command_byte.reset();
 	}
 	else {
@@ -667,8 +668,18 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_config.load_config_data(l_config_xml_path);
 		cache_config_variables();
 
+		// extract from ROM based on constants
+		// tileset mappings
+		std::size_t l_wtile_offset{ m_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
+		std::size_t l_btile_offset{ m_config.constant(c::ID_BUILDING_TO_TILESET_OFFSET) };
+
+		for (std::size_t i{ 0 }; i < 8; ++i)
+			m_world_tileset_idx.push_back(bytes.at(l_wtile_offset + i));
+		for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i)
+			m_building_rooms_tileset_idx.push_back(bytes.at(l_btile_offset + i));
+
 		m_game = fe::Game(m_config, bytes);
-		m_game->generate_tilesets(m_config);
+		m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
 
 		std::filesystem::path romPath(p_filepath);
 

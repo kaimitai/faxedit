@@ -266,9 +266,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 				ImGui::PopID();
 
-				ui::imgui_checkbox("Edit Building Sprite Sets (advanced)",
-					m_show_sprite_sets_in_buildings,
-					"Check the documentation before using this functionality");
+				if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
+					ui::imgui_checkbox("Edit Building Sprite Sets (advanced)",
+						m_show_sprite_sets_in_buildings,
+						"Check the documentation before using this functionality");
 
 				ImGui::EndTabItem();
 			}

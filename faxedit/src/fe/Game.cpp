@@ -141,21 +141,66 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 		m_jump_on_animation.push_back(m_rom_data.at(l_jump_on_anim_offset + i));
 }
 
-void fe::Game::generate_tilesets(const fe::Config& p_config) {
-	const auto bg_offsets{ p_config.bmap_as_numeric_vec(c::ID_BG_CHR_ROM_OFFSETS, 10) };
+void fe::Game::generate_tilesets(const fe::Config& p_config,
+	std::vector<std::size_t>& p_tileset_start,
+	std::vector<std::size_t>& p_tileset_size) {
+	std::size_t l_tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
+	std::size_t l_chr_hud_offset{ p_config.constant(c::ID_CHR_HUD_TILE_OFFSET) };
+	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
+	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
+	std::size_t l_tileset_chr_ppu_start_offset{ l_tileset_to_addr + 2 * l_tileset_count };
+	std::size_t l_tileset_chr_count_offset{ l_tileset_chr_ppu_start_offset + l_tileset_count };
 
-	for (std::size_t c{ 0 }; c < bg_offsets.size(); ++c) {
-		m_tilesets.push_back(std::vector<klib::NES_tile>());
-
-		for (std::size_t i{ 0 }; i < 256; ++i) {
-			m_tilesets[c].push_back(klib::NES_tile::NES_tile(m_rom_data,
-				bg_offsets[c] + 16 * i));
-		}
-
-		// set the 0th entry to be a blank tile
-		// this will make everything render correctly
-		m_tilesets[c][0] = klib::NES_tile();
+	// HUD header is the same for all tilesets
+	std::vector<klib::NES_tile> l_hud_tiles;
+	for (std::size_t i{ 0 }; i < c::CHR_HUD_TILE_COUNT; ++i) {
+		l_hud_tiles.push_back(klib::NES_tile(m_rom_data,
+			l_chr_hud_offset + 16 * i));
 	}
+
+	m_tilesets.clear();
+	p_tileset_size.clear();
+	p_tileset_start.clear();
+
+	for (std::size_t i{ 0 }; i < l_tileset_count; ++i) {
+		auto l_tileset{ l_hud_tiles };
+
+		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
+		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
+		std::size_t l_local_addr{
+			256 * static_cast<std::size_t>(m_rom_data.at(l_local_addr_hi)) +
+			static_cast<std::size_t>(m_rom_data.at(l_local_addr_lo)) +
+			l_chr_wtile_offset - 0x8000
+		};
+
+		std::size_t l_tileset_start{ m_rom_data.at(l_tileset_chr_ppu_start_offset + i) };
+		l_tileset_start *= 0x100;
+		l_tileset_start -= 0x1000;
+		l_tileset_start /= 0x10;
+
+		if (l_tileset_start > 256)
+			throw std::exception("Invalid tile index");
+
+		p_tileset_start.push_back(l_tileset_start);
+
+		std::size_t l_tile_count{ m_rom_data.at(l_tileset_chr_count_offset + i) };
+		l_tile_count *= 0x10;
+
+		p_tileset_size.push_back(l_tile_count);
+
+		while (l_tileset.size() < l_tileset_start)
+			l_tileset.push_back(klib::NES_tile());
+
+		for (std::size_t tidx{ 0 }; tidx < l_tile_count; ++tidx)
+			l_tileset.push_back(klib::NES_tile(m_rom_data,
+				l_local_addr + 16 * tidx));
+
+		while (l_tileset.size() < 256)
+			l_tileset.push_back(klib::NES_tile());
+
+		m_tilesets.push_back(l_tileset);
+	}
+
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset,

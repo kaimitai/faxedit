@@ -19,6 +19,7 @@
 namespace fe {
 
 	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
+	enum ChrPickerMode { Default, HUD, All };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -49,6 +50,9 @@ namespace fe {
 			m_labels_palettes, m_labels_spec_sprite_sets;
 		std::vector<std::string> m_labels_worlds, m_labels_sprites,
 			m_labels_buildings;
+		std::vector<std::size_t> m_world_tileset_idx,
+			m_building_rooms_tileset_idx,
+			m_tileset_start, m_tileset_size;
 
 		std::size_t m_sprite_count, m_iscript_count;
 
@@ -97,6 +101,7 @@ namespace fe {
 		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
+		fe::ChrPickerMode m_chr_picker_mode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		std::optional<fe::Game> m_game;
@@ -150,6 +155,8 @@ namespace fe {
 		void show_stage_door_data(fe::Door& p_door);
 		void show_stages_data(void);
 		void show_screen_scroll_data(void);
+
+		void show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_chunk);
 
 		void show_sprite_set_contents(std::size_t p_sprite_set);
 

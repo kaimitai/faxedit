@@ -26,133 +26,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[2].active);
 				ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[2].hovered);
 
-				// CHUNK - METATILES - BEGIN
-				if (ImGui::BeginTabItem("Metatiles")) {
-
-					if (m_sel_metatile >= l_chunk.m_metatiles.size())
-						m_sel_metatile = 0;
-
-					auto& l_mt_def{ l_chunk.m_metatiles[m_sel_metatile] };
-
-					ImVec2 image_pos = ImGui::GetCursorScreenPos(); // capture position BEFORE drawing
-
-					ImGui::Image(m_gfx.get_metatile_texture(m_sel_metatile), ImVec2(64.0f, 64.0f));
-
-
-					ImVec2 mouse_pos = ImGui::GetMousePos();
-
-					for (int y = 0; y < 2; ++y) {
-						for (int x = 0; x < 2; ++x) {
-							int quadrant = y * 2 + x;
-
-							ImVec2 quad_pos = ImVec2(image_pos.x + x * 64.0f / 2, image_pos.y + y * 64.0f / 2);
-							ImVec2 quad_end = ImVec2(quad_pos.x + 64.0f / 2, quad_pos.y + 64.0f / 2);
-
-							bool hovered = mouse_pos.x >= quad_pos.x && mouse_pos.x < quad_end.x &&
-								mouse_pos.y >= quad_pos.y && mouse_pos.y < quad_end.y;
-
-							if (hovered && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-								l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
-								generate_metatile_textures(p_rnd);
-							}
-							else if (hovered && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-								m_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
-
-							}
-
-							// Optional: draw outline on hover
-							if (hovered) {
-								ImGui::GetWindowDrawList()->AddRect(
-									quad_pos, quad_end,
-									IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f
-								);
-							}
-						}
-					}
-
-					ImGui::SeparatorText(std::format("Selected metatile: {}", m_sel_metatile).c_str());
-
-					ui::imgui_slider_with_arrows("Metatile###mtdef", "", m_sel_metatile, 0,
-						l_chunk.m_metatiles.size() - 1, "", false, true);
-
-					ImGui::SeparatorText(std::format("Block property: {}",
-						get_description(l_mt_def.m_block_property,
-							m_labels_block_props)).c_str());
-
-					ui::imgui_slider_with_arrows("mtblprop", "",
-						l_mt_def.m_block_property, 0x00, 0x0f);
-
-					ImGui::BeginChild("TilePicker", ImVec2(0, 400), true); // scrollable area
-					auto l_atlas{ m_gfx.get_atlas() };
-
-					for (std::size_t i{ 0x80 }; i <= 0x100; ++i) {
-						std::size_t truetile{ i == 0x100 ? 0 : i };
-
-						// Compute UVs for tile i
-						float u0 = (truetile * 8.0f) / (float)l_atlas->w;
-						float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
-						float u1 = ((truetile + 1) * 8.0f) / (float)l_atlas->w;
-						float v1 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
-
-						if (ImGui::ImageButton(std::format("###stile{}", truetile).c_str(),
-							l_atlas, ImVec2(32.0f, 32.0f), ImVec2(u0, v0), ImVec2(u1, v1))) {
-							m_sel_nes_tile = truetile;
-						}
-
-						// Highlight if selected
-						if (truetile == m_sel_nes_tile) {
-							ImVec2 button_pos = ImGui::GetItemRectMin();
-							ImVec2 button_end = ImGui::GetItemRectMax();
-							ImGui::GetWindowDrawList()->AddRect(
-								button_pos, button_end,
-								IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f
-							);
-						}
-
-						// Layout: 8 buttons per row
-						if ((i + 1) % 16 != 0)
-							ImGui::SameLine();
-					}
-
-					ImGui::EndChild();
-
-					ImGui::SeparatorText("Sub-palettes per quadrant");
-
-					ui::imgui_slider_with_arrows("mtdeftl", "Top-Left",
-						l_mt_def.m_attr_tl, 0, 3);
-					ui::imgui_slider_with_arrows("mtdeftr", "Top-Right",
-						l_mt_def.m_attr_tr, 0, 3);
-					ui::imgui_slider_with_arrows("mtdefbl", "Bottom-Left",
-						l_mt_def.m_attr_bl, 0, 3);
-					ui::imgui_slider_with_arrows("mtdefbr", "Bottom-Right",
-						l_mt_def.m_attr_br, 0, 3);
-
-					ImGui::Separator();
-
-					if (ui::imgui_button("Add metatile", 2)) {
-						l_chunk.m_metatiles.push_back(fe::Metatile());
-						generate_metatile_textures(p_rnd);
-					}
-
-					ImGui::SameLine();
-
-					if (ui::imgui_button("Delete metatile", 1)) {
-						if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
-							if (m_game->is_metatile_referenced(m_sel_chunk,
-								m_sel_metatile))
-								add_message("Metatile is in use", 1);
-							else {
-								m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
-								generate_metatile_textures(p_rnd);
-							}
-						}
-						else
-							add_message("Hold shift to delete metatile");
-					}
-
-					ImGui::EndTabItem();
-				}
-				// CHUNK - METATILES - BEGIN
+				// WORLD - METATILES - BEGIN
+				show_mt_definition_tab(p_rnd, l_chunk);
+				// WORLD - METATILES - BEGIN
 
 				// CHUNK - PALETTE - BEGIN
 				if (ImGui::BeginTabItem("Palette")) {
@@ -603,5 +479,156 @@ void fe::MainWindow::show_screen_scroll_data(void) {
 		}
 
 		ImGui::EndTable();
+	}
+}
+
+void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_chunk) {
+	if (ImGui::BeginTabItem("Metatiles")) {
+
+		if (m_sel_metatile >= p_chunk.m_metatiles.size())
+			m_sel_metatile = 0;
+
+		auto& l_mt_def{ p_chunk.m_metatiles[m_sel_metatile] };
+
+		ImVec2 image_pos = ImGui::GetCursorScreenPos(); // capture position BEFORE drawing
+
+		ImGui::Image(m_gfx.get_metatile_texture(m_sel_metatile), ImVec2(64.0f, 64.0f));
+
+
+		ImVec2 mouse_pos = ImGui::GetMousePos();
+
+		for (int y = 0; y < 2; ++y) {
+			for (int x = 0; x < 2; ++x) {
+				int quadrant = y * 2 + x;
+
+				ImVec2 quad_pos = ImVec2(image_pos.x + x * 64.0f / 2, image_pos.y + y * 64.0f / 2);
+				ImVec2 quad_end = ImVec2(quad_pos.x + 64.0f / 2, quad_pos.y + 64.0f / 2);
+
+				bool hovered = mouse_pos.x >= quad_pos.x && mouse_pos.x < quad_end.x &&
+					mouse_pos.y >= quad_pos.y && mouse_pos.y < quad_end.y;
+
+				if (hovered && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+					l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
+					generate_metatile_textures(p_rnd);
+				}
+				else if (hovered && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+					m_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
+
+				}
+
+				// Optional: draw outline on hover
+				if (hovered) {
+					ImGui::GetWindowDrawList()->AddRect(
+						quad_pos, quad_end,
+						IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f
+					);
+				}
+			}
+		}
+
+		ImGui::SeparatorText(std::format("Selected metatile: {}", m_sel_metatile).c_str());
+
+		ui::imgui_slider_with_arrows("Metatile###mtdef", "", m_sel_metatile, 0,
+			p_chunk.m_metatiles.size() - 1, "", false, true);
+
+		ImGui::SeparatorText(std::format("Block property: {}",
+			get_description(l_mt_def.m_block_property,
+				m_labels_block_props)).c_str());
+
+		ui::imgui_slider_with_arrows("mtblprop", "",
+			l_mt_def.m_block_property, 0x00, 0x0f);
+
+		std::size_t l_tileset_no{ this->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
+		std::size_t l_tileset_start{ m_tileset_start.at(l_tileset_no) };
+		std::size_t l_tileset_end{ l_tileset_start + m_tileset_size.at(l_tileset_no) };
+
+		ImGui::BeginChild("TilePicker", ImVec2(0, 400), true); // scrollable area
+		auto l_atlas{ m_gfx.get_atlas() };
+
+		int showcount{ 0 };
+
+		for (std::size_t i{ 0 }; i < 256; ++i) {
+
+			if (i < l_tileset_start && m_chr_picker_mode == fe::ChrPickerMode::Default)
+				continue;
+			else if (i < l_tileset_start && i >= c::CHR_HUD_TILE_COUNT && m_chr_picker_mode != fe::ChrPickerMode::All)
+				continue;
+			else if (i >= l_tileset_end && m_chr_picker_mode != fe::ChrPickerMode::All)
+				continue;
+
+			// Compute UVs for tile i
+			float u0 = (i * 8.0f) / (float)l_atlas->w;
+			float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
+			float u1 = ((i + 1) * 8.0f) / (float)l_atlas->w;
+			float v1 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
+
+			if (ImGui::ImageButton(std::format("###stile{}", i).c_str(),
+				l_atlas, ImVec2(32.0f, 32.0f), ImVec2(u0, v0), ImVec2(u1, v1))) {
+				m_sel_nes_tile = i;
+			}
+
+			// Highlight if selected
+			if (i == m_sel_nes_tile) {
+				ImVec2 button_pos = ImGui::GetItemRectMin();
+				ImVec2 button_end = ImGui::GetItemRectMax();
+				ImGui::GetWindowDrawList()->AddRect(
+					button_pos, button_end,
+					IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f
+				);
+			}
+
+			// Layout: 8 buttons per row
+			if ((showcount++ + 1) % 16 != 0)
+				ImGui::SameLine();
+		}
+
+		ImGui::EndChild();
+
+		ImGui::SeparatorText("Sub-palettes per quadrant");
+
+		ui::imgui_slider_with_arrows("mtdeftl", "Top-Left",
+			l_mt_def.m_attr_tl, 0, 3);
+		ui::imgui_slider_with_arrows("mtdeftr", "Top-Right",
+			l_mt_def.m_attr_tr, 0, 3);
+		ui::imgui_slider_with_arrows("mtdefbl", "Bottom-Left",
+			l_mt_def.m_attr_bl, 0, 3);
+		ui::imgui_slider_with_arrows("mtdefbr", "Bottom-Right",
+			l_mt_def.m_attr_br, 0, 3);
+
+		ImGui::Separator();
+
+		if (ui::imgui_button("Add metatile", 2)) {
+			p_chunk.m_metatiles.push_back(fe::Metatile());
+			generate_metatile_textures(p_rnd);
+		}
+
+		ImGui::SameLine();
+
+		if (ui::imgui_button("Delete metatile", 1)) {
+			if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
+				if (m_game->is_metatile_referenced(m_sel_chunk,
+					m_sel_metatile))
+					add_message("Metatile is in use", 1);
+				else {
+					m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
+					generate_metatile_textures(p_rnd);
+				}
+			}
+			else
+				add_message("Hold shift to delete metatile");
+		}
+
+		ImGui::SeparatorText("Source NES-tiles");
+
+		if (ImGui::RadioButton("Default###mtchrdef", (m_chr_picker_mode == fe::ChrPickerMode::Default)))
+			m_chr_picker_mode = fe::ChrPickerMode::Default;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("HUD###mtchrhud", (m_chr_picker_mode == fe::ChrPickerMode::HUD)))
+			m_chr_picker_mode = fe::ChrPickerMode::HUD;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("All###mtchrall", (m_chr_picker_mode == fe::ChrPickerMode::All)))
+			m_chr_picker_mode = fe::ChrPickerMode::All;
+
+		ImGui::EndTabItem();
 	}
 }

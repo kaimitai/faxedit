@@ -155,7 +155,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game->m_rom_data = l_rom;
 
 			// extract gfx
-			m_game->generate_tilesets(m_config);
+			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
 			add_message("Loaded xml file " + get_xml_path(), 2);
 		}
 		catch (const std::runtime_error& p_ex) {

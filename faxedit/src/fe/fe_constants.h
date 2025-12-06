@@ -75,10 +75,20 @@ namespace fe {
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
 		constexpr char ID_ISCRIPT_COUNT[]{ "iscript_count" };
 
+		// chr constants
+		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };
+		constexpr char ID_CHR_WORLD_TILE_OFFSET[]{ "chr_world_tile_offset" };
+		constexpr char ID_CHR_HUD_TILE_OFFSET[]{ "chr_hud_tile_offset" };
+		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
+		constexpr char ID_WORLD_TO_TILESET_OFFSET[]{ "world_to_tileset_offset" };
+		constexpr char ID_BUILDING_TO_TILESET_OFFSET[]{ "building_to_tileset_offset" };
 
-		// chunks with special meaning in some contexts
+		// constants not stored in the config xml
+		// move them to xml if it becomes necessary
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
+		constexpr std::size_t WORLD_BUILDINGS_SCREEN_COUNT{ 10 };
+		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
 
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid

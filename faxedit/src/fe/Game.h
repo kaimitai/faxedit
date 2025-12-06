@@ -67,7 +67,9 @@ namespace fe {
 		std::size_t delete_unreferenced_metatiles(std::size_t p_chunk_no);
 		std::size_t delete_unreferenced_screens(std::size_t p_chunk_no);
 
-		void generate_tilesets(const fe::Config& p_config);
+		void generate_tilesets(const fe::Config& p_config,
+			std::vector<std::size_t>& p_tileset_start,
+			std::vector<std::size_t>& p_tileset_size);
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;
