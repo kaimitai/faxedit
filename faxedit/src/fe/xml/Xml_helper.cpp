@@ -144,7 +144,9 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 			l_game.m_building_scenes.push_back(fe::Scene(
 				parse_numeric(n_scene.attribute(c::ATTR_DEFAULT_PALETTE).as_string()),
 				parse_numeric(n_scene.attribute(c::ATTR_TILESET).as_string()),
-				parse_numeric(n_scene.attribute(c::ATTR_MUSIC).as_string())
+				parse_numeric(n_scene.attribute(c::ATTR_MUSIC).as_string()),
+				parse_numeric_byte(n_scene.attribute(c::ATTR_X).as_string()),
+				parse_numeric_byte(n_scene.attribute(c::ATTR_Y).as_string())
 			));
 		}
 	}
@@ -169,6 +171,14 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		auto n_scene_music{ n_chunk.attribute(c::ATTR_MUSIC) };
 		if (n_scene_music)
 			l_chunk.m_scene.m_music = parse_numeric_byte(n_chunk.attribute(c::ATTR_MUSIC).as_string());
+
+		auto n_scene_x{ n_chunk.attribute(c::ATTR_X) };
+		if (n_scene_x)
+			l_chunk.m_scene.m_x = parse_numeric_byte(n_chunk.attribute(c::ATTR_X).as_string());
+
+		auto n_scene_y{ n_chunk.attribute(c::ATTR_Y) };
+		if (n_scene_y)
+			l_chunk.m_scene.m_y = parse_numeric_byte(n_chunk.attribute(c::ATTR_Y).as_string());
 
 		// mattock animation
 		l_chunk.m_mattock_animation = parse_byte_list(n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).as_string());
@@ -456,6 +466,14 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_scene.append_attribute(c::ATTR_MUSIC);
 		n_scene.attribute(c::ATTR_MUSIC).set_value(
 			byte_to_hex(static_cast<byte>(p_game.m_building_scenes[i].m_music)));
+
+		n_scene.append_attribute(c::ATTR_X);
+		n_scene.attribute(c::ATTR_X).set_value(
+			byte_to_hex(p_game.m_building_scenes[i].m_x));
+
+		n_scene.append_attribute(c::ATTR_Y);
+		n_scene.attribute(c::ATTR_Y).set_value(
+			byte_to_hex(p_game.m_building_scenes[i].m_y));
 	}
 
 	// for each chunk
@@ -478,6 +496,12 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 		n_chunk.append_attribute(c::ATTR_MUSIC);
 		n_chunk.attribute(c::ATTR_MUSIC).set_value(byte_to_hex(static_cast<byte>(lc_chunk.m_scene.m_music)));
+
+		n_chunk.append_attribute(c::ATTR_X);
+		n_chunk.attribute(c::ATTR_X).set_value(byte_to_hex(lc_chunk.m_scene.m_x));
+
+		n_chunk.append_attribute(c::ATTR_Y);
+		n_chunk.attribute(c::ATTR_Y).set_value(byte_to_hex(lc_chunk.m_scene.m_y));
 
 		// mattock animation
 		n_chunk.append_attribute(c::ATTR_MATTOCK_ANIMATION);

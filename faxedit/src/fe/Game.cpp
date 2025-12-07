@@ -822,6 +822,11 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 			m_building_scenes[i].m_tileset = m_rom_data.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i);
 		if (m_building_scenes[i].m_music == 256)
 			m_building_scenes[i].m_music = m_rom_data.at(l_bscene_start + i);
+		if (m_building_scenes[i].m_x >= 16) {
+			byte pos{ m_rom_data.at(l_bscene_start + 3 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) };
+			m_building_scenes[i].m_x = pos % 16;
+			m_building_scenes[i].m_y = pos / 16;
+		}
 	}
 
 	// set scene values for each world
@@ -832,6 +837,11 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 			m_chunks[i].m_scene.m_tileset = m_rom_data.at(l_wscene_start + i);
 		if (m_chunks[i].m_scene.m_palette == 256)
 			m_chunks[i].m_scene.m_palette = m_rom_data.at(l_wscene_start + 8 + i);
+		if (m_chunks[i].m_scene.m_x >= 16) {
+			byte pos{ m_rom_data.at(l_wscene_start + 16 + i) };
+			m_chunks[i].m_scene.m_x = pos % 16;
+			m_chunks[i].m_scene.m_y = pos / 16;
+		}
 		if (m_chunks[i].m_scene.m_music == 256)
 			m_chunks[i].m_scene.m_music = m_rom_data.at(l_wscene_start + 24 + i);
 	}

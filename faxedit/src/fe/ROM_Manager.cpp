@@ -688,6 +688,7 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 		p_rom.at(l_bscene_start + i) = static_cast<byte>(bscenes[i].m_music);
 		p_rom.at(l_bscene_start + c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_palette);
 		p_rom.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_tileset);
+		p_rom.at(l_bscene_start + 3 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) = bscenes[i].get_pos_as_byte();
 	}
 
 	// patch scenes for each world
@@ -697,6 +698,7 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 	for (std::size_t i{ 0 }; i < wscenes.size(); ++i) {
 		p_rom.at(l_wscene_start + i) = static_cast<byte>(wscenes[i].m_scene.m_tileset);
 		p_rom.at(l_wscene_start + 8 + i) = static_cast<byte>(wscenes[i].m_scene.m_palette);
+		p_rom.at(l_wscene_start + 16 + i) = wscenes[i].m_scene.get_pos_as_byte();
 		p_rom.at(l_wscene_start + 24 + i) = static_cast<byte>(wscenes[i].m_scene.m_music);
 	}
 }

@@ -34,7 +34,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				if (ImGui::BeginTabItem("Scene")) {
 
 					bool l_bldg{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
-					show_scene(l_chunk.m_scene, !l_bldg, !l_bldg);
+					show_scene(l_chunk.m_scene, !l_bldg, !l_bldg, false);
 
 					if (l_bldg) {
 						ImGui::Separator();
@@ -187,7 +187,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
 						m_sel_screen == ls_sel_bldg,
 						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
-						m_sel_screen == ls_sel_bldg);
+						m_sel_screen == ls_sel_bldg, true);
 
 					ImGui::EndTabItem();
 				}
@@ -653,7 +653,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 }
 
 void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_regen_tiles,
-	bool p_regen_palette) {
+	bool p_regen_palette, bool p_show_pos) {
 
 	if (fe::ui::imgui_slider_with_arrows("##wsp",
 		std::format("Palette: {}", get_description(static_cast<byte>(p_scene.m_palette), m_labels_palettes)),
@@ -675,5 +675,17 @@ void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_regen_tiles,
 		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music), m_labels_music)),
 		p_scene.m_music, 0, m_labels_music.size() - 1);
 
+	if (p_show_pos) {
+		ImGui::SeparatorText("Entry Position");
+		ImGui::PushID("scenepos");
+
+		auto l_pos{ show_position_slider(p_scene.m_x, p_scene.m_y) };
+		if (l_pos.has_value()) {
+			p_scene.m_x = l_pos->first;
+			p_scene.m_y = l_pos->second;
+		}
+
+		ImGui::PopID();
+	}
 
 }

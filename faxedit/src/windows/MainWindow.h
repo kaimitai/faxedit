@@ -166,7 +166,8 @@ namespace fe {
 
 		void show_sprite_set_contents(std::size_t p_sprite_set);
 		void show_scene(fe::Scene& p_scene,
-			bool p_regen_tiles, bool p_regen_palette);
+			bool p_regen_tiles, bool p_regen_palette,
+			bool p_show_pos);
 
 		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
 
