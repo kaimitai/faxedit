@@ -84,7 +84,7 @@ namespace fe {
 			m_sel_stage,
 			// selected iscript
 			m_sel_iscript,
-			
+
 			// gfx selectors
 			m_sel_gfx_ts_world,
 			m_sel_gfx_ts_screen;
@@ -190,6 +190,17 @@ namespace fe {
 		void draw_sprites(SDL_Renderer* p_rnd,
 			const std::vector<fe::Sprite>& p_sprites,
 			std::size_t p_sel_sprite_no) const;
+
+		// helper functions for the bmp import
+		void gen_read_only_chr_idx_non_building(std::size_t p_tileset_no,
+			std::size_t p_world_no, std::set<std::size_t>& p_idxs) const;
+		void gen_read_only_chr_idx_building(std::size_t p_tileset_no,
+			std::size_t p_world_no, std::size_t p_screen_no,
+			std::set<std::size_t>& p_idxs) const;
+		void gen_building_metatile_usage(std::size_t p_screen_no,
+			std::set<std::size_t>& p_idxs) const;
+		void gen_fixed_building_metatiles(std::size_t p_tileset_no,
+			std::set<std::size_t>& p_idxs) const;
 
 	public:
 

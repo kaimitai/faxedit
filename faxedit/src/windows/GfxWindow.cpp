@@ -86,9 +86,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			flat_pal_to_2d_pal(m_game->m_palettes.at(l_palette_no)),
 			m_game->m_chunks.at(m_sel_gfx_ts_world).m_metatiles,
 			m_game->m_tilesets.at(l_ts_no),
-			m_path.string() + "/bmp",
+			m_path.string() + "/" + m_filename + "-bmp",
 			std::format("tileset-{}-{}.bmp", m_sel_gfx_ts_world, l_pass_screen)
-			);
+		);
 
 		add_message("Tileset/metatile bmp saved", 2);
 	}
@@ -109,10 +109,22 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		for (std::size_t i{ l_tileset_end }; i < 256; ++i)
 			l_res_idx.insert(i);
 
+		// fix any other chr refs from worlds
+		gen_read_only_chr_idx_non_building(l_ts_no, m_sel_gfx_ts_world, l_res_idx);
+		// fix any other chr refs from buildings screens
+		gen_read_only_chr_idx_building(l_ts_no, m_sel_gfx_ts_world,
+			l_pass_screen, l_res_idx);
+
+		// if we are in the buildings world, ensure we do not update metatile refs
+		// used by screens with another tileset than this one
+		std::set<std::size_t> l_read_only_mts;
+		if (m_sel_gfx_ts_world == c::CHUNK_IDX_BUILDINGS)
+			gen_fixed_building_metatiles(l_ts_no, l_read_only_mts);
+
 		auto gfxres = m_gfx.import_tileset_bmp(m_game->m_tilesets.at(l_ts_no),
 			l_res_idx,
 			flat_pal_to_2d_pal(m_game->m_palettes.at(l_palette_no)),
-			m_path.string() + "/bmp",
+			m_path.string() + "/" + m_filename + "-bmp",
 			std::format("tileset-{}-{}.bmp", m_sel_gfx_ts_world, l_pass_screen));
 
 		m_game->m_tilesets.at(l_ts_no) = gfxres.m_tileset;
@@ -121,12 +133,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		// update metatile sub-palette indexes (for all quadrants)
 		for (std::size_t i{ 0 }; i < mts.size() && i < gfxres.m_metatile_sub_palette.size();
-			++i) {
-			mts[i].m_attr_bl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-			mts[i].m_attr_br = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-			mts[i].m_attr_tl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-			mts[i].m_attr_tr = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-		}
+			++i)
+			if (!l_read_only_mts.contains(i)) {
+				mts[i].m_attr_bl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
+				mts[i].m_attr_br = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
+				mts[i].m_attr_tl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
+				mts[i].m_attr_tr = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
+			}
 
 		// update all metatile definitions
 		for (const auto& kv : gfxres.m_usage) {
@@ -135,7 +148,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			for (std::size_t i{ 0 }; i < kv.second.size(); ++i) {
 
 				std::size_t l_mt_idx{ kv.second[i].first };
-				if (l_mt_idx < mts.size()) {
+				if (l_mt_idx < mts.size() &&
+					!l_read_only_mts.contains(l_mt_idx)) {
 					std::size_t l_quadrant{ kv.second[i].second };
 
 					// update the quadrants
@@ -163,4 +177,68 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	}
 
 	ImGui::End();
+}
+
+void fe::MainWindow::gen_read_only_chr_idx_non_building(std::size_t p_tileset_no,
+	std::size_t p_world_no, std::set<std::size_t>& p_idxs) const {
+
+	// let us reserve chr indexes which are used by metatile
+	// definitions for other worlds using this tileset so we don't make
+	// any changes to them, while ignoring buildings
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		if (i == c::CHUNK_IDX_BUILDINGS ||
+			i == p_world_no ||
+			get_default_tileset_no(i, 0) != p_tileset_no)
+			continue;
+
+		const auto& other_mts{ m_game->m_chunks.at(i).m_metatiles };
+
+		for (const auto& omt : other_mts)
+			for (const auto& row : omt.m_tilemap)
+				for (byte b : row)
+					p_idxs.insert(static_cast<std::size_t>(b));
+	}
+
+}
+
+void fe::MainWindow::gen_read_only_chr_idx_building(std::size_t p_tileset_no,
+	std::size_t p_world_no, std::size_t p_screen_no,
+	std::set<std::size_t>& p_idxs) const {
+
+	std::set<std::size_t> l_used_mts;
+
+	for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i) {
+
+		if (p_world_no == c::CHUNK_IDX_BUILDINGS && i == p_screen_no)
+			continue;
+		if (get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
+			continue;
+
+		gen_building_metatile_usage(i, l_used_mts);
+	}
+
+	const auto& building_mts{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_metatiles };
+
+	for (std::size_t i{ 0 }; i < building_mts.size(); ++i)
+		if (l_used_mts.contains(i))
+			for (const auto& row : building_mts[i].m_tilemap)
+				for (byte b : row)
+					p_idxs.insert(static_cast<std::size_t>(b));
+}
+
+void fe::MainWindow::gen_building_metatile_usage(
+	std::size_t p_screen_no, std::set<std::size_t>& p_idxs) const {
+
+	const auto& scr{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.at(p_screen_no) };
+	for (std::size_t j{ 0 }; j < 13; ++j)
+		for (std::size_t i{ 0 }; i < 16; ++i)
+			p_idxs.insert(scr.get_mt_at_pos(i, j));
+}
+
+void fe::MainWindow::gen_fixed_building_metatiles(std::size_t p_tileset_no,
+	std::set<std::size_t>& p_idxs) const {
+
+	for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i)
+		if (get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
+			gen_building_metatile_usage(i, p_idxs);
 }
