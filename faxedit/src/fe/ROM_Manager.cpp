@@ -465,6 +465,35 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_jump_on_tiles(p_config, p_game, p_rom);
 }
 
+void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom,
+	const std::vector<std::size_t> p_tileset_start, const std::vector<std::size_t> p_tileset_count) const {
+
+	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
+	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
+
+	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i) {
+		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
+		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
+		std::size_t l_local_addr{
+			256 * static_cast<std::size_t>(p_rom.at(l_local_addr_hi)) +
+			static_cast<std::size_t>(p_rom.at(l_local_addr_lo)) +
+			l_chr_wtile_offset - 0x8000
+		};
+
+		const auto& chrtiles{ p_game.m_tilesets[i] };
+
+		for (std::size_t j{ p_tileset_start.at(i) };
+			j < p_tileset_start.at(i) + p_tileset_count.at(i); ++j) {
+			const auto chr_bytes{ chrtiles.at(j).to_bytes() };
+
+			patch_bytes(chr_bytes, p_rom, l_local_addr);
+			l_local_addr += 16;
+		}
+
+	}
+}
+
 void fe::ROM_Manager::encode_chunk_palette_no(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	std::size_t l_def_palette_offset{ p_config.constant(c::ID_DEFAULT_PALETTE_OFFSET) };
 	for (std::size_t i{ 0 }; i < 8; ++i) {

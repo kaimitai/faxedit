@@ -303,6 +303,18 @@
 			<entry byte="$1a" str="Magic Trainer" />
 			<entry byte="$1b" str="Towns" />
 		</byte_to_string_map>
+		<!-- labels for tilesets -->
+		<byte_to_string_map name="tileset_labels">
+			<entry byte="$00" str="Eolis" />
+			<entry byte="$01" str="Branches" />
+			<entry byte="$02" str="Trunk" />
+			<entry byte="$03" str="Mist" />
+			<entry byte="$04" str="Dartmoor/Zenis" />
+			<entry byte="$05" str="Towns" />
+			<entry byte="$06" str="King/Guru/Hospital" />
+			<entry byte="$07" str="Shops/House" />
+			<entry byte="$08" str="Strength/Magic Trainer" />
+		</byte_to_string_map>
 		<!-- labels for building sprite sets with special significance in game code -->
 		<byte_to_string_map name="special_sprite_set_labels">
 			<entry byte="$44" str="End-Game Sprite Set" />

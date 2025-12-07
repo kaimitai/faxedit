@@ -103,6 +103,8 @@ namespace fe {
 		void encode_mattock_animations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_push_block(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_jump_on_tiles(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
+		void encode_chr_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom,
+			const std::vector<std::size_t> p_tileset_start, const std::vector<std::size_t> p_tileset_count) const;
 
 		// util
 		void patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const;

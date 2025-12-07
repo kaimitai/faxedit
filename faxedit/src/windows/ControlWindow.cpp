@@ -177,6 +177,10 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 
 	auto x_rom{ m_game->m_rom_data };
 
+	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom,
+		m_tileset_start, m_tileset_size);
+	add_message("Patched chr data", 2);
+
 	m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
 	add_message("Patched static data", 2);
 

@@ -275,8 +275,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			}
 			// TAB SPRITES - END
 
-
-
 			// TAB DOORS - BEGIN
 			if (ImGui::BeginTabItem("Doors")) {
 				m_emode = fe::EditMode::Doors;

@@ -24,6 +24,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_atlas_tileset_no{ 1 },
 	m_atlas_new_tileset_no{ 0 },
 	m_atlas_new_palette_no{ 0 },
+	m_atlas_force_update{ true },
 	m_sel_metatile{ 0 },
 	m_sel_tilemap_sub_palette{ 0 },
 	m_sel_nes_tile{ 0x80 },
@@ -31,13 +32,17 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_npc_bundle{ 0 },
 	m_sel_stage{ 0 },
 	m_sel_iscript{ 0 },
+	m_sel_gfx_ts_world{ 0 },
+	m_sel_gfx_ts_screen{ 0 },
 	m_emode{ fe::EditMode::Tilemap },
 	m_chr_picker_mode{ fe::ChrPickerMode::Default },
+	m_gfx_emode{ fe::GfxEditMode::WorldChr },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
 	m_pulse_time{ 0.0f },
 	m_anim_time{ 0.0f },
 	m_anim_frame{ 0 },
 	m_iscript_window{ false },
+	m_gfx_window{ true },
 	m_iscript_win_set_focus{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
@@ -219,6 +224,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		if (m_iscript_window)
 			draw_iscript_window(p_rnd);
 
+		if (m_gfx_window)
+			draw_gfx_window(p_rnd);
+
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 	}
@@ -261,7 +269,8 @@ void fe::MainWindow::draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_s
 void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
 
 	if (m_atlas_new_tileset_no != m_atlas_tileset_no ||
-		m_atlas_new_palette_no != m_atlas_palette_no) {
+		m_atlas_new_palette_no != m_atlas_palette_no ||
+		m_atlas_force_update) {
 
 		m_gfx.generate_atlas(p_rnd, m_game->m_tilesets.at(m_atlas_new_tileset_no),
 			m_game->m_palettes.at(m_atlas_new_palette_no));
@@ -269,8 +278,8 @@ void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
 
 		m_atlas_tileset_no = m_atlas_new_tileset_no;
 		m_atlas_palette_no = m_atlas_new_palette_no;
+		m_atlas_force_update = false;
 	}
-
 }
 
 // can be regenerated independently of the atlas
@@ -283,9 +292,9 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd) {
 
 std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
 	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
-		return m_building_rooms_tileset_idx.at(m_sel_screen);
+		return m_building_rooms_tileset_idx.at(p_screen_no);
 	else
-		return m_world_tileset_idx.at(m_sel_chunk);
+		return m_world_tileset_idx.at(p_chunk_no);
 }
 
 std::size_t fe::MainWindow::get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
@@ -772,7 +781,9 @@ void fe::MainWindow::cache_config_variables(void) {
 	// maps we convert to vectors
 	m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
 	m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_sprite_count);
-	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, 10);
+	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
+	m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
+		m_config.constant(c::ID_WORLD_TILESET_COUNT));
 
 	// need sprite count to populate the sprite dimension metadata
 	m_sprite_dims = std::vector<fe::AnimationGUIData>(m_sprite_count,

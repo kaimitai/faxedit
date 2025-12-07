@@ -64,6 +64,7 @@ namespace fe {
 		constexpr char ID_BLOCK_PROP_LABELS[]{ "block_property_labels" };
 		constexpr char ID_DOOR_REQ_LABELS[]{ "door_requirement_labels" };
 		constexpr char ID_PALETTE_LABELS[]{ "palette_labels" };
+		constexpr char ID_TILESET_LABELS[]{ "tileset_labels" };
 		constexpr char ID_SPECIAL_SPRITE_SET_LABELS[]{ "special_sprite_set_labels" };
 		constexpr char ID_CMD_BYTE_LABELS[]{ "command_byte_labels" };
 		constexpr char ID_TILEMAP_BANK_OFFSETS[]{ "tilemap_bank_offsets" };

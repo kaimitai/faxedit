@@ -20,6 +20,7 @@ namespace fe {
 
 	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
+	enum GfxEditMode { WorldChr, Palettes };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -49,7 +50,7 @@ namespace fe {
 			m_labels_door_reqs, m_labels_block_props,
 			m_labels_palettes, m_labels_spec_sprite_sets;
 		std::vector<std::string> m_labels_worlds, m_labels_sprites,
-			m_labels_buildings;
+			m_labels_buildings, m_labels_tilesets;
 		std::vector<std::size_t> m_world_tileset_idx,
 			m_building_rooms_tileset_idx,
 			m_tileset_start, m_tileset_size;
@@ -82,7 +83,11 @@ namespace fe {
 			// selected stage
 			m_sel_stage,
 			// selected iscript
-			m_sel_iscript;
+			m_sel_iscript,
+			
+			// gfx selectors
+			m_sel_gfx_ts_world,
+			m_sel_gfx_ts_screen;
 
 		// sprite dimensions; holding sprite size and
 		// cartesian offsets per animation frame
@@ -93,7 +98,8 @@ namespace fe {
 
 		// rendering options
 		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
-			m_show_grid, m_iscript_win_set_focus;
+			m_show_grid, m_iscript_win_set_focus,
+			m_gfx_window;
 
 		// functionality toggles
 		bool m_show_sprite_sets_in_buildings;
@@ -101,9 +107,11 @@ namespace fe {
 		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
+		fe::GfxEditMode m_gfx_emode;
 		fe::ChrPickerMode m_chr_picker_mode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
+		bool m_atlas_force_update;
 		std::optional<fe::Game> m_game;
 		fe::gfx m_gfx;
 		std::deque<fe::Message> m_messages;
@@ -141,6 +149,7 @@ namespace fe {
 		void draw_metadata_window(SDL_Renderer* p_rnd);
 		void draw_iscript_window(SDL_Renderer* p_rnd);
 		void draw_filepicker_window(SDL_Renderer* p_rnd);
+		void draw_gfx_window(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 
