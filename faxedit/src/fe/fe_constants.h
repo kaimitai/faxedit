@@ -46,6 +46,8 @@ namespace fe {
 		constexpr char ID_GAME_START_HP_OFFSET[]{ "game_start_hp_offset" };
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
+		constexpr char ID_PALETTE_TO_MUSIC_OFFSET[]{ "palette_to_music_offset" };
+		
 		// scene definition start offsets
 		constexpr char ID_WORLD_TO_TILESET_OFFSET[]{ "world_to_tileset_offset" };
 		constexpr char ID_BUILDING_TO_MUSIC_OFFSET[]{ "building_to_music_offset" };
@@ -78,6 +80,7 @@ namespace fe {
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
 		constexpr char ID_ISCRIPT_COUNT[]{ "iscript_count" };
+		constexpr char ID_PALETTE_TO_MUSIC_SLOTS[]{ "palette_to_music_slots" };
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };

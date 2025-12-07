@@ -355,6 +355,31 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				// GAME - JUMP-ON ANIMATION - END
 
+				if (ImGui::BeginTabItem("Pal2Mus")) {
+					static std::size_t ls_p2m_slot{ 0 };
+					auto& slots{ m_game->m_pal_to_music };
+
+					ui::imgui_slider_with_arrows("###p2ms",
+						"Slot", ls_p2m_slot, 0, slots.m_slots.size() - 1,
+						"", false, true);
+
+					ImGui::SeparatorText("Palette to Music mapping");
+
+					auto& slot{ slots.m_slots[ls_p2m_slot] };
+
+					ui::imgui_slider_with_arrows("###p2mp",
+						std::format("Palette: {}",
+							get_description(slot.m_palette, m_labels_palettes)),
+						slot.m_palette, 0, m_game->m_palettes.size() - 1);
+
+					ui::imgui_slider_with_arrows("###p2mm",
+						std::format("Music: {}",
+							get_description(slot.m_music, m_labels_music)),
+						slot.m_music, 0, m_labels_music.size() - 1);
+
+					ImGui::EndTabItem();
+				}
+
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
 			}

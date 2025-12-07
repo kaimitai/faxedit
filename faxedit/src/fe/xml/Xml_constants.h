@@ -31,6 +31,9 @@ namespace fe {
 			constexpr char TAG_NPC_BUNDLES[]{ "building_params" };
 			constexpr char TAG_NPC_BUNDLE[]{ "building_param" };
 
+			constexpr char TAG_PALETTE_TO_MUSIC[]{ "palette_to_music" };
+			constexpr char TAG_SLOT[]{ "slot" };
+
 			constexpr char TAG_PUSH_BLOCK[]{ "push_block" };
 			constexpr char ATTR_BLOCK_COUNT[]{ "block_count" };
 			constexpr char ATTR_DELTA_X[]{ "delta_x" };

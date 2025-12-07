@@ -76,6 +76,8 @@
 		<const name="spawn_loc_data_start" value="0x3ddbd" />
 		<const name="mattock_animations_offset" value="0x3c69f" />
 		<const name="jump_on_animation_offset" value="0x3d6ff" />
+		<const name="palette_to_music_offset" value="0x3e579" />
+		<const name="palette_to_music_slots" value="7" />
 		<!-- path to mascon line-drawing constants -->
 		<const name="ptm_stage_no_offset" value="0x3d782" />
 		<const name="ptm_screen_no_offset" value="0x3d788" />

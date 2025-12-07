@@ -463,6 +463,7 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_push_block(p_config, p_game, p_rom);
 	encode_jump_on_tiles(p_config, p_game, p_rom);
 	encode_scene_data(p_config, p_game, p_rom);
+	encode_palette_to_music(p_config, p_game, p_rom);
 }
 
 void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
@@ -700,6 +701,19 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 		p_rom.at(l_wscene_start + 8 + i) = static_cast<byte>(wscenes[i].m_scene.m_palette);
 		p_rom.at(l_wscene_start + 16 + i) = wscenes[i].m_scene.get_pos_as_byte();
 		p_rom.at(l_wscene_start + 24 + i) = static_cast<byte>(wscenes[i].m_scene.m_music);
+	}
+}
+
+void fe::ROM_Manager::encode_palette_to_music(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	auto l_slots{ p_config.constant(c::ID_PALETTE_TO_MUSIC_SLOTS) };
+	auto l_slot_offset{ p_config.constant(c::ID_PALETTE_TO_MUSIC_OFFSET) };
+
+	const auto& pal_to_mus{ p_game.m_pal_to_music.m_slots };
+
+	for (std::size_t i{ 0 }; i < pal_to_mus.size(); ++i) {
+		p_rom.at(l_slot_offset + i) = pal_to_mus[i].m_palette;
+		p_rom.at(l_slot_offset + l_slots + i) = pal_to_mus[i].m_music;
 	}
 }
 

@@ -81,6 +81,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 		p_config.constant(c::ID_GAME_START_HP_OFFSET));
 
 	extract_scenes_if_empty(p_config);
+	extract_palette_to_music(p_config);
 
 	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
 	for (std::size_t i{ 0 }; i < 31; ++i) {
@@ -845,4 +846,16 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 		if (m_chunks[i].m_scene.m_music == 256)
 			m_chunks[i].m_scene.m_music = m_rom_data.at(l_wscene_start + 24 + i);
 	}
+}
+
+void fe::Game::extract_palette_to_music(const fe::Config& p_config) {
+	auto l_slots{ p_config.constant(c::ID_PALETTE_TO_MUSIC_SLOTS) };
+	auto l_slot_offset{ p_config.constant(c::ID_PALETTE_TO_MUSIC_OFFSET) };
+	std::size_t l_start{ m_pal_to_music.m_slots.size() };
+
+	for (std::size_t i{ l_start }; i < l_slots; ++i)
+		m_pal_to_music.m_slots.push_back(fe::PaletteMusicSlot(
+			m_rom_data.at(l_slot_offset + i),
+			m_rom_data.at(l_slot_offset + l_slots + i)
+		));
 }

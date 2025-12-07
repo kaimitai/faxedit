@@ -151,6 +151,20 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		}
 	}
 
+	// if palette to music map is not defined, extract from ROM post-import
+	auto n_pal2mus{ n_root.child(c::TAG_PALETTE_TO_MUSIC) };
+	if (n_pal2mus) {
+		auto& slots{ l_game.m_pal_to_music.m_slots };
+
+		for (auto n_slot{ n_pal2mus.child(c::TAG_SLOT) }; n_slot;
+			n_slot = n_slot.next_sibling(c::TAG_SLOT)) {
+			slots.push_back(fe::PaletteMusicSlot(
+				parse_numeric_byte(n_slot.attribute(c::TAG_PALETTE).as_string()),
+				parse_numeric_byte(n_slot.attribute(c::ATTR_MUSIC).as_string())
+			));
+		}
+	}
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -448,6 +462,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		join_bytes(p_game.m_jump_on_animation, true)
 	);
 
+	// building room scene data
 	auto n_bscenes{ n_metadata.append_child(c::TAG_BUILDING_SCENES) };
 	for (std::size_t i{ 0 }; i < p_game.m_building_scenes.size(); ++i) {
 		auto n_scene{ n_bscenes.append_child(c::TAG_SCENE) };
@@ -474,6 +489,22 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_scene.append_attribute(c::ATTR_Y);
 		n_scene.attribute(c::ATTR_Y).set_value(
 			byte_to_hex(p_game.m_building_scenes[i].m_y));
+	}
+
+	// palette to music slots
+	auto n_p2m_slots{ n_metadata.append_child(c::TAG_PALETTE_TO_MUSIC) };
+
+	const auto& slots{ p_game.m_pal_to_music.m_slots };
+	for (std::size_t i{ 0 }; i < slots.size(); ++i) {
+		auto n_slot{ n_p2m_slots.append_child(c::TAG_SLOT) };
+		n_slot.append_attribute(c::ATTR_NO);
+		n_slot.attribute(c::ATTR_NO).set_value(i);
+
+		n_slot.append_attribute(c::TAG_PALETTE);
+		n_slot.attribute(c::TAG_PALETTE).set_value(byte_to_hex(slots[i].m_palette));
+
+		n_slot.append_attribute(c::ATTR_MUSIC);
+		n_slot.attribute(c::ATTR_MUSIC).set_value(byte_to_hex(slots[i].m_music));
 	}
 
 	// for each chunk
