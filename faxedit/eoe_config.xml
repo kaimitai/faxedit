@@ -64,7 +64,6 @@
 		<const name="transition_data_end" value="0x3fff0" />
 		<!-- palettes -->
 		<const name="palette_offset" value="0x2c010" />
-		<const name="default_palette_offset" value="0x3df5c" />
 		<!-- stages and start data -->
 		<const name="stage_conn_offset" value="0x3e5f7" />
 		<const name="stage_screen_offset" value="0x3e603" />
@@ -103,14 +102,18 @@
 		<const name="iscript_data_rg2_start" region="jp,en-transl" value="0x33196" />
 		<!-- secondary script data necessarily ends within bank 12 -->
 		<const name="iscript_data_rg2_end" value="0x34010" />
-
 		<!-- chr tile offsets -->
 		<const name="world_tileset_count" value="9" />
 		<const name="chr_world_tile_offset" value="0x10010" />
 		<const name="chr_hud_tile_offset" value="0x28150" />
 		<const name="world_tileset_to_addr_offset" value="0x3cf17" />
+		<!-- scene offsets -->
+		<!-- 10 entries, one for each building room -->
+		<!-- music, palettes, tilesets and start positions  -->
+		<const name="building_to_music_offset" value="0x3e60f" />
+		<!-- 8 entries, one for each world -->
+		<!-- tileset, palettes, start pos (unused) and music -->
 		<const name="world_to_tileset_offset" value="0x3df54" />
-		<const name="building_to_tileset_offset" value="0x3e623" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -314,6 +317,25 @@
 			<entry byte="$06" str="King/Guru/Hospital" />
 			<entry byte="$07" str="Shops/House" />
 			<entry byte="$08" str="Strength/Magic Trainer" />
+		</byte_to_string_map>
+		<byte_to_string_map name="music_labels">
+			<entry byte="$00" str="None" />
+			<entry byte="$01" str="Intro" />
+			<entry byte="$02" str="Dartmoor Castle" />
+			<entry byte="$03" str="Trunk" />
+			<entry byte="$04" str="Branches" />
+			<entry byte="$05" str="Mist" />
+			<entry byte="$06" str="Towers" />
+			<entry byte="$07" str="Eolis" />
+			<entry byte="$08" str="Mantra/Death" />
+			<entry byte="$09" str="Towns" />
+			<entry byte="$0a" str="Boss Music" />
+			<entry byte="$0b" str="Hour Glass" />
+			<entry byte="$0c" str="Outro" />
+			<entry byte="$0d" str="King" />
+			<entry byte="$0e" str="Guru" />
+			<entry byte="$0f" str="Shops/House" />
+			<entry byte="$10" str="Zenis" />
 		</byte_to_string_map>
 		<!-- labels for building sprite sets with special significance in game code -->
 		<byte_to_string_map name="special_sprite_set_labels">

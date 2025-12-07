@@ -36,7 +36,6 @@ namespace fe {
 		// constant offsets
 		constexpr char ID_WORLD_TILEMAP_MD[]{ "world_tilemap_metadata" };
 		constexpr char ID_PALETTE_OFFSET[]{ "palette_offset" };
-		constexpr char ID_DEFAULT_PALETTE_OFFSET[]{ "default_palette_offset" };
 		constexpr char ID_SPAWN_LOC_DATA_START[]{ "spawn_loc_data_start" };
 		constexpr char ID_STAGE_CONN_OFFSET[]{ "stage_conn_offset" };
 		constexpr char ID_STAGE_SCREEN_OFFSET[]{ "stage_screen_offset" };
@@ -47,6 +46,9 @@ namespace fe {
 		constexpr char ID_GAME_START_HP_OFFSET[]{ "game_start_hp_offset" };
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
+		// scene definition start offsets
+		constexpr char ID_WORLD_TO_TILESET_OFFSET[]{ "world_to_tileset_offset" };
+		constexpr char ID_BUILDING_TO_MUSIC_OFFSET[]{ "building_to_music_offset" };
 		// path to mascon parameter offsets
 		constexpr char ID_PTM_STAGE_NO_OFFSET[]{ "ptm_stage_no_offset" };
 		constexpr char ID_PTM_SCREEN_NO_OFFSET[]{ "ptm_screen_no_offset" };
@@ -65,6 +67,7 @@ namespace fe {
 		constexpr char ID_DOOR_REQ_LABELS[]{ "door_requirement_labels" };
 		constexpr char ID_PALETTE_LABELS[]{ "palette_labels" };
 		constexpr char ID_TILESET_LABELS[]{ "tileset_labels" };
+		constexpr char ID_MUSIC_LABELS[]{ "music_labels" };
 		constexpr char ID_SPECIAL_SPRITE_SET_LABELS[]{ "special_sprite_set_labels" };
 		constexpr char ID_CMD_BYTE_LABELS[]{ "command_byte_labels" };
 		constexpr char ID_TILEMAP_BANK_OFFSETS[]{ "tilemap_bank_offsets" };
@@ -81,8 +84,6 @@ namespace fe {
 		constexpr char ID_CHR_WORLD_TILE_OFFSET[]{ "chr_world_tile_offset" };
 		constexpr char ID_CHR_HUD_TILE_OFFSET[]{ "chr_hud_tile_offset" };
 		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
-		constexpr char ID_WORLD_TO_TILESET_OFFSET[]{ "world_to_tileset_offset" };
-		constexpr char ID_BUILDING_TO_TILESET_OFFSET[]{ "building_to_tileset_offset" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

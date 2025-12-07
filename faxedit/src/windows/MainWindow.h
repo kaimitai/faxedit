@@ -48,12 +48,11 @@ namespace fe {
 		// config values we will cache
 		std::map<byte, std::string> m_labels_cmd_byte,
 			m_labels_door_reqs, m_labels_block_props,
-			m_labels_palettes, m_labels_spec_sprite_sets;
+			m_labels_palettes, m_labels_spec_sprite_sets,
+			m_labels_music;
 		std::vector<std::string> m_labels_worlds, m_labels_sprites,
 			m_labels_buildings, m_labels_tilesets;
-		std::vector<std::size_t> m_world_tileset_idx,
-			m_building_rooms_tileset_idx,
-			m_tileset_start, m_tileset_size;
+		std::vector<std::size_t> m_tileset_start, m_tileset_size;
 
 		std::size_t m_sprite_count, m_iscript_count;
 
@@ -135,8 +134,6 @@ namespace fe {
 		std::string get_nes_path(void) const;
 		std::string get_filepath(const std::string& p_ext, bool p_add_out = false) const;
 
-		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
-		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
 		std::string get_sprite_label(std::size_t p_sprite_id) const;
@@ -168,6 +165,8 @@ namespace fe {
 		void show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_chunk);
 
 		void show_sprite_set_contents(std::size_t p_sprite_set);
+		void show_scene(fe::Scene& p_scene,
+			bool p_regen_tiles, bool p_regen_palette);
 
 		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
 

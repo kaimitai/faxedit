@@ -75,8 +75,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
 
 	// ensure the atlas will be generated
-	m_atlas_new_tileset_no = get_default_tileset_no(0, 0);
-	m_atlas_new_palette_no = get_default_palette_no(0, 0);
+	m_atlas_new_tileset_no = m_game->get_default_tileset_no(0, 0);
+	m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
 
 	// TODO: generate sprite textures
 }
@@ -128,7 +128,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		const auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
 		const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
 		const auto& l_tilemap{ l_screen.m_tilemap };
-		std::size_t l_tileset{ get_default_tileset_no(m_sel_chunk, m_sel_screen) };
+		std::size_t l_tileset{ m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
 		byte mattock_mt_id{ l_chunk.m_mattock_animation.at(0) };
 
 		for (int y{ 0 }; y < 13; ++y)
@@ -288,21 +288,6 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd) {
 		m_gfx.generate_mt_texture(p_rnd,
 			m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(i).m_tilemap,
 			i, m_sel_tilemap_sub_palette);
-}
-
-std::size_t fe::MainWindow::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
-		return m_building_rooms_tileset_idx.at(p_screen_no);
-	else
-		return m_world_tileset_idx.at(p_chunk_no);
-}
-
-std::size_t fe::MainWindow::get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-
-	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
-		return p_screen_no + 17;
-	else
-		return m_game->m_chunks.at(p_chunk_no).m_default_palette_no;
 }
 
 std::string fe::MainWindow::get_description(byte p_index,
@@ -677,16 +662,6 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_config.load_config_data(l_config_xml_path);
 		cache_config_variables();
 
-		// extract from ROM based on constants
-		// tileset mappings
-		std::size_t l_wtile_offset{ m_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
-		std::size_t l_btile_offset{ m_config.constant(c::ID_BUILDING_TO_TILESET_OFFSET) };
-
-		for (std::size_t i{ 0 }; i < 8; ++i)
-			m_world_tileset_idx.push_back(bytes.at(l_wtile_offset + i));
-		for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i)
-			m_building_rooms_tileset_idx.push_back(bytes.at(l_btile_offset + i));
-
 		m_game = fe::Game(m_config, bytes);
 		m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
 
@@ -748,7 +723,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		}
 
 		if (m_game->m_chunks.size() > 0)
-			m_atlas_new_palette_no = m_game->m_chunks[0].m_default_palette_no;
+			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
 
 		add_message("Loaded " + p_filepath, 2);
 	}
@@ -773,6 +748,7 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_labels_block_props = m_config.bmap(c::ID_BLOCK_PROP_LABELS);
 	m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
 	m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
+	m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
 
 	// constants
 	m_iscript_count = m_config.constant(c::ID_ISCRIPT_COUNT);

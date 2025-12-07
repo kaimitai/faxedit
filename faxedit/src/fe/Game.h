@@ -8,6 +8,7 @@
 #include "./../common/klib/NES_tile.h"
 #include "Chunk.h"
 #include "StageManager.h"
+#include "Scene.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -35,6 +36,7 @@ namespace fe {
 		std::vector<std::vector<klib::NES_tile>> m_tilesets;
 
 		fe::StageManager m_stages;
+		std::vector<fe::Scene> m_building_scenes;
 
 		// stored as building chunk sprite data, but is globally referred to
 		std::vector<fe::Sprite_set> m_npc_bundles;
@@ -70,6 +72,11 @@ namespace fe {
 		void generate_tilesets(const fe::Config& p_config,
 			std::vector<std::size_t>& p_tileset_start,
 			std::vector<std::size_t>& p_tileset_size);
+
+		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
+
+		void extract_scenes_if_empty(const fe::Config& p_config);
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;

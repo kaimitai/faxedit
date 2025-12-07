@@ -47,11 +47,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		ui::imgui_slider_with_arrows("###tss",
 			m_labels_buildings.at(m_sel_gfx_ts_screen), m_sel_gfx_ts_screen, 0, c::WORLD_BUILDINGS_SCREEN_COUNT - 1);
 
-	std::size_t l_ts_no{ get_default_tileset_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
-	std::size_t l_palette_no{ get_default_palette_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
+	std::size_t l_ts_no{ m_game->get_default_tileset_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
+	std::size_t l_palette_no{ m_game->get_default_palette_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
 
 	imgui_text(std::format("Tileset {}: {}", l_ts_no, m_labels_tilesets.at(l_ts_no)));
-	imgui_text(std::format("Palette {}: {}", l_palette_no, m_labels_palettes.at(static_cast<byte>(l_palette_no))));
+	imgui_text(std::format("Palette: {}",
+		get_description(static_cast<byte>(l_palette_no), m_labels_palettes)
+	));
 
 	ImGui::Separator();
 
@@ -166,7 +168,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			}
 		}
 
-		if (l_ts_no == get_default_tileset_no(m_sel_chunk, m_sel_screen))
+		if (l_ts_no == m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen))
 			m_atlas_force_update = true;
 	}
 	catch (const std::runtime_error& ex) {
@@ -188,7 +190,7 @@ void fe::MainWindow::gen_read_only_chr_idx_non_building(std::size_t p_tileset_no
 	for (std::size_t i{ 0 }; i < 8; ++i) {
 		if (i == c::CHUNK_IDX_BUILDINGS ||
 			i == p_world_no ||
-			get_default_tileset_no(i, 0) != p_tileset_no)
+			m_game->get_default_tileset_no(i, 0) != p_tileset_no)
 			continue;
 
 		const auto& other_mts{ m_game->m_chunks.at(i).m_metatiles };
@@ -211,7 +213,7 @@ void fe::MainWindow::gen_read_only_chr_idx_building(std::size_t p_tileset_no,
 
 		if (p_world_no == c::CHUNK_IDX_BUILDINGS && i == p_screen_no)
 			continue;
-		if (get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
+		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
 			continue;
 
 		gen_building_metatile_usage(i, l_used_mts);
@@ -239,6 +241,6 @@ void fe::MainWindow::gen_fixed_building_metatiles(std::size_t p_tileset_no,
 	std::set<std::size_t>& p_idxs) const {
 
 	for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i)
-		if (get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
+		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
 			gen_building_metatile_usage(i, p_idxs);
 }

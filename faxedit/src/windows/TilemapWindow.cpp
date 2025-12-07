@@ -396,7 +396,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						l_dest_tooltip.clear();
 
 						if (l_dtype == fe::DoorType::Building) {
-							l_dest_palette = static_cast<byte>(get_default_palette_no(c::CHUNK_IDX_BUILDINGS, l_door.m_dest_screen_id));
+							l_dest_palette = static_cast<byte>(m_game->get_default_palette_no(c::CHUNK_IDX_BUILDINGS, l_door.m_dest_screen_id));
 						}
 						else {
 							l_dest_palette = l_door.m_dest_palette_id;
@@ -567,7 +567,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					else {
 						if (ui::imgui_button("Add Transition###swiwtadd", 2))
 							l_screen.m_interchunk_scroll = fe::InterChunkScroll(
-								0, 0, l_chunk.m_default_palette_no
+								0, 0, static_cast<byte>(l_chunk.m_scene.m_palette)
 							);
 					}
 
@@ -601,17 +601,17 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			if (fe::ui::imgui_slider_with_arrows("##ws", "",
 				m_sel_chunk, static_cast<std::size_t>(0), m_game->m_chunks.size() - 1)) {
 				m_sel_screen = 0;
-				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
-				m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
 			}
 
 			ImGui::SeparatorText(std::format("Selected Screen: #{} of {}", m_sel_screen, m_game->m_chunks.at(m_sel_chunk).m_screens.size()).c_str());
 
 			if (fe::ui::imgui_slider_with_arrows("##ss", "",
 				m_sel_screen, static_cast<std::size_t>(0), m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1)) {
-				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 				if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
-					m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
+					m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
 			}
 
 			ImGui::SeparatorText("Navigation");
@@ -777,7 +777,7 @@ void fe::MainWindow::show_stage_door_data(fe::Door& p_door) {
 		ImGui::Text(std::format("Destination screen: {}",
 			l_dest_screen).c_str());
 		ImGui::Text(std::format("Destination palette: {}",
-			get_description(m_game->m_chunks.at(l_dest_world).m_default_palette_no,
+			get_description(static_cast<byte>(m_game->get_default_palette_no(l_dest_world, 0)),
 				m_labels_palettes)).c_str());
 	}
 }
@@ -816,8 +816,8 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 		else if (l_door.m_door_type == fe::Building) {
 			m_sel_screen = l_door.m_dest_screen_id;
 			m_sel_chunk = c::CHUNK_IDX_BUILDINGS;
-			m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
-			m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+			m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+			m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 			m_sel_npc_bundle = l_door.m_npc_bundle;
 		}
 		else {
@@ -832,8 +832,8 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 
 				m_sel_chunk = m_game->m_stages.m_stages[l_dest_stage].m_world_id;
 				m_sel_screen = (l_next ? l_stage.value()->m_next_screen : l_stage.value()->m_prev_screen);
-				m_atlas_new_palette_no = get_default_palette_no(m_sel_chunk, m_sel_screen);
-				m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+				m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 			}
 		}
 
@@ -859,7 +859,7 @@ void fe::MainWindow::transition_ow_button(const fe::Screen& p_screen) {
 		m_sel_chunk = p_screen.m_intrachunk_scroll.value().m_dest_chunk;
 		m_sel_screen = p_screen.m_intrachunk_scroll.value().m_dest_screen;
 		m_atlas_new_palette_no = p_screen.m_intrachunk_scroll.value().m_palette_id;
-		m_atlas_new_tileset_no = get_default_tileset_no(m_sel_chunk, m_sel_screen);
+		m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 	}
 }
 

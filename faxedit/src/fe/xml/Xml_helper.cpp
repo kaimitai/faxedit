@@ -134,6 +134,21 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 			n_jump_on.attribute(c::TAG_METATILES).as_string()
 		);
 
+	// if building scenes are not set (pre beta-5), extract them from ROM
+	// after the import
+	auto n_bscenes = n_root.child(c::TAG_BUILDING_SCENES);
+	if (n_bscenes) {
+		for (auto n_scene{ n_bscenes.child(c::TAG_SCENE) }; n_scene;
+			n_scene = n_scene.next_sibling(c::TAG_SCENE)) {
+
+			l_game.m_building_scenes.push_back(fe::Scene(
+				parse_numeric(n_scene.attribute(c::ATTR_DEFAULT_PALETTE).as_string()),
+				parse_numeric(n_scene.attribute(c::ATTR_TILESET).as_string()),
+				parse_numeric(n_scene.attribute(c::ATTR_MUSIC).as_string())
+			));
+		}
+	}
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -143,8 +158,17 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 		// extract chunk-level metadata
 
-		// chunk default palette
-		l_chunk.set_default_palette_no(parse_numeric_byte(n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).as_string()));
+		// chunk scene values
+		// if any are missing (pre beta-5) they will be loaded from ROM after the xml load
+		l_chunk.m_scene.m_palette = parse_numeric_byte(n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).as_string());
+
+		auto n_scene_tileset{ n_chunk.attribute(c::ATTR_TILESET) };
+		if (n_scene_tileset)
+			l_chunk.m_scene.m_tileset = parse_numeric_byte(n_chunk.attribute(c::ATTR_TILESET).as_string());
+
+		auto n_scene_music{ n_chunk.attribute(c::ATTR_MUSIC) };
+		if (n_scene_music)
+			l_chunk.m_scene.m_music = parse_numeric_byte(n_chunk.attribute(c::ATTR_MUSIC).as_string());
 
 		// mattock animation
 		l_chunk.m_mattock_animation = parse_byte_list(n_chunk.attribute(c::ATTR_MATTOCK_ANIMATION).as_string());
@@ -414,6 +438,26 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		join_bytes(p_game.m_jump_on_animation, true)
 	);
 
+	auto n_bscenes{ n_metadata.append_child(c::TAG_BUILDING_SCENES) };
+	for (std::size_t i{ 0 }; i < p_game.m_building_scenes.size(); ++i) {
+		auto n_scene{ n_bscenes.append_child(c::TAG_SCENE) };
+
+		n_scene.append_attribute(c::ATTR_NO);
+		n_scene.attribute(c::ATTR_NO).set_value(i);
+
+		n_scene.append_attribute(c::ATTR_DEFAULT_PALETTE);
+		n_scene.attribute(c::ATTR_DEFAULT_PALETTE).set_value(
+			byte_to_hex(static_cast<byte>(p_game.m_building_scenes[i].m_palette)));
+
+		n_scene.append_attribute(c::ATTR_TILESET);
+		n_scene.attribute(c::ATTR_TILESET).set_value(
+			byte_to_hex(static_cast<byte>(p_game.m_building_scenes[i].m_tileset)));
+
+		n_scene.append_attribute(c::ATTR_MUSIC);
+		n_scene.attribute(c::ATTR_MUSIC).set_value(
+			byte_to_hex(static_cast<byte>(p_game.m_building_scenes[i].m_music)));
+	}
+
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
 
@@ -427,7 +471,13 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 		// chunk metadata
 		n_chunk.append_attribute(c::ATTR_DEFAULT_PALETTE);
-		n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).set_value(byte_to_hex(lc_chunk.m_default_palette_no));
+		n_chunk.attribute(c::ATTR_DEFAULT_PALETTE).set_value(byte_to_hex(static_cast<byte>(lc_chunk.m_scene.m_palette)));
+
+		n_chunk.append_attribute(c::ATTR_TILESET);
+		n_chunk.attribute(c::ATTR_TILESET).set_value(byte_to_hex(static_cast<byte>(lc_chunk.m_scene.m_tileset)));
+
+		n_chunk.append_attribute(c::ATTR_MUSIC);
+		n_chunk.attribute(c::ATTR_MUSIC).set_value(byte_to_hex(static_cast<byte>(lc_chunk.m_scene.m_music)));
 
 		// mattock animation
 		n_chunk.append_attribute(c::ATTR_MATTOCK_ANIMATION);

@@ -9,7 +9,7 @@ namespace fe {
 
 			constexpr char TAG_ROOT[]{ "echoes_of_eolis" };
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
-			constexpr char VAL_ROOT_VERSION[]{ "beta-4" };
+			constexpr char VAL_ROOT_VERSION[]{ "beta-5" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
 			constexpr char TAG_STAGES[]{ "stages" };
@@ -49,10 +49,15 @@ namespace fe {
 
 			constexpr char ATTR_MATTOCK_ANIMATION[]{ "mattock_animation" };
 
+			constexpr char TAG_BUILDING_SCENES[]{ "building_scenes" };
+			constexpr char TAG_SCENE[]{ "scenes" };
+
 			constexpr char TAG_CHUNKS[]{ "worlds" };
 			constexpr char TAG_CHUNK[]{ "world" };
 
 			constexpr char ATTR_DEFAULT_PALETTE[]{ "default_palette" };
+			constexpr char ATTR_TILESET[]{ "tileset" };
+			constexpr char ATTR_MUSIC[]{ "music" };
 
 			constexpr char ATTR_MT_PROPERTY[]{ "property" };
 			constexpr char ATTR_MT_PAL_TL[]{ "pal_tl" };

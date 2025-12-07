@@ -323,5 +323,8 @@
     <ClInclude Include="src\fe\Config.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\Scene.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

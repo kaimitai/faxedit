@@ -30,20 +30,21 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				show_mt_definition_tab(p_rnd, l_chunk);
 				// WORLD - METATILES - BEGIN
 
-				// CHUNK - PALETTE - BEGIN
-				if (ImGui::BeginTabItem("Palette")) {
-					if (fe::ui::imgui_slider_with_arrows("##cdp",
-						std::format("Default Palette: {}", get_description(l_chunk.m_default_palette_no, m_labels_palettes)),
-						l_chunk.m_default_palette_no, 0,
-						m_game->m_palettes.size() - 1,
-						"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
-						m_atlas_new_palette_no = l_chunk.m_default_palette_no;
+				// CHUNK - SCENE - BEGIN
+				if (ImGui::BeginTabItem("Scene")) {
+
+					bool l_bldg{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
+					show_scene(l_chunk.m_scene, !l_bldg, !l_bldg);
+
+					if (l_bldg) {
+						ImGui::Separator();
+						imgui_text("Building scenes are set per screen as Game Metadata");
 					}
 
 					ImGui::EndTabItem();
 				}
 
-				// CHUNK - PALETTE - END
+				// CHUNK - SCENE - END
 
 				// CHUNK - MATTOCK ANIMATION - BEGIN
 
@@ -173,7 +174,25 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("Building Sprite Sets")) {
+				if (ImGui::BeginTabItem("Scenes")) {
+					static std::size_t ls_sel_bldg{ 0 };
+
+					ui::imgui_slider_with_arrows("###bsroom",
+						std::format("Building Room {}: {}", ls_sel_bldg,
+							get_description(static_cast<byte>(ls_sel_bldg), m_labels_buildings)),
+						ls_sel_bldg, 0, c::WORLD_BUILDINGS_SCREEN_COUNT - 1,
+						"", false, true);
+
+					show_scene(m_game->m_building_scenes.at(ls_sel_bldg),
+						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
+						m_sel_screen == ls_sel_bldg,
+						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
+						m_sel_screen == ls_sel_bldg);
+
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem("Sprite Sets")) {
 
 					show_sprite_npc_bundle_screen();
 
@@ -303,7 +322,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				// GAME - JUMP-ON ANIMATION - BEGIN
 
-				if (ImGui::BeginTabItem("Jump-On Animation")) {
+				if (ImGui::BeginTabItem("Jump-On")) {
 					auto& l_jo{ m_game->m_jump_on_animation };
 
 					ImGui::Text("Define the four blocks cycled through when jumping on breakable floors");
@@ -538,7 +557,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		ui::imgui_slider_with_arrows("mtblprop", "",
 			l_mt_def.m_block_property, 0x00, 0x0f);
 
-		std::size_t l_tileset_no{ this->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
+		std::size_t l_tileset_no{ m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
 		std::size_t l_tileset_start{ m_tileset_start.at(l_tileset_no) };
 		std::size_t l_tileset_end{ l_tileset_start + m_tileset_size.at(l_tileset_no) };
 
@@ -631,4 +650,30 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::EndTabItem();
 	}
+}
+
+void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_regen_tiles,
+	bool p_regen_palette) {
+
+	if (fe::ui::imgui_slider_with_arrows("##wsp",
+		std::format("Palette: {}", get_description(static_cast<byte>(p_scene.m_palette), m_labels_palettes)),
+		p_scene.m_palette, 0,
+		m_game->m_palettes.size() - 1,
+		"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
+		if (p_regen_palette)
+			m_atlas_new_palette_no = p_scene.m_palette;
+	}
+
+	if (fe::ui::imgui_slider_with_arrows("###wst",
+		std::format("Tileset: {}", get_description(static_cast<byte>(p_scene.m_tileset), m_labels_tilesets)),
+		p_scene.m_tileset, 0,
+		m_game->m_tilesets.size() - 1))
+		if (p_regen_tiles)
+			m_atlas_new_tileset_no = p_scene.m_tileset;
+
+	fe::ui::imgui_slider_with_arrows("###wsm",
+		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music), m_labels_music)),
+		p_scene.m_music, 0, m_labels_music.size() - 1);
+
+
 }

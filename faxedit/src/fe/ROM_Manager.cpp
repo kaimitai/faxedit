@@ -457,12 +457,12 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_ow_transitions(const
 
 // all static data patching
 void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	encode_chunk_palette_no(p_config, p_game, p_rom);
 	encode_stage_data(p_config, p_game, p_rom);
 	encode_spawn_locations(p_config, p_game, p_rom);
 	encode_mattock_animations(p_config, p_game, p_rom);
 	encode_push_block(p_config, p_game, p_rom);
 	encode_jump_on_tiles(p_config, p_game, p_rom);
+	encode_scene_data(p_config, p_game, p_rom);
 }
 
 void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
@@ -491,14 +491,6 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 			l_local_addr += 16;
 		}
 
-	}
-}
-
-void fe::ROM_Manager::encode_chunk_palette_no(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	std::size_t l_def_palette_offset{ p_config.constant(c::ID_DEFAULT_PALETTE_OFFSET) };
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		p_rom.at(l_def_palette_offset + i) =
-			p_game.m_chunks.at(i).m_default_palette_no;
 	}
 }
 
@@ -683,6 +675,30 @@ void fe::ROM_Manager::encode_jump_on_tiles(const fe::Config& p_config,
 	std::size_t l_jump_on_anim_offset{ p_config.constant(c::ID_JUMP_ON_ANIM_OFFSET) };
 	for (std::size_t i{ 0 }; i < p_game.m_jump_on_animation.size() && i < 4; ++i)
 		p_rom.at(l_jump_on_anim_offset + i) = p_game.m_jump_on_animation[i];
+}
+
+void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Game& p_game,
+	std::vector<byte>& p_rom) const {
+
+	// patch building screen scenes
+	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_TO_MUSIC_OFFSET) };
+	const auto& bscenes{ p_game.m_building_scenes };
+
+	for (std::size_t i{ 0 }; i < bscenes.size(); ++i) {
+		p_rom.at(l_bscene_start + i) = static_cast<byte>(bscenes[i].m_music);
+		p_rom.at(l_bscene_start + c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_palette);
+		p_rom.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_tileset);
+	}
+
+	// patch scenes for each world
+	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
+	const auto& wscenes{ p_game.m_chunks };
+
+	for (std::size_t i{ 0 }; i < wscenes.size(); ++i) {
+		p_rom.at(l_wscene_start + i) = static_cast<byte>(wscenes[i].m_scene.m_tileset);
+		p_rom.at(l_wscene_start + 8 + i) = static_cast<byte>(wscenes[i].m_scene.m_palette);
+		p_rom.at(l_wscene_start + 24 + i) = static_cast<byte>(wscenes[i].m_scene.m_music);
+	}
 }
 
 // this function generates pointer tables and data offsets for several pieces of data at once,

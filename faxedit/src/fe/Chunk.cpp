@@ -5,11 +5,6 @@
 #include <map>
 #include <stdexcept>
 
-fe::Chunk::Chunk(void) :
-	m_default_palette_no{ 0 }
-{
-}
-
 void fe::Chunk::decompress_and_add_screen(const std::vector<byte>& p_rom,
 	std::size_t p_offset) {
 	m_screens.push_back(fe::Screen(p_rom, p_offset));
@@ -68,10 +63,6 @@ void fe::Chunk::set_screen_doors(const std::vector<byte>& p_rom,
 			)
 		);
 	}
-}
-
-void fe::Chunk::set_default_palette_no(byte p_palette_no) {
-	m_default_palette_no = p_palette_no;
 }
 
 void fe::Chunk::add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x,

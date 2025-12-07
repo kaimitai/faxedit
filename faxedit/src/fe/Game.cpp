@@ -15,7 +15,6 @@ fe::Game::Game(void) :
 fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data }
 {
-
 	// start of 8-byte map from world to bank no
 	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
 	// start of 8-byte map from world to ptr in that bank
@@ -81,9 +80,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 		p_config.constant(c::ID_GAME_START_POS_OFFSET),
 		p_config.constant(c::ID_GAME_START_HP_OFFSET));
 
-	// set default palette indexes for each chunk
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		m_chunks.at(i).set_default_palette_no(m_rom_data.at(p_config.constant(c::ID_DEFAULT_PALETTE_OFFSET) + i));
+	extract_scenes_if_empty(p_config);
 
 	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
 	for (std::size_t i{ 0 }; i < 31; ++i) {
@@ -794,4 +791,48 @@ fe::Sprite_set fe::Game::extract_sprite_set(const std::vector<byte>& p_rom_data,
 		l_result.m_command_byte = m_rom_data.at(l_offset + 2);
 
 	return l_result;
+}
+
+std::size_t fe::Game::get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
+		return m_building_scenes.at(p_screen_no).m_tileset;
+	else
+		return m_chunks.at(p_chunk_no).m_scene.m_tileset;
+}
+
+std::size_t fe::Game::get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS)
+		return m_building_scenes.at(p_screen_no).m_palette;
+	else
+		return m_chunks.at(p_chunk_no).m_scene.m_palette;
+}
+
+void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
+
+	// set building scenes
+	while (m_building_scenes.size() < c::WORLD_BUILDINGS_SCREEN_COUNT)
+		m_building_scenes.push_back(fe::Scene());
+
+	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_TO_MUSIC_OFFSET) };
+
+	for (std::size_t i{ 0 }; i < m_building_scenes.size(); ++i) {
+		if (m_building_scenes[i].m_palette == 256)
+			m_building_scenes[i].m_palette = m_rom_data.at(l_bscene_start + c::WORLD_BUILDINGS_SCREEN_COUNT + i);
+		if (m_building_scenes[i].m_tileset == 256)
+			m_building_scenes[i].m_tileset = m_rom_data.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i);
+		if (m_building_scenes[i].m_music == 256)
+			m_building_scenes[i].m_music = m_rom_data.at(l_bscene_start + i);
+	}
+
+	// set scene values for each world
+	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
+
+	for (std::size_t i{ 0 }; i < m_chunks.size(); ++i) {
+		if (m_chunks[i].m_scene.m_tileset == 256)
+			m_chunks[i].m_scene.m_tileset = m_rom_data.at(l_wscene_start + i);
+		if (m_chunks[i].m_scene.m_palette == 256)
+			m_chunks[i].m_scene.m_palette = m_rom_data.at(l_wscene_start + 8 + i);
+		if (m_chunks[i].m_scene.m_music == 256)
+			m_chunks[i].m_scene.m_music = m_rom_data.at(l_wscene_start + 24 + i);
+	}
 }

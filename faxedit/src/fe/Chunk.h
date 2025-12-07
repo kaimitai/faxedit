@@ -5,6 +5,7 @@
 #include <vector>
 #include "Screen.h"
 #include "Metatile.h"
+#include "Scene.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -16,8 +17,8 @@ namespace fe {
 
 		std::vector<fe::Metatile> m_metatiles;
 		std::vector<fe::Screen> m_screens;
-		byte m_default_palette_no;
 		std::vector<byte> m_mattock_animation;
+		fe::Scene m_scene;
 
 		std::vector<byte> extract_bytes(const std::vector<byte>& p_rom,
 			std::size_t p_offset, std::size_t p_length) const;
@@ -25,7 +26,7 @@ namespace fe {
 		std::vector<byte> get_metatile_quadrant_bytes(std::size_t p_x, std::size_t p_y) const;
 
 	public:
-		Chunk(void);
+		Chunk(void) = default;
 
 		void decompress_and_add_screen(const std::vector<byte>& p_rom,
 			std::size_t p_offset);
@@ -37,7 +38,6 @@ namespace fe {
 		void set_screen_doors(const std::vector<byte>& p_rom,
 			std::size_t p_door_offset, std::size_t p_door_param_offset,
 			byte p_param_offset);
-		void set_default_palette_no(byte p_palette_no);
 		void add_screen_sprite(std::size_t p_screen_no, byte p_id, byte p_x, byte p_y);
 		void set_screen_sprite_text(std::size_t p_screen_no, std::size_t p_sprite_no, byte p_text_id);
 

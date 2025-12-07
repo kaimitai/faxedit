@@ -154,6 +154,9 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game = xml::load_xml(get_xml_path());
 			m_game->m_rom_data = l_rom;
 
+			// extract values not present in previous xml versions
+			m_game->extract_scenes_if_empty(m_config);
+
 			// extract gfx
 			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
 			add_message("Loaded xml file " + get_xml_path(), 2);

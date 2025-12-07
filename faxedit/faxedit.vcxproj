@@ -213,6 +213,7 @@
     <ClInclude Include="src\fe\IntraChunkScroll.h" />
     <ClInclude Include="src\fe\Metatile.h" />
     <ClInclude Include="src\fe\ROM_Manager.h" />
+    <ClInclude Include="src\fe\Scene.h" />
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
     <ClInclude Include="src\fe\Sprite_definitions.h" />
