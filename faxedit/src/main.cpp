@@ -10,6 +10,10 @@
 #include "./windows/MainWindow.h"
 #include "./fe/fe_app_constants.h"
 #include "./windows/gfx.h"
+#include "./common/klib/SDL_WindowConfig.h"
+
+constexpr char SDL_WIN_FILENAME[]{ "eoe_os_window.cfg" };
+constexpr char IMGUI_WIN_FILENAME[]{ "eoe_windows.ini" };
 
 int main(int argc, char** argv) try {
 
@@ -22,10 +26,18 @@ int main(int argc, char** argv) try {
 	else {
 		SDL_Event e;
 
-		l_window = SDL_CreateWindow("Echoes of Eolis", 1280, 720, SDL_WINDOW_RESIZABLE);
+		klib::WindowConfig l_wconf;
+		l_wconf.loadConfig(SDL_WIN_FILENAME);
+
+		l_window = SDL_CreateWindow("Echoes of Eolis", l_wconf.w, l_wconf.h, SDL_WINDOW_RESIZABLE);
 		if (l_window == nullptr)
 			throw std::runtime_error(SDL_GetError());
 		else {
+			if (l_wconf.maximized)
+				SDL_MaximizeWindow(l_window);
+			else
+				SDL_SetWindowPosition(l_window, l_wconf.x, l_wconf.y);
+
 			l_rnd = SDL_CreateRenderer(l_window, nullptr);
 
 			if (l_rnd == nullptr)
@@ -45,8 +57,7 @@ int main(int argc, char** argv) try {
 			// Setup Platform/Renderer backends
 			ImGui_ImplSDL3_InitForSDLRenderer(l_window, l_rnd);
 			ImGui_ImplSDLRenderer3_Init(l_rnd);
-			std::string l_ini_filename{ "faxedit_windows.ini" };
-			ImGui::GetIO().IniFilename = l_ini_filename.c_str();
+			ImGui::GetIO().IniFilename = IMGUI_WIN_FILENAME;
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
 			fe::gfx::set_app_icon(l_window, fe::c::APP_ICON);
@@ -74,8 +85,10 @@ int main(int argc, char** argv) try {
 				if (SDL_PollEvent(&e) != 0) {
 					ImGui_ImplSDL3_ProcessEvent(&e);
 
-					if (e.type == SDL_EVENT_QUIT)
+					if (e.type == SDL_EVENT_QUIT) {
+						l_wconf.saveWindowConfig(l_window, SDL_WIN_FILENAME);
 						l_exit = true;
+					}
 				}
 
 				if (delta != 0) {

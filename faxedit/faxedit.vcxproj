@@ -154,6 +154,7 @@
     <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
+    <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Config.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
+    <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\common\stb_image.h" />

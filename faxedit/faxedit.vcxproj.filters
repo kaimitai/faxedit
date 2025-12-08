@@ -189,6 +189,9 @@
     <ClCompile Include="src\windows\GfxWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -328,6 +331,9 @@
     </ClInclude>
     <ClInclude Include="src\fe\PaletteMusicMap.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\SDL_WindowConfig.h">
+      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
