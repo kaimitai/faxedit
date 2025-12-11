@@ -2,8 +2,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "./../common/stb_image.h"
 #include "./../common/klib/Kfile.h"
+#include <array>
 #include <format>
 #include <stdexcept>
+#include <unordered_map>
+#include <unordered_set>
 
 constexpr int TILEMAP_SCALE{ 1 };
 
@@ -55,7 +58,7 @@ fe::gfx::~gfx(void) {
 		delete_texture(txt);
 	for (auto& txt : m_door_req_gfx)
 		delete_texture(txt);
-	for (auto& kv : m_tileset_mt_gfx)
+	for (auto& kv : m_tilemap_gfx)
 		delete_texture(kv.second);
 }
 
@@ -232,12 +235,14 @@ void fe::gfx::draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
 
 }
 
-SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h, bool p_transparent) const {
+SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h,
+	bool p_transparent, bool p_set_no_colorkey) const {
 	SDL_Surface* l_bmp = SDL_CreateSurface(p_w, p_h, SDL_PIXELFORMAT_ABGR8888);
 
 	if (p_transparent) {
 		SDL_FillSurfaceRect(l_bmp, nullptr, HOT_PINK_TRANSPARENT);
-		SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
+		if (!p_set_no_colorkey)
+			SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
 	}
 
 	return l_bmp;
@@ -503,8 +508,8 @@ SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
 
 SDL_Texture* fe::gfx::get_tileset_txt(std::size_t p_world_no,
 	std::size_t p_screen_no) const {
-	auto iter = m_tileset_mt_gfx.find(std::make_pair(p_world_no, p_screen_no));
-	if (iter == end(m_tileset_mt_gfx))
+	auto iter = m_tilemap_gfx.find(std::make_pair(p_world_no, p_screen_no));
+	if (iter == end(m_tilemap_gfx))
 		return nullptr;
 	else
 		return iter->second;
@@ -538,9 +543,9 @@ void fe::gfx::gen_tileset_txt(SDL_Renderer* p_rnd, std::size_t p_world_no,
 	auto srf{ gen_tileset_surface(p_palette, p_metatiles, p_tiles) };
 
 	auto key{ std::make_pair(p_world_no, p_screen_no) };
-	delete_texture(m_tileset_mt_gfx[key]);
+	delete_texture(m_tilemap_gfx[key]);
 
-	m_tileset_mt_gfx[key] = surface_to_texture(p_rnd, srf);
+	m_tilemap_gfx[key] = surface_to_texture(p_rnd, srf);
 }
 
 void fe::gfx::save_tileset_bmp(std::size_t p_world_no,
@@ -553,7 +558,7 @@ void fe::gfx::save_tileset_bmp(std::size_t p_world_no,
 
 	auto srf{ gen_tileset_surface(p_palette, p_metatiles, p_tiles) };
 
-	save_surface_as_bmp(srf, p_path,p_filename);
+	save_surface_as_bmp(srf, p_path, p_filename);
 }
 
 SDL_Surface* fe::gfx::gen_tileset_surface(const std::vector<std::vector<byte>>& p_palette,
@@ -592,7 +597,6 @@ SDL_Surface* fe::gfx::gen_tileset_surface(const std::vector<std::vector<byte>>& 
 	return srf;
 }
 
-
 int fe::gfx::score_region_vs_palette(SDL_Surface* srf, const std::vector<byte>& p_palette,
 	int x, int y, int w, int h) const {
 	int l_error{ 0 };
@@ -622,19 +626,22 @@ int fe::gfx::score_region_vs_palette(SDL_Surface* srf, const std::vector<byte>& 
 	return l_error;
 }
 
-std::size_t fe::gfx::best_subpalette_region_fit(SDL_Surface* srf,
+std::vector<std::size_t> fe::gfx::best_subpalette_region_fit(SDL_Surface* srf,
 	const std::vector<std::vector<byte>>& p_palette,
 	int x, int y, int w, int h) const {
-	std::size_t result{ 0 };
+	std::vector<std::size_t> result{ 0 };
 	int best_score{ -1 };
 
 	for (std::size_t i{ 0 }; i < 4; ++i) {
 		int l_score{ score_region_vs_palette(srf, p_palette.at(i),
 			x, y, w, h) };
 		if (best_score == -1 || l_score < best_score) {
-			result = i;
+			result.clear();
+			result.push_back(i);
 			best_score = l_score;
 		}
+		else if (l_score == best_score)
+			result.push_back(i);
 	}
 
 	return result;
@@ -652,11 +659,13 @@ SDL_Surface* fe::gfx::load_bmp(const std::string& p_path,
 	return srf;
 }
 
-fe::GfxResult fe::gfx::import_tileset_bmp(const std::vector<klib::NES_tile> p_tiles,
+fe::GfxResult fe::gfx::import_tileset_bmp(
+	const std::vector<klib::NES_tile> p_tiles,
 	std::set<std::size_t> p_read_only_idx,
 	const std::vector<std::vector<byte>>& p_palette,
 	const std::string& p_path,
-	const std::string& p_filename) const {
+	const std::string& p_filename) const
+{
 	SDL_Surface* srf{ load_bmp(p_path, p_filename) };
 
 	// enforce multiples of 16
@@ -665,53 +674,121 @@ fe::GfxResult fe::gfx::import_tileset_bmp(const std::vector<klib::NES_tile> p_ti
 		throw std::runtime_error("BMP dimensions must be multiples of 16");
 	}
 
+	struct Candidate {
+		std::size_t paletteIndex;
+		std::array<klib::NES_tile, 4> quadrants; // q0..q3
+	};
+
+	struct MetatileCandidates {
+		std::size_t id; // metatileNo
+		std::vector<Candidate> candidates;
+	};
+
 	fe::GfxResult result;
 
-	std::vector<std::size_t> mt_sub_palettes;
+	// 1) Gather palette candidates per metatile
+	std::vector<std::vector<std::size_t>> mt_sub_palette_candidates;
+	mt_sub_palette_candidates.reserve((srf->w / 16) * (srf->h / 16));
 
-	for (int j{ 0 }; j < srf->h; j += 16)
-		for (int i{ 0 }; i < srf->w; i += 16)
-			mt_sub_palettes.push_back(best_subpalette_region_fit(srf,
-				p_palette, i, j, 16, 16));
+	for (int j{ 0 }; j < srf->h; j += 16) {
+		for (int i{ 0 }; i < srf->w; i += 16) {
+			mt_sub_palette_candidates.push_back(
+				best_subpalette_region_fit(srf, p_palette, i, j, 16, 16));
+		}
+	}
 
-	// we know have the best sub-palette for each metatile
-	// let us convert all 8x8 gfx into chr-tiles and deduplicate
-	// while keeping track of which metatile uses it for which quadrant
-	std::map<klib::NES_tile, std::vector<std::pair<std::size_t, std::size_t>>> l_chrs;
+	// 2) Collect all candidates and build global popularity (quadrant-agnostic)
+	std::vector<MetatileCandidates> allMetatiles;
+	allMetatiles.reserve(mt_sub_palette_candidates.size());
+
+	// Use std::map to avoid hashing NES_tile
+	std::map<klib::NES_tile, int> globalPopularity;
 
 	int metatileNo = 0;
 	for (int my = 0; my < srf->h; my += 16) {
 		for (int mx = 0; mx < srf->w; mx += 16) {
+			MetatileCandidates mt{ std::size_t(metatileNo), {} };
 
-			const std::vector<Uint8>& subPalette = p_palette[mt_sub_palettes[metatileNo]];
+			const auto& candidates = mt_sub_palette_candidates[metatileNo];
+			if (candidates.empty()) {
+				SDL_DestroySurface(srf);
+				throw std::runtime_error("No valid sub-palette candidates for a metatile.");
+			}
 
-			// Quadrant 0: top-left
-			klib::NES_tile q0{ surface_region_to_nes_tile(srf, subPalette, mx, my) };
+			mt.candidates.reserve(candidates.size());
+			for (std::size_t candIdx : candidates) {
+				const std::vector<byte>& subPalette = p_palette[candIdx]; // FIX: byte, not Uint8
 
-			// Quadrant 1: top-right
-			klib::NES_tile q1 = surface_region_to_nes_tile(srf, subPalette, mx + 8, my);
+				Candidate c{
+					candIdx,
+					{
+						surface_region_to_nes_tile(srf, subPalette, mx,     my),
+						surface_region_to_nes_tile(srf, subPalette, mx + 8, my),
+						surface_region_to_nes_tile(srf, subPalette, mx,     my + 8),
+						surface_region_to_nes_tile(srf, subPalette, mx + 8, my + 8)
+					}
+				};
 
-			// Quadrant 2: bottom-left
-			klib::NES_tile q2 = surface_region_to_nes_tile(srf, subPalette, mx, my + 8);
+				// Quadrant-agnostic popularity: count identical tiles regardless of position
+				for (const auto& q : c.quadrants) {
+					++globalPopularity[q];
+				}
 
-			// Quadrant 3: bottom-right
-			klib::NES_tile q3{ surface_region_to_nes_tile(srf, subPalette, mx + 8, my + 8) };
+				mt.candidates.push_back(std::move(c));
+			}
 
-			// Now you can insert into your map<NES_tile, vector<pair<int,int>>>
-			l_chrs[q0].push_back({ metatileNo, 0 });
-			l_chrs[q1].push_back({ metatileNo, 1 });
-			l_chrs[q2].push_back({ metatileNo, 2 });
-			l_chrs[q3].push_back({ metatileNo, 3 });
-
+			allMetatiles.push_back(std::move(mt));
 			++metatileNo;
 		}
 	}
 
 	SDL_DestroySurface(srf);
 
-	// next we loop over all our generated tiles, and check what is already in the
-	// tileset. if it is the same tile as at a read-only index we use that index
-	// otherwise we use the next free slot AND patch the output
+	// After filling globalPopularity
+	for (const auto& idx : p_read_only_idx) {
+		if (idx < p_tiles.size()) {
+			const klib::NES_tile& reservedTile = p_tiles[idx];
+			auto it = globalPopularity.find(reservedTile);
+			if (it != globalPopularity.end()) {
+				it->second += 1; // reserved bias = 1
+			}
+		}
+	}
+
+	// 3) Global selection pass (no greedy commits)
+	std::vector<std::size_t> mt_sub_palettes;
+	mt_sub_palettes.reserve(allMetatiles.size());
+
+	std::map<klib::NES_tile, std::vector<std::pair<std::size_t, std::size_t>>> l_chrs; // keep only one definition
+
+	for (const auto& mt : allMetatiles) {
+		int bestScore = std::numeric_limits<int>::min();
+		const Candidate* bestCandPtr = nullptr;
+
+		for (const auto& cand : mt.candidates) {
+			int score = 0;
+			for (const auto& q : cand.quadrants) {
+				auto it = globalPopularity.find(q);
+				if (it != globalPopularity.end()) score += it->second;
+			}
+
+			// Safe tie-break: prefer first if bestCandPtr is null, or greater score
+			if (bestCandPtr == nullptr || score > bestScore) {
+				bestScore = score;
+				bestCandPtr = &cand;
+			}
+		}
+
+		// Commit chosen candidate’s quadrants into l_chrs
+		l_chrs[bestCandPtr->quadrants[0]].push_back({ mt.id, 0 });
+		l_chrs[bestCandPtr->quadrants[1]].push_back({ mt.id, 1 });
+		l_chrs[bestCandPtr->quadrants[2]].push_back({ mt.id, 2 });
+		l_chrs[bestCandPtr->quadrants[3]].push_back({ mt.id, 3 });
+
+		mt_sub_palettes.push_back(bestCandPtr->paletteIndex);
+	}
+
+	// 4) Assign CHR indices with reserved preference and 256 cap
 	std::vector<klib::NES_tile> l_result_chr{ p_tiles };
 
 	std::map<klib::NES_tile, std::size_t> l_indexmap; // tile -> assigned CHR index
@@ -719,13 +796,16 @@ fe::GfxResult fe::gfx::import_tileset_bmp(const std::vector<klib::NES_tile> p_ti
 	while (p_read_only_idx.find(l_nextfree) != end(p_read_only_idx))
 		++l_nextfree;
 
+	bool l_ok{ true };
+
 	for (const auto& kv : l_chrs) {
+		const auto& tile = kv.first;
 		bool matched = false;
 
 		// 1. Check reserved indices
 		for (std::size_t idx : p_read_only_idx) {
-			if (kv.first == p_tiles[idx]) {
-				l_indexmap[kv.first] = idx; // reuse reserved slot
+			if (idx < p_tiles.size() && tile == p_tiles[idx]) {
+				l_indexmap[tile] = idx; // reuse reserved slot
 				matched = true;
 				break;
 			}
@@ -737,15 +817,22 @@ fe::GfxResult fe::gfx::import_tileset_bmp(const std::vector<klib::NES_tile> p_ti
 			while (p_read_only_idx.find(l_nextfree) != end(p_read_only_idx))
 				++l_nextfree;
 
-			if (l_nextfree >= 256)
-				throw std::runtime_error("chr-tile overflow. Reduce unique tile count.");
+			if (l_nextfree >= 256) {
+				// throw std::runtime_error("chr-tile overflow. Reduce unique tile count.");
+				l_ok = false;
+			}
+			else {
 
-			l_indexmap[kv.first] = l_nextfree;
-			l_result_chr[l_nextfree] = kv.first; // patch CHR set at this index
+				l_indexmap[tile] = l_nextfree;
+				// p_tiles.size() is your base; ensure we can write nextfree safely
+				if (l_nextfree >= l_result_chr.size())
+					l_result_chr.resize(l_nextfree + 1);
+
+				l_result_chr[l_nextfree] = tile; // patch CHR set at this index
+			}
 			++l_nextfree;
 		}
 	}
-
 
 	result.m_usage = l_chrs;
 	result.m_metatile_sub_palette = mt_sub_palettes;
@@ -790,4 +877,466 @@ klib::NES_tile fe::gfx::surface_region_to_nes_tile(SDL_Surface* srf,
 	}
 
 	return result;
+}
+
+int fe::gfx::get_duplicate_count(const klib::NES_tile& p_q0, const klib::NES_tile& p_q1,
+	const klib::NES_tile& p_q2, const klib::NES_tile& p_q3,
+	const std::set<std::size_t>& p_reserved_idxs,
+	const std::map<klib::NES_tile, std::vector<std::pair<std::size_t, std::size_t>>>& p_generated,
+	const std::vector<klib::NES_tile>& p_tiles) const {
+
+	int result{ 0 };
+
+	if (p_generated.count(p_q0))
+		++result;
+	if (p_generated.count(p_q1))
+		++result;
+	if (p_generated.count(p_q2))
+		++result;
+	if (p_generated.count(p_q3))
+		++result;
+
+	for (std::size_t idx : p_reserved_idxs) {
+		if (p_tiles.at(idx) == p_q0)
+			++result;
+		if (p_tiles.at(idx) == p_q1)
+			++result;
+		if (p_tiles.at(idx) == p_q2)
+			++result;
+		if (p_tiles.at(idx) == p_q3)
+			++result;
+	}
+
+	return result;
+}
+
+
+// gfx import functions
+fe::ChrTilemap fe::gfx::import_tilemap_bmp(
+	std::vector<ChrGfxTile>& p_tiles,
+	const std::vector<std::vector<byte>>& p_palette,
+	ChrDedupMode p_dedupmode,
+	const std::string& p_path,
+	const std::string& p_filename) const {
+
+	SDL_Surface* srf{ load_bmp(p_path, p_filename) };
+
+	// enforce multiples of 16
+	if ((srf->w % 16) != 0 || (srf->h % 16) != 0) {
+		SDL_DestroySurface(srf);
+		throw std::runtime_error("BMP dimensions must be multiples of 16");
+	}
+
+	std::size_t mt_w{ static_cast<std::size_t>(srf->w / 16) };
+	std::size_t mt_h{ static_cast<std::size_t>(srf->h / 16) };
+
+	// the tilemap, containing concrete chr tiles
+	std::vector<std::vector<std::optional<ChrMetaTile>>> l_final_tilemap(
+		mt_h, std::vector<std::optional<ChrMetaTile>>(mt_w));
+
+	// the candidate tilemap, also containing concrete chr tiles
+	// but we don't know if we can use all of them before we execute
+	std::vector<std::vector<std::optional<MetaTileCandidate>>> l_tilemap(
+		mt_h, std::vector<std::optional<MetaTileCandidate>>(mt_w));
+
+	for (std::size_t j{ 0 }; j < mt_h; ++j)
+		for (std::size_t i{ 0 }; i < mt_w; ++i) {
+			if (is_optional_bmp_region(srf, i, j))
+				l_tilemap[j][i] = std::nullopt;
+			else {
+				std::vector<fe::MetaTileCandidate> l_cands;
+				for (std::size_t pal{ 0 }; pal < 4; ++pal)
+					l_cands.push_back(slice_and_quantize(
+						srf, i, j, p_palette, pal, p_dedupmode, p_tiles
+					));
+
+				l_tilemap[j][i] = collapse_candidates(l_cands);
+			}
+		}
+
+	// we now have the full tilemap with concrete chr tiles
+	// and pre-calculated rgb-errors vs the bmp
+	// we now emit chr tiles to our generated tilemap
+	std::map<klib::NES_tile, std::vector<std::size_t>> tileToIndices;
+
+	// fill out all read-only and unusable tiles
+	for (std::size_t i{ 0 }; i < p_tiles.size(); ++i)
+		if (!p_tiles[i].m_allowed || p_tiles[i].m_readonly)
+			tileToIndices[p_tiles[i].m_tile].push_back(i);
+
+	for (std::size_t j{ 0 }; j < mt_h; ++j)
+		for (std::size_t i{ 0 }; i < mt_w; ++i)
+			if (l_tilemap[j][i].has_value()) {
+				l_final_tilemap[j][i] = fe::ChrMetaTile();
+				l_final_tilemap[j][i]->m_palette = l_tilemap[j][i]->paletteIndex;
+
+				for (std::size_t t{ 0 }; t < 4; ++t) {
+					std::size_t idx{ allocate_or_reuse_chr(l_tilemap[j][i]->m_tiles[t],
+						p_tiles, tileToIndices,
+						p_palette[l_tilemap[j][i]->paletteIndex],
+						p_dedupmode) };
+
+					if (idx < 256)
+						l_final_tilemap[j][i]->m_idxs.push_back(idx);
+					else {
+						auto pxpos{ mt_to_pixels(i, j, t) };
+
+						l_final_tilemap[j][i]->m_idxs.push_back(
+							best_substitute_chr_index(srf,
+								pxpos.first, pxpos.second, p_palette.at(l_final_tilemap[j][i]->m_palette),
+								tileToIndices, p_tiles)
+						);
+					}
+				}
+			}
+			else
+				l_final_tilemap[j][i] = std::nullopt;
+
+	SDL_DestroySurface(srf);
+
+	// if we have leftover chr space, set it to the empty tile
+	std::vector<std::size_t> spareindices;
+
+	for (std::size_t i{ 0 }; i < 256; ++i) {
+		bool l_found{ false };
+		for (const auto& kv : tileToIndices)
+			for (std::size_t tidx : kv.second)
+				if (i == tidx)
+					l_found = true;
+
+		if (!l_found)
+			spareindices.push_back(i);
+	}
+
+	if (!spareindices.empty()) {
+		klib::NES_tile l_empty;
+		auto iter{ tileToIndices.find(l_empty) };
+
+		if (iter != end(tileToIndices)) {
+			for (std::size_t i : spareindices)
+				iter->second.push_back(i);
+		}
+		else {
+			tileToIndices.insert(std::make_pair(l_empty, spareindices));
+		}
+	}
+
+	// finally done ... return final tilemap and chr map to caller
+	fe::ChrTilemap result{ fe::ChrTilemap(l_final_tilemap,
+		chrtiletoindex_map_to_vector(tileToIndices),
+		p_palette) };
+
+	return result;
+}
+
+std::pair<int, int> fe::gfx::mt_to_pixels(std::size_t mt_x, std::size_t mt_y,
+	std::size_t quadrant) const {
+	int px{ 16 * static_cast<int>(mt_x) };
+	int py{ 16 * static_cast<int>(mt_y) };
+
+	if (quadrant == 1 || quadrant == 3)
+		px += 8;
+
+	if (quadrant == 2 || quadrant == 3)
+		py += 8;
+
+	return std::make_pair(px, py);
+}
+
+fe::MetaTileCandidate fe::gfx::slice_and_quantize(
+	SDL_Surface* p_srf,
+	std::size_t mt_x, std::size_t mt_y,
+	const std::vector<std::vector<byte>>& p_palette,
+	std::size_t p_sub_pal_idx,
+	fe::ChrDedupMode p_dedupmode,
+	const std::vector<fe::ChrGfxTile>& p_tiles) const {
+
+	fe::MetaTileCandidate result;
+	result.paletteIndex = p_sub_pal_idx;
+	result.rgbError = 0;
+
+	int px{ 16 * static_cast<int>(mt_x) };
+	int py{ 16 * static_cast<int>(mt_y) };
+
+	result.m_tiles.push_back(
+		surface_region_to_nes_tile(p_srf, p_palette[p_sub_pal_idx], px, py)
+	);
+	result.m_tiles.push_back(
+		surface_region_to_nes_tile(p_srf, p_palette[p_sub_pal_idx], px + 8, py)
+	);
+	result.m_tiles.push_back(
+		surface_region_to_nes_tile(p_srf, p_palette[p_sub_pal_idx], px, py + 8)
+	);
+	result.m_tiles.push_back(
+		surface_region_to_nes_tile(p_srf, p_palette[p_sub_pal_idx], px + 8, py + 8)
+	);
+
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		const auto& tile = result.m_tiles[i];
+		result.m_unique_tiles.insert(tile);
+
+		// compute per-tile error
+		int err = rgb_space_diff(tile,
+			p_palette[p_sub_pal_idx],
+			p_srf,
+			px + static_cast<int>(i % 2) * 8,
+			py + static_cast<int>(i / 2) * 8);
+
+		result.m_quad_errors.push_back(err);
+		result.rgbError += err;
+	}
+
+	for (const auto& tile : result.m_unique_tiles)
+		for (const auto& globaltile : p_tiles)
+			if (globaltile.m_allowed &&
+				chr_tile_equivalence(p_dedupmode,
+					globaltile.m_tile, tile,
+					p_palette[p_sub_pal_idx])) {
+				result.reuseCount++;
+				break;
+			}
+
+	return result;
+}
+
+int fe::gfx::rgb_space_diff(const klib::NES_tile& p_tile,
+	const std::vector<byte>& p_palette,
+	SDL_Surface* srf, int x, int y) const {
+	int result{ 0 };
+
+	for (int j{ 0 }; j < 8; ++j)
+		for (int i{ 0 }; i < 8; ++i) {
+
+			Uint8 r, g, b, a;
+			if (!SDL_ReadSurfacePixel(srf, x + i, y + j, &r, &g, &b, &a))
+				throw std::runtime_error("pixel out of bounds");
+
+			byte palIndex = p_palette.at(p_tile.get_color(i, j));
+			SDL_Color tile_pixel_col{ m_nes_palette->colors[palIndex] };
+
+			int rr{ static_cast<int>(r) - static_cast<int>(tile_pixel_col.r) };
+			int gg{ static_cast<int>(g) - static_cast<int>(tile_pixel_col.g) };
+			int bb{ static_cast<int>(b) - static_cast<int>(tile_pixel_col.b) };
+
+			result += rr * rr + gg * gg + bb * bb;
+		}
+
+	return result;
+}
+
+fe::MetaTileCandidate fe::gfx::collapse_candidates(
+	const std::vector<fe::MetaTileCandidate>& cands) const {
+	fe::MetaTileCandidate best;
+	bool first = true;
+
+	for (const auto& cand : cands) {
+		if (first ||
+			cand.rgbError < best.rgbError ||
+			(cand.rgbError == best.rgbError && cand.reuseCount > best.reuseCount) ||
+			(cand.rgbError == best.rgbError && cand.reuseCount == best.reuseCount &&
+				cand.paletteIndex < best.paletteIndex)) {
+			best = cand;
+			first = false;
+		}
+	}
+
+	return best;
+}
+
+std::size_t fe::gfx::allocate_or_reuse_chr(const klib::NES_tile& tile,
+	std::vector<ChrGfxTile>& p_tiles,
+	std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+	const std::vector<byte> p_palette,
+	fe::ChrDedupMode p_dedupmode) const {
+
+	// Deduplication: if tile already exists, reuse any allowed index
+	for (auto& [candidateTile, indices] : tileToIndices) {
+		if (chr_tile_equivalence(p_dedupmode, tile, candidateTile,
+			p_palette)) {
+			for (std::size_t idx : indices) {
+				if (p_tiles[idx].m_allowed) {
+					return idx;
+				}
+			}
+		}
+	}
+
+	// Pass 1: search p_tiles for a mutable exact match (allowed && !readonly && slot holds tile)
+	// We DON'T pre-seed mutable slots in tileToIndices, so we must scan p_tiles here.
+	for (std::size_t idx{ 0 }; idx < p_tiles.size(); ++idx) {
+		if (p_tiles[idx].m_allowed && !p_tiles[idx].m_readonly &&
+			chr_tile_equivalence(p_dedupmode,
+				p_tiles[idx].m_tile, tile,
+				p_palette)) {
+			p_tiles[idx].m_readonly = true;            // claim and lock
+			tileToIndices[tile].push_back(idx);        // record now that it's claimed
+			return idx;
+		}
+	}
+
+	// Allocation: find a writable slot (allowed && !readOnly)
+	for (std::size_t idx{ 0 }; idx < p_tiles.size(); ++idx) {
+		if (p_tiles[idx].m_allowed && !p_tiles[idx].m_readonly) {
+			p_tiles[idx].m_readonly = true;
+			tileToIndices[tile].push_back(idx);
+			return idx;
+		}
+	}
+
+	// No usable slot available
+	return 256;
+}
+
+std::size_t fe::gfx::best_substitute_chr_index(
+	SDL_Surface* srf,
+	int px, int py,
+	const std::vector<byte>& subPalette,
+	const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+	const std::vector<ChrGfxTile>& p_tiles) const {
+
+	std::size_t bestChrIdx = 0;
+	int bestErr = std::numeric_limits<int>::max();
+
+	// Iterate over committed tiles (authoritative content)
+	for (const auto& [candidateTile, indices] : tileToIndices) {
+		// Compute error IN CONTEXT for the candidate’s CHR content
+		int err = rgb_space_diff(candidateTile, subPalette, srf, px, py);
+		if (err >= bestErr) continue;
+
+		// Among its recorded indices, choose an allowed one to emit
+		// Prefer the smallest allowed index for determinism.
+		std::size_t chosenIdx = std::numeric_limits<std::size_t>::max();
+		for (std::size_t idx : indices) {
+			if (idx < p_tiles.size() && p_tiles[idx].m_allowed) {
+				chosenIdx = std::min(chosenIdx, idx);
+			}
+		}
+		if (chosenIdx == std::numeric_limits<std::size_t>::max()) {
+			// This map entry has no allowed indices (all disallowed) -> skip
+			continue;
+		}
+
+		// Better match found -> record
+		bestErr = err;
+		bestChrIdx = chosenIdx;
+	}
+
+	return bestChrIdx; // Guaranteed to be one of the committed indices
+
+}
+
+std::vector<klib::NES_tile> fe::gfx::chrtiletoindex_map_to_vector(
+	const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+	std::size_t chr_count
+) const {
+	std::vector<klib::NES_tile> result(chr_count, klib::NES_tile());
+
+	for (const auto& kv : tileToIndices)
+		for (std::size_t idx : kv.second)
+			if (idx >= chr_count)
+				throw std::runtime_error("invalid chr tile index");
+			else
+				result[idx] = kv.first;
+
+	return result;
+}
+
+bool fe::gfx::chr_tile_equivalence(fe::ChrDedupMode p_dedupmode,
+	const klib::NES_tile& p_tile_a,
+	const klib::NES_tile& p_tile_b,
+	const std::vector<byte>& p_palette) const {
+
+	if (p_dedupmode == fe::ChrDedupMode::PalIndex_Eq)
+		return p_tile_a == p_tile_b;
+	else {
+
+		for (std::size_t j{ 0 }; j < 8; ++j)
+			for (std::size_t i{ 0 }; i < 8; ++i) {
+				std::size_t inda{ p_palette[p_tile_a.get_color(i, j)] };
+				std::size_t indb{ p_palette[p_tile_b.get_color(i, j)] };
+
+				if (p_dedupmode == fe::ChrDedupMode::NESPalIndex_Eq) {
+					if (inda != indb)
+						return false;
+				}
+				else if (!rgb_equivalence(
+					m_nes_palette->colors[inda],
+					m_nes_palette->colors[indb])
+					)
+					return false;
+			}
+	}
+
+	return true;
+}
+
+bool fe::gfx::rgb_equivalence(const SDL_Color col_a, const SDL_Color col_b) const {
+	return (col_a.r == col_b.r) && (col_a.g == col_b.g) && (col_a.b == col_b.b);
+}
+
+bool fe::gfx::is_optional_bmp_region(SDL_Surface* srf,
+	std::size_t mt_x, std::size_t mt_y) const {
+	auto l_pxpos{ mt_to_pixels(mt_x, mt_y, 0) };
+	SDL_Color hotpink{ uint24_to_SDL_Color(static_cast<std::size_t>(HOT_PINK_TRANSPARENT)) };
+
+	for (int j{ 0 }; j < 16; ++j)
+		for (int i{ 0 }; i < 16; ++i) {
+			Uint8 r, g, b, a;
+			if (!SDL_ReadSurfacePixel(srf, l_pxpos.first + i,
+				l_pxpos.second + j, &r, &g, &b, &a))
+				throw std::runtime_error("pixel out of bounds");
+
+			if (r != hotpink.r ||
+				g != hotpink.g ||
+				b != hotpink.g)
+				return false;
+		}
+
+	return true;
+}
+
+// functions for bmp export
+SDL_Surface* fe::gfx::gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const {
+	const auto& tilemap{ p_tilemap.m_tilemap };
+	const auto& chrtiles{ p_tilemap.m_tiles };
+	const auto& pals{ p_tilemap.m_palette };
+
+	int width = static_cast<int>(tilemap.empty() ? 0 : 16 * tilemap[0].size());
+	int height = 16 * static_cast<int>(tilemap.size());
+
+	auto srf{ create_sdl_surface(width, height, true, true) };
+
+	for (std::size_t j{ 0 }; j < tilemap.size(); ++j)
+		for (std::size_t i{ 0 }; i < tilemap[j].size(); ++i) {
+			if (tilemap[j][i].has_value()) {
+
+				for (std::size_t q{ 0 }; q < 4; ++q) {
+					auto pxpos{ mt_to_pixels(i, j, q) };
+					draw_nes_tile_on_surface(srf,
+						pxpos.first, pxpos.second,
+						chrtiles.at(tilemap[j][i]->m_idxs[q]),
+						pals.at(tilemap[j][i]->m_palette));
+				}
+			}
+		}
+
+	return srf;
+}
+
+void fe::gfx::save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
+	const std::string& p_path,
+	const std::string& p_filename) const {
+
+	save_surface_as_bmp(gen_tilemap_surface(p_tilemap), p_path, p_filename);
+}
+
+void fe::gfx::gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,
+	std::size_t p_key, std::size_t p_sub_key) {
+
+	auto srf{ gen_tilemap_surface(p_tilemap) };
+
+	auto key{ std::make_pair(p_key, p_sub_key) };
+	delete_texture(m_tilemap_gfx[key]);
+
+	m_tilemap_gfx[key] = surface_to_texture(p_rnd, srf);
 }

@@ -23,6 +23,9 @@ static std::vector<std::vector<byte>> flat_pal_to_2d_pal(const std::vector<byte>
 }
 
 void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
+	static fe::ChrDedupMode ls_dedup_strat{
+	fe::ChrDedupMode::PalIndex_Eq
+	};
 
 	ui::imgui_screen("Graphics Editor",
 		c::WIN_ISCRIPT_X, c::WIN_ISCRIPT_Y,
@@ -74,20 +77,16 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	ImGui::Separator();
 
 	if (ui::imgui_button("Extract", 4))
-		m_gfx.gen_tileset_txt(p_rnd,
-			m_sel_gfx_ts_world,
-			l_pass_screen,
-			flat_pal_to_2d_pal(m_game->m_palettes.at(l_palette_no)),
-			m_game->m_chunks.at(m_sel_gfx_ts_world).m_metatiles,
-			m_game->m_tilesets.at(l_ts_no));
+		m_gfx.gen_tilemap_texture(p_rnd,
+			get_world_mt_tilemap(m_sel_gfx_ts_world, l_pass_screen),
+			m_sel_gfx_ts_world, l_pass_screen);
 
 	ImGui::SameLine();
 
 	if (ui::imgui_button("Save bmp", 2, "", txt == nullptr)) try {
-		m_gfx.save_tileset_bmp(m_sel_gfx_ts_world, l_pass_screen,
-			flat_pal_to_2d_pal(m_game->m_palettes.at(l_palette_no)),
-			m_game->m_chunks.at(m_sel_gfx_ts_world).m_metatiles,
-			m_game->m_tilesets.at(l_ts_no),
+
+		m_gfx.save_tilemap_bmp(get_world_mt_tilemap(m_sel_gfx_ts_world,
+			l_pass_screen),
 			m_path.string() + "/" + m_filename + "-bmp",
 			std::format("tileset-{}-{}.bmp", m_sel_gfx_ts_world, l_pass_screen)
 		);
@@ -123,50 +122,57 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		if (m_sel_gfx_ts_world == c::CHUNK_IDX_BUILDINGS)
 			gen_fixed_building_metatiles(l_ts_no, l_read_only_mts);
 
-		auto gfxres = m_gfx.import_tileset_bmp(m_game->m_tilesets.at(l_ts_no),
-			l_res_idx,
-			flat_pal_to_2d_pal(m_game->m_palettes.at(l_palette_no)),
-			m_path.string() + "/" + m_filename + "-bmp",
-			std::format("tileset-{}-{}.bmp", m_sel_gfx_ts_world, l_pass_screen));
+		std::vector<fe::ChrGfxTile> l_tiles;
+		const auto& chrtiles{ m_game->m_tilesets.at(l_ts_no) };
 
-		m_game->m_tilesets.at(l_ts_no) = gfxres.m_tileset;
+		for (std::size_t i{ 0 }; i < chrtiles.size(); ++i)
+			l_tiles.push_back(fe::ChrGfxTile(chrtiles[i],
+				l_res_idx.find(i) != end(l_res_idx),
+				(i < l_tileset_end && i >= l_tileset_start) ||
+				i < c::CHR_HUD_TILE_COUNT
+			));
+
+		auto gfxres{ m_gfx.import_tilemap_bmp(l_tiles,
+			flat_pal_to_2d_pal(m_game->m_palettes.at(m_game->get_default_palette_no(m_sel_gfx_ts_world,
+				l_pass_screen))),
+			ls_dedup_strat,
+			m_path.string() + "/" + m_filename + "-bmp",
+			std::format("tileset-{}-{}.bmp", m_sel_gfx_ts_world, l_pass_screen))
+		};
+
+		m_game->m_tilesets.at(l_ts_no) = gfxres.m_tiles;
 
 		auto& mts{ m_game->m_chunks.at(m_sel_gfx_ts_world).m_metatiles };
+		const auto& restm{ gfxres.m_tilemap };
 
-		// update metatile sub-palette indexes (for all quadrants)
-		for (std::size_t i{ 0 }; i < mts.size() && i < gfxres.m_metatile_sub_palette.size();
-			++i)
-			if (!l_read_only_mts.contains(i)) {
-				mts[i].m_attr_bl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-				mts[i].m_attr_br = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-				mts[i].m_attr_tl = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-				mts[i].m_attr_tr = static_cast<byte>(gfxres.m_metatile_sub_palette[i]);
-			}
+		auto l_use_mts{ gen_metatile_usage(m_sel_gfx_ts_world,
+			l_pass_screen, mts.size()) };
 
-		// update all metatile definitions
-		for (const auto& kv : gfxres.m_usage) {
-			byte l_chr_idx{ static_cast<byte>(gfxres.m_index_map.at(kv.first)) };
+		auto allowediter{ begin(l_use_mts) };
 
-			for (std::size_t i{ 0 }; i < kv.second.size(); ++i) {
+		for (std::size_t j{ 0 }; j < restm.size(); ++j)
+			for (std::size_t i{ 0 }; i < restm[j].size(); ++i) {
+				if (allowediter == end(l_use_mts))
+					break;
+				std::size_t mtno{ *allowediter };
 
-				std::size_t l_mt_idx{ kv.second[i].first };
-				if (l_mt_idx < mts.size() &&
-					!l_read_only_mts.contains(l_mt_idx)) {
-					std::size_t l_quadrant{ kv.second[i].second };
+				if (restm[j][i].has_value() && mtno < mts.size()) {
+					auto& umt{ mts.at(mtno) };
+					auto& umt_tm{ umt.m_tilemap };
+					const auto& idxs{ restm[j][i]->m_idxs };
+					umt.m_attr_tl = static_cast<byte>(restm[j][i]->m_palette);
+					umt.m_attr_tr = static_cast<byte>(restm[j][i]->m_palette);
+					umt.m_attr_bl = static_cast<byte>(restm[j][i]->m_palette);
+					umt.m_attr_br = static_cast<byte>(restm[j][i]->m_palette);
 
-					// update the quadrants
-					if (l_quadrant == 0)
-						mts[l_mt_idx].m_tilemap.at(0).at(0) = l_chr_idx;
-					else if (l_quadrant == 1)
-						mts[l_mt_idx].m_tilemap.at(0).at(1) = l_chr_idx;
-					else if (l_quadrant == 2)
-						mts[l_mt_idx].m_tilemap.at(1).at(0) = l_chr_idx;
-					else if (l_quadrant == 3)
-						mts[l_mt_idx].m_tilemap.at(1).at(1) = l_chr_idx;
+					umt_tm.at(0).at(0) = static_cast<byte>(idxs.at(0));
+					umt_tm.at(0).at(1) = static_cast<byte>(idxs.at(1));
+					umt_tm.at(1).at(0) = static_cast<byte>(idxs.at(2));
+					umt_tm.at(1).at(1) = static_cast<byte>(idxs.at(3));
 
+					++allowediter;
 				}
 			}
-		}
 
 		if (l_ts_no == m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen))
 			m_atlas_force_update = true;
@@ -177,6 +183,31 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);
 	}
+
+	ImGui::SeparatorText("chr-tile deduplication strategy");
+
+	if (ImGui::RadioButton("Sub-Palette",
+		ls_dedup_strat == ChrDedupMode::PalIndex_Eq))
+		ls_dedup_strat = ChrDedupMode::PalIndex_Eq;
+
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Compare tiles strictly by palette indices (strict)");
+
+	ImGui::SameLine();
+	if (ImGui::RadioButton("NES-Palette",
+		ls_dedup_strat == ChrDedupMode::NESPalIndex_Eq))
+		ls_dedup_strat = ChrDedupMode::NESPalIndex_Eq;
+
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Compare tiles by the NES color the palette indices resolve to");
+
+	ImGui::SameLine();
+	if (ImGui::RadioButton("RGB",
+		ls_dedup_strat == ChrDedupMode::rgb_Eq))
+		ls_dedup_strat = ChrDedupMode::rgb_Eq;
+
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Compare tiles by the rgb-value they resolve to (loose)");
 
 	ImGui::End();
 }
@@ -216,7 +247,9 @@ void fe::MainWindow::gen_read_only_chr_idx_building(std::size_t p_tileset_no,
 		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
 			continue;
 
-		gen_building_metatile_usage(i, l_used_mts);
+		// we have a buildings screen with the tileset we want to protect
+		l_used_mts = gen_metatile_usage(c::CHUNK_IDX_BUILDINGS, i, 0);
+		break;
 	}
 
 	const auto& building_mts{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_metatiles };
@@ -228,19 +261,90 @@ void fe::MainWindow::gen_read_only_chr_idx_building(std::size_t p_tileset_no,
 					p_idxs.insert(static_cast<std::size_t>(b));
 }
 
-void fe::MainWindow::gen_building_metatile_usage(
-	std::size_t p_screen_no, std::set<std::size_t>& p_idxs) const {
+std::set<std::size_t> fe::MainWindow::gen_metatile_usage(std::size_t p_world_no,
+	std::size_t p_screen_no,
+	std::size_t p_total_metatile_count) const {
+	std::set<std::size_t> result;
 
-	const auto& scr{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.at(p_screen_no) };
-	for (std::size_t j{ 0 }; j < 13; ++j)
-		for (std::size_t i{ 0 }; i < 16; ++i)
-			p_idxs.insert(scr.get_mt_at_pos(i, j));
+	if (p_world_no == c::CHUNK_IDX_BUILDINGS) {
+		std::size_t l_tileset_no{ m_game->get_default_tileset_no(p_world_no,
+			p_screen_no) };
+
+		for (std::size_t s{ 0 }; s < c::WORLD_BUILDINGS_SCREEN_COUNT; ++s)
+			if (m_game->get_default_tileset_no(p_world_no, s) == l_tileset_no) {
+				const auto& scr{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.at(s) };
+				for (std::size_t j{ 0 }; j < 13; ++j)
+					for (std::size_t i{ 0 }; i < 16; ++i)
+						result.insert(scr.get_mt_at_pos(i, j));
+			}
+	}
+	else {
+		for (std::size_t i{ 0 }; i < p_total_metatile_count; ++i)
+			result.insert(i);
+	}
+
+	return result;
 }
 
 void fe::MainWindow::gen_fixed_building_metatiles(std::size_t p_tileset_no,
 	std::set<std::size_t>& p_idxs) const {
 
+	std::set<std::size_t> result;
+
 	for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i)
-		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
-			gen_building_metatile_usage(i, p_idxs);
+		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no) {
+			auto l_fixed_idxs = gen_metatile_usage(c::CHUNK_IDX_BUILDINGS, i, 0);
+			result.insert(begin(l_fixed_idxs), end(l_fixed_idxs));
+		}
+
+	result = p_idxs;
+}
+
+fe::ChrTilemap fe::MainWindow::get_world_mt_tilemap(std::size_t p_world_no,
+	std::size_t p_screen_no) const {
+	fe::ChrTilemap result;
+	std::size_t l_tileset_no{ m_game->get_default_tileset_no(
+		p_world_no, p_screen_no) };
+
+	const auto& mts{ m_game->m_chunks.at(p_world_no).m_metatiles };
+
+	std::set<std::size_t> use_mt_idx{ gen_metatile_usage(p_world_no,
+		p_screen_no, mts.size()) };
+
+	// set palette
+	result.m_palette = flat_pal_to_2d_pal(m_game->m_palettes.at(m_game->get_default_palette_no(p_world_no, p_screen_no)));
+
+	// generate tilemap
+	std::vector<std::optional<fe::ChrMetaTile>> resrow;
+	for (std::size_t i{ 0 }; i < mts.size(); ++i) {
+		if (!use_mt_idx.contains(i))
+			continue;
+
+		fe::ChrMetaTile tile;
+		tile.m_palette = mts[i].get_palette_attribute(0, 0);
+
+		for (const auto& col : mts[i].m_tilemap)
+			for (byte b : col)
+				tile.m_idxs.push_back(static_cast<std::size_t>(b));
+
+		resrow.push_back(tile);
+
+		if (resrow.size() % 16 == 0) {
+			result.m_tilemap.push_back(resrow);
+			resrow.clear();
+		}
+	}
+
+	if (!resrow.empty()) {
+		while (resrow.size() % 16 != 0)
+			resrow.push_back(std::nullopt);
+		result.m_tilemap.push_back(resrow);
+	}
+
+	// get chr tiles with the correct metadata
+	result.m_tiles = m_game->m_tilesets.at(
+		m_game->get_default_tileset_no(p_world_no, p_screen_no)
+	);
+
+	return result;
 }

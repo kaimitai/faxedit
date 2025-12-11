@@ -284,10 +284,12 @@ void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
 
 // can be regenerated independently of the atlas
 void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd) {
-	for (std::size_t i{ 0 }; i < m_game->m_chunks.at(m_sel_chunk).m_metatiles.size(); ++i)
+	const auto& mts{ m_game->m_chunks.at(m_sel_chunk).m_metatiles };
+
+	for (std::size_t i{ 0 }; i < mts.size(); ++i)
 		m_gfx.generate_mt_texture(p_rnd,
 			m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(i).m_tilemap,
-			i, m_sel_tilemap_sub_palette);
+			i, mts[i].m_attr_tl);
 }
 
 std::string fe::MainWindow::get_description(byte p_index,

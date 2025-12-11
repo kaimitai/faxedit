@@ -3,6 +3,7 @@
 
 #include <./SDL3/SDL.h>
 #include <map>
+#include <optional>
 #include <utility>
 #include <set>
 #include <vector>
@@ -29,6 +30,63 @@ namespace fe {
 		std::vector<std::size_t> m_metatile_sub_palette;
 	};
 
+	struct ChrGfxTile {
+		klib::NES_tile m_tile;
+		bool m_readonly, m_allowed;
+
+		ChrGfxTile(const klib::NES_tile& p_tile,
+			bool p_readonly, bool p_allowed) :
+			m_tile{ p_tile },
+			m_readonly{ p_readonly }, m_allowed{ p_allowed }
+		{
+		}
+
+		ChrGfxTile(void) :
+			m_readonly{ false },
+			m_allowed{ false }
+		{
+		}
+	};
+
+	struct MetaTileCandidate {
+		std::vector<klib::NES_tile> m_tiles;
+		std::set<klib::NES_tile> m_unique_tiles;
+		std::size_t paletteIndex;
+
+		std::vector<int> m_quad_errors;
+		int reuseCount; // how many quadrants already exist
+		int rgbError; // visual diff score
+
+		MetaTileCandidate(void) :
+			paletteIndex{ 0 },
+			reuseCount{ 0 },
+			rgbError{ 0 }
+		{
+		}
+	};
+
+	struct ChrMetaTile {
+		std::vector<std::size_t> m_idxs;
+		std::size_t m_palette;
+
+		ChrMetaTile(void) :
+			m_palette{ 0 }
+		{
+		}
+	};
+
+	struct ChrTilemap {
+		std::vector<std::vector<std::optional<ChrMetaTile>>> m_tilemap;
+		std::vector<klib::NES_tile> m_tiles;
+		std::vector<std::vector<byte>> m_palette;
+	};
+
+	enum ChrDedupMode {
+		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
+		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically
+		rgb_Eq           // visual equivalence: tiles equal if resolved RGB values match
+	};
+
 	class gfx {
 
 		// background tile atlas, tiles will be pulled from here when rendering the background gfx of a screen
@@ -42,7 +100,8 @@ namespace fe {
 		std::vector<SDL_Texture*> m_metatile_gfx, m_door_req_gfx;
 		std::map<std::size_t, std::vector<SDL_Texture*>> m_sprite_gfx;
 		// map from (world, screen) to SDL_Texture of all its world metatiles as texture
-		std::map<std::pair<std::size_t, std::size_t>, SDL_Texture*> m_tileset_mt_gfx;
+		// use virtual keys for other tilemaps, like the intro, outro and title screens
+		std::map<std::pair<std::size_t, std::size_t>, SDL_Texture*> m_tilemap_gfx;
 
 		SDL_Palette* m_nes_palette;
 
@@ -50,7 +109,8 @@ namespace fe {
 
 		// surface operations
 		SDL_Surface* create_sdl_surface(int p_w, int p_h,
-			bool p_transparent = false) const;
+			bool p_transparent = false,
+			bool p_set_no_colorkey = false) const;
 		void put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index,
 			bool p_transparent = false) const;
 		SDL_Texture* surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf,
@@ -127,7 +187,7 @@ namespace fe {
 
 		int score_region_vs_palette(SDL_Surface* srf, const std::vector<byte>& p_palette,
 			int x, int y, int w, int h) const;
-		std::size_t best_subpalette_region_fit(SDL_Surface* srf, const std::vector<std::vector<byte>>& p_palette,
+		std::vector<std::size_t> best_subpalette_region_fit(SDL_Surface* srf, const std::vector<std::vector<byte>>& p_palette,
 			int x, int y, int w, int h) const;
 		fe::GfxResult import_tileset_bmp(const std::vector<klib::NES_tile> p_tiles,
 			std::set<std::size_t> p_read_only_idx,
@@ -137,6 +197,74 @@ namespace fe {
 		klib::NES_tile surface_region_to_nes_tile(SDL_Surface* srf,
 			const std::vector<byte>& p_palette,
 			int x, int y) const;
+		int get_duplicate_count(const klib::NES_tile& p_q0, const klib::NES_tile& p_q1,
+			const klib::NES_tile& p_q2, const klib::NES_tile& p_q3,
+			const std::set<std::size_t>& p_reserved_idxs,
+			const std::map<klib::NES_tile, std::vector<std::pair<std::size_t, std::size_t>>>& p_generated,
+			const std::vector<klib::NES_tile>& p_tiles) const;
+
+		// functions for bmp import
+		ChrTilemap import_tilemap_bmp(std::vector<ChrGfxTile>& p_tiles,
+			const std::vector<std::vector<byte>>& p_palette,
+			ChrDedupMode p_dedupmode,
+			const std::string& p_path,
+			const std::string& p_filename) const;
+
+		MetaTileCandidate slice_and_quantize(
+			SDL_Surface* p_srf,
+			std::size_t mt_x, std::size_t mt_y,
+			const std::vector<std::vector<byte>>& p_palette,
+			std::size_t p_sub_pal_idx,
+			fe::ChrDedupMode p_dedupmode,
+			const std::vector<fe::ChrGfxTile>& p_tiles
+		) const;
+
+		int rgb_space_diff(const klib::NES_tile& p_tile,
+			const std::vector<byte>& p_palette,
+			SDL_Surface* srf, int x, int y) const;
+
+		fe::MetaTileCandidate collapse_candidates(
+			const std::vector<fe::MetaTileCandidate>& cands) const;
+
+		std::size_t allocate_or_reuse_chr(const klib::NES_tile& tile,
+			std::vector<ChrGfxTile>& p_tiles,
+			std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+			const std::vector<byte> p_palette,
+			fe::ChrDedupMode p_dedupmode) const;
+
+		std::size_t best_substitute_chr_index(
+			SDL_Surface* srf,
+			int px, int py,
+			const std::vector<byte>& subPalette,
+			const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+			const std::vector<ChrGfxTile>& p_tiles) const;
+
+		std::pair<int, int> mt_to_pixels(std::size_t mt_x,
+			std::size_t mt_y, std::size_t quadrant) const;
+
+		std::vector<klib::NES_tile> chrtiletoindex_map_to_vector(
+			const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
+			std::size_t chr_count = 256
+		) const;
+
+		bool chr_tile_equivalence(fe::ChrDedupMode p_dedupmode,
+			const klib::NES_tile& p_tile_a,
+			const klib::NES_tile& p_tile_b,
+			const std::vector<byte>& p_palette) const;
+
+		bool rgb_equivalence(const SDL_Color a, const SDL_Color b) const;
+
+		bool is_optional_bmp_region(SDL_Surface* srf,
+			std::size_t mt_x, std::size_t mt_y) const;
+
+		// functions for bmp export
+		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;
+		void gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,
+			std::size_t p_key, std::size_t p_sub_key);
+
+		void save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
+			const std::string& p_path,
+			const std::string& p_filename) const;
 	};
 
 }

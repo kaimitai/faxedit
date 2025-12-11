@@ -197,10 +197,16 @@ namespace fe {
 		void gen_read_only_chr_idx_building(std::size_t p_tileset_no,
 			std::size_t p_world_no, std::size_t p_screen_no,
 			std::set<std::size_t>& p_idxs) const;
-		void gen_building_metatile_usage(std::size_t p_screen_no,
-			std::set<std::size_t>& p_idxs) const;
+		std::set<std::size_t> gen_metatile_usage(std::size_t p_world_no,
+			std::size_t p_screen_no,
+			std::size_t p_total_metatile_count) const;
 		void gen_fixed_building_metatiles(std::size_t p_tileset_no,
 			std::set<std::size_t>& p_idxs) const;
+
+		// helper functions for the bmp import - new
+		fe::ChrTilemap get_world_mt_tilemap(
+			std::size_t p_world_no,
+			std::size_t p_screen_no = 0) const;
 
 	public:
 
