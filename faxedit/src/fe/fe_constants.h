@@ -61,6 +61,49 @@ namespace fe {
 		constexpr char ID_PTM_TILE_NO_OFFSET[]{ "ptm_tile_no_offset" };
 		constexpr char ID_PTM_COVER_POS_OFFSET[]{ "ptm_cover_pos_offset" };
 
+		// gfx definition constants
+		constexpr char ID_TITLE_CHR_OFFSET[]{ "title_screen_chr_offset" };
+		constexpr char ID_TITLE_CHR_PPU_INDEX[]{ "title_screen_chr_ppu_index" };
+		constexpr char ID_TITLE_CHR_PPU_COUNT[]{ "title_screen_chr_ppu_count" };
+		constexpr char ID_TITLE_TILEMAP_OFFSET[]{ "title_screen_tilemap_offset" };
+		constexpr char ID_TITLE_ATTRIBUTE_OFFSET[]{ "title_screen_attribute_offset" };
+		constexpr char ID_TITLE_PALETTE_OFFSET[]{ "title_screen_palette_offset" };
+		constexpr char ID_TITLE_TILEMAP_MT_X[]{ "title_screen_mt_x" };
+		constexpr char ID_TITLE_TILEMAP_MT_Y[]{ "title_screen_mt_y" };
+		constexpr char ID_TITLE_TILEMAP_MT_W[]{ "title_screen_mt_w" };
+		constexpr char ID_TITLE_TILEMAP_MT_H[]{ "title_screen_mt_h" };
+
+		constexpr char ID_INTRO_ANIM_CHR_OFFSET[]{ "intro_anim_chr_offset" };
+		constexpr char ID_INTRO_ANIM_CHR_PPU_INDEX[]{ "intro_anim_chr_ppu_index" };
+		constexpr char ID_INTRO_ANIM_CHR_PPU_COUNT[]{ "intro_anim_chr_ppu_count" };
+		constexpr char ID_INTRO_ANIM_TILEMAP_OFFSET[]{ "intro_anim_tilemap_offset" };
+		constexpr char ID_INTRO_ANIM_ATTRIBUTE_OFFSET[]{ "intro_anim_attribute_offset" };
+		constexpr char ID_INTRO_ANIM_PALETTE_OFFSET[]{ "intro_anim_palette_offset" };
+		constexpr char ID_INTRO_ANIM_TILEMAP_MT_X[]{ "intro_anim_mt_x" };
+		constexpr char ID_INTRO_ANIM_TILEMAP_MT_Y[]{ "intro_anim_mt_y" };
+		constexpr char ID_INTRO_ANIM_TILEMAP_MT_W[]{ "intro_anim_mt_w" };
+		constexpr char ID_INTRO_ANIM_TILEMAP_MT_H[]{ "intro_anim_mt_h" };
+
+		constexpr char ID_OUTRO_ANIM_CHR_OFFSET[]{ "outro_anim_chr_offset" };
+		constexpr char ID_OUTRO_ANIM_CHR_PPU_INDEX[]{ "outro_anim_chr_ppu_index" };
+		constexpr char ID_OUTRO_ANIM_CHR_PPU_COUNT[]{ "outro_anim_chr_ppu_count" };
+		constexpr char ID_OUTRO_ANIM_TILEMAP_OFFSET[]{ "outro_anim_tilemap_offset" };
+		constexpr char ID_OUTRO_ANIM_ATTRIBUTE_OFFSET[]{ "outro_anim_attribute_offset" };
+		constexpr char ID_OUTRO_ANIM_PALETTE_OFFSET[]{ "outro_anim_palette_offset" };
+		constexpr char ID_OUTRO_ANIM_TILEMAP_MT_X[]{ "outro_anim_mt_x" };
+		constexpr char ID_OUTRO_ANIM_TILEMAP_MT_Y[]{ "outro_anim_mt_y" };
+		constexpr char ID_OUTRO_ANIM_TILEMAP_MT_W[]{ "outro_anim_mt_w" };
+		constexpr char ID_OUTRO_ANIM_TILEMAP_MT_H[]{ "outro_anim_mt_h" };
+
+		constexpr char ID_ITEM_VSCREEN_CHR_OFFSET[]{ "item_vscreen_chr_offset" };
+		constexpr char ID_ITEM_VSCREEN_CHR_PPU_INDEX[]{ "item_vscreen_chr_ppu_index" };
+		constexpr char ID_ITEM_VSCREEN_CHR_PPU_COUNT[]{ "item_vscreen_chr_ppu_count" };
+		constexpr char ID_ITEM_VSCREEN_TILEMAP_OFFSET[]{ "item_vscreen_tilemap_offset" };
+		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_X[]{ "item_vscreen_mt_x" };
+		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_Y[]{ "item_vscreen_mt_y" };
+		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_W[]{ "item_vscreen_mt_w" };
+		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_H[]{ "item_vscreen_mt_h" };
+
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
 		constexpr char ID_SPRITE_LABELS[]{ "sprite_labels" };

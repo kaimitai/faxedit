@@ -10,6 +10,7 @@
 #include "StageManager.h"
 #include "Scene.h"
 #include "PaletteMusicMap.h"
+#include "GameGfxTilemap.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -49,6 +50,9 @@ namespace fe {
 		fe::Push_block_parameters m_push_block;
 		std::vector<byte> m_jump_on_animation;
 
+		// gfx objects which can be loaded and patched
+		std::vector<fe::GameGfxTilemap> m_game_gfx;
+
 		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);
 
@@ -80,6 +84,9 @@ namespace fe {
 
 		void extract_scenes_if_empty(const fe::Config& p_config);
 		void extract_palette_to_music(const fe::Config& p_config);
+
+		// gfx functions
+		void initialize_game_gfx_metadata(const fe::Config& p_config);
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;

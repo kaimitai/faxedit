@@ -243,11 +243,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						ImGui::SameLine();
 				}
 
-				ImGui::NewLine();
-				ImGui::SeparatorText("Sub-palette for rendering metatiles");
-				if (ui::imgui_slider_with_arrows("###mtsp", "", m_sel_tilemap_sub_palette, 0, 3))
-					generate_metatile_textures(p_rnd);
-
 				ImGui::EndTabItem();
 			}
 			// TAB TILEMAP - END

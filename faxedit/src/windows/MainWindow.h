@@ -20,7 +20,7 @@ namespace fe {
 
 	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
-	enum GfxEditMode { WorldChr, Palettes };
+	enum GfxEditMode { WorldChr, BgGraphics, Palettes };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -202,11 +202,12 @@ namespace fe {
 			std::size_t p_total_metatile_count) const;
 		void gen_fixed_building_metatiles(std::size_t p_tileset_no,
 			std::set<std::size_t>& p_idxs) const;
-
-		// helper functions for the bmp import - new
 		fe::ChrTilemap get_world_mt_tilemap(
 			std::size_t p_world_no,
 			std::size_t p_screen_no = 0) const;
+		std::string get_bmp_path(void) const;
+		std::string get_bmp_filename(std::size_t p_gfx_key) const;
+		std::string get_bmp_filepath(std::size_t p_gfx_key) const;
 
 	public:
 

@@ -160,6 +160,7 @@
     <ClCompile Include="src\fe\Config.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
+    <ClCompile Include="src\fe\GameGfxTilemap.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
     <ClCompile Include="src\fe\IntraChunkScroll.cpp" />
     <ClCompile Include="src\fe\Metatile.cpp" />
@@ -211,6 +212,7 @@
     <ClInclude Include="src\fe\fe_app_constants.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
+    <ClInclude Include="src\fe\GameGfxTilemap.h" />
     <ClInclude Include="src\fe\InterChunkScroll.h" />
     <ClInclude Include="src\fe\IntraChunkScroll.h" />
     <ClInclude Include="src\fe\Metatile.h" />

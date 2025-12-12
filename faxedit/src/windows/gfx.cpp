@@ -506,9 +506,8 @@ SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
 	return surface_to_texture(p_rnd, srf);
 }
 
-SDL_Texture* fe::gfx::get_tileset_txt(std::size_t p_world_no,
-	std::size_t p_screen_no) const {
-	auto iter = m_tilemap_gfx.find(std::make_pair(p_world_no, p_screen_no));
+SDL_Texture* fe::gfx::get_tileset_txt(std::size_t p_key) const {
+	auto iter = m_tilemap_gfx.find(p_key);
 	if (iter == end(m_tilemap_gfx))
 		return nullptr;
 	else
@@ -534,119 +533,6 @@ void fe::gfx::save_surface_as_bmp(SDL_Surface* srf,
 		throw std::runtime_error("Could not save " + l_filepath);
 }
 
-void fe::gfx::gen_tileset_txt(SDL_Renderer* p_rnd, std::size_t p_world_no,
-	std::size_t p_screen_no,
-	const std::vector<std::vector<byte>>& p_palette,
-	const std::vector<fe::Metatile>& p_metatiles,
-	const std::vector<klib::NES_tile>& p_tiles) {
-
-	auto srf{ gen_tileset_surface(p_palette, p_metatiles, p_tiles) };
-
-	auto key{ std::make_pair(p_world_no, p_screen_no) };
-	delete_texture(m_tilemap_gfx[key]);
-
-	m_tilemap_gfx[key] = surface_to_texture(p_rnd, srf);
-}
-
-void fe::gfx::save_tileset_bmp(std::size_t p_world_no,
-	std::size_t p_screen_no,
-	const std::vector<std::vector<byte>>& p_palette,
-	const std::vector<fe::Metatile>& p_metatiles,
-	const std::vector<klib::NES_tile>& p_tiles,
-	const std::string& p_path,
-	const std::string& p_filename) const {
-
-	auto srf{ gen_tileset_surface(p_palette, p_metatiles, p_tiles) };
-
-	save_surface_as_bmp(srf, p_path, p_filename);
-}
-
-SDL_Surface* fe::gfx::gen_tileset_surface(const std::vector<std::vector<byte>>& p_palette,
-	const std::vector<fe::Metatile>& p_metatiles,
-	const std::vector<klib::NES_tile>& p_tiles) const {
-
-	int rows = (static_cast<int>(p_metatiles.size()) + 16 - 1) / 16;
-	int width = 16 * 16;
-	int height = rows * 16;
-
-	auto srf{ create_sdl_surface(width, height) };
-
-	for (std::size_t t{ 0 }; t < p_metatiles.size(); ++t) {
-		int tx{ 16 * (static_cast<int>(t) % 16) };
-		int ty{ 16 * (static_cast<int>(t) / 16) };
-
-		const auto& pal{ p_palette.at(p_metatiles[t].m_attr_tl) };
-		draw_nes_tile_on_surface(srf, tx, ty,
-			p_tiles.at(p_metatiles[t].m_tilemap[0][0]),
-			pal
-		);
-		draw_nes_tile_on_surface(srf, tx + 8, ty,
-			p_tiles.at(p_metatiles[t].m_tilemap[0][1]),
-			pal
-		);
-		draw_nes_tile_on_surface(srf, tx, ty + 8,
-			p_tiles.at(p_metatiles[t].m_tilemap[1][0]),
-			pal
-		);
-		draw_nes_tile_on_surface(srf, tx + 8, ty + 8,
-			p_tiles.at(p_metatiles[t].m_tilemap[1][1]),
-			pal
-		);
-	}
-
-	return srf;
-}
-
-int fe::gfx::score_region_vs_palette(SDL_Surface* srf, const std::vector<byte>& p_palette,
-	int x, int y, int w, int h) const {
-	int l_error{ 0 };
-
-	for (int yy = 0; yy < h; ++yy) {
-		for (int xx = 0; xx < w; ++xx) {
-			Uint8 r, g, b, a;
-			if (!SDL_ReadSurfacePixel(srf, x + xx, y + yy, &r, &g, &b, &a)) {
-				continue; // skip if out of bounds
-			}
-
-			// Find nearest of the 4 palette colors
-			int bestDist = INT_MAX;
-			for (Uint8 idx : p_palette) {
-				const SDL_Color& palCol = m_nes_palette->colors[idx];
-				int dr = int(r) - int(palCol.r);
-				int dg = int(g) - int(palCol.g);
-				int db = int(b) - int(palCol.b);
-				int dist = dr * dr + dg * dg + db * db;
-				if (dist < bestDist) bestDist = dist;
-			}
-
-			l_error += bestDist;
-		}
-	}
-
-	return l_error;
-}
-
-std::vector<std::size_t> fe::gfx::best_subpalette_region_fit(SDL_Surface* srf,
-	const std::vector<std::vector<byte>>& p_palette,
-	int x, int y, int w, int h) const {
-	std::vector<std::size_t> result{ 0 };
-	int best_score{ -1 };
-
-	for (std::size_t i{ 0 }; i < 4; ++i) {
-		int l_score{ score_region_vs_palette(srf, p_palette.at(i),
-			x, y, w, h) };
-		if (best_score == -1 || l_score < best_score) {
-			result.clear();
-			result.push_back(i);
-			best_score = l_score;
-		}
-		else if (l_score == best_score)
-			result.push_back(i);
-	}
-
-	return result;
-}
-
 SDL_Surface* fe::gfx::load_bmp(const std::string& p_path,
 	const std::string& p_filename) const {
 	std::string l_filepath{ std::format("{}/{}", p_path, p_filename) };
@@ -657,189 +543,6 @@ SDL_Surface* fe::gfx::load_bmp(const std::string& p_path,
 		throw std::runtime_error("Could not load " + l_filepath);
 
 	return srf;
-}
-
-fe::GfxResult fe::gfx::import_tileset_bmp(
-	const std::vector<klib::NES_tile> p_tiles,
-	std::set<std::size_t> p_read_only_idx,
-	const std::vector<std::vector<byte>>& p_palette,
-	const std::string& p_path,
-	const std::string& p_filename) const
-{
-	SDL_Surface* srf{ load_bmp(p_path, p_filename) };
-
-	// enforce multiples of 16
-	if ((srf->w % 16) != 0 || (srf->h % 16) != 0) {
-		SDL_DestroySurface(srf);
-		throw std::runtime_error("BMP dimensions must be multiples of 16");
-	}
-
-	struct Candidate {
-		std::size_t paletteIndex;
-		std::array<klib::NES_tile, 4> quadrants; // q0..q3
-	};
-
-	struct MetatileCandidates {
-		std::size_t id; // metatileNo
-		std::vector<Candidate> candidates;
-	};
-
-	fe::GfxResult result;
-
-	// 1) Gather palette candidates per metatile
-	std::vector<std::vector<std::size_t>> mt_sub_palette_candidates;
-	mt_sub_palette_candidates.reserve((srf->w / 16) * (srf->h / 16));
-
-	for (int j{ 0 }; j < srf->h; j += 16) {
-		for (int i{ 0 }; i < srf->w; i += 16) {
-			mt_sub_palette_candidates.push_back(
-				best_subpalette_region_fit(srf, p_palette, i, j, 16, 16));
-		}
-	}
-
-	// 2) Collect all candidates and build global popularity (quadrant-agnostic)
-	std::vector<MetatileCandidates> allMetatiles;
-	allMetatiles.reserve(mt_sub_palette_candidates.size());
-
-	// Use std::map to avoid hashing NES_tile
-	std::map<klib::NES_tile, int> globalPopularity;
-
-	int metatileNo = 0;
-	for (int my = 0; my < srf->h; my += 16) {
-		for (int mx = 0; mx < srf->w; mx += 16) {
-			MetatileCandidates mt{ std::size_t(metatileNo), {} };
-
-			const auto& candidates = mt_sub_palette_candidates[metatileNo];
-			if (candidates.empty()) {
-				SDL_DestroySurface(srf);
-				throw std::runtime_error("No valid sub-palette candidates for a metatile.");
-			}
-
-			mt.candidates.reserve(candidates.size());
-			for (std::size_t candIdx : candidates) {
-				const std::vector<byte>& subPalette = p_palette[candIdx]; // FIX: byte, not Uint8
-
-				Candidate c{
-					candIdx,
-					{
-						surface_region_to_nes_tile(srf, subPalette, mx,     my),
-						surface_region_to_nes_tile(srf, subPalette, mx + 8, my),
-						surface_region_to_nes_tile(srf, subPalette, mx,     my + 8),
-						surface_region_to_nes_tile(srf, subPalette, mx + 8, my + 8)
-					}
-				};
-
-				// Quadrant-agnostic popularity: count identical tiles regardless of position
-				for (const auto& q : c.quadrants) {
-					++globalPopularity[q];
-				}
-
-				mt.candidates.push_back(std::move(c));
-			}
-
-			allMetatiles.push_back(std::move(mt));
-			++metatileNo;
-		}
-	}
-
-	SDL_DestroySurface(srf);
-
-	// After filling globalPopularity
-	for (const auto& idx : p_read_only_idx) {
-		if (idx < p_tiles.size()) {
-			const klib::NES_tile& reservedTile = p_tiles[idx];
-			auto it = globalPopularity.find(reservedTile);
-			if (it != globalPopularity.end()) {
-				it->second += 1; // reserved bias = 1
-			}
-		}
-	}
-
-	// 3) Global selection pass (no greedy commits)
-	std::vector<std::size_t> mt_sub_palettes;
-	mt_sub_palettes.reserve(allMetatiles.size());
-
-	std::map<klib::NES_tile, std::vector<std::pair<std::size_t, std::size_t>>> l_chrs; // keep only one definition
-
-	for (const auto& mt : allMetatiles) {
-		int bestScore = std::numeric_limits<int>::min();
-		const Candidate* bestCandPtr = nullptr;
-
-		for (const auto& cand : mt.candidates) {
-			int score = 0;
-			for (const auto& q : cand.quadrants) {
-				auto it = globalPopularity.find(q);
-				if (it != globalPopularity.end()) score += it->second;
-			}
-
-			// Safe tie-break: prefer first if bestCandPtr is null, or greater score
-			if (bestCandPtr == nullptr || score > bestScore) {
-				bestScore = score;
-				bestCandPtr = &cand;
-			}
-		}
-
-		// Commit chosen candidate’s quadrants into l_chrs
-		l_chrs[bestCandPtr->quadrants[0]].push_back({ mt.id, 0 });
-		l_chrs[bestCandPtr->quadrants[1]].push_back({ mt.id, 1 });
-		l_chrs[bestCandPtr->quadrants[2]].push_back({ mt.id, 2 });
-		l_chrs[bestCandPtr->quadrants[3]].push_back({ mt.id, 3 });
-
-		mt_sub_palettes.push_back(bestCandPtr->paletteIndex);
-	}
-
-	// 4) Assign CHR indices with reserved preference and 256 cap
-	std::vector<klib::NES_tile> l_result_chr{ p_tiles };
-
-	std::map<klib::NES_tile, std::size_t> l_indexmap; // tile -> assigned CHR index
-	std::size_t l_nextfree{ 0 };
-	while (p_read_only_idx.find(l_nextfree) != end(p_read_only_idx))
-		++l_nextfree;
-
-	bool l_ok{ true };
-
-	for (const auto& kv : l_chrs) {
-		const auto& tile = kv.first;
-		bool matched = false;
-
-		// 1. Check reserved indices
-		for (std::size_t idx : p_read_only_idx) {
-			if (idx < p_tiles.size() && tile == p_tiles[idx]) {
-				l_indexmap[tile] = idx; // reuse reserved slot
-				matched = true;
-				break;
-			}
-		}
-
-		// 2. If no match, assign next free slot
-		if (!matched) {
-			// find next free slot (skip reserved)
-			while (p_read_only_idx.find(l_nextfree) != end(p_read_only_idx))
-				++l_nextfree;
-
-			if (l_nextfree >= 256) {
-				// throw std::runtime_error("chr-tile overflow. Reduce unique tile count.");
-				l_ok = false;
-			}
-			else {
-
-				l_indexmap[tile] = l_nextfree;
-				// p_tiles.size() is your base; ensure we can write nextfree safely
-				if (l_nextfree >= l_result_chr.size())
-					l_result_chr.resize(l_nextfree + 1);
-
-				l_result_chr[l_nextfree] = tile; // patch CHR set at this index
-			}
-			++l_nextfree;
-		}
-	}
-
-	result.m_usage = l_chrs;
-	result.m_metatile_sub_palette = mt_sub_palettes;
-	result.m_index_map = l_indexmap;
-	result.m_tileset = l_result_chr;
-
-	return result;
 }
 
 klib::NES_tile fe::gfx::surface_region_to_nes_tile(SDL_Surface* srf,
@@ -910,14 +613,27 @@ int fe::gfx::get_duplicate_count(const klib::NES_tile& p_q0, const klib::NES_til
 	return result;
 }
 
+// gfx import result queries
+bool fe::gfx::has_tilemap_import_result(std::size_t p_key) const {
+	return m_tilemap_import_results.contains(p_key);
+}
+
+fe::ChrTilemap fe::gfx::get_tilemap_import_result(std::size_t p_key) const {
+	return m_tilemap_import_results.at(p_key);
+}
+
+void fe::gfx::clear_tilemap_import_result(std::size_t p_key) {
+	m_tilemap_import_results.erase(p_key);
+}
 
 // gfx import functions
-fe::ChrTilemap fe::gfx::import_tilemap_bmp(
+void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 	std::vector<ChrGfxTile>& p_tiles,
 	const std::vector<std::vector<byte>>& p_palette,
 	ChrDedupMode p_dedupmode,
 	const std::string& p_path,
-	const std::string& p_filename) const {
+	const std::string& p_filename,
+	std::size_t p_key) {
 
 	SDL_Surface* srf{ load_bmp(p_path, p_filename) };
 
@@ -1021,12 +737,15 @@ fe::ChrTilemap fe::gfx::import_tilemap_bmp(
 		}
 	}
 
-	// finally done ... return final tilemap and chr map to caller
+	// finally done ... update result map and texture
 	fe::ChrTilemap result{ fe::ChrTilemap(l_final_tilemap,
 		chrtiletoindex_map_to_vector(tileToIndices),
 		p_palette) };
 
-	return result;
+	// add result to staging
+	m_tilemap_import_results[p_key] = result;
+	// render it to the outside
+	gen_tilemap_texture(p_rnd, result, p_key);
 }
 
 std::pair<int, int> fe::gfx::mt_to_pixels(std::size_t mt_x, std::size_t mt_y,
@@ -1331,12 +1050,11 @@ void fe::gfx::save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 }
 
 void fe::gfx::gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,
-	std::size_t p_key, std::size_t p_sub_key) {
+	std::size_t p_key) {
 
 	auto srf{ gen_tilemap_surface(p_tilemap) };
 
-	auto key{ std::make_pair(p_key, p_sub_key) };
-	delete_texture(m_tilemap_gfx[key]);
+	delete_texture(m_tilemap_gfx[p_key]);
 
-	m_tilemap_gfx[key] = surface_to_texture(p_rnd, srf);
+	m_tilemap_gfx[p_key] = surface_to_texture(p_rnd, srf);
 }

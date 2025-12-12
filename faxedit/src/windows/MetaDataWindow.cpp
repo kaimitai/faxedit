@@ -611,6 +611,12 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 				m_sel_nes_tile = i;
 			}
 
+			if (ImGui::IsItemHovered()) {
+				ImGui::BeginTooltip();
+				imgui_text(std::format("chr-tile {}", i));
+				ImGui::EndTooltip();
+			}
+
 			// Highlight if selected
 			if (i == m_sel_nes_tile) {
 				ImVec2 button_pos = ImGui::GetItemRectMin();
@@ -673,6 +679,10 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		if (ImGui::RadioButton("All###mtchrall", (m_chr_picker_mode == fe::ChrPickerMode::All)))
 			m_chr_picker_mode = fe::ChrPickerMode::All;
 
+		ImGui::SeparatorText("Sub-palette for rendering chr-tiles");
+
+		ui::imgui_slider_with_arrows("###mtsp", "", m_sel_tilemap_sub_palette, 0, 3, "",
+			false, true);
 		ImGui::EndTabItem();
 	}
 }

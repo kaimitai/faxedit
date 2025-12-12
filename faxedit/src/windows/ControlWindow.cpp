@@ -146,6 +146,13 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		add_message("Integrity analysis completed", 4);
 	}
 
+	ImGui::SameLine();
+
+	if (ui::imgui_button(std::format("{} gfx editor",
+		m_gfx_window ? "Show" : "Hide"),
+		m_gfx_window ? 4 : 2))
+		m_gfx_window = !m_gfx_window;
+
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) {
 
 		try {
@@ -160,6 +167,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 			// extract gfx
 			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
+			m_game->initialize_game_gfx_metadata(m_config);
 			add_message("Loaded xml file " + get_xml_path(), 2);
 		}
 		catch (const std::runtime_error& p_ex) {

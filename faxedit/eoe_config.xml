@@ -116,6 +116,52 @@
 		<!-- 8 entries, one for each world -->
 		<!-- tileset, palettes, start pos (unused) and music -->
 		<const name="world_to_tileset_offset" value="0x3df54" />
+		<!-- item background tiles for the 39 items - virtual screen defined for easy bmp imports -->
+		<const name="item_vscreen_mt_x" value="0" />
+		<const name="item_vscreen_mt_y" value="0" />
+		<const name="item_vscreen_mt_w" value="1" />
+		<const name="item_vscreen_mt_h" value="39" />
+		<const name="item_vscreen_chr_offset" value="0x28510" />
+		<const name="item_vscreen_chr_ppu_index" value="$00" />
+		<const name="item_vscreen_chr_ppu_count" value="144" />
+		<const name="item_vscreen_tilemap_offset" value="0x2b4b0" />
+		<!-- title screen - dimensions given in metatile-space -->
+		<const name="title_screen_mt_x" value="1" />
+		<const name="title_screen_mt_y" value="1" />
+		<const name="title_screen_mt_w" value="14" />
+		<const name="title_screen_mt_h" value="8" />
+		<const name="title_screen_chr_offset" value="0x28e10" />
+		<const name="title_screen_chr_ppu_index" value="$00" />
+		<const name="title_screen_chr_ppu_count" value="213" />
+		<const name="title_screen_tilemap_offset" value="0x30010" />
+		<const name="title_screen_attribute_offset" value="0x29b70" />
+		<const name="title_screen_palette_offset" value="0x2c110" />
+		<!-- intro animation screen - dimensions given in metatile-space -->
+		<const name="intro_anim_mt_x" value="0" />
+		<const name="intro_anim_mt_y" value="0" />
+		<const name="intro_anim_mt_w" value="16" />
+		<const name="intro_anim_mt_h" value="15" />
+		<const name="intro_anim_chr_offset" value="0x2a4b0" />
+		<const name="intro_anim_chr_ppu_index" value="$80" />
+		<const name="intro_anim_chr_ppu_count" value="128" />
+		<const name="intro_anim_tilemap_offset" value="0x2acb0" />
+		<const name="intro_anim_attribute_offset" value="0x2b070" />
+		<const name="intro_anim_palette_offset" region="us,randum" value="0x326d8" />
+		<const name="intro_anim_palette_offset" region="eu" value="0x32723" />
+		<const name="intro_anim_palette_offset" region="jp,en-transl" value="0x32ad4" />
+		<!-- outro animation screen - dimensions given in metatile-space -->
+		<const name="outro_anim_mt_x" value="0" />
+		<const name="outro_anim_mt_y" value="0" />
+		<const name="outro_anim_mt_w" value="16" />
+		<const name="outro_anim_mt_h" value="15" />
+		<const name="outro_anim_chr_offset" value="0x2a4b0" />
+		<const name="outro_anim_chr_ppu_index" value="$80" />
+		<const name="outro_anim_chr_ppu_count" value="128" />
+		<const name="outro_anim_tilemap_offset" value="0x2b0b0" />
+		<const name="outro_anim_attribute_offset" value="0x2b470" />
+		<const name="outro_anim_palette_offset" region="us,randum" value="0x326f8" />
+		<const name="outro_anim_palette_offset" region="eu" value="0x32743" />
+		<const name="outro_anim_palette_offset" region="jp,en-transl" value="0x32af4" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -307,6 +353,9 @@
 			<entry byte="$19" str="Martial Arts" />
 			<entry byte="$1a" str="Magic Trainer" />
 			<entry byte="$1b" str="Towns" />
+			<entry byte="$1c" str="Sprites (worlds)" />
+			<entry byte="$1d" str="Sprites (buildings)" />
+			<entry byte="$1e" str="Sprites (portraits)" />
 		</byte_to_string_map>
 		<!-- labels for tilesets -->
 		<byte_to_string_map name="tileset_labels">
