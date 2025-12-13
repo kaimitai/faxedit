@@ -20,7 +20,7 @@ namespace fe {
 
 	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
-	enum GfxEditMode { WorldChr, BgGraphics, Palettes };
+	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes };
 
 	struct Size4 {
 		std::size_t x, y, w, h;

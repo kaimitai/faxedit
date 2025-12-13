@@ -53,7 +53,7 @@ namespace fe {
 		std::vector<std::vector<ChrMetaTile>> m_tilemap;
 		std::vector<fe::ChrGfxTile> m_chr_tiles;
 		std::vector<std::vector<std::size_t>> m_attributes;
-		std::vector<std::vector<byte>> m_palette;
+		std::vector<byte> m_palette;
 
 		GameGfxTilemap(const std::string& p_name,
 			std::size_t p_mtx, std::size_t p_mty,

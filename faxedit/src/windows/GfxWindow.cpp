@@ -41,9 +41,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		m_gfx_emode == fe::GfxEditMode::BgGraphics))
 		m_gfx_emode = fe::GfxEditMode::BgGraphics;
 	ImGui::SameLine();
-	if (ImGui::RadioButton("Palettes",
-		m_gfx_emode == fe::GfxEditMode::Palettes))
-		m_gfx_emode = fe::GfxEditMode::Palettes;
+	if (ImGui::RadioButton("Game Palettes",
+		m_gfx_emode == fe::GfxEditMode::WorldPalettes))
+		m_gfx_emode = fe::GfxEditMode::WorldPalettes;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Gfx Palettes",
+		m_gfx_emode == fe::GfxEditMode::GfxPalettes))
+		m_gfx_emode = fe::GfxEditMode::GfxPalettes;
 
 	ImGui::Separator();
 
@@ -281,7 +285,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 				m_gfx.import_tilemap_bmp(p_rnd,
 					l_tmp_tiles,
-					m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_palette,
+					flat_pal_to_2d_pal(m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_palette),
 					ls_dedup_strat,
 					get_bmp_path(),
 					get_bmp_filename(l_gfx_key),
@@ -324,7 +328,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 	}
 
-	else if (m_gfx_emode == fe::GfxEditMode::Palettes) {
+	else if (m_gfx_emode == fe::GfxEditMode::WorldPalettes) {
 		// selected game palette no
 		static std::size_t ls_sel_wpal{ 0 };
 		auto& wpal{ m_game->m_palettes.at(ls_sel_wpal) };
@@ -338,6 +342,26 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		if (show_palette_window(wpal)) {
 			if (m_atlas_palette_no == ls_sel_wpal)
 				m_atlas_force_update = true;
+		}
+	}
+	else if (m_gfx_emode == fe::GfxEditMode::GfxPalettes) {
+		static std::size_t ls_sel_game_gfx{ 0 };
+
+		ui::imgui_slider_with_arrows("###sgbg",
+			std::format("Graphic: {}", m_game->m_game_gfx.at(ls_sel_game_gfx).m_gfx_name),
+			ls_sel_game_gfx, 0, m_game->m_game_gfx.size() - 1,
+			"", false, true);
+
+		auto& selbggxfobj{ m_game->m_game_gfx.at(ls_sel_game_gfx) };
+		
+		if (selbggxfobj.m_loaded)
+			show_palette_window(selbggxfobj.m_palette);
+		else
+			imgui_text("Graphic not loaded");
+
+		if (!selbggxfobj.m_patch_palette) {
+			ImGui::Separator();
+			imgui_text("This palette will not be saved to ROM.\nIt is only used for bmp export and import.");
 		}
 	}
 

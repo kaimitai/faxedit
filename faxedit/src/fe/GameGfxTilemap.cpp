@@ -62,23 +62,20 @@ void fe::GameGfxTilemap::commit_import(const fe::ChrTilemap& p_result) {
 
 	for (std::size_t t{ 0 }; t < p_result.m_tiles.size(); ++t)
 		m_chr_tiles.at(t).m_tile = p_result.m_tiles[t];
-
-	m_palette = p_result.m_palette;
 }
 
 void fe::GameGfxTilemap::load_from_rom(const std::vector<byte>& p_rom) {
 	// extract palette if we get it from ROM
 	if (m_patch_palette) {
-		std::vector<byte> flatpal;
+		m_palette.clear();
 		for (std::size_t i{ 0 }; i < 16; ++i)
-			flatpal.push_back(p_rom.at(m_rom_offset_pal + i));
-		m_palette = flat_pal_to_2d_pal(flatpal);
+			m_palette.push_back(p_rom.at(m_rom_offset_pal + i));
 	}
 	else {
-		m_palette = flat_pal_to_2d_pal({ 0x0f, 0x18, 0x26, 0x30,
+		m_palette = { 0x0f, 0x18, 0x26, 0x30,
 			0x0f, 0x18, 0x26, 0x30,
 			0x0f, 0x18, 0x26, 0x30,
-			0x0f, 0x18, 0x26, 0x30 });
+			0x0f, 0x18, 0x26, 0x30 };
 	}
 
 	if (m_patch_attributes) {
@@ -160,7 +157,7 @@ void fe::GameGfxTilemap::initialize_attributes(std::size_t p_attr) {
 
 fe::ChrTilemap fe::GameGfxTilemap::get_chrtilemap(void) const {
 	fe::ChrTilemap l_tilemap;
-	l_tilemap.m_palette = m_palette;
+	l_tilemap.m_palette = flat_pal_to_2d_pal(m_palette);
 
 	for (const auto& tile : m_chr_tiles)
 		l_tilemap.m_tiles.push_back(tile.m_tile);
@@ -230,9 +227,8 @@ void fe::GameGfxTilemap::patch_rom(std::vector<byte>& p_rom) const {
 }
 
 void fe::GameGfxTilemap::patch_palette(std::vector<byte>& p_rom) const {
-	for (std::size_t j{ 0 }; j < 4; ++j)
-		for (std::size_t i{ 0 }; i < 4; ++i)
-			p_rom.at(m_rom_offset_pal + 4 * j + i) = m_palette.at(j).at(i);
+	for (std::size_t j{ 0 }; j < m_palette.size(); ++j)
+		p_rom.at(m_rom_offset_pal + j) = m_palette[j];
 }
 
 void fe::GameGfxTilemap::patch_attributes(std::vector<byte>& p_rom) const {
@@ -302,5 +298,4 @@ std::pair<std::size_t, std::size_t> fe::GameGfxTilemap::mt_coords_to_attribute(
 	std::size_t quadrant = (mty % 2) * 2 + (mtx % 2);
 
 	return std::make_pair(byte_index, quadrant);
-
 }
