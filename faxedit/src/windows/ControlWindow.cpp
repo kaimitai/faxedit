@@ -149,7 +149,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 	ImGui::SameLine();
 
 	if (ui::imgui_button(std::format("{} gfx editor",
-		m_gfx_window ? "Show" : "Hide"),
+		m_gfx_window ? "Hide" : "Show"),
 		m_gfx_window ? 4 : 2))
 		m_gfx_window = !m_gfx_window;
 

@@ -457,6 +457,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_ow_transitions(const
 
 // all static data patching
 void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	encode_palette_data(p_config, p_game, p_rom);
 	encode_stage_data(p_config, p_game, p_rom);
 	encode_spawn_locations(p_config, p_game, p_rom);
 	encode_mattock_animations(p_config, p_game, p_rom);
@@ -496,6 +497,16 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 			l_local_addr += 16;
 		}
 
+	}
+}
+
+// patch ROM in place for the palette data
+void fe::ROM_Manager::encode_palette_data(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	std::size_t l_rom_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
+	for (const auto& palette : p_game.m_palettes) {
+		patch_bytes(palette, p_rom, l_rom_offset);
+			l_rom_offset += 16;
 	}
 }
 

@@ -324,6 +324,23 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 	}
 
+	else if (m_gfx_emode == fe::GfxEditMode::Palettes) {
+		// selected game palette no
+		static std::size_t ls_sel_wpal{ 0 };
+		auto& wpal{ m_game->m_palettes.at(ls_sel_wpal) };
+
+		ui::imgui_slider_with_arrows("###wpal",
+			std::format("Palette: {}", get_description(static_cast<byte>(ls_sel_wpal),
+				m_labels_palettes)),
+			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
+			"", false, true);
+
+		if (show_palette_window(wpal)) {
+			if (m_atlas_palette_no == ls_sel_wpal)
+				m_atlas_force_update = true;
+		}
+	}
+
 
 	if (m_gfx_emode == fe::GfxEditMode::WorldChr ||
 		m_gfx_emode == fe::GfxEditMode::BgGraphics) {
@@ -354,6 +371,99 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	}
 
 	ImGui::End();
+}
+
+bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
+	bool was_changed{ false };
+
+	// selected palette index
+	static std::size_t ls_sel_pal_idx{ 0 };
+	const auto nescols{ m_gfx.get_nes_palette() };
+
+	ImGui::SeparatorText("Palette Colors");
+
+	for (std::size_t i{ 0 }; i < 16; ++i) {
+		ImVec4 col = SDL_Color_to_imgui(nescols->colors[p_palette.at(i)]);
+		ImGui::PushStyleColor(ImGuiCol_Button, col);
+
+		if (ImGui::Button(std::format("###wpidx{}", i).c_str(),
+			ImVec2(32, 32))) {
+			ls_sel_pal_idx = i;
+		}
+
+		// Outline if selected
+		if (ls_sel_pal_idx == i) {
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();
+			ImVec2 p_min = ImGui::GetItemRectMin();
+			ImVec2 p_max = ImGui::GetItemRectMax();
+			draw_list->AddRect(p_min, p_max, IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f);
+		}
+
+		ImGui::PopStyleColor();
+		if ((i + 1) % 4 != 0)
+			ImGui::SameLine();
+	}
+
+	ImGui::SeparatorText("NES-Palette");
+
+	std::size_t l_nes_pal_idx_resolve{ p_palette.at(ls_sel_pal_idx) };
+
+	for (std::size_t i{ 0 }; i < 64; ++i) {
+		ImVec4 col = SDL_Color_to_imgui(nescols->colors[i]);
+		ImGui::PushStyleColor(ImGuiCol_Button, col);
+
+		if (i == 0x0d)
+			ImGui::BeginDisabled();
+
+		if (ImGui::Button(std::format("###wpcol{}", i).c_str(),
+			ImVec2(32, 32))) {
+			if (ls_sel_pal_idx % 4 == 0)
+				was_changed = update_pal_bg_idx(p_palette, static_cast<byte>(i));
+			else if (i != l_nes_pal_idx_resolve) {
+				was_changed = true;
+				p_palette.at(ls_sel_pal_idx) = static_cast<byte>(i);
+			}
+		}
+
+		// Outline if selected
+		if (l_nes_pal_idx_resolve == i) {
+			ImDrawList* draw_list = ImGui::GetWindowDrawList();
+			ImVec2 p_min = ImGui::GetItemRectMin();
+			ImVec2 p_max = ImGui::GetItemRectMax();
+			draw_list->AddRect(p_min, p_max, IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f);
+		}
+
+		// Tooltip with hex value
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			imgui_text(std::format("${:02x}", i));
+			ImGui::EndTooltip();
+		}
+
+		// disable the "forbidden" glitch color
+		if (i == 0x0d)
+			ImGui::EndDisabled();
+
+		ImGui::PopStyleColor();
+		if ((i + 1) % 16 != 0)
+			ImGui::SameLine();
+	}
+
+	return was_changed;
+}
+
+bool fe::MainWindow::update_pal_bg_idx(std::vector<byte>& p_palette,
+	byte p_nes_pal_idx) const {
+	bool any_change{ false };
+
+	for (std::size_t i{ 0 }; i < p_palette.size(); i += 4) {
+		if (p_palette[i] != p_nes_pal_idx) {
+			p_palette[i] = p_nes_pal_idx;
+			any_change = true;
+		}
+	}
+
+	return any_change;
 }
 
 void fe::MainWindow::gen_read_only_chr_idx_non_building(std::size_t p_tileset_no,
@@ -504,4 +614,8 @@ std::string fe::MainWindow::get_bmp_filename(std::size_t p_gfx_key) const {
 std::string fe::MainWindow::get_bmp_filepath(std::size_t p_gfx_key) const {
 	return std::format("{}/{}", get_bmp_path(),
 		get_bmp_filename(p_gfx_key));
+}
+
+ImVec4 fe::MainWindow::SDL_Color_to_imgui(const SDL_Color& c) const {
+	return ImVec4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
 }

@@ -208,6 +208,9 @@ namespace fe {
 		std::string get_bmp_path(void) const;
 		std::string get_bmp_filename(std::size_t p_gfx_key) const;
 		std::string get_bmp_filepath(std::size_t p_gfx_key) const;
+		ImVec4 SDL_Color_to_imgui(const SDL_Color& c) const;
+		bool show_palette_window(std::vector<byte>& p_palette);
+		bool update_pal_bg_idx(std::vector<byte>& p_palette, byte p_nes_pal_idx) const;
 
 	public:
 

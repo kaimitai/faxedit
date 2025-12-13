@@ -97,6 +97,7 @@ namespace fe {
 		// no need to return anything here as the data is of fixed length
 		void encode_static_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
+		void encode_palette_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_stage_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_palette_to_music(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_spawn_locations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;

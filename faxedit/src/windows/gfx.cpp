@@ -1058,3 +1058,7 @@ void fe::gfx::gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_t
 
 	m_tilemap_gfx[p_key] = surface_to_texture(p_rnd, srf);
 }
+
+const SDL_Palette* fe::gfx::get_nes_palette(void) const {
+	return m_nes_palette;
+}

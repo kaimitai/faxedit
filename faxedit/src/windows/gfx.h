@@ -200,6 +200,9 @@ namespace fe {
 		void save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 			const std::string& p_path,
 			const std::string& p_filename) const;
+
+		// palette
+		const SDL_Palette* get_nes_palette(void) const;
 	};
 
 }
