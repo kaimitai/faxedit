@@ -25,7 +25,7 @@ fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
 	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) },
-	HOT_PINK_TRANSPARENT{ 0xff69b400 }
+	m_hot_pink{ SDL_Color(0xff, 0x69, 0xbf, 0x00) }
 {
 	SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
 	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
@@ -123,10 +123,6 @@ void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
 		throw std::runtime_error("Could not make icon overlays");
 	}
 
-	unsigned char transp_r{ (HOT_PINK_TRANSPARENT >> 24) & 0xff };
-	unsigned char transp_g{ (HOT_PINK_TRANSPARENT >> 16) & 0xff };
-	unsigned char transp_b{ (HOT_PINK_TRANSPARENT >> 8) & 0xff };
-
 	for (int i = 0; i < width * height; ++i) {
 		for (int i = 0; i < width * height; ++i) {
 			int idx = i * 4;
@@ -134,7 +130,7 @@ void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
 			unsigned char g = rgbaPixels[idx + 1];
 			unsigned char b = rgbaPixels[idx + 2];
 
-			if (r == transp_r && g == transp_g && b == transp_b) {
+			if (r == m_hot_pink.r && g == m_hot_pink.g && b == m_hot_pink.b) {
 				rgbaPixels[idx + 3] = 0; // make transparent
 			}
 		}
@@ -239,10 +235,14 @@ SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h,
 	bool p_transparent, bool p_set_no_colorkey) const {
 	SDL_Surface* l_bmp = SDL_CreateSurface(p_w, p_h, SDL_PIXELFORMAT_ABGR8888);
 
+	Uint32 l_hotpink_32 = SDL_MapRGBA(SDL_GetPixelFormatDetails(l_bmp->format),
+		nullptr,
+		m_hot_pink.r, m_hot_pink.g, m_hot_pink.b, m_hot_pink.a);
+
 	if (p_transparent) {
-		SDL_FillSurfaceRect(l_bmp, nullptr, HOT_PINK_TRANSPARENT);
+		SDL_FillSurfaceRect(l_bmp, nullptr, l_hotpink_32);
 		if (!p_set_no_colorkey)
-			SDL_SetSurfaceColorKey(l_bmp, true, HOT_PINK_TRANSPARENT);
+			SDL_SetSurfaceColorKey(l_bmp, true, l_hotpink_32);
 	}
 
 	return l_bmp;
@@ -256,10 +256,10 @@ void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index
 		SDL_WriteSurfacePixel(srf, x, y, l_col.r, l_col.g, l_col.b, l_col.a);
 	else
 		SDL_WriteSurfacePixel(srf, x, y,
-			(HOT_PINK_TRANSPARENT >> 24) & 0xff,
-			(HOT_PINK_TRANSPARENT >> 16) & 0xff,
-			(HOT_PINK_TRANSPARENT >> 8) & 0xff,
-			HOT_PINK_TRANSPARENT & 0xff
+			m_hot_pink.r,
+			m_hot_pink.g,
+			m_hot_pink.b,
+			m_hot_pink.a
 		);
 }
 
@@ -524,7 +524,15 @@ void fe::gfx::save_surface_as_bmp(SDL_Surface* srf,
 
 	klib::file::create_directories(p_path);
 	std::string l_filepath{ p_path + "/" + p_filename };
-	bool l_result{ SDL_SaveBMP(srf, l_filepath.c_str()) };
+
+	// convert to 24-bit bmp as we want to preserve the hot pink on disk
+	SDL_Surface* out_bmp{ SDL_ConvertSurface(srf, SDL_PIXELFORMAT_RGB24) };
+	if (!out_bmp)
+		throw std::runtime_error("Could not create 24-bit surface");
+
+	bool l_result{ SDL_SaveBMP(out_bmp, l_filepath.c_str()) };
+
+	SDL_DestroySurface(out_bmp);
 
 	if (p_destroy_surface)
 		SDL_DestroySurface(srf);
@@ -796,7 +804,6 @@ fe::MetaTileCandidate fe::gfx::slice_and_quantize(
 
 	for (std::size_t i{ 0 }; i < 4; ++i) {
 		const auto& tile = result.m_tiles[i];
-		result.m_unique_tiles.insert(tile);
 
 		// compute per-tile error
 		int err = rgb_space_diff(tile,
@@ -809,7 +816,10 @@ fe::MetaTileCandidate fe::gfx::slice_and_quantize(
 		result.rgbError += err;
 	}
 
-	for (const auto& tile : result.m_unique_tiles)
+	auto l_unique_tiles{ gen_unique_tiles(result.m_tiles,
+		p_palette[p_sub_pal_idx], p_dedupmode) };
+
+	for (const auto& tile : l_unique_tiles)
 		for (const auto& globaltile : p_tiles)
 			if (globaltile.m_allowed &&
 				chr_tile_equivalence(p_dedupmode,
@@ -818,6 +828,27 @@ fe::MetaTileCandidate fe::gfx::slice_and_quantize(
 				result.reuseCount++;
 				break;
 			}
+
+	return result;
+}
+
+std::vector<klib::NES_tile> fe::gfx::gen_unique_tiles(
+	const std::vector<klib::NES_tile>& p_tiles,
+	const std::vector<byte>& p_palette,
+	fe::ChrDedupMode p_dedupmode
+) const {
+	std::vector<klib::NES_tile> result;
+
+	for (const auto& tile : p_tiles) {
+		bool l_unique{ true };
+		for(const auto& utile : result)
+			if (chr_tile_equivalence(p_dedupmode, tile, utile, p_palette)) {
+				l_unique = false;
+				break;
+			}
+		if (l_unique)
+			result.push_back(tile);
+	}
 
 	return result;
 }
@@ -1000,7 +1031,6 @@ bool fe::gfx::rgb_equivalence(const SDL_Color col_a, const SDL_Color col_b) cons
 bool fe::gfx::is_optional_bmp_region(SDL_Surface* srf,
 	std::size_t mt_x, std::size_t mt_y) const {
 	auto l_pxpos{ mt_to_pixels(mt_x, mt_y, 0) };
-	SDL_Color hotpink{ uint24_to_SDL_Color(static_cast<std::size_t>(HOT_PINK_TRANSPARENT)) };
 
 	for (int j{ 0 }; j < 16; ++j)
 		for (int i{ 0 }; i < 16; ++i) {
@@ -1009,9 +1039,9 @@ bool fe::gfx::is_optional_bmp_region(SDL_Surface* srf,
 				l_pxpos.second + j, &r, &g, &b, &a))
 				throw std::runtime_error("pixel out of bounds");
 
-			if (r != hotpink.r ||
-				g != hotpink.g ||
-				b != hotpink.g)
+			if (r != m_hot_pink.r ||
+				g != m_hot_pink.g ||
+				b != m_hot_pink.b)
 				return false;
 		}
 

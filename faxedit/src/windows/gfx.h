@@ -18,7 +18,6 @@ namespace fe {
 
 	struct MetaTileCandidate {
 		std::vector<klib::NES_tile> m_tiles;
-		std::set<klib::NES_tile> m_unique_tiles;
 		std::size_t paletteIndex;
 
 		std::vector<int> m_quad_errors;
@@ -58,7 +57,7 @@ namespace fe {
 
 		SDL_Palette* m_nes_palette;
 
-		Uint32 HOT_PINK_TRANSPARENT;
+		SDL_Color m_hot_pink;
 
 		// surface operations
 		SDL_Surface* create_sdl_surface(int p_w, int p_h,
@@ -153,6 +152,12 @@ namespace fe {
 			std::size_t p_sub_pal_idx,
 			fe::ChrDedupMode p_dedupmode,
 			const std::vector<fe::ChrGfxTile>& p_tiles
+		) const;
+
+		std::vector<klib::NES_tile> gen_unique_tiles(
+			const std::vector<klib::NES_tile>& p_tiles,
+			const std::vector<byte>& p_palette,
+			fe::ChrDedupMode p_dedupmode
 		) const;
 
 		int rgb_space_diff(const klib::NES_tile& p_tile,
