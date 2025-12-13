@@ -92,14 +92,17 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		ImGui::Separator();
 
-		if (ui::imgui_button("Extract", 4))
+		if (ui::imgui_button("Extract from ROM", 4)) {
 			m_gfx.gen_tilemap_texture(p_rnd,
 				get_world_mt_tilemap(m_sel_gfx_ts_world, l_pass_screen),
 				l_gfx_key);
 
+			m_gfx.clear_tilemap_import_result(l_gfx_key);
+		}
+
 		ImGui::SameLine();
 
-		if (ui::imgui_button("Save bmp", 2, "", txt == nullptr)) try {
+		if (ui::imgui_button("Save bmp", 2)) try {
 
 			m_gfx.save_tilemap_bmp(get_world_mt_tilemap(m_sel_gfx_ts_world,
 				l_pass_screen),
@@ -125,6 +128,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				l_res_idx.insert(i);
 			for (std::size_t i{ l_tileset_end }; i < 256; ++i)
 				l_res_idx.insert(i);
+
+			// if this is the fog world we should fix chr indexes for fog tiles
+			if (m_sel_gfx_ts_world == m_game->m_fog.m_world_no) {
+				const auto fogtiles{ m_config.vset_as_set(c::ID_FOG_RESERVED_CHR_IDXS) };
+				for (const auto b : fogtiles)
+					l_res_idx.insert(b);
+			}
 
 			// fix any other chr refs from worlds
 			gen_read_only_chr_idx_non_building(l_ts_no, m_sel_gfx_ts_world, l_res_idx);
@@ -234,7 +244,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			));
 		}
 
-		if (ui::imgui_button("Extract", 4)) {
+		if (ui::imgui_button("Extract from ROM", 4)) {
 			auto& gamegfx{ m_game->m_game_gfx.at(ls_sel_bg_game_gfx) };
 
 			if (!gamegfx.m_loaded)
@@ -242,6 +252,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 			m_gfx.gen_tilemap_texture(p_rnd,
 				m_game->m_game_gfx.at(ls_sel_bg_game_gfx).get_chrtilemap(), l_gfx_key);
+
+			m_gfx.clear_tilemap_import_result(l_gfx_key);
 		}
 		ImGui::SameLine();
 		if (ui::imgui_button("Save bmp", txt == nullptr ? 4 : 2,

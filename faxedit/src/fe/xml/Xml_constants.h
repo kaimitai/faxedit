@@ -46,6 +46,7 @@ namespace fe {
 			constexpr char ATTR_COVER_Y[]{ "cover_y" };
 
 			constexpr char TAG_JUMP_ON_ANIMATION[]{ "jump_on_animation" };
+			constexpr char TAG_FOG[]{ "fog" };
 
 			constexpr char TAG_METATILES[]{ "metatiles" };
 			constexpr char TAG_METATILE[]{ "metatile" };

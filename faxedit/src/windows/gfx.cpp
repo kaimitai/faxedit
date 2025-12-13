@@ -626,6 +626,10 @@ void fe::gfx::clear_tilemap_import_result(std::size_t p_key) {
 	m_tilemap_import_results.erase(p_key);
 }
 
+void fe::gfx::clear_all_tilemap_import_results(void) {
+	m_tilemap_import_results.clear();
+}
+
 // gfx import functions
 void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 	std::vector<ChrGfxTile>& p_tiles,

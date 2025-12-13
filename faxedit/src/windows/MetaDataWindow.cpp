@@ -34,12 +34,14 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				if (ImGui::BeginTabItem("Scene")) {
 
 					bool l_bldg{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
-					show_scene(l_chunk.m_scene, !l_bldg, !l_bldg, false);
 
 					if (l_bldg) {
+						show_scene(m_game->m_building_scenes.at(m_sel_screen), true);
 						ImGui::Separator();
-						imgui_text("Building scenes are set per screen as Game Metadata");
+						imgui_text("Building world scenes are set per screen");
 					}
+					else
+						show_scene(l_chunk.m_scene, false);
 
 					ImGui::EndTabItem();
 				}
@@ -174,24 +176,6 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::EndTabItem();
 				}
 
-				if (ImGui::BeginTabItem("Scenes")) {
-					static std::size_t ls_sel_bldg{ 0 };
-
-					ui::imgui_slider_with_arrows("###bsroom",
-						std::format("Building Room {}: {}", ls_sel_bldg,
-							get_description(static_cast<byte>(ls_sel_bldg), m_labels_buildings)),
-						ls_sel_bldg, 0, c::WORLD_BUILDINGS_SCREEN_COUNT - 1,
-						"", false, true);
-
-					show_scene(m_game->m_building_scenes.at(ls_sel_bldg),
-						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
-						m_sel_screen == ls_sel_bldg,
-						m_sel_chunk == c::CHUNK_IDX_BUILDINGS &&
-						m_sel_screen == ls_sel_bldg, true);
-
-					ImGui::EndTabItem();
-				}
-
 				if (ImGui::BeginTabItem("Sprite Sets")) {
 
 					show_sprite_npc_bundle_screen();
@@ -319,7 +303,6 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::EndTabItem();
 				}
 
-
 				// GAME - JUMP-ON ANIMATION - BEGIN
 
 				if (ImGui::BeginTabItem("Jump-On")) {
@@ -379,6 +362,33 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ImGui::EndTabItem();
 				}
+
+				// GAME - FOG - BEGIN
+
+				if (ImGui::BeginTabItem("Fog")) {
+					auto& l_fog{ m_game->m_fog };
+
+					imgui_text("World and palette combination for the fog to be in effect");
+					imgui_text("Set to an invalid world number to disable fog entirely");
+
+					ImGui::Separator();
+
+					ui::imgui_slider_with_arrows("###fogw",
+						std::format("World: {}",
+							get_description(l_fog.m_world_no, m_labels_worlds)),
+						l_fog.m_world_no, 0, m_game->m_chunks.size()
+					);
+
+					ui::imgui_slider_with_arrows("###fogp",
+						std::format("Palette: {}",
+							get_description(l_fog.m_palette_no, m_labels_palettes)),
+						l_fog.m_palette_no, 0, m_game->m_palettes.size() - 1
+					);
+
+					ImGui::EndTabItem();
+				}
+
+				// GAME - FOG - END
 
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
@@ -552,8 +562,13 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 					mouse_pos.y >= quad_pos.y && mouse_pos.y < quad_end.y;
 
 				if (hovered && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-					l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
-					generate_metatile_textures(p_rnd);
+					byte oldval{ l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) };
+					byte newval{ static_cast<byte>(m_sel_nes_tile) };
+
+					if (oldval != newval) {
+						l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
+						generate_metatile_textures(p_rnd, m_sel_metatile);
+					}
 				}
 				else if (hovered && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 					m_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
@@ -636,8 +651,9 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::SeparatorText("Sub-palettes per quadrant");
 
-		ui::imgui_slider_with_arrows("mtdeftl", "Top-Left",
-			l_mt_def.m_attr_tl, 0, 3);
+		if (ui::imgui_slider_with_arrows("mtdeftl", "Top-Left",
+			l_mt_def.m_attr_tl, 0, 3))
+			generate_metatile_textures(p_rnd, m_sel_metatile);
 		ui::imgui_slider_with_arrows("mtdeftr", "Top-Right",
 			l_mt_def.m_attr_tr, 0, 3);
 		ui::imgui_slider_with_arrows("mtdefbl", "Bottom-Left",
@@ -649,7 +665,8 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		if (ui::imgui_button("Add metatile", 2)) {
 			p_chunk.m_metatiles.push_back(fe::Metatile());
-			generate_metatile_textures(p_rnd);
+			generate_metatile_textures(p_rnd,
+				p_chunk.m_metatiles.size() - 1);
 		}
 
 		ImGui::SameLine();
@@ -687,24 +704,21 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 	}
 }
 
-void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_regen_tiles,
-	bool p_regen_palette, bool p_show_pos) {
+void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_show_pos) {
 
 	if (fe::ui::imgui_slider_with_arrows("##wsp",
 		std::format("Palette: {}", get_description(static_cast<byte>(p_scene.m_palette), m_labels_palettes)),
 		p_scene.m_palette, 0,
 		m_game->m_palettes.size() - 1,
 		"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
-		if (p_regen_palette)
-			m_atlas_new_palette_no = p_scene.m_palette;
+		m_atlas_new_palette_no = p_scene.m_palette;
 	}
 
 	if (fe::ui::imgui_slider_with_arrows("###wst",
 		std::format("Tileset: {}", get_description(static_cast<byte>(p_scene.m_tileset), m_labels_tilesets)),
 		p_scene.m_tileset, 0,
 		m_game->m_tilesets.size() - 1))
-		if (p_regen_tiles)
-			m_atlas_new_tileset_no = p_scene.m_tileset;
+		m_atlas_new_tileset_no = p_scene.m_tileset;
 
 	fe::ui::imgui_slider_with_arrows("###wsm",
 		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music), m_labels_music)),

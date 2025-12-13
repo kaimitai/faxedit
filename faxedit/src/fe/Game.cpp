@@ -82,6 +82,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 
 	extract_scenes_if_empty(p_config);
 	extract_palette_to_music(p_config);
+	extract_fog_parameters(p_config);
 
 	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
 	for (std::size_t i{ 0 }; i < 31; ++i) {
@@ -816,7 +817,7 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 	while (m_building_scenes.size() < c::WORLD_BUILDINGS_SCREEN_COUNT)
 		m_building_scenes.push_back(fe::Scene());
 
-	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_TO_MUSIC_OFFSET) };
+	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_SCENE_OFFSET) };
 
 	for (std::size_t i{ 0 }; i < m_building_scenes.size(); ++i) {
 		if (m_building_scenes[i].m_palette == 256)
@@ -833,7 +834,7 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 	}
 
 	// set scene values for each world
-	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
+	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_SCENE_OFFSET) };
 
 	for (std::size_t i{ 0 }; i < m_chunks.size(); ++i) {
 		if (m_chunks[i].m_scene.m_tileset == 256)
@@ -860,6 +861,15 @@ void fe::Game::extract_palette_to_music(const fe::Config& p_config) {
 			m_rom_data.at(l_slot_offset + i),
 			m_rom_data.at(l_slot_offset + l_slots + i)
 		));
+}
+
+void fe::Game::extract_fog_parameters(const fe::Config& p_config) {
+	m_fog.m_world_no = m_rom_data.at(
+		p_config.constant(c::ID_FOG_WORLD_OFFSET)
+	);
+	m_fog.m_palette_no = m_rom_data.at(
+		p_config.constant(c::ID_FOG_PALETTE_OFFSET)
+	);
 }
 
 void fe::Game::initialize_game_gfx_metadata(const fe::Config& p_config) {

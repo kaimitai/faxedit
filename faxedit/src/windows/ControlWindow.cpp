@@ -168,6 +168,10 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			// extract gfx
 			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
 			m_game->initialize_game_gfx_metadata(m_config);
+
+			// clear staging area for gfx
+			m_gfx.clear_all_tilemap_import_results();
+
 			add_message("Loaded xml file " + get_xml_path(), 2);
 		}
 		catch (const std::runtime_error& p_ex) {

@@ -135,6 +135,7 @@ namespace fe {
 		bool has_tilemap_import_result(std::size_t p_key) const;
 		ChrTilemap get_tilemap_import_result(std::size_t p_key) const;
 		void clear_tilemap_import_result(std::size_t p_key);
+		void clear_all_tilemap_import_results(void);
 
 		// functions for bmp import
 		void import_tilemap_bmp(SDL_Renderer* p_rnd,

@@ -49,8 +49,14 @@ namespace fe {
 		constexpr char ID_PALETTE_TO_MUSIC_OFFSET[]{ "palette_to_music_offset" };
 		
 		// scene definition start offsets
-		constexpr char ID_WORLD_TO_TILESET_OFFSET[]{ "world_to_tileset_offset" };
-		constexpr char ID_BUILDING_TO_MUSIC_OFFSET[]{ "building_to_music_offset" };
+		constexpr char ID_WORLD_SCENE_OFFSET[]{ "world_scene_offset" };
+		constexpr char ID_BUILDING_SCENE_OFFSET[]{ "building_scene_offset" };
+		
+		// fog parameter offsets
+		constexpr char ID_FOG_WORLD_OFFSET[]{ "fog_world_offset" };
+		constexpr char ID_FOG_PALETTE_OFFSET[]{ "fog_palette_offset" };
+		constexpr char ID_FOG_RESERVED_CHR_IDXS[]{ "reserved_fog_chr_indexes" };
+
 		// path to mascon parameter offsets
 		constexpr char ID_PTM_STAGE_NO_OFFSET[]{ "ptm_stage_no_offset" };
 		constexpr char ID_PTM_SCREEN_NO_OFFSET[]{ "ptm_screen_no_offset" };

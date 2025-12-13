@@ -465,6 +465,7 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_jump_on_tiles(p_config, p_game, p_rom);
 	encode_scene_data(p_config, p_game, p_rom);
 	encode_palette_to_music(p_config, p_game, p_rom);
+	encode_fog_data(p_config, p_game, p_rom);
 
 	// will only patch images which have been loaded during runtime
 	for (const auto& gfxtilemap : p_game.m_game_gfx)
@@ -697,7 +698,7 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 	std::vector<byte>& p_rom) const {
 
 	// patch building screen scenes
-	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_TO_MUSIC_OFFSET) };
+	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_SCENE_OFFSET) };
 	const auto& bscenes{ p_game.m_building_scenes };
 
 	for (std::size_t i{ 0 }; i < bscenes.size(); ++i) {
@@ -708,7 +709,7 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 	}
 
 	// patch scenes for each world
-	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_TO_TILESET_OFFSET) };
+	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_SCENE_OFFSET) };
 	const auto& wscenes{ p_game.m_chunks };
 
 	for (std::size_t i{ 0 }; i < wscenes.size(); ++i) {
@@ -717,6 +718,11 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 		p_rom.at(l_wscene_start + 16 + i) = wscenes[i].m_scene.get_pos_as_byte();
 		p_rom.at(l_wscene_start + 24 + i) = static_cast<byte>(wscenes[i].m_scene.m_music);
 	}
+}
+
+void fe::ROM_Manager::encode_fog_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
+	p_rom.at(p_config.constant(c::ID_FOG_WORLD_OFFSET)) = p_game.m_fog.m_world_no;
+	p_rom.at(p_config.constant(c::ID_FOG_PALETTE_OFFSET)) = p_game.m_fog.m_palette_no;
 }
 
 void fe::ROM_Manager::encode_palette_to_music(const fe::Config& p_config,

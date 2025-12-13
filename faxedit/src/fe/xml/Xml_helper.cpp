@@ -165,6 +165,15 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		}
 	}
 
+	// if fog is not defined, use the default values for the fog-struct's constructor
+	auto n_fog{ n_root.child(c::TAG_FOG) };
+	if (n_fog) {
+		l_game.m_fog = fe::Fog(
+			parse_numeric_byte(n_fog.attribute(c::ATTR_CHUNK_ID).as_string()),
+			parse_numeric_byte(n_fog.attribute(c::TAG_PALETTE).as_string())
+		);
+	}
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -506,6 +515,12 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_slot.append_attribute(c::ATTR_MUSIC);
 		n_slot.attribute(c::ATTR_MUSIC).set_value(byte_to_hex(slots[i].m_music));
 	}
+
+	auto n_fog{ n_metadata.append_child(c::TAG_FOG) };
+	n_fog.append_attribute(c::ATTR_CHUNK_ID);
+	n_fog.attribute(c::ATTR_CHUNK_ID).set_value(byte_to_hex(p_game.m_fog.m_world_no));
+	n_fog.append_attribute(c::TAG_PALETTE);
+	n_fog.attribute(c::TAG_PALETTE).set_value(byte_to_hex(p_game.m_fog.m_palette_no));
 
 	// for each chunk
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
