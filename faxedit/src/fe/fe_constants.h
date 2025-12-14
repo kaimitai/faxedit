@@ -36,6 +36,9 @@ namespace fe {
 		// constant offsets
 		constexpr char ID_WORLD_TILEMAP_MD[]{ "world_tilemap_metadata" };
 		constexpr char ID_PALETTE_OFFSET[]{ "palette_offset" };
+		constexpr char ID_PALETTE_COUNT[]{ "palette_count" };
+		constexpr char ID_HUD_ATTRIBUTE_LOOKUP_OFFSET[]{ "hud_attribute_lookup_offset" };
+		constexpr char ID_HUD_ATTRIBUTE_LOOKUP_COUNT[]{ "hud_attribute_lookup_count" };
 		constexpr char ID_SPAWN_LOC_DATA_START[]{ "spawn_loc_data_start" };
 		constexpr char ID_STAGE_CONN_OFFSET[]{ "stage_conn_offset" };
 		constexpr char ID_STAGE_SCREEN_OFFSET[]{ "stage_screen_offset" };
@@ -47,11 +50,11 @@ namespace fe {
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
 		constexpr char ID_PALETTE_TO_MUSIC_OFFSET[]{ "palette_to_music_offset" };
-		
+
 		// scene definition start offsets
 		constexpr char ID_WORLD_SCENE_OFFSET[]{ "world_scene_offset" };
 		constexpr char ID_BUILDING_SCENE_OFFSET[]{ "building_scene_offset" };
-		
+
 		// fog parameter offsets
 		constexpr char ID_FOG_WORLD_OFFSET[]{ "fog_world_offset" };
 		constexpr char ID_FOG_PALETTE_OFFSET[]{ "fog_palette_offset" };

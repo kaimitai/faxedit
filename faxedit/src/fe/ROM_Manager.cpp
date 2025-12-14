@@ -504,11 +504,21 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 // patch ROM in place for the palette data
 void fe::ROM_Manager::encode_palette_data(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	std::size_t l_rom_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
+	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
 	for (const auto& palette : p_game.m_palettes) {
-		patch_bytes(palette, p_rom, l_rom_offset);
-			l_rom_offset += 16;
+		patch_bytes(palette, p_rom, l_palette_offset);
+		l_palette_offset += 16;
 	}
+
+	// we are now at the palette to hud idx offset
+	const auto& hud{ p_game.m_hud_attributes };
+	for (std::size_t i{ 0 }; i < hud.m_palette_to_hud_idx.size(); ++i)
+		p_rom.at(l_palette_offset + i) = hud.m_palette_to_hud_idx[i];
+
+	// and finally patch the hud attributes themselves
+	std::size_t l_hud_attr_offset{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_OFFSET) };
+	for (std::size_t i{ 0 }; i < hud.m_hud_attributes.size(); ++i)
+		p_rom.at(l_hud_attr_offset + i) = hud.m_hud_attributes[i].to_byte();
 }
 
 // patch ROM in place for the stage data

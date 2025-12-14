@@ -162,8 +162,10 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game->m_rom_data = l_rom;
 
 			// extract values not present in previous xml versions
+			// none of this should do anything if we got values from the xml
 			m_game->extract_scenes_if_empty(m_config);
 			m_game->extract_palette_to_music(m_config);
+			m_game->extract_hud_attributes(m_config);
 
 			// extract gfx
 			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);

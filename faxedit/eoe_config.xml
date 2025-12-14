@@ -64,6 +64,9 @@
 		<const name="transition_data_end" value="0x3fff0" />
 		<!-- palettes -->
 		<const name="palette_offset" value="0x2c010" />
+		<const name="palette_count" value="31" />
+		<const name="hud_attribute_lookup_offset" value="0x3c02b" />
+		<const name="hud_attribute_lookup_count" value="24" />
 		<!-- stages and start data -->
 		<const name="stage_conn_offset" value="0x3e5f7" />
 		<const name="stage_screen_offset" value="0x3e603" />
@@ -173,7 +176,7 @@
 		<set name="reserved_script_string_indexes" values="3,6,16,18,19,20" />
 		<!-- ppu-indexed chr-tiles which are part of the fog animation -->
 		<!-- should be considered read-only on bmp import -->
-		<set name="reserved_fog_chr_indexes" values="$80,$82,$84,$86" />
+		<set name="reserved_fog_chr_indexes" values="$80,$81,$82,$83,$84,$85,$86,$87" />
 	</sets>
 
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->

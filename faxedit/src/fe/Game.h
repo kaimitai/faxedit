@@ -34,18 +34,21 @@ namespace fe {
 	struct Fog {
 		byte m_world_no, m_palette_no;
 
-		Fog(byte p_world_no,
-			byte p_palette_no) :
-			m_world_no{ p_world_no },
-			m_palette_no{ p_palette_no }
-		{
-		}
+		Fog(byte p_world_no, byte p_palette_no);
+		Fog(void);
+	};
 
-		Fog(void) :
-			m_world_no{ 2 },
-			m_palette_no{ 10 }
-		{
-		}
+	struct PaletteAttribute {
+		byte m_tl, m_tr, m_bl, m_br;
+
+		PaletteAttribute(byte b);
+		PaletteAttribute(byte p_tl, byte p_tr, byte p_bl, byte p_br);
+		byte to_byte(void) const;
+	};
+
+	struct HUD_Attributes {
+		std::vector<byte> m_palette_to_hud_idx;
+		std::vector<PaletteAttribute> m_hud_attributes;
 	};
 
 	class Config;
@@ -67,6 +70,8 @@ namespace fe {
 		fe::Push_block_parameters m_push_block;
 		std::vector<byte> m_jump_on_animation;
 		fe::Fog m_fog;
+
+		fe::HUD_Attributes m_hud_attributes;
 
 		// gfx objects which can be loaded and patched
 		std::vector<fe::GameGfxTilemap> m_game_gfx;
@@ -103,6 +108,7 @@ namespace fe {
 		void extract_scenes_if_empty(const fe::Config& p_config);
 		void extract_palette_to_music(const fe::Config& p_config);
 		void extract_fog_parameters(const fe::Config& p_config);
+		void extract_hud_attributes(const fe::Config& p_config);
 
 		// gfx functions
 		void initialize_game_gfx_metadata(const fe::Config& p_config);

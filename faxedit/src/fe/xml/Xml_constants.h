@@ -25,6 +25,11 @@ namespace fe {
 			constexpr char TAG_PALETTES[]{ "palettes" };
 			constexpr char TAG_PALETTE[]{ "palette" };
 
+			constexpr char ATTR_HUD_ATTR_INDEX[]{ "hud_attr_index" };
+
+			constexpr char TAG_HUD_ATTRIBUTES[]{ "hud_attributes" };
+			constexpr char TAG_HUD_ATTRIBUTE[]{ "hud_attribute" };
+
 			constexpr char TAG_SPAWN_POINTS[]{ "spawn_points" };
 			constexpr char TAG_SPAWN_POINT[]{ "spawn_point" };
 
@@ -54,7 +59,7 @@ namespace fe {
 			constexpr char ATTR_MATTOCK_ANIMATION[]{ "mattock_animation" };
 
 			constexpr char TAG_BUILDING_SCENES[]{ "building_scenes" };
-			constexpr char TAG_SCENE[]{ "scenes" };
+			constexpr char TAG_SCENE[]{ "scene" };
 
 			constexpr char TAG_CHUNKS[]{ "worlds" };
 			constexpr char TAG_CHUNK[]{ "world" };

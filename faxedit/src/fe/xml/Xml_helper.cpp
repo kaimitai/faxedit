@@ -48,6 +48,30 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 	for (auto n_palette{ n_palettes.child(c::TAG_PALETTE) }; n_palette;
 		n_palette = n_palette.next_sibling(c::TAG_PALETTE)) {
 		l_game.m_palettes.push_back(parse_byte_list(n_palette.attribute(c::ATTR_BYTES).as_string()));
+
+		// if the hud attribute index exists, we get it from here
+		// older xml versions will not have it, but then it is pulled from ROM
+		if (n_palette.attribute(c::ATTR_HUD_ATTR_INDEX))
+			l_game.m_hud_attributes.m_palette_to_hud_idx.push_back(
+				parse_numeric_byte(n_palette.attribute(c::ATTR_HUD_ATTR_INDEX).as_string())
+			);
+	}
+
+	// extract hud attribute lookup table if it exists, otherwise
+	// it must be pulled from ROM later
+	auto n_hud_attrs{ n_root.child(c::TAG_HUD_ATTRIBUTES) };
+	if (n_hud_attrs) {
+		for (auto n_hud_attr{ n_hud_attrs.child(c::TAG_HUD_ATTRIBUTE) };
+			n_hud_attr; n_hud_attr = n_hud_attr.next_sibling(c::TAG_HUD_ATTRIBUTE)) {
+			l_game.m_hud_attributes.m_hud_attributes.push_back(
+				fe::PaletteAttribute(
+					parse_numeric_byte(n_hud_attr.attribute(c::ATTR_MT_PAL_TL).as_string()),
+					parse_numeric_byte(n_hud_attr.attribute(c::ATTR_MT_PAL_TR).as_string()),
+					parse_numeric_byte(n_hud_attr.attribute(c::ATTR_MT_PAL_BL).as_string()),
+					parse_numeric_byte(n_hud_attr.attribute(c::ATTR_MT_PAL_BR).as_string())
+				)
+			);
+		}
 	}
 
 	// extract building parameters
@@ -370,6 +394,31 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_palette.attribute(c::ATTR_NO).set_value(i);
 		n_palette.append_attribute(c::ATTR_BYTES);
 		n_palette.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_palettes[i], true));
+
+		n_palette.append_attribute(c::ATTR_HUD_ATTR_INDEX);
+		n_palette.attribute(c::ATTR_HUD_ATTR_INDEX).set_value(
+			byte_to_hex(p_game.m_hud_attributes.m_palette_to_hud_idx.at(i))
+		);
+	}
+
+	// for each hud attribute
+	auto n_hud_atts{ n_metadata.append_child(c::TAG_HUD_ATTRIBUTES) };
+	const auto& l_hatts{ p_game.m_hud_attributes.m_hud_attributes };
+
+	for (std::size_t i{ 0 }; i < l_hatts.size(); ++i) {
+		auto n_hud_att{ n_hud_atts.append_child(c::TAG_HUD_ATTRIBUTE) };
+
+		n_hud_att.append_attribute(c::ATTR_NO);
+		n_hud_att.attribute(c::ATTR_NO).set_value(i);
+
+		n_hud_att.append_attribute(c::ATTR_MT_PAL_TL);
+		n_hud_att.attribute(c::ATTR_MT_PAL_TL).set_value(byte_to_hex(l_hatts[i].m_tl));
+		n_hud_att.append_attribute(c::ATTR_MT_PAL_TR);
+		n_hud_att.attribute(c::ATTR_MT_PAL_TR).set_value(byte_to_hex(l_hatts[i].m_tr));
+		n_hud_att.append_attribute(c::ATTR_MT_PAL_BL);
+		n_hud_att.attribute(c::ATTR_MT_PAL_BL).set_value(byte_to_hex(l_hatts[i].m_bl));
+		n_hud_att.append_attribute(c::ATTR_MT_PAL_BR);
+		n_hud_att.attribute(c::ATTR_MT_PAL_BR).set_value(byte_to_hex(l_hatts[i].m_br));
 	}
 
 	// for each npc-bundle

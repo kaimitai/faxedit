@@ -83,9 +83,11 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	extract_scenes_if_empty(p_config);
 	extract_palette_to_music(p_config);
 	extract_fog_parameters(p_config);
+	extract_hud_attributes(p_config);
 
 	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
-	for (std::size_t i{ 0 }; i < 31; ++i) {
+	std::size_t l_palette_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+	for (std::size_t i{ 0 }; i < l_palette_count; ++i) {
 		NES_Palette l_tmp_palette;
 		for (std::size_t pidx{ l_palette_offset + 16 * i }; pidx < l_palette_offset + 16 * i + 16; ++pidx)
 			l_tmp_palette.push_back(p_rom_data[pidx]);
@@ -872,6 +874,26 @@ void fe::Game::extract_fog_parameters(const fe::Config& p_config) {
 	);
 }
 
+void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
+	std::size_t l_palette_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+	std::size_t l_hud_attribute_count{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_COUNT) };
+	std::size_t l_hud_attribute_offset{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_OFFSET) };
+	std::size_t l_attr_to_hud_idx_offset{
+		p_config.constant(c::ID_PALETTE_OFFSET) +
+		16 * l_palette_count
+	};
+
+	for (std::size_t i{ 0 };
+		m_hud_attributes.m_palette_to_hud_idx.size() < l_palette_count; ++i)
+		m_hud_attributes.m_palette_to_hud_idx.push_back(m_rom_data.at(l_attr_to_hud_idx_offset + i));
+
+	for (std::size_t i{ 0 };
+		m_hud_attributes.m_hud_attributes.size() < l_hud_attribute_count; ++i)
+		m_hud_attributes.m_hud_attributes.push_back(
+			fe::PaletteAttribute(m_rom_data.at(l_hud_attribute_offset + i))
+		);
+}
+
 void fe::Game::initialize_game_gfx_metadata(const fe::Config& p_config) {
 	m_game_gfx.clear();
 
@@ -935,4 +957,43 @@ void fe::Game::initialize_game_gfx_metadata(const fe::Config& p_config) {
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_PPU_COUNT),
 		false,
 		false, false));
+}
+
+fe::Fog::Fog(byte p_world_no,
+	byte p_palette_no) :
+	m_world_no{ p_world_no },
+	m_palette_no{ p_palette_no }
+{
+}
+
+fe::Fog::Fog(void) :
+	m_world_no{ 2 },
+	m_palette_no{ 10 }
+{
+}
+
+fe::PaletteAttribute::PaletteAttribute(byte p_tl, byte p_tr,
+	byte p_bl, byte p_br) :
+	m_tl{ p_tl },
+	m_tr{ p_tr },
+	m_bl{ p_bl },
+	m_br{ p_br }
+{
+}
+
+
+fe::PaletteAttribute::PaletteAttribute(byte b) {
+	m_tl = (b >> 0) & 0x03; // bits 0–1
+	m_tr = (b >> 2) & 0x03; // bits 2–3
+	m_bl = (b >> 4) & 0x03; // bits 4–5
+	m_br = (b >> 6) & 0x03; // bits 6–7
+}
+
+byte fe::PaletteAttribute::to_byte(void) const {
+	byte result{ 0 };
+	result |= (m_tl & 0x03) << 0; // bits 0–1
+	result |= (m_tr & 0x03) << 2; // bits 2–3
+	result |= (m_bl & 0x03) << 4; // bits 4–5
+	result |= (m_br & 0x03) << 6; // bits 6–7
+	return result;
 }
