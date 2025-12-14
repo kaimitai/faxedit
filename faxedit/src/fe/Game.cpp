@@ -910,7 +910,10 @@ void fe::Game::initialize_game_gfx_metadata(const fe::Config& p_config) {
 		true,
 		true, true,
 		p_config.constant(c::ID_TITLE_ATTRIBUTE_OFFSET),
-		p_config.constant(c::ID_TITLE_PALETTE_OFFSET)
+		p_config.constant(c::ID_TITLE_PALETTE_OFFSET),
+		true,
+		p_config.constant(c::ID_ALPHABET_CHR_OFFSET),
+		p_config.constant(c::ID_NUMERIC_CHR_OFFSET)
 	));
 
 	m_game_gfx.push_back(fe::GameGfxTilemap(

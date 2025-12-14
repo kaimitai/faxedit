@@ -113,6 +113,9 @@ namespace fe {
 		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_W[]{ "item_vscreen_mt_w" };
 		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_H[]{ "item_vscreen_mt_h" };
 
+		constexpr char ID_ALPHABET_CHR_OFFSET[]{ "alphabet_chr_offset" };
+		constexpr char ID_NUMERIC_CHR_OFFSET[]{ "numeric_chr_offset" };
+
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
 		constexpr char ID_SPRITE_LABELS[]{ "sprite_labels" };

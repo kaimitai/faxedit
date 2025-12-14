@@ -122,15 +122,6 @@
 		<!-- fog definition constants -->
 		<const name="fog_world_offset" value="0x3dfd8" />
 		<const name="fog_palette_offset" value="0x3dfdf" />
-		<!-- item background tiles for the 39 items - virtual screen defined for easy bmp imports -->
-		<const name="item_vscreen_mt_x" value="0" />
-		<const name="item_vscreen_mt_y" value="0" />
-		<const name="item_vscreen_mt_w" value="1" />
-		<const name="item_vscreen_mt_h" value="39" />
-		<const name="item_vscreen_chr_offset" value="0x28510" />
-		<const name="item_vscreen_chr_ppu_index" value="$00" />
-		<const name="item_vscreen_chr_ppu_count" value="144" />
-		<const name="item_vscreen_tilemap_offset" value="0x2b4b0" />
 		<!-- title screen - dimensions given in metatile-space -->
 		<const name="title_screen_mt_x" value="1" />
 		<const name="title_screen_mt_y" value="1" />
@@ -138,7 +129,7 @@
 		<const name="title_screen_mt_h" value="8" />
 		<const name="title_screen_chr_offset" value="0x28e10" />
 		<const name="title_screen_chr_ppu_index" value="$00" />
-		<const name="title_screen_chr_ppu_count" value="213" />
+		<const name="title_screen_chr_ppu_count" value="214" />
 		<const name="title_screen_tilemap_offset" value="0x30010" />
 		<const name="title_screen_attribute_offset" value="0x29b70" />
 		<const name="title_screen_palette_offset" value="0x2c110" />
@@ -168,6 +159,18 @@
 		<const name="outro_anim_palette_offset" region="us,randum" value="0x326f8" />
 		<const name="outro_anim_palette_offset" region="eu" value="0x32743" />
 		<const name="outro_anim_palette_offset" region="jp,en-transl" value="0x32af4" />
+		<!-- item background tiles for the 39 items - virtual screen defined for easy bmp imports -->
+		<const name="item_vscreen_mt_x" value="0" />
+		<const name="item_vscreen_mt_y" value="0" />
+		<const name="item_vscreen_mt_w" value="1" />
+		<const name="item_vscreen_mt_h" value="39" />
+		<const name="item_vscreen_chr_offset" value="0x28510" />
+		<const name="item_vscreen_chr_ppu_index" value="$00" />
+		<const name="item_vscreen_chr_ppu_count" value="144" />
+		<const name="item_vscreen_tilemap_offset" value="0x2b4b0" />
+		<!-- some gfx needed for chr tile pool adjustment for the title screen -->
+		<const name="alphabet_chr_offset" value="0x28250" />
+		<const name="numeric_chr_offset" value="0x28450" />
 	</consts>
 	<!-- value sets -->
 	<sets>

@@ -639,13 +639,17 @@ void fe::gfx::clear_all_tilemap_import_results(void) {
 }
 
 // gfx import functions
-void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
+std::pair<int, int> fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 	std::vector<ChrGfxTile>& p_tiles,
 	const std::vector<std::vector<byte>>& p_palette,
 	ChrDedupMode p_dedupmode,
 	const std::string& p_path,
 	const std::string& p_filename,
 	std::size_t p_key) {
+
+	// return values - did we have room to spare or did we overflow?
+	int leftover_chr_count{ 0 };
+	int overflow_chr_count{ 0 };
 
 	SDL_Surface* srf{ load_bmp(p_path, p_filename) };
 
@@ -714,6 +718,8 @@ void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 								pxpos.first, pxpos.second, p_palette.at(l_final_tilemap[j][i]->m_palette),
 								tileToIndices, p_tiles)
 						);
+
+						++overflow_chr_count;
 					}
 				}
 			}
@@ -735,6 +741,8 @@ void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 		if (!l_found)
 			spareindices.push_back(i);
 	}
+
+	leftover_chr_count = static_cast<int>(spareindices.size());
 
 	if (!spareindices.empty()) {
 		klib::NES_tile l_empty;
@@ -758,6 +766,8 @@ void fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 	m_tilemap_import_results[p_key] = result;
 	// render it to the outside
 	gen_tilemap_texture(p_rnd, result, p_key);
+
+	return std::make_pair(leftover_chr_count, overflow_chr_count);
 }
 
 std::pair<int, int> fe::gfx::mt_to_pixels(std::size_t mt_x, std::size_t mt_y,

@@ -137,7 +137,7 @@ namespace fe {
 		void clear_all_tilemap_import_results(void);
 
 		// functions for bmp import
-		void import_tilemap_bmp(SDL_Renderer* p_rnd,
+		std::pair<int, int> import_tilemap_bmp(SDL_Renderer* p_rnd,
 			std::vector<ChrGfxTile>& p_tiles,
 			const std::vector<std::vector<byte>>& p_palette,
 			ChrDedupMode p_dedupmode,

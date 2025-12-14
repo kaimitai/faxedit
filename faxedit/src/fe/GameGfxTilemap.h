@@ -45,9 +45,12 @@ namespace fe {
 			m_rom_offset_pal,
 			m_rom_offset_chr,
 			m_chr_ppu_index,
-			m_chr_ppu_count;
+			m_chr_ppu_count,
+			m_alpha_chr_offset,
+			m_numeric_chr_offset;
 
-		bool m_patch_attributes, m_patch_palette, m_fix_tile_0;
+		bool m_patch_attributes, m_patch_palette, m_fix_tile_0,
+			m_add_alphanumeric;
 		bool m_loaded;
 
 		std::vector<std::vector<ChrMetaTile>> m_tilemap;
@@ -66,7 +69,10 @@ namespace fe {
 			bool p_patch_attr,
 			bool p_patch_palette,
 			std::size_t p_attr_rom_offset = 0,
-			std::size_t p_pal_rom_offset = 0);
+			std::size_t p_pal_rom_offset = 0,
+			bool p_add_alphanumeric = false,
+			std::size_t p_alpha_chr_offset = 0,
+			std::size_t p_numeric_chr_offset = 0);
 
 		void load_from_rom(const std::vector<byte>& p_rom);
 		void commit_import(const fe::ChrTilemap& p_result);

@@ -158,7 +158,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 					i < c::CHR_HUD_TILE_COUNT
 				));
 
-			m_gfx.import_tilemap_bmp(p_rnd,
+			auto bmpimportres = m_gfx.import_tilemap_bmp(p_rnd,
 				l_tiles,
 				flat_pal_to_2d_pal(m_game->m_palettes.at(m_game->get_default_palette_no(m_sel_gfx_ts_world,
 					l_pass_screen))),
@@ -168,6 +168,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				l_gfx_key);
 
 			add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), 2);
+			add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
+				bmpimportres.first, bmpimportres.second), 6);
 		}
 		catch (const std::runtime_error& ex) {
 			add_message(ex.what(), 1);
@@ -295,13 +297,17 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				for (std::size_t i : l_lock_ind)
 					l_tmp_tiles.at(i).m_readonly = true;
 
-				m_gfx.import_tilemap_bmp(p_rnd,
+				auto bmpimportres = m_gfx.import_tilemap_bmp(p_rnd,
 					l_tmp_tiles,
 					flat_pal_to_2d_pal(m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_palette),
 					ls_dedup_strat,
 					get_bmp_path(),
 					get_bmp_filename(l_gfx_key),
 					l_gfx_key);
+
+				add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), 2);
+				add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
+					bmpimportres.first, bmpimportres.second), 6);
 			}
 			catch (const std::runtime_error& ex) {
 				add_message(ex.what(), 1);
@@ -365,7 +371,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			"", false, true);
 
 		auto& selbggxfobj{ m_game->m_game_gfx.at(ls_sel_game_gfx) };
-		
+
 		if (selbggxfobj.m_loaded)
 			show_palette_window(selbggxfobj.m_palette);
 		else
@@ -413,14 +419,21 @@ bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
 	bool was_changed{ false };
 
 	// selected palette index
-	static std::size_t ls_sel_pal_idx{ 0 };
+	static std::size_t ls_sel_pal_idx{ 1 };
+	static bool ls_edit_bg_col{ false };
+
 	const auto nescols{ m_gfx.get_nes_palette() };
 
 	ImGui::SeparatorText("Palette Colors");
 
 	for (std::size_t i{ 0 }; i < 16; ++i) {
+		bool l_disabled{ !ls_edit_bg_col && i % 4 == 0 };
+
 		ImVec4 col = SDL_Color_to_imgui(nescols->colors[p_palette.at(i)]);
 		ImGui::PushStyleColor(ImGuiCol_Button, col);
+
+		if (l_disabled)
+			ImGui::BeginDisabled();
 
 		if (ImGui::Button(std::format("###wpidx{}", i).c_str(),
 			ImVec2(32, 32))) {
@@ -434,6 +447,16 @@ bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
 			ImVec2 p_max = ImGui::GetItemRectMax();
 			draw_list->AddRect(p_min, p_max, IM_COL32(255, 255, 0, 255), 0.0f, 0, 2.0f);
 		}
+
+		// Tooltip with hex value of the NES-palette index
+		if (ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			imgui_text(std::format("${:02x}", p_palette.at(i)));
+			ImGui::EndTooltip();
+		}
+
+		if (l_disabled)
+			ImGui::EndDisabled();
 
 		ImGui::PopStyleColor();
 		if ((i + 1) % 4 != 0)
@@ -484,6 +507,11 @@ bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
 		if ((i + 1) % 16 != 0)
 			ImGui::SameLine();
 	}
+
+	ImGui::Separator();
+
+	ui::imgui_checkbox("Allow editing bg-color", ls_edit_bg_col,
+		"Faxanadu will override the bg-color with NES palette index $0f (black) in-game");
 
 	return was_changed;
 }
@@ -596,6 +624,8 @@ fe::ChrTilemap fe::MainWindow::get_world_mt_tilemap(std::size_t p_world_no,
 	std::size_t l_tileset_no{ m_game->get_default_tileset_no(
 		p_world_no, p_screen_no) };
 
+	// the bmp metatile-width should match the metatile picker
+	const std::size_t lc_metatile_width{ 10 };
 	const auto& mts{ m_game->m_chunks.at(p_world_no).m_metatiles };
 
 	std::set<std::size_t> use_mt_idx{ gen_metatile_usage(p_world_no,
@@ -619,7 +649,7 @@ fe::ChrTilemap fe::MainWindow::get_world_mt_tilemap(std::size_t p_world_no,
 
 		resrow.push_back(tile);
 
-		if (resrow.size() % 16 == 0) {
+		if (resrow.size() % lc_metatile_width == 0) {
 			result.m_tilemap.push_back(resrow);
 			resrow.clear();
 		}

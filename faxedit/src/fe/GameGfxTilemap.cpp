@@ -13,7 +13,10 @@ fe::GameGfxTilemap::GameGfxTilemap(const std::string& p_gfx_name,
 	bool p_patch_attr,
 	bool p_patch_palette,
 	std::size_t p_attr_rom_offset,
-	std::size_t p_pal_rom_offset) :
+	std::size_t p_pal_rom_offset,
+	bool p_add_alphanumeric,
+	std::size_t p_alpha_chr_offset,
+	std::size_t p_numeric_chr_offset) :
 	m_gfx_name{ p_gfx_name },
 	mt_x{ p_mtx },
 	mt_y{ p_mty },
@@ -28,6 +31,9 @@ fe::GameGfxTilemap::GameGfxTilemap(const std::string& p_gfx_name,
 	m_rom_offset_pal{ p_pal_rom_offset },
 	m_patch_attributes{ p_patch_attr },
 	m_patch_palette{ p_patch_palette },
+	m_add_alphanumeric{ p_add_alphanumeric },
+	m_alpha_chr_offset{ p_alpha_chr_offset },
+	m_numeric_chr_offset{ p_numeric_chr_offset },
 	m_loaded{ false }
 {
 }
@@ -141,6 +147,21 @@ void fe::GameGfxTilemap::load_from_rom(const std::vector<byte>& p_rom) {
 
 	if (m_fix_tile_0)
 		l_tiles[0].m_readonly = true;
+
+	// add alphanumeric tiles if required
+	if (m_add_alphanumeric) {
+		std::size_t l_chr_ppu_idx{ m_chr_ppu_index + m_chr_ppu_count };
+
+		// 0-9
+		for (std::size_t i{ 0 }; i < 10 && l_chr_ppu_idx < 256; ++i)
+			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(klib::NES_tile(
+				p_rom, m_numeric_chr_offset + 16 * i), true, true);
+
+		// A-Z + copyright symbol
+		for (std::size_t i{ 0 }; i < 27 && l_chr_ppu_idx < 256; ++i)
+			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(klib::NES_tile(
+				p_rom, m_alpha_chr_offset + 16 * i), true, true);
+	}
 
 	m_chr_tiles = l_tiles;
 
