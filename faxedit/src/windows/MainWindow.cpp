@@ -35,7 +35,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_gfx_ts_world{ 0 },
 	m_sel_gfx_ts_screen{ 0 },
 	m_emode{ fe::EditMode::Tilemap },
-	m_chr_picker_mode{ fe::ChrPickerMode::Default },
+	m_chr_picker_mode{ fe::ChrPickerMode::HUD },
 	m_gfx_emode{ fe::GfxEditMode::WorldChr },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
 	m_pulse_time{ 0.0f },
@@ -673,6 +673,8 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		m_game = fe::Game(m_config, bytes);
 		m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
+
+		initialize_hud_tilemap();
 
 		std::filesystem::path romPath(p_filepath);
 

@@ -102,6 +102,17 @@ std::vector<std::size_t> fe::Config::bmap_as_numeric_vec(const std::string& p_id
 	return result;
 }
 
+std::map<byte, std::vector<byte>> fe::Config::bmap_as_numeric_vectors(const std::string& p_id) const {
+	std::map<byte, std::vector<byte>> result;
+	const auto btovec{ bmap(p_id) };
+
+	for (const auto& kv : btovec)
+		result.insert(std::make_pair(kv.first,
+			xml::parse_byte_list(kv.second)));
+
+	return result;
+}
+
 void fe::Config::determine_region(const std::vector<byte>& p_rom) {
 	for (const auto& reg : m_region_defs) {
 		if (reg.m_filesize.has_value() && (reg.m_filesize.value() != p_rom.size()))

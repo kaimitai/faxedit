@@ -33,6 +33,10 @@ namespace fe {
 		std::vector<std::vector<std::optional<ChrMetaTile>>> m_tilemap;
 		std::vector<klib::NES_tile> m_tiles;
 		std::vector<std::vector<byte>> m_palette;
+
+		void set_flat_palette(const std::vector<byte>& p_palette);
+		void populate_attribute(byte p_tl, byte p_tr, byte p_bl, byte p_br);
+		void set_attribute(std::size_t p_mt_x, std::size_t p_mt_y, byte p_attr);
 	};
 
 	struct GameGfxTilemap {

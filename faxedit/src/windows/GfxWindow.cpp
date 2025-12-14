@@ -33,11 +33,11 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SeparatorText("Edit Mode");
 
-	if (ImGui::RadioButton("Tilesets and Metatiles",
+	if (ImGui::RadioButton("World Gfx",
 		m_gfx_emode == fe::GfxEditMode::WorldChr))
 		m_gfx_emode = fe::GfxEditMode::WorldChr;
 	ImGui::SameLine();
-	if (ImGui::RadioButton("BG Graphics",
+	if (ImGui::RadioButton("BG Gfx",
 		m_gfx_emode == fe::GfxEditMode::BgGraphics))
 		m_gfx_emode = fe::GfxEditMode::BgGraphics;
 	ImGui::SameLine();
@@ -45,9 +45,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		m_gfx_emode == fe::GfxEditMode::WorldPalettes))
 		m_gfx_emode = fe::GfxEditMode::WorldPalettes;
 	ImGui::SameLine();
-	if (ImGui::RadioButton("Gfx Palettes",
+	if (ImGui::RadioButton("BG Palettes",
 		m_gfx_emode == fe::GfxEditMode::GfxPalettes))
 		m_gfx_emode = fe::GfxEditMode::GfxPalettes;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("HUD",
+		m_gfx_emode == fe::GfxEditMode::HUDAttributes))
+		m_gfx_emode = fe::GfxEditMode::HUDAttributes;
 
 	ImGui::Separator();
 
@@ -382,7 +386,73 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			imgui_text("This palette will not be saved to ROM.\nIt is only used for bmp export and import.");
 		}
 	}
+	else if (m_gfx_emode == fe::GfxEditMode::HUDAttributes) {
+		const std::size_t HUD_GFX_KEY{ 1000 };
 
+		const auto regen_hud = [this](SDL_Renderer* p_rnd,
+			std::size_t p_palette_no) -> void {
+				m_hud_tilemap.set_flat_palette(m_game->m_palettes.at(p_palette_no));
+				const auto& attrs{
+					m_game->m_hud_attributes.m_hud_attributes.at(
+						m_game->m_hud_attributes.m_palette_to_hud_idx.at(p_palette_no)
+					)
+				};
+				m_hud_tilemap.populate_attribute(attrs.m_tl, attrs.m_tr, attrs.m_bl, attrs.m_br);
+				m_gfx.gen_tilemap_texture(p_rnd, m_hud_tilemap, HUD_GFX_KEY);
+			};
+
+		static std::size_t ls_sel_wpal{ 0 };
+		auto& hud_attrs{ m_game->m_hud_attributes };
+
+		if (ui::imgui_slider_with_arrows("###hpal",
+			std::format("Palette: {}", get_description(static_cast<byte>(ls_sel_wpal),
+				m_labels_palettes)),
+			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
+			"", false, true))
+			regen_hud(p_rnd, ls_sel_wpal);
+
+		ImGui::Separator();
+
+		if (ui::imgui_slider_with_arrows("###hamap",
+			"HUD Attribute Index", hud_attrs.m_palette_to_hud_idx.at(ls_sel_wpal),
+			0, hud_attrs.m_hud_attributes.size() - 1))
+			regen_hud(p_rnd, ls_sel_wpal);
+
+		auto& attrs{ hud_attrs.m_hud_attributes.at(hud_attrs.m_palette_to_hud_idx.at(ls_sel_wpal)) };
+
+		ImGui::SeparatorText("HUD Attribute Values");
+
+		ImGui::Text("Note: Altering these values will impact all palettes using this HUD attribute index");
+
+		ImGui::Separator();
+
+		if (ui::imgui_slider_with_arrows("###hatl", "Top Left",
+			attrs.m_tl, 0, 3))
+			regen_hud(p_rnd, ls_sel_wpal);
+		if (ui::imgui_slider_with_arrows("###hatr", "Top Right",
+			attrs.m_tr, 0, 3))
+			regen_hud(p_rnd, ls_sel_wpal);
+		if (ui::imgui_slider_with_arrows("###habl", "Bottom Left",
+			attrs.m_bl, 0, 3))
+			regen_hud(p_rnd, ls_sel_wpal);
+		if (ui::imgui_slider_with_arrows("###habr", "Bottom Right",
+			attrs.m_br, 0, 3))
+			regen_hud(p_rnd, ls_sel_wpal);
+
+		auto txt{ m_gfx.get_tileset_txt(HUD_GFX_KEY) };
+
+		ImGui::SeparatorText("HUD Preview");
+
+		if (txt != nullptr) {
+			ImGui::Image(txt, ImVec2(
+				static_cast<float>(2 * txt->w),
+				static_cast<float>(2 * txt->h)
+			));
+		}
+		else {
+			regen_hud(p_rnd, ls_sel_wpal);
+		}
+	}
 
 	if (m_gfx_emode == fe::GfxEditMode::WorldChr ||
 		m_gfx_emode == fe::GfxEditMode::BgGraphics) {
@@ -684,4 +754,47 @@ std::string fe::MainWindow::get_bmp_filepath(std::size_t p_gfx_key) const {
 
 ImVec4 fe::MainWindow::SDL_Color_to_imgui(const SDL_Color& c) const {
 	return ImVec4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+}
+
+void fe::MainWindow::initialize_hud_tilemap(void) {
+	std::size_t l_hud_chr_offset{ m_config.constant(c::ID_CHR_HUD_TILE_OFFSET) };
+
+	m_hud_tilemap.m_tiles.clear();
+	for (std::size_t i{ 0 }; i < 256; ++i) {
+		m_hud_tilemap.m_tiles.push_back(
+			klib::NES_tile(m_game->m_rom_data, l_hud_chr_offset + 16 * i)
+		);
+	}
+
+	auto tileidx{ m_config.bmap_as_numeric_vectors(c::ID_HUD_TILEMAP) };
+	std::vector<std::vector<byte>> l_hudtiles;
+
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		auto iter{ tileidx.find(static_cast<byte>(i)) };
+		if (iter == end(tileidx))
+			l_hudtiles.push_back(std::vector<byte>(32, 0));
+		else {
+			l_hudtiles.push_back(iter->second);
+			while (l_hudtiles.back().size() < 32)
+				l_hudtiles.back().push_back(0);
+		}
+	}
+
+	m_hud_tilemap.m_tilemap.clear();
+
+	for (std::size_t j{ 0 }; j < 4; j += 2) {
+		std::vector<std::optional<fe::ChrMetaTile>> row;
+		for (std::size_t i{ 0 }; i < 32; i += 2) {
+			row.push_back(fe::ChrMetaTile());
+			row.back()->m_idxs = {
+				l_hudtiles[j][i],
+				l_hudtiles[j][i + 1],
+				l_hudtiles[j + 1][i],
+				l_hudtiles[j + 1][i + 1]
+			};
+		}
+		m_hud_tilemap.m_tilemap.push_back(row);
+	}
+
+	m_hud_tilemap.set_flat_palette(std::vector<byte>(16, 0));
 }

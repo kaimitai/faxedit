@@ -20,7 +20,7 @@ namespace fe {
 
 	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
-	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes };
+	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -99,6 +99,8 @@ namespace fe {
 		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
 			m_show_grid, m_iscript_win_set_focus,
 			m_gfx_window;
+
+		fe::ChrTilemap m_hud_tilemap;
 
 		// functionality toggles
 		bool m_show_sprite_sets_in_buildings;
@@ -209,6 +211,8 @@ namespace fe {
 		ImVec4 SDL_Color_to_imgui(const SDL_Color& c) const;
 		bool show_palette_window(std::vector<byte>& p_palette);
 		bool update_pal_bg_idx(std::vector<byte>& p_palette, byte p_nes_pal_idx) const;
+
+		void initialize_hud_tilemap(void);
 
 	public:
 

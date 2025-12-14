@@ -685,15 +685,15 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 				add_message("Hold shift to delete metatile");
 		}
 
-		ImGui::SeparatorText("Source NES-tiles");
+		ImGui::SeparatorText("Display chr-tiles");
 
-		if (ImGui::RadioButton("Default###mtchrdef", (m_chr_picker_mode == fe::ChrPickerMode::Default)))
+		if (ImGui::RadioButton("Tileset###mtchrdef", (m_chr_picker_mode == fe::ChrPickerMode::Default)))
 			m_chr_picker_mode = fe::ChrPickerMode::Default;
 		ImGui::SameLine();
-		if (ImGui::RadioButton("HUD###mtchrhud", (m_chr_picker_mode == fe::ChrPickerMode::HUD)))
+		if (ImGui::RadioButton("Include HUD tiles###mtchrhud", (m_chr_picker_mode == fe::ChrPickerMode::HUD)))
 			m_chr_picker_mode = fe::ChrPickerMode::HUD;
 		ImGui::SameLine();
-		if (ImGui::RadioButton("All###mtchrall", (m_chr_picker_mode == fe::ChrPickerMode::All)))
+		if (ImGui::RadioButton("Show All###mtchrall", (m_chr_picker_mode == fe::ChrPickerMode::All)))
 			m_chr_picker_mode = fe::ChrPickerMode::All;
 
 		ImGui::SeparatorText("Sub-palette for rendering chr-tiles");

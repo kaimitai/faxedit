@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Only make changes to this file if you are confident in what you are doing! (and keep backups even then) -->
-<eoe_config app_version="beta-4">
+<eoe_config app_version="beta-5">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -1006,6 +1006,12 @@
 			<entry byte="$3d" str="$b8b8b8" />
 			<entry byte="$3e" str="$000000" />
 			<entry byte="$3f" str="$000000" />
+		</byte_to_string_map>
+		<!-- hud tilemap - used for previews when editing palette to hud attribute data -->
+		<!-- the key is hud line number (0-3), any line not defined will be filled with zeroes -->
+		<byte_to_string_map name="hud_tilemap">
+			<entry byte="$02" str="$00,$1c,$0a,$09,$09,$09,$09,$09,$09,$07,$07,$07,$07,$0b,$14,$3a,$30,$30,$30,$30,$30,$00,$23,$3a,$30,$30,$00,$2c,$a5,$a6,$2e,$00" />
+			<entry byte="$03" str="$00,$1f,$0a,$08,$08,$08,$08,$08,$08,$07,$07,$07,$07,$0b,$16,$3a,$30,$30,$30,$30,$30,$30,$30,$00,$00,$00,$00,$2d,$a7,$a8,$2f,$00" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>
