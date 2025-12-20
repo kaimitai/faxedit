@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-4), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-5), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
@@ -29,9 +29,11 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Building Sprite Sets](#building-sprite-sets)
   - [Push-Block](#push-block)
   - [Jump-On Animation](#jump-on-animation)
+  - [Palette to Music map](#palette-to-music-map)
+  - [Fog metadata](#fog-metadata)
 - [World Metadata](#world-metadata)
   - [Metatile Definitions](#metatile-definitions)
-  - [Palette](#palette)
+  - [Scenes](#scenes)
   - [Mattock Animation](#mattock-animation)
   - [Cleanup](#cleanup)
 - [Screen Metadata](#screen-metadata)
@@ -41,6 +43,13 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Screen Doors](#screen-doors)
   - [Screen Scrolling](#screen-scrolling)
   - [Screen Transitions](#screen-transitions)
+- [Graphics](#graphics)
+  - [World gfx](#world-gfx)
+  - [World palettes](#world-palettes)
+  - [Background gfx](#background-gfx)
+  - [Background palettes](#background-palettes)
+  - [HUD](#hud)
+  - [Tips for bmp import](#tips-for-bmp-import)
 
 <hr>
 
@@ -54,6 +63,7 @@ This is the screen used for file operations and data analysis.
 * Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes (hold shift to patch the ROM in-place)
 * Save ips: Generates an ips patch file
 * Data Integrity Analysis: Does some checking on whether there is problems in your data
+* Show/Hide gfx editor: Opens or closes the Graphics Editor window
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Output Messages: The messages from the editor
 
@@ -168,6 +178,24 @@ It is similar to the Mattock Animation in that it defines a 4-block animation cy
 
 Set the four metatiles here. The metatiles will be rendered based on the available metatiles in the selected World - as long as the metatile index is within bounds fo that world. Using jump-on with undefined metatiles will probably result in garbled graphics showing up in the game.
 
+## Palette to Music map
+
+Same-world doors can come with a palette change, which is part of the door's parameters. Some palettes can be defined to also introduce a music change. This is how towers work in the original game; when you enter a door the palette changes and a music change is triggered too.
+
+![pal2mus](./img/win_metadata_game_pal2mus.png)
+
+There are seven slots for palette to music definitions. If a palette change occurrs and it has no entry in this map, the current music will keep playing as you enter the same-world door.
+
+## Fog Metadata
+
+The fog effect happens in world 3 (Mist) in the original game, but not inside Mist towers.
+
+The reason is that for the fog to be in effect, a certain combination of world number and palette number must be active. This combination can be set here. If you set world number to 8 (invalid world number) the fog will not be active anywhere.
+
+![Fog](./img/win_metadata_game_fog.png)
+
+Another reason we need to know the fog world, is that the fog generating code is using certain chr-tiles of that world's tileset to generate the fog effect. When importing bmp we have to keep this tiles fixed, or else we will ruin the fog graphics.
+
 <hr>
 
 # World Metadata
@@ -180,7 +208,7 @@ Metatiles are defined on a per-world basis, and are used to make tilemaps for al
 
 ![Metatiles](./img/win_metadata_world_metatiles.png)
 
-The tiles on the bottom are NES-tiles used by this world's NES tilemap, and are used to define the metatile graphics. One NES-tile for each of the four quadrants of the metatile.
+The tiles on the bottom are chr-tiles used by this world's tilemap, and are used to define the metatile graphics. One chr-tile for each of the four quadrants of the metatile.
 
 Right-clicking on the metatile will place the selected NES-tile on the clicked quadrant. Ctrl+Right Click will select the NES-tile from the clicked quadrant. ("color picker"). We are including this functionality for completeness' sake.
 
@@ -220,13 +248,23 @@ Each metatile is associated with 4 sub-palettes. These are the sub-palettes the 
 
 No metatiles in the original game use this functionality. In the original game all metatiles have the same value here for all its quadrants. It looks like it can be buggy if text boxes appear and such - and the palette attribute table cannot be properly restored.
 
+* Display chr-tiles
+  * Tileset: Show only the chr-tiles which belong to the current world
+  * Include HUD tiles: The same as above, but include the HUD tiles which are always loaded in the ppu during gameplay. Stable metatiles can be made out of these.
+  * Show All: Will show all chr-tiles, including those which update dynamically during gameplay for text and such. Will cause visual glitches if used in a metatile definition, but could possibly be used creatively.
+
+
 * Add / Remove metatile: Adds a new metatile, or deletes the selected metatile. Metatiles which are placed on any screen tilemap cannot be deleted. The same goes for metatiles that are part of mattock animations and block-push parameters.
 
-## Palette
+## Scenes
 
-This defines the default palette for the world. When you take a stage-door into the world, this palette is used. You can override the palette using same-world doors and transitions. For world Trunk, for example, the default palette is 6 - but doors leading into towers change this to 7. Similarly for Mist and its towers. The editor will show a label for the palettes.
+This tab allows you to change some default settings of the current world; palette, music and tileset.
 
 ![Tilemap](./img/win_metadata_palette.png)
+
+For the buildings world, each screen has a definition here, and for buildings you can also define the entry position when you enter a door to building.
+
+Default palette and music can be overriden using same-world doors and palette to music mappings.
 
 ## Mattock Animation
 
@@ -399,3 +437,97 @@ In the original game all other-world transitions are defined from overworld-scre
 You can define these transitions between any two worlds (apart from the Buildings world probably), but one important thing to note is that it allows you to change world without changing your stage. This can allow players to reach stage-doors in several ways, and since the stage-door destinations will change depending on the stage number you could have a door with different destinations depending on how you got to that door.
 
 When in Transitions-editing mode, Shift+left Click moves the other-world destination position to the clicked position on the tilemap. Ctrl+Left Click moves the same-world destination position.
+
+# Graphics
+
+We have functionality for editing the graphics by importing bmp files. The NES does not support arbitraty bitmaps, and there are some strict rules we need to follow for our graphics to look good.
+
+NES background graphics are made out of chr-tiles, which are 8x8 pixel images, where each pixel has a value 0 to 3.
+
+One background palette can be active at any one time, and a palette has 4 sub-palettes. When combining a chr-tile with a palette, we get a colored chr-tile.
+
+Even though the sub-palettes have 4 color, they share the first color - meaning at most 13 distinct background colors can be active at any one time.
+
+On top of this, a sub-palette is not active per chr-tile, but for a 2x2 region of chr-tiles, which we call a metatile.
+
+So these are the effective rules for a NES screen:
+
+The screen is made out of 8x8 pixel chr tiles.
+
+Only 4 distinct colors can be active for any one 16x16 pixel region (2x2 chr-tiles) of the screen.
+
+Only 13 distinct colors can be active for the screen as a whole.
+
+The number of chr-tiles the picture processing unit (ppu) of the nes can access at one time is limited to 256.
+
+## World gfx
+
+![World gfx](./img/win_gfx_world_gfx.png)
+
+In this edit mode, you can extract a world's (or building screen's) metatiles as a bmp - and import one back in.
+
+* Extract from ROM: Make a texture out of your current metatile definitions and show them as an image.
+* Save bmp: Save the tilemap as a bmp. The output messages will tell you where it was stored.
+* Load bmp: Import a bmp as a metatile tilemap, and render it here. The rendering will show you what your import will look like in the game.
+* Commit to ROM: If you are happy with the result, you can commit your import to ROM in memory and it will show in your screen tilemaps. If you are not happy with the result, you can extract from ROM again to clear your staging data. If you have a screen loaded in the tilemap editor using this tileset, you will immediately see the change there, and the chr-tile picker in world metadata will also be updated.
+* If there is any staging data, a "preview result under other palette"-slider will be available. This is there so you can check your result if you want your metatiles to render under different palettes, if you have doors to towers for example. You need to click the "Re-render" button to regenerate your output image. This does not change any data however, it is for rendering purposes only.
+* chr-tile deduplication strategy; When importing bmp, we want to generate as few chr-tiles as possible while still rendering the imported bmp. We have different strategies to decuplicate, and they are:
+  * Sub-Palette: chr-tiles are considered equal only if they have the same byte output (strict)
+  * NES-palette: chr-tiles are considered equal if their palette indexes resolve to the same NES-palette colors. If you only need your metatiles to show in the context of one single palette, this is a good option.
+  * RGB: chr-tiles are considered equal if they resolve to the same RGB-colors after applying the NES palette and resolving its rgb-values defined in the config xml. (loose)
+
+## World palettes
+
+![World gfx](./img/win_gfx_world_palette.png)
+
+This screen allows you to change the 4 sub-palettes for any of the world-palettes.
+
+The sub-palettes show at the top as a 4x4 grid, and the full NES-palette shows at the bottom. You can select a palette color, and then change which NES color it resolves to. If you have a screen loaded in the tilemap editor using this palette, you will immediately see the change.
+
+We have a checkbox "Allow editing bg-color", which users can toggle to edit the first color of each sub-palette. Faxanadu seems to set this to color $0f (black) regardless of value in ROM, so there is little use in changing this color unless you have a modified ROM which does not enforce this.
+
+## Background gfx
+
+![World gfx](./img/win_gfx_bg_gfx.png)
+
+This screen functions similarly to the World Gfx screen, but deals with background tilemaps instead; The title, intro and outro screen - as well as a virtual tilemap for the items when rendered as background objects (and not as sprites).
+
+The intro and outro screens share tileset, and both must be extracted from ROM to be editable - because when editing one the other's chr-tiles must be fixed, otherwise we would ruin the other image.
+
+## Background palettes
+
+This screen works the same way as the world palettes, but applies to the palettes used by the background screens. For the items tilemap we defined a palette, but in the game the palette used depends on the world - and items can look different in different contexts.
+
+## HUD
+
+![World gfx](./img/win_gfx_hud.png)
+
+For completeness' sake we have a HUD-editor with a preview.
+
+The game has a mapping from palette number to HUD attribute index, and each HUD attribute index is associated with 4 sub-palettes which are used for the metatiles making up the HUD gfx.
+
+When editing the HUD attributes for each quadrant, you are editing for all palettes using this HUD attribute index.
+
+This is for advanced modding only, but if you change palette you might want to use this functionality. Note also that only the bottom left and bottom right palette attribute is of consequence, as the top two rows of the HUD are blank.
+
+The original game only uses 4 different HUD attributte indexes, although there are 24 slots available.
+
+## Tips for bmp import
+
+When editing NES gfx you are working under heavy constraints, but there are some things you can do to help the bmp importer.
+
+Make sure your graphics are aligned on an 8x8 pixel grid, and that you are aware of the "1 sub-palette per 2x2 chr-tile region" rule. The closer your colors are to your import palette the better. If your import bmp only uses colors from the import palette, and you follow all the rules of NES graphics, the importer will have an easy time.
+
+Try to use sub-palettes which have distinct colors. If you have two indexes of the same color, the importer will assign all the matching colors to the first palette index.
+
+If you need your chr-tiles to be rendered under several sub-palettes ensure the colors you want to match have the same index. If you want the color yellow under one sub-palette to be red under another sub-palette, the red and yellow color must have the same index. Otherwise more chr-tiles must be generated, even if the graphics are otherwise identical.
+
+The hardest gfx to make is the intro and outro screens. They are rendered under two different palettes, your chr-tile bank consists of 128 tiles - but you need to render 2 screens which are drawn with a total of 1920 tiles - in other words a lot of re-use is necessary.
+
+You can start by importing a totally blank bmp to one of them and commit, that will free up all tiles for the other - and once you have a result for one of them, you can iteratively generate the other.
+
+When loading a bmp an output message will tell you how many chr-tiles were reclaimed (how many more you can make and still be within the limits), or how many it needed to approximate. If approximation was necessary, your chr-count overflowed and the importer had to re-use tiles and just chose the tiles that fit the best to generate the rest of the image. Ideally you don't want to overflow.
+
+For some images, if you import a bmp you exported from ROM, it will still fail to stay within the limits. This might seem counter-intuitive, but this is because there were palettes with the same color within a sub-palette - and it therefore failed to match it to chr-tiles it potentially could have matched it if the same-color was distributed to different indexes in some way. It becomes computationally prohibitive to try all such combinations however. You can temporarily alter palettes like that to have all colors distinct with each sub-palette, and then change the colors back after the import.
+
+Experiment and have fun!

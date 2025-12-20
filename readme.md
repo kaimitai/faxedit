@@ -1,4 +1,4 @@
-# Echoes of Eolis - An editor for Faxanadu (NES)
+﻿# Echoes of Eolis - An editor for Faxanadu (NES)
 
 Welcome to the Echoes of Eolis code repository and release page. The code is standard C++20, and the project files were created using Microsoft Visual Studio Community 2022. You can compile the application from source, or get the latest precompiled Windows x64 build under the [repository releases](https://github.com/kaimitai/faxedit/releases/).
 
@@ -21,7 +21,7 @@ The following data is editable:
 ### World Data
 
 * Metatile definitions
-* Default palette
+* Scenes: World palette, music and tilesets
 * Mattock animations
 
 ### Game Data
@@ -30,6 +30,8 @@ The following data is editable:
 * Building parameter sprite-sets
 * Push-Block metadata
 * Jump-On Block metadata
+* Palette to music mapping
+* Fog parameters
 
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
@@ -39,9 +41,8 @@ The editor can save your project as a patched NES ROM file or as an IPS patch. W
 
 ### Roadmap
 
-This editor was built during a few intense weeks of development, and is being released as a beta. Some bugs are expected. While we stabilize the codebase, we will prioritize bug-fixing. Once the technical debt has been paid down, we want to prioritize the following additions:
+This editor is in development, and is being released as a beta. Some bugs are expected. While we stabilize the codebase, we will prioritize bug-fixing. Once the technical debt has been paid down, we want to prioritize the following additions:
 
-* Support graphics editing, perhaps by way of bmp imports and exports
 * Add an undo feature
 * Add configuration support for more ROM-hacks
 * General UI improvements
@@ -50,10 +51,25 @@ This editor was built during a few intense weeks of development, and is being re
 
 ### Version History
 
+* 2025-12-21: version beta-5
+
+  * Added BMP import/export for world graphics, title, intro, and outro screens, with automatic CHR and attribute-table reconstruction.
+  * Added full palette editor for all world palettes and title/intro/outro palettes.
+  * Expanded scene metadata: default music, tileset selection, and entry positions.
+  * Added editor for palette-to-music mapping used for same‑world door transitions.
+  * Added fog metadata editor for world/palette combinations.
+  * Added HUD attribute-table editor with preview.
+  * World tilesets are now loaded from ROM instead of being hard‑coded.
+  * Metatiles can now reference any CHR tile index.
+  * Window position and state are now saved at OS level.
+  * Added palette override for rendering screens without modifying game data.
+  * The metatile picker draws metatiles using their actual sub-palette
+
+
 * 2025-11-29: version beta-4
 
   * Optimized tilemap placement: The editor now dynamically distributes the eight world tilemaps across available ROM banks, eliminating the rigid fixed layout of the original game. This includes support for placing tilemap data in previously unused banks, unlocking new storage capacity. We are now breaking an invariant that has existed for almost forty years.
-  * Building Sprite Set editor: World�4 (Buildings) now supports direct visual editing of sprite sets. We also enabled the "Enter Door"-button for doors to buildings, in which case the door's screen and sprite set both will be selected.
+  * Building Sprite Set editor: World 4 (Buildings) now supports direct visual editing of sprite sets. We also enabled the "Enter Door"-button for doors to buildings, in which case the door's screen and sprite set both will be selected.
   * Gridline toggle in tilemap window: Developers can enable or disable gridlines for clearer visual alignment when editing maps.
   * Default palette: The palette used to render screens will not go back to the world's default palette whenever you change screens via the slider. If you navigate to another world, however, it will revert to the default again.
   * Configurable NES palette: The palette definition has been moved into the configuration XML, allowing custom overrides and experimentation with color schemes.
@@ -61,7 +77,7 @@ This editor was built during a few intense weeks of development, and is being re
 
   Compatibility note: ROMs created with earlier versions of the editor remain fully compatible with this new release. However, ROMs created with beta-4 or later may not be compatible with earlier versions of the editor.
 
-  This is because earlier releases relied on a hard-coded world-to-bank and pointer index mapping, while the new editor reads and writes these mappings dynamically from the ROM itself. The ROM format is still faithful to the game�s design � the difference lies only in how the editor interprets and patches the tilemap metadata.
+  This is because earlier releases relied on a hard-coded world-to-bank and pointer index mapping, while the new editor reads and writes these mappings dynamically from the ROM itself. The ROM format is still faithful to the game’s design — the difference lies only in how the editor interprets and patches the tilemap metadata.
 
 * 2025-11-22: version beta-3
   * We show iScript code directly in the editor, with syntax highlighting. To actually edit and assemble the code, however, you need to use a separate tool like [FaxIScripts](https://github.com/kaimitai/FaxIScripts/).
