@@ -136,6 +136,12 @@ namespace fe {
 		void clear_tilemap_import_result(std::size_t p_key);
 		void clear_all_tilemap_import_results(void);
 
+		// re-generate an already imported result under a new palette
+		// use: view result under any palette before you commit
+		void re_render_tilemap_result(SDL_Renderer* p_rnd,
+			std::size_t p_key,
+			const std::vector<byte>& p_palette);
+
 		// functions for bmp import
 		std::pair<int, int> import_tilemap_bmp(SDL_Renderer* p_rnd,
 			std::vector<ChrGfxTile>& p_tiles,

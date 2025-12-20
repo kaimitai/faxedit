@@ -41,6 +41,9 @@
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="eu" value="0x31fc6" zero_addr="0x28010" />
+		<!-- ROM offset to music data - ptr table -->
+		<pointer name="music_ptr" region="us,randum,jp,en-transl" value="0x14f0b" zero_addr="0xc010" />
+		<pointer name="music_ptr" region="eu" value="0x14f5a" zero_addr="0xc010" />
 	</pointers>
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
@@ -93,6 +96,7 @@
 		<!-- counts -->
 		<const name="sprite_count" value="101" />
 		<const name="iscript_count" value="152" />
+		<const name="music_count" value="16" />
 		<const name="string_data_start" region="eu,us,randum" value="0x34310" />
 		<const name="string_data_end" region="eu,us,randum" value="0x38010" />
 		<const name="string_data_start" region="jp" value="0x35f50" />
@@ -107,6 +111,11 @@
 		<const name="iscript_data_rg2_start" region="jp,en-transl" value="0x33196" />
 		<!-- secondary script data necessarily ends within bank 12 -->
 		<const name="iscript_data_rg2_end" value="0x34010" />
+		<!-- music data necessarily ends within bank 5 -->
+		<const name="music_data_end" value="0x18010" />
+		<!-- pitch offset per channel, needed to convert to actual note values -->
+		<const name="music_channel_pitch_offset" region="us,randum,jp,en-transl" value="0x1457c" />
+		<const name="music_channel_pitch_offset" region="eu" value="0x145cb" />
 		<!-- chr tile offsets -->
 		<const name="world_tileset_count" value="9" />
 		<const name="chr_world_tile_offset" value="0x10010" />
@@ -1012,6 +1021,33 @@
 		<byte_to_string_map name="hud_tilemap">
 			<entry byte="$02" str="$00,$1c,$0a,$09,$09,$09,$09,$09,$09,$07,$07,$07,$07,$0b,$14,$3a,$30,$30,$30,$30,$30,$00,$23,$3a,$30,$30,$00,$2c,$a5,$a6,$2e,$00" />
 			<entry byte="$03" str="$00,$1f,$0a,$08,$08,$08,$08,$08,$08,$07,$07,$07,$07,$0b,$16,$3a,$30,$30,$30,$30,$30,$30,$30,$00,$00,$00,$00,$2d,$a7,$a8,$2f,$00" />
+		</byte_to_string_map>
+		<!-- music engine opcodes  -->
+		<byte_to_string_map name="mscript_opcodes">
+			<entry byte="$ee" str="Mnemonic=SQ2PitchBias,Arg=byte" />
+			<entry byte="$ef" str="Mnemonic=SQPitchEffectDepth,Arg=byte" />
+			<entry byte="$f0" str="Mnemonic=SQEnvelope,Arg=byte,ArgDomain=Envelope" />
+			<entry byte="$f1" str="Mnemonic=Volume,Arg=byte" />
+			<entry byte="$f2" str="Mnemonic=SQControl,Arg=byte,ArgDomain=SQControl" />
+			<entry byte="$f3" str="Mnemonic=NoteLength,Arg=byte" />
+			<entry byte="$f4" str="Mnemonic=Restart,Flow=End" />
+			<entry byte="$f5" str="Mnemonic=Return,Flow=End" />
+			<entry byte="$f6" str="Mnemonic=ChannelTranspose,Arg=byte,ArgDomain=PitchOffset" />
+			<entry byte="$f7" str="Mnemonic=GlobalTranspose,Arg=byte,ArgDomain=PitchOffset" />
+			<entry byte="$f8" str="Mnemonic=JSR,Arg=Addr,Flow=Jump" />
+			<entry byte="$f9" str="Mnemonic=PushAddr" />
+			<entry byte="$fa" str="Mnemonic=NOP" />
+			<entry byte="$fb" str="Mnemonic=NextLoopIf,Arg=byte" />
+			<entry byte="$fc" str="Mnemonic=EndLoop" />
+			<entry byte="$fd" str="Mnemonic=BeginLoop,Arg=byte" />
+			<entry byte="$fe" str="Mnemonic=PopAddr" />
+			<entry byte="$ff" str="Mnemonic=End,Flow=End" />
+		</byte_to_string_map>
+		<!-- mscript defines: envelopes  -->
+		<byte_to_string_map name="mscript_defines_env">
+			<entry byte="$00" str="ENV_VOLUME_DECAY" />
+			<entry byte="$01" str="ENV_CURVE_HELD" />
+			<entry byte="$02" str="ENV_ATTACK_DECAY_CURVE" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>

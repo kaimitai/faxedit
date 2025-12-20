@@ -684,11 +684,25 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							m_labels_block_props));
 					ImGui::SameLine();
 				}
+
+				ImGui::Spacing();
+				ImGui::SameLine();
+				if (j == 0) {
+					ui::imgui_checkbox("Mattock-Breakable", m_mattock_overlay);
+				}
+				else if (j == 1) {
+					ui::imgui_checkbox("Door Requirements", m_door_req_overlay);
+				}
+
 				ImGui::NewLine();
 			}
 
-			ui::imgui_checkbox("Mattock-Breakable", m_mattock_overlay);
-			ui::imgui_checkbox("Door Requirements", m_door_req_overlay);
+			ImGui::SeparatorText(std::format("Render Palette: {}", 
+				get_description(static_cast<byte>(m_atlas_new_palette_no), m_labels_palettes)).c_str());
+
+			ui::imgui_slider_with_arrows("###renderpal",
+				"", m_atlas_new_palette_no, 0, m_game->m_palettes.size() - 1,
+				"", false, true);
 
 		}
 		ImGui::EndChild();

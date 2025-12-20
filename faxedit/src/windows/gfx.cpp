@@ -25,10 +25,10 @@ fe::gfx::gfx(SDL_Renderer* p_rnd) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
 	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) },
-	m_hot_pink{ SDL_Color(0xff, 0x69, 0xbf, 0x00) }
+	m_hot_pink{ SDL_Color(0xff, 0x69, 0xb4, 0x00) }
 {
-	SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
-	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
+	// SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
+	// SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
 
 	m_screen_texture = SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
 		SDL_TEXTUREACCESS_TARGET, TILEMAP_SCALE * 16 * 16, TILEMAP_SCALE * 13 * 16);
@@ -124,15 +124,13 @@ void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
 	}
 
 	for (int i = 0; i < width * height; ++i) {
-		for (int i = 0; i < width * height; ++i) {
-			int idx = i * 4;
-			unsigned char r = rgbaPixels[idx + 0];
-			unsigned char g = rgbaPixels[idx + 1];
-			unsigned char b = rgbaPixels[idx + 2];
+		int idx = i * 4;
+		unsigned char r = rgbaPixels[idx + 0];
+		unsigned char g = rgbaPixels[idx + 1];
+		unsigned char b = rgbaPixels[idx + 2];
 
-			if (r == m_hot_pink.r && g == m_hot_pink.g && b == m_hot_pink.b) {
-				rgbaPixels[idx + 3] = 0; // make transparent
-			}
+		if (r == m_hot_pink.r && g == m_hot_pink.g && b == m_hot_pink.b) {
+			rgbaPixels[idx + 3] = 0; // make transparent
 		}
 	}
 
@@ -143,7 +141,7 @@ void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
 		width * 4                  // pitch (bytes per row)
 	);
 	if (!fullSurface)
-		throw std::runtime_error("bad boi!");
+		throw std::runtime_error("Could not generate icon overlays");
 
 	for (int i = 0; i < width / 16; ++i) {
 		SDL_Rect srcRect = { i * 16, 0, 16, 16 };
@@ -151,6 +149,7 @@ void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
 		SDL_BlitSurface(fullSurface, &srcRect, iconSurface, nullptr);
 
 		SDL_Texture* iconTex = SDL_CreateTextureFromSurface(p_rnd, iconSurface);
+		SDL_SetTextureBlendMode(iconTex, SDL_BLENDMODE_BLEND);
 		m_icon_overlays.push_back(iconTex);
 
 		SDL_DestroySurface(iconSurface);
@@ -638,6 +637,21 @@ void fe::gfx::clear_all_tilemap_import_results(void) {
 	m_tilemap_import_results.clear();
 }
 
+void fe::gfx::re_render_tilemap_result(SDL_Renderer* p_rnd,
+	std::size_t p_key,
+	const std::vector<byte>& p_palette) {
+	if (!m_tilemap_import_results.contains(p_key))
+		return;
+
+	// make a temporary copy of the pending result,
+	// swap out its palette and render
+	fe::ChrTilemap l_tmp{ m_tilemap_import_results.at(p_key) };
+	l_tmp.set_flat_palette(p_palette);
+
+	// then replace the generated texture
+	gen_tilemap_texture(p_rnd, l_tmp, p_key);
+}
+
 // gfx import functions
 std::pair<int, int> fe::gfx::import_tilemap_bmp(SDL_Renderer* p_rnd,
 	std::vector<ChrGfxTile>& p_tiles,
@@ -851,7 +865,7 @@ std::vector<klib::NES_tile> fe::gfx::gen_unique_tiles(
 
 	for (const auto& tile : p_tiles) {
 		bool l_unique{ true };
-		for(const auto& utile : result)
+		for (const auto& utile : result)
 			if (chr_tile_equivalence(p_dedupmode, tile, utile, p_palette)) {
 				l_unique = false;
 				break;

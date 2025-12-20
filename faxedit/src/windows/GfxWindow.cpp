@@ -37,13 +37,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		m_gfx_emode == fe::GfxEditMode::WorldChr))
 		m_gfx_emode = fe::GfxEditMode::WorldChr;
 	ImGui::SameLine();
+	if (ImGui::RadioButton("World Palettes",
+		m_gfx_emode == fe::GfxEditMode::WorldPalettes))
+		m_gfx_emode = fe::GfxEditMode::WorldPalettes;
+	ImGui::SameLine();
 	if (ImGui::RadioButton("BG Gfx",
 		m_gfx_emode == fe::GfxEditMode::BgGraphics))
 		m_gfx_emode = fe::GfxEditMode::BgGraphics;
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Game Palettes",
-		m_gfx_emode == fe::GfxEditMode::WorldPalettes))
-		m_gfx_emode = fe::GfxEditMode::WorldPalettes;
 	ImGui::SameLine();
 	if (ImGui::RadioButton("BG Palettes",
 		m_gfx_emode == fe::GfxEditMode::GfxPalettes))
@@ -185,8 +185,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		ImGui::SameLine();
 
 		bool l_res_pending{ m_gfx.has_tilemap_import_result(l_gfx_key) };
+
 		if (ui::imgui_button("Commit to ROM",
-			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) {
+			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
 			const auto gfxres{ m_gfx.get_tilemap_import_result(l_gfx_key) };
 
 			m_game->m_tilesets.at(l_ts_no) = gfxres.m_tiles;
@@ -226,9 +227,35 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			if (l_ts_no == m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen))
 				m_atlas_force_update = true;
 
-			m_gfx.clear_tilemap_import_result(l_gfx_key);
+			// make life easy for ourselves and wipe all staging data on commit
+			m_gfx.clear_all_tilemap_import_results();
 
 			add_message("Imported graphics committed to ROM", 2);
+		}
+		catch (const std::runtime_error& ex) {
+			add_message(ex.what(), 1);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
+
+		if (m_gfx.has_tilemap_import_result(l_gfx_key)) {
+			static std::size_t ls_rerender_pal{ 0 };
+
+			ImGui::SeparatorText(
+				std::format("Preview result under palette: {}",
+					get_description(static_cast<byte>(ls_rerender_pal),
+						m_labels_palettes)).c_str()
+			);
+
+			ui::imgui_slider_with_arrows("###gfxrerender",
+				"", ls_rerender_pal, 0, m_game->m_palettes.size() - 1,
+				"", false, true);
+
+			if (ui::imgui_button("Re-Render", 4))
+				m_gfx.re_render_tilemap_result(p_rnd, l_gfx_key,
+					m_game->m_palettes.at(ls_rerender_pal));
+			ImGui::Separator();
 		}
 
 	}
@@ -263,7 +290,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		}
 		ImGui::SameLine();
 		if (ui::imgui_button("Save bmp", txt == nullptr ? 4 : 2,
-			"", txt == nullptr)) {
+			"", txt == nullptr)) try {
 			m_gfx.save_tilemap_bmp(
 				m_game->m_game_gfx.at(ls_sel_bg_game_gfx).get_chrtilemap(),
 				get_bmp_path(),
@@ -272,6 +299,12 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 			add_message(std::format("Saved {}",
 				get_bmp_filepath(l_gfx_key)), 2);
+		}
+		catch (const std::runtime_error& ex) {
+			add_message(ex.what(), 1);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
 		}
 
 		if (ui::imgui_button("Load bmp", txt == nullptr ? 4 : 2,
@@ -316,6 +349,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			catch (const std::runtime_error& ex) {
 				add_message(ex.what(), 1);
 			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
 
 		}
 
@@ -323,7 +359,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		bool l_res_pending{ m_gfx.has_tilemap_import_result(l_gfx_key) };
 		if (ui::imgui_button("Commit to ROM",
-			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) {
+			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
 			const auto gfxres{ m_gfx.get_tilemap_import_result(l_gfx_key) };
 
 			m_game->m_game_gfx.at(ls_sel_bg_game_gfx).commit_import(
@@ -343,9 +379,16 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 						l_ggfx[gf].m_chr_tiles.push_back(tile);
 				}
 
-			m_gfx.clear_tilemap_import_result(l_gfx_key);
+			// make life easy for ourselves and wipe all staging data on commit
+			m_gfx.clear_all_tilemap_import_results();
 
 			add_message("Graphics committed to ROM", 2);
+		}
+		catch (const std::runtime_error& ex) {
+			add_message(ex.what(), 1);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
 		}
 
 	}
