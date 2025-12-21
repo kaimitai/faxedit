@@ -16,7 +16,7 @@ We use some conventions in the editor:
 * Yellow sliders are selection sliders to navigate to objects within a container; these will not make any changes to your data, only select it.
 * Faxanadu is divided into what has come to be commonly known as "worlds", of which there are eight. We label them - in order - as "Eolis", "Trunk", "Mist", "Towns", "Buildings", "Branches", "Darmoor Castle" and "Zenis". All worlds are modeled pretty much in the same way, but worlds "Towns" and "Buildings" are associated with some special handling. More on that in the various sections below.
 
-The main window for file operations is [Project Control]("project-control).
+The main window for file operations is [Project Control](#project-control).
 
 The data we can edit forms a data hierarchy, from the top-level game metadata down to the individual screens and their sub-data.
 
@@ -184,17 +184,17 @@ Same-world doors can come with a palette change, which is part of the door's par
 
 ![pal2mus](./img/win_metadata_game_pal2mus.png)
 
-There are seven slots for palette to music definitions. If a palette change occurrs and it has no entry in this map, the current music will keep playing as you enter the same-world door.
+There are seven slots for palette to music definitions. If a palette change occurs and it has no entry in this map, the current music will keep playing as you enter the same-world door.
 
 ## Fog Metadata
 
-The fog effect happens in world 3 (Mist) in the original game, but not inside Mist towers.
+The fog effect happens in world 2 (Mist) in the original game, but not inside Mist towers.
 
 The reason is that for the fog to be in effect, a certain combination of world number and palette number must be active. This combination can be set here. If you set world number to 8 (invalid world number) the fog will not be active anywhere.
 
 ![Fog](./img/win_metadata_game_fog.png)
 
-Another reason we need to know the fog world, is that the fog generating code is using certain chr-tiles of that world's tileset to generate the fog effect. When importing bmp we have to keep this tiles fixed, or else we will ruin the fog graphics.
+Another reason we need to know the fog world, is that the fog generating code is using certain chr-tiles of that world's tileset to generate the fog effect. When importing bmp we have to keep these tiles fixed, or else we will ruin the fog graphics.
 
 <hr>
 
@@ -316,7 +316,7 @@ The top section shows which metatile is selected, and which property it has.
 
 The bottom section is where you select the metatile to use when drawing.
 
-The slider at the bottom lets you select which sub-palette to render all the metatiles with. This is for visualization only, and will not make any changes to your data.
+All metatiles are drawn with the top-left attribute defined for that metatile. In practice the attribute for each quadrant should probably be the same. If they differ between quadrants, they will still render correctly on the tilemap itself.
 
 The controls for making a screen tilemap image is as follows:
 * Left click: Select a tile position on the tilemap
@@ -469,6 +469,15 @@ In this edit mode, you can extract a world's (or building screen's) metatiles as
 * Extract from ROM: Make a texture out of your current metatile definitions and show them as an image.
 * Save bmp: Save the tilemap as a bmp. The output messages will tell you where it was stored.
 * Load bmp: Import a bmp as a metatile tilemap, and render it here. The rendering will show you what your import will look like in the game.
+
+When loading a bmp to a world's chr-data, we have to make sure we don't ruin the chr-data of any other world using the same tilset. In the original game Dartmoor and Zenis use the same tileset. If importing for Zenis, the importer will keep chr-tiles used by metatile definitions in Dartmoor fixed - and the other way around.
+
+For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason.
+
+Also, do not make any changes to screen tilemaps or metatiles between the time you export a bmp and the time you import it, otherwise the importer might be working under the wrong assumptions.
+
+The importer will not generate any new metatiles, it will only update the graphics of metatiles that already exist.
+
 * Commit to ROM: If you are happy with the result, you can commit your import to ROM in memory and it will show in your screen tilemaps. If you are not happy with the result, you can extract from ROM again to clear your staging data. If you have a screen loaded in the tilemap editor using this tileset, you will immediately see the change there, and the chr-tile picker in world metadata will also be updated.
 * If there is any staging data, a "preview result under other palette"-slider will be available. This is there so you can check your result if you want your metatiles to render under different palettes, if you have doors to towers for example. You need to click the "Re-render" button to regenerate your output image. This does not change any data however, it is for rendering purposes only.
 * chr-tile deduplication strategy; When importing bmp, we want to generate as few chr-tiles as possible while still rendering the imported bmp. We have different strategies to decuplicate, and they are:

@@ -59,7 +59,7 @@ This editor is in development, and is being released as a beta. Some bugs are ex
   * Added editor for palette-to-music mapping used for same‑world door transitions.
   * Added fog metadata editor for world/palette combinations.
   * Added HUD attribute-table editor with preview.
-  * World tilesets are now loaded from ROM instead of being hard‑coded.
+  * World tileset definitions are now loaded from ROM instead of being hard‑coded.
   * Metatiles can now reference any CHR tile index.
   * Window position and state are now saved at OS level.
   * Added palette override for rendering screens without modifying game data.
