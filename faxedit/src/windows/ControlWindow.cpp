@@ -168,11 +168,23 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game->extract_hud_attributes(m_config);
 
 			// extract gfx
-			m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
+			if (m_game->m_tilesets.empty())
+				m_game->generate_tilesets(m_config);
+
 			m_game->initialize_game_gfx_metadata(m_config);
 
 			// clear staging area for gfx
 			m_gfx.clear_all_tilemap_import_results();
+
+			// update gui cache for world tilesets
+			generate_world_tilesets();
+			m_atlas_force_update = true;
+
+			if (m_sel_chunk >= m_game->m_chunks.size())
+				m_sel_chunk = 0;
+			if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size())
+				m_sel_screen = 0;
+			m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
 
 			add_message("Loaded xml file " + get_xml_path(), 2);
 		}
@@ -195,8 +207,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 
 	auto x_rom{ m_game->m_rom_data };
 
-	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom,
-		m_tileset_start, m_tileset_size);
+	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom);
 	add_message("Patched chr data", 2);
 
 	m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);

@@ -16,8 +16,12 @@
 			<!-- look for address of script ptr table -->
 			<signature no="0" offset="0x3025d" values="$6b,$9f" />
 		</region>
+		<!-- look for addresses of script and music ptr table -->
+		<region name="us-rev-a">
+			<signature no="0" offset="0x3025d" values="$b6,$9f" />
+			<signature no="1" offset="0x14096" values="$fa,$8e" />
+		</region>
 		<!-- look for address of script ptr table -->
-		<!-- this might also apply to the revised US version but that is unproblematic -->
 		<region name="eu">
 			<signature no="0" offset="0x3025d" values="$b6,$9f" />
 		</region>
@@ -40,9 +44,9 @@
 		<!-- ROM offset of iScript pointer table lo bytes; combined with iscript_count we can dedude hi byte offset and script data start -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
-		<pointer name="iscript_ptr_lo" region="eu" value="0x31fc6" zero_addr="0x28010" />
+		<pointer name="iscript_ptr_lo" region="eu,us-rev-a" value="0x31fc6" zero_addr="0x28010" />
 		<!-- ROM offset to music data - ptr table -->
-		<pointer name="music_ptr" region="us,randum,jp,en-transl" value="0x14f0b" zero_addr="0xc010" />
+		<pointer name="music_ptr" region="us,randum,jp,en-transl,us-rev-a" value="0x14f0b" zero_addr="0xc010" />
 		<pointer name="music_ptr" region="eu" value="0x14f5a" zero_addr="0xc010" />
 	</pointers>
 	<!-- contant addresses and counts -->
@@ -63,7 +67,7 @@
 		<!-- we combine same-world and other-world transition data if we use the bank 15 free space -->
 		<const name="transition_data_start" region="en-transl" value="0x3fe0a" />
 		<const name="transition_data_start" region="jp" value="0x3fdc2" />
-		<const name="transition_data_start" region="eu,us" value="0x3fcdd" />
+		<const name="transition_data_start" region="eu,us,us-rev-a" value="0x3fcdd" />
 		<const name="transition_data_end" value="0x3fff0" />
 		<!-- palettes -->
 		<const name="palette_offset" value="0x2c010" />
@@ -97,8 +101,8 @@
 		<const name="sprite_count" value="101" />
 		<const name="iscript_count" value="152" />
 		<const name="music_count" value="16" />
-		<const name="string_data_start" region="eu,us,randum" value="0x34310" />
-		<const name="string_data_end" region="eu,us,randum" value="0x38010" />
+		<const name="string_data_start" region="eu,us,randum,us-rev-a" value="0x34310" />
+		<const name="string_data_end" region="eu,us,randum,us-rev-a" value="0x38010" />
 		<const name="string_data_start" region="jp" value="0x35f50" />
 		<const name="string_data_end" region="jp" value="0x37a50" />
 		<const name="string_data_start" region="en-transl" value="0x40010" />
@@ -107,14 +111,14 @@
 		<const name="iscript_data_rg1_size" value="1581" />
 		<!-- secondary region for script data -->
 		<const name="iscript_data_rg2_start" region="us,randum" value="0x32d9b" />
-		<const name="iscript_data_rg2_start" region="eu" value="0x32de5" />
+		<const name="iscript_data_rg2_start" region="eu,us-rev-a" value="0x32de5" />
 		<const name="iscript_data_rg2_start" region="jp,en-transl" value="0x33196" />
 		<!-- secondary script data necessarily ends within bank 12 -->
 		<const name="iscript_data_rg2_end" value="0x34010" />
 		<!-- music data necessarily ends within bank 5 -->
 		<const name="music_data_end" value="0x18010" />
 		<!-- pitch offset per channel, needed to convert to actual note values -->
-		<const name="music_channel_pitch_offset" region="us,randum,jp,en-transl" value="0x1457c" />
+		<const name="music_channel_pitch_offset" region="us,randum,jp,en-transl,us-rev-a" value="0x1457c" />
 		<const name="music_channel_pitch_offset" region="eu" value="0x145cb" />
 		<!-- chr tile offsets -->
 		<const name="world_tileset_count" value="9" />
@@ -153,7 +157,7 @@
 		<const name="intro_anim_tilemap_offset" value="0x2acb0" />
 		<const name="intro_anim_attribute_offset" value="0x2b070" />
 		<const name="intro_anim_palette_offset" region="us,randum" value="0x326d8" />
-		<const name="intro_anim_palette_offset" region="eu" value="0x32723" />
+		<const name="intro_anim_palette_offset" region="eu,us-rev-a" value="0x32723" />
 		<const name="intro_anim_palette_offset" region="jp,en-transl" value="0x32ad4" />
 		<!-- outro animation screen - dimensions given in metatile-space -->
 		<const name="outro_anim_mt_x" value="0" />
@@ -166,7 +170,7 @@
 		<const name="outro_anim_tilemap_offset" value="0x2b0b0" />
 		<const name="outro_anim_attribute_offset" value="0x2b470" />
 		<const name="outro_anim_palette_offset" region="us,randum" value="0x326f8" />
-		<const name="outro_anim_palette_offset" region="eu" value="0x32743" />
+		<const name="outro_anim_palette_offset" region="eu,us-rev-a" value="0x32743" />
 		<const name="outro_anim_palette_offset" region="jp,en-transl" value="0x32af4" />
 		<!-- item background tiles for the 39 items - virtual screen defined for easy bmp imports -->
 		<const name="item_vscreen_mt_x" value="0" />
@@ -432,7 +436,7 @@
 			<entry byte="$00" str="$00" />
 		</byte_to_string_map>
 		<!-- string mapping used by the iScript assembler and disassembler -->
-		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum">
+		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum,us-rev-a">
 			<!-- printable characters -->
 			<entry byte="$21" str="!" />
 			<entry byte="$27" str="'" />

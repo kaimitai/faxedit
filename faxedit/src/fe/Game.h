@@ -51,11 +51,18 @@ namespace fe {
 		std::vector<PaletteAttribute> m_hud_attributes;
 	};
 
+	struct Tileset {
+		std::size_t start_idx;
+		std::vector<klib::NES_tile> tiles;
+
+		std::size_t end_index(void) const;
+	};
+
 	class Config;
 
 	struct Game {
 
-		std::vector<std::vector<klib::NES_tile>> m_tilesets;
+		std::vector<Tileset> m_tilesets;
 
 		fe::StageManager m_stages;
 		std::vector<fe::Scene> m_building_scenes;
@@ -98,9 +105,8 @@ namespace fe {
 		std::size_t delete_unreferenced_metatiles(std::size_t p_chunk_no);
 		std::size_t delete_unreferenced_screens(std::size_t p_chunk_no);
 
-		void generate_tilesets(const fe::Config& p_config,
-			std::vector<std::size_t>& p_tileset_start,
-			std::vector<std::size_t>& p_tileset_size);
+		std::vector<klib::NES_tile> get_hud_chr_tiles(const fe::Config& p_config) const;
+		void generate_tilesets(const fe::Config& p_config);
 
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;

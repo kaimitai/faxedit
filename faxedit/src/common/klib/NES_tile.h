@@ -12,7 +12,7 @@ namespace klib {
 		std::vector<std::vector<byte>> m_tile_data;
 
 	public:
-		NES_tile(const std::vector<byte>& p_rom_data, std::size_t p_offset);
+		NES_tile(const std::vector<byte>& p_rom_data, std::size_t p_offset = 0);
 		NES_tile(void);
 		bool operator<(const klib::NES_tile& rhs) const;
 		bool operator==(const klib::NES_tile& rhs) const;

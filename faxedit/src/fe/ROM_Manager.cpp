@@ -473,31 +473,53 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 }
 
 void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom,
-	const std::vector<std::size_t> p_tileset_start, const std::vector<std::size_t> p_tileset_count) const {
+	const fe::Game& p_game, std::vector<byte>& p_rom) const {
 
+	const std::size_t tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
+
+	// drop all chr tiles in the tileset chr bank
 	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
-	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
 
-	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i) {
-		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
-		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
-		std::size_t l_local_addr{
-			256 * static_cast<std::size_t>(p_rom.at(l_local_addr_hi)) +
-			static_cast<std::size_t>(p_rom.at(l_local_addr_lo)) +
-			l_chr_wtile_offset - 0x8000
-		};
+	std::size_t l_chr_offset{ 0 };
+	for (const auto& tileset : p_game.m_tilesets) {
+		if (tileset.tiles.size() % 16 != 0 || tileset.start_idx % 16 != 0)
+			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but both must be divisible by 16 to fit on ppu pages", tileset.tiles.size(), tileset.start_idx));
+		else if (tileset.start_idx + tileset.tiles.size() > 256)
+			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but last index must be < 256", tileset.tiles.size(), tileset.start_idx));
 
-		const auto& chrtiles{ p_game.m_tilesets[i] };
-
-		for (std::size_t j{ p_tileset_start.at(i) };
-			j < p_tileset_start.at(i) + p_tileset_count.at(i); ++j) {
-			const auto chr_bytes{ chrtiles.at(j).to_bytes() };
-
-			patch_bytes(chr_bytes, p_rom, l_local_addr);
-			l_local_addr += 16;
+		for (const auto& tile : tileset.tiles) {
+			if (l_chr_offset >= 0x4000)
+				throw std::runtime_error("Chr-tiles across world tilesets exceeds bank size");
+			patch_bytes(tile.to_bytes(), p_rom, l_chr_wtile_offset + l_chr_offset);
+			l_chr_offset += 16;
 		}
+	}
 
+	// next patch the ptr table - we know where each ptr should point
+	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
+	// char bank is loaded into cpu mem 0x8000
+	std::size_t l_rel_addr{ 0x8000 };
+
+	for (std::size_t i{ 0 }; i < tileset_count; ++i) {
+		p_rom.at(l_tileset_to_addr + 2 * i) = static_cast<byte>(l_rel_addr % 256);
+		p_rom.at(l_tileset_to_addr + 2 * i + 1) = static_cast<byte>(l_rel_addr / 256);
+		l_rel_addr += 16 * p_game.m_tilesets[i].tiles.size();
+	}
+
+	// next patch the upper ppu address for each tileset, this depends on the ppu start index
+	std::size_t ppu_addr_offset{ l_tileset_to_addr + 2 * tileset_count };
+	for (std::size_t i{ 0 }; i < tileset_count; ++i) {
+		p_rom.at(ppu_addr_offset + i) = static_cast<byte>(
+			0x10 + (p_game.m_tilesets.at(i).start_idx / 0x10)
+			);
+	}
+
+	// next patch the number of ppu pages for each tileset, this depends on the chr tile count
+	std::size_t ppu_numpage_offset{ l_tileset_to_addr + 3 * tileset_count };
+	for (std::size_t i{ 0 }; i < tileset_count; ++i) {
+		p_rom.at(ppu_numpage_offset + i) = static_cast<byte>(
+			p_game.m_tilesets.at(i).tiles.size() / 0x10
+			);
 	}
 }
 

@@ -266,13 +266,41 @@ void fe::MainWindow::draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_s
 
 }
 
+// 1) extract hud tiles (ppu index 0-59)
+// 2) inject empty tiles until we hit the world-specific tileset index
+// 3) inject the world-specific tileset
+// 4( inject empty tiles until we have 256 chr-tiles in total
+void fe::MainWindow::generate_world_tilesets(void) {
+	std::vector<std::vector<klib::NES_tile>> new_tiles;
+	const auto& gtilesets{ m_game->m_tilesets };
+	
+	auto hud_tiles{ m_game->get_hud_chr_tiles(m_config) };
+	
+	for (const auto& wtileset : gtilesets) {
+		std::vector<klib::NES_tile> wpputileset{ hud_tiles };
+
+		while (wpputileset.size() < wtileset.start_idx)
+			wpputileset.push_back(klib::NES_tile());
+
+		for (const auto& wtile : wtileset.tiles)
+			wpputileset.push_back(wtile);
+
+		while (wpputileset.size() < 256)
+			wpputileset.push_back(klib::NES_tile());
+
+		new_tiles.push_back(wpputileset);
+	}
+
+	world_ppu_tilesets = new_tiles;
+}
+
 void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
 
 	if (m_atlas_new_tileset_no != m_atlas_tileset_no ||
 		m_atlas_new_palette_no != m_atlas_palette_no ||
 		m_atlas_force_update) {
 
-		m_gfx.generate_atlas(p_rnd, m_game->m_tilesets.at(m_atlas_new_tileset_no),
+		m_gfx.generate_atlas(p_rnd, world_ppu_tilesets.at(m_atlas_new_tileset_no),
 			m_game->m_palettes.at(m_atlas_new_palette_no));
 		generate_metatile_textures(p_rnd);
 
@@ -672,7 +700,10 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		cache_config_variables();
 
 		m_game = fe::Game(m_config, bytes);
-		m_game->generate_tilesets(m_config, m_tileset_start, m_tileset_size);
+		m_game->generate_tilesets(m_config);
+		// the game object has world tilesets, let us make a cache of 256
+		// tile big tilesets for the UI to send to the renderer
+		generate_world_tilesets();
 
 		initialize_hud_tilemap();
 

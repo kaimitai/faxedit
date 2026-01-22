@@ -144,15 +144,10 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	initialize_game_gfx_metadata(p_config);
 }
 
-void fe::Game::generate_tilesets(const fe::Config& p_config,
-	std::vector<std::size_t>& p_tileset_start,
-	std::vector<std::size_t>& p_tileset_size) {
-	std::size_t l_tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
+// generate PPU tiles 0-58 which are static and available for any world
+std::vector<klib::NES_tile> fe::Game::get_hud_chr_tiles(
+	const fe::Config& p_config) const {
 	std::size_t l_chr_hud_offset{ p_config.constant(c::ID_CHR_HUD_TILE_OFFSET) };
-	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
-	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
-	std::size_t l_tileset_chr_ppu_start_offset{ l_tileset_to_addr + 2 * l_tileset_count };
-	std::size_t l_tileset_chr_count_offset{ l_tileset_chr_ppu_start_offset + l_tileset_count };
 
 	// HUD header is the same for all tilesets
 	std::vector<klib::NES_tile> l_hud_tiles;
@@ -161,13 +156,23 @@ void fe::Game::generate_tilesets(const fe::Config& p_config,
 			l_chr_hud_offset + 16 * i));
 	}
 
+	return l_hud_tiles;
+}
+
+std::size_t fe::Tileset::end_index(void) const {
+	return start_idx + tiles.size();
+}
+
+void fe::Game::generate_tilesets(const fe::Config& p_config) {
+	std::size_t l_tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
+	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
+	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
+	std::size_t l_tileset_chr_ppu_start_offset{ l_tileset_to_addr + 2 * l_tileset_count };
+	std::size_t l_tileset_chr_count_offset{ l_tileset_chr_ppu_start_offset + l_tileset_count };
+
 	m_tilesets.clear();
-	p_tileset_size.clear();
-	p_tileset_start.clear();
 
 	for (std::size_t i{ 0 }; i < l_tileset_count; ++i) {
-		auto l_tileset{ l_hud_tiles };
-
 		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
 		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
 		std::size_t l_local_addr{
@@ -177,33 +182,22 @@ void fe::Game::generate_tilesets(const fe::Config& p_config,
 		};
 
 		std::size_t l_tileset_start{ m_rom_data.at(l_tileset_chr_ppu_start_offset + i) };
-		l_tileset_start *= 0x100;
-		l_tileset_start -= 0x1000;
-		l_tileset_start /= 0x10;
+		l_tileset_start = (l_tileset_start - 0x10) * 0x10;
 
-		if (l_tileset_start > 256)
-			throw std::exception("Invalid tile index");
-
-		p_tileset_start.push_back(l_tileset_start);
+		fe::Tileset l_tileset(l_tileset_start);
 
 		std::size_t l_tile_count{ m_rom_data.at(l_tileset_chr_count_offset + i) };
 		l_tile_count *= 0x10;
 
-		p_tileset_size.push_back(l_tile_count);
-
-		while (l_tileset.size() < l_tileset_start)
-			l_tileset.push_back(klib::NES_tile());
+		if (l_tileset_start + l_tile_count > 256)
+			throw std::runtime_error("Invalid tile index or count");
 
 		for (std::size_t tidx{ 0 }; tidx < l_tile_count; ++tidx)
-			l_tileset.push_back(klib::NES_tile(m_rom_data,
+			l_tileset.tiles.push_back(klib::NES_tile(m_rom_data,
 				l_local_addr + 16 * tidx));
-
-		while (l_tileset.size() < 256)
-			l_tileset.push_back(klib::NES_tile());
 
 		m_tilesets.push_back(l_tileset);
 	}
-
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset,

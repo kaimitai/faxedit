@@ -61,6 +61,11 @@ namespace fe {
 			constexpr char TAG_BUILDING_SCENES[]{ "building_scenes" };
 			constexpr char TAG_SCENE[]{ "scene" };
 
+			constexpr char TAG_TILESETS[]{ "tilesets" };
+			constexpr char TAG_TILESET[]{ "tileset" };
+			constexpr char TAG_CHR_TILE[]{ "chr_tile" };
+			constexpr char ATTR_PPU_START_IDX[]{ "ppu_start_index" };
+
 			constexpr char TAG_CHUNKS[]{ "worlds" };
 			constexpr char TAG_CHUNK[]{ "world" };
 

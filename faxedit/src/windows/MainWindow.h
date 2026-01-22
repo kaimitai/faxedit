@@ -52,7 +52,6 @@ namespace fe {
 			m_labels_music;
 		std::vector<std::string> m_labels_worlds, m_labels_sprites,
 			m_labels_buildings, m_labels_tilesets;
-		std::vector<std::size_t> m_tileset_start, m_tileset_size;
 
 		std::size_t m_sprite_count, m_iscript_count;
 
@@ -102,6 +101,9 @@ namespace fe {
 
 		fe::ChrTilemap m_hud_tilemap;
 
+		// world tileset cache (for all 256 ppu tiles, not only tileset tiles)
+		std::vector<std::vector<klib::NES_tile>> world_ppu_tilesets;
+
 		// functionality toggles
 		bool m_show_sprite_sets_in_buildings;
 
@@ -143,6 +145,7 @@ namespace fe {
 		void draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_sel_screen,
 			std::size_t p_sel_x, std::size_t p_sel_y);
 
+		void generate_world_tilesets(void);
 		void draw_control_window(SDL_Renderer* p_rnd);
 		void draw_screen_tilemap_window(SDL_Renderer* p_rnd);
 		void draw_metadata_window(SDL_Renderer* p_rnd);

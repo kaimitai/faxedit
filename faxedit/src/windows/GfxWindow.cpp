@@ -125,8 +125,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		if (ui::imgui_button("Load bmp", 4)) try {
 			std::set<std::size_t> l_res_idx;
-			std::size_t l_tileset_start{ m_tileset_start.at(l_ts_no) };
-			std::size_t l_tileset_end{ l_tileset_start + m_tileset_size.at(l_ts_no) };
+			std::size_t l_tileset_start{ m_game->m_tilesets.at(l_ts_no).start_idx };
+			std::size_t l_tileset_end{ m_game->m_tilesets.at(l_ts_no).end_index() };
 
 			for (std::size_t i{ 0 }; i < l_tileset_start; ++i)
 				l_res_idx.insert(i);
@@ -153,7 +153,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				gen_fixed_building_metatiles(l_ts_no, l_read_only_mts);
 
 			std::vector<fe::ChrGfxTile> l_tiles;
-			const auto& chrtiles{ m_game->m_tilesets.at(l_ts_no) };
+			const auto& chrtiles{ world_ppu_tilesets.at(l_ts_no) };
 
 			for (std::size_t i{ 0 }; i < chrtiles.size(); ++i)
 				l_tiles.push_back(fe::ChrGfxTile(chrtiles[i],
@@ -190,7 +190,14 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
 			const auto gfxres{ m_gfx.get_tilemap_import_result(l_gfx_key) };
 
-			m_game->m_tilesets.at(l_ts_no) = gfxres.m_tiles;
+			std::size_t l_start_idx{ m_game->m_tilesets.at(l_ts_no).start_idx };
+			std::size_t l_end_idx{ m_game->m_tilesets.at(l_ts_no).end_index() };
+			std::size_t l_tcount{ l_end_idx - l_start_idx };
+
+			for (std::size_t i{ 0 }; i < l_tcount; ++i)
+				m_game->m_tilesets.at(l_ts_no).tiles.at(i) = gfxres.m_tiles.at(l_start_idx + i);
+			// the world tileset chr-tiles were updated, update the ui cache
+			generate_world_tilesets();
 
 			auto& mts{ m_game->m_chunks.at(m_sel_gfx_ts_world).m_metatiles };
 			const auto& restm{ gfxres.m_tilemap };
@@ -775,7 +782,7 @@ fe::ChrTilemap fe::MainWindow::get_world_mt_tilemap(std::size_t p_world_no,
 	}
 
 	// get chr tiles with the correct metadata
-	result.m_tiles = m_game->m_tilesets.at(
+	result.m_tiles = world_ppu_tilesets.at(
 		m_game->get_default_tileset_no(p_world_no, p_screen_no)
 	);
 

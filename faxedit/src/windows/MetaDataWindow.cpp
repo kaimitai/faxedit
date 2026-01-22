@@ -598,8 +598,8 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 			l_mt_def.m_block_property, 0x00, 0x0f);
 
 		std::size_t l_tileset_no{ m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
-		std::size_t l_tileset_start{ m_tileset_start.at(l_tileset_no) };
-		std::size_t l_tileset_end{ l_tileset_start + m_tileset_size.at(l_tileset_no) };
+		std::size_t l_tileset_start{ m_game->m_tilesets.at(l_tileset_no).start_idx };
+		std::size_t l_tileset_end{ m_game->m_tilesets.at(l_tileset_no).end_index() };
 
 		ImGui::BeginChild("TilePicker", ImVec2(0, 400), true); // scrollable area
 		auto l_atlas{ m_gfx.get_atlas() };

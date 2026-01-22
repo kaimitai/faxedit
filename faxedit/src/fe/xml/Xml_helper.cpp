@@ -198,6 +198,25 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		);
 	}
 
+	// if tilesets are not defined, extract from rom post-import
+	auto n_tilesets{ n_root.child(c::TAG_TILESETS) };
+	if (n_tilesets) {
+
+		for (auto n_tileset{ n_tilesets.child(c::TAG_TILESET) }; n_tileset;
+			n_tileset = n_tileset.next_sibling(c::TAG_TILESET)) {
+
+			std::size_t l_ppu_start_idx{ parse_numeric(n_tileset.attribute(c::ATTR_PPU_START_IDX).as_string()) };
+			std::vector<klib::NES_tile> l_tiles;
+
+			for (auto n_chr_tile{ n_tileset.child(c::TAG_CHR_TILE) }; n_chr_tile;
+				n_chr_tile = n_chr_tile.next_sibling(c::TAG_CHR_TILE)) {
+				l_tiles.push_back(klib::NES_tile(parse_byte_list(n_chr_tile.attribute(c::ATTR_BYTES).as_string())));
+			}
+
+			l_game.m_tilesets.push_back(fe::Tileset(l_ppu_start_idx, l_tiles));
+		}
+	}
+
 	// extract chunks
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
@@ -571,7 +590,28 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	n_fog.append_attribute(c::TAG_PALETTE);
 	n_fog.attribute(c::TAG_PALETTE).set_value(byte_to_hex(p_game.m_fog.m_palette_no));
 
-	// for each chunk
+	// for each tileset
+	auto n_tilesets{ n_metadata.append_child(c::TAG_TILESETS) };
+
+	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i) {
+		auto n_tileset{ n_tilesets.append_child(c::TAG_TILESET) };
+		n_tileset.append_attribute(c::ATTR_NO);
+		n_tileset.attribute(c::ATTR_NO).set_value(i);
+		n_tileset.append_attribute(c::ATTR_PPU_START_IDX);
+		n_tileset.attribute(c::ATTR_PPU_START_IDX).set_value(p_game.m_tilesets[i].start_idx);
+
+		// for each chr-tile
+		for (std::size_t j{ 0 }; j < p_game.m_tilesets[i].tiles.size(); ++j) {
+			auto n_chr_tile{ n_tileset.append_child(c::TAG_CHR_TILE) };
+			n_chr_tile.append_attribute(c::ATTR_NO);
+			n_chr_tile.attribute(c::ATTR_NO).set_value(j);
+
+			n_chr_tile.append_attribute(c::ATTR_BYTES);
+			n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_tilesets[i].tiles[j].to_bytes(), true));
+		}
+	}
+
+	// for each world
 	auto n_chunks{ n_metadata.append_child(c::TAG_CHUNKS) };
 
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
