@@ -126,6 +126,9 @@ namespace fe {
 		float m_pulse_time, m_anim_time;
 		std::size_t m_anim_frame;
 
+		// application exit handler variables
+		bool m_exit_app_requested, m_exit_app_granted;
+
 		void imgui_text(const std::string& p_str) const;
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
@@ -151,6 +154,7 @@ namespace fe {
 		void draw_metadata_window(SDL_Renderer* p_rnd);
 		void draw_iscript_window(SDL_Renderer* p_rnd);
 		void draw_filepicker_window(SDL_Renderer* p_rnd);
+		void draw_exit_app_window(SDL_Renderer* p_rnd);
 		void draw_gfx_window(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
@@ -226,6 +230,9 @@ namespace fe {
 		void generate_metatile_textures(SDL_Renderer* p_rnd,
 			std::size_t p_mt_no = 256);
 		void draw(SDL_Renderer* p_rnd);
+
+		void request_exit_app(void);
+		bool is_exit_app_granted(void) const;
 	};
 
 }

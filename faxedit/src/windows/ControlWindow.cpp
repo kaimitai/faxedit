@@ -287,3 +287,11 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 		return std::nullopt;
 	}
 }
+
+void fe::MainWindow::request_exit_app(void) {
+	m_exit_app_requested = true;
+}
+
+bool fe::MainWindow::is_exit_app_granted(void) const {
+	return m_exit_app_granted;
+}

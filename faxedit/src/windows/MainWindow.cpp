@@ -52,7 +52,10 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_show_sprite_sets_in_buildings{ false },
 	// config variables, will be loaded with the config xml
 	m_sprite_count{ 0 },
-	m_iscript_count{ 0 }
+	m_iscript_count{ 0 },
+	// exit handler variables
+	m_exit_app_requested{ false },
+	m_exit_app_granted{ false }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("For iScript editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
@@ -82,7 +85,14 @@ void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
 }
 
 void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
-	if (m_game.has_value()) {
+
+	if (m_exit_app_requested) {
+		if (!m_game.has_value())
+			m_exit_app_granted = true;
+		else
+			draw_exit_app_window(p_rnd);
+	}
+	else if (m_game.has_value()) {
 
 		const SDL_Color lc_pulse_start{ 153, 153, 0, 255 };   // dark yellow
 		const SDL_Color lc_pulse_end{ 255, 255, 102, 255 }; // light yellow
@@ -273,9 +283,9 @@ void fe::MainWindow::draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_s
 void fe::MainWindow::generate_world_tilesets(void) {
 	std::vector<std::vector<klib::NES_tile>> new_tiles;
 	const auto& gtilesets{ m_game->m_tilesets };
-	
+
 	auto hud_tiles{ m_game->get_hud_chr_tiles(m_config) };
-	
+
 	for (const auto& wtileset : gtilesets) {
 		std::vector<klib::NES_tile> wpputileset{ hud_tiles };
 
@@ -610,6 +620,31 @@ bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::siz
 		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? 2 : 1);
 
 	return l_ok;
+}
+
+void fe::MainWindow::draw_exit_app_window(SDL_Renderer* p_rnd) {
+	SDL_SetRenderDrawColor(p_rnd, 96, 96, 255, 0);
+	SDL_RenderClear(p_rnd);
+
+	ImGui_ImplSDLRenderer3_NewFrame();
+	ImGui_ImplSDL3_NewFrame();
+	ImGui::NewFrame();
+
+	ui::imgui_screen("Close Application?", c::WIN_ROM_X, c::WIN_ROM_Y, c::WIN_ROM_W, c::WIN_ROM_H,
+		4);
+
+	if (ui::imgui_button("Return to editor", 2))
+		m_exit_app_requested = false;
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Exit application", 1))
+		m_exit_app_granted = true;
+
+	ImGui::End();
+
+	ImGui::Render();
+	ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
 }
 
 void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {

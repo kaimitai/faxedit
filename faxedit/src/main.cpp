@@ -72,7 +72,7 @@ int main(int argc, char** argv) try {
 
 			int l_w{ 1024 }, l_h{ 768 };
 
-			while (!l_exit) {
+			while (!l_main_window.is_exit_app_granted()) {
 
 				uint64_t tick_time = SDL_GetTicks();	// current time
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) try {
 
 					if (e.type == SDL_EVENT_QUIT) {
 						l_wconf.saveWindowConfig(l_window, SDL_WIN_FILENAME);
-						l_exit = true;
+						l_main_window.request_exit_app();
 					}
 				}
 
