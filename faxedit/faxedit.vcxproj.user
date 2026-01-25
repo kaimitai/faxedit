@@ -3,11 +3,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>  "c:\temp\roms\us.nes"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>  "c:\temp\faxanadu (u).nes"|  "c:\temp\roms\en.nes"|  "c:\temp\roms\uxs.nes"|  "c:\temp\roms\us.nes"|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>  "c:\temp\roms\en.nes"|  "c:\temp\roms\uxs.nes"|  "c:\temp\roms\usx.nes"|  "c:\temp\newmml\us.nes"|  "c:\temp\roms\us.nes"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>"c:\temp\faxanadu (u).nes"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"c:\temp\roms\us.nes"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArgumentsHistory>"c:\temp\faxanadu (u).nes"|</LocalDebuggerCommandArgumentsHistory>
+    <LocalDebuggerCommandArgumentsHistory>"c:\temp\faxanadu (u).nes"|"c:\temp\roms\us.nes"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>

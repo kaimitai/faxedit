@@ -58,10 +58,11 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_exit_app_granted{ false }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
-	add_message("For iScript editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
+	add_message("For script and music editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
+	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", 4);
 	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), 5);
@@ -122,6 +123,15 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			}
 			else if (ImGui::IsKeyDown(ImGuiMod_Shift) && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste(false);
+			}
+
+			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+				if (!m_undo->undo(m_sel_chunk, m_sel_screen))
+					add_message("No tilemap changes to undo", 4);
+			}
+			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_Y)) {
+				if (!m_undo->redo(m_sel_chunk, m_sel_screen))
+					add_message("No tilemap changes to redo", 4);
 			}
 		}
 
@@ -364,7 +374,9 @@ std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 void fe::MainWindow::add_message(const std::string& p_msg, int p_status) {
 	if (m_messages.size() > 50)
 		m_messages.pop_back();
-	m_messages.push_front(fe::Message(p_msg, p_status));
+
+	if (m_messages.empty() || m_messages.front().text != p_msg)
+		m_messages.push_front(fe::Message(p_msg, p_status));
 }
 
 // remember to push and pop IDs before calling this function
@@ -594,12 +606,8 @@ void fe::MainWindow::clipboard_paste(bool l_update_data) {
 	// all good, paste or at least show selection rectangle
 	else {
 		if (l_update_data) {
-			for (std::size_t j{ 0 }; j < l_clip.size(); ++j)
-				for (std::size_t i{ 0 }; i < l_clip.at(j).size(); ++i)
-					m_game->m_chunks.at(m_sel_chunk).
-					m_screens.at(m_sel_screen).
-					m_tilemap.at(m_sel_tile_y + j).at(m_sel_tile_x + i) =
-					l_clip[j][i];
+			m_undo->apply_tilemap_edit(m_sel_chunk, m_sel_screen,
+				m_sel_tile_x, m_sel_tile_y, l_clip);
 		}
 
 		m_sel_tile_x2 = m_sel_tile_x + l_clip[0].size() - 1;
@@ -801,6 +809,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		if (m_game->m_chunks.size() > 0)
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
+
+		m_undo.reset();
+		m_undo.emplace(m_game.value());
 
 		add_message("Loaded " + p_filepath, 2);
 	}

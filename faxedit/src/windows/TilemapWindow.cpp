@@ -117,7 +117,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 					else if (l_mouse_right_down) {
 						if (m_sel_metatile < l_metatiles.size())
-							l_screen.m_tilemap.at(tileY).at(tileX) = static_cast<byte>(m_sel_metatile);
+							m_undo->apply_tilemap_edit(m_sel_chunk, m_sel_screen,
+								tileX, tileY, static_cast<byte>(m_sel_metatile));
 					}
 
 				}
@@ -657,6 +658,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					add_message("Screen has references", 1);
 				else {
 					m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
+					m_undo->clear_history(m_sel_chunk);
 					if (m_sel_screen >= l_chunk.m_screens.size())
 						--m_sel_screen;
 				}
@@ -697,7 +699,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				ImGui::NewLine();
 			}
 
-			ImGui::SeparatorText(std::format("Render Palette: {}", 
+			ImGui::SeparatorText(std::format("Render Palette: {}",
 				get_description(static_cast<byte>(m_atlas_new_palette_no), m_labels_palettes)).c_str());
 
 			ui::imgui_slider_with_arrows("###renderpal",

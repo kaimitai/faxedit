@@ -198,6 +198,9 @@
     <ClCompile Include="src\fe\ChrStructures.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
+    <ClCompile Include="src\windows\UndoInterface.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -346,6 +349,9 @@
     </ClInclude>
     <ClInclude Include="src\fe\ChrStructures.h">
       <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\UndoInterface.h">
+      <Filter>Header Files\windows</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

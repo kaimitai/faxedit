@@ -160,6 +160,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			auto l_rom{ m_game->m_rom_data };
 			m_game = xml::load_xml(get_xml_path());
 			m_game->m_rom_data = l_rom;
+			m_undo->clear_history();
 
 			// extract values not present in previous xml versions
 			// none of this should do anything if we got values from the xml

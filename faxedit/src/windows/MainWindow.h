@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include "gfx.h"
+#include "UndoInterface.h"
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
@@ -44,6 +45,8 @@ namespace fe {
 
 		// config
 		fe::Config m_config;
+		// tilemap undo interface
+		std::optional<fe::UndoInterface> m_undo;
 
 		// config values we will cache
 		std::map<byte, std::string> m_labels_cmd_byte,

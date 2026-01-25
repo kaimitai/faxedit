@@ -93,13 +93,19 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
 						add_message(std::format("{} metatiles deleted from world {}",
 							l_del_cnt, m_sel_chunk), 5);
-						if (l_del_cnt > 0)
+						if (l_del_cnt > 0) {
 							generate_metatile_textures(p_rnd);
+							// clear undo history for this world if a metatile was deleted
+							m_undo->clear_history(m_sel_chunk);
+						}
 					}
 
 					if (ui::imgui_button("Delete Unreferenced Screens", 1, "",
 						m_sel_chunk == c::CHUNK_IDX_BUILDINGS || !ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_screens(m_sel_chunk) };
+						// clear undo history for this world if a screen was deleted
+						if (l_del_cnt > 0)
+							m_undo->clear_history(m_sel_chunk);
 						add_message(std::format("{} screens deleted from world {}",
 							l_del_cnt, m_sel_chunk), 5);
 						if (m_sel_screen >= m_game->m_chunks.at(m_sel_chunk).m_screens.size())
@@ -678,6 +684,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 					add_message("Metatile is in use", 1);
 				else {
 					m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
+					m_undo->clear_history(m_sel_chunk);
 					generate_metatile_textures(p_rnd);
 				}
 			}

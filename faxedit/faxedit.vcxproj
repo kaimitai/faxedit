@@ -185,6 +185,7 @@
     <ClCompile Include="src\windows\imgui_helper.cpp" />
     <ClCompile Include="src\windows\MainWindow.cpp" />
     <ClCompile Include="src\windows\TilemapWindow.cpp" />
+    <ClCompile Include="src\windows\UndoInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialog.h" />
@@ -236,6 +237,7 @@
     <ClInclude Include="src\windows\gfx.h" />
     <ClInclude Include="src\windows\Imgui_helper.h" />
     <ClInclude Include="src\windows\MainWindow.h" />
+    <ClInclude Include="src\windows\UndoInterface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
