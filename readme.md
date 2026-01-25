@@ -39,13 +39,15 @@ The editor can save your project as a patched NES ROM file or as an IPS patch. W
 
 <hr>
 
-### Roadmap
+### Upcoming changes
 
-This editor is in development, and is being released as a beta. Some bugs are expected. While we stabilize the codebase, we will prioritize bug-fixing. Once the technical debt has been paid down, we want to prioritize the following additions:
+The following features have been completed in the development branch, and will be released soon:
 
-* Add an undo feature
-* Add configuration support for more ROM-hacks
-* General UI improvements
+* Tilemap undo/redo feature with a generous history size
+* Store chr-tiles for the world tilesets in the data xml
+* Store game gfx images in the data xml; tilemap, attribute table, chr-tiles and palettes
+* Full support for the US revision A in the configuration xml (differs from the EU version only in the music data)
+* Will be bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), with new support for editing music via an MML (music macro language) interface
 
 <hr>
 
@@ -121,3 +123,10 @@ The character data for this NPC is stored in the middle of the character data fo
 Here is the animation:
 
 ![Unused female NPC](./docs/img/unused_female_npc.png)
+
+<hr>
+
+You can also find me on the **Faxanadu Randomizer & Romhacking** Discord server, the main hub for all things Faxanadu.
+
+[![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/K65uxXhA)
+
