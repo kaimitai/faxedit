@@ -9,7 +9,7 @@
 #include <vector>
 #include "./../common/klib/NES_tile.h"
 #include "./../fe/Sprite_definitions.h"
-#include "./../fe/GameGfxTilemap.h"
+#include "./../fe/ChrStructures.h"
 
 using byte = unsigned char;
 using NES_Palette = std::vector<byte>;
@@ -121,6 +121,7 @@ namespace fe {
 			const std::vector<klib::NES_tile>& p_tiles,
 			const std::vector<std::vector<byte>>& p_palette);
 		SDL_Texture* get_tileset_txt(std::size_t p_key) const;
+		void clear_tileset_textures(void);
 
 		klib::NES_tile surface_region_to_nes_tile(SDL_Surface* srf,
 			const std::vector<byte>& p_palette,

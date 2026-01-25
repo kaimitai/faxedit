@@ -217,7 +217,67 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		}
 	}
 
-	// extract chunks
+	// if tilesets are not defined, extract from rom post-import
+	auto n_chrbanks{ n_root.child(c::TAG_CHR_BANKS) };
+	if (n_chrbanks) {
+		for (auto n_chrbank{ n_chrbanks.child(c::TAG_CHR_BANK) }; n_chrbank;
+			n_chrbank = n_chrbank.next_sibling(c::TAG_CHR_BANK)) {
+
+			std::string chrbankid{ n_chrbank.attribute(c::ATTR_ID).as_string() };
+			std::vector<klib::NES_tile> l_tiles;
+
+			for (auto n_chr_tile{ n_chrbank.child(c::TAG_CHR_TILE) }; n_chr_tile;
+				n_chr_tile = n_chr_tile.next_sibling(c::TAG_CHR_TILE)) {
+				l_tiles.push_back(klib::NES_tile(parse_byte_list(n_chr_tile.attribute(c::ATTR_BYTES).as_string())));
+			}
+			l_game.m_gfx_manager.set_chr_bank(chrbankid, l_tiles);
+		}
+	}
+
+	// if gfx images are note defined, extract from rom post-import
+	auto n_images{ n_root.child(c::TAG_GFX_IMAGES) };
+	if (n_images) {
+		for (auto n_image{ n_images.child(c::TAG_GFX_IMAGE) }; n_image;
+			n_image = n_image.next_sibling(c::TAG_GFX_IMAGE)) {
+
+			std::string gfx_id{ n_image.attribute(c::ATTR_ID).as_string() };
+			if (n_image.attribute(c::TAG_PALETTE)) {
+				l_game.m_gfx_manager.set_palette(gfx_id,
+					parse_byte_list(n_image.attribute(c::TAG_PALETTE).as_string()));
+			}
+
+			auto n_tilemap{ n_image.child(c::TAG_TILEMAP) };
+			if (n_tilemap) {
+				std::vector<std::vector<byte>> l_tilemap;
+
+				for (auto n_row{ n_tilemap.child(c::TAG_ROW) }; n_row;
+					n_row = n_row.next_sibling(c::TAG_ROW)) {
+					l_tilemap.push_back(
+						parse_byte_list(n_row.attribute(c::ATTR_BYTES).as_string())
+					);
+				}
+
+				l_game.m_gfx_manager.set_tilemap(gfx_id, l_tilemap);
+			}
+
+			auto n_attr_table{ n_image.child(c::TAG_GFX_ATTRTABLE) };
+			if (n_attr_table) {
+				std::vector<std::vector<byte>> l_attr_table;
+
+				for (auto n_row{ n_attr_table.child(c::TAG_ROW) }; n_row;
+					n_row = n_row.next_sibling(c::TAG_ROW)) {
+					l_attr_table.push_back(
+						parse_byte_list(n_row.attribute(c::ATTR_BYTES).as_string())
+					);
+				}
+
+				l_game.m_gfx_manager.set_attribute_table(gfx_id, l_attr_table);
+			}
+
+		}
+	}
+
+	// extract worlds
 	auto n_chunks = n_root.child(c::TAG_CHUNKS);
 	for (auto n_chunk{ n_chunks.child(c::TAG_CHUNK) }; n_chunk;
 		n_chunk = n_chunk.next_sibling(c::TAG_CHUNK)) {
@@ -608,6 +668,67 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 			n_chr_tile.append_attribute(c::ATTR_BYTES);
 			n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(p_game.m_tilesets[i].tiles[j].to_bytes(), true));
+		}
+	}
+
+	const auto& gfx_mgr{ p_game.m_gfx_manager };
+
+	// for each gfx tilemap image
+	auto n_images{ n_metadata.append_child(c::TAG_GFX_IMAGES) };
+
+	for (const auto& kv : gfx_mgr.tilemapdata) {
+		auto n_image{ n_images.append_child(c::TAG_GFX_IMAGE) };
+		n_image.append_attribute(c::ATTR_ID);
+		n_image.attribute(c::ATTR_ID).set_value(kv.first);
+		n_image.append_attribute(c::TAG_CHR_BANK);
+		n_image.attribute(c::TAG_CHR_BANK).set_value(gfx_mgr.get_tilemap_chr_bank_id(kv.first));
+
+		if (gfx_mgr.is_palette_dynamic(kv.first)) {
+			n_image.append_attribute(c::TAG_PALETTE);
+			n_image.attribute(c::TAG_PALETTE).set_value(join_bytes(kv.second.palette, true));
+		}
+
+		auto n_tilemap{ n_image.append_child(c::TAG_TILEMAP) };
+		for (std::size_t i{ 0 }; i < kv.second.tilemap.size(); ++i) {
+			auto n_row{ n_tilemap.append_child(c::TAG_ROW) };
+			n_row.append_attribute(c::ATTR_NO);
+			n_row.attribute(c::ATTR_NO).set_value(i);
+
+			n_row.append_attribute(c::ATTR_BYTES);
+			n_row.attribute(c::ATTR_BYTES).set_value(join_bytes(kv.second.tilemap[i], true));
+		}
+
+		if (gfx_mgr.is_attr_table_dynamic(kv.first)) {
+			auto n_attr_table{ n_image.append_child(c::TAG_GFX_ATTRTABLE) };
+			for (std::size_t i{ 0 }; i < kv.second.attrmap.size(); ++i) {
+				auto n_row{ n_attr_table.append_child(c::TAG_ROW) };
+				n_row.append_attribute(c::ATTR_NO);
+				n_row.attribute(c::ATTR_NO).set_value(i);
+
+				n_row.append_attribute(c::ATTR_BYTES);
+				n_row.attribute(c::ATTR_BYTES).set_value(join_bytes(kv.second.attrmap[i], true));
+			}
+		}
+	}
+
+	// for each dynamic chr-tile bank
+	auto n_chrbanks{ n_metadata.append_child(c::TAG_CHR_BANKS) };
+	for (const auto& chrbank : gfx_mgr.chrbanks) {
+		if (gfx_mgr.is_chr_bank_dynamic(chrbank.first)) {
+
+			auto n_chrbank{ n_chrbanks.append_child(c::TAG_CHR_BANK) };
+			n_chrbank.append_attribute(c::ATTR_ID);
+			n_chrbank.attribute(c::ATTR_ID).set_value(chrbank.first);
+
+			// for each chr-tile in the bank
+			for (std::size_t i{ 0 }; i < chrbank.second.size(); ++i) {
+				auto n_chr_tile{ n_chrbank.append_child(c::TAG_CHR_TILE) };
+				n_chr_tile.append_attribute(c::ATTR_NO);
+				n_chr_tile.attribute(c::ATTR_NO).set_value(i);
+
+				n_chr_tile.append_attribute(c::ATTR_BYTES);
+				n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(chrbank.second[i].to_bytes(), true));
+			}
 		}
 	}
 

@@ -192,7 +192,10 @@
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp">
       <Filter>Source Files\common\klib</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\GameGfxTilemap.cpp">
+    <ClCompile Include="src\fe\GfxTilemapManager.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\ChrStructures.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
   </ItemGroup>
@@ -338,8 +341,11 @@
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h">
       <Filter>Header Files\common\klib</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\GameGfxTilemap.h">
+    <ClInclude Include="src\fe\GfxTilemapManager.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\ChrStructures.h">
+      <Filter>Header Files\fe\xml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 #ifndef FE_CONSTANTS_H
 #define FE_CONSTANTS_H
 
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
@@ -150,6 +151,15 @@ namespace fe {
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 		constexpr std::size_t WORLD_BUILDINGS_SCREEN_COUNT{ 10 };
 		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
+
+		// gfx tilemap image keys
+		constexpr char CHR_GFX_ID_TITLE[]{ "title" };
+		constexpr char CHR_GFX_ID_INTRO[]{ "intro" };
+		constexpr char CHR_GFX_ID_OUTRO[]{ "outro" };
+		constexpr char CHR_GFX_ID_ITEMS[]{ "items" };
+		static const inline std::array<std::string, 4> CHR_GFX_IDS = {
+		CHR_GFX_ID_TITLE, CHR_GFX_ID_INTRO, CHR_GFX_ID_OUTRO, CHR_GFX_ID_ITEMS
+		};
 
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid

@@ -268,11 +268,14 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::BgGraphics) {
 		static std::size_t ls_sel_bg_game_gfx{ 0 };
-		std::size_t l_gfx_key{ 900 + ls_sel_bg_game_gfx };
+
+		auto& gfxman{ m_game->m_gfx_manager };
+		const auto& gfxkey{ c::CHR_GFX_IDS[ls_sel_bg_game_gfx] };
+		std::size_t l_gfx_key{ gfxman.get_gfx_numeric_key(gfxkey) };
 
 		ui::imgui_slider_with_arrows("###sgbg",
-			std::format("Graphic: {}", m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_gfx_name),
-			ls_sel_bg_game_gfx, 0, m_game->m_game_gfx.size() - 1,
+			std::format("Graphic: {}", gfxman.get_label(gfxkey)),
+			ls_sel_bg_game_gfx, 0, c::CHR_GFX_IDS.size() - 1,
 			"", false, true);
 
 		auto txt{ m_gfx.get_tileset_txt(l_gfx_key) };
@@ -285,13 +288,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		}
 
 		if (ui::imgui_button("Extract from ROM", 4)) {
-			auto& gamegfx{ m_game->m_game_gfx.at(ls_sel_bg_game_gfx) };
-
-			if (!gamegfx.m_loaded)
-				gamegfx.load_from_rom(m_game->m_rom_data);
-
 			m_gfx.gen_tilemap_texture(p_rnd,
-				m_game->m_game_gfx.at(ls_sel_bg_game_gfx).get_chrtilemap(), l_gfx_key);
+				gfxman.get_chrtilemap(gfxkey), l_gfx_key);
 
 			m_gfx.clear_tilemap_import_result(l_gfx_key);
 		}
@@ -299,7 +297,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		if (ui::imgui_button("Save bmp", txt == nullptr ? 4 : 2,
 			"", txt == nullptr)) try {
 			m_gfx.save_tilemap_bmp(
-				m_game->m_game_gfx.at(ls_sel_bg_game_gfx).get_chrtilemap(),
+				gfxman.get_chrtilemap(gfxkey),
 				get_bmp_path(),
 				get_bmp_filename(l_gfx_key)
 			);
@@ -314,36 +312,14 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			add_message(ex.what(), 1);
 		}
 
-		if (ui::imgui_button("Load bmp", txt == nullptr ? 4 : 2,
-			"", txt == nullptr)) {
+		if (ui::imgui_button("Load bmp", 2)) {
 
 			try {
-				const auto& l_ggfx{ m_game->m_game_gfx };
-				std::set<std::size_t> l_lock_ind;
-
-				for (std::size_t gf{ 0 }; gf < l_ggfx.size(); ++gf)
-					if (gf != ls_sel_bg_game_gfx &&
-						l_ggfx[gf].m_rom_offset_chr == l_ggfx[ls_sel_bg_game_gfx].m_rom_offset_chr) {
-						if (!l_ggfx[gf].m_loaded)
-							throw std::runtime_error(std::format(
-								"Shared chr tiles detected - extract \"{}\" before importing bmp to this image",
-								l_ggfx[gf].m_gfx_name)
-							); else {
-							const auto& ggchrs{ l_ggfx[gf].m_tilemap };
-							for (const auto& row : ggchrs)
-								for (const auto& col : row)
-									for (const auto& idx : col.m_idxs)
-										l_lock_ind.insert(idx);
-						}
-					}
-
-				auto l_tmp_tiles{ m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_chr_tiles };
-				for (std::size_t i : l_lock_ind)
-					l_tmp_tiles.at(i).m_readonly = true;
+				auto l_tmp_tiles{ gfxman.get_complete_chr_tileset_w_md(gfxkey) };
 
 				auto bmpimportres = m_gfx.import_tilemap_bmp(p_rnd,
 					l_tmp_tiles,
-					flat_pal_to_2d_pal(m_game->m_game_gfx.at(ls_sel_bg_game_gfx).m_palette),
+					flat_pal_to_2d_pal(gfxman.tilemapdata.at(gfxkey).palette),
 					ls_dedup_strat,
 					get_bmp_path(),
 					get_bmp_filename(l_gfx_key),
@@ -369,22 +345,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
 			const auto gfxres{ m_gfx.get_tilemap_import_result(l_gfx_key) };
 
-			m_game->m_game_gfx.at(ls_sel_bg_game_gfx).commit_import(
-				gfxres
-			);
-
-			// copy the chr tiles to the other bg gfx using this tileset
-			// to keep them in synch
-			auto& l_ggfx{ m_game->m_game_gfx };
-
-			for (std::size_t gf{ 0 }; gf < l_ggfx.size(); ++gf)
-				if (gf != ls_sel_bg_game_gfx &&
-					l_ggfx[gf].m_rom_offset_chr == l_ggfx[ls_sel_bg_game_gfx].m_rom_offset_chr &&
-					l_ggfx[gf].m_loaded) { // must be true here
-					l_ggfx[gf].m_chr_tiles.clear();
-					for (const auto& tile : l_ggfx[ls_sel_bg_game_gfx].m_chr_tiles)
-						l_ggfx[gf].m_chr_tiles.push_back(tile);
-				}
+			gfxman.commit_import(gfxkey, gfxres);
 
 			// make life easy for ourselves and wipe all staging data on commit
 			m_gfx.clear_all_tilemap_import_results();
@@ -419,19 +380,19 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	else if (m_gfx_emode == fe::GfxEditMode::GfxPalettes) {
 		static std::size_t ls_sel_game_gfx{ 0 };
 
+		auto& gfxman{ m_game->m_gfx_manager };
+		const auto& gfxkey{ c::CHR_GFX_IDS[ls_sel_game_gfx] };
+
 		ui::imgui_slider_with_arrows("###sgbg",
-			std::format("Graphic: {}", m_game->m_game_gfx.at(ls_sel_game_gfx).m_gfx_name),
-			ls_sel_game_gfx, 0, m_game->m_game_gfx.size() - 1,
+			std::format("Graphic: {}", m_game->m_gfx_manager.get_label(gfxkey)),
+			ls_sel_game_gfx, 0, c::CHR_GFX_IDS.size() - 1,
 			"", false, true);
 
-		auto& selbggxfobj{ m_game->m_game_gfx.at(ls_sel_game_gfx) };
+		show_palette_window(
+			m_game->m_gfx_manager.get_bg_palette(gfxkey)
+		);
 
-		if (selbggxfobj.m_loaded)
-			show_palette_window(selbggxfobj.m_palette);
-		else
-			imgui_text("Graphic not loaded");
-
-		if (!selbggxfobj.m_patch_palette) {
+		if (!m_game->m_gfx_manager.is_palette_dynamic(gfxkey)) {
 			ImGui::Separator();
 			imgui_text("This palette will not be saved to ROM.\nIt is only used for bmp export and import.");
 		}

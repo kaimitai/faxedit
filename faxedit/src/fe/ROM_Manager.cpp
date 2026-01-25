@@ -467,9 +467,7 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_palette_to_music(p_config, p_game, p_rom);
 	encode_fog_data(p_config, p_game, p_rom);
 
-	// will only patch images which have been loaded during runtime
-	for (const auto& gfxtilemap : p_game.m_game_gfx)
-		gfxtilemap.patch_rom(p_rom);
+	p_game.m_gfx_manager.patch_rom(p_rom);
 }
 
 void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,

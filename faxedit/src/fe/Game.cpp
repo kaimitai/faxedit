@@ -141,7 +141,8 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	for (std::size_t i{ 0 }; i < 4; ++i)
 		m_jump_on_animation.push_back(m_rom_data.at(l_jump_on_anim_offset + i));
 
-	initialize_game_gfx_metadata(p_config);
+	// initialize gfx metadata and load gfx images
+	m_gfx_manager.initialize(p_config, p_rom_data);
 }
 
 // generate PPU tiles 0-58 which are static and available for any world
@@ -170,9 +171,7 @@ void fe::Game::generate_tilesets(const fe::Config& p_config) {
 	std::size_t l_tileset_chr_ppu_start_offset{ l_tileset_to_addr + 2 * l_tileset_count };
 	std::size_t l_tileset_chr_count_offset{ l_tileset_chr_ppu_start_offset + l_tileset_count };
 
-	m_tilesets.clear();
-
-	for (std::size_t i{ 0 }; i < l_tileset_count; ++i) {
+	for (std::size_t i{ m_tilesets.size() }; i < l_tileset_count; ++i) {
 		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
 		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
 		std::size_t l_local_addr{
@@ -886,74 +885,6 @@ void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
 		m_hud_attributes.m_hud_attributes.push_back(
 			fe::PaletteAttribute(m_rom_data.at(l_hud_attribute_offset + i))
 		);
-}
-
-void fe::Game::initialize_game_gfx_metadata(const fe::Config& p_config) {
-	m_game_gfx.clear();
-
-	m_game_gfx.push_back(fe::GameGfxTilemap(
-		"Title Screen",
-		p_config.constant(c::ID_TITLE_TILEMAP_MT_X),
-		p_config.constant(c::ID_TITLE_TILEMAP_MT_Y),
-		p_config.constant(c::ID_TITLE_TILEMAP_MT_W),
-		p_config.constant(c::ID_TITLE_TILEMAP_MT_H),
-		p_config.constant(c::ID_TITLE_TILEMAP_OFFSET),
-		p_config.constant(c::ID_TITLE_CHR_OFFSET),
-		p_config.constant(c::ID_TITLE_CHR_PPU_INDEX),
-		p_config.constant(c::ID_TITLE_CHR_PPU_COUNT),
-		true,
-		true, true,
-		p_config.constant(c::ID_TITLE_ATTRIBUTE_OFFSET),
-		p_config.constant(c::ID_TITLE_PALETTE_OFFSET),
-		true,
-		p_config.constant(c::ID_ALPHABET_CHR_OFFSET),
-		p_config.constant(c::ID_NUMERIC_CHR_OFFSET)
-	));
-
-	m_game_gfx.push_back(fe::GameGfxTilemap(
-		"Intro Animation Screen",
-		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_X),
-		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_Y),
-		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_W),
-		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_H),
-		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_OFFSET),
-		p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET),
-		p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_INDEX),
-		p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_COUNT),
-		false,
-		true, true,
-		p_config.constant(c::ID_INTRO_ANIM_ATTRIBUTE_OFFSET),
-		p_config.constant(c::ID_INTRO_ANIM_PALETTE_OFFSET)
-	));
-
-	m_game_gfx.push_back(fe::GameGfxTilemap(
-		"Outro Animation Screen",
-		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_X),
-		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_Y),
-		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_W),
-		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_H),
-		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_OFFSET),
-		p_config.constant(c::ID_OUTRO_ANIM_CHR_OFFSET),
-		p_config.constant(c::ID_OUTRO_ANIM_CHR_PPU_INDEX),
-		p_config.constant(c::ID_OUTRO_ANIM_CHR_PPU_COUNT),
-		false,
-		true, true,
-		p_config.constant(c::ID_OUTRO_ANIM_ATTRIBUTE_OFFSET),
-		p_config.constant(c::ID_OUTRO_ANIM_PALETTE_OFFSET)
-	));
-
-	m_game_gfx.push_back(fe::GameGfxTilemap(
-		"Items (background gfx)",
-		p_config.constant(c::ID_ITEM_VSCREEN_TILEMAP_MT_X),
-		p_config.constant(c::ID_ITEM_VSCREEN_TILEMAP_MT_Y),
-		p_config.constant(c::ID_ITEM_VSCREEN_TILEMAP_MT_W),
-		p_config.constant(c::ID_ITEM_VSCREEN_TILEMAP_MT_H),
-		p_config.constant(c::ID_ITEM_VSCREEN_TILEMAP_OFFSET),
-		p_config.constant(c::ID_ITEM_VSCREEN_CHR_OFFSET),
-		p_config.constant(c::ID_ITEM_VSCREEN_CHR_PPU_INDEX),
-		p_config.constant(c::ID_ITEM_VSCREEN_CHR_PPU_COUNT),
-		false,
-		false, false));
 }
 
 fe::Fog::Fog(byte p_world_no,

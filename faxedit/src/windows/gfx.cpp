@@ -513,6 +513,12 @@ SDL_Texture* fe::gfx::get_tileset_txt(std::size_t p_key) const {
 		return iter->second;
 }
 
+void fe::gfx::clear_tileset_textures(void) {
+	for (auto& kv : m_tilemap_gfx)
+		delete_texture(kv.second);
+	m_tilemap_gfx.clear();
+}
+
 void fe::gfx::save_surface_as_bmp(SDL_Surface* srf,
 	const std::string& p_path,
 	const std::string& p_filename,

@@ -638,7 +638,7 @@ void fe::MainWindow::draw_exit_app_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Exit application", 1))
+	if (ui::imgui_button("Exit", 1))
 		m_exit_app_granted = true;
 
 	ImGui::End();

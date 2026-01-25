@@ -168,13 +168,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			m_game->extract_hud_attributes(m_config);
 
 			// extract gfx
-			if (m_game->m_tilesets.empty())
-				m_game->generate_tilesets(m_config);
+			m_game->generate_tilesets(m_config);
+			m_game->m_gfx_manager.initialize(m_config, m_game->m_rom_data);
 
-			m_game->initialize_game_gfx_metadata(m_config);
-
-			// clear staging area for gfx
+			// clear staging area for gfx, as well as loaded tilemap/tileset textures
 			m_gfx.clear_all_tilemap_import_results();
+			m_gfx.clear_tileset_textures();
 
 			// update gui cache for world tilesets
 			generate_world_tilesets();

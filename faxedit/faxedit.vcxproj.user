@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>  "c:\temp\faxanadu (u).nes"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>  "c:\temp\roms\us.nes"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>  "c:\temp\faxanadu (u).nes"|  "c:\temp\roms\en.nes"|  "c:\temp\roms\uxs.nes"|  "c:\temp\roms\us.nes"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>"c:\temp\faxanadu (u).nes"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArgumentsHistory>"c:\temp\faxanadu (u).nes"|</LocalDebuggerCommandArgumentsHistory>
   </PropertyGroup>
 </Project>
