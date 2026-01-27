@@ -467,6 +467,8 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_palette_to_music(p_config, p_game, p_rom);
 	encode_fog_data(p_config, p_game, p_rom);
 
+	// TODO: The title screen uses one of the "world palettes" - so make sure this is patched last
+	// can we handle this more elegantly?
 	p_game.m_gfx_manager.patch_rom(p_rom);
 }
 

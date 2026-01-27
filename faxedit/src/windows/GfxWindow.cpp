@@ -372,7 +372,10 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
 			"", false, true);
 
-		if (show_palette_window(wpal)) {
+		if (ls_sel_wpal == c::PAL_INDEX_TITLE_SCREEN) {
+			ImGui::Text("This palette is used by the Title Screen - Edit and use it in the context of BG Gfx");
+		}
+		else if (show_palette_window(ls_sel_wpal, wpal)) {
 			if (m_atlas_palette_no == ls_sel_wpal)
 				m_atlas_force_update = true;
 		}
@@ -388,7 +391,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			ls_sel_game_gfx, 0, c::CHR_GFX_IDS.size() - 1,
 			"", false, true);
 
-		show_palette_window(
+		show_palette_window(gfxman.get_gfx_numeric_key(gfxkey),
 			m_game->m_gfx_manager.get_bg_palette(gfxkey)
 		);
 
@@ -496,12 +499,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	ImGui::End();
 }
 
-bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
+bool fe::MainWindow::show_palette_window(std::size_t p_pal_key, std::vector<byte>& p_palette) {
 	bool was_changed{ false };
 
 	// selected palette index
 	static std::size_t ls_sel_pal_idx{ 1 };
 	static bool ls_edit_bg_col{ false };
+	static std::vector<byte> ls_pal_clipboard;
 
 	const auto nescols{ m_gfx.get_nes_palette() };
 
@@ -558,11 +562,10 @@ bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
 		if (ImGui::Button(std::format("###wpcol{}", i).c_str(),
 			ImVec2(32, 32))) {
 			if (ls_sel_pal_idx % 4 == 0)
-				was_changed = update_pal_bg_idx(p_palette, static_cast<byte>(i));
-			else if (i != l_nes_pal_idx_resolve) {
-				was_changed = true;
-				p_palette.at(ls_sel_pal_idx) = static_cast<byte>(i);
-			}
+				was_changed = m_undo->apply_palette_edit(p_pal_key, p_palette,
+					update_pal_bg_idx(p_palette, static_cast<byte>(i)));
+			else was_changed = m_undo->apply_palette_edit(p_pal_key, p_palette,
+				ls_sel_pal_idx, static_cast<byte>(i));
 		}
 
 		// Outline if selected
@@ -594,21 +597,38 @@ bool fe::MainWindow::show_palette_window(std::vector<byte>& p_palette) {
 	ui::imgui_checkbox("Allow editing bg-color", ls_edit_bg_col,
 		"Faxanadu will override the bg-color with NES palette index $0f (black) in-game");
 
+	ImGui::Separator();
+
+	if (ui::imgui_button("Undo###palundo", 4, "", !m_undo->has_palette_undo(p_pal_key))) {
+		m_undo->undo_palette(p_pal_key, p_palette);
+		was_changed = true;
+	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Redo###palredo", 4, "", !m_undo->has_palette_redo(p_pal_key))) {
+		m_undo->redo_palette(p_pal_key, p_palette);
+		was_changed = true;
+	}
+
+	if (ui::imgui_button("Copy###palcpy", 4, "Copy entire palette to clipboard"))
+		ls_pal_clipboard = p_palette;
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Paste###palpaste", 4, "Paste entire palette from clipboard",
+		ls_pal_clipboard.empty()))
+		was_changed = m_undo->apply_palette_edit(p_pal_key, p_palette, ls_pal_clipboard);
+
 	return was_changed;
 }
 
-bool fe::MainWindow::update_pal_bg_idx(std::vector<byte>& p_palette,
-	byte p_nes_pal_idx) const {
-	bool any_change{ false };
-
-	for (std::size_t i{ 0 }; i < p_palette.size(); i += 4) {
-		if (p_palette[i] != p_nes_pal_idx) {
-			p_palette[i] = p_nes_pal_idx;
-			any_change = true;
-		}
-	}
-
-	return any_change;
+std::vector<byte> fe::MainWindow::update_pal_bg_idx(std::vector<byte>& p_palette,
+	byte p_nes_pal_idx) {
+	auto newpal{ p_palette };
+	for (std::size_t i{ 0 }; i < p_palette.size(); i += 4)
+		newpal[i] = p_nes_pal_idx;
+	return newpal;
 }
 
 void fe::MainWindow::gen_read_only_chr_idx_non_building(std::size_t p_tileset_no,

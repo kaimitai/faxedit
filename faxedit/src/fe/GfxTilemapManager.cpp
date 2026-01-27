@@ -449,12 +449,13 @@ void fe::GfxTilemapManager::patch_tilemap_data(std::vector<byte>& p_rom) const {
 			const auto attrbytes{ serialize_attr_table(tilemapdata.at(kv.first).attrmap) };
 			std::copy(begin(attrbytes), end(attrbytes), begin(p_rom) + kv.second.m_rom_offset_attr);
 		}
-
+		
 		// patch palette if patchable
 		if (kv.second.m_patch_palette) {
 			const auto& palbytes{ tilemapdata.at(kv.first).palette };
 			std::copy(begin(palbytes), end(palbytes), begin(p_rom) + kv.second.m_rom_offset_pal);
 		}
+		
 	}
 }
 

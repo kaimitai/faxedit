@@ -367,6 +367,7 @@
 			<entry byte="$0d" str="Fraternal Castle" />
 			<entry byte="$0e" str="King Grieve's Room" />
 			<entry byte="$0f" str="Zenis" />
+			<entry byte="$10" str="Title Screen" />
 			<entry byte="$11" str="King Room" />
 			<entry byte="$12" str="Guru Room" />
 			<entry byte="$13" str="Hospital" />

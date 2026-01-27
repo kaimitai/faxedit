@@ -41,7 +41,6 @@ void fe::UndoInterface::apply_tilemap_edit(std::size_t p_world_no, std::size_t p
 
 void fe::UndoInterface::apply_edit(const Key& p_key, const std::vector<Coord>& positions,
 	const std::vector<byte>& p_data) {
-
 	TilemapEdit edit;
 	edit.positions = positions;
 	edit.after = p_data;
@@ -113,10 +112,12 @@ Key fe::UndoInterface::make_key(std::size_t p_world_no,
 	return std::make_pair(p_world_no, p_screen_no);
 }
 
-// clear all history
+// clear all history for all types
 void fe::UndoInterface::clear_history(void) {
 	m_undo.clear();
 	m_redo.clear();
+	m_palette_undo.clear();
+	m_palette_redo.clear();
 }
 
 // clear all undo and redo for a world
@@ -133,4 +134,124 @@ void fe::UndoInterface::clear_history(std::size_t p_world_no) {
 void fe::UndoInterface::trim_history(std::vector<TilemapEdit>& p_stack) {
 	while (p_stack.size() > c::UNDO_HISTORY_SIZE)
 		p_stack.erase(begin(p_stack));
+}
+
+// apply a palette edit - we know all the incoming values are different from the current
+// due to pre-processing
+void fe::UndoInterface::apply_palette_edit(std::size_t p_pal_key, Palette& p_palette,
+	const std::vector<std::size_t>& p_indexes, const std::vector<byte>& p_values) {
+	PaletteEdit edit;
+	edit.indexes = p_indexes;
+	edit.after = p_values;
+	edit.before.reserve(p_indexes.size());
+
+	// Capture "before" values from the palette
+	for (std::size_t i = 0; i < p_indexes.size(); ++i) {
+		byte oldValue = p_palette[p_indexes[i]];
+		edit.before.push_back(oldValue);
+	}
+
+	// Apply new values to the palette
+	for (std::size_t i = 0; i < p_indexes.size(); ++i)
+		p_palette[p_indexes[i]] = p_values[i];
+
+	// Push to undo stack
+	auto& undoStack = m_palette_undo[p_pal_key];
+	undoStack.push_back(std::move(edit));
+	trim_palette_history(undoStack);
+
+	// New edit invalidates redo history
+	m_palette_redo[p_pal_key].clear();
+}
+
+// pre-process for single color update
+bool fe::UndoInterface::apply_palette_edit(std::size_t p_pal_key, Palette& p_palette,
+	std::size_t p_index, byte p_value) {
+	if (p_palette.at(p_index) != p_value) {
+		std::vector<std::size_t> idxs{ p_index };
+		std::vector<byte> vals{ p_value };
+		apply_palette_edit(p_pal_key, p_palette, idxs, vals);
+		return true;
+	}
+	else
+		return false;
+}
+
+// pre-process for multi colors update (clipboard paste/bg color update)
+bool fe::UndoInterface::apply_palette_edit(std::size_t p_pal_key, Palette& p_palette,
+	const Palette& p_new_palette) {
+	std::vector<std::size_t> idxs;
+	std::vector<byte> vals;
+
+	for (std::size_t i{ 0 }; i < p_palette.size(); ++i)
+		if (p_palette[i] != p_new_palette.at(i)) {
+			idxs.push_back(i);
+			vals.push_back(p_new_palette.at(i));
+		}
+
+	if (!idxs.empty()) {
+		apply_palette_edit(p_pal_key, p_palette, idxs, vals);
+		return true;
+	}
+	else
+		return false;
+}
+
+// palette undo and redo
+bool fe::UndoInterface::undo_palette(std::size_t p_pal_key, Palette& p_palette) {
+	auto it = m_palette_undo.find(p_pal_key);
+	if (it == m_palette_undo.end() || it->second.empty())
+		return false;
+
+	auto& undoStack = it->second;
+	PaletteEdit edit = std::move(undoStack.back());
+	undoStack.pop_back();
+
+	// Apply "before" values
+	for (std::size_t i = 0; i < edit.indexes.size(); ++i)
+		p_palette[edit.indexes[i]] = edit.before[i];
+
+	// Move this edit to the redo stack
+	m_palette_redo[p_pal_key].push_back(std::move(edit));
+	return true;
+}
+
+bool fe::UndoInterface::redo_palette(std::size_t p_pal_key, Palette& p_palette) {
+	auto it = m_palette_redo.find(p_pal_key);
+	if (it == m_palette_redo.end() || it->second.empty())
+		return false;
+
+	auto& redoStack = it->second;
+	PaletteEdit edit = std::move(redoStack.back());
+	redoStack.pop_back();
+
+	// Apply "after" values
+	for (std::size_t i = 0; i < edit.indexes.size(); ++i) {
+		p_palette[edit.indexes[i]] = edit.after[i];
+	}
+
+	// Move this edit back to the undo stack
+	m_palette_undo[p_pal_key].push_back(std::move(edit));
+	return true;
+}
+
+// palette editing history
+void fe::UndoInterface::clear_palette_history(void) {
+	m_palette_undo.clear();
+	m_palette_redo.clear();
+}
+
+void fe::UndoInterface::trim_palette_history(std::vector<PaletteEdit>& p_stack) {
+	while (p_stack.size() > c::UNDO_HISTORY_SIZE)
+		p_stack.erase(begin(p_stack));
+}
+
+bool fe::UndoInterface::has_palette_undo(std::size_t p_pal_key) const {
+	return m_palette_undo.contains(p_pal_key) &&
+		!m_palette_undo.at(p_pal_key).empty();
+}
+
+bool fe::UndoInterface::has_palette_redo(std::size_t p_pal_key) const {
+	return m_palette_redo.contains(p_pal_key) &&
+		!m_palette_redo.at(p_pal_key).empty();
 }
