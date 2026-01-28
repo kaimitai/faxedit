@@ -39,19 +39,44 @@ The editor can save your project as a patched NES ROM file or as an IPS patch. W
 
 <hr>
 
-### Upcoming changes
+### Recommended Workflow
 
-The following features have been completed in the development branch, and will be released soon:
+The editor allows you to work directly on ROM files, and for small or experimental changes this is perfectly fine. A ROM contains all necessary data, and you can patch and save it repeatedly without needing any external files other than ```eoe_config.xml```.
 
-* Tilemap undo/redo feature with a generous history size
-* Store chr-tiles for the world tilesets in the data xml
-* Store game gfx images in the data xml; tilemap, attribute table, chr-tiles and palettes
-* Full support for the US revision A in the configuration xml (differs from the EU version only in the music data)
-* Will be bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), with new support for editing music via an MML (music macro language) interface
+For larger or long‑term projects, however, it is strongly recommended to export your project data to XML and treat that XML file as your **primary source of truth**. The XML format stores all world tilesets, game graphics, palettes, tilemaps, and related metadata in a clean, editable, and version‑friendly way.
+
+If your project also involves editing **music** or **scripts** for use with [FaxIScripts](https://github.com/kaimitai/FaxIScripts), you should keep these text files as part of your project’s source as well. These text‑based assets integrate naturally with the project as a whole and will give you full control over every part of the game the editor and assembler support.
+
+Using a version control system such as **git** is highly encouraged. Text files (XML, scripts, music sources) are:
+
+- easy to diff  
+- easy to merge  
+- easy to revert  
+- acts as a backup system with file history
+
+These files are also **region‑agnostic** for the most part. (The only exception are strings in iScripts for the jp-region) When patching a ROM, the editor reads all region‑specific offsets and layout information from `eoe_config.xml`, ensuring that your exported data is always routed to the correct locations regardless of whether you’re working with EU, US, or US Rev A ROMs - or any custom compatible ROM hack - as long as it is defined in the configuration xml.
+
+In short:
+
+- **Small edits:** you can work directly on the ROM
+- **Serious projects:** keep XML + script/music sources under version control  
+- **ROM region differences:** handled automatically through configuration  
+
+This approach gives you a clean, reliable workflow and protects your work over time.
 
 <hr>
 
 ### Version History
+
+* 2025-01-28: version beta-5.1
+
+  * Added undo/redo for screen tilemap edits (250-step history)
+  * Added undo/redo for palette edits (250-step history)
+  * Added a palette clipboard for copying and pasting entire palettes
+  * World tileset chr-data is now stored in the data xml
+  * Game gfx images are now stored in the data xml (tilemap, attribute table, chr-tiles and palettes)
+  * Added full support for ROM region US revision A in the configuration xml (differs from EU version only in the music data)
+  * The application now asks for confirmation before closing when a ROM is loaded
 
 * 2025-12-21: version beta-5
 

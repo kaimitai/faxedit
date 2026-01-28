@@ -1,12 +1,12 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-5), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-5.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
 You can start the editor with a filename parameter to make the editor load a given ROM, or use the file picker that appears if no ROM is loaded at startup, to select a file to load. The editor depends on a ROM being loaded and cannot be used without one.
 
-It also depends on configuration file eoe_config.xml being present, as this file contains necessary constants per ROM region.
+It also depends on configuration file eoe_config.xml being present, as this file contains necessary constants per ROM region. This configuration file contains the needed information to know which ROM region you are using, and how to read and write data from it - which differs between regions.
 
 The editor will automatically deduce the ROM region, unless you specify it as a command-line parameter following a ROM-filename.
 
@@ -210,7 +210,7 @@ Metatiles are defined on a per-world basis, and are used to make tilemaps for al
 
 The tiles on the bottom are chr-tiles used by this world's tilemap, and are used to define the metatile graphics. One chr-tile for each of the four quadrants of the metatile.
 
-Right-clicking on the metatile will place the selected NES-tile on the clicked quadrant. Ctrl+Right Click will select the NES-tile from the clicked quadrant. ("color picker"). We are including this functionality for completeness' sake.
+Right-clicking on the metatile will place the selected NES-tile on the clicked quadrant. Ctrl+Left Click will select the NES-tile from the clicked quadrant. ("color picker").
 
 The other things you can change for a metatile are the following:
 
@@ -265,6 +265,8 @@ This tab allows you to change some default settings of the current world; palett
 For the buildings world, each screen has a definition here, and for buildings you can also define the entry position when you enter a door to building.
 
 Default palette and music can be overriden using same-world doors and palette to music mappings.
+
+Note that on player death or restore, the tileset for the Guru room your start in is hard coded in the game to be 6. The same happens when you beat the game and are transported to the King's room.
 
 ## Mattock Animation
 
@@ -326,6 +328,10 @@ The controls for making a screen tilemap image is as follows:
 * Ctrl+C: Copy rectangular area to clipboard (one clipboard per world)
 * Ctrl+V: Paste clipboard at selected tilemap position of clipboard fits
 * Shit+V: Show clipboard rectangle at position if it fits, without pasting anything. To see where your clipboard data would be pasted.
+* Ctrl+Z: Undo the last action
+* Ctrl+Y: Redo the last undone action
+
+The undo and redo have a history of 250 steps. Destructive structural changes - deleting a screen or a metatile definition - will clear all the undo history for the related world.
 
 The clipboards are per-world since the metatile definitions are world-specific.
 
@@ -396,7 +402,7 @@ You can add or remove doors of all types at any time. No reference check is nece
 
 When in Door-editing mode, Shift+Click moves the door entry position to the clicked position on the tilemap. Ctrl+Click moves the exit position.
 
-If the door is not of building-type, and the door destination is unambiguous, an "Enter Door"-button will let you go to the door destination while taking palette setting into account. (we do not go to buildings since the screens are templated)
+If the door destination is unambiguous, an "Enter Door"-button will let you go to the door destination while taking palette setting into account.
 
 Note: The "Towns" world does not support same-world doors due to special handling in the game's logic.
 
@@ -487,7 +493,7 @@ The importer will not generate any new metatiles, it will only update the graphi
 
 ## World palettes
 
-![World gfx](./img/win_gfx_world_palette.png)
+![World palette](./img/win_gfx_world_palette.png)
 
 This screen allows you to change the 4 sub-palettes for any of the world-palettes.
 
@@ -495,9 +501,13 @@ The sub-palettes show at the top as a 4x4 grid, and the full NES-palette shows a
 
 We have a checkbox "Allow editing bg-color", which users can toggle to edit the first color of each sub-palette. Faxanadu seems to set this to color $0f (black) regardless of value in ROM, so there is little use in changing this color unless you have a modified ROM which does not enforce this.
 
+The Undo and Redo buttons are per palette. The copy and paste buttons apply to the entire palette as a whole.
+
+Note that palette 16 is used by the Title Screen graphic, so we only allow editing this palette in the BG Gfx section. It can be used as the default palette for a world in the Scenes metadata, however.
+
 ## Background gfx
 
-![World gfx](./img/win_gfx_bg_gfx.png)
+![BG gfx](./img/win_gfx_bg_gfx.png)
 
 This screen functions similarly to the World Gfx screen, but deals with background tilemaps instead; The title, intro and outro screen - as well as a virtual tilemap for the items when rendered as background objects (and not as sprites).
 
@@ -505,11 +515,11 @@ The intro and outro screens share tileset, and both must be extracted from ROM t
 
 ## Background palettes
 
-This screen works the same way as the world palettes, but applies to the palettes used by the background screens. For the items tilemap we defined a palette, but in the game the palette used depends on the world - and items can look different in different contexts.
+This screen works the same way as the world palettes, but applies to the palettes used by the background screens. For the items tilemap we defined a palette, but in the game the palette used depends on the world's palette - and items can look different in different contexts.
 
 ## HUD
 
-![World gfx](./img/win_gfx_hud.png)
+![HUD](./img/win_gfx_hud.png)
 
 For completeness' sake we have a HUD-editor with a preview.
 
@@ -531,7 +541,7 @@ Try to use sub-palettes which have distinct colors. If you have two indexes of t
 
 If you need your chr-tiles to be rendered under several sub-palettes ensure the colors you want to match have the same index. If you want the color yellow under one sub-palette to be red under another sub-palette, the red and yellow color must have the same index. Otherwise more chr-tiles must be generated, even if the graphics are otherwise identical.
 
-The hardest gfx to make is the intro and outro screens. They are rendered under two different palettes, your chr-tile bank consists of 128 tiles - but you need to render 2 screens which are drawn with a total of 1920 tiles - in other words a lot of re-use is necessary.
+The hardest gfx to make is the intro and outro screens. They are rendered under two different palettes, their **shared** chr-tile bank consists of 128 tiles - but you need to render 2 screens which are drawn with a total of 1920 tiles - in other words a lot of re-use is necessary.
 
 You can start by importing a totally blank bmp to one of them and commit, that will free up all tiles for the other - and once you have a result for one of them, you can iteratively generate the other.
 
