@@ -176,7 +176,7 @@ It is similar to the Mattock Animation in that it defines a 4-block animation cy
 
 ![Jump-On Animation](./img/win_metadata_jump_on_animations.png)
 
-Set the four metatiles here. The metatiles will be rendered based on the available metatiles in the selected World - as long as the metatile index is within bounds fo that world. Using jump-on with undefined metatiles will probably result in garbled graphics showing up in the game.
+Set the four metatiles here. The metatiles will be rendered based on the available metatiles in the selected World - as long as the metatile index is within bounds for that world. Using jump-on with undefined metatiles will probably result in garbled graphics showing up in the game.
 
 ## Palette to Music map
 
@@ -452,7 +452,7 @@ NES background graphics are made out of chr-tiles, which are 8x8 pixel images, w
 
 One background palette can be active at any one time, and a palette has 4 sub-palettes. When combining a chr-tile with a palette, we get a colored chr-tile.
 
-Even though the sub-palettes have 4 color, they share the first color - meaning at most 13 distinct background colors can be active at any one time.
+Even though the sub-palettes have 4 colors, they share the first color - meaning at most 13 distinct background colors can be active at any one time.
 
 On top of this, a sub-palette is not active per chr-tile, but for a 2x2 region of chr-tiles, which we call a metatile.
 
@@ -478,7 +478,7 @@ In this edit mode, you can extract a world's (or building screen's) metatiles as
 
 When loading a bmp to a world's chr-data, we have to make sure we don't ruin the chr-data of any other world using the same tilset. In the original game Dartmoor and Zenis use the same tileset. If importing for Zenis, the importer will keep chr-tiles used by metatile definitions in Dartmoor fixed - and the other way around.
 
-For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason.
+For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason. For the buildings world, if you want to import graphics for new metatiles, it is not enough to just make a new metatile for the world - the metatile actually has to be used in the screen you are importing for. The gfx importer looks at actual metatile usage so that unrelated metatiles do not get clobbered.
 
 Also, do not make any changes to screen tilemaps or metatiles between the time you export a bmp and the time you import it, otherwise the importer might be working under the wrong assumptions.
 
@@ -511,7 +511,7 @@ Note that palette 16 is used by the Title Screen graphic, so we only allow editi
 
 This screen functions similarly to the World Gfx screen, but deals with background tilemaps instead; The title, intro and outro screen - as well as a virtual tilemap for the items when rendered as background objects (and not as sprites).
 
-The intro and outro screens share tileset, and both must be extracted from ROM to be editable - because when editing one the other's chr-tiles must be fixed, otherwise we would ruin the other image.
+The intro and outro screens share one tileset. When editing one the other's chr-tiles must be fixed, otherwise we would ruin the other image.
 
 ## Background palettes
 
@@ -547,6 +547,6 @@ You can start by importing a totally blank bmp to one of them and commit, that w
 
 When loading a bmp an output message will tell you how many chr-tiles were reclaimed (how many more you can make and still be within the limits), or how many it needed to approximate. If approximation was necessary, your chr-count overflowed and the importer had to re-use tiles and just chose the tiles that fit the best to generate the rest of the image. Ideally you don't want to overflow.
 
-For some images, if you import a bmp you exported from ROM, it will still fail to stay within the limits. This might seem counter-intuitive, but this is because there were palettes with the same color within a sub-palette - and it therefore failed to match it to chr-tiles it potentially could have matched it if the same-color was distributed to different indexes in some way. It becomes computationally prohibitive to try all such combinations however. You can temporarily alter palettes like that to have all colors distinct with each sub-palette, and then change the colors back after the import.
+For some images, if you import a bmp you exported from ROM, it will still fail to stay within the limits. This might seem counter-intuitive, but this is because there were palettes with the same color within a sub-palette - and it therefore failed to match it to chr-tiles it potentially could have matched it if the same-color was distributed to different indexes in some way. It becomes computationally prohibitive to try all such combinations however. You can temporarily alter palettes like that to have all colors distinct within each 4-color sub-palette, and then change the colors back after the import.
 
 Experiment and have fun!
