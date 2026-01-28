@@ -17,6 +17,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	if (ui::imgui_button("Save xml", 2)) {
 		try {
+			m_game->sync_palettes(m_shared_palettes);
 			xml::save_xml(get_xml_path(), m_game.value());
 			add_message("xml file written to " + get_xml_path(), 2);
 		}
@@ -205,6 +206,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 	bool l_good{ true };
 	std::size_t l_dyndata_bytes{ 0 };
 
+	m_game->sync_palettes(m_shared_palettes);
 	auto x_rom{ m_game->m_rom_data };
 
 	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom);

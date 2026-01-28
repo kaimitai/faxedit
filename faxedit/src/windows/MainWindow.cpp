@@ -743,11 +743,11 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		cache_config_variables();
 
 		m_game = fe::Game(m_config, bytes);
+		m_shared_palettes = m_game->get_shared_palettes(m_config);
 		m_game->generate_tilesets(m_config);
 		// the game object has world tilesets, let us make a cache of 256
 		// tile big tilesets for the UI to send to the renderer
 		generate_world_tilesets();
-
 		initialize_hud_tilemap();
 
 		std::filesystem::path romPath(p_filepath);

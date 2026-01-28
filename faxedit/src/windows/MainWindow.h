@@ -58,6 +58,9 @@ namespace fe {
 
 		std::size_t m_sprite_count, m_iscript_count;
 
+		// palettes shared between worlds and game gfx images
+		std::map<std::size_t, std::string> m_shared_palettes;
+
 		// file info
 		std::filesystem::path m_path;
 		std::string m_filename;

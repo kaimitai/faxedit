@@ -372,8 +372,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
 			"", false, true);
 
-		if (ls_sel_wpal == c::PAL_INDEX_TITLE_SCREEN) {
-			ImGui::Text("This palette is used by the Title Screen - Edit and use it in the context of BG Gfx");
+		auto spal_iter{ m_shared_palettes.find(ls_sel_wpal) };
+		if (spal_iter != end(m_shared_palettes)) {
+			imgui_text(std::format("This palette is used by gfx \"{}\" - Edit under BG Palettes", spal_iter->second));
 		}
 		else if (show_palette_window(ls_sel_wpal, wpal)) {
 			if (m_atlas_palette_no == ls_sel_wpal)

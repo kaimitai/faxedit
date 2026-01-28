@@ -151,7 +151,6 @@ namespace fe {
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 		constexpr std::size_t WORLD_BUILDINGS_SCREEN_COUNT{ 10 };
 		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
-		constexpr std::size_t PAL_INDEX_TITLE_SCREEN{ 0x10 };
 
 		// gfx tilemap image keys
 		constexpr char CHR_GFX_ID_TITLE[]{ "title" };

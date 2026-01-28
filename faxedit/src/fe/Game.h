@@ -116,6 +116,9 @@ namespace fe {
 		void extract_fog_parameters(const fe::Config& p_config);
 		void extract_hud_attributes(const fe::Config& p_config);
 
+		std::map<std::size_t, std::string> get_shared_palettes(const fe::Config& p_config) const;
+		void sync_palettes(const std::map<std::size_t, std::string>& p_wpal_to_gfx);
+
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;
 		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;

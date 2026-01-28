@@ -887,6 +887,30 @@ void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
 		);
 }
 
+// a helper to cache all gfx images which use a world palette
+// the gfx context will be the master, so we can use this to syncronize
+std::map<std::size_t, std::string> fe::Game::get_shared_palettes(const fe::Config& p_config) const {
+	std::map<std::size_t, std::string> result;
+
+	std::size_t l_wpal_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
+	std::size_t l_wpal_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+
+	for (std::size_t i{ 0 }; i < l_wpal_count; ++i)
+		for (const auto& md : m_gfx_manager.metadata) {
+			if (md.second.m_patch_palette &&
+				md.second.m_rom_offset_pal == (l_wpal_offset + 16 * i))
+				result.insert(std::make_pair(i, md.first));
+		}
+
+	return result;
+}
+
+void fe::Game::sync_palettes(const std::map<std::size_t, std::string>& p_wpal_to_gfx) {
+	for (const auto& kv : p_wpal_to_gfx) {
+		m_palettes.at(kv.first) = m_gfx_manager.get_bg_palette(kv.second);
+	}
+}
+
 fe::Fog::Fog(byte p_world_no,
 	byte p_palette_no) :
 	m_world_no{ p_world_no },
