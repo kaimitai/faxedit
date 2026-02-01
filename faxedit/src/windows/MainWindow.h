@@ -227,6 +227,9 @@ namespace fe {
 
 		void initialize_hud_tilemap(void);
 
+		// save functions
+		void save_xml(void);
+
 	public:
 
 		MainWindow(SDL_Renderer* p_rnd,

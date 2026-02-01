@@ -99,10 +99,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				if (m_emode == fe::EditMode::Tilemap) {
 					if (l_mouse_left_down) {
 						// ctrl + left mouse; color picker
-						if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) {
+						if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
 							m_sel_metatile = l_screen.m_tilemap.at(tileY).at(tileX);
 						}
-						else if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+						else if (ImGui::IsKeyDown(ImGuiMod_Shift)) {
 							m_sel_tile_x2 = tileX;
 							m_sel_tile_y2 = tileY;
 						}
@@ -123,8 +123,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 				}
 				else {
-					bool l_shift{ ImGui::IsKeyDown(ImGuiKey_LeftShift) };
-					bool l_ctrl{ ImGui::IsKeyDown(ImGuiKey_LeftCtrl) };
+					bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+					bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
 
 					bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
 					bool l_allow_sprite_edit{ !l_building || m_show_sprite_sets_in_buildings };

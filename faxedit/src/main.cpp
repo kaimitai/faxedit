@@ -29,14 +29,16 @@ int main(int argc, char** argv) try {
 		klib::WindowConfig l_wconf;
 		l_wconf.loadConfig(SDL_WIN_FILENAME);
 
+		if (!l_wconf.isVisibleOnAnyDisplay())
+			l_wconf.set_defaults();
+
 		l_window = SDL_CreateWindow("Echoes of Eolis", l_wconf.w, l_wconf.h, SDL_WINDOW_RESIZABLE);
 		if (l_window == nullptr)
 			throw std::runtime_error(SDL_GetError());
 		else {
+			SDL_SetWindowPosition(l_window, l_wconf.x, l_wconf.y);
 			if (l_wconf.maximized)
 				SDL_MaximizeWindow(l_window);
-			else
-				SDL_SetWindowPosition(l_window, l_wconf.x, l_wconf.y);
 
 			l_rnd = SDL_CreateRenderer(l_window, nullptr);
 

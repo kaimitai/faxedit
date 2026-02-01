@@ -34,7 +34,7 @@ namespace fe {
 		constexpr int WIN_ISCRIPT_H{ 300 };
 
 		constexpr char APP_NAME[]{ "Echoes of Eolis" };
-		constexpr char APP_VERSION[]{ "beta-5.1" };
+		constexpr char APP_VERSION[]{ "beta-5.2" };
 
 		constexpr unsigned char APP_ICON[64] = {
 			0b00010000, 0b01000001, 0b01000001, 0b00000100,

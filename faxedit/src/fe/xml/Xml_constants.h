@@ -9,7 +9,6 @@ namespace fe {
 
 			constexpr char TAG_ROOT[]{ "echoes_of_eolis" };
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
-			constexpr char VAL_ROOT_VERSION[]{ "beta-5.1" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
 			constexpr char TAG_STAGES[]{ "stages" };

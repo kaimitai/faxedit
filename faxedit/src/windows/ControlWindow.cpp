@@ -10,23 +10,29 @@
 #include "./../fe/ROM_manager.h"
 #include "./../fe/fe_app_constants.h"
 
+void fe::MainWindow::save_xml(void) {
+	add_message("Attempting to save project as xml");
+
+	try {
+		m_game->sync_palettes(m_shared_palettes);
+		xml::save_xml(get_xml_path(), m_game.value());
+		add_message("xml file written to " + get_xml_path(), 2);
+	}
+	catch (const std::runtime_error& p_ex) {
+		add_message(p_ex.what(), 1);
+	}
+	catch (const std::exception& p_ex) {
+		add_message(p_ex.what(), 1);
+	}
+}
+
 void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	ui::imgui_screen("Project Control###pcw", c::WIN_CONTROLS_X, c::WIN_CONTROLS_Y,
 		c::WIN_CONTROLS_W, c::WIN_CONTROLS_H, 4);
 
 	if (ui::imgui_button("Save xml", 2)) {
-		try {
-			m_game->sync_palettes(m_shared_palettes);
-			xml::save_xml(get_xml_path(), m_game.value());
-			add_message("xml file written to " + get_xml_path(), 2);
-		}
-		catch (const std::runtime_error& p_ex) {
-			add_message(p_ex.what(), 1);
-		}
-		catch (const std::exception& p_ex) {
-			add_message(p_ex.what(), 1);
-		}
+		save_xml();
 	}
 
 	ImGui::SameLine();

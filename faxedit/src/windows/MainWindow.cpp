@@ -113,23 +113,29 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		m_pulse_color.b = static_cast<Uint8>(lc_pulse_start.b + (lc_pulse_end.b - lc_pulse_start.b) * t);
 		m_pulse_color.a = 255;
 
+		// input handling regardless of editing mode
+		bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
+
+		if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
+			save_xml();
+
 		// input handling, move to separate function later
 		if (m_emode == fe::EditMode::Tilemap) {
-			if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_C)) {
+			if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
 				clipboard_copy();
 			}
-			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_V)) {
+			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste();
 			}
 			else if (ImGui::IsKeyDown(ImGuiMod_Shift) && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste(false);
 			}
 
-			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
 				if (!m_undo->undo(m_sel_chunk, m_sel_screen))
 					add_message("No tilemap changes to undo", 4);
 			}
-			else if (ImGui::IsKeyDown(ImGuiMod_Ctrl) && ImGui::IsKeyPressed(ImGuiKey_Y)) {
+			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
 				if (!m_undo->redo(m_sel_chunk, m_sel_screen))
 					add_message("No tilemap changes to redo", 4);
 			}

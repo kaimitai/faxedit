@@ -1,13 +1,15 @@
 #include <fstream>
 #include "SDL_WindowConfig.h"
 
-klib::WindowConfig::WindowConfig(void) :
-	x{ SDL_WINDOWPOS_CENTERED },
-	y{ SDL_WINDOWPOS_CENTERED },
-	w{ 1280 },
-	h{ 720 },
-	maximized{ false }
-{
+klib::WindowConfig::WindowConfig(void) {
+	set_defaults();
+}
+
+void klib::WindowConfig::set_defaults(void) {
+	x = SDL_WINDOWPOS_CENTERED;
+	y = SDL_WINDOWPOS_CENTERED;
+	w = 1280;
+	h = 720;
 }
 
 void klib::WindowConfig::loadConfig(const std::string& p_filepath) {
@@ -34,4 +36,37 @@ void klib::WindowConfig::saveWindowConfig(SDL_Window* window,
 
 		out.close();
 	}
+}
+
+bool klib::WindowConfig::isVisibleOnAnyDisplay(void) const {
+	int count = 0;
+	SDL_DisplayID* displays = SDL_GetDisplays(&count);
+	if (!displays)
+		return false;
+
+	// Compute window center
+	const int cx = x + w / 2;
+	const int cy = y + h / 2;
+
+	bool visible = false;
+
+	for (int i = 0; i < count; ++i) {
+		SDL_Rect bounds;
+		if (SDL_GetDisplayBounds(displays[i], &bounds)) {
+
+			const bool inside =
+				cx >= bounds.x &&
+				cx < bounds.x + bounds.w &&
+				cy >= bounds.y &&
+				cy < bounds.y + bounds.h;
+
+			if (inside) {
+				visible = true;
+				break;
+			}
+		}
+	}
+
+	SDL_free(displays);
+	return visible;
 }

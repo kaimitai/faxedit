@@ -1,5 +1,6 @@
 #include "Xml_helper.h"
 #include "Xml_constants.h"
+#include "./../fe_app_constants.h"
 #include <stdexcept>
 
 using byte = unsigned char;
@@ -428,7 +429,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 
 	auto n_metadata = doc.append_child(c::TAG_ROOT);
 	n_metadata.append_attribute(c::ATTR_ROOT_VERSION);
-	n_metadata.attribute(c::ATTR_ROOT_VERSION).set_value(c::VAL_ROOT_VERSION);
+	n_metadata.attribute(c::ATTR_ROOT_VERSION).set_value(fe::c::APP_VERSION);
 
 	// game metadata
 
