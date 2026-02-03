@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-5.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-5.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
@@ -68,6 +68,14 @@ This is the screen used for file operations and data analysis.
 * Output Messages: The messages from the editor
 
 The tilemaps are stored in four different banks in ROM, but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
+
+Some Keyboard shortcuts are always availabe when a ROM is loaded:
+* Ctrl + S: Save xml
+* Ctrl + Shift + L: Load xml
+* Ctrl + P: Patch ROM
+* Ctrl + Shift + P: Patch ROM in-place (patch the loaded ROM directly)
+
+Holding Alt when patching a ROM will enable semi-static patching mode - which generates ROMs that are compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer/), with the limitation that sprites, screen connections and metadata will remain unpatched.
 
 <hr>
 

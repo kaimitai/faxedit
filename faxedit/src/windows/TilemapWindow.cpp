@@ -14,7 +14,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	const std::string l_win_label{ std::format("{} > Screen {} > {}",
 		m_labels_worlds[m_sel_chunk], m_sel_screen,
 		get_editmode_as_string()) +
-		(m_emode == fe::EditMode::Tilemap ?
+		(m_emode == fe::EditMode::TilemapEditMode ?
 		std::format(" > Position ({},{})", m_sel_tile_x, m_sel_tile_y) : "")
 	+ "###stmw" };
 
@@ -81,7 +81,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
 
 			// show tile position as tooltip - begin
-			if (m_emode != fe::EditMode::Tilemap) {
+			if (m_emode != fe::EditMode::TilemapEditMode) {
 				ImGui::SetNextWindowPos(ImVec2(5, 5));
 				ImGui::Begin("TilemapTooltip", nullptr,
 					ImGuiWindowFlags_NoDecoration |
@@ -96,7 +96,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 			if (l_win_active && (l_mouse_left_down || l_mouse_right_down)) {
 
-				if (m_emode == fe::EditMode::Tilemap) {
+				if (m_emode == fe::EditMode::TilemapEditMode) {
 					if (l_mouse_left_down) {
 						// ctrl + left mouse; color picker
 						if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
@@ -215,7 +215,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 		if (ImGui::BeginTabBar("ScreenTabs")) {
 			// TAB TILEMAP - BEGIN
 			if (ImGui::BeginTabItem("Tilemap")) {
-				m_emode = fe::EditMode::Tilemap;
+				m_emode = fe::EditMode::TilemapEditMode;
 
 				ImGui::SeparatorText("Selected Metatile");
 

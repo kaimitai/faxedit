@@ -19,7 +19,7 @@
 
 namespace fe {
 
-	enum EditMode { Tilemap, Sprites, Doors, Scrolling, Transitions, Other };
+	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes };
 
@@ -227,6 +227,7 @@ namespace fe {
 		void initialize_hud_tilemap(void);
 
 		// load functions
+		void validate_game_data(fe::Game& p_game);
 		void load_xml(void);
 
 		// save functions

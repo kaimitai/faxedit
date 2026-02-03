@@ -174,6 +174,7 @@ void fe::MainWindow::load_xml(void) {
 		add_message("Attempting to load xml " + get_xml_path(), 5);
 		auto l_rom{ m_game->m_rom_data };
 		m_game = xml::load_xml(get_xml_path());
+		validate_game_data(m_game.value());
 		m_game->m_rom_data = l_rom;
 		m_undo->clear_history();
 
@@ -300,6 +301,62 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	else {
 		add_message("Could not patch ROM data", 1);
 		return std::nullopt;
+	}
+}
+
+void fe::MainWindow::validate_game_data(fe::Game& p_game) {
+
+	const auto validate_screen_connection = [this](std::optional<byte>& conn, std::size_t world,
+		std::size_t screen, std::size_t screen_count) -> void {
+			if (conn && (static_cast<std::size_t>(conn.value()) >= screen_count)) {
+				conn.reset();
+				add_message(
+					std::format("Invalid connection reference on World {}, Screen {}: connection disabled", world, screen), 1
+				);
+			}
+		};
+
+	// check worlds
+	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
+		auto& world{ p_game.m_chunks[w] };
+
+		// check all screen data for world
+		std::size_t screen_count{ world.m_screens.size() };
+		for (std::size_t s{ 0 }; s < screen_count; ++s) {
+			auto& screen{ world.m_screens[s] };
+
+			// validate connections
+			validate_screen_connection(screen.m_scroll_left, w, s, screen_count);
+			validate_screen_connection(screen.m_scroll_right, w, s, screen_count);
+			validate_screen_connection(screen.m_scroll_up, w, s, screen_count);
+			validate_screen_connection(screen.m_scroll_down, w, s, screen_count);
+
+			// validate tilemap
+			for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
+				for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x)
+					if (static_cast<std::size_t>(screen.get_mt_at_pos(x, y)) >= world.m_metatiles.size()) {
+						add_message(
+							std::format("Invalid metatile reference on World {}, Screen {}, x {}, y {}: {} was set to 0", w, s, x, y, screen.m_tilemap[y][x]), 1
+						);
+						screen.m_tilemap[y][x] = 0;
+					}
+		}
+
+		// check scene for world
+		if (world.m_scene.m_palette >= p_game.m_palettes.size()) {
+			add_message(std::format("Invalid palette reference on World {}: {} was set to 0", w, world.m_scene.m_palette), 1);
+			world.m_scene.m_palette = 0;
+		}
+	}
+
+	// check building scenes
+	for (std::size_t bscene{ 0 }; bscene < p_game.m_building_scenes.size(); ++bscene) {
+		auto& bScene{ p_game.m_building_scenes[bscene] };
+
+		if (bScene.m_palette >= p_game.m_palettes.size()) {
+			add_message(std::format("Invalid palette reference on scene for building screen {}: {} was set to 0", bscene, bScene.m_palette), 1);
+			bScene.m_palette = 0;
+		}
 	}
 }
 

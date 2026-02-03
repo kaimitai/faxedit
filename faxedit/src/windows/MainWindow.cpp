@@ -34,7 +34,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_iscript{ 0 },
 	m_sel_gfx_ts_world{ 0 },
 	m_sel_gfx_ts_screen{ 0 },
-	m_emode{ fe::EditMode::Tilemap },
+	m_emode{ fe::EditMode::TilemapEditMode },
 	m_chr_picker_mode{ fe::ChrPickerMode::HUD },
 	m_gfx_emode{ fe::GfxEditMode::WorldChr },
 	m_pulse_color{ 255, 255, 102, 255 }, // light yellow },
@@ -126,7 +126,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			load_xml();
 
 		// input handling, move to separate function later
-		if (m_emode == fe::EditMode::Tilemap) {
+		if (m_emode == fe::EditMode::TilemapEditMode) {
 			if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
 				clipboard_copy();
 			}
@@ -191,7 +191,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 		// draw selected rectangle
 
-		if (m_emode == fe::EditMode::Tilemap) {
+		if (m_emode == fe::EditMode::TilemapEditMode) {
 			if (m_sel_tile_x2 < 16) {
 				const auto l_rect{ get_selection_dims() };
 
@@ -561,7 +561,7 @@ void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
 }
 
 std::string fe::MainWindow::get_editmode_as_string(void) const {
-	if (m_emode == fe::EditMode::Tilemap)
+	if (m_emode == fe::EditMode::TilemapEditMode)
 		return "Tilemap";
 	else if (m_emode == fe::EditMode::Sprites)
 		return "Sprites";
@@ -756,6 +756,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		cache_config_variables();
 
 		m_game = fe::Game(m_config, bytes);
+		validate_game_data(m_game.value());
 		m_shared_palettes = m_game->get_shared_palettes(m_config);
 		m_game->generate_tilesets(m_config);
 		// the game object has world tilesets, let us make a cache of 256
