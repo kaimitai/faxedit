@@ -11,12 +11,10 @@
 #include "./../fe/fe_app_constants.h"
 
 void fe::MainWindow::save_xml(void) {
-	add_message("Attempting to save project as xml");
-
 	try {
 		m_game->sync_palettes(m_shared_palettes);
 		xml::save_xml(get_xml_path(), m_game.value());
-		add_message("xml file written to " + get_xml_path(), 2);
+		add_message("xml file written to " + get_xml_path(), 2, true);
 	}
 	catch (const std::runtime_error& p_ex) {
 		add_message(p_ex.what(), 1);
@@ -26,44 +24,47 @@ void fe::MainWindow::save_xml(void) {
 	}
 }
 
+void fe::MainWindow::patch_nes_rom(bool p_in_place, bool p_exclude_dynamic) {
+	auto l_patched_rom{ patch_rom(p_exclude_dynamic) };
+
+	if (l_patched_rom.has_value()) {
+		std::string l_out_file{ p_in_place ? get_filepath("nes") : get_nes_path() };
+
+		try {
+			klib::file::write_bytes_to_file(l_patched_rom.value(), l_out_file);
+			add_message("ROM file written to " + l_out_file, 2);
+		}
+		catch (const std::runtime_error& ex) {
+			add_message(ex.what(), 1);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
+	}
+}
+
 void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	ui::imgui_screen("Project Control###pcw", c::WIN_CONTROLS_X, c::WIN_CONTROLS_Y,
 		c::WIN_CONTROLS_W, c::WIN_CONTROLS_H, 4);
 
-	if (ui::imgui_button("Save xml", 2)) {
+	if (ui::imgui_button("Save xml", 2))
 		save_xml();
-	}
 
 	ImGui::SameLine();
 
 	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+	bool l_alt{ ImGui::IsKeyDown(ImGuiMod_Alt) };
 
 	if (ui::imgui_button("Patch nes ROM",
 		l_shift ? 4 : 2,
-		"Patch loaded ROM file")) {
-		auto l_patched_rom{ patch_rom() };
-
-		if (l_patched_rom.has_value()) {
-			std::string l_out_file{ l_shift ? get_filepath("nes") : get_nes_path() };
-
-			try {
-				klib::file::write_bytes_to_file(l_patched_rom.value(), l_out_file);
-				add_message("ROM file written to " + l_out_file, 2);
-			}
-			catch (const std::runtime_error& ex) {
-				add_message(ex.what(), 1);
-			}
-			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
-			}
-		}
-	}
+		"Patch loaded ROM file"))
+		patch_nes_rom(l_shift, l_alt);
 
 	ImGui::SameLine();
 
 	if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
-		auto l_patched_rom{ patch_rom() };
+		auto l_patched_rom{ patch_rom(l_alt) };
 
 		if (l_patched_rom.has_value()) {
 			try {
@@ -160,55 +161,60 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_gfx_window ? 4 : 2))
 		m_gfx_window = !m_gfx_window;
 
-	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) {
-
-		try {
-			add_message("Attempting to load xml " + get_xml_path(), 5);
-			auto l_rom{ m_game->m_rom_data };
-			m_game = xml::load_xml(get_xml_path());
-			m_game->m_rom_data = l_rom;
-			m_undo->clear_history();
-
-			// extract values not present in previous xml versions
-			// none of this should do anything if we got values from the xml
-			m_game->extract_scenes_if_empty(m_config);
-			m_game->extract_palette_to_music(m_config);
-			m_game->extract_hud_attributes(m_config);
-
-			// extract gfx
-			m_game->generate_tilesets(m_config);
-			m_game->m_gfx_manager.initialize(m_config, m_game->m_rom_data);
-
-			// clear staging area for gfx, as well as loaded tilemap/tileset textures
-			m_gfx.clear_all_tilemap_import_results();
-			m_gfx.clear_tileset_textures();
-
-			// update gui cache for world tilesets
-			generate_world_tilesets();
-			m_atlas_force_update = true;
-
-			if (m_sel_chunk >= m_game->m_chunks.size())
-				m_sel_chunk = 0;
-			if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size())
-				m_sel_screen = 0;
-			m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
-
-			add_message("Loaded xml file " + get_xml_path(), 2);
-		}
-		catch (const std::runtime_error& p_ex) {
-			add_message(p_ex.what(), 1);
-		}
-		catch (const std::exception& p_ex) {
-			add_message(p_ex.what(), 1);
-		}
-	}
+	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
+		load_xml();
 
 	show_output_messages();
 
 	ImGui::End();
 }
 
-std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
+void fe::MainWindow::load_xml(void) {
+	try {
+		add_message("Attempting to load xml " + get_xml_path(), 5);
+		auto l_rom{ m_game->m_rom_data };
+		m_game = xml::load_xml(get_xml_path());
+		m_game->m_rom_data = l_rom;
+		m_undo->clear_history();
+
+		// extract values not present in previous xml versions
+		// none of this should do anything if we got values from the xml
+		m_game->extract_scenes_if_empty(m_config);
+		m_game->extract_palette_to_music(m_config);
+		m_game->extract_hud_attributes(m_config);
+
+		// extract gfx
+		m_game->generate_tilesets(m_config);
+		m_game->m_gfx_manager.initialize(m_config, m_game->m_rom_data);
+
+		// clear staging area for gfx, as well as loaded tilemap/tileset textures
+		m_gfx.clear_all_tilemap_import_results();
+		m_gfx.clear_tileset_textures();
+
+		// update gui cache for world tilesets
+		generate_world_tilesets();
+		m_atlas_force_update = true;
+
+		if (m_sel_chunk >= m_game->m_chunks.size())
+			m_sel_chunk = 0;
+		if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size())
+			m_sel_screen = 0;
+		m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+
+		add_message("Loaded xml file " + get_xml_path(), 2);
+	}
+	catch (const std::runtime_error& p_ex) {
+		add_message(p_ex.what(), 1);
+	}
+	catch (const std::exception& p_ex) {
+		add_message(p_ex.what(), 1);
+	}
+}
+
+std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynamic) {
+	if (p_exclude_dynamic)
+		add_message("*** using semi-static patching mode ***", 4);
+
 	bool l_good{ true };
 	std::size_t l_dyndata_bytes{ 0 };
 
@@ -223,24 +229,30 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
-	if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
-		l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);
-		l_good &= check_patched_size("Same-World Transition Data", l_bret.first, l_bret.second);
+	if (!p_exclude_dynamic) {
+		if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
+			l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);
+			l_good &= check_patched_size("Same-World Transition Data", l_bret.first, l_bret.second);
+			l_dyndata_bytes += l_bret.first;
+
+			l_bret = m_rom_manager.encode_ow_transitions(m_config, m_game.value(), x_rom);
+			l_good &= check_patched_size("Other-World Transition Data", l_bret.first, l_bret.second);
+			l_dyndata_bytes += l_bret.first;
+		}
+		else {
+			l_bret = m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom);
+			l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
+			l_dyndata_bytes += l_bret.first;
+		}
+
+		l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);
+		l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 
-		l_bret = m_rom_manager.encode_ow_transitions(m_config, m_game.value(), x_rom);
-		l_good &= check_patched_size("Other-World Transition Data", l_bret.first, l_bret.second);
+		l_bret = m_rom_manager.encode_metadata(m_config, m_game.value(), x_rom);
+		l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 	}
-	else {
-		l_bret = m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom);
-		l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
-		l_dyndata_bytes += l_bret.first;
-	}
-
-	l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);
-	l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);
-	l_dyndata_bytes += l_bret.first;
 
 	auto l_tm_result{ m_rom_manager.encode_game_tilemaps(m_config, x_rom,
 		m_game.value()) };
@@ -279,11 +291,6 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) {
 				l_tm_result.m_sizes[i]), 6);
 		}
 	}
-
-	l_bret = m_rom_manager.encode_metadata(m_config, m_game.value(), x_rom);
-	l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second);
-	l_dyndata_bytes += l_bret.first;
-
 
 	if (l_good) {
 		add_message(std::format("ROM data patched ({} dynamic bytes)",

@@ -6,10 +6,24 @@ klib::WindowConfig::WindowConfig(void) {
 }
 
 void klib::WindowConfig::set_defaults(void) {
-	x = SDL_WINDOWPOS_CENTERED;
-	y = SDL_WINDOWPOS_CENTERED;
 	w = 1280;
 	h = 720;
+	maximized = false;
+
+	SDL_DisplayID d = SDL_GetPrimaryDisplay();
+	SDL_Rect usable;
+	if (d && SDL_GetDisplayUsableBounds(d, &usable)) {
+		if (w > usable.w) w = usable.w;
+		if (h > usable.h) h = usable.h;
+
+		x = usable.x + (usable.w - w) / 2;
+		y = usable.y + (usable.h - h) / 2;
+	}
+	else {
+		// ultra-safe fallback
+		x = 100;
+		y = 100;
+	}
 }
 
 void klib::WindowConfig::loadConfig(const std::string& p_filepath) {

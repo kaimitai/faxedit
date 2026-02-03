@@ -115,9 +115,15 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 		// input handling regardless of editing mode
 		bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
+		bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+		bool l_alt{ ImGui::IsKeyDown(ImGuiMod_Alt) };
 
 		if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
 			save_xml();
+		else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
+			patch_nes_rom(l_shift, l_alt);
+		else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
+			load_xml();
 
 		// input handling, move to separate function later
 		if (m_emode == fe::EditMode::Tilemap) {
@@ -127,7 +133,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste();
 			}
-			else if (ImGui::IsKeyDown(ImGuiMod_Shift) && ImGui::IsKeyPressed(ImGuiKey_V)) {
+			else if (l_shift && ImGui::IsKeyPressed(ImGuiKey_V)) {
 				clipboard_paste(false);
 			}
 
@@ -377,11 +383,12 @@ std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 		fe::Sprite_gfx_definiton::SpriteCatToString(m_sprite_dims[p_sprite_id].m_cat));
 }
 
-void fe::MainWindow::add_message(const std::string& p_msg, int p_status) {
+void fe::MainWindow::add_message(const std::string& p_msg, int p_status,
+	bool p_allow_repeat) {
 	if (m_messages.size() > 50)
 		m_messages.pop_back();
 
-	if (m_messages.empty() || m_messages.front().text != p_msg)
+	if (p_allow_repeat || m_messages.empty() || m_messages.front().text != p_msg)
 		m_messages.push_front(fe::Message(p_msg, p_status));
 }
 

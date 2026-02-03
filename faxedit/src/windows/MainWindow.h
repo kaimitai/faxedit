@@ -140,7 +140,6 @@ namespace fe {
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 			const std::string& p_region = std::string());
 		void cache_config_variables(void);
-		std::optional<std::vector<byte>> patch_rom(void);
 
 		std::string get_ips_path(void) const;
 		std::string get_xml_path(void) const;
@@ -165,7 +164,7 @@ namespace fe {
 
 		void show_output_messages(void) const;
 
-		void add_message(const std::string& p_msg, int p_status = 0);
+		void add_message(const std::string& p_msg, int p_status = 0, bool p_allow_repeat = false);
 
 		std::optional<byte> show_screen_scroll_section(const std::string& p_direction,
 			std::size_t p_screen_count, std::optional<byte> p_scroll_data);
@@ -227,8 +226,13 @@ namespace fe {
 
 		void initialize_hud_tilemap(void);
 
+		// load functions
+		void load_xml(void);
+
 		// save functions
 		void save_xml(void);
+		void patch_nes_rom(bool p_in_place, bool p_exclude_dynamic = false);
+		std::optional<std::vector<byte>> patch_rom(bool p_exclude_dynamic = false);
 
 	public:
 
