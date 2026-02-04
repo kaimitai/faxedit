@@ -33,6 +33,10 @@ The following data is editable:
 * Palette to music mapping
 * Fog parameters
 
+### Graphics
+* Tilesets for metatiles
+* Images used in the game
+
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
 The editor can save your project as a patched NES ROM file or as an IPS patch. We also support our own XML format, which allows users to more easily compare file versions, use version control systems to track file history, and collaborate on projects.
@@ -67,6 +71,20 @@ This approach gives you a clean, reliable workflow and protects your work over t
 <hr>
 
 ### Version History
+
+* 2025-02-04: version beta-5.2
+
+  * Added new keyboard shortcuts:
+	* Ctrl+S: Save xml
+	* Ctrl+Shift+L: Load xml
+	* Ctrl+P: Patch ROM (generate out-file)
+	* Ctrl+Shift+P: Patch ROM in place (patch loaded ROM directly)
+  * Bundle release with version 0.6 of the [script assembler](https://github.com/kaimitai/FaxIScripts):
+	* The assembler supports extracting and assembling behavior scripts
+	* The [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) was updated with instructive exampels graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
+  * Holding Alt when patching ROM enables semi-static patching mode, which generates ROMs compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer). Will not patch sprites, metadata or screen connections and transitions.
+  * Fixed an oversight where only the left ctrl and shift buttons were considered in some contexts
+  * Fixed a bug where the window position stored in ```eoe_os_window.cfg``` would not recover after a monitor setup change
 
 * 2025-01-28: version beta-5.1
 

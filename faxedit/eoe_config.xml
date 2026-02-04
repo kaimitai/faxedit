@@ -1084,7 +1084,7 @@
 			<!-- $05 unused in the original game - argument list not certain -->
 			<entry byte="$05" str="Mnemonic=Behavior_NOP" />
 			<entry byte="$06" str="Mnemonic=Behavior_Unused_06,Arg=zero" />
-			<entry byte="$07" str="Mnemonic=Behavior_Lighntingball,Arg=zero" />
+			<entry byte="$07" str="Mnemonic=Behavior_Lightningball,Arg=zero" />
 			<entry byte="$08" str="Mnemonic=Behavior_Charron,Arg=zero" />
 			<entry byte="$09" str="Mnemonic=Behavior_Hop,Arg=zero:pixels:blocks:mode" />
 			<entry byte="$0a" str="Mnemonic=Behavior_Wyvern,Arg=zero" />
