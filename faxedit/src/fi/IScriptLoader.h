@@ -55,6 +55,7 @@ namespace fi {
 			const std::vector<byte>& p_rom);
 		std::vector<fi::AsmToken> get_asm_code(std::size_t p_script_no);
 		std::vector<fi::AsmToken> parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no);
+		std::size_t get_script_count(void) const;
 
 		// map from spawn point to script no where the spawn is set
 		// we need this later for spawn point deduction

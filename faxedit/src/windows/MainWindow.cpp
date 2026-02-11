@@ -53,6 +53,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	// config variables, will be loaded with the config xml
 	m_sprite_count{ 0 },
 	m_iscript_count{ 0 },
+	m_music_count{ 0 },
 	// exit handler variables
 	m_exit_app_requested{ false },
 	m_exit_app_granted{ false }
@@ -460,7 +461,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
 				std::format("Script: {}", l_sprite.m_text_id.value()),
-				l_sprite.m_text_id.value(), 0, m_iscript_count);
+				l_sprite.m_text_id.value(), 0, m_iscript_count - 1);
 
 			if (ui::imgui_button("View script", 4)) {
 				m_sel_iscript = l_sprite.m_text_id.value();
@@ -805,6 +806,8 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		// extract scripts
 		try {
 			fi::IScriptLoader loader(m_config, bytes);
+			m_iscript_count = loader.get_script_count();
+			add_message(std::format("Detected {} interaction scripts", m_iscript_count), 4);
 
 			for (std::size_t i{ 0 }; i < m_iscript_count; ++i) {
 				try {
@@ -818,7 +821,16 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_game->m_spawn_to_script_no = loader.m_spawn_scripts;
 		}
 		catch (...) {
-			add_message("Malformed script section", 1);
+			add_message("Malformed script section - script count could not be deduced", 1);
+		}
+
+		// extract music count
+		try {
+			m_music_count = m_rom_manager.get_music_count(m_config, bytes);
+			add_message(std::format("Detected {} music tracks", m_music_count), 4);
+		}
+		catch (...) {
+			add_message("Music count could not be deduced", 1);
 		}
 
 		if (m_game->m_chunks.size() > 0)
@@ -853,7 +865,6 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
 
 	// constants
-	m_iscript_count = m_config.constant(c::ID_ISCRIPT_COUNT);
 	m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
 
 	// maps we convert to vectors

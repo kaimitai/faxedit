@@ -1291,3 +1291,22 @@ fe::Sprite_gfx_definiton fe::ROM_Manager::extract_door_req_gfx(
 
 	return result;
 }
+
+std::size_t fe::ROM_Manager::get_music_count(const fe::Config& p_config, std::vector<byte>& p_rom) const {
+	auto musicptr{ p_config.pointer(c::ID_MUSIC_PTR) };
+	std::size_t result{ 0 };
+	std::size_t lowest_target{ 0x10000 };
+
+	for (std::size_t i{ 0 }; ; i += 2) {
+		std::size_t next_ptr_addr{ (musicptr.first - musicptr.second) + (i + 2) };
+		if (next_ptr_addr > lowest_target + 1)
+			break;
+
+		++result;
+		std::size_t ptr_addr{ static_cast<std::size_t>(p_rom.at(musicptr.first + i)) +
+			256 * static_cast<std::size_t>(p_rom.at(musicptr.first + i + 1)) };
+		lowest_target = std::min(lowest_target, ptr_addr);
+	}
+
+	return result / 4;
+}

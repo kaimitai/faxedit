@@ -19,6 +19,7 @@ namespace fe {
 		constexpr char ID_SPRITE_PTR[]{ "sprite_ptr" };
 		constexpr char ID_SAMEWORLD_TRANS_PTR[]{ "sameworld_trans_ptr" };
 		constexpr char ID_OTHERWORLD_TRANS_PTR[]{ "otherworld_trans_ptr" };
+		constexpr char ID_MUSIC_PTR[]{ "music_ptr" };
 
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
@@ -136,7 +137,6 @@ namespace fe {
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
-		constexpr char ID_ISCRIPT_COUNT[]{ "iscript_count" };
 		constexpr char ID_PALETTE_TO_MUSIC_SLOTS[]{ "palette_to_music_slots" };
 
 		// chr constants

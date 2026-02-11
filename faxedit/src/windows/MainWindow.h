@@ -56,7 +56,7 @@ namespace fe {
 		std::vector<std::string> m_labels_worlds, m_labels_sprites,
 			m_labels_buildings, m_labels_tilesets;
 
-		std::size_t m_sprite_count, m_iscript_count;
+		std::size_t m_sprite_count, m_iscript_count, m_music_count;
 
 		// palettes shared between worlds and game gfx images
 		std::map<std::size_t, std::string> m_shared_palettes;

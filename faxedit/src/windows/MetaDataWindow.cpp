@@ -364,7 +364,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ui::imgui_slider_with_arrows("###p2mm",
 						std::format("Music: {}",
 							get_description(slot.m_music, m_labels_music)),
-						slot.m_music, 0, m_labels_music.size() - 1);
+						slot.m_music, 0, m_music_count);
 
 					ImGui::EndTabItem();
 				}
@@ -729,7 +729,7 @@ void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_show_pos) {
 
 	fe::ui::imgui_slider_with_arrows("###wsm",
 		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music), m_labels_music)),
-		p_scene.m_music, 0, m_labels_music.size() - 1);
+		p_scene.m_music, 0, m_music_count);
 
 	if (p_show_pos) {
 		ImGui::SeparatorText("Entry Position");

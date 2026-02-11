@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Only make changes to this file if you are confident in what you are doing! (and keep backups even then) -->
-<eoe_config app_version="beta-5.2">
+<eoe_config app_version="beta-5.3">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -13,19 +13,19 @@
 			<signature no="0" offset="0x31ddc" values="$f1,$e0,$ed,$e3,$f4,$ec,$e8,$f9,$e4,$f1" />
 		</region>
 		<region name="us">
-			<!-- look for address of script ptr table -->
+			<!-- look for address of script ptr table (lo bytes start) -->
 			<signature no="0" offset="0x3025d" values="$6b,$9f" />
 		</region>
-		<!-- look for addresses of script and music ptr table -->
+		<!-- look for addresses of script (lo bytes start) and music ptr table -->
 		<region name="us-rev-a">
 			<signature no="0" offset="0x3025d" values="$b6,$9f" />
 			<signature no="1" offset="0x14096" values="$fa,$8e" />
 		</region>
-		<!-- look for address of script ptr table -->
+		<!-- look for address of script ptr table (lo bytes start) -->
 		<region name="eu">
 			<signature no="0" offset="0x3025d" values="$b6,$9f" />
 		</region>
-		<!-- look for address of script ptr table -->
+		<!-- look for address of script ptr table (lo bytes start) -->
 		<region name="jp">
 			<signature no="0" offset="0x3025d" values="$67,$a3" />
 		</region>
@@ -41,7 +41,7 @@
 		<pointer name="sprite_ptr" value="0x2c220" zero_addr="0x24010" />
 		<pointer name="sameworld_trans_ptr" value="0x3ea47" zero_addr="0x30010" />
 		<pointer name="otherworld_trans_ptr" value="0x3eaac" zero_addr="0x30010" />
-		<!-- ROM offset of iScript pointer table lo bytes; combined with iscript_count we can dedude hi byte offset and script data start -->
+		<!-- ROM offset of iScript pointer table lo bytes; this will not be changed by the assembler (start of hi might, however) -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="eu,us-rev-a" value="0x31fc6" zero_addr="0x28010" />
@@ -101,7 +101,8 @@
 		<const name="ptm_cover_pos_offset" value="0x3ef8a" />
 		<!-- counts -->
 		<const name="sprite_count" value="101" />
-		<const name="iscript_count" value="152" />
+		<!-- minimum number of iScripts we require when assembling; hard-coded ref to index #151 in game code -->
+		<const name="iscript_min_count" value="152" />
 		<const name="music_count" value="16" />
 		<const name="string_data_start" region="eu,us,randum,us-rev-a" value="0x34310" />
 		<const name="string_data_end" region="eu,us,randum,us-rev-a" value="0x38010" />
@@ -109,8 +110,12 @@
 		<const name="string_data_end" region="jp" value="0x37a50" />
 		<const name="string_data_start" region="en-transl" value="0x40010" />
 		<const name="string_data_end" region="en-transl" value="0x43d5a" />
-		<!-- byte-size of the script data in the original region; everything following the end of the ptr table -->
-		<const name="iscript_data_rg1_size" value="1581" />
+		<!-- the reference to the start of the iscript ptr hi bytes (NOT the offset to the hi bytes themselves) -->
+		<const name="iscript_ptr_hi_ref_offset" value="0x30262" />
+		<!-- the end of iScript data region 1 -->
+		<const name="iscript_data_rg1_end" region="jp,en-transl" value="0x32ad4" />
+		<const name="iscript_data_rg1_end" region="us,randum" value="0x326d8" />
+		<const name="iscript_data_rg1_end" region="eu,us-rev-a" value="0x32723" />
 		<!-- offset of one past the last offset in which bscripts can be placed (region 1) -->
 		<const name="bscript_data_rg1_end" value="0x3b283" />
 		<!-- this bigger limit is probably safe, but not confirmed -->

@@ -9,8 +9,12 @@ fi::IScriptLoader::IScriptLoader(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) {
 	parse_strings(p_config, p_rom);
 
-	std::size_t l_iscript_count{ p_config.constant(c::ID_ISCRIPT_COUNT) };
 	auto l_iscript_ptr{ p_config.pointer(c::ID_ISCRIPT_PTR_LO) };
+	std::size_t l_iscript_hi_ref_offset{ p_config.constant(c::ID_ISCRIPT_HI_REF_OFFSET) };
+	std::size_t l_iscript_hi_addr{ static_cast<std::size_t>(p_rom.at(l_iscript_hi_ref_offset)) +
+		256 * static_cast<std::size_t>(p_rom.at(l_iscript_hi_ref_offset + 1)) };
+
+	std::size_t l_iscript_count{ l_iscript_hi_addr - (l_iscript_ptr.first - l_iscript_ptr.second) };
 
 	m_ptr_zero_addr = l_iscript_ptr.second;
 	m_defines_item = p_config.bmap(c::ID_DEFINES_ITEM);
@@ -22,6 +26,10 @@ fi::IScriptLoader::IScriptLoader(const fe::Config& p_config,
 		m_ptr_table.push_back(static_cast<std::size_t>(p_rom.at(l_iscript_ptr.first + i))
 			+ 256 * static_cast<std::size_t>(p_rom.at(l_iscript_ptr.first + l_iscript_count + i))
 			+ l_iscript_ptr.second);
+}
+
+std::size_t fi::IScriptLoader::get_script_count(void) const {
+	return m_ptr_table.size();
 }
 
 std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no) {

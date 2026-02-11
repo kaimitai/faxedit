@@ -151,6 +151,24 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 			}
 		}
 
+		// check that metatile usage for buildings don't go across tilesets
+		std::map<byte, std::set<std::size_t>> l_mt_usage; // <metatile no> -> set <tileset no>
+		const auto& buildingscreens{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens };
+
+		for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i) {
+			std::size_t tileset_no{ m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) };
+
+			for (std::size_t y{ 0 }; y < 13; ++y)
+				for (std::size_t x{ 0 }; x < 16; ++x)
+					l_mt_usage[buildingscreens.at(i).get_mt_at_pos(x, y)].insert(tileset_no);
+		}
+
+		for (const auto& kv : l_mt_usage) {
+			if (kv.second.size() != 1) {
+				add_message(std::format("Metatile {} in the buildings world used across tilesets", kv.first), 1);
+			}
+		}
+
 		add_message("Integrity analysis completed", 4);
 	}
 

@@ -14,7 +14,7 @@ void fe::MainWindow::draw_iscript_window(SDL_Renderer* p_rnd) {
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(6.0f, 2.0f));
 
 	ImGui::SeparatorText("Selected iScript");
-	ui::imgui_slider_with_arrows("###iscript", "", m_sel_iscript, 0, 151, "",
+	ui::imgui_slider_with_arrows("###iscript", "", m_sel_iscript, 0, m_iscript_count - 1, "",
 		false, true);
 
 	ImGui::SameLine();
