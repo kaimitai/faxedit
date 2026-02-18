@@ -48,7 +48,8 @@ namespace fe {
 		SDL_Texture* m_screen_texture;
 
 		// cache all metatile definitions
-		std::vector<SDL_Texture*> m_metatile_gfx, m_door_req_gfx;
+		std::vector<SDL_Texture*> m_metatile_gfx;
+		std::map<byte, SDL_Texture*> m_door_req_gfx;
 		std::map<std::size_t, std::vector<SDL_Texture*>> m_sprite_gfx;
 		// map from (world, screen) to SDL_Texture of all its world metatiles as texture
 		// use virtual keys for other tilemaps, like the intro, outro and title screens
@@ -115,7 +116,9 @@ namespace fe {
 		void gen_sprites(SDL_Renderer* p_rnd,
 			const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs);
 		void gen_door_req_gfx(SDL_Renderer* p_rnd,
-			const fe::Sprite_gfx_definiton& p_def);
+			byte p_req_no,
+			const std::vector<klib::NES_tile>& p_tiles,
+			const std::vector<byte>& p_palette);
 		SDL_Texture* anim_frame_to_texture(SDL_Renderer* p_rnd,
 			const fe::AnimationFrame& p_frame,
 			const std::vector<klib::NES_tile>& p_tiles,

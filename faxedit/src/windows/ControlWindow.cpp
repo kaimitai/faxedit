@@ -180,14 +180,14 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_gfx_window = !m_gfx_window;
 
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
-		load_xml();
+		load_xml(p_rnd);
 
 	show_output_messages();
 
 	ImGui::End();
 }
 
-void fe::MainWindow::load_xml(void) {
+void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	try {
 		add_message("Attempting to load xml " + get_xml_path(), 5);
 		auto l_rom{ m_game->m_rom_data };
@@ -209,6 +209,8 @@ void fe::MainWindow::load_xml(void) {
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();
 		m_gfx.clear_tileset_textures();
+		// update cached gfx
+		generate_door_req_gfx(p_rnd);
 
 		// update gui cache for world tilesets
 		generate_world_tilesets();

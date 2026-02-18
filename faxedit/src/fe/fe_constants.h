@@ -134,6 +134,7 @@ namespace fe {
 		constexpr char ID_BG_CHR_ROM_OFFSETS[]{ "bg_chr_rom_offsets" };
 		constexpr char ID_NES_PALETTE[]{ "nes_palette" };
 		constexpr char ID_HUD_TILEMAP[]{ "hud_tilemap" };
+		constexpr char ID_DOOR_REQ_ITEM_GFX[]{ "door_requirement_item_gfx" };
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };

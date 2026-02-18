@@ -116,10 +116,9 @@ namespace fe {
 		// gfx
 		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(
 			const std::vector<byte>& p_rom) const;
-		fe::Sprite_gfx_definiton extract_door_req_gfx(const std::vector<byte>& p_rom) const;
 
 		// cahcing utils
-		std::size_t get_music_count(const fe::Config& p_config, std::vector<byte>& p_rom) const;
+		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
 	};
 
 }

@@ -56,8 +56,8 @@ fe::gfx::~gfx(void) {
 			delete_texture(txt);
 	for (auto& txt : m_icon_overlays)
 		delete_texture(txt);
-	for (auto& txt : m_door_req_gfx)
-		delete_texture(txt);
+	for (auto& kv : m_door_req_gfx)
+		delete_texture(kv.second);
 	for (auto& kv : m_tilemap_gfx)
 		delete_texture(kv.second);
 }
@@ -340,18 +340,17 @@ void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_pr
 }
 
 void fe::gfx::draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const {
-	if (p_req >= m_door_req_gfx.size() ||
-		m_door_req_gfx[p_req] == nullptr)
-		return;
-	else {
+	auto iter{ m_door_req_gfx.find(p_req) };
+
+	if (iter != end(m_door_req_gfx)) {
 		float w, h;
-		SDL_GetTextureSize(m_door_req_gfx[p_req], &w, &h);
+		SDL_GetTextureSize(iter->second, &w, &h);
 		SDL_FRect dst_rect = { 16.0f * static_cast<float>(x),
 			16.0f * static_cast<float>(y),
 		w, h };
 
 		SDL_SetRenderTarget(p_rnd, m_screen_texture);
-		SDL_RenderTexture(p_rnd, m_door_req_gfx[p_req],
+		SDL_RenderTexture(p_rnd, iter->second,
 			nullptr,
 			&dst_rect);
 		SDL_SetRenderTarget(p_rnd, nullptr);
@@ -460,16 +459,21 @@ void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
 }
 
 void fe::gfx::gen_door_req_gfx(SDL_Renderer* p_rnd,
-	const fe::Sprite_gfx_definiton& p_def) {
-	const auto& l_sprpal{ p_def.m_sprite_palette };
-	const auto& tiles{ p_def.m_nes_tiles };
+	byte p_req_no,
+	const std::vector<klib::NES_tile>& p_tiles,
+	const std::vector<byte>& p_palette) {
 
-	m_door_req_gfx.push_back(nullptr); // req "None"
-	for (std::size_t i{ 0 }; i < p_def.m_frames.size(); ++i)
-		m_door_req_gfx.push_back(
-			anim_frame_to_texture(p_rnd, p_def.m_frames[i],
-				p_def.m_nes_tiles, p_def.m_sprite_palette)
-		);
+	// we know a metatile came in here, so a 4-chr vector
+	auto srf{ create_sdl_surface(16, 16, true) };
+	for (int y{ 0 }; y < 2; ++y)
+		for (int x{ 0 }; x < 2; ++x)
+			draw_nes_tile_on_surface(srf, 8 * x, 8 * y, p_tiles.at(static_cast<std::size_t>(2 * y + x)),
+				p_palette, true);
+
+	if (m_door_req_gfx.contains(p_req_no))
+		delete_texture(m_door_req_gfx[p_req_no]);
+
+	m_door_req_gfx[p_req_no] = surface_to_texture(p_rnd, srf);
 }
 
 SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,

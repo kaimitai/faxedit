@@ -103,7 +103,6 @@
 		<const name="sprite_count" value="101" />
 		<!-- minimum number of iScripts we require when assembling; hard-coded ref to index #151 in game code -->
 		<const name="iscript_min_count" value="152" />
-		<const name="music_count" value="16" />
 		<const name="string_data_start" region="eu,us,randum,us-rev-a" value="0x34310" />
 		<const name="string_data_end" region="eu,us,randum,us-rev-a" value="0x38010" />
 		<const name="string_data_start" region="jp" value="0x35f50" />
@@ -198,6 +197,49 @@
 		<!-- some gfx needed for chr tile pool adjustment for the title screen -->
 		<const name="alphabet_chr_offset" value="0x28250" />
 		<const name="numeric_chr_offset" value="0x28450" />
+		<!-- misc data offset -->
+		<const name="status_string_count" value="34" />
+		<const name="status_string_offset" region="jp,en-transl" value="0x3085b" />
+		<const name="status_string_offset" value="0x30883" />
+		<const name="item_string_count" value="39" />
+		<const name="item_string_offset" region="eu,us-rev-a" value="0x31b91" />
+		<const name="item_string_offset" region="jp,en-transl" value="0x31f85" />
+		<const name="item_string_offset" region="us,randum" value="0x31b4d" />
+		<const name="password_string_count" value="3" />
+		<const name="password_string_offset" region="us,eu,us-rev-a,randum" value="0x311ce" />
+		<const name="rank_count" value="16" />
+		<const name="rank_string_length" region="us,eu,us-rev-a,randum" value="16" />
+		<const name="rank_string_length" region="jp,en-transl" value="8" />
+		<const name="rank_string_offset" region="us,eu,us-rev-a,randum" value="0x3f659" />
+		<const name="rank_string_offset" region="jp,en-transl" value="0x3f7a1" />
+		<const name="rank_data_offset" region="us,eu,us-rev-a,randum" value="0x3f759" />
+		<const name="rank_data_offset" region="jp,en-transl" value="0x3f821" />
+		<!-- sprite data -->
+		<const name="sprite_drop_table_offset" value="0x3acfd" />
+		<const name="sprite_drop_table_count" value="64" />
+		<const name="sprite_type_offset" value="0x3b554" />
+		<const name="sprite_hp_offset" value="0x3b5b9" />
+		<const name="sprite_hp_count" value="101" />
+		<const name="sprite_xp_offset" value="0x3b61e" />
+		<const name="sprite_xp_count" value="100" />
+		<const name="sprite_drop_idx_offset" value="0x3b682" />
+		<const name="sprite_drop_idx_count" value="101" />
+		<const name="sprite_damage_offset" value="0x3b6e7" />
+		<const name="sprite_damage_count" value="100" />
+		<const name="sprite_defense_offset" value="0x3b74b" />
+		<const name="sprite_defense_count" value="101" />
+		<!-- weapons and magic -->
+		<const name="armor_count" value="4" />
+		<const name="magic_count" value="5" />
+		<const name="weapon_count" value="4" />
+		<const name="magic_damage_offset" value="0x3b7b0" />
+		<const name="magic_cost_offset" value="0x3b7b9" />
+		<const name="weapon_damage_offset" value="0x3b7b5" />
+		<const name="weapon_glove_damage_offset" value="0x388d7" />
+		<const name="armor_defense_offset" value="0x38ae8" />
+		<!-- wing boot timer -->
+		<const name="wing_boots_time_count" value="4" />
+		<const name="wing_boots_time_offset" value="0x3c5a9" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -263,6 +305,17 @@
 			<entry byte="$06" str="Ring of Elf" />
 			<entry byte="$07" str="Ring of Dwarf" />
 			<entry byte="$08" str="Demon's Ring" />
+		</byte_to_string_map>
+		<!-- item gfx for door requirements - used to draw door icon overlays -->
+		<byte_to_string_map name="door_requirement_item_gfx">
+			<entry byte="$01" str="21" />
+			<entry byte="$02" str="22" />
+			<entry byte="$03" str="23" />
+			<entry byte="$04" str="24" />
+			<entry byte="$05" str="25" />
+			<entry byte="$06" str="19" />
+			<entry byte="$07" str="17" />
+			<entry byte="$08" str="20" />
 		</byte_to_string_map>
 		<!-- labels for sprites -->
 		<byte_to_string_map name="sprite_labels">

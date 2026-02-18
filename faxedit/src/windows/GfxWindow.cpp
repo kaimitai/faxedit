@@ -830,3 +830,38 @@ void fe::MainWindow::initialize_hud_tilemap(void) {
 
 	m_hud_tilemap.set_flat_palette(std::vector<byte>(16, 0));
 }
+
+// generate the door requirement graphics based on the items image
+void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
+	// mapping from door requirement no (treat as 1-indexed) to item graphic no in the item gfx tilemap
+	const auto DOOR_REQ_ITEMS{ m_config.bmap_numeric(c::ID_DOOR_REQ_ITEM_GFX) };
+	const auto itemgfx{ m_game->m_gfx_manager.get_chrtilemap(c::CHR_GFX_ID_ITEMS) };
+
+	try {
+		for (const auto& kv : DOOR_REQ_ITEMS) {
+			std::size_t drgfx{ kv.second };
+
+			// very defensive check here
+			if (drgfx < itemgfx.m_tilemap.size() && !itemgfx.m_tilemap.at(drgfx).empty() &&
+				itemgfx.m_tilemap.at(drgfx).at(0).has_value()) {
+				const auto& metatile{ itemgfx.m_tilemap.at(drgfx).at(0).value() };
+
+				std::vector<klib::NES_tile> tiles;
+				for (std::size_t chridx : metatile.m_idxs)
+					tiles.push_back(itemgfx.m_tiles.at(chridx));
+
+				m_gfx.gen_door_req_gfx(p_rnd, kv.first, tiles, itemgfx.m_palette.at(0));
+			}
+		}
+	}
+	catch (const std::runtime_error& ex) {
+		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()));
+	}
+	catch (const std::exception& ex) {
+		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()));
+	}
+	catch (...) {
+		add_message("Could not generate door requirement graphics: Unknown exception");
+	}
+
+}

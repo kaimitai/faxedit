@@ -225,10 +225,11 @@ namespace fe {
 		std::vector<byte> update_pal_bg_idx(std::vector<byte>& p_palette, byte p_nes_pal_idx);
 
 		void initialize_hud_tilemap(void);
+		void generate_door_req_gfx(SDL_Renderer* p_rnd);
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);
-		void load_xml(void);
+		void load_xml(SDL_Renderer* p_rnd);
 
 		// save functions
 		void save_xml(void);

@@ -124,7 +124,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
 			patch_nes_rom(l_shift, l_alt);
 		else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
-			load_xml();
+			load_xml(p_rnd);
 
 		// input handling, move to separate function later
 		if (m_emode == fe::EditMode::TilemapEditMode) {
@@ -795,13 +795,10 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		// gen NES palette
 		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
-
+		// gen door requirement gfx
+		generate_door_req_gfx(p_rnd);
 		// pass it on the gfx handler to make sprite textures
 		m_gfx.gen_sprites(p_rnd, gfx_def);
-
-		// extract door requirement gfx
-		auto req_gfx{ m_rom_manager.extract_door_req_gfx(bytes) };
-		m_gfx.gen_door_req_gfx(p_rnd, req_gfx);
 
 		// extract scripts
 		try {
