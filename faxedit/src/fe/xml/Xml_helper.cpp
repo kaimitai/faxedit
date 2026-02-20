@@ -1055,7 +1055,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 
 			std::string l_name{ n_bmap.attribute(c::ATTR_NAME).as_string() };
 
-			if (p_sets.find(l_name) == end(p_sets)) {
+			if (p_byte_maps.find(l_name) == end(p_byte_maps)) {
 				std::map<byte, std::string> l_tmp_bmap;
 
 				for (auto n_entry{ n_bmap.child(c::TAG_ENTRY) }; n_entry;

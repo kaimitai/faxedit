@@ -3,6 +3,7 @@
 
 #include <./SDL3/SDL.h>
 #include <map>
+#include <unordered_map>
 #include <optional>
 #include <utility>
 #include <set>
@@ -51,6 +52,7 @@ namespace fe {
 		std::vector<SDL_Texture*> m_metatile_gfx;
 		std::map<byte, SDL_Texture*> m_door_req_gfx;
 		std::map<std::size_t, std::vector<SDL_Texture*>> m_sprite_gfx;
+		std::unordered_map<std::string, SDL_Texture*> m_chr_bank_gfx;
 		// map from (world, screen) to SDL_Texture of all its world metatiles as texture
 		// use virtual keys for other tilemaps, like the intro, outro and title screens
 		std::map<std::size_t, SDL_Texture*> m_tilemap_gfx;
@@ -110,8 +112,15 @@ namespace fe {
 		void draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
 			const klib::NES_tile& tile, const std::vector<byte>& p_palette,
 			bool p_transparent = false, bool h_flip = false, bool v_flip = false) const;
+		void draw_rect_on_surface(SDL_Surface* p_srf, int x, int y,
+			int w, int h, SDL_Color color, int line_width = 1) const;
 
 		static void set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels);
+
+		void gen_bank_chr_gfx(SDL_Renderer* p_rnd, const std::string& p_bank_id,
+			const std::vector<fe::ChrGfxTile> tiles,
+			const std::set<std::size_t>& p_fixed_idx_tiles = std::set<std::size_t>());
+		SDL_Texture* get_bank_chr_gfx(const std::string& p_bank_id) const;
 
 		void gen_sprites(SDL_Renderer* p_rnd,
 			const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs);

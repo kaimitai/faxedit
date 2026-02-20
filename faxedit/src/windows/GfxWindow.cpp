@@ -52,6 +52,10 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	if (ImGui::RadioButton("HUD",
 		m_gfx_emode == fe::GfxEditMode::HUDAttributes))
 		m_gfx_emode = fe::GfxEditMode::HUDAttributes;
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Bg Chr",
+		m_gfx_emode == fe::GfxEditMode::GfxChrBank))
+		m_gfx_emode = fe::GfxEditMode::GfxChrBank;
 
 	ImGui::Separator();
 
@@ -468,6 +472,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			regen_hud(p_rnd, ls_sel_wpal);
 		}
 	}
+	else if (m_gfx_emode == fe::GfxEditMode::GfxChrBank) {
+		show_gfx_chr_bank_screen(p_rnd);
+	}
 
 	if (m_gfx_emode == fe::GfxEditMode::WorldChr ||
 		m_gfx_emode == fe::GfxEditMode::BgGraphics) {
@@ -862,6 +869,56 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 	}
 	catch (...) {
 		add_message("Could not generate door requirement graphics: Unknown exception");
+	}
+
+}
+
+void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
+	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO, c::CHR_BANK_ITEMS };
+	static std::size_t ls_sel_bank{ 0 };
+
+	ImGui::SeparatorText("chr-bank");
+
+	for (std::size_t i{ 0 }; i < lcs_chr_banks.size(); ++i) {
+		if (ImGui::RadioButton(lcs_chr_banks[i].c_str(),
+			ls_sel_bank == i))
+			ls_sel_bank = i;
+		ImGui::SameLine();
+	}
+
+	ImGui::NewLine();
+
+	const std::string bank_id{ lcs_chr_banks[ls_sel_bank] };
+	auto banktxt{ m_gfx.get_bank_chr_gfx(bank_id) };
+	if (banktxt == nullptr) {
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			m_game->m_gfx_manager.get_complete_bank_chr_tileset_w_md(bank_id));
+	}
+	else {
+		ImGui::Image(banktxt, ImVec2(
+			static_cast<float>(4 * banktxt->w),
+			static_cast<float>(4 * banktxt->h)
+		));
+	}
+
+	ImGui::Separator();
+
+	if (ui::imgui_button("Re-render", 2))
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			m_game->m_gfx_manager.get_complete_bank_chr_tileset_w_md(bank_id));
+
+	if (ui::imgui_button("Export chr", 4)) {
+
+	}
+	ImGui::SameLine();
+	if (ui::imgui_button("Import chr", 4)) {
+
+	}
+
+	ImGui::NewLine();
+
+	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank")) {
+
 	}
 
 }

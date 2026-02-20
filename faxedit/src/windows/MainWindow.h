@@ -21,7 +21,7 @@ namespace fe {
 
 	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
-	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes };
+	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, GfxChrBank };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -161,6 +161,7 @@ namespace fe {
 		void draw_filepicker_window(SDL_Renderer* p_rnd);
 		void draw_exit_app_window(SDL_Renderer* p_rnd);
 		void draw_gfx_window(SDL_Renderer* p_rnd);
+		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 

@@ -348,8 +348,18 @@ fe::ChrTilemap fe::GfxTilemapManager::get_chrtilemap(const std::string& p_gfx_id
 	return result;
 }
 
+// TODO: Make complete chr-tileset depend only on a chr bank, and not any particular gfx image
+std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_bank_chr_tileset_w_md(
+	const std::string& p_bank_id) const {
+	for (const auto& kv : metadata)
+		if (kv.second.m_chr_bank_id == p_bank_id)
+			return get_complete_chr_tileset_w_md(kv.first, false);
+
+	throw std::runtime_error(std::format("Could not determine complete chr-data for chr bank '{}'", p_bank_id));
+}
+
 std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md(
-	const std::string& p_gfx_id) const {
+	const std::string& p_gfx_id, bool p_determine_fixed) const {
 	std::vector<fe::ChrGfxTile> l_tiles;
 
 	const auto& md{ metadata.at(p_gfx_id) };
@@ -385,13 +395,15 @@ std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md
 			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(alphabank[i], true, true);
 	}
 
-	// next - lock all tiles referenced by other images using this char bank
-	for (const auto& kv : metadata)
-		if (kv.first != p_gfx_id && kv.second.m_chr_bank_id == md.m_chr_bank_id) {
-			for (const auto& otherrow : tilemapdata.at(kv.first).tilemap)
-				for (byte othertile : otherrow)
-					l_tiles.at(othertile).m_readonly = true;
-		}
+	// next - lock all tiles referenced by other images using this char bank if required
+	if (p_determine_fixed) {
+		for (const auto& kv : metadata)
+			if (kv.first != p_gfx_id && kv.second.m_chr_bank_id == md.m_chr_bank_id) {
+				for (const auto& otherrow : tilemapdata.at(kv.first).tilemap)
+					for (byte othertile : otherrow)
+						l_tiles.at(othertile).m_readonly = true;
+			}
+	}
 
 	return l_tiles;
 }
@@ -449,13 +461,13 @@ void fe::GfxTilemapManager::patch_tilemap_data(std::vector<byte>& p_rom) const {
 			const auto attrbytes{ serialize_attr_table(tilemapdata.at(kv.first).attrmap) };
 			std::copy(begin(attrbytes), end(attrbytes), begin(p_rom) + kv.second.m_rom_offset_attr);
 		}
-		
+
 		// patch palette if patchable
 		if (kv.second.m_patch_palette) {
 			const auto& palbytes{ tilemapdata.at(kv.first).palette };
 			std::copy(begin(palbytes), end(palbytes), begin(p_rom) + kv.second.m_rom_offset_pal);
 		}
-		
+
 	}
 }
 

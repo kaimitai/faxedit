@@ -67,7 +67,9 @@ namespace fe {
 		void verify_chr_gfx_id(const std::string& p_gfx_id) const;
 
 		std::vector<klib::NES_tile> get_complete_chr_tileset(const std::string& p_gfx_id) const;
-		std::vector<fe::ChrGfxTile> get_complete_chr_tileset_w_md(const std::string& p_gfx_id) const;
+		std::vector<fe::ChrGfxTile> get_complete_chr_tileset_w_md(const std::string& p_gfx_id,
+			bool p_determine_fixed = true) const;
+		std::vector<fe::ChrGfxTile> get_complete_bank_chr_tileset_w_md(const std::string& p_bank_id) const;
 
 		// rom patching
 		void patch_chr_banks(std::vector<byte>& p_rom) const;

@@ -198,6 +198,13 @@
 		<const name="alphabet_chr_offset" value="0x28250" />
 		<const name="numeric_chr_offset" value="0x28450" />
 		<!-- misc data offset -->
+		<!-- title screen strings - variable length with $00-delimiters -->
+		<const name="title_string_offset" region="us,randum" value="0x31dcd" />
+		<const name="title_string_end_offset" region="us,randum" value="0x31e1e" />
+		<const name="title_string_offset" region="eu,us-rev-a" value="0x31e11" />
+		<const name="title_string_end_offset" region="eu,us-rev-a" value="0x31e69" />
+		<const name="title_string_offset" region="jp,en-transl" value="0x32205" />
+		<const name="title_string_end_offset" region="jp,en-transl" value="0x32233" />
 		<const name="status_string_count" value="34" />
 		<const name="status_string_offset" region="jp,en-transl" value="0x3085b" />
 		<const name="status_string_offset" value="0x30883" />

@@ -60,6 +60,8 @@ fe::gfx::~gfx(void) {
 		delete_texture(kv.second);
 	for (auto& kv : m_tilemap_gfx)
 		delete_texture(kv.second);
+	for (auto& kv : m_chr_bank_gfx)
+		delete_texture(kv.second);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -228,6 +230,43 @@ void fe::gfx::draw_nes_tile_on_surface(SDL_Surface* p_srf, int dst_x, int dst_y,
 		}
 	}
 
+}
+
+void fe::gfx::draw_rect_on_surface(
+	SDL_Surface* p_srf,
+	int p_x, int p_y,
+	int p_w, int p_h,
+	SDL_Color p_color,
+	int line_width
+) const
+{
+	if (line_width < 1)
+		return;
+
+	// Draw 'line_width' nested rectangles
+	for (int i = 0; i < line_width; ++i) {
+
+		int x = p_x + i;
+		int y = p_y + i;
+		int w = p_w - 2 * i;
+		int h = p_h - 2 * i;
+
+		// Stop if the rectangle collapses
+		if (w <= 0 || h <= 0)
+			break;
+
+		// Top and bottom
+		for (int xx = 0; xx < w; ++xx) {
+			SDL_WriteSurfacePixel(p_srf, x + xx, y, p_color.r, p_color.g, p_color.b, p_color.a);
+			SDL_WriteSurfacePixel(p_srf, x + xx, y + h - 1, p_color.r, p_color.g, p_color.b, p_color.a);
+		}
+
+		// Left and right
+		for (int yy = 0; yy < h; ++yy) {
+			SDL_WriteSurfacePixel(p_srf, x, y + yy, p_color.r, p_color.g, p_color.b, p_color.a);
+			SDL_WriteSurfacePixel(p_srf, x + w - 1, y + yy, p_color.r, p_color.g, p_color.b, p_color.a);
+		}
+	}
 }
 
 SDL_Surface* fe::gfx::create_sdl_surface(int p_w, int p_h,
@@ -435,6 +474,63 @@ void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) 
 	SDL_UnlockSurface(l_icon);
 	SDL_SetWindowIcon(p_window, l_icon);
 	SDL_DestroySurface(l_icon);
+}
+
+void fe::gfx::gen_bank_chr_gfx(SDL_Renderer* p_rnd, const std::string& p_bank_id,
+	const std::vector<fe::ChrGfxTile> tiles,
+	const std::set<std::size_t>& p_fixed_idx_tiles) {
+	static const std::vector<byte> lcs_chr_bank_palette{ 0x0f, 0x17, 0x28, 0x39 };
+	static const std::vector<SDL_Color> lcs_colors{
+		SDL_Color(0x00, 0xff, 0x00, 0xff),	// editable
+		SDL_Color(0xff, 0x00, 0x00, 0xff),	// unusable (dynamic, run-time dependent)
+		SDL_Color(0xff, 0xff, 0x00, 0xff),	// read-only
+		SDL_Color(0x00, 0x00, 0xff, 0xff)	// editable, but not relocatable
+	};
+
+	if (tiles.size() != 256)
+		throw std::runtime_error(
+			std::format("Can not generate chr bank image for bank '{}', expected 256 tiles but got {}",
+				p_bank_id, tiles.size()));
+
+	// we need 10x10px to draw the chr banks because we will outline them with colored rectangles
+	auto srf{ create_sdl_surface(10 * 16,10 * 16) };
+
+	for (int y{ 0 }; y < 16; ++y)
+		for (int x{ 0 }; x < 16; ++x) {
+			std::size_t tile_idx{ static_cast<std::size_t>(16 * y + x) };
+			const auto& tile{ tiles.at(tile_idx) };
+			std::size_t color_idx{ 0 };
+			int tx{ 10 * x };
+			int ty{ 10 * y };
+
+			draw_nes_tile_on_surface(srf, tx + 1, ty + 1, tile.m_tile,
+				lcs_chr_bank_palette);
+
+			if (p_fixed_idx_tiles.contains(tile_idx))
+				color_idx = 3;
+			else if (!tile.m_allowed)
+				color_idx = 1;
+			else if (tile.m_readonly)
+				color_idx = 2;
+
+			if (color_idx != 0)
+				draw_rect_on_surface(srf, tx, ty, 10, 10, lcs_colors[color_idx],
+					color_idx == 1 ? 5 : 1);
+		}
+
+	auto banktxt{ surface_to_texture(p_rnd, srf) };
+	if (m_chr_bank_gfx.contains(p_bank_id))
+		delete_texture(m_chr_bank_gfx.at(p_bank_id));
+
+	m_chr_bank_gfx[p_bank_id] = banktxt;
+}
+
+SDL_Texture* fe::gfx::get_bank_chr_gfx(const std::string& p_bank_id) const {
+	auto iter{ m_chr_bank_gfx.find(p_bank_id) };
+	if (iter == end(m_chr_bank_gfx))
+		return nullptr;
+	else
+		return iter->second;
 }
 
 void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
