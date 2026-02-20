@@ -16,6 +16,12 @@ using GfxPalette = std::vector<byte>;
 
 namespace fe {
 
+	// type used for canonicalization of chr banks
+	struct ChrReorderResult {
+		std::vector<klib::NES_tile> tiles;
+		std::vector<std::size_t> idx_old_to_new;
+	};
+
 	// struct of tilemaps we store - chr data is separate
 	struct GfxTilemapData {
 		GfxTilemap tilemap;
@@ -70,6 +76,7 @@ namespace fe {
 		std::vector<fe::ChrGfxTile> get_complete_chr_tileset_w_md(const std::string& p_gfx_id,
 			bool p_determine_fixed = true) const;
 		std::vector<fe::ChrGfxTile> get_complete_bank_chr_tileset_w_md(const std::string& p_bank_id) const;
+		bool is_bank_tile_0_fixed(const std::string& p_bank_id) const;
 
 		// rom patching
 		void patch_chr_banks(std::vector<byte>& p_rom) const;
@@ -82,6 +89,8 @@ namespace fe {
 			const std::vector<byte>& p_rom);
 		std::size_t get_gfx_numeric_key(const std::string& p_gfx_id) const;
 		std::string get_label(const std::string& p_gfx_id) const;
+
+		void apply_canonicalization(const std::string& p_bank_id, const fe::ChrReorderResult& result);
 
 		// rom patching
 		void patch_rom(std::vector<byte>& p_rom) const;

@@ -21,7 +21,7 @@ namespace fe {
 
 	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
-	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, GfxChrBank };
+	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -227,6 +227,10 @@ namespace fe {
 
 		void initialize_hud_tilemap(void);
 		void generate_door_req_gfx(SDL_Renderer* p_rnd);
+
+		// gfx functions for chr logic
+		fe::ChrReorderResult reorder_chr_tiles(const std::vector<klib::NES_tile>& tiles,
+			const std::set<std::size_t>& fixed_indexes = std::set<std::size_t>()) const;
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);

@@ -358,6 +358,13 @@ std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_bank_chr_tileset
 	throw std::runtime_error(std::format("Could not determine complete chr-data for chr bank '{}'", p_bank_id));
 }
 
+bool fe::GfxTilemapManager::is_bank_tile_0_fixed(const std::string& p_bank_id) const {
+	for (const auto& kv : metadata)
+		if (kv.second.m_chr_bank_id == p_bank_id)
+			return kv.second.m_fix_tile_0;
+	throw std::runtime_error(std::format("Could not determine tile-0 fixation for chr bank '{}'", p_bank_id));
+}
+
 std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md(
 	const std::string& p_gfx_id, bool p_determine_fixed) const {
 	std::vector<fe::ChrGfxTile> l_tiles;
@@ -503,4 +510,40 @@ void fe::GfxTilemapManager::patch_chr_banks(std::vector<byte>& p_rom) const {
 			std::copy(begin(chrbytes), end(chrbytes), begin(p_rom) + kv.second + 16 * i);
 		}
 	}
+}
+
+void fe::GfxTilemapManager::apply_canonicalization(const std::string& p_bank_id,
+	const fe::ChrReorderResult& result) {
+	auto iter{ chrbanks.find(p_bank_id) };
+	byte idx_offset{ 0 };
+
+	if (iter != end(chrbanks)) {
+
+		for(auto& kv : metadata)
+			if (kv.second.m_chr_bank_id == p_bank_id) {
+				idx_offset = static_cast<byte>(kv.second.m_chr_ppu_index);
+
+				auto& tilemap{ this->tilemapdata.at(kv.first).tilemap };
+
+				for(auto& row : tilemap)
+					for (byte& b : row) {
+						
+						// index too low
+						if (b < idx_offset)
+							continue;
+
+						// index too high
+						std::size_t old_index{ static_cast<std::size_t>(b) - idx_offset };
+						if (old_index >= result.tiles.size())
+							continue;
+
+						// within remap region
+						std::size_t new_index = result.idx_old_to_new[old_index];
+						b = static_cast<byte>(idx_offset + new_index);
+					}
+			}
+
+	}
+
+	set_chr_bank(p_bank_id, result.tiles);
 }

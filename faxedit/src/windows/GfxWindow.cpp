@@ -877,6 +877,18 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO, c::CHR_BANK_ITEMS };
 	static std::size_t ls_sel_bank{ 0 };
 
+	const auto bank_chr_w_metadata = [this](const std::string& p_bank_id) ->
+		std::pair<std::vector<fe::ChrGfxTile>, std::set<std::size_t>> {
+		std::set<std::size_t> fixed_tiles;
+		auto tiles{ this->m_game->m_gfx_manager.get_complete_bank_chr_tileset_w_md(p_bank_id) };
+		if (this->m_game->m_gfx_manager.is_bank_tile_0_fixed(p_bank_id)) {
+			fixed_tiles.insert(0);
+			tiles.at(0).m_readonly = false;
+		}
+
+		return std::make_pair(tiles, fixed_tiles);
+		};
+
 	ImGui::SeparatorText("chr-bank");
 
 	for (std::size_t i{ 0 }; i < lcs_chr_banks.size(); ++i) {
@@ -890,11 +902,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	const std::string bank_id{ lcs_chr_banks[ls_sel_bank] };
 	auto banktxt{ m_gfx.get_bank_chr_gfx(bank_id) };
-	if (banktxt == nullptr) {
-		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
-			m_game->m_gfx_manager.get_complete_bank_chr_tileset_w_md(bank_id));
-	}
-	else {
+	if (banktxt != nullptr) {
 		ImGui::Image(banktxt, ImVec2(
 			static_cast<float>(4 * banktxt->w),
 			static_cast<float>(4 * banktxt->h)
@@ -903,9 +911,11 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	ImGui::Separator();
 
-	if (ui::imgui_button("Re-render", 2))
+	if (ui::imgui_button("Re-render", 2) || banktxt == nullptr) {
+		auto completebank{ bank_chr_w_metadata(bank_id) };
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
-			m_game->m_gfx_manager.get_complete_bank_chr_tileset_w_md(bank_id));
+			completebank.first, completebank.second);
+	}
 
 	if (ui::imgui_button("Export chr", 4)) {
 
@@ -918,7 +928,131 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	ImGui::NewLine();
 
 	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank")) {
+		auto completebank{ bank_chr_w_metadata(bank_id) };
+		std::vector<klib::NES_tile> banktiles;
+		for (const auto& mdtile : completebank.first)
+			if (mdtile.m_allowed && !mdtile.m_readonly)
+				banktiles.push_back(mdtile.m_tile);
 
+		m_game->m_gfx_manager.apply_canonicalization(bank_id, reorder_chr_tiles(banktiles, completebank.second));
+		completebank = bank_chr_w_metadata(bank_id);
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
 	}
 
+}
+
+fe::ChrReorderResult fe::MainWindow::reorder_chr_tiles(const std::vector<klib::NES_tile>& tiles,
+	const std::set<std::size_t>& fixed_indexes) const {
+	fe::ChrReorderResult out;
+	std::size_t N{ tiles.size() };
+
+	// 1. prepare output and mark fixed slots
+	// set output to all empty
+	// any fixed tile map to their own positions
+	// anything else stays empty until we place the movables we end up keeping
+	out.tiles.assign(N, klib::NES_tile{});             // all empty initially
+	out.idx_old_to_new.assign(N, std::size_t(-1));     // fill later
+
+	std::vector<bool> is_fixed(N, false);
+	for (std::size_t fi : fixed_indexes) {
+		assert(fi < N && "fixed index out of range");
+		is_fixed[fi] = true;
+		out.tiles[fi] = tiles[fi]; // fixed preserved verbatim
+	}
+
+	// 2. decide representatives (global deduplication)
+	struct TileLess {
+		bool operator()(const klib::NES_tile& a, const klib::NES_tile& b) const {
+			return a < b;
+		}
+	};
+
+	std::map<klib::NES_tile, std::size_t, TileLess> first_rep_old;
+	std::vector<std::size_t> rep_old(N, std::size_t(-1));
+	std::vector<bool> kept_movable(N, false);
+
+	auto consider_index = [&](std::size_t i) {
+		auto it = first_rep_old.find(tiles[i]);
+		if (it == first_rep_old.end()) {
+			first_rep_old.emplace(tiles[i], i);
+			rep_old[i] = i;
+			if (!is_fixed[i]) kept_movable[i] = true; // unique movable, keep it
+		}
+		else {
+			rep_old[i] = it->second; // duplicate, points to rep
+		}
+		};
+
+	// seed fixed first (so fixed wins as rep)
+	for (std::size_t fi : fixed_indexes) consider_index(fi);
+
+	// then process movables
+	for (std::size_t i = 0; i < N; ++i)
+		if (!is_fixed[i]) consider_index(i);
+
+	struct Kept { klib::NES_tile tile; std::size_t old_idx; };
+
+	std::vector<Kept> kept;
+	kept.reserve(N);
+
+	for (std::size_t i = 0; i < N; ++i) {
+		if (kept_movable[i]) kept.push_back({ tiles[i], i });
+	}
+
+	std::sort(kept.begin(), kept.end(),
+		[](const Kept& a, const Kept& b) {
+			if (b.tile < a.tile) return true;   // a before b when a is greater
+			if (a.tile < b.tile) return false;  // a after b when a is smaller
+			return a.old_idx < b.old_idx;       // deterministic tie-break
+		});
+
+	std::vector<std::size_t> movable_positions;
+	movable_positions.reserve(N);
+	for (std::size_t i = 0; i < N; ++i)
+		if (!is_fixed[i]) movable_positions.push_back(i);
+
+	std::vector<std::size_t> new_pos_for_old_kept(N, std::size_t(-1));
+
+	for (std::size_t k = 0; k < kept.size(); ++k) {
+		const std::size_t dest = movable_positions[k];
+		out.tiles[dest] = kept[k].tile;
+		new_pos_for_old_kept[kept[k].old_idx] = dest;
+	}
+
+	for (std::size_t i = 0; i < N; ++i) {
+		if (is_fixed[i]) {
+			out.idx_old_to_new[i] = i; // fixed never reindex
+			continue;
+		}
+
+		const std::size_t rep = rep_old[i];
+		assert(rep != std::size_t(-1));
+
+		if (is_fixed[rep]) {
+			out.idx_old_to_new[i] = rep; // maps into fixed rep
+		}
+		else {
+			const std::size_t new_pos = new_pos_for_old_kept[rep];
+			assert(new_pos != std::size_t(-1));
+			out.idx_old_to_new[i] = new_pos; // maps into moved kept tile
+		}
+	}
+
+	// TODO: Remove this test once the code is trusted
+	// test - begin
+	for (std::size_t i = 0; i < N; ++i) {
+		const auto& old_tile = tiles[i];
+		const auto& new_tile = out.tiles[out.idx_old_to_new[i]];
+		// Fixed indices themselves must stay the same
+		if (is_fixed[i]) {
+			assert(out.idx_old_to_new[i] == i);
+			assert(old_tile == out.tiles[i]);
+		}
+		// Everything must map to an identical tile value
+		assert(old_tile == new_tile);
+	}
+	// test - end
+
+	return out;
 }
