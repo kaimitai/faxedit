@@ -235,8 +235,14 @@ namespace fe {
 		std::pair<std::vector<klib::NES_tile>, std::set<std::size_t>> get_world_tileset_w_metadata(std::size_t p_tileset_no) const;
 		void set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_tileset_no,
 			const fe::ChrReorderResult& p_result);
+		void set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_tileset_no,
+			const std::vector<klib::NES_tile>& p_tiles);
 		fe::ChrReorderResult reorder_chr_tiles(const std::vector<klib::NES_tile>& tiles,
 			const std::set<std::size_t>& fixed_indexes = std::set<std::size_t>()) const;
+		std::string get_chr_folder(void) const;
+		std::string get_chr_file_path(const std::string& p_bank_id) const;
+		void save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id);
+		std::vector<klib::NES_tile> load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count);
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);

@@ -257,14 +257,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		if (m_iscript_window)
 			draw_iscript_window(p_rnd);
 
-		if (m_gfx_window) {
-			try {
-				draw_gfx_window(p_rnd);
-			}
-			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
-			}
-		}
+		if (m_gfx_window)
+			draw_gfx_window(p_rnd);
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);

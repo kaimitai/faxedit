@@ -6,6 +6,7 @@
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
+#include "./../common/klib/Kfile.h"
 
 using byte = unsigned char;
 
@@ -477,10 +478,20 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		}
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::WorldChrBank) {
-		show_world_chr_bank_screen(p_rnd);
+		try {
+			show_world_chr_bank_screen(p_rnd);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::GfxChrBank) {
-		show_gfx_chr_bank_screen(p_rnd);
+		try {
+			show_gfx_chr_bank_screen(p_rnd);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
 	}
 
 	if (m_gfx_emode == fe::GfxEditMode::WorldChr ||
@@ -883,6 +894,7 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO, c::CHR_BANK_ITEMS };
 	static std::size_t ls_sel_bank{ 0 };
+	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
 	const auto bank_chr_w_metadata = [this](const std::string& p_bank_id) ->
 		std::pair<std::vector<fe::ChrGfxTile>, std::set<std::size_t>> {
@@ -911,8 +923,8 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	auto banktxt{ m_gfx.get_bank_chr_gfx(bank_id) };
 	if (banktxt != nullptr) {
 		ImGui::Image(banktxt, ImVec2(
-			static_cast<float>(4 * banktxt->w),
-			static_cast<float>(4 * banktxt->h)
+			static_cast<float>(3 * banktxt->w),
+			static_cast<float>(3 * banktxt->h)
 		));
 	}
 
@@ -925,16 +937,38 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	}
 
 	if (ui::imgui_button("Export chr", 4)) {
-
+		save_chr(m_game->m_gfx_manager.chrbanks.at(bank_id), bank_id);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Import chr", 4)) {
-
+		undo_tiles[bank_id] = m_game->m_gfx_manager.chrbanks.at(bank_id);
+		m_game->m_gfx_manager.set_chr_bank(bank_id,
+			load_chr(bank_id, m_game->m_gfx_manager.chrbanks.at(bank_id).size())
+		);
+		auto completebank{ bank_chr_w_metadata(bank_id) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
 	}
 
-	ImGui::NewLine();
+	ImGui::SameLine();
 
-	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank")) {
+	bool has_undo{ undo_tiles.contains(bank_id) };
+	if (ui::imgui_button("Undo import", 4, "", !has_undo)) {
+		m_game->m_gfx_manager.set_chr_bank(bank_id, undo_tiles.at(bank_id));
+		undo_tiles.erase(bank_id);
+		auto completebank{ bank_chr_w_metadata(bank_id) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
+	}
+
+	ImGui::Separator();
+
+	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
+
+	bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+
+	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank",
+		!l_shift)) {
 		auto completebank{ bank_chr_w_metadata(bank_id) };
 		std::vector<klib::NES_tile> banktiles;
 		for (const auto& mdtile : completebank.first)
@@ -951,6 +985,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 	static std::size_t ls_tileset_no{ 0 };
+	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
 	ui::imgui_slider_with_arrows("###wchrb", std::format("Tileset {}: {}", ls_tileset_no,
 		get_description(static_cast<byte>(ls_tileset_no), m_labels_tilesets)).c_str(),
@@ -962,8 +997,8 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	if (banktxt != nullptr) {
 		ImGui::Image(banktxt, ImVec2(
-			static_cast<float>(4 * banktxt->w),
-			static_cast<float>(4 * banktxt->h)
+			static_cast<float>(3 * banktxt->w),
+			static_cast<float>(3 * banktxt->h)
 		));
 	}
 
@@ -973,7 +1008,38 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 			completebank.first, completebank.second);
 	}
 
-	if (ui::imgui_button("Canonicalize", 4)) {
+	if (ui::imgui_button("Export chr", 4)) {
+		save_chr(m_game->m_tilesets.at(ls_tileset_no).tiles, bank_id);
+	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Import chr", 4)) {
+		undo_tiles[bank_id] = m_game->m_tilesets.at(ls_tileset_no).tiles;
+		set_world_tileset_tiles(p_rnd, ls_tileset_no, load_chr(bank_id, m_game->m_tilesets.at(ls_tileset_no).tiles.size()));
+		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
+	}
+
+	ImGui::SameLine();
+
+	bool has_undo{ undo_tiles.contains(bank_id) };
+	if (ui::imgui_button("Undo import", 4, "", !has_undo)) {
+		set_world_tileset_tiles(p_rnd, ls_tileset_no, undo_tiles.at(bank_id));
+		undo_tiles.erase(bank_id);
+		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
+	}
+
+	ImGui::Separator();
+
+	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
+
+	bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+
+	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank", !l_shift)) {
 		auto chrbank{ get_world_tileset_w_metadata(ls_tileset_no) };
 		set_world_tileset_tiles(p_rnd, ls_tileset_no, reorder_chr_tiles(chrbank.first, chrbank.second));
 		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
@@ -1035,6 +1101,18 @@ void fe::MainWindow::set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_
 					) + static_cast<byte>(ppu_start));
 			}
 	}
+
+	generate_world_tilesets();
+	if (m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) == p_tileset_no) {
+		generate_metatile_textures(p_rnd);
+		m_atlas_force_update = true;
+	}
+}
+
+// only call this if the size of the chr-tile vector has been confirmed
+void fe::MainWindow::set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_tileset_no,
+	const std::vector<klib::NES_tile>& p_tiles) {
+	m_game->m_tilesets.at(p_tileset_no).tiles = p_tiles;
 
 	generate_world_tilesets();
 	if (m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) == p_tileset_no) {
@@ -1197,4 +1275,40 @@ fe::ChrReorderResult fe::MainWindow::reorder_chr_tiles(const std::vector<klib::N
 	// test - end
 
 	return out;
+}
+
+std::string fe::MainWindow::get_chr_folder(void) const {
+	return std::format("{}/{}-chr", m_path.string(), m_filename);
+}
+
+std::string fe::MainWindow::get_chr_file_path(const std::string& p_bank_id) const {
+	return std::format("{}/{}.chr", get_chr_folder(), p_bank_id);
+}
+
+void fe::MainWindow::save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id) {
+	klib::file::create_directories(get_chr_folder());
+	std::vector<byte> out_data;
+	for (const auto& tile : tiles) {
+		auto tilebytes{ tile.to_bytes() };
+		out_data.insert(end(out_data), begin(tilebytes), end(tilebytes));
+	}
+	std::string out_file{ get_chr_file_path(p_bank_id) };
+	klib::file::write_bytes_to_file(out_data, out_file);
+	add_message(std::format("chr-data written to '{}' ({} chr-tiles, {} bytes)", out_file, tiles.size(), out_data.size()), 2);
+}
+
+std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count) {
+	std::vector<klib::NES_tile> out_tiles;
+	std::string in_file{ get_chr_file_path(p_bank_id) };
+	auto chrbytes{ klib::file::read_file_as_bytes(in_file) };
+	if (chrbytes.size() != 16 * p_chr_tile_count)
+		throw std::runtime_error(std::format("Expected file size '{}' to be {} ({} chr-tiles), but actual size was {}",
+			in_file, 16 * p_chr_tile_count, p_chr_tile_count, chrbytes.size()));
+
+	for (std::size_t i{ 0 }; i < chrbytes.size(); i += 16)
+		out_tiles.push_back(klib::NES_tile(chrbytes, i));
+
+	add_message(std::format("Loaded {} chr-tiles from '{}'", out_tiles.size(), in_file), 2);
+
+	return out_tiles;
 }
