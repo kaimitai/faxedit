@@ -121,6 +121,7 @@ namespace fe {
 			const std::vector<fe::ChrGfxTile> tiles,
 			const std::set<std::size_t>& p_fixed_idx_tiles = std::set<std::size_t>());
 		SDL_Texture* get_bank_chr_gfx(const std::string& p_bank_id) const;
+		void clear_bank_chr_textures(void);
 
 		void gen_sprites(SDL_Renderer* p_rnd,
 			const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs);

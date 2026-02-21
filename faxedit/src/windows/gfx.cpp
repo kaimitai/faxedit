@@ -533,6 +533,12 @@ SDL_Texture* fe::gfx::get_bank_chr_gfx(const std::string& p_bank_id) const {
 		return iter->second;
 }
 
+void fe::gfx::clear_bank_chr_textures(void) {
+	for (auto& kv : m_chr_bank_gfx)
+		delete_texture(kv.second);
+	m_chr_bank_gfx.clear();
+}
+
 void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
 	const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs) {
 	for (auto& kv : m_sprite_gfx)

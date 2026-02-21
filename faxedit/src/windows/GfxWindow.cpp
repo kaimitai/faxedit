@@ -53,6 +53,10 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		m_gfx_emode == fe::GfxEditMode::HUDAttributes))
 		m_gfx_emode = fe::GfxEditMode::HUDAttributes;
 	ImGui::SameLine();
+	if (ImGui::RadioButton("World Chr",
+		m_gfx_emode == fe::GfxEditMode::WorldChrBank))
+		m_gfx_emode = fe::GfxEditMode::WorldChrBank;
+	ImGui::SameLine();
 	if (ImGui::RadioButton("Bg Chr",
 		m_gfx_emode == fe::GfxEditMode::GfxChrBank))
 		m_gfx_emode = fe::GfxEditMode::GfxChrBank;
@@ -471,6 +475,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		else {
 			regen_hud(p_rnd, ls_sel_wpal);
 		}
+	}
+	else if (m_gfx_emode == fe::GfxEditMode::WorldChrBank) {
+		show_world_chr_bank_screen(p_rnd);
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::GfxChrBank) {
 		show_gfx_chr_bank_screen(p_rnd);
@@ -940,6 +947,141 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 			completebank.first, completebank.second);
 	}
 
+}
+
+void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
+	static std::size_t ls_tileset_no{ 0 };
+
+	ui::imgui_slider_with_arrows("###wchrb", std::format("Tileset {}: {}", ls_tileset_no,
+		get_description(static_cast<byte>(ls_tileset_no), m_labels_tilesets)).c_str(),
+		ls_tileset_no, 0, m_game->m_tilesets.size() - 1, "", false, true);
+
+	std::string bank_id{ std::format("tileset-{}", ls_tileset_no) };
+
+	auto banktxt{ m_gfx.get_bank_chr_gfx(bank_id) };
+
+	if (banktxt != nullptr) {
+		ImGui::Image(banktxt, ImVec2(
+			static_cast<float>(4 * banktxt->w),
+			static_cast<float>(4 * banktxt->h)
+		));
+	}
+
+	if (ui::imgui_button("Re-render", 2) || banktxt == nullptr) {
+		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
+	}
+
+	if (ui::imgui_button("Canonicalize", 4)) {
+		auto chrbank{ get_world_tileset_w_metadata(ls_tileset_no) };
+		set_world_tileset_tiles(p_rnd, ls_tileset_no, reorder_chr_tiles(chrbank.first, chrbank.second));
+		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
+		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+			completebank.first, completebank.second);
+	}
+
+}
+
+void fe::MainWindow::set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_tileset_no,
+	const fe::ChrReorderResult& p_result) {
+	auto& wtileset{ m_game->m_tilesets.at(p_tileset_no) };
+	auto& wtiles{ wtileset.tiles };
+
+	if (wtiles.size() == p_result.tiles.size())
+		wtiles = p_result.tiles;
+	else
+		throw std::runtime_error(std::format("Invalid chr tile count {} for world tileset {} - expected {}",
+			p_result.tiles.size(), p_tileset_no, wtiles.size()));
+
+	std::size_t ppu_start{ wtileset.start_idx };
+	std::size_t ppu_end{ wtileset.end_index() };
+
+	// re-index metatiles for all worlds using this tileset (except buildings)
+	for (std::size_t i{ 0 }; i < m_game->m_chunks.size(); ++i)
+		if (i != c::CHUNK_IDX_BUILDINGS) {
+			if (m_game->get_default_tileset_no(i, 0) == p_tileset_no) {
+				for (auto& mt : m_game->m_chunks[i].m_metatiles) {
+					for (auto& row : mt.m_tilemap)
+						for (auto& b : row) {
+							if (static_cast<std::size_t>(b) >= ppu_start &&
+								static_cast<std::size_t>(b) < ppu_end)
+								b = static_cast<byte>(p_result.idx_old_to_new.at(
+									static_cast<std::size_t>(b) - ppu_start
+								) + static_cast<byte>(ppu_start));
+						}
+				}
+			}
+		}
+
+	// re-index all metatiles in the buildings world used by a screen connected to this tileset, if any
+	std::set<std::size_t> building_mts;
+	auto& scrs{ m_game->m_chunks[c::CHUNK_IDX_BUILDINGS].m_screens };
+	for (std::size_t i{ 0 }; i < scrs.size(); ++i) {
+		if (m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) == p_tileset_no)
+			for (const auto& row : scrs[i].m_tilemap)
+				for (byte b : row)
+					building_mts.insert(static_cast<std::size_t>(b));
+	}
+
+	auto& bmts{ m_game->m_chunks[c::CHUNK_IDX_BUILDINGS].m_metatiles };
+	for (std::size_t mtno : building_mts) {
+		for (auto& row : bmts[mtno].m_tilemap)
+			for (auto& b : row) {
+				if (static_cast<std::size_t>(b) >= ppu_start &&
+					static_cast<std::size_t>(b) < ppu_end)
+					b = static_cast<byte>(p_result.idx_old_to_new.at(
+						static_cast<std::size_t>(b) - ppu_start
+					) + static_cast<byte>(ppu_start));
+			}
+	}
+
+	generate_world_tilesets();
+	if (m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) == p_tileset_no) {
+		generate_metatile_textures(p_rnd);
+		m_atlas_force_update = true;
+	}
+}
+
+std::pair<std::vector<klib::NES_tile>, std::set<std::size_t>> fe::MainWindow::get_world_tileset_w_metadata(
+	std::size_t p_tileset_no) const {
+	const auto totalset{ get_complete_world_tileset_w_metadata(p_tileset_no, true) };
+	std::vector<klib::NES_tile> tiles;
+	for (const auto& tile : totalset.first)
+		tiles.push_back(tile.m_tile);
+
+	return std::make_pair(tiles, totalset.second);
+}
+
+std::pair<std::vector<fe::ChrGfxTile>, std::set<std::size_t>> fe::MainWindow::get_complete_world_tileset_w_metadata(
+	std::size_t p_tileset_no, bool p_normalize) const {
+	std::vector<fe::ChrGfxTile> result;
+
+	const auto& tiles{ world_ppu_tilesets.at(p_tileset_no) };
+	std::size_t ppu_start{ m_game->m_tilesets.at(p_tileset_no).start_idx };
+	std::size_t ppu_end{ m_game->m_tilesets.at(p_tileset_no).end_index() };
+
+	for (std::size_t i{ 0 }; i < tiles.size(); ++i) {
+		auto chrtile{ tiles[i] };
+		if (i < c::CHR_HUD_TILE_COUNT && !p_normalize)
+			result.push_back(fe::ChrGfxTile(chrtile, true, true));
+		else if (i >= ppu_start && i < ppu_end)
+			result.push_back(fe::ChrGfxTile(chrtile, false, true));
+		else if (!p_normalize)
+			result.push_back(fe::ChrGfxTile(chrtile, false, false));
+	}
+
+	std::set<std::size_t> reservedidx;
+	if (m_game->m_fog.m_world_no < m_game->m_chunks.size() &&
+		m_game->get_default_tileset_no(m_game->m_fog.m_world_no, 0) == p_tileset_no) {
+		const auto fogchr{ m_config.vset_as_set(c::ID_FOG_RESERVED_CHR_IDXS) };
+		for (byte b : fogchr)
+			reservedidx.insert(p_normalize ?
+				static_cast<std::size_t>(b) - static_cast<std::size_t>(ppu_start) :
+				static_cast<std::size_t>(b));
+	}
+
+	return std::make_pair(result, reservedidx);
 }
 
 fe::ChrReorderResult fe::MainWindow::reorder_chr_tiles(const std::vector<klib::NES_tile>& tiles,

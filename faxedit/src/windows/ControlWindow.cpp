@@ -209,6 +209,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();
 		m_gfx.clear_tileset_textures();
+		m_gfx.clear_bank_chr_textures();
 		// update cached gfx
 		generate_door_req_gfx(p_rnd);
 

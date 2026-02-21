@@ -162,6 +162,7 @@ namespace fe {
 		void draw_exit_app_window(SDL_Renderer* p_rnd);
 		void draw_gfx_window(SDL_Renderer* p_rnd);
 		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
+		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 
@@ -229,6 +230,11 @@ namespace fe {
 		void generate_door_req_gfx(SDL_Renderer* p_rnd);
 
 		// gfx functions for chr logic
+		std::pair<std::vector<fe::ChrGfxTile>, std::set<std::size_t>> get_complete_world_tileset_w_metadata(std::size_t p_tileset_no,
+			bool p_normalize = false) const;
+		std::pair<std::vector<klib::NES_tile>, std::set<std::size_t>> get_world_tileset_w_metadata(std::size_t p_tileset_no) const;
+		void set_world_tileset_tiles(SDL_Renderer* p_rnd, std::size_t p_tileset_no,
+			const fe::ChrReorderResult& p_result);
 		fe::ChrReorderResult reorder_chr_tiles(const std::vector<klib::NES_tile>& tiles,
 			const std::set<std::size_t>& fixed_indexes = std::set<std::size_t>()) const;
 
