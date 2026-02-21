@@ -1,5 +1,5 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
-<!-- Only make changes to this file if you are confident in what you are doing! (and keep backups even then) -->
+<!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
 <eoe_config app_version="beta-5.3">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->

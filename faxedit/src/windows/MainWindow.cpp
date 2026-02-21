@@ -732,7 +732,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		l_config_xml_path = basePath;
 	}
 
+	std::string l_config_override_xml_path{ l_config_xml_path };
 	l_config_xml_path += c::CONFIG_FILE_NAME;
+	l_config_override_xml_path += c::CONFIG_OVERRIDE_FILE_NAME;
 
 	add_message("Attempting to load file " + p_filepath, 5);
 
@@ -741,7 +743,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		auto bytes = klib::file::read_file_as_bytes(p_filepath);
 
 		m_config.clear();
-		m_config.load_definitions(l_config_xml_path);
+		m_config.load_definitions(l_config_xml_path, l_config_override_xml_path);
 
 		if (p_region.empty()) {
 			m_config.determine_region(bytes);
@@ -753,7 +755,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_config.set_region(p_region);
 		}
 
-		m_config.load_config_data(l_config_xml_path);
+		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path);
 		cache_config_variables();
 
 		m_game = fe::Game(m_config, bytes);

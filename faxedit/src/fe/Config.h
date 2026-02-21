@@ -35,11 +35,11 @@ namespace fe {
 		bool has_constant(const std::string& p_id) const;
 
 		// first, load all definitions from xml
-		void load_definitions(const std::string& p_config_xml);
+		void load_definitions(const std::string& p_config_xml, const std::string& p_config_override_xml);
 		// then, determine the region for our ROM
 		void determine_region(const std::vector<byte>& p_rom);
 		// finally load all the data for our region
-		void load_config_data(const std::string& p_config_xml);
+		void load_config_data(const std::string& p_config_xml, const std::string& p_config_override_xml);
 
 		std::size_t constant(const std::string& p_id) const;
 		std::pair<std::size_t, std::size_t> pointer(const std::string& p_id) const;

@@ -13,6 +13,7 @@ namespace fe {
 	namespace c {
 
 		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
+		constexpr char CONFIG_OVERRIDE_FILE_NAME[]{ "eoe_config_override.xml" };
 
 		// pointers
 		constexpr char ID_METADATA_PTR[]{ "metadata_ptr" };

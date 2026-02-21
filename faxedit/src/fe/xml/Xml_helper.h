@@ -29,13 +29,15 @@ namespace fe {
 		fe::Game load_xml(const std::string p_filepath);
 
 		// eoe config
-		std::vector<RegionDefinition> load_region_defs(const std::string& p_xml_file);
+		std::vector<RegionDefinition> load_region_defs(const std::string& p_xml_file,
+			bool p_throw_on_file_not_exists = true);
 		void load_configuration(const std::string& p_config_xml,
 			const std::string& p_region_name,
 			std::map<std::string, std::size_t>& p_constants,
 			std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 			std::map<std::string, std::vector<byte>>& p_sets,
-			std::map<std::string, std::map<byte, std::string>>& p_byte_maps);
+			std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+			bool p_throw_on_file_not_exists = true);
 
 		// utility
 		bool region_match(const std::string& current_region, const std::string& region_list);

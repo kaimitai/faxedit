@@ -941,10 +941,11 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Import chr", 4)) {
-		undo_tiles[bank_id] = m_game->m_gfx_manager.chrbanks.at(bank_id);
+		auto tmpundo{ m_game->m_gfx_manager.chrbanks.at(bank_id) };
 		m_game->m_gfx_manager.set_chr_bank(bank_id,
 			load_chr(bank_id, m_game->m_gfx_manager.chrbanks.at(bank_id).size())
 		);
+		undo_tiles[bank_id] = tmpundo;
 		auto completebank{ bank_chr_w_metadata(bank_id) };
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
@@ -1015,8 +1016,9 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 	ImGui::SameLine();
 
 	if (ui::imgui_button("Import chr", 4)) {
-		undo_tiles[bank_id] = m_game->m_tilesets.at(ls_tileset_no).tiles;
+		auto tmpundo{ m_game->m_tilesets.at(ls_tileset_no).tiles };
 		set_world_tileset_tiles(p_rnd, ls_tileset_no, load_chr(bank_id, m_game->m_tilesets.at(ls_tileset_no).tiles.size()));
+		undo_tiles[bank_id] = tmpundo;
 		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);

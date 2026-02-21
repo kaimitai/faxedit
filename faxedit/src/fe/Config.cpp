@@ -3,11 +3,17 @@
 #include <format>
 #include <stdexcept>
 
-void fe::Config::load_definitions(const std::string& p_config_xml) {
-	m_region_defs = xml::load_region_defs(p_config_xml);
+void fe::Config::load_definitions(const std::string& p_config_xml,
+	const std::string& p_config_override_xml) {
+	m_region_defs = xml::load_region_defs(p_config_override_xml, false);
+	auto base_defs{ xml::load_region_defs(p_config_xml) };
+	m_region_defs.insert(end(m_region_defs), begin(base_defs), end(base_defs));
 }
 
-void fe::Config::load_config_data(const std::string& p_config_xml) {
+void fe::Config::load_config_data(const std::string& p_config_xml,
+	const std::string& p_config_override_xml) {
+	xml::load_configuration(p_config_override_xml, m_region, m_constants,
+		m_pointers, m_sets, m_byte_maps, false);
 	xml::load_configuration(p_config_xml, m_region, m_constants,
 		m_pointers, m_sets, m_byte_maps);
 }
