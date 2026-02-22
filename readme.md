@@ -4,7 +4,7 @@ Welcome to the Echoes of Eolis code repository and release page. The code is sta
 
 Make sure to read the [documentation](./docs/doc.md) for a detailed overview of all the inter-connected data in this game.
 
-This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assembler various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
+This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
 
 <hr>
 
