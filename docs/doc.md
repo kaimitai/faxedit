@@ -1,6 +1,8 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-5.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-5.3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+
+This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
 <hr>
 
@@ -49,7 +51,9 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Background gfx](#background-gfx)
   - [Background palettes](#background-palettes)
   - [HUD](#hud)
+  - [chr banks](#chr-banks)
   - [Tips for bmp import](#tips-for-bmp-import)
+- [Configuration Files](#configuration-files)
 
 <hr>
 
@@ -488,6 +492,8 @@ When loading a bmp to a world's chr-data, we have to make sure we don't ruin the
 
 For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason. For the buildings world, if you want to import graphics for new metatiles, it is not enough to just make a new metatile for the world - the metatile actually has to be used in the screen you are importing for. The gfx importer looks at actual metatile usage so that unrelated metatiles do not get clobbered.
 
+The data integrity analysis will check if a metatile is used on several building screens with different tilesets. This should be avoided.
+
 Also, do not make any changes to screen tilemaps or metatiles between the time you export a bmp and the time you import it, otherwise the importer might be working under the wrong assumptions.
 
 The importer will not generate any new metatiles, it will only update the graphics of metatiles that already exist.
@@ -539,6 +545,32 @@ This is for advanced modding only, but if you change palette you might want to u
 
 The original game only uses 4 different HUD attributte indexes, although there are 24 slots available.
 
+## chr banks
+
+![HUD](./img/win_gfx_world_chr.png)
+
+There are two screens for viewing the tile chr banks - one for world tilesets, and one for gfx images. The entire 256-entry tilebank loaded into the PPU will be visible here, with color coding as follows:
+* Black outline: Editable chr-tiles. These make up the tileset-specific bank
+* Yellow outline: Read-only chr-tiles. These can be used as part of tilemaps, and the bmp import will read these - but never change them.
+* Red: Unusable chr-tiles. These change during runtime and there is no guarantee what these will actually look like, so they are ignored.
+* Blue: Unrelocatable. They are part of the editable section, but should not be moved. For the world tilesets these are the chr-tiles used to generate the fog effect, and for image chr this only appears in the title screen, where an empty tile is used to draw outside the image. The bmp import will treat these too as read-only, so nothing is inadvertedly broken.
+
+The ```Re-render``` button will re-draw the tilebank. Use this after bmp-imports for example, to refresh the view.
+
+The ```Export chr``` button will save the editable portion of a tilebank as a chr-file which can be edited by external tools like yy-chr.
+
+The ```Import chr``` button will load a chr-file and update the editable chr bank with it.
+
+The ```Canonicalize``` button will canonicalize the chr-bank; that is deduplicate and sort the chr-tiles, and all tilemaps referencing the bank will be re-indexed. This is just an advanced feature for deterministic builds, and has limited practical use for most users. Hold shift to use this button, and keep in mind that it will change more data than the chr bank itself.
+
+In general, if you export a bank as a chr-file, and then perform actions that change tilemaps (like bmp-import or canonicalization) those previously exported chr-files are invalidated. If you import them again all referencing graphics will usually become garbled. In other words, export chr-files ***after*** bmp-imports if you want to use both features.
+
+The bmp import is image-centric, and changes tilemaps, attribute tables and chr-banks. The chr-import is bank-centric and only changes the chr-tiles themselves, regardless of how many tilemaps use the bank.
+
+If you import a chr-file to a bank, you can re-render all images using that bank to see the new result. For world tilesets the re-rendering will be automatically seen in the screen tilemap editor.
+
+<hr>
+
 ## Tips for bmp import
 
 When editing NES gfx you are working under heavy constraints, but there are some things you can do to help the bmp importer.
@@ -558,3 +590,42 @@ When loading a bmp an output message will tell you how many chr-tiles were recla
 For some images, if you import a bmp you exported from ROM, it will still fail to stay within the limits. This might seem counter-intuitive, but this is because there were palettes with the same color within a sub-palette - and it therefore failed to match it to chr-tiles it potentially could have matched it if the same-color was distributed to different indexes in some way. It becomes computationally prohibitive to try all such combinations however. You can temporarily alter palettes like that to have all colors distinct within each 4-color sub-palette, and then change the colors back after the import.
 
 Experiment and have fun!
+
+<hr>
+
+## Configuration Files
+
+The application comes with a file ```eoe_config.xml``` which provides all necessary information about ROM regions, offsets, pointers, constants etc. It ensures that ROMs are correctly loaded and patched for any region.
+
+If users want to define their own regions for custom ROM hacks with other offsets, pointers and constants and such - do not edit eoe_config.xml directly. Instead use the skeleton ```eoe_config_override.xml```-file in the util-folder, and populate it.
+
+When the application starts it will look for eoe_config_override.xml and load region definitions from it before it loads region definitions from eoe_config.xml.
+
+Then it will load config data based on whatever region the ROM was determined to have, from the overidde xml. Finally it loads config data from the base config file, but anything in the override file takes presedence.
+
+The reason we provide override functionality is that each new release of these tools might come with a new configuration xml, and we want users to avoid having to merge their user-overrides into this file for each new release.
+
+What the constants actually mean for the applications will be documented in more detail later, once we stabilize the base config and once we see a need for custom ROM support.
+
+We provide one example though. Let's say you run out of space for behavior scripts, and would like to add more code. It is known that ROM offset ```0x3b283``` is a safe end-offset for all ROM regions, but it is likely that we can extend it as far as ```0x3b417``` - though not yet confirmed. To experiment with this, a user can add one line to the consts-section of ```eoe_config_override.xml```:
+
+
+```
+	<!-- constant overrides -->
+	<consts>
+	    <const name="bscript_data_rg1_end" value="0x3b417" />
+	</consts>
+```
+
+When the assembler runs this value will take presedence of what is in the base config xml.
+
+If the override only applies to one custom region, the entry could me changed to something like this:
+
+```
+	<!-- constant overrides -->
+	<consts>
+	    <const name="bscript_data_rg1_end" region="my-custom-region" value="0x3b417" />
+	</consts>
+```
+
+but then ```my-custom-region``` must also be defined in the regions-section of the override xml.

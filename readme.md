@@ -4,6 +4,8 @@ Welcome to the Echoes of Eolis code repository and release page. The code is sta
 
 Make sure to read the [documentation](./docs/doc.md) for a detailed overview of all the inter-connected data in this game.
 
+This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assembler various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
+
 <hr>
 
 ## Editor Capabilities
@@ -68,9 +70,25 @@ In short:
 
 This approach gives you a clean, reliable workflow and protects your work over time.
 
+If you use a configuration file override (eoe_config_override.xml) this should usually also be considered part of the project masterdata.
+
 <hr>
 
 ### Version History
+
+* 2025-02-22: version beta-5.3
+
+  * Add tileset and image chr-bank views to the gfx editor - giving a visual overview of the various chr banks - showing which chr-tiles are editable, read-only, unusable and unrelocatable
+	* Add support for exporting editable portions of chr-banks to chr-files that can be edited in external tools
+	* Add support for importing chr-files to replace chr-banks
+	* Add highly advanced option to canonicalize chr-banks for deterministic chr-ordering
+  * EoE will now detect interaction script count and muisc track count from ROM data, instead of relying on configuration constants. The application will allow assigning music and scripts freely depending on these counts
+  * Add cross-tileset metatile usage check for Building screens in the data integrity analysis (this should be avoided as it causes problems for chr bank re-ordering)
+  * Generate door requirement overlay graphics from the Item Gfx tilemap, rather than relying on hard-coded chr-indexes - icons could be garbled after chr-banks were reordered by bmp imports
+  * Add support for configuration file override (eoe_config_override.xml) so user overrides do not need to be merged for each new release
+  * Bundled with version 0.7 of the [script assembler](https://github.com/kaimitai/FaxIScripts), which has the following important new features:
+	* Miscellaneous data interface for modifying static data (strings, sprite parameters, weapon and magic parameters etc)
+	* Supports dynamic sizing of the iScript entrypoint table - meaning more scripts can be added
 
 * 2025-02-04: version beta-5.2
 

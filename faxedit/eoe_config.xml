@@ -218,7 +218,8 @@
 		<const name="rank_string_length" region="us,eu,us-rev-a,randum" value="16" />
 		<const name="rank_string_length" region="jp,en-transl" value="8" />
 		<const name="rank_string_offset" region="us,eu,us-rev-a,randum" value="0x3f659" />
-		<const name="rank_string_offset" region="jp,en-transl" value="0x3f7a1" />
+		<const name="rank_string_offset" region="jp" value="0x3f7a1" />
+		<const name="rank_string_offset" region="en-transl" value="0x7f7a1" />
 		<const name="rank_data_offset" region="us,eu,us-rev-a,randum" value="0x3f759" />
 		<const name="rank_data_offset" region="jp,en-transl" value="0x3f821" />
 		<!-- sprite data -->
@@ -255,7 +256,7 @@
 		<set name="reserved_script_string_indexes" values="3,6,16,18,19,20" />
 		<!-- ppu-indexed chr-tiles which are part of the fog animation -->
 		<!-- should be considered read-only on bmp import -->
-		<set name="reserved_fog_chr_indexes" values="$80,$81,$82,$83,$84,$85,$86,$87" />
+		<set name="reserved_fog_chr_indexes" values="$80,$82,$84,$86" />
 	</sets>
 
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->

@@ -950,7 +950,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
 	}
-
+	/*
 	ImGui::SameLine();
 
 	bool has_undo{ undo_tiles.contains(bank_id) };
@@ -961,7 +961,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
 	}
-
+	*/
 	ImGui::Separator();
 
 	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
@@ -1023,7 +1023,7 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
 	}
-
+	/*
 	ImGui::SameLine();
 
 	bool has_undo{ undo_tiles.contains(bank_id) };
@@ -1034,7 +1034,7 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
 	}
-
+	*/
 	ImGui::Separator();
 
 	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
