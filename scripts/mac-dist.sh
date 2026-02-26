@@ -50,9 +50,16 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Frameworks"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
-cp build/faxedit "$APP_BUNDLE/Contents/MacOS/"
-cp build/eoe_config.xml "$APP_BUNDLE/Contents/MacOS/"
+cp build/faxedit "$APP_BUNDLE/Contents/MacOS/faxedit_bin"
+cp build/eoe_config.xml "$APP_BUNDLE/Contents/Resources/"
 cp "$ROOT/scripts/assets/icon.icns" "$APP_BUNDLE/Contents/Resources/"
+
+cat > "$APP_BUNDLE/Contents/MacOS/faxedit" << 'LAUNCHER'
+#!/bin/bash
+cd "$(dirname "$0")/../Resources"
+exec "$(dirname "$0")/faxedit_bin" "$@"
+LAUNCHER
+chmod +x "$APP_BUNDLE/Contents/MacOS/faxedit"
 
 cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -77,7 +84,7 @@ EOF
 
 echo "==> Bundling SDL3 library..."
 dylibbundler -od -b \
-    -x "$APP_BUNDLE/Contents/MacOS/faxedit" \
+    -x "$APP_BUNDLE/Contents/MacOS/faxedit_bin" \
     -d "$APP_BUNDLE/Contents/Frameworks/" \
     -p @executable_path/../Frameworks/
 
