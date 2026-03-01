@@ -213,6 +213,9 @@
     <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp">
       <Filter>Source Files\fe\sprite</Filter>
     </ClCompile>
+    <ClCompile Include="src\windows\SpriteGfxWindow.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">

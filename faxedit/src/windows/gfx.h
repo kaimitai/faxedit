@@ -81,6 +81,11 @@ namespace fe {
 		std::size_t approximated_tile_count;
 	};
 
+	struct GfxCollectionTextures {
+		SDL_Texture* chrbank_texture;
+		std::vector<SDL_Texture*> frame_textures;
+	};
+
 	enum ChrDedupMode {
 		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
 		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically
@@ -105,6 +110,7 @@ namespace fe {
 		// use virtual keys for other tilemaps, like the intro, outro and title screens
 		std::map<std::size_t, SDL_Texture*> m_tilemap_gfx;
 		std::map<std::size_t, ChrTilemap> m_tilemap_import_results;
+		std::unordered_map<std::size_t, GfxCollectionTextures> m_sprite_coll_gfx;
 
 		SDL_Palette* m_nes_palette;
 
@@ -316,6 +322,12 @@ namespace fe {
 			const std::vector<byte>& pal16,
 			std::size_t max_bank_size,
 			int tolerance) const;
+
+		// rendering
+		void gen_gfx_collection_textures(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+			const fe::SpriteGfxCollection& coll, const std::vector<byte>& p_palette);
+		void clear_gfx_collection_textures(std::size_t p_gfx_key);
+		SDL_Texture* get_gfx_coll_frame_txt(std::size_t p_gfx_key, std::size_t p_frame_no) const;
 
 		// functions for bmp export
 		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;

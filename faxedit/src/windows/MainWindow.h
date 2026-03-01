@@ -22,6 +22,7 @@ namespace fe {
 	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
+	enum class SpriteGfxEditMode { Settings, Portraits, Sprites, Player, Weapons, Shields };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -103,7 +104,7 @@ namespace fe {
 		// rendering options
 		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
 			m_show_grid, m_iscript_win_set_focus,
-			m_gfx_window;
+			m_gfx_window, m_sprite_gfx_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -161,6 +162,7 @@ namespace fe {
 		void draw_filepicker_window(SDL_Renderer* p_rnd);
 		void draw_exit_app_window(SDL_Renderer* p_rnd);
 		void draw_gfx_window(SDL_Renderer* p_rnd);
+		void draw_sprite_gfx_window(SDL_Renderer* p_rnd);
 		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
 		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
 
@@ -243,6 +245,11 @@ namespace fe {
 		std::string get_chr_file_path(const std::string& p_bank_id) const;
 		void save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id);
 		std::vector<klib::NES_tile> load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count);
+
+		// sprite gfx functions and procedures
+		void show_gfx_collection_editor(SDL_Renderer* p_rnd, std::size_t p_gfx_key, fe::SpriteGfxCollection& coll,
+			std::size_t p_palette_no);
+		std::string get_file_prefix(std::size_t p_gfx_key) const;
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);

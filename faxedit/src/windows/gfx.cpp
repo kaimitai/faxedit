@@ -64,6 +64,8 @@ fe::gfx::~gfx(void) {
 		delete_texture(kv.second);
 	for (auto& kv : m_chr_bank_gfx)
 		delete_texture(kv.second);
+	for (auto& kv : m_sprite_coll_gfx)
+		clear_gfx_collection_textures(kv.first);
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -1620,6 +1622,39 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_folder(
 
 	return import_sprite_frames_from_bmps(
 		files, flat_pal_to_2d_pal(pal16), max_bank_size, tolerance);
+}
+
+// sprite gfx collection rendering
+void fe::gfx::gen_gfx_collection_textures(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+	const fe::SpriteGfxCollection& coll, const std::vector<byte>& p_palette) {
+	auto pal4x4{ flat_pal_to_2d_pal(p_palette) };
+
+	std::vector<SDL_Texture*> frametextures;
+	for (std::size_t i{ 0 }; i < coll.frames.size(); ++i)
+		frametextures.push_back(surface_to_texture(p_rnd, gen_sprite_frame_surface(coll, pal4x4, i)));
+
+	clear_gfx_collection_textures(p_gfx_key);
+	m_sprite_coll_gfx[p_gfx_key].frame_textures = frametextures;
+}
+
+SDL_Texture* fe::gfx::get_gfx_coll_frame_txt(std::size_t p_gfx_key, std::size_t p_frame_no) const {
+	auto iter{ m_sprite_coll_gfx.find(p_gfx_key) };
+	if (iter == end(m_sprite_coll_gfx))
+		return nullptr;
+	else
+		return p_frame_no < iter->second.frame_textures.size() ?
+		iter->second.frame_textures[p_frame_no] :
+		nullptr;
+}
+
+void fe::gfx::clear_gfx_collection_textures(std::size_t p_gfx_key) {
+	auto iter{ m_sprite_coll_gfx.find(p_gfx_key) };
+	if (iter != end(m_sprite_coll_gfx)) {
+		delete_texture(iter->second.chrbank_texture);
+
+		for (auto& txt : iter->second.frame_textures)
+			delete_texture(txt);
+	}
 }
 
 // functions for bmp export

@@ -43,6 +43,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_anim_frame{ 0 },
 	m_iscript_window{ false },
 	m_gfx_window{ false },
+	m_sprite_gfx_window{ true },
 	m_iscript_win_set_focus{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
@@ -259,6 +260,9 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 		if (m_gfx_window)
 			draw_gfx_window(p_rnd);
+
+		if (m_sprite_gfx_window)
+			draw_sprite_gfx_window(p_rnd);
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
@@ -837,6 +841,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		m_undo.reset();
 		m_undo.emplace(m_game.value());
+
+		auto sprloadstr{ m_game->m_sprite_gfx_manager.load_portrait_data(m_config, m_game->m_rom_data,
+			m_rom_manager) };
 
 		add_message("Loaded " + p_filepath, 2);
 	}
