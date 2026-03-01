@@ -3,7 +3,9 @@
 #include "./../common/stb_image.h"
 #include "./../common/klib/Kfile.h"
 #include <array>
+#include <filesystem>
 #include <format>
+#include <limits>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
@@ -362,7 +364,7 @@ void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no
 }
 
 void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const {
-	if (static_cast<std::size_t>(block_property) > m_icon_overlays.size())
+	if (static_cast<std::size_t>(block_property) >= m_icon_overlays.size())
 		return;
 
 	float w, h;
@@ -678,7 +680,7 @@ klib::NES_tile fe::gfx::surface_region_to_nes_tile(SDL_Surface* srf,
 
 			// Find closest of the 4 palette colors
 			int bestIdx = 0;
-			int bestDist = INT_MAX;
+			int bestDist = std::numeric_limits<int>::max();
 			for (int i = 0; i < 4; ++i) {
 				const SDL_Color& palCol = m_nes_palette->colors[p_palette[i]];
 				int dr = int(r) - int(palCol.r);
@@ -1184,6 +1186,442 @@ bool fe::gfx::is_optional_bmp_region(SDL_Surface* srf,
 	return true;
 }
 
+// sprite chr import helpers
+bool fe::gfx::is_transparent_chr_region(SDL_Surface* srf, int px_x, int px_y, int p_tolerance) const {
+	for (int j = 0; j < 8; ++j)
+		for (int i = 0; i < 8; ++i)
+			if (!is_transparent_surface_pixel(srf, px_x + i, px_y + j, p_tolerance))
+				return false;
+	return true;
+}
+
+bool fe::gfx::is_transparent_surface_pixel(SDL_Surface* srf, int px_x, int px_y,
+	int p_tolerance) const {
+
+	Uint8 r, g, b, a;
+	if (!SDL_ReadSurfacePixel(srf, px_x, px_y, &r, &g, &b, &a))
+		throw std::runtime_error("pixel out of bounds");
+
+	if (std::abs(static_cast<int>(r) - static_cast<int>(m_hot_pink.r)) > p_tolerance ||
+		std::abs(static_cast<int>(g) - static_cast<int>(m_hot_pink.g)) > p_tolerance ||
+		std::abs(static_cast<int>(b) - static_cast<int>(m_hot_pink.b)) > p_tolerance)
+		return false;
+	else
+		return true;
+}
+
+fe::SpriteTileBuildResult fe::gfx::build_tile_from_bmp_block(
+	SDL_Surface* srf,
+	int x, int y,
+	const std::vector<byte>& subpal, // size 4, entries are NES palette indices
+	int p_tolerance) const {
+
+	if (subpal.size() != 4)
+		throw std::runtime_error("subpal must have 4 entries");
+
+	klib::NES_tile out; // assumed 8x8 and starts as 0s
+	int score = 0;
+
+	for (int j = 0; j < 8; ++j)
+		for (int i = 0; i < 8; ++i) {
+
+			Uint8 r, g, b, a;
+			if (!SDL_ReadSurfacePixel(srf, x + i, y + j, &r, &g, &b, &a))
+				throw std::runtime_error("pixel out of bounds");
+
+			// hot pink => transparent
+			if (std::abs(int(r) - int(m_hot_pink.r)) <= p_tolerance &&
+				std::abs(int(g) - int(m_hot_pink.g)) <= p_tolerance &&
+				std::abs(int(b) - int(m_hot_pink.b)) <= p_tolerance)
+			{
+				out.set_color(i, j, 0);
+				continue;
+			}
+
+			// choose among palette entries 1..3 (avoid 0 => transparency)
+			int best_k = 1;
+			int best_d = std::numeric_limits<int>::max();
+
+			for (int k = 1; k <= 3; ++k) {
+				byte palIndex = subpal.at(k);
+				SDL_Color pc{ m_nes_palette->colors[palIndex] };
+
+				int rr = int(r) - int(pc.r);
+				int gg = int(g) - int(pc.g);
+				int bb = int(b) - int(pc.b);
+				int d = rr * rr + gg * gg + bb * bb;
+
+				if (d < best_d) {
+					best_d = d;
+					best_k = k;
+				}
+			}
+
+			out.set_color(i, j, static_cast<byte>(best_k));
+			score += best_d;
+		}
+
+	return { out, score };
+}
+
+std::optional<fe::SpriteTileMatch> fe::gfx::find_tile_match_under_flips(
+	const std::vector<klib::NES_tile>& bank,
+	const klib::NES_tile& candidate) const {
+	// try in tie-break order: none, H, V, HV
+	const struct { bool h, v; } flips[4] = {
+		{false,false}, {true,false}, {false,true}, {true,true}
+	};
+
+	for (auto f : flips) {
+		klib::NES_tile t = candidate;
+		if (f.h) t.flip_h();
+		if (f.v) t.flip_v();
+
+		for (std::size_t i = 0; i < bank.size(); ++i) {
+			if (bank[i] == t) {
+				return SpriteTileMatch{
+					static_cast<byte>(i),
+					f.h,
+					f.v
+				};
+			}
+		}
+	}
+
+	return std::nullopt;
+}
+
+#include <limits>
+
+#include <limits>
+
+fe::SpriteTilePickResult fe::gfx::pick_or_build_sprite_tile_for_block(
+	SDL_Surface* srf,
+	int x, int y,
+	const std::vector<std::vector<byte>>& pals4x4,
+	int tol,
+	const std::vector<klib::NES_tile>& bank) const
+{
+	if (pals4x4.size() != 4)
+		throw std::runtime_error("Expected 4 sub-palettes");
+
+	// 1) find best NEW tile (quantize under each subpalette)
+	bool haveBestNew = false;
+	SpriteTilePickResult bestNew{};
+
+	for (byte sp = 0; sp < 4; ++sp) {
+		const auto& subpal = pals4x4.at(sp);
+		auto built = build_tile_from_bmp_block(srf, x, y, subpal, tol);
+
+		if (!haveBestNew || built.score < bestNew.score) {
+			haveBestNew = true;
+			bestNew.reuse = false;
+			bestNew.sub_palette = sp;
+			bestNew.score = built.score;
+			bestNew.tile = built.tile;
+			bestNew.h_flip = false;
+			bestNew.v_flip = false;
+			bestNew.index = 0;
+		}
+	}
+
+	if (!haveBestNew)
+		throw std::runtime_error("Failed to build tile candidate (unexpected).");
+
+	// 2) find best REUSE among existing bank (all tiles, flips, palettes)
+	if (!bank.empty()) {
+		auto reuse = find_best_approximate_reuse(
+			srf, x, y, pals4x4, tol, bank);
+
+		// CRITICAL RULE:
+		// if reuse is not worse than creating a new tile, reuse it.
+		// This is what prevents “duplicates that canonicalization later collapses”.
+		if (reuse.score <= bestNew.score) {
+			SpriteTilePickResult r{};
+			r.reuse = true;
+			r.index = reuse.index;
+			r.sub_palette = reuse.sub_palette;
+			r.h_flip = reuse.h_flip;
+			r.v_flip = reuse.v_flip;
+			r.score = reuse.score;
+			return r;
+		}
+	}
+
+	// 2.5) canonical reuse check
+	{
+		klib::NES_tile cand = bestNew.tile;
+		auto canon = cand.canonicalize(); // cand becomes canonical; canon tells the flips applied
+
+		// If bank tiles are stored canonical (we canonicalize on insert),
+		// then equality here is the real "dedup key".
+		for (std::size_t i = 0; i < bank.size(); ++i) {
+			if (bank[i] == cand) {
+				SpriteTilePickResult r{};
+				r.reuse = true;
+				r.index = static_cast<byte>(i);
+				r.sub_palette = bestNew.sub_palette;
+
+				// IMPORTANT: because we canonicalized the tile data, we must apply the same flips
+				// to the instance that references it.
+				r.h_flip = canon.h;
+				r.v_flip = canon.v;
+				r.score = 0;
+				return r;
+			}
+		}
+	}
+
+	// 3) otherwise build new
+	return bestNew;
+}
+
+int fe::gfx::score_block_against_bank_tile(
+	SDL_Surface* srf,
+	int x, int y,
+	const klib::NES_tile& tile,
+	const std::vector<byte>& subpal,
+	int tol,
+	bool h_flip,
+	bool v_flip) const
+{
+	constexpr int PEN = 1'000'000;
+	int result = 0;
+
+	for (int j = 0; j < 8; ++j)
+		for (int i = 0; i < 8; ++i) {
+
+			Uint8 r, g, b, a;
+			if (!SDL_ReadSurfacePixel(srf, x + i, y + j, &r, &g, &b, &a))
+				throw std::runtime_error("pixel out of bounds");
+
+			const bool bmp_transparent =
+				std::abs(int(r) - int(m_hot_pink.r)) <= tol &&
+				std::abs(int(g) - int(m_hot_pink.g)) <= tol &&
+				std::abs(int(b) - int(m_hot_pink.b)) <= tol;
+
+			const int tx = h_flip ? (7 - i) : i;
+			const int ty = v_flip ? (7 - j) : j;
+
+			const byte pix = tile.get_color(tx, ty);
+			const bool tile_transparent = (pix == 0);
+
+			// Enforce transparency match
+			if (bmp_transparent != tile_transparent) {
+				result += PEN;
+				continue;
+			}
+
+			if (bmp_transparent) {
+				// both transparent => perfect at this pixel
+				continue;
+			}
+
+			// both opaque: compare RGB
+			const byte nesIdx = subpal.at(pix);
+			const SDL_Color expected{ m_nes_palette->colors[nesIdx] };
+
+			const int rr = int(r) - int(expected.r);
+			const int gg = int(g) - int(expected.g);
+			const int bb = int(b) - int(expected.b);
+
+			result += rr * rr + gg * gg + bb * bb;
+		}
+
+	return result;
+}
+
+fe::SpriteApproxReuse fe::gfx::find_best_approximate_reuse(
+	SDL_Surface* srf,
+	int x, int y,
+	const std::vector<std::vector<byte>>& pals4x4,
+	int p_tolerance,
+	const std::vector<klib::NES_tile>& bank) const {
+	if (bank.empty())
+		throw std::runtime_error("Approximate reuse requested with empty bank");
+
+	int bestScore = std::numeric_limits<int>::max();
+	fe::SpriteApproxReuse best{ 0, 0, false, false, std::numeric_limits<int>::max() };
+
+	const struct { bool h, v; } flips[4] = {
+		{false,false}, {true,false}, {false,true}, {true,true}
+	};
+
+	for (std::size_t ti = 0; ti < bank.size(); ++ti) {
+		const auto& t = bank[ti];
+
+		for (byte sp = 0; sp < 4; ++sp) {
+			const auto& subpal = pals4x4.at(sp);
+
+			for (auto f : flips) {
+				const int s = score_block_against_bank_tile(
+					srf, x, y, t, subpal, p_tolerance, f.h, f.v);
+
+				if (s < bestScore) {
+					bestScore = s;
+					best.index = static_cast<byte>(ti);
+					best.sub_palette = sp;
+					best.h_flip = f.h;
+					best.v_flip = f.v;
+					best.score = s;
+
+					if (bestScore == 0)
+						return best; // can't beat perfect
+				}
+			}
+		}
+	}
+
+	return best;
+}
+
+std::optional<fe::SpriteRenderReuse> fe::gfx::find_render_perfect_reuse(
+	SDL_Surface* srf,
+	int x, int y,
+	const std::vector<std::vector<byte>>& pals4x4,
+	int p_tolerance,
+	const std::vector<klib::NES_tile>& bank) const {
+	const struct { bool h, v; } flips[4] = {
+	{false,false}, {true,false}, {false,true}, {true,true}
+	};
+
+	for (std::size_t ti = 0; ti < bank.size(); ++ti) {
+		for (byte sp = 0; sp < 4; ++sp) {
+			const auto& subpal = pals4x4.at(sp);
+
+			for (auto f : flips) {
+				if (score_block_against_bank_tile(
+					srf, x, y,
+					bank[ti],
+					subpal,
+					p_tolerance,
+					f.h,
+					f.v) == 0)
+				{
+					return fe::SpriteRenderReuse{
+						static_cast<byte>(ti),
+						sp,
+						f.h,
+						f.v
+					};
+				}
+			}
+		}
+	}
+	return std::nullopt;
+}
+
+fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
+	const std::vector<std::string>& bmp_files,
+	const std::vector<std::vector<byte>>& pals4x4,
+	std::size_t max_bank_size,
+	int p_tolerance) const {
+
+	fe::SpriteGfxCollection coll;
+	std::size_t approximated_tile_count{ 0 };
+
+	for (const auto& path : bmp_files) {
+
+		SDL_Surface* srf = SDL_LoadBMP(path.c_str());
+		if (!srf)
+			throw std::runtime_error(std::format("Failed to load BMP '{}' ", path));
+
+		const int tiles_x = srf->w / 8;
+		const int tiles_y = srf->h / 8;
+
+		if (tiles_x < 1 || tiles_x > 16 || tiles_y < 1 || tiles_y > 16)
+			throw std::runtime_error(std::format("Invalid dimensions for sprite bmp ({}x{})",
+				srf->w, srf->h));
+
+		fe::SpriteAnimationFrame frame;
+		frame.tilemap.resize(tiles_y);
+
+		for (int ty = 0; ty < tiles_y; ++ty) {
+			frame.tilemap[ty].resize(tiles_x);
+
+			for (int tx = 0; tx < tiles_x; ++tx) {
+
+				const int px = tx * 8;
+				const int py = ty * 8;
+
+				if (is_transparent_chr_region(srf, px, py, p_tolerance)) {
+					frame.tilemap[ty][tx] = std::nullopt;
+					continue;
+				}
+
+				auto pick = pick_or_build_sprite_tile_for_block(
+					srf, px, py, pals4x4, p_tolerance, coll.tiles);
+
+				if (pick.reuse) {
+					frame.tilemap[ty][tx] = fe::SpriteFrameTile{
+						pick.index,
+						pick.sub_palette,
+						pick.v_flip,
+						pick.h_flip
+					};
+				}
+				else {
+					if (coll.tiles.size() < max_bank_size) {
+						klib::NES_tile t = pick.tile;
+						auto canon = t.canonicalize();     // modifies t in-place, returns flips used
+
+						byte newIndex = static_cast<byte>(coll.tiles.size());
+						coll.tiles.push_back(std::move(t));
+
+						frame.tilemap[ty][tx] = fe::SpriteFrameTile{
+							newIndex,
+							pick.sub_palette,
+							canon.v,
+							canon.h
+						};
+					}
+					else {
+						auto approx = find_best_approximate_reuse(
+							srf, px, py, pals4x4, p_tolerance, coll.tiles);
+
+						frame.tilemap[ty][tx] = fe::SpriteFrameTile{
+							approx.index,
+							approx.sub_palette,
+							approx.v_flip,
+							approx.h_flip
+						};
+
+						++approximated_tile_count;
+					}
+				}
+			}
+		}
+
+		coll.frames.push_back(std::move(frame));
+		SDL_DestroySurface(srf);
+	}
+
+	return { std::move(coll), approximated_tile_count };
+}
+
+fe::SpriteImportResult fe::gfx::import_sprite_frames_from_folder(
+	const std::string& folder,
+	const std::string& prefix,
+	const std::vector<byte>& pal16,
+	std::size_t max_bank_size,
+	int tolerance) const {
+
+	std::vector<std::string> files;
+
+	for (int i = 0;; ++i) {
+		auto filename = std::format("{}-{:03}.bmp", prefix, i);
+		auto fullpath = std::format("{}/{}", folder, filename);
+
+		if (!std::filesystem::exists(fullpath))
+			break;
+
+		files.push_back(fullpath);
+	}
+
+	return import_sprite_frames_from_bmps(
+		files, flat_pal_to_2d_pal(pal16), max_bank_size, tolerance);
+}
+
 // functions for bmp export
 SDL_Surface* fe::gfx::gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const {
 	const auto& tilemap{ p_tilemap.m_tilemap };
@@ -1212,11 +1650,60 @@ SDL_Surface* fe::gfx::gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const
 	return srf;
 }
 
+SDL_Surface* fe::gfx::gen_sprite_frame_surface(const fe::SpriteGfxCollection& coll,
+	const std::vector<std::vector<byte>>& p_palette, std::size_t p_frame_idx) const {
+	const auto& frame{ coll.frames.at(p_frame_idx) };
+	const auto& tilemap{ coll.frames.at(p_frame_idx).tilemap };
+	const auto& chrbank{ coll.tiles };
+
+	int width = 8 * static_cast<int>(frame.w());
+	int height = 8 * static_cast<int>(frame.h());
+
+	auto srf{ create_sdl_surface(width, height, true, true) };
+
+	for (std::size_t j{ 0 }; j < tilemap.size(); ++j)
+		for (std::size_t i{ 0 }; i < tilemap[j].size(); ++i) {
+			if (tilemap[j][i])
+				draw_nes_tile_on_surface(srf, static_cast<int>(8 * i), static_cast<int>(8 * j),
+					chrbank.at(tilemap[j][i]->index),
+					p_palette.at(tilemap[j][i]->sub_palette),
+					true,
+					tilemap[j][i]->h_flip, tilemap[j][i]->v_flip);
+		}
+
+	return srf;
+}
+
 void fe::gfx::save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 	const std::string& p_path,
 	const std::string& p_filename) const {
 
 	save_surface_as_bmp(gen_tilemap_surface(p_tilemap), p_path, p_filename);
+}
+
+void fe::gfx::save_sprite_frames_bmp(const fe::SpriteGfxCollection& coll,
+	const std::vector<byte>& p_palette,
+	const std::string& p_path,
+	const std::string& p_file_prefix) const {
+
+	for (std::size_t i{ 0 }; i < coll.frames.size(); ++i) {
+		std::string filename{ std::format("{}-{:03}.bmp", p_file_prefix, i) };
+		save_surface_as_bmp(gen_sprite_frame_surface(coll, flat_pal_to_2d_pal(p_palette), i), p_path, filename);
+	}
+
+}
+
+std::vector<std::vector<byte>> fe::gfx::flat_pal_to_2d_pal(const std::vector<byte>& p_palette) const {
+	std::vector<std::vector<byte>> result;
+
+	for (std::size_t i{ 0 }; i < 16; i += 4) {
+		std::vector<byte> tmp;
+		tmp.insert(end(tmp), begin(p_palette) + i, begin(p_palette) + i + 4);
+		result.push_back(tmp);
+	}
+
+
+	return result;
 }
 
 void fe::gfx::gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,

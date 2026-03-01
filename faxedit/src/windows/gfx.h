@@ -11,6 +11,7 @@
 #include "./../common/klib/NES_tile.h"
 #include "./../fe/Sprite_definitions.h"
 #include "./../fe/ChrStructures.h"
+#include "./../fe/sprite/SpriteGfxManager.h"
 
 using byte = unsigned char;
 using NES_Palette = std::vector<byte>;
@@ -31,6 +32,53 @@ namespace fe {
 			rgbError{ 0 }
 		{
 		}
+	};
+
+	struct SpriteTileBuildResult {
+		klib::NES_tile tile;
+		int score = 0;
+	};
+
+	struct SpriteTileMatch {
+		byte index;
+		bool h_flip;
+		bool v_flip;
+	};
+
+	struct SpriteTilePickResult {
+		bool reuse = false;
+
+		// if reuse == true:
+		byte index = 0;
+		bool h_flip = false;
+		bool v_flip = false;
+
+		// always valid:
+		byte sub_palette = 0;
+		int score = 0;
+
+		// if reuse == false: this is the new tile to add
+		klib::NES_tile tile;
+	};
+
+	struct SpriteRenderReuse {
+		byte index;
+		byte sub_palette;
+		bool h_flip;
+		bool v_flip;
+	};
+
+	struct SpriteApproxReuse {
+		byte index;
+		byte sub_palette;
+		bool h_flip;
+		bool v_flip;
+		int score;
+	};
+
+	struct SpriteImportResult {
+		fe::SpriteGfxCollection collection;
+		std::size_t approximated_tile_count;
 	};
 
 	enum ChrDedupMode {
@@ -218,14 +266,72 @@ namespace fe {
 		bool is_optional_bmp_region(SDL_Surface* srf,
 			std::size_t mt_x, std::size_t mt_y) const;
 
+		// sprite data bmp import
+		bool is_transparent_chr_region(SDL_Surface* srf, int px_x, int px_y,
+			int p_tolerance = 0) const;
+		bool is_transparent_surface_pixel(SDL_Surface* srf, int px_x, int px_y,
+			int p_tolerance = 0) const;
+		fe::SpriteTileBuildResult build_tile_from_bmp_block(
+			SDL_Surface* srf,
+			int x, int y,
+			const std::vector<byte>& subpal, // size 4, entries are NES palette indices
+			int p_tolerance) const;
+		std::optional<fe::SpriteTileMatch> find_tile_match_under_flips(
+			const std::vector<klib::NES_tile>& bank,
+			const klib::NES_tile& candidate) const;
+		fe::SpriteTilePickResult pick_or_build_sprite_tile_for_block(
+			SDL_Surface* srf,
+			int x, int y,
+			const std::vector<std::vector<byte>>& pals4x4, // 4 subpals, each size 4 NES color indices
+			int tol,
+			const std::vector<klib::NES_tile>& bank) const;
+		int score_block_against_bank_tile(
+			SDL_Surface* srf,
+			int x, int y,
+			const klib::NES_tile& tile,
+			const std::vector<byte>& subpal, // size 4 NES indices
+			int tol,
+			bool h_flip,
+			bool v_flip) const;
+		fe::SpriteApproxReuse find_best_approximate_reuse(
+			SDL_Surface* srf,
+			int x, int y,
+			const std::vector<std::vector<byte>>& pals4x4,
+			int p_tolerance,
+			const std::vector<klib::NES_tile>& bank) const;
+		std::optional<fe::SpriteRenderReuse> find_render_perfect_reuse(
+			SDL_Surface* srf,
+			int x, int y,
+			const std::vector<std::vector<byte>>& pals4x4,
+			int p_tolerance,
+			const std::vector<klib::NES_tile>& bank) const;
+		fe::SpriteImportResult import_sprite_frames_from_bmps(
+			const std::vector<std::string>& bmp_files,
+			const std::vector<std::vector<byte>>& pals4x4,
+			std::size_t max_bank_size,
+			int p_tolerance) const;
+		fe::SpriteImportResult import_sprite_frames_from_folder(
+			const std::string& folder,
+			const std::string& prefix,
+			const std::vector<byte>& pal16,
+			std::size_t max_bank_size,
+			int tolerance) const;
+
 		// functions for bmp export
 		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;
 		void gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,
 			std::size_t p_key);
-
 		void save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 			const std::string& p_path,
 			const std::string& p_filename) const;
+
+		SDL_Surface* gen_sprite_frame_surface(const fe::SpriteGfxCollection& coll,
+			const std::vector<std::vector<byte>>& p_palette, std::size_t p_frame_idx) const;
+		void save_sprite_frames_bmp(const fe::SpriteGfxCollection& coll,
+			const std::vector<byte>& p_palette,
+			const std::string& p_path,
+			const std::string& p_file_prefix) const;
+		std::vector<std::vector<byte>> flat_pal_to_2d_pal(const std::vector<byte>& p_palette) const;
 
 		// palette
 		const SDL_Palette* get_nes_palette(void) const;

@@ -193,6 +193,11 @@ std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_ro
 	return p_zero_addr + l_rel_addr;
 }
 
+std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+	std::pair<std::size_t, std::size_t> p_ptr) const {
+	return get_ptr_to_rom_offset(p_rom, p_ptr.first, p_ptr.second);
+}
+
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Config& p_config,
 	const fe::Game& p_game) const {
@@ -292,6 +297,11 @@ std::vector<byte> fe::ROM_Manager::build_pointer_table_and_data(
 
 void fe::ROM_Manager::patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const {
 	std::copy(begin(p_source), end(p_source), begin(p_target) + p_target_offset);
+}
+
+void fe::ROM_Manager::patch_ptr(std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_ptr_value) const {
+	p_rom.at(p_offset) = static_cast<byte>(p_ptr_value % 256);
+	p_rom.at(p_offset + 1) = static_cast<byte>(p_ptr_value / 256);
 }
 
 std::pair<byte, byte> fe::ROM_Manager::to_uint16_le(std::size_t p_value) {

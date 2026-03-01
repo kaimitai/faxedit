@@ -24,6 +24,7 @@ namespace fe {
 	};
 
 	class ROM_Manager {
+	public:
 
 		std::vector<byte> build_pointer_table_and_data(
 			std::size_t p_rom_loc_ptr_table,
@@ -40,7 +41,7 @@ namespace fe {
 			std::size_t p_ptr_base_rom_offset,
 			std::size_t p_rom_loc_data,
 			const std::vector<std::vector<byte>>& p_data) const;
-
+		/*
 		template<class T, class U = T>
 		std::size_t get_vector_index(const std::vector<T>& p_data, U p_val) const {
 			for (std::size_t i{ 0 }; i < p_data.size(); ++i)
@@ -48,7 +49,7 @@ namespace fe {
 					return i;
 			throw std::runtime_error("No such element");
 		}
-
+		*/
 		// this function generates pointer tables and data offsets for several pieces of data at once,
 		// and generates a vector of <data table number> -> {ptr value, data pointed to}
 		// it uses global deduplication across all the data
@@ -57,10 +58,6 @@ namespace fe {
 			const std::vector<std::size_t>& pointer_table_offsets,
 			std::size_t rom_zero_address,
 			const std::vector<std::pair<std::size_t, std::size_t>>& p_available);
-
-		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
-			std::size_t p_ptr_offset,
-			std::size_t p_zero_addr) const;
 
 	public:
 		ROM_Manager(void);
@@ -110,8 +107,14 @@ namespace fe {
 
 		// util
 		void patch_bytes(const std::vector<byte>& p_source, std::vector<byte>& p_target, std::size_t p_target_offset) const;
+		void patch_ptr(std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_ptr_value) const;
 		static std::pair<byte, byte> to_uint16_le(std::size_t p_value);
 		static std::size_t from_uint16_le(const std::pair<byte, byte>& p_value);
+		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+			std::size_t p_ptr_offset,
+			std::size_t p_zero_addr) const;
+		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
+			std::pair<std::size_t, std::size_t> p_ptr) const;
 
 		// gfx
 		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(

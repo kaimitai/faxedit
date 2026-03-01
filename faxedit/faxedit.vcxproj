@@ -168,6 +168,8 @@
     <ClCompile Include="src\fe\ROM_Manager.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
+    <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp" />
+    <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp" />
     <ClCompile Include="src\fe\Sprite_definitions.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
@@ -224,6 +226,9 @@
     <ClInclude Include="src\fe\Scene.h" />
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\Sprite.h" />
+    <ClInclude Include="src\fe\sprite\fe_sprite_constants.h" />
+    <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h" />
+    <ClInclude Include="src\fe\sprite\SpriteGfxManager.h" />
     <ClInclude Include="src\fe\Sprite_definitions.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />
     <ClInclude Include="src\fe\StageManager.h" />

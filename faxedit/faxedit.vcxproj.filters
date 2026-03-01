@@ -67,6 +67,12 @@
     <Filter Include="Source Files\fi">
       <UniqueIdentifier>{8f6fdbd5-b442-4233-a226-0f9f6981f425}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fe\sprite">
+      <UniqueIdentifier>{de9cca38-9245-475b-a4d1-e261d0526cc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\sprite">
+      <UniqueIdentifier>{17f0805c-ddc1-4c70-a691-13c486aa4f9d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -200,6 +206,12 @@
     </ClCompile>
     <ClCompile Include="src\windows\UndoInterface.cpp">
       <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -352,6 +364,15 @@
     </ClInclude>
     <ClInclude Include="src\windows\UndoInterface.h">
       <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\fe_sprite_constants.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteGfxManager.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h">
+      <Filter>Header Files\fe\sprite</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
