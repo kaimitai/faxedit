@@ -21,24 +21,74 @@ void fe::SpriteGfxManager::merge_portrait_collection(const SpriteGfxCollection& 
 	portraits = newcoll;
 }
 
-std::string fe::SpriteGfxManager::load_portrait_data(const fe::Config& p_config,
+void fe::SpriteGfxManager::load_rom_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const fe::ROM_Manager& p_rom_mgr) {
+	load_portrait_data(p_config, p_rom, p_rom_mgr);
+	load_player_data(p_config, p_rom, p_rom_mgr);
+}
+
+void fe::SpriteGfxManager::load_player_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const fe::ROM_Manager& p_rom_mgr) {
+
+	const auto player_count{ p_config.constant(c::ID_GFX_PLAYER_COUNT) };
+	std::vector<std::size_t> loadlist_sizes;
+	std::vector<std::vector<byte>> loadlists;
+
+	// load list sizes seem to be one less than the actual size
+	for (std::size_t i{ 0 }; i < player_count; ++i)
+		loadlist_sizes.push_back(p_rom.at(p_config.constant(c::ID_GFX_PLAYER_TILE_COUNT_OFFSET) + i));
+
+	auto loadlist_master_ptr{ p_config.pointer(c::ID_GFX_PLAYER_LOOKUP_TABLE_PTR) };
+	auto loadlist_ptr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, loadlist_master_ptr) };
+
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		auto loadlist_addr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, loadlist_ptr + 2 * i, loadlist_master_ptr.second) };
+		std::vector<byte> loadlist;
+		for (std::size_t j{ 0 }; j <= loadlist_sizes[i]; ++j)
+			loadlist.push_back(p_rom.at(loadlist_addr + j));
+		loadlists.push_back(loadlist);
+	}
+
+	// final load lists are ready, we now load the chr tiles - assume count to be the maximum 255 until proven otherwise
+	// we can't know up front how many chr tiles are in the bank before consulting the animation frames
+	auto chrdata_ptr{ p_config.pointer(c::ID_GFX_PLAYER_CHR_PTR) };
+	auto chrdata_addr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, chrdata_ptr) };
+	auto chrbank{ extract_chr_tiles(p_rom, chrdata_addr, 255) };
+
+	std::vector<fe::SpriteAnimationFrame> frames;
+
+	auto frameptr{ p_config.pointer(c::ID_GFX_PLAYER_ANIM_FRAME_PTR) };
+	auto frame_ptr_table_addr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, frameptr) };
+
+	for (std::size_t j{ 0 }; j < player_count; ++j) {
+		const auto loadlist{ loadlists[j] };
+
+		for (std::size_t i{ 0 }; i < 8; ++i) {
+			auto frame_addr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, frame_ptr_table_addr, frameptr.second) };
+			auto frame{ fe::SpriteAnimationFrame(p_rom, frame_addr) };
+			normalize_frame(loadlist, frame, chrbank.size());
+			frames.push_back(frame);
+			frame_ptr_table_addr += 2;
+		}
+	}
+
+	player = fe::SpriteGfxCollection(chrbank, frames);
+}
+
+void fe::SpriteGfxManager::load_portrait_data(const fe::Config& p_config,
 	const std::vector<byte>& p_rom, const fe::ROM_Manager& p_rom_mgr) {
-	std::string result;
 
 	auto portrait_chr_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom,
 		p_config.pointer(c::ID_GFX_PORTRAIT_CHR_PTR)) };
 
-	result += std::format("Portrait chr start offset: 0x{:5x}\n", portrait_chr_offset);
 	portraits.tiles = extract_chr_tiles(p_rom, portrait_chr_offset, p_config.constant(c::ID_GFX_PORTRAIT_CHR_TILE_COUNT));
 
 	auto portrait_frames_ptr_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom,
 		p_config.pointer(c::ID_GFX_PORTRAIT_ANIM_FRAME_PTR)) };
 
-	result += std::format("Portrait frame ptr table offset: 0x{:5x}\n", portrait_frames_ptr_offset);
 	for (std::size_t i{ 0 }; i < p_config.constant(c::ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT); ++i) {
 		auto frame_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, portrait_frames_ptr_offset + 2 * i,
 			p_config.pointer(c::ID_GFX_PORTRAIT_ANIM_FRAME_PTR).second) };
-		result += std::format("Portrait frame {} offset: 0x{:5x}\n", i, frame_offset);
 		portraits.frames.push_back(fe::SpriteAnimationFrame(p_rom, frame_offset));
 	}
 
@@ -46,36 +96,18 @@ std::string fe::SpriteGfxManager::load_portrait_data(const fe::Config& p_config,
 		p_config.pointer(c::ID_GFX_PORTRAIT_LOOKUP_TABLE_PTR)) };
 
 	std::size_t frames_per_portrait{ p_config.constant(c::ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT) / p_config.constant(c::ID_GFX_PORTRAIT_COUNT) };
-	result += std::format("Portrait lookup ptr table offset: 0x{:5x}\n", portrait_frames_lookup_offset);
 	for (std::size_t i{ 0 }; i < p_config.constant(c::ID_GFX_PORTRAIT_COUNT); ++i) {
 		auto lookup_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, portrait_frames_lookup_offset + 2 * i,
 			p_config.pointer(c::ID_GFX_PORTRAIT_LOOKUP_TABLE_PTR).second) };
-		result += std::format("Portrait {} lookup offset: 0x{:5x}\n", i, lookup_offset);
 
 		auto ppu_order{ extract_ppu_idx_lookup_ff_delim(p_rom, lookup_offset) };
 		std::set<byte> ppu_set;
 		for (byte b : ppu_order)
 			ppu_set.insert(b);
 
-		for (std::size_t j{ 0 }; j < frames_per_portrait; ++j) {
-			int clears{ normalize_frame(ppu_order, portraits.frames.at(i * frames_per_portrait + j), portraits.tiles.size()) };
-			result += std::format("frame {} normalized vs {} size lookup ({} clears)\n",
-				i * frames_per_portrait + j, ppu_order.size(), clears);
-		}
-
+		for (std::size_t j{ 0 }; j < frames_per_portrait; ++j)
+			normalize_frame(ppu_order, portraits.frames.at(i * frames_per_portrait + j), portraits.tiles.size());
 	}
-
-	std::map<byte, int>  totalcounts;
-	for (const auto& frame : portraits.frames) {
-		const auto fusage{ frame.get_tile_usage() };
-		for (const auto& kv : fusage)
-			totalcounts[kv.first] += kv.second;
-	}
-
-	for (byte b{ 0 }; b < 255; ++b)
-		if (!totalcounts.contains(b))
-			result += std::format("Tile {} not used!\n", b);
-	return result;
 }
 
 // makes frame tile numbers relative to chr bank and not ppu order
@@ -88,10 +120,10 @@ int fe::SpriteGfxManager::normalize_frame(const std::vector<byte>& ppu_order,
 		for (std::size_t x{ 0 }; x < frame.tilemap[y].size(); ++x) {
 			auto& tile{ frame.tilemap[y][x] };
 			if (tile) {
-				if (tile->index < p_chr_bank_size)
+				if (tile->index < ppu_order.size())
 					tile->index = ppu_order[tile->index];
 				else {
-					tile->index = 0;
+					tile = std::nullopt;
 					++result;
 				}
 			}

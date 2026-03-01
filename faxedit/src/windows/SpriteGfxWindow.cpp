@@ -27,12 +27,19 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 		if (ImGui::RadioButton("Portraits",
 			editmode == fe::SpriteGfxEditMode::Portraits))
 			editmode = fe::SpriteGfxEditMode::Portraits;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("Player",
+			editmode == fe::SpriteGfxEditMode::Player))
+			editmode = fe::SpriteGfxEditMode::Player;
 
 		ImGui::Separator();
 
 		if (editmode == fe::SpriteGfxEditMode::Portraits)
 			show_gfx_collection_editor(p_rnd, 1000, m_game->m_sprite_gfx_manager.portraits,
 				30);
+		else if (editmode == fe::SpriteGfxEditMode::Player)
+			show_gfx_collection_editor(p_rnd, 2000, m_game->m_sprite_gfx_manager.player,
+				28);
 	}
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);
@@ -48,12 +55,15 @@ void fe::MainWindow::show_gfx_collection_editor(SDL_Renderer* p_rnd,
 	const auto& lr_palette{ m_game->m_palettes.at(p_palette_no) };
 
 	auto iter{ ls_selected_frame_map.find(p_gfx_key) };
-	if (iter == end(ls_selected_frame_map))
+	if (iter == end(ls_selected_frame_map)) {
+		ls_selected_frame = 0;
 		ls_selected_frame_map.insert(std::make_pair(p_gfx_key, ls_selected_frame));
+	}
 
+	ls_selected_frame = ls_selected_frame_map[p_gfx_key];
 
 	ui::imgui_slider_with_arrows("###fsel", std::format("Frame #{}/{}", ls_selected_frame, coll.frames.size()),
-		ls_selected_frame, 0, coll.frames.size() - 1, "", false, true);
+		ls_selected_frame_map[p_gfx_key], 0, coll.frames.size() - 1, "", false, true);
 
 	auto& frame{ coll.frames.at(ls_selected_frame) };
 
@@ -109,6 +119,8 @@ void fe::MainWindow::show_gfx_collection_editor(SDL_Renderer* p_rnd,
 std::string fe::MainWindow::get_file_prefix(std::size_t p_gfx_key) const {
 	if (p_gfx_key == 1000)
 		return "portraits";
+	else if (p_gfx_key == 2000)
+		return "player";
 	else
 		throw std::runtime_error(
 			std::format("Could not deduce file prefix from sprite collection key {}", p_gfx_key)

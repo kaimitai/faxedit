@@ -21,7 +21,7 @@ namespace fe {
 
 	struct SpriteGfxManager {
 
-		SpriteGfxCollection portraits;
+		SpriteGfxCollection portraits, player;
 
 		// calculating functions
 		std::vector<byte> calc_portrait_ppu_load_list(std::size_t p_portrait_no) const;
@@ -30,13 +30,19 @@ namespace fe {
 		void patch_portrait_data(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
 
+		void load_portrait_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr);
+		void load_player_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr);
+
 	public:
 		SpriteGfxManager(void) = default;
 
+		void load_rom_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr);
+
 		void merge_portrait_collection(const SpriteGfxCollection& coll);
 
-		std::string load_portrait_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
-			const fe::ROM_Manager& p_rom_mgr);
 		std::vector<byte> extract_ppu_idx_lookup_ff_delim(const std::vector<byte>& p_rom, std::size_t p_offset) const;
 		std::vector<klib::NES_tile> extract_chr_tiles(const std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_count) const;
 		void canonicalize_gfx_collection(SpriteGfxCollection& coll);
