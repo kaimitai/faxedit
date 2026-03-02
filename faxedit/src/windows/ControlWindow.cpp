@@ -252,8 +252,8 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
 	if (!p_exclude_dynamic) {
-		m_game->m_sprite_gfx_manager.patch_portrait_data(m_config, x_rom, m_rom_manager);
-		add_message("Patched portrait data", 2);
+		m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager);
+		add_message("Patched sprite gfx data", 2);
 
 		if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
 			l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);

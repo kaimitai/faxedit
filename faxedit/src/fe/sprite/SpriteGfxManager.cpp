@@ -25,6 +25,107 @@ void fe::SpriteGfxManager::load_rom_data(const fe::Config& p_config, const std::
 	const fe::ROM_Manager& p_rom_mgr) {
 	load_portrait_data(p_config, p_rom, p_rom_mgr);
 	load_player_data(p_config, p_rom, p_rom_mgr);
+	load_npc_data(p_config, p_rom, p_rom_mgr);
+}
+
+void fe::SpriteGfxManager::load_npc_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const fe::ROM_Manager& p_rom_mgr) {
+	// read this from ROM
+	const std::size_t SPRITE_CUTOFF{ 55 };
+
+	std::size_t sprite_count{ p_config.constant(c::ID_SPRITE_COUNT) };
+
+	// load common sprite chr (ppu $40-$90)
+	std::vector<klib::NES_tile> common_chr(c::PPU_COMMON_TILE_START, klib::NES_tile());
+
+	auto common_chr_data{ extract_chr_tiles(p_rom,
+		p_rom_mgr.get_ptr_to_rom_offset(p_rom, p_config.pointer(c::ID_GFX_COMMON_CHR_PTR)),
+		c::PPU_COMMON_TILE_COUNT) };
+
+	common_chr.insert(end(common_chr), begin(common_chr_data), end(common_chr_data));
+
+	auto ppu_tile_counts{ p_rom_mgr.read_bytes(p_rom, p_config.constant(c::ID_GFX_NPC_TILE_COUNT_OFFSET), sprite_count) };
+	auto anim_frame_starts{ p_rom_mgr.read_bytes(
+		p_rom, p_config.constant(c::ID_GFX_NPC_ANIM_IDX_OFFSET), sprite_count) };
+
+	auto bank6_chr_master_ptr{ p_config.pointer(c::ID_GFX_NPC_CHR_BANK6_PTR) };
+	auto bank7_chr_master_ptr{ p_config.pointer(c::ID_GFX_NPC_CHR_BANK7_PTR) };
+	auto anim_frames_master_ptr{ p_config.pointer(c::ID_GFX_NPC_ANIM_FRAME_PTR) };
+	auto bank6_chr_ptr_table_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_master_ptr) };
+	auto bank7_chr_ptr_table_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_chr_master_ptr) };
+
+	auto anim_frame_ptr_table_offset{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, anim_frames_master_ptr) };
+
+	const auto sprite_frame_counts{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_COUNT) };
+
+	std::map<std::size_t, std::vector<std::pair<std::size_t, std::size_t>>> framerefs;
+	std::map<std::size_t, std::vector<std::pair<bool, std::size_t>>> chrrefs;
+
+	
+
+	for (std::size_t i{ 0 }; i < sprite_count; ++i) {
+		bool bank6{ i < SPRITE_CUTOFF };
+		std::size_t ptr_table_entry{ bank6 ? i : i - SPRITE_CUTOFF };
+
+		std::size_t zero_addr{ bank6 ? bank6_chr_master_ptr.second : bank7_chr_master_ptr.second };
+		std::size_t chr_ptr_addr{ bank6 ?
+			bank6_chr_ptr_table_offset + 2 * ptr_table_entry :
+			bank7_chr_ptr_table_offset + 2 * ptr_table_entry };
+
+		std::size_t pputilecount{ ppu_tile_counts[i] };
+		std::vector<klib::NES_tile> chrbank;
+
+		if (pputilecount > 1) {
+			chrbank = extract_chr_tiles(p_rom,
+				p_rom_mgr.get_ptr_to_rom_offset(p_rom, chr_ptr_addr, zero_addr),
+				ppu_tile_counts[i]);
+			chrrefs[p_rom_mgr.get_ptr_to_rom_offset(p_rom, chr_ptr_addr, zero_addr)].push_back(
+				{bank6, i}
+			);
+		}
+		else
+			chrbank = common_chr;
+
+		std::size_t framecount{ sprite_frame_counts.contains(static_cast<byte>(i)) ?
+			sprite_frame_counts.at(static_cast<byte>(i)) : 1 };
+		std::vector<fe::SpriteAnimationFrame> frames;
+
+		for (std::size_t fr{ 0 }; fr < framecount; ++fr) {
+			auto framestartaddr{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, anim_frame_ptr_table_offset +
+				2 * (anim_frame_starts.at(i) + fr),
+	anim_frames_master_ptr.second) };
+			frames.push_back(fe::SpriteAnimationFrame(p_rom, framestartaddr));
+
+			framerefs[framestartaddr].push_back({ i,fr });
+		}
+
+		npcs.push_back({ chrbank, frames });
+	}
+
+	std::string reusereport;
+	for (const auto& kv : framerefs)
+		if (kv.second.size() != 1) {
+			reusereport += std::format("{}: ", kv.first);
+			for (const auto& ppp : kv.second)
+				reusereport += std::format("({},{}) ", ppp.first, ppp.second);
+			reusereport += "\n";
+		}
+
+	reusereport += "*******************\n";
+
+	for (const auto& kv : chrrefs)
+		if (kv.second.size() != 1) {
+			reusereport += std::format("{}: ", kv.first);
+			for (const auto& ppp : kv.second)
+				reusereport += std::format("({},{}) ", ppp.first, ppp.second);
+			reusereport += "\n";
+		}
+
+	std::size_t totalframecnt{ 0 };
+	for (const auto& fr : npcs)
+		totalframecnt += fr.frames.size();
+
+	std::size_t must_remove{ totalframecnt - 256 };
 }
 
 void fe::SpriteGfxManager::load_player_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
@@ -166,6 +267,18 @@ std::vector<byte> fe::SpriteGfxManager::calc_portrait_ppu_load_list(std::size_t 
 	result.push_back(0xff); // delimiter - no frame could even theoretically have this as a chr-tile index
 
 	return result;
+}
+
+void fe::SpriteGfxManager::patch_rom(const fe::Config& p_config, std::vector<byte>& p_rom,
+	const fe::ROM_Manager& p_rom_mgr) {
+	patch_portrait_data(p_config, p_rom, p_rom_mgr);
+
+	std::vector<std::vector<byte>> npc_frames;
+
+	for (const auto& npc : npcs)
+		for (const auto& frame : npc.frames)
+			npc_frames.push_back(frame.to_bytes());
+
 }
 
 void fe::SpriteGfxManager::patch_portrait_data(const fe::Config& p_config, std::vector<byte>& p_rom,

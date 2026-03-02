@@ -22,6 +22,8 @@ namespace fe {
 	struct SpriteGfxManager {
 
 		SpriteGfxCollection portraits, player;
+		std::vector<SpriteGfxCollection> npcs;
+		std::vector<klib::NES_tile> common_chr;
 
 		// calculating functions
 		std::vector<byte> calc_portrait_ppu_load_list(std::size_t p_portrait_no) const;
@@ -34,11 +36,15 @@ namespace fe {
 			const fe::ROM_Manager& p_rom_mgr);
 		void load_player_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
+		void load_npc_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr);
 
 	public:
 		SpriteGfxManager(void) = default;
 
 		void load_rom_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr);
+		void patch_rom(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
 
 		void merge_portrait_collection(const SpriteGfxCollection& coll);

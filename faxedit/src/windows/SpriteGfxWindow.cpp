@@ -12,6 +12,7 @@ using byte = unsigned char;
 
 void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 	static SpriteGfxEditMode editmode{ fe::SpriteGfxEditMode::Portraits };
+	static std::size_t ls_sel_npc{ 0 };
 
 	ui::imgui_screen("Sprite Graphics Editor",
 		c::WIN_TILEMAP_X + 50, c::WIN_TILEMAP_Y + 50,
@@ -31,6 +32,10 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 		if (ImGui::RadioButton("Player",
 			editmode == fe::SpriteGfxEditMode::Player))
 			editmode = fe::SpriteGfxEditMode::Player;
+		ImGui::SameLine();
+		if (ImGui::RadioButton("NPCs++",
+			editmode == fe::SpriteGfxEditMode::NPC))
+			editmode = fe::SpriteGfxEditMode::NPC;
 
 		ImGui::Separator();
 
@@ -40,6 +45,17 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 		else if (editmode == fe::SpriteGfxEditMode::Player)
 			show_gfx_collection_editor(p_rnd, 2000, m_game->m_sprite_gfx_manager.player,
 				28);
+		else if (editmode == fe::SpriteGfxEditMode::NPC) {
+			ui::imgui_slider_with_arrows("###selnpc",
+				get_description(static_cast<byte>(ls_sel_npc), m_labels_sprites),
+				ls_sel_npc,
+				0, m_sprite_count - 1, "",
+				false, true);
+
+			show_gfx_collection_editor(p_rnd, ls_sel_npc, m_game->m_sprite_gfx_manager.npcs.at(ls_sel_npc),
+				28);
+		}
+
 	}
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);
@@ -80,8 +96,8 @@ void fe::MainWindow::show_gfx_collection_editor(SDL_Renderer* p_rnd,
 		m_gfx.gen_gfx_collection_textures(p_rnd, p_gfx_key, coll, lr_palette);
 	else
 		ImGui::Image(frametxt, ImVec2(
-			static_cast<float>(2 * frametxt->w),
-			static_cast<float>(2 * frametxt->h)
+			static_cast<float>(4 * frametxt->w),
+			static_cast<float>(4 * frametxt->h)
 		));
 
 	ImGui::Separator();

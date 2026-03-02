@@ -1698,7 +1698,7 @@ SDL_Surface* fe::gfx::gen_sprite_frame_surface(const fe::SpriteGfxCollection& co
 
 	for (std::size_t j{ 0 }; j < tilemap.size(); ++j)
 		for (std::size_t i{ 0 }; i < tilemap[j].size(); ++i) {
-			if (tilemap[j][i])
+			if (tilemap[j][i] && tilemap[j][i]->index < chrbank.size())
 				draw_nes_tile_on_surface(srf, static_cast<int>(8 * i), static_cast<int>(8 * j),
 					chrbank.at(tilemap[j][i]->index),
 					p_palette.at(tilemap[j][i]->sub_palette),

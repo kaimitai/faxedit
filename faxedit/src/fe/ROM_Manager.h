@@ -115,6 +115,7 @@ namespace fe {
 			std::size_t p_zero_addr) const;
 		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
 			std::pair<std::size_t, std::size_t> p_ptr) const;
+		std::vector<byte> read_bytes(const std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_count) const;
 
 		// gfx
 		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(

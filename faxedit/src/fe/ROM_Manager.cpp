@@ -198,6 +198,11 @@ std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_ro
 	return get_ptr_to_rom_offset(p_rom, p_ptr.first, p_ptr.second);
 }
 
+std::vector<byte> fe::ROM_Manager::read_bytes(const std::vector<byte>& p_rom,
+	std::size_t p_offset, std::size_t p_count) const {
+	return std::vector<byte>(begin(p_rom) + p_offset, begin(p_rom) + p_offset + p_count);
+}
+
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Config& p_config,
 	const fe::Game& p_game) const {

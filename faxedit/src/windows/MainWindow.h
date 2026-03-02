@@ -22,7 +22,7 @@ namespace fe {
 	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
-	enum class SpriteGfxEditMode { Settings, Portraits, Sprites, Player, Weapons, Shields };
+	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player, Weapons, Shields };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
