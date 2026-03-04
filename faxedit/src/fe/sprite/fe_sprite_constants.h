@@ -7,6 +7,9 @@ namespace fe {
 
 	namespace c {
 
+		// set of all sprites using absolute ppu idx in their animation frames
+		constexpr char ID_ABSOLUTE_PPU_IDX_SPRITES[]{ "common_gfx_sprites" };
+
 		// constants enforced by the game engine
 		// player + shield + weapon (TODO: separate out weapon and shield)
 		constexpr byte PPU_PLAYER_TILE_START{ 0x00 };
@@ -28,6 +31,9 @@ namespace fe {
 
 		// npc ptrs
 		// chr-tiles are stored in banks 6 and 7
+		constexpr char ID_NPC_CHR_CUTOFF_REF1[]{ "gfx_npc_chr_cutoff_ref1" };
+		constexpr char ID_NPC_CHR_CUTOFF_REF2[]{ "gfx_npc_chr_cutoff_ref2" };
+		constexpr char ID_NPC_CHR_CUTOFF_REF3[]{ "gfx_npc_chr_cutoff_ref3" };
 		constexpr char ID_GFX_NPC_ANIM_FRAME_PTR[]{ "gfx_npc_anim_frame_ptr" };
 		constexpr char ID_GFX_NPC_CHR_BANK6_PTR[]{ "gfx_npc_bank6_chr_ptr" };
 		constexpr char ID_GFX_NPC_CHR_BANK7_PTR[]{ "gfx_npc_bank7_chr_ptr" };
@@ -36,7 +42,7 @@ namespace fe {
 		constexpr char ID_GFX_COMMON_CHR_PTR[]{ "gfx_common_chr_data_ptr" };
 
 		// portrait constants
-		constexpr char ID_GFX_PORTRAIT_COUNT[]{ "gfx_portrait_count" };
+		constexpr char ID_GFX_PORTRAIT_FRAME_COUNT[]{ "gfx_portrait_frame_count" };
 		constexpr char ID_GFX_PORTRAIT_CHR_TILE_COUNT[]{ "gfx_portrait_chr_tile_count" };
 		constexpr char ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT[]{ "gfx_portrait_total_frame_count" };
 

@@ -27,10 +27,13 @@ namespace fe {
 
 		// calculating functions
 		std::vector<byte> calc_portrait_ppu_load_list(std::size_t p_portrait_no) const;
+		std::size_t get_sprite_chr_cutoff(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
 
 		// patching functions
 		void patch_portrait_data(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
+		void patch_npc_data(const fe::Config& p_config, std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr) const;
 
 		void load_portrait_data(const fe::Config& p_config, const std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
@@ -58,6 +61,36 @@ namespace fe {
 
 		int normalize_frame(const std::vector<byte>& ppu_order, fe::SpriteAnimationFrame& frame,
 			std::size_t p_chr_bank_size);
+
+		template <class T>
+		static std::size_t find_with_overflow(const std::vector<T>& needle,
+			const std::vector<T>& haystack) {
+			const std::size_t hsize = haystack.size();
+			const std::size_t nsize = needle.size();
+
+			for (std::size_t i = 0; i < hsize; ++i)
+			{
+				bool match = true;
+
+				for (std::size_t j = 0; j < nsize; ++j)
+				{
+					const std::size_t hindex = i + j;
+
+					if (hindex >= hsize)
+						break; // overflow allowed -> remaining needle auto-matches
+
+					if (!(haystack[hindex] == needle[j])) {
+						match = false;
+						break;
+					}
+				}
+
+				if (match)
+					return i;
+			}
+
+			return hsize; // no match
+		}
 	};
 
 }

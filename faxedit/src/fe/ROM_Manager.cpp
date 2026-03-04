@@ -203,6 +203,23 @@ std::vector<byte> fe::ROM_Manager::read_bytes(const std::vector<byte>& p_rom,
 	return std::vector<byte>(begin(p_rom) + p_offset, begin(p_rom) + p_offset + p_count);
 }
 
+// given ROM offset and zero addr of ptr table start - detect how many ptrs are present
+// assumes data follows the ptr table - and that the table has at least one ptr
+std::size_t fe::ROM_Manager::get_ptr_table_entry_count(const std::vector<byte>& p_rom,
+	std::size_t p_ptr_rom_address, std::size_t p_zero_addr) const {
+	std::size_t min_ptr_value{ get_ptr_to_rom_offset(p_rom, p_ptr_rom_address, p_zero_addr) };
+	std::size_t cur_rom_offset{ p_ptr_rom_address };
+	std::size_t result{ 0 };
+
+	while (cur_rom_offset < min_ptr_value) {
+		min_ptr_value = std::min(min_ptr_value, get_ptr_to_rom_offset(p_rom, cur_rom_offset, p_zero_addr));
+		cur_rom_offset += 2;
+		++result;
+	}
+
+	return result;
+}
+
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Config& p_config,
 	const fe::Game& p_game) const {
