@@ -669,7 +669,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::Separator();
 
-		if (ui::imgui_button("Add metatile", 2)) {
+		if (ui::imgui_button("Add metatile", 2, "", p_chunk.m_metatiles.size() >= 256)) {
 			p_chunk.m_metatiles.push_back(fe::Metatile());
 			generate_metatile_textures(p_rnd,
 				p_chunk.m_metatiles.size() - 1);
@@ -681,7 +681,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 			if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
 				if (m_game->is_metatile_referenced(m_sel_chunk,
 					m_sel_metatile))
-					add_message("Metatile is in use", 1);
+					add_message("Metatile is in use", 1, true);
 				else {
 					m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
 					m_undo->clear_history(m_sel_chunk);
