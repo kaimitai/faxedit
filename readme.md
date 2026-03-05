@@ -76,6 +76,10 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 
 ### Version History
 
+* 2025-03-05: version beta-5.31
+
+  * Emergency bugfix: Adding more than 256 metatile definitions to any world would cause an unhandled error to occur in the renderer pipeline.
+
 * 2025-02-22: version beta-5.3
 
   * Add tileset and image chr-bank views to the gfx editor - giving a visual overview of the various chr banks - showing which chr-tiles are editable, read-only, unusable and unrelocatable
