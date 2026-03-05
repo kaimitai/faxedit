@@ -160,9 +160,9 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p
 				l_door_bytes.push_back(0xfe);
 			else if (l_door.m_door_type == fe::DoorType::SameWorld) {
 				if (p_is_town)
-					throw std::exception("Can not have intra-world doors in town world");
+					throw std::runtime_error("Can not have intra-world doors in town world");
 				else if (l_sw_door_cnt == 0x20)
-					throw std::exception("More than 31 same-world doors");
+					throw std::runtime_error("More than 31 same-world doors");
 				else {
 					// set index byte to be same-world
 					l_door_bytes.push_back(l_sw_door_cnt++);
@@ -180,7 +180,7 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p
 			// we necessarily have a door to building
 			else {
 				if (0x20 + l_bld_door_cnt == 0xfe)
-					throw std::exception("More than 221 doors to buildings");
+					throw std::runtime_error("More than 221 doors to buildings");
 				else {
 					// set index byte to be building
 					l_door_bytes.push_back(0x20 + l_bld_door_cnt++);
