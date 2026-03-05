@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-5.3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-5.31), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
