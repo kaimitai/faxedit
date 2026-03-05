@@ -27,8 +27,8 @@ cp "$ROOT/faxedit/eoe_config.xml" .
 cd "$ROOT"
 
 echo "==> Creating icon..."
-ICON_SRC="$ROOT/scripts/assets/icon.png"
-ICONSET="$ROOT/scripts/assets/icon.iconset"
+ICON_SRC="$ROOT/faxedit/assets/eoe_icon_256x256.png"
+ICONSET="$ROOT/faxedit/assets/eoe_icon_256x256.iconset"
 rm -rf "$ICONSET"
 mkdir -p "$ICONSET"
 sips -z 16 16     "$ICON_SRC" --out "$ICONSET/icon_16x16.png"
@@ -41,7 +41,7 @@ sips -z 256 256   "$ICON_SRC" --out "$ICONSET/icon_256x256.png"
 sips -z 512 512   "$ICON_SRC" --out "$ICONSET/icon_256x256@2x.png"
 sips -z 512 512   "$ICON_SRC" --out "$ICONSET/icon_512x512.png"
 sips -z 1024 1024 "$ICON_SRC" --out "$ICONSET/icon_512x512@2x.png"
-iconutil -c icns "$ICONSET" -o "$ROOT/scripts/assets/icon.icns"
+iconutil -c icns "$ICONSET" -o "$ROOT/scripts/icon.icns"
 rm -rf "$ICONSET"
 
 echo "==> Creating app bundle..."
@@ -52,7 +52,7 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 cp build/faxedit "$APP_BUNDLE/Contents/MacOS/faxedit_bin"
 cp build/eoe_config.xml "$APP_BUNDLE/Contents/Resources/"
-cp "$ROOT/scripts/assets/icon.icns" "$APP_BUNDLE/Contents/Resources/"
+cp "$ROOT/scripts/icon.icns" "$APP_BUNDLE/Contents/Resources/"
 
 cat > "$APP_BUNDLE/Contents/MacOS/faxedit" << 'LAUNCHER'
 #!/bin/bash
