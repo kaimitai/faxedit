@@ -7,3 +7,8 @@ x64
 eoe_os_window.cfg
 v18
 faxedit.vcxproj.user
+/EchoesOfEolis.app
+/*.dmg
+/build
+icon.icns
+.DS_Store

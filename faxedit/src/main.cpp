@@ -59,6 +59,10 @@ int main(int argc, char** argv) try {
 			// Setup Platform/Renderer backends
 			ImGui_ImplSDL3_InitForSDLRenderer(l_window, l_rnd);
 			ImGui_ImplSDLRenderer3_Init(l_rnd);
+			#ifdef __APPLE__
+			ImFontConfig cfg; cfg.SizePixels = 13.0f * 1.5f; ImGui::GetIO().Fonts->AddFontDefault(&cfg);
+			ImGui::GetStyle().ScaleAllSizes(1.5f);
+			#endif
 			ImGui::GetIO().IniFilename = IMGUI_WIN_FILENAME;
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
