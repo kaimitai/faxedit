@@ -250,6 +250,7 @@ namespace fe {
 		void show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 			std::size_t p_coll, fe::SpriteFrameCollection& p_collection);
 		std::string get_file_prefix(std::size_t p_gfx_key) const;
+		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);

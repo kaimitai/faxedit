@@ -256,33 +256,15 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 
 	if (!p_exclude_dynamic) {
 		auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
-
-		if (spritegfxres.bank6_used) {
-			add_message(
-				std::format("Bank 6: npc-chr ({}/{} bytes) - npc index cutoff: {}",
-					spritegfxres.bank6_used.value(), 0x4000, spritegfxres.bank6_sprite_cutoff.value()), 2);
-			l_dyndata_bytes += spritegfxres.bank6_used.value();
-		}
-		else {
-			add_message("Failed to patch bank 6 chr-data", 1);
-		}
-
-		if (spritegfxres.bank7_used) {
-			add_message(
-				std::format("Bank 7: data ({}/{} bytes) - npc-chr={}, npc frames={}, player-frames={}, portrait-frames={}",
-					spritegfxres.bank7_used.value(), 0x4000,
-					spritegfxres.bank7_sprite_chr_used.value(),
-					spritegfxres.bank7_npc_anim_frame_used.value(),
-					spritegfxres.bank7_player_anim_frame_used.value(),
-					spritegfxres.bank7_portrait_anim_frame_used.value()
-				), 2);
-			l_dyndata_bytes += spritegfxres.bank7_used.value();
-		}
-		else {
-			add_message("Failed to patch bank 7 chr-data", 1);
-		}
-
+		l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
 		l_good &= spritegfxres.success;
+		report_sprite_gfx_patch(spritegfxres);
+		if (spritegfxres.success)
+			add_message("Sprite Gfx data patched!", 2);
+		else
+			add_message("Could not patch Sprite Gfx data", 1);
 
 		if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
 			l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);
@@ -355,6 +337,62 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 		add_message("Could not patch ROM data", 1);
 		return std::nullopt;
 	}
+}
+
+void fe::MainWindow::report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result) {
+
+	const auto bank_header = [](int p_bank_no, std::optional<std::size_t> p_bank_used) -> std::string {
+		if (!p_bank_used) {
+			return std::format("Bank {} fail: ", p_bank_no);
+		}
+		else {
+			std::size_t bank_used{ p_bank_used.value() };
+
+			return std::format("Bank {}: {}/{} bytes ({:.2f}%): ", p_bank_no, bank_used, 0x4000,
+				(100.0f * bank_used) / 0x4000);
+		}
+		};
+
+	const auto bank_item = [](const std::string& p_item_name, std::optional<std::size_t> p_value,
+		bool p_add_comma = true) -> std::string {
+			std::string l_result{ p_item_name };
+
+			if (p_value)
+				l_result += std::format("={}", p_value.value());
+			else
+				l_result += "=null";
+
+			if (p_add_comma)
+				l_result += ", ";
+
+			return l_result;
+		};
+
+	std::string bank6res{ bank_header(6, result.bank6_used) };
+	std::string bank7res{ bank_header(7, result.bank7_used) };
+	std::string bank8res{ bank_header(8, result.bank8_used) };
+
+	bank6res += bank_item("npc_chr", result.bank6_used);
+	bank6res += bank_item("sprite_cutoff", result.bank6_sprite_cutoff, false);
+
+	bank7res += bank_item("npc_chr", result.bank7_sprite_chr_used);
+	bank7res += bank_item("npc_frame", result.bank7_npc_anim_frame_used);
+	bank7res += bank_item("player_frame", result.bank7_player_anim_frame_used);
+	bank7res += bank_item("portrait_frame", result.bank7_portrait_anim_frame_used, false);
+
+	bank8res += bank_item("player_list", result.bank8_player_load_lists);
+	bank8res += bank_item("wep_list", result.bank8_weapons_load_lists);
+	bank8res += bank_item("player_chr", result.bank8_player_chr);
+	bank8res += bank_item("wep_chr", result.bank8_weapons_chr);
+	bank8res += bank_item("common_chr", result.bank8_common_chr);
+	bank8res += bank_item("shield_chr", result.bank8_shield_chr);
+	bank8res += bank_item("shield_list", result.bank8_shield_load_lists);
+	bank8res += bank_item("portrait_list", result.bank8_portrait_load_lists);
+	bank8res += bank_item("portrait_chr", result.bank8_portrait_chr, false);
+
+	add_message(bank6res, result.bank6_used ? 6 : 1);
+	add_message(bank7res, result.bank7_used ? 6 : 1);
+	add_message(bank8res, result.bank8_used ? 6 : 1);
 }
 
 void fe::MainWindow::validate_game_data(fe::Game& p_game) {

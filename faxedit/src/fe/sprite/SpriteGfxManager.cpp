@@ -48,13 +48,16 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 	std::size_t bank6_chr_ptr_table_start{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_master_ptr) };
 
 	for (std::size_t i{ 0 }; i < SPRITE_CUTOFF; ++i) {
+		// TODO: Decide how to handle what is most likely garbage chr-banks
+		/*
 		if (npc_using_common_gfx.contains(i))
 			c_npcs.add_chr_bank({});
 		else
-			c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
-				p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_ptr_table_start + 2 * i,
-					bank6_chr_master_ptr.second),
-				ppu_tile_counts.at(i)));
+		*/
+		c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
+			p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_ptr_table_start + 2 * i,
+				bank6_chr_master_ptr.second),
+			ppu_tile_counts.at(i)));
 	}
 
 	// bank 7 - chr-banks for sprites with IDs >= cutoff, and frames of all types
@@ -67,13 +70,16 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 
 	// read in chr-banks for sprites residing in bank 7
 	for (std::size_t i{ SPRITE_CUTOFF }; i < SPRITE_COUNT; ++i) {
+		// TODO: Decide how to handle what is most likely garbage chr-banks
+		/*
 		if (npc_using_common_gfx.contains(i))
 			c_npcs.add_chr_bank({});
 		else
-			c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
-				p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_chr_ptr_table_start + 2 * (i - SPRITE_CUTOFF),
-					bank7_chr_master_ptr.second),
-				ppu_tile_counts.at(i)));
+		*/
+		c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
+			p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_chr_ptr_table_start + 2 * (i - SPRITE_CUTOFF),
+				bank7_chr_master_ptr.second),
+			ppu_tile_counts.at(i)));
 	}
 
 	c_npcs.add_frames(extract_animation_frames(p_rom, p_rom_mgr,
@@ -246,8 +252,11 @@ void fe::SpriteGfxManager::calculate_npc_chr_bank_mappings(void) {
 		std::size_t bank_idx{ npc_using_common_gfx.contains(i) ? PPU_BANK_IDX : i };
 		for (std::size_t j{ 0 }; j < npc_frame_counts[i]; ++j) {
 			std::size_t frame_no{ npc_start_frames[i] + j };
-			if (frame_no < bank_maps.size())
+			if (frame_no < bank_maps.size()) {
 				bank_maps[frame_no].insert(bank_idx);
+				// TODO: Decide how to handle what is most likely garbage chr-banks - always add npc-banks?
+				bank_maps[frame_no].insert(i);
+			}
 		}
 	}
 
@@ -599,7 +608,10 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 			chr_bank7_master_ptr.second, p_rom, npc_frames)
 	};
 
-	final_result.bank7_npc_anim_frame_used = bank7npcframe_result.value() - bank7chr_result.value();
+	if (!bank7npcframe_result)
+		return final_result;
+	else
+		final_result.bank7_npc_anim_frame_used = bank7npcframe_result.value() - bank7chr_result.value();
 
 	// pack the player anim frames
 	const auto bank7_player_anim_frame_ptr{ p_config.pointer(c::ID_GFX_PLAYER_ANIM_FRAME_PTR) };
@@ -630,7 +642,10 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 		chr_bank7_master_ptr.second, p_rom, player_load_lists, weapon_load_lists, shield_load_lists)
 	};
 
-	final_result.bank7_player_anim_frame_used = bank7playerframe_result.value() - bank7npcframe_result.value();
+	if (!bank7playerframe_result)
+		return final_result;
+	else
+		final_result.bank7_player_anim_frame_used = bank7playerframe_result.value() - bank7npcframe_result.value();
 
 	// pack the portrait anim frames
 	const auto bank7_portrait_anim_frame_ptr{ p_config.pointer(c::ID_GFX_PORTRAIT_ANIM_FRAME_PTR) };
@@ -643,7 +658,10 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	chr_bank7_master_ptr.second, p_rom, portrait_load_lists)
 	};
 
-	final_result.bank7_portrait_anim_frame_used = bank7portraitframe_result.value() - bank7playerframe_result.value();
+	if (!bank7portraitframe_result)
+		return final_result;
+	else
+		final_result.bank7_portrait_anim_frame_used = bank7portraitframe_result.value() - bank7playerframe_result.value();
 
 	final_result.bank7_used = bank7portraitframe_result.value() - chr_bank7_master_ptr.first;
 
@@ -668,14 +686,20 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	const auto player_ll_result{ allocator.init_allocate_and_patch_single_table(l_rom_cursor,
 		PLAYER_LOAD_LIST_PTR.second,
 		player_load_lists, p_rom) };
-	final_result.bank8_player_load_lists = player_ll_result.value() - l_rom_cursor;
+	if (!player_ll_result)
+		return final_result;
+	else
+		final_result.bank8_player_load_lists = player_ll_result.value() - l_rom_cursor;
 
 	// weapon load lists
 	p_rom_mgr.patch_ptr(p_rom, WEAPONS_LOAD_LIST_PTR.first, player_ll_result.value() - WEAPONS_LOAD_LIST_PTR.second);
 	const auto weapons_ll_result{ allocator.init_allocate_and_patch_single_table(player_ll_result.value(),
 		WEAPONS_LOAD_LIST_PTR.second,
 		weapon_load_lists, p_rom) };
-	final_result.bank8_weapons_load_lists = weapons_ll_result.value() - player_ll_result.value();
+	if (!weapons_ll_result)
+		return final_result;
+	else
+		final_result.bank8_weapons_load_lists = weapons_ll_result.value() - player_ll_result.value();
 
 	// player chr-tiles
 	p_rom_mgr.patch_ptr(p_rom, PLAYER_CHR_PTR.first, weapons_ll_result.value() - PLAYER_CHR_PTR.second);
@@ -710,14 +734,20 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	const auto shields_ll_result{ allocator.init_allocate_and_patch_single_table(l_rom_cursor,
 		SHIELDS_LOAD_LIST_PTR.second,
 		shield_load_lists, p_rom) };
-	final_result.bank8_shield_load_lists = shields_ll_result.value() - l_rom_cursor;
+	if (!shields_ll_result)
+		return final_result;
+	else
+		final_result.bank8_shield_load_lists = shields_ll_result.value() - l_rom_cursor;
 
 	// portrait load lists
 	p_rom_mgr.patch_ptr(p_rom, PORTRAIT_LOAD_LISTS_PTR.first, shields_ll_result.value() - PORTRAIT_LOAD_LISTS_PTR.second);
 	const auto portrait_ll_result{ allocator.init_allocate_and_patch_single_table(shields_ll_result.value(),
 		PORTRAIT_LOAD_LISTS_PTR.second,
 		portrait_load_lists, p_rom) };
-	final_result.bank8_portrait_load_lists = portrait_ll_result.value() - shields_ll_result.value();
+	if (!portrait_ll_result)
+		return final_result;
+	else
+		final_result.bank8_portrait_load_lists = portrait_ll_result.value() - shields_ll_result.value();
 
 	// portrait chr-tiles
 	p_rom_mgr.patch_ptr(p_rom, PORTRAIT_CHR_PTR.first, portrait_ll_result.value() - PORTRAIT_CHR_PTR.second);
@@ -743,7 +773,28 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	for (std::size_t i{ 0 }; i < weapon_load_lists.size(); ++i)
 		p_rom.at(PPU_TILE_COUNT_WEAPON + i) = static_cast<byte>(weapon_load_lists[i].size() - 1);
 
-	final_result.success = true;
+	final_result.success = (final_result.bank6_used.value() <= 0x4000 &&
+		final_result.bank7_used.value() <= 0x4000 &&
+		final_result.bank8_used.value() <= 0x4000);
+
+	// Write 0xff to all space we claim is unused - Begin
+	// TODO: Decide if we want to keep this
+	if (final_result.success) {
+		std::vector<std::size_t> used_sizes{
+			final_result.bank6_used.value(),
+			final_result.bank7_used.value(),
+			final_result.bank8_used.value()
+		};
+
+		for (std::size_t i{ 6 }; i <= 8; ++i) {
+			std::size_t rom_offset{ i * 0x4000 + 0x10 };
+			std::size_t rom_end_offset{ rom_offset + 0x4000 };
+			std::size_t start_idx{ rom_offset + used_sizes[i - 6] };
+			for (std::size_t bb{ start_idx }; bb < rom_end_offset; ++bb)
+				p_rom.at(bb) = 0xff;
+		}
+	}
+	// Write 0xff to all space we claim is unused - End
 
 	return final_result;
 }
