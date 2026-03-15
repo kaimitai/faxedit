@@ -777,6 +777,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_filename = romPath.stem().string();
 
 		// extract sprite definitions
+		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
 		const auto& gfx_def{ m_rom_manager.extract_sprite_data(bytes) };
 
 		// use it to extract sprite sizes before it is sent off and discarded
@@ -841,8 +842,6 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		m_undo.reset();
 		m_undo.emplace(m_game.value());
-
-		m_game->m_sprite_gfx_manager.load_rom_data(m_config, m_game->m_rom_data, m_rom_manager);
 
 		add_message("Loaded " + p_filepath, 2);
 	}

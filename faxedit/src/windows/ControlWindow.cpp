@@ -206,6 +206,9 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		m_game->generate_tilesets(m_config);
 		m_game->m_gfx_manager.initialize(m_config, m_game->m_rom_data);
 
+		// extract sprite gfx (even if we got values from the xml we need to populate some config)
+		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
+
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();
 		m_gfx.clear_tileset_textures();
@@ -252,8 +255,34 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
 	if (!p_exclude_dynamic) {
-		m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager);
-		add_message("Patched sprite gfx data", 2);
+		auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
+
+		if (spritegfxres.bank6_used) {
+			add_message(
+				std::format("Bank 6: npc-chr ({}/{} bytes) - npc index cutoff: {}",
+					spritegfxres.bank6_used.value(), 0x4000, spritegfxres.bank6_sprite_cutoff.value()), 2);
+			l_dyndata_bytes += spritegfxres.bank6_used.value();
+		}
+		else {
+			add_message("Failed to patch bank 6 chr-data", 1);
+		}
+
+		if (spritegfxres.bank7_used) {
+			add_message(
+				std::format("Bank 7: data ({}/{} bytes) - npc-chr={}, npc frames={}, player-frames={}, portrait-frames={}",
+					spritegfxres.bank7_used.value(), 0x4000,
+					spritegfxres.bank7_sprite_chr_used.value(),
+					spritegfxres.bank7_npc_anim_frame_used.value(),
+					spritegfxres.bank7_player_anim_frame_used.value(),
+					spritegfxres.bank7_portrait_anim_frame_used.value()
+				), 2);
+			l_dyndata_bytes += spritegfxres.bank7_used.value();
+		}
+		else {
+			add_message("Failed to patch bank 7 chr-data", 1);
+		}
+
+		l_good &= spritegfxres.success;
 
 		if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
 			l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);

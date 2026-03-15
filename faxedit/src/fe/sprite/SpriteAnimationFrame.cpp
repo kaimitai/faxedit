@@ -1,4 +1,5 @@
 #include "SpriteAnimationFrame.h"
+#include <format>
 #include <stdexcept>
 
 fe::SpriteAnimationFrame::SpriteAnimationFrame(const std::vector<byte>& p_rom, std::size_t p_offset) :
@@ -49,6 +50,14 @@ std::size_t fe::SpriteAnimationFrame::w(void) const {
 
 std::size_t fe::SpriteAnimationFrame::h(void) const {
 	return tilemap.size();
+}
+
+std::vector<byte> fe::SpriteAnimationFrame::to_bytes(const std::vector<byte>& load_list) const {
+	std::map<byte, byte> remap;
+	for (std::size_t i{ 0 }; i < load_list.size(); ++i)
+		if (load_list[i] != 0xff)
+			remap.insert(std::make_pair(load_list[i], static_cast<byte>(i)));
+	return to_bytes(remap);
 }
 
 std::vector<byte> fe::SpriteAnimationFrame::to_bytes(const std::map<byte, byte>& remap) const {
@@ -114,6 +123,34 @@ std::vector<byte> fe::SpriteFrameTile::to_bytes(const std::map<byte, byte>& rema
 	// bit 7: v-flip
 	if (v_flip) attr |= 0x80;
 	result.push_back(attr);
+
+	return result;
+}
+
+std::string fe::SpriteAnimationFrame::to_string(void) const {
+	std::string result{ std::format("w={} h={} x={} y={} pivot={}\n",
+		w(), h(), offset_x, offset_y, pivot_x) };
+
+	for (const auto& row : tilemap) {
+		for (std::size_t i{ 0 }; i < row.size(); ++i) {
+			if (row[i]) {
+				result += std::format("{:2x}:{}:", row[i]->index, row[i]->sub_palette);
+				if (row[i]->v_flip)
+					result.push_back('v');
+				else
+					result.push_back('_');
+				if (row[i]->h_flip)
+					result.push_back('h');
+				else
+					result.push_back('_');
+
+			}
+			else {
+				result += "__:_:__ ";
+			}
+		}
+		result += "\n";
+	}
 
 	return result;
 }

@@ -64,8 +64,7 @@ fe::gfx::~gfx(void) {
 		delete_texture(kv.second);
 	for (auto& kv : m_chr_bank_gfx)
 		delete_texture(kv.second);
-	for (auto& kv : m_sprite_coll_gfx)
-		clear_gfx_collection_textures(kv.first);
+	clear_sprite_selected_texture();
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -1519,8 +1518,9 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
 	std::size_t max_bank_size,
 	int p_tolerance) const {
 
-	fe::SpriteGfxCollection coll;
-	std::size_t approximated_tile_count{ 0 };
+	std::vector<klib::NES_tile> out_tiles;
+	std::vector<fe::SpriteAnimationFrame> out_frames;
+	int approx_tile_count{ 0 };
 
 	for (const auto& path : bmp_files) {
 
@@ -1552,7 +1552,7 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
 				}
 
 				auto pick = pick_or_build_sprite_tile_for_block(
-					srf, px, py, pals4x4, p_tolerance, coll.tiles);
+					srf, px, py, pals4x4, p_tolerance, out_tiles);
 
 				if (pick.reuse) {
 					frame.tilemap[ty][tx] = fe::SpriteFrameTile{
@@ -1563,12 +1563,12 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
 					};
 				}
 				else {
-					if (coll.tiles.size() < max_bank_size) {
+					if (out_tiles.size() < max_bank_size) {
 						klib::NES_tile t = pick.tile;
 						auto canon = t.canonicalize();     // modifies t in-place, returns flips used
 
-						byte newIndex = static_cast<byte>(coll.tiles.size());
-						coll.tiles.push_back(std::move(t));
+						byte newIndex = static_cast<byte>(out_tiles.size());
+						out_tiles.push_back(std::move(t));
 
 						frame.tilemap[ty][tx] = fe::SpriteFrameTile{
 							newIndex,
@@ -1579,7 +1579,7 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
 					}
 					else {
 						auto approx = find_best_approximate_reuse(
-							srf, px, py, pals4x4, p_tolerance, coll.tiles);
+							srf, px, py, pals4x4, p_tolerance, out_tiles);
 
 						frame.tilemap[ty][tx] = fe::SpriteFrameTile{
 							approx.index,
@@ -1588,34 +1588,36 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_bmps(
 							approx.h_flip
 						};
 
-						++approximated_tile_count;
+						++approx_tile_count;
 					}
 				}
 			}
 		}
 
-		coll.frames.push_back(std::move(frame));
+		out_frames.push_back(std::move(frame));
 		SDL_DestroySurface(srf);
 	}
 
-	return { std::move(coll), approximated_tile_count };
+	return { .frames = out_frames, .tiles = out_tiles, .approximated_tile_count = approx_tile_count };
 }
 
 fe::SpriteImportResult fe::gfx::import_sprite_frames_from_folder(
 	const std::string& folder,
 	const std::string& prefix,
+	std::size_t p_bank_idx,
+	std::vector<std::size_t> p_frame_idxs,
 	const std::vector<byte>& pal16,
 	std::size_t max_bank_size,
 	int tolerance) const {
 
 	std::vector<std::string> files;
 
-	for (int i = 0;; ++i) {
-		auto filename = std::format("{}-{:03}.bmp", prefix, i);
-		auto fullpath = std::format("{}/{}", folder, filename);
+	for (std::size_t frame_idx : p_frame_idxs) {
+		auto filename{ get_sprite_frame_bmp_filename(prefix, p_bank_idx, frame_idx) };
+		auto fullpath{ std::format("{}/{}", folder, filename) };
 
 		if (!std::filesystem::exists(fullpath))
-			break;
+			throw std::runtime_error(std::format("Could not find bmp file {}", fullpath));
 
 		files.push_back(fullpath);
 	}
@@ -1624,37 +1626,57 @@ fe::SpriteImportResult fe::gfx::import_sprite_frames_from_folder(
 		files, flat_pal_to_2d_pal(pal16), max_bank_size, tolerance);
 }
 
+std::string fe::gfx::get_sprite_frame_bmp_filename(
+	const std::string& prefix,
+	std::size_t p_bank_idx,
+	std::size_t p_frame_idx) const {
+	return std::format("{}-bank_{:03}-frame_{:03}.bmp", prefix, p_bank_idx, p_frame_idx);
+}
+
+std::string fe::gfx::get_sprite_frame_bmp_wc_filpath(
+	const std::string& p_bmp_folder,
+	const std::string& prefix,
+	std::size_t p_bank_idx
+) const {
+	return std::format("{}/{}-bank_{:03}-frame_*.bmp", p_bmp_folder, prefix, p_bank_idx);
+}
+
 // sprite gfx collection rendering
-void fe::gfx::gen_gfx_collection_textures(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
-	const fe::SpriteGfxCollection& coll, const std::vector<byte>& p_palette) {
-	auto pal4x4{ flat_pal_to_2d_pal(p_palette) };
-
-	std::vector<SDL_Texture*> frametextures;
-	for (std::size_t i{ 0 }; i < coll.frames.size(); ++i)
-		frametextures.push_back(surface_to_texture(p_rnd, gen_sprite_frame_surface(coll, pal4x4, i)));
-
-	clear_gfx_collection_textures(p_gfx_key);
-	m_sprite_coll_gfx[p_gfx_key].frame_textures = frametextures;
-}
-
-SDL_Texture* fe::gfx::get_gfx_coll_frame_txt(std::size_t p_gfx_key, std::size_t p_frame_no) const {
-	auto iter{ m_sprite_coll_gfx.find(p_gfx_key) };
-	if (iter == end(m_sprite_coll_gfx))
-		return nullptr;
+SDL_Texture* fe::gfx::get_sprite_selected_texture(std::size_t p_coll_type, std::size_t p_frame_no,
+	std::size_t p_chr_bank_no) const {
+	if (m_sprite_selected_key &&
+		std::get<0>(m_sprite_selected_key.value()) == p_coll_type &&
+		std::get<1>(m_sprite_selected_key.value()) == p_frame_no &&
+		std::get<2>(m_sprite_selected_key.value()) == p_chr_bank_no)
+		return m_sprite_selected_gfx;
 	else
-		return p_frame_no < iter->second.frame_textures.size() ?
-		iter->second.frame_textures[p_frame_no] :
-		nullptr;
+		return nullptr;
 }
 
-void fe::gfx::clear_gfx_collection_textures(std::size_t p_gfx_key) {
-	auto iter{ m_sprite_coll_gfx.find(p_gfx_key) };
-	if (iter != end(m_sprite_coll_gfx)) {
-		delete_texture(iter->second.chrbank_texture);
+SDL_Texture* fe::gfx::get_sprite_selected_chr_bank(std::size_t p_coll_type, std::size_t p_chr_bank_no) const {
+	if (m_sprite_selected_key &&
+		std::get<0>(m_sprite_selected_key.value()) == p_coll_type &&
+		std::get<2>(m_sprite_selected_key.value()) == p_chr_bank_no)
+		return m_sprite_selected_bank;
+	else
+		return nullptr;
+}
 
-		for (auto& txt : iter->second.frame_textures)
-			delete_texture(txt);
-	}
+void fe::gfx::gen_sprite_selected_texture(SDL_Renderer* p_rnd, std::size_t p_coll_type, std::size_t p_frame_no,
+	std::size_t p_chr_bank_no, const fe::SpriteAnimationFrame& p_frame,
+	const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette) {
+	clear_sprite_selected_texture();
+
+	m_sprite_selected_gfx = surface_to_texture(p_rnd, gen_sprite_frame_surface(p_frame, p_chr_bank,
+		flat_pal_to_2d_pal(p_palette)));
+	m_sprite_selected_bank = surface_to_texture(p_rnd, gen_chr_bank_surface(p_chr_bank, flat_pal_to_2d_pal(p_palette)));
+	m_sprite_selected_key = std::make_tuple(p_coll_type, p_frame_no, p_chr_bank_no);
+}
+
+void fe::gfx::clear_sprite_selected_texture(void) {
+	delete_texture(m_sprite_selected_gfx);
+	delete_texture(m_sprite_selected_bank);
+	m_sprite_selected_key = std::nullopt;
 }
 
 // functions for bmp export
@@ -1685,14 +1707,55 @@ SDL_Surface* fe::gfx::gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const
 	return srf;
 }
 
-SDL_Surface* fe::gfx::gen_sprite_frame_surface(const fe::SpriteGfxCollection& coll,
+SDL_Surface* fe::gfx::gen_sprite_frame_surface(const fe::SpriteAnimationFrame& p_frame,
+	const std::vector<klib::NES_tile> p_tiles, const std::vector<std::vector<byte>>& p_palette) const {
+	int width = 8 * static_cast<int>(p_frame.w());
+	int height = 8 * static_cast<int>(p_frame.h());
+
+	auto srf{ create_sdl_surface(width, height, true, true) };
+
+	for (std::size_t j{ 0 }; j < p_frame.tilemap.size(); ++j)
+		for (std::size_t i{ 0 }; i < p_frame.tilemap[j].size(); ++i) {
+			if (p_frame.tilemap[j][i] && p_frame.tilemap[j][i]->index < p_tiles.size())
+				draw_nes_tile_on_surface(srf, static_cast<int>(8 * i), static_cast<int>(8 * j),
+					p_tiles.at(p_frame.tilemap[j][i]->index),
+					p_palette.at(p_frame.tilemap[j][i]->sub_palette),
+					true,
+					p_frame.tilemap[j][i]->h_flip, p_frame.tilemap[j][i]->v_flip);
+		}
+
+	return srf;
+}
+
+SDL_Surface* fe::gfx::gen_chr_bank_surface(const std::vector<klib::NES_tile> p_tiles,
+	const std::vector<std::vector<byte>>& p_palette) const {
+	int width = 16;
+	int height = (static_cast<int>(p_tiles.size()) + width - 1) / width;
+
+	auto srf{ create_sdl_surface(width * 8, height * 8, true, true) };
+
+	for (int j{ 0 }; j < height; ++j)
+		for (int i{ 0 }; i < width; ++i) {
+			std::size_t chr_index{ static_cast<std::size_t>(j * width + i) };
+			if (chr_index >= p_tiles.size())
+				break;
+
+			draw_nes_tile_on_surface(srf, 8 * i, 8 * j, p_tiles[chr_index], p_palette.at(0), true);
+		}
+
+	return srf;
+}
+
+SDL_Surface* fe::gfx::gen_sprite_frame_surface(const fe::SpriteFrameCollection& coll,
+	std::size_t p_bank_idx,
+	std::size_t frame_idx,
 	const std::vector<std::vector<byte>>& p_palette, std::size_t p_frame_idx) const {
 	const auto& frame{ coll.frames.at(p_frame_idx) };
-	const auto& tilemap{ coll.frames.at(p_frame_idx).tilemap };
-	const auto& chrbank{ coll.tiles };
+	const auto& tilemap{ coll.frames.at(p_frame_idx).frame.tilemap };
+	const auto& chrbank{ coll.banks.at(p_bank_idx) };
 
-	int width = 8 * static_cast<int>(frame.w());
-	int height = 8 * static_cast<int>(frame.h());
+	int width = 8 * static_cast<int>(frame.frame.w());
+	int height = 8 * static_cast<int>(frame.frame.h());
 
 	auto srf{ create_sdl_surface(width, height, true, true) };
 
@@ -1716,14 +1779,18 @@ void fe::gfx::save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 	save_surface_as_bmp(gen_tilemap_surface(p_tilemap), p_path, p_filename);
 }
 
-void fe::gfx::save_sprite_frames_bmp(const fe::SpriteGfxCollection& coll,
+void fe::gfx::save_sprite_frames_bmp(const fe::SpriteFrameCollection& coll,
+	std::size_t p_bank_idx,
+	std::vector<std::size_t> frame_idxs,
 	const std::vector<byte>& p_palette,
 	const std::string& p_path,
 	const std::string& p_file_prefix) const {
 
-	for (std::size_t i{ 0 }; i < coll.frames.size(); ++i) {
-		std::string filename{ std::format("{}-{:03}.bmp", p_file_prefix, i) };
-		save_surface_as_bmp(gen_sprite_frame_surface(coll, flat_pal_to_2d_pal(p_palette), i), p_path, filename);
+	for (std::size_t frame_idx : frame_idxs) {
+		std::string filename{ get_sprite_frame_bmp_filename(p_file_prefix, p_bank_idx, frame_idx) };
+		save_surface_as_bmp(
+			gen_sprite_frame_surface(coll, p_bank_idx, frame_idx, flat_pal_to_2d_pal(p_palette), frame_idx),
+			p_path, filename);
 	}
 
 }

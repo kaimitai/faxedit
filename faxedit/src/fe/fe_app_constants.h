@@ -30,11 +30,11 @@ namespace fe {
 
 		constexpr int WIN_ISCRIPT_X{ WIN_TILEMAP_X + 50 };
 		constexpr int WIN_ISCRIPT_Y{ WIN_TILEMAP_Y + 50 };
-		constexpr int WIN_ISCRIPT_W{ 400 };
-		constexpr int WIN_ISCRIPT_H{ 300 };
+		constexpr int WIN_ISCRIPT_W{ WIN_TILEMAP_W };
+		constexpr int WIN_ISCRIPT_H{ WIN_TILEMAP_H };
 
 		constexpr char APP_NAME[]{ "Echoes of Eolis" };
-		constexpr char APP_VERSION[]{ "beta-5.31" };
+		constexpr char APP_VERSION[]{ "beta-6" };
 
 		constexpr unsigned char APP_ICON[64] = {
 			0b00010000, 0b01000001, 0b01000001, 0b00000100,

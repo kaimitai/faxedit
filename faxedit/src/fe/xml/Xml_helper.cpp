@@ -416,6 +416,33 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		l_game.m_chunks.push_back(l_chunk);
 	}
 
+	// extract sprite gfx if it is defined in the xml, otherwise read from rom bytes afterward
+	auto n_sprite_gfx{ n_root.child(c::TAG_SPRITE_GFX) };
+	if (n_sprite_gfx) {
+
+		// extract sprite start frames
+		auto n_npc_start_frames{ n_sprite_gfx.child(c::TAG_NPC_START_FRAMES) };
+		for (auto n_start_frame{ n_npc_start_frames.child(c::TAG_SPRITE) }; n_start_frame;
+			n_start_frame = n_start_frame.next_sibling(c::TAG_SPRITE)) {
+			l_game.m_sprite_gfx_manager.npc_start_frames.push_back(
+				parse_numeric(n_start_frame.attribute(c::ATTR_NPC_FRAME_NO).as_string()));
+		}
+
+		// extract shield load lists
+		auto n_shield_lls{ n_sprite_gfx.child(c::TAG_SHIELD_LOAD_LISTS) };
+		for (auto n_load_list{ n_shield_lls.child(c::TAG_LOAD_LIST) }; n_load_list;
+			n_load_list = n_load_list.next_sibling(c::TAG_LOAD_LIST)) {
+			l_game.m_sprite_gfx_manager.m_shield_load_lists.push_back(
+				parse_byte_list(n_load_list.attribute(c::ATTR_BYTES).as_string()));
+		}
+
+		// extract chr-banks and frames
+		l_game.m_sprite_gfx_manager.c_npcs = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_NPC_GFX));
+		l_game.m_sprite_gfx_manager.c_player = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_PLAYER_GFX));
+		l_game.m_sprite_gfx_manager.c_portraits = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_PORTRAIT_GFX));
+
+	}
+
 	return l_game;
 }
 
@@ -972,11 +999,170 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		}
 	}
 
+	// sprite gfx
+	auto n_sprite_gfx = n_metadata.append_child(c::TAG_SPRITE_GFX);
+
+	// npcs - store the start frame per npc
+	auto n_npc_start_frames{ n_sprite_gfx.append_child(c::TAG_NPC_START_FRAMES) };
+	const auto& npc_start_frame_vec{ p_game.m_sprite_gfx_manager.npc_start_frames };
+
+	for (std::size_t i{ 0 }; i < npc_start_frame_vec.size(); ++i) {
+		auto n_start_frame{ n_npc_start_frames.append_child(c::TAG_SPRITE) };
+		n_start_frame.append_attribute(c::ATTR_NO);
+		n_start_frame.attribute(c::ATTR_NO).set_value(i);
+		n_start_frame.append_attribute(c::ATTR_NPC_FRAME_NO);
+		n_start_frame.attribute(c::ATTR_NPC_FRAME_NO).set_value(npc_start_frame_vec[i]);
+	}
+
+	// shield load lists - store them for now (highly special case)
+	auto n_shield_load_lists{ n_sprite_gfx.append_child(c::TAG_SHIELD_LOAD_LISTS) };
+	const auto& shield_lls{ p_game.m_sprite_gfx_manager.m_shield_load_lists };
+	for (std::size_t i{ 0 }; i < shield_lls.size(); ++i) {
+		auto n_load_list{ n_shield_load_lists.append_child(c::TAG_LOAD_LIST) };
+		n_load_list.append_attribute(c::ATTR_NO);
+		n_load_list.attribute(c::ATTR_NO).set_value(i);
+		n_load_list.append_attribute(c::ATTR_BYTES);
+		n_load_list.attribute(c::ATTR_BYTES).set_value(join_bytes(shield_lls[i], true));
+	}
+
+	auto n_npcs{ n_sprite_gfx.append_child(c::TAG_NPC_GFX) };
+	add_sprite_gfx_container(n_npcs, p_game.m_sprite_gfx_manager.c_npcs);
+	auto n_player{ n_sprite_gfx.append_child(c::TAG_PLAYER_GFX) };
+	add_sprite_gfx_container(n_player, p_game.m_sprite_gfx_manager.c_player);
+	auto n_portraits{ n_sprite_gfx.append_child(c::TAG_PORTRAIT_GFX) };
+	add_sprite_gfx_container(n_portraits, p_game.m_sprite_gfx_manager.c_portraits);
+
 	// save document to disk
 	if (!doc.save_file(p_filepath.c_str()))
 		throw std::runtime_error("Could not save " + p_filepath);
 }
 
+// sprite gfx helpers
+void fe::xml::add_sprite_gfx_container(pugi::xml_node p_node, const fe::SpriteFrameCollection& p_coll) {
+	auto n_chr_banks{ p_node.append_child(c::TAG_CHR_BANKS) };
+
+	for (std::size_t i{ 0 }; i < p_coll.banks.size(); ++i)
+		add_chr_bank(n_chr_banks, i, p_coll.banks[i]);
+
+	auto n_frames{ p_node.append_child(c::TAG_FRAMES) };
+
+	for (std::size_t i{ 0 }; i < p_coll.frames.size(); ++i)
+		add_frame(n_frames, i, p_coll.frames[i].frame);
+}
+
+void fe::xml::add_frame(pugi::xml_node p_node, std::size_t p_frame_no, const fe::SpriteAnimationFrame& p_frame) {
+	auto n_frame{ p_node.append_child(c::TAG_FRAME) };
+	const auto tilemap{ p_frame.tilemap };
+
+	n_frame.append_attribute(c::ATTR_NO);
+	n_frame.attribute(c::ATTR_NO).set_value(p_frame_no);
+	n_frame.append_attribute(c::ATTR_OFFSET_X);
+	n_frame.attribute(c::ATTR_OFFSET_X).set_value(p_frame.offset_x);
+	n_frame.append_attribute(c::ATTR_OFFSET_Y);
+	n_frame.attribute(c::ATTR_OFFSET_Y).set_value(p_frame.offset_y);
+	n_frame.append_attribute(c::ATTR_PIVOT_X);
+	n_frame.attribute(c::ATTR_PIVOT_X).set_value(p_frame.pivot_x);
+
+	for (std::size_t j{ 0 }; j < tilemap.size(); ++j) {
+		auto n_row{ n_frame.append_child(c::TAG_ROW) };
+		n_row.append_attribute(c::ATTR_NO);
+		n_row.attribute(c::ATTR_NO).set_value(j);
+
+		for (std::size_t i{ 0 }; i < tilemap[j].size(); ++i) {
+			auto n_tile{ n_row.append_child(c::TAG_TILE) };
+			n_tile.append_attribute(c::ATTR_NO);
+			n_tile.attribute(c::ATTR_NO).set_value(i);
+
+			if (tilemap[j][i]) {
+				const auto tile{ tilemap[j][i].value() };
+
+				n_tile.append_attribute(c::ATTR_CHR_INDEX);
+				n_tile.attribute(c::ATTR_CHR_INDEX).set_value(tile.index);
+				n_tile.append_attribute(c::ATTR_SUB_PAL);
+				n_tile.attribute(c::ATTR_SUB_PAL).set_value(tile.sub_palette);
+				if (tile.h_flip) {
+					n_tile.append_attribute(c::ATTR_HFLIP);
+					n_tile.attribute(c::ATTR_HFLIP).set_value(true);
+				}
+				if (tile.v_flip) {
+					n_tile.append_attribute(c::ATTR_VFLIP);
+					n_tile.attribute(c::ATTR_VFLIP).set_value(true);
+				}
+			}
+		}
+	}
+}
+
+void fe::xml::add_chr_bank(pugi::xml_node p_node, std::size_t p_bank_no, const std::vector<klib::NES_tile>& p_tiles) {
+	auto n_chr_bank{ p_node.append_child(c::TAG_CHR_BANK) };
+	n_chr_bank.append_attribute(c::ATTR_NO);
+	n_chr_bank.attribute(c::ATTR_NO).set_value(p_bank_no);
+
+	for (std::size_t i{ 0 }; i < p_tiles.size(); ++i) {
+		auto n_chr_tile{ n_chr_bank.append_child(c::TAG_CHR_TILE) };
+		n_chr_tile.append_attribute(c::ATTR_NO);
+		n_chr_tile.attribute(c::ATTR_NO).set_value(i);
+		n_chr_tile.append_attribute(c::ATTR_BYTES);
+		n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(p_tiles[i].to_bytes(), true));
+	}
+}
+
+fe::SpriteFrameCollection fe::xml::read_sprite_gfx_container(pugi::xml_node p_node) {
+	fe::SpriteFrameCollection result;
+
+	auto n_chr_banks{ p_node.child(c::TAG_CHR_BANKS) };
+	for (auto n_bank{ n_chr_banks.child(c::TAG_CHR_BANK) }; n_bank; n_bank = n_bank.next_sibling(c::TAG_CHR_BANK))
+		result.add_chr_bank(read_chr_bank(n_bank));
+
+	auto n_frames{ p_node.child(c::TAG_FRAMES) };
+	for (auto n_frame{ n_frames.child(c::TAG_FRAME) }; n_frame; n_frame = n_frame.next_sibling(c::TAG_FRAME))
+		result.add_frame(read_frame(n_frame));
+
+	return result;
+}
+
+std::vector<klib::NES_tile> fe::xml::read_chr_bank(pugi::xml_node p_node) {
+	std::vector<klib::NES_tile> result;
+
+	for (auto n_tile{ p_node.child(c::TAG_CHR_TILE) }; n_tile; n_tile = n_tile.next_sibling(c::TAG_CHR_TILE))
+		result.push_back(parse_byte_list(n_tile.attribute(c::ATTR_BYTES).as_string()));
+
+	return result;
+}
+
+fe::SpriteAnimationFrame fe::xml::read_frame(pugi::xml_node p_node) {
+	fe::SpriteAnimationFrame result;
+
+	result.offset_x = p_node.attribute(c::ATTR_OFFSET_X).as_int();
+	result.offset_y = p_node.attribute(c::ATTR_OFFSET_Y).as_int();
+	result.pivot_x = p_node.attribute(c::ATTR_PIVOT_X).as_int();
+
+	for (auto n_row{ p_node.child(c::TAG_ROW) }; n_row; n_row = n_row.next_sibling(c::TAG_ROW)) {
+		std::vector<std::optional<fe::SpriteFrameTile>> tile_row;
+
+		for (auto n_tile{ n_row.child(c::TAG_TILE) }; n_tile; n_tile = n_tile.next_sibling(c::TAG_TILE)) {
+			auto n_idx{ n_tile.attribute(c::ATTR_CHR_INDEX) };
+			if (n_idx) {
+				auto n_sub_pal{ n_tile.attribute(c::ATTR_SUB_PAL) };
+				auto n_hflip{ n_tile.attribute(c::ATTR_HFLIP) };
+				auto n_vflip{ n_tile.attribute(c::ATTR_VFLIP) };
+
+				tile_row.push_back(fe::SpriteFrameTile{
+					.index = static_cast<byte>(parse_numeric(n_idx.as_string())),
+					.sub_palette = static_cast<byte>(parse_numeric(n_sub_pal.as_string())),
+					.v_flip = (n_vflip ? n_vflip.as_bool() : false),
+					.h_flip = (n_hflip ? n_hflip.as_bool() : false)
+					});
+			}
+			else
+				tile_row.push_back(std::nullopt);
+		}
+
+		result.tilemap.push_back(tile_row);
+	}
+
+	return result;
+}
 
 // eoe config helpers
 

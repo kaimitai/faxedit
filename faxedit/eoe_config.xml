@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-5.31">
+<eoe_config app_version="beta-6">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -50,6 +50,23 @@
 		<!-- ROM offset to music data - ptr table -->
 		<pointer name="music_ptr" region="us,randum,jp,en-transl,us-rev-a" value="0x14f0b" zero_addr="0xc010" />
 		<pointer name="music_ptr" region="eu" value="0x14f5a" zero_addr="0xc010" />
+		<!-- npc/ui sprite data ptrs -->
+		<pointer name="gfx_npc_bank6_chr_ptr" value="0x18010" zero_addr="0x18010" />
+		<pointer name="gfx_npc_bank7_chr_ptr" value="0x1c010" zero_addr="0x1c010" />
+		<pointer name="gfx_npc_anim_frame_ptr" value="0x1c016" zero_addr="0x1c010" />
+		<pointer name="gfx_common_chr_data_ptr" value="0x20018" zero_addr="0x20010" />
+		<!-- player sprite data ptrs -->
+		<pointer name="gfx_player_anim_frame_ptr" value="0x1c018" zero_addr="0x1c010" />
+		<pointer name="gfx_player_tile_index_table_ptr" value="0x20010" zero_addr="0x20010" />
+		<pointer name="gfx_weapon_tile_index_table_ptr" value="0x20012" zero_addr="0x20010" />
+		<pointer name="gfx_shield_tile_index_table_ptr" value="0x2001c" zero_addr="0x20010" />
+		<pointer name="gfx_player_chr_data_ptr" value="0x20014" zero_addr="0x20010" />
+		<pointer name="gfx_weapon_chr_data_ptr" value="0x20016" zero_addr="0x20010" />
+		<pointer name="gfx_shield_chr_data_ptr" value="0x2001a" zero_addr="0x20010" />
+		<!-- portrait data ptrs - chr data, ppu load lists and anim frames -->
+		<pointer name="gfx_portrait_anim_frame_ptr" value="0x1c01a" zero_addr="0x1c010" />
+		<pointer name="gfx_portrait_tile_index_table_ptr" value="0x2001e" zero_addr="0x20010" />
+		<pointer name="gfx_portrait_chr_data_ptr" value="0x20020" zero_addr="0x20010" />
 	</pointers>
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
@@ -197,6 +214,16 @@
 		<!-- some gfx needed for chr tile pool adjustment for the title screen -->
 		<const name="alphabet_chr_offset" value="0x28250" />
 		<const name="numeric_chr_offset" value="0x28450" />
+		<!-- gfx constants: player -->
+		<const name="gfx_player_tile_count_offset" value="0x3eda5" />
+		<const name="gfx_weapon_tile_count_offset" value="0x3edd1" />
+		<!-- gfx constants: npcs -->
+		<!-- sprite index defining the cut-off for chr-tiles (bank 6, or 7) - all 3 values must agree -->
+		<const name="gfx_npc_chr_cutoff_ref1" value="0x3c292" />
+		<const name="gfx_npc_chr_cutoff_ref2" value="0x3cda3" />
+		<const name="gfx_npc_chr_cutoff_ref3" value="0x3cda7" />
+		<const name="gfx_npc_ppu_tile_count_offset" value="0x3ce2b" />
+		<const name="gfx_npc_anim_index_offset" value="0x38caf" />
 		<!-- misc data offset -->
 		<!-- title screen strings - variable length with $00-delimiters -->
 		<const name="title_string_offset" region="us,randum" value="0x31dcd" />
@@ -257,6 +284,10 @@
 		<!-- ppu-indexed chr-tiles which are part of the fog animation -->
 		<!-- should be considered read-only on bmp import -->
 		<set name="reserved_fog_chr_indexes" values="$80,$82,$84,$86" />
+		<!-- sprites which use the common tile gfx, rather than having their own chr-banks -->
+		<!-- generally sprites that spawn during gameplay; coins, breads and effects -->
+		<!-- 19 = ripasheiku projectile? -->
+		<set name="common_gfx_sprites" values="0,1,2,3,20,79,81,83,84,100" />
 	</sets>
 
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
@@ -1243,6 +1274,85 @@
 			<entry byte="$02" str="RAM_SPRITE_FLAGS:$02dc" />
 			<entry byte="$03" str="RAM_SPRITE_HIT_COUNTER:$034c" />
 			<entry byte="$04" str="RAM_SPRITE_VALUES:$036c" />
+		</byte_to_string_map>
+		<!-- how many frames an npc uses - if not given assumed to be one -->
+		<!-- this is kept in config since it is not feasible to deduce it from the game logic -->
+		<byte_to_string_map name="npc_animation_frame_counts">
+			<entry byte="$02" str="2" />
+			<entry byte="$03" str="6" />
+			<entry byte="$04" str="4" />
+			<entry byte="$05" str="2" />
+			<entry byte="$06" str="3" />
+			<entry byte="$07" str="2" />
+			<entry byte="$08" str="2" />
+			<entry byte="$09" str="5" />
+			<entry byte="$0a" str="2" />
+			<entry byte="$0b" str="2" />
+			<entry byte="$0c" str="2" />
+			<entry byte="$0d" str="3" />
+			<entry byte="$0e" str="3" />
+			<entry byte="$0f" str="4" />
+			<entry byte="$10" str="2" />
+			<entry byte="$11" str="4" />
+			<entry byte="$12" str="5" />
+			<entry byte="$13" str="5" />
+			<entry byte="$14" str="5" />
+			<entry byte="$15" str="3" />
+			<entry byte="$17" str="3" />
+			<entry byte="$18" str="2" />
+			<entry byte="$19" str="4" />
+			<entry byte="$1a" str="2" />
+			<entry byte="$1b" str="2" />
+			<entry byte="$1c" str="2" />
+			<entry byte="$1d" str="4" />
+			<entry byte="$1e" str="3" />
+			<entry byte="$1f" str="3" />
+			<entry byte="$20" str="5" />
+			<entry byte="$21" str="3" />
+			<entry byte="$22" str="2" />
+			<entry byte="$23" str="2" />
+			<entry byte="$24" str="4" />
+			<entry byte="$26" str="3" />
+			<entry byte="$27" str="2" />
+			<entry byte="$28" str="4" />
+			<entry byte="$2a" str="3" />
+			<entry byte="$2b" str="2" />
+			<entry byte="$2c" str="7" />
+			<entry byte="$2d" str="4" />
+			<entry byte="$2e" str="4" />
+			<entry byte="$2f" str="8" />
+			<entry byte="$30" str="3" />
+			<entry byte="$31" str="6" />
+			<entry byte="$32" str="3" />
+			<entry byte="$33" str="10" />
+			<entry byte="$34" str="3" />
+			<entry byte="$35" str="3" />
+			<entry byte="$36" str="3" />
+			<entry byte="$37" str="2" />
+			<entry byte="$38" str="2" />
+			<entry byte="$39" str="2" />
+			<entry byte="$3a" str="4" />
+			<entry byte="$3b" str="2" />
+			<entry byte="$3c" str="2" />
+			<entry byte="$3d" str="2" />
+			<entry byte="$3e" str="2" />
+			<entry byte="$3f" str="2" />
+			<entry byte="$40" str="2" />
+			<entry byte="$41" str="2" />
+			<entry byte="$42" str="2" />
+			<entry byte="$43" str="2" />
+			<entry byte="$44" str="2" />
+			<entry byte="$45" str="2" />
+			<entry byte="$46" str="2" />
+			<entry byte="$47" str="2" />
+			<entry byte="$51" str="2" />
+			<entry byte="$52" str="7" />
+			<entry byte="$53" str="3" />
+			<entry byte="$54" str="20" />
+			<entry byte="$61" str="7" />
+			<entry byte="$62" str="7" />
+			<entry byte="$63" str="7" />
+			<entry byte="$64" str="5" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>

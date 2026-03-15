@@ -1,6 +1,7 @@
 #ifndef FE_ROM_MANAGER_H
 #define FE_ROM_MANAGER_H
 
+#include "GodAllocator.h"
 #include "Game.h"
 #include "fe_constants.h"
 #include "./../common/klib/NES_tile.h"

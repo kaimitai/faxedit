@@ -133,6 +133,28 @@ namespace fe {
 			constexpr char VAL_DOOR_TYPE_NEXTCHUNK[]{ "next_stage" };
 			constexpr char VAL_DOOR_TYPE_PREVCHUNK[]{ "previous_stage" };
 
+			// sprite gfx tags and attributes
+			constexpr char TAG_SPRITE_GFX[]{ "sprite_gfx" };
+			constexpr char TAG_NPC_START_FRAMES[]{ "npc_start_frames" };
+			constexpr char TAG_SHIELD_LOAD_LISTS[]{ "shield_load_lists" };
+			constexpr char TAG_LOAD_LIST[]{ "load_list" };
+			constexpr char TAG_FRAMES[]{ "frames" };
+			constexpr char TAG_FRAME[]{ "frame" };
+			constexpr char TAG_TILE[]{ "tile" };
+			constexpr char TAG_NPC_GFX[]{ "npc_gfx" };
+			constexpr char TAG_PLAYER_GFX[]{ "player_gfx" };
+			constexpr char TAG_PORTRAIT_GFX[]{ "portrait_gfx" };
+
+			constexpr char ATTR_NPC_FRAME_NO[]{ "frame_no" };
+			constexpr char ATTR_OFFSET_X[]{ "x_offset" };
+			constexpr char ATTR_OFFSET_Y[]{ "y_offset" };
+			constexpr char ATTR_PIVOT_X[]{ "x_pivot" };
+
+			constexpr char ATTR_CHR_INDEX[]{ "idx" };
+			constexpr char ATTR_SUB_PAL[]{ "sp" };
+			constexpr char ATTR_HFLIP[]{ "h" };
+			constexpr char ATTR_VFLIP[]{ "v" };
+
 			// config file tags
 			constexpr char TAG_CONFIG_ROOT[]{ "eoe_config" };
 

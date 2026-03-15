@@ -216,6 +216,12 @@
     <ClCompile Include="src\windows\SpriteGfxWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\fe\GodAllocator.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -375,6 +381,12 @@
       <Filter>Header Files\fe\sprite</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\GodAllocator.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h">
       <Filter>Header Files\fe\sprite</Filter>
     </ClInclude>
   </ItemGroup>

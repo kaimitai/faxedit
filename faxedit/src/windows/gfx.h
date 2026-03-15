@@ -7,6 +7,7 @@
 #include <optional>
 #include <utility>
 #include <set>
+#include <tuple>
 #include <vector>
 #include "./../common/klib/NES_tile.h"
 #include "./../fe/Sprite_definitions.h"
@@ -77,13 +78,9 @@ namespace fe {
 	};
 
 	struct SpriteImportResult {
-		fe::SpriteGfxCollection collection;
-		std::size_t approximated_tile_count;
-	};
-
-	struct GfxCollectionTextures {
-		SDL_Texture* chrbank_texture;
-		std::vector<SDL_Texture*> frame_textures;
+		std::vector<fe::SpriteAnimationFrame> frames;
+		std::vector<klib::NES_tile> tiles;
+		int approximated_tile_count;
 	};
 
 	enum ChrDedupMode {
@@ -110,7 +107,10 @@ namespace fe {
 		// use virtual keys for other tilemaps, like the intro, outro and title screens
 		std::map<std::size_t, SDL_Texture*> m_tilemap_gfx;
 		std::map<std::size_t, ChrTilemap> m_tilemap_import_results;
-		std::unordered_map<std::size_t, GfxCollectionTextures> m_sprite_coll_gfx;
+
+		std::optional<std::tuple<std::size_t, std::size_t, std::size_t>> m_sprite_selected_key;
+		SDL_Texture* m_sprite_selected_gfx;
+		SDL_Texture* m_sprite_selected_bank;
 
 		SDL_Palette* m_nes_palette;
 
@@ -319,15 +319,31 @@ namespace fe {
 		fe::SpriteImportResult import_sprite_frames_from_folder(
 			const std::string& folder,
 			const std::string& prefix,
+			std::size_t p_bank_idx,
+			std::vector<std::size_t> p_frame_idxs,
 			const std::vector<byte>& pal16,
 			std::size_t max_bank_size,
 			int tolerance) const;
+		std::string get_sprite_frame_bmp_filename(
+			const std::string& prefix,
+			std::size_t p_bank_idx,
+			std::size_t p_frame_idx
+		) const;
+		std::string get_sprite_frame_bmp_wc_filpath(
+			const std::string& p_bmp_folder,
+			const std::string& prefix,
+			std::size_t p_bank_idx
+		) const;
 
 		// rendering
-		void gen_gfx_collection_textures(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
-			const fe::SpriteGfxCollection& coll, const std::vector<byte>& p_palette);
-		void clear_gfx_collection_textures(std::size_t p_gfx_key);
-		SDL_Texture* get_gfx_coll_frame_txt(std::size_t p_gfx_key, std::size_t p_frame_no) const;
+		SDL_Texture* get_sprite_selected_texture(std::size_t p_coll_type, std::size_t p_frame_no,
+			std::size_t p_chr_bank_no) const;
+		SDL_Texture* get_sprite_selected_chr_bank(std::size_t p_coll_type, std::size_t p_chr_bank_no) const;
+
+		void gen_sprite_selected_texture(SDL_Renderer* p_rnd, std::size_t p_coll_type, std::size_t p_frame_no,
+			std::size_t p_chr_bank_no, const fe::SpriteAnimationFrame& p_frame,
+			const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette);
+		void clear_sprite_selected_texture(void);
 
 		// functions for bmp export
 		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;
@@ -337,9 +353,17 @@ namespace fe {
 			const std::string& p_path,
 			const std::string& p_filename) const;
 
-		SDL_Surface* gen_sprite_frame_surface(const fe::SpriteGfxCollection& coll,
+		SDL_Surface* gen_sprite_frame_surface(const fe::SpriteAnimationFrame& p_frame,
+			const std::vector<klib::NES_tile> p_tiles, const std::vector<std::vector<byte>>& p_palette) const;
+		SDL_Surface* gen_chr_bank_surface(const std::vector<klib::NES_tile> p_tiles,
+			const std::vector<std::vector<byte>>& p_palette) const;
+		SDL_Surface* gen_sprite_frame_surface(const fe::SpriteFrameCollection& coll,
+			std::size_t p_bank_idx,
+			std::size_t frame_idx,
 			const std::vector<std::vector<byte>>& p_palette, std::size_t p_frame_idx) const;
-		void save_sprite_frames_bmp(const fe::SpriteGfxCollection& coll,
+		void save_sprite_frames_bmp(const fe::SpriteFrameCollection& coll,
+			std::size_t p_bank_idx,
+			std::vector<std::size_t> frame_idxs,
 			const std::vector<byte>& p_palette,
 			const std::string& p_path,
 			const std::string& p_file_prefix) const;

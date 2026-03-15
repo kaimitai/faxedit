@@ -162,6 +162,7 @@
     <ClCompile Include="src\fe\Door.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\GfxTilemapManager.cpp" />
+    <ClCompile Include="src\fe\GodAllocator.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
     <ClCompile Include="src\fe\IntraChunkScroll.cpp" />
     <ClCompile Include="src\fe\Metatile.cpp" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />
     <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp" />
+    <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp" />
     <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp" />
     <ClCompile Include="src\fe\Sprite_definitions.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
@@ -219,6 +221,7 @@
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
     <ClInclude Include="src\fe\GfxTilemapManager.h" />
+    <ClInclude Include="src\fe\GodAllocator.h" />
     <ClInclude Include="src\fe\InterChunkScroll.h" />
     <ClInclude Include="src\fe\IntraChunkScroll.h" />
     <ClInclude Include="src\fe\Metatile.h" />
@@ -229,6 +232,7 @@
     <ClInclude Include="src\fe\Sprite.h" />
     <ClInclude Include="src\fe\sprite\fe_sprite_constants.h" />
     <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h" />
+    <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h" />
     <ClInclude Include="src\fe\sprite\SpriteGfxManager.h" />
     <ClInclude Include="src\fe\Sprite_definitions.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />

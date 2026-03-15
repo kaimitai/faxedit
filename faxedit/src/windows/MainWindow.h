@@ -247,8 +247,8 @@ namespace fe {
 		std::vector<klib::NES_tile> load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count);
 
 		// sprite gfx functions and procedures
-		void show_gfx_collection_editor(SDL_Renderer* p_rnd, std::size_t p_gfx_key, fe::SpriteGfxCollection& coll,
-			std::size_t p_palette_no);
+		void show_sprite_gfx_editor(SDL_Renderer* p_rnd,
+			std::size_t p_coll, fe::SpriteFrameCollection& p_collection);
 		std::string get_file_prefix(std::size_t p_gfx_key) const;
 
 		// load functions
