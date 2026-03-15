@@ -89,8 +89,8 @@ namespace fe {
 		std::vector<byte> extract_load_list(const std::vector<byte>& p_rom,
 			std::size_t p_ptr_table_rom_offset, std::size_t p_tile_count) const;
 		std::vector<std::vector<byte>> calc_portrait_load_lists(void) const;
-		std::vector<std::vector<byte>> calc_player_load_lists(void) const;
-		std::vector<std::vector<byte>> calc_weapons_load_lists(void) const;
+		std::vector<std::vector<byte>> calc_player_load_lists(std::size_t min_weapon_start, std::size_t drasle_start) const;
+		std::vector<std::vector<byte>> calc_weapons_load_lists(const std::vector<std::size_t>& p_weapon_tile_start) const;
 		std::vector<byte> calc_load_list(const fe::SpriteFrameCollection& p_coll,
 			std::set<std::size_t> frame_indexes,
 			bool add_ff = false) const;

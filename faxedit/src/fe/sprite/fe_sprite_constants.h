@@ -15,11 +15,14 @@ namespace fe {
 		// constants enforced by the game engine
 		// player + shield + weapon (TODO: separate out weapon and shield)
 		constexpr byte PPU_PLAYER_TILE_START{ 0x00 };
-		constexpr byte PPU_PLAYER_TILE_COUNT{ 0x40 };
+		constexpr byte PPU_PLAYER_TILE_COUNT{ 0x40 }; // includes (optional) shield and weapon
+		constexpr byte PPU_SHIELD_START{ 0x30 }; // weapon start is not fixed, must be read from rom
 		constexpr byte PPU_COMMON_TILE_START{ PPU_PLAYER_TILE_START + PPU_PLAYER_TILE_COUNT };
 		constexpr byte PPU_COMMON_TILE_COUNT{ 0x50 };
 		constexpr byte PPU_DYNAMIC_TILE_START{ 0x90 };
 		constexpr std::size_t PPU_DYNAMIC_TILE_COUNT{ 0x100 - PPU_DYNAMIC_TILE_START };
+		constexpr std::size_t PPU_PORTRAIT_TILE_COUNT{ PPU_DYNAMIC_TILE_COUNT };
+		constexpr std::size_t PPU_NPC_TILE_COUNT{ PPU_DYNAMIC_TILE_COUNT };
 
 		// immutables
 		constexpr std::size_t PLAYER_TYPE_COUNT{ 8 };

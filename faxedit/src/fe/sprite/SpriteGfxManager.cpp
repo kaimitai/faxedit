@@ -421,13 +421,21 @@ std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_portrait_load_lists(vo
 		std::set<std::size_t> frame_indexes;
 		for (std::size_t j{ 0 }; j < c::PORTRAIT_FRAME_COUNT; ++j)
 			frame_indexes.insert(i + j);
+
 		result.push_back(calc_load_list(c_portraits, frame_indexes, true));
+
+		// validate load list size
+		std::size_t portrait_ppu_tiles{ result.back().size() - 1 };
+		if (portrait_ppu_tiles > c::PPU_PORTRAIT_TILE_COUNT)
+			throw std::runtime_error(std::format("Portrait {} uses {} tiles, but maximum is {}",
+				i / 5, portrait_ppu_tiles, c::PPU_PORTRAIT_TILE_COUNT));
 	}
 
 	return result;
 }
 
-std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_player_load_lists(void) const {
+std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_player_load_lists(std::size_t min_weapon_start,
+	std::size_t drasle_start) const {
 	std::vector<std::vector<byte>> result;
 
 	for (std::size_t i{ 0 }; i < c::PLAYER_TYPE_COUNT; ++i) {
@@ -440,12 +448,30 @@ std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_player_load_lists(void
 		player_frames.insert(c::HAND_EXTEND_FRAME_START + c::HAND_EXTEND_ORDER_TO_ARMOR[i]);
 
 		result.push_back(calc_load_list(c_player, player_frames));
+
+		// validate load list size
+		std::size_t player_ppu_tiles{ result.back().size() };
+
+		// default max tiles: type < 6 AND we have a shield, then our tile count must stop before
+		// the first shield tile
+		std::size_t player_max_tiles{ static_cast<std::size_t>(c::PPU_SHIELD_START) };
+
+		// if player type >= 6, we have the dragon slayer and don't need to worry about a shield
+		if (i >= 6)
+			player_max_tiles = drasle_start;
+		else if (i % 2 == 0) {
+			player_max_tiles = min_weapon_start; // this is the minimum ppu tile index for all weapons BUT drasle
+		}
+		// else we have a shield, and then our tile count must be less than shield start, which was our initial value
+		if (player_ppu_tiles > player_max_tiles)
+			throw std::runtime_error(std::format("Player type {} uses {} tiles, but maximum is {}",
+				i, player_ppu_tiles, player_max_tiles));
 	}
 
 	return result;
 }
 
-std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_weapons_load_lists(void) const {
+std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_weapons_load_lists(const std::vector<std::size_t>& p_weapon_tile_start) const {
 	std::vector<std::vector<byte>> result;
 
 	constexpr std::size_t WEAPONS_START_FRAME{ c::PLAYER_TYPE_COUNT * c::PLAYER_FRAME_COUNT };
@@ -455,8 +481,15 @@ std::vector<std::vector<byte>> fe::SpriteGfxManager::calc_weapons_load_lists(voi
 		for (std::size_t j{ 0 }; j < c::PLAYER_FRAME_COUNT; ++j)
 			weapon_frames.insert(WEAPONS_START_FRAME + i * c::PLAYER_FRAME_COUNT + j);
 		result.push_back(calc_load_list(c_player, weapon_frames));
-	}
 
+		// validate load list size
+		std::size_t weapon_ppu_tiles{ result.back().size() };
+		std::size_t weapon_max_tiles{ static_cast<std::size_t>(c::PPU_COMMON_TILE_START) -
+			p_weapon_tile_start.at(i) };
+		if (weapon_ppu_tiles > weapon_max_tiles)
+			throw std::runtime_error(std::format("Weapon {} uses {} tiles, but maximum is {}",
+				i, weapon_ppu_tiles, weapon_max_tiles));
+	}
 
 	return result;
 }
@@ -573,8 +606,23 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	p_rom_mgr.patch_ptr(p_rom, bank7_player_anim_frame_ptr.first,
 		bank7npcframe_result.value() - chr_bank7_chr_ptr.second);
 
-	const auto weapon_load_lists{ calc_weapons_load_lists() };
-	const auto player_load_lists{ calc_player_load_lists() };
+	// we need to find out the ppu index of the weapon tiles to calculate our player tile count limits
+	const std::size_t ROM_OFFSET_WEAPON_TILE_PPU_ADDR_OFFSET{
+		p_config.constant(c::ID_GFX_WEAPON_TILE_COUNT_OFFSET) + c::WEAPON_TYPE_COUNT
+	};
+
+	std::vector<std::size_t> wep_ppu_start;
+	for (std::size_t i{ 0 }; i < c::WEAPON_TYPE_COUNT; ++i)
+		wep_ppu_start.push_back(
+			(static_cast<std::size_t>(p_rom.at(ROM_OFFSET_WEAPON_TILE_PPU_ADDR_OFFSET + 2 * i)) +
+				256 * static_cast<std::size_t>(p_rom.at(ROM_OFFSET_WEAPON_TILE_PPU_ADDR_OFFSET + 2 * i + 1))) / 0x10);
+
+	std::size_t min_wep_start_xcept_drasle{
+		*std::min_element(begin(wep_ppu_start), begin(wep_ppu_start) + c::WEAPON_TYPE_COUNT - 1)
+	};
+
+	const auto weapon_load_lists{ calc_weapons_load_lists(wep_ppu_start) };
+	const auto player_load_lists{ calc_player_load_lists(min_wep_start_xcept_drasle, wep_ppu_start.back()) };
 	const auto shield_load_lists{ m_shield_load_lists };
 
 	auto bank7playerframe_result{
