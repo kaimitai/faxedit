@@ -52,6 +52,15 @@ std::size_t fe::SpriteAnimationFrame::h(void) const {
 	return tilemap.size();
 }
 
+std::vector<byte> fe::SpriteAnimationFrame::to_bytes(byte linear_delta) const {
+	std::map<byte, byte> remap;
+
+	for (byte i{ linear_delta }; i < 0xff; ++i)
+		remap.insert(std::make_pair(i, i - linear_delta));
+
+	return to_bytes(remap);
+}
+
 std::vector<byte> fe::SpriteAnimationFrame::to_bytes(const std::vector<byte>& load_list) const {
 	std::map<byte, byte> remap;
 	for (std::size_t i{ 0 }; i < load_list.size(); ++i)

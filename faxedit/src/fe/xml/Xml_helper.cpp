@@ -436,6 +436,12 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 				parse_byte_list(n_load_list.attribute(c::ATTR_BYTES).as_string()));
 		}
 
+		// extract shield frame indexes
+		auto n_shield_frame_idxs{ n_sprite_gfx.child(c::TAG_SHIELD_FRAME_INDEXES) };
+		l_game.m_sprite_gfx_manager.shield_frame_indexes = parse_byte_list(
+			n_shield_frame_idxs.attribute(c::TAG_FRAMES).as_string()
+		);
+
 		// extract chr-banks and frames
 		l_game.m_sprite_gfx_manager.c_npcs = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_NPC_GFX));
 		l_game.m_sprite_gfx_manager.c_player = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_PLAYER_GFX));
@@ -1024,6 +1030,13 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_load_list.append_attribute(c::ATTR_BYTES);
 		n_load_list.attribute(c::ATTR_BYTES).set_value(join_bytes(shield_lls[i], true));
 	}
+
+	// player animation state to shield frame index map
+	auto n_shield_frame_idxs{ n_sprite_gfx.append_child(c::TAG_SHIELD_FRAME_INDEXES) };
+	n_shield_frame_idxs.append_attribute(c::TAG_FRAMES);
+	n_shield_frame_idxs.attribute(c::TAG_FRAMES).set_value(
+		join_bytes(p_game.m_sprite_gfx_manager.shield_frame_indexes)
+	);
 
 	auto n_npcs{ n_sprite_gfx.append_child(c::TAG_NPC_GFX) };
 	add_sprite_gfx_container(n_npcs, p_game.m_sprite_gfx_manager.c_npcs);

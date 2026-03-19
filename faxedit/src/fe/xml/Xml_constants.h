@@ -138,6 +138,7 @@ namespace fe {
 			constexpr char TAG_NPC_START_FRAMES[]{ "npc_start_frames" };
 			constexpr char TAG_SHIELD_LOAD_LISTS[]{ "shield_load_lists" };
 			constexpr char TAG_LOAD_LIST[]{ "load_list" };
+			constexpr char TAG_SHIELD_FRAME_INDEXES[]{ "shield_frame_indexes" };
 			constexpr char TAG_FRAMES[]{ "frames" };
 			constexpr char TAG_FRAME[]{ "frame" };
 			constexpr char TAG_TILE[]{ "tile" };

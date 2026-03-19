@@ -48,16 +48,13 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 	std::size_t bank6_chr_ptr_table_start{ p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_master_ptr) };
 
 	for (std::size_t i{ 0 }; i < SPRITE_CUTOFF; ++i) {
-		// TODO: Decide how to handle what is most likely garbage chr-banks
-		/*
 		if (npc_using_common_gfx.contains(i))
 			c_npcs.add_chr_bank({});
 		else
-		*/
-		c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
-			p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_ptr_table_start + 2 * i,
-				bank6_chr_master_ptr.second),
-			ppu_tile_counts.at(i)));
+			c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
+				p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank6_chr_ptr_table_start + 2 * i,
+					bank6_chr_master_ptr.second),
+				ppu_tile_counts.at(i)));
 	}
 
 	// bank 7 - chr-banks for sprites with IDs >= cutoff, and frames of all types
@@ -70,16 +67,13 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 
 	// read in chr-banks for sprites residing in bank 7
 	for (std::size_t i{ SPRITE_CUTOFF }; i < SPRITE_COUNT; ++i) {
-		// TODO: Decide how to handle what is most likely garbage chr-banks
-		/*
 		if (npc_using_common_gfx.contains(i))
 			c_npcs.add_chr_bank({});
 		else
-		*/
-		c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
-			p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_chr_ptr_table_start + 2 * (i - SPRITE_CUTOFF),
-				bank7_chr_master_ptr.second),
-			ppu_tile_counts.at(i)));
+			c_npcs.add_chr_bank(extract_chr_tiles(p_rom,
+				p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_chr_ptr_table_start + 2 * (i - SPRITE_CUTOFF),
+					bank7_chr_master_ptr.second),
+				ppu_tile_counts.at(i)));
 	}
 
 	c_npcs.add_frames(extract_animation_frames(p_rom, p_rom_mgr,
@@ -88,6 +82,17 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 		p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_player_frame_master_ptr), bank7_player_frame_master_ptr.second));
 	c_portraits.add_frames(extract_animation_frames(p_rom, p_rom_mgr,
 		p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_portrait_frame_master_ptr), bank7_portrait_frame_master_ptr.second));
+
+	// add constant to all frame indexes (given in config, but hard coded in asm for a few frames)
+	const auto NPC_LINEAR_TRANSLATE{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_IDX_TRANSLATE) };
+	for (const auto& kv : NPC_LINEAR_TRANSLATE) {
+		std::size_t frame_idx{ npcstartframes.at(kv.first) };
+		std::size_t frame_count{ npcframecounts.at(kv.first) };
+
+		for (std::size_t i{ 0 }; i < frame_count; ++i)
+			if (frame_idx + i < c_npcs.frames.size())
+				normalize_frame(static_cast<byte>(kv.second), c_npcs.frames[frame_idx + i].frame);
+	}
 
 	// bank 8 - 8 master ptrs
 	// 2 bytes: ptr to player load list ptr tables
@@ -204,7 +209,11 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 		}
 	}
 
+	// extract the player animation state -> shield frame index map
+	shield_frame_indexes = p_rom_mgr.read_bytes(p_rom, p_config.constant(c::ID_GFX_SHIELD_FRAME_IDX_OFFSET),
+		c::PLAYER_FRAME_COUNT);
 	m_shield_load_lists = shield_load_lists;
+
 	calculate_all_chr_bank_mappings();
 }
 
@@ -249,12 +258,11 @@ void fe::SpriteGfxManager::calculate_npc_chr_bank_mappings(void) {
 	std::vector<std::set<std::size_t>> bank_maps(FRAME_COUNT, std::set<std::size_t>());
 
 	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i) {
-		std::size_t bank_idx{ npc_using_common_gfx.contains(i) ? PPU_BANK_IDX : i };
+		if (npc_using_common_gfx.contains(i))
+			continue;
 		for (std::size_t j{ 0 }; j < npc_frame_counts[i]; ++j) {
 			std::size_t frame_no{ npc_start_frames[i] + j };
 			if (frame_no < bank_maps.size()) {
-				bank_maps[frame_no].insert(bank_idx);
-				// TODO: Decide how to handle what is most likely garbage chr-banks - always add npc-banks?
 				bank_maps[frame_no].insert(i);
 			}
 		}
@@ -262,26 +270,28 @@ void fe::SpriteGfxManager::calculate_npc_chr_bank_mappings(void) {
 
 	for (std::size_t i{ 0 }; i < frames.size(); ++i)
 		if (bank_maps[i].empty())
-			frames[i].chrbanks = { PPU_BANK_IDX };
+			frames[i].chrbanks.push_back(PPU_BANK_IDX);
 		else
 			frames[i].chrbanks = std::vector<std::size_t>(begin(bank_maps[i]), end(bank_maps[i]));
 }
 
 void fe::SpriteGfxManager::calculate_player_chr_bank_mappings(void) {
 	for (std::size_t i{ 0 }; i < c::PLAYER_TYPE_COUNT * c::PLAYER_FRAME_COUNT; ++i)
-		c_player.frames[i].chrbanks = { 0 };
+		c_player.frames[i].chrbanks = { c::KEY_BANK_ARMOR };
 	for (std::size_t i{ c::HAND_EXTEND_FRAME_START }; i < c_player.frames.size(); ++i)
-		c_player.frames[i].chrbanks = { 0 };
-	for (std::size_t i{ 0 }; i < c::SHIELD_FRAME_COUNT - 1; ++i)
-		c_player.frames[c::SHIELD_FRAME_START + i].chrbanks = { 2 };
+		c_player.frames[i].chrbanks = { c::KEY_BANK_ARMOR };
 	for (std::size_t i{ 0 }; i < c::WEAPON_FRAME_COUNT * c::WEAPON_TYPE_COUNT; ++i)
-		c_player.frames.at(c::WEAPON_FRAME_START + i).chrbanks = { 1 };
+		c_player.frames.at(c::WEAPON_FRAME_START + i).chrbanks = { c::KEY_BANK_WEAPONS };
+
+	for (auto& frame : c_player.frames)
+		if (frame.chrbanks.empty())
+			frame.chrbanks.push_back(c::KEY_BANK_SHIELDS);
 }
 
 void fe::SpriteGfxManager::calculate_portrait_chr_bank_mappings(void) {
 	// all portraits use the same chr-bank
 	for (std::size_t i{ 0 }; i < c_portraits.frames.size(); ++i)
-		c_portraits.frames[i].chrbanks = { 0 };
+		c_portraits.frames[i].chrbanks = { c::KEY_BANK_PORTRAITS };
 }
 
 std::vector<byte> fe::SpriteGfxManager::extract_load_list(const std::vector<byte>& p_rom,
@@ -399,6 +409,13 @@ int fe::SpriteGfxManager::normalize_frame(const std::vector<byte>& ppu_order,
 		}
 
 	return result;
+}
+
+void fe::SpriteGfxManager::normalize_frame(byte linear_value, fe::SpriteAnimationFrame& frame) {
+	for (auto& row : frame.tilemap)
+		for (auto& tile : row)
+			if (tile)
+				tile->index += linear_value;
 }
 
 std::vector<klib::NES_tile> fe::SpriteGfxManager::extract_chr_tiles(const std::vector<byte>& p_rom,
@@ -599,9 +616,26 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	p_rom_mgr.patch_ptr(p_rom, bank7_npc_anim_frame_ptr.first,
 		bank7chr_result.value() - chr_bank7_chr_ptr.second);
 
+	const auto NPC_LINEAR_TRANSLATE{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_IDX_TRANSLATE) };
+	std::vector<byte> linear_deltas{ std::vector<byte>(c_npcs.frames.size(), 0) };
+	for (const auto& kv : NPC_LINEAR_TRANSLATE) {
+		std::size_t frame_idx{ npc_start_frames.at(kv.first) };
+		std::size_t frame_count{ npc_frame_counts.at(kv.first) };
+
+		for (std::size_t i{ 0 }; i < frame_count; ++i)
+			if (frame_idx + i < linear_deltas.size())
+				linear_deltas[frame_idx + i] = static_cast<byte>(kv.second);
+	}
+
 	std::vector<std::vector<byte>> npc_frames;
-	for (const auto& frame : c_npcs.frames)
-		npc_frames.push_back(frame.frame.to_bytes());
+	for (std::size_t i{ 0 }; i < c_npcs.frames.size(); ++i) {
+		const auto& frame{ c_npcs.frames[i].frame };
+		byte lindelta{ linear_deltas[i] };
+		if (lindelta == 0)
+			npc_frames.push_back(frame.to_bytes());
+		else
+			npc_frames.push_back(frame.to_bytes(lindelta));
+	}
 
 	auto bank7npcframe_result{
 		pack_animation_frame_data(bank7chr_result.value(),
@@ -773,6 +807,8 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	for (std::size_t i{ 0 }; i < weapon_load_lists.size(); ++i)
 		p_rom.at(PPU_TILE_COUNT_WEAPON + i) = static_cast<byte>(weapon_load_lists[i].size() - 1);
 
+	p_rom_mgr.patch_bytes(shield_frame_indexes, p_rom, p_config.constant(c::ID_GFX_SHIELD_FRAME_IDX_OFFSET));
+
 	final_result.success = (final_result.bank6_used.value() <= 0x4000 &&
 		final_result.bank7_used.value() <= 0x4000 &&
 		final_result.bank8_used.value() <= 0x4000);
@@ -797,22 +833,6 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	// Write 0xff to all space we claim is unused - End
 
 	return final_result;
-}
-
-void fe::SpriteGfxManager::canonsort_everything(void) {
-	std::vector<std::string> errors;
-
-	canonsort_gfx_collection_chr_bank(c_portraits, 0);
-	for (std::size_t i{ 0 }; i < 2; ++i)
-		canonsort_gfx_collection_chr_bank(c_player, i);
-	for (std::size_t i{ 0 }; i < 101; ++i) {
-		try {
-			canonsort_gfx_collection_chr_bank(c_npcs, i);
-		}
-		catch (const std::exception& ex) {
-			errors.push_back(std::string(ex.what()));
-		}
-	}
 }
 
 void fe::SpriteGfxManager::canonsort_gfx_collection_chr_bank(SpriteFrameCollection& coll, std::size_t p_bank_idx) {

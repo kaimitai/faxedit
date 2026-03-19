@@ -217,6 +217,7 @@
 		<!-- gfx constants: player -->
 		<const name="gfx_player_tile_count_offset" value="0x3eda5" />
 		<const name="gfx_weapon_tile_count_offset" value="0x3edd1" />
+		<const name="gfx_shield_frame_idx_offset" value="0x3b9e5" />
 		<!-- gfx constants: npcs -->
 		<!-- sprite index defining the cut-off for chr-tiles (bank 6, or 7) - all 3 values must agree -->
 		<const name="gfx_npc_chr_cutoff_ref1" value="0x3c292" />
@@ -286,8 +287,7 @@
 		<set name="reserved_fog_chr_indexes" values="$80,$82,$84,$86" />
 		<!-- sprites which use the common tile gfx, rather than having their own chr-banks -->
 		<!-- generally sprites that spawn during gameplay; coins, breads and effects -->
-		<!-- 19 = ripasheiku projectile? -->
-		<set name="common_gfx_sprites" values="0,1,2,3,20,79,81,83,84,100" />
+		<set name="common_gfx_sprites" values="0,1,2,3,10,19,20,22,37,41,79,81,83,84,100" />
 	</sets>
 
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
@@ -368,7 +368,7 @@
 			<entry byte="$07" str="Hornet" />
 			<entry byte="$08" str="Bihoruda" />
 			<entry byte="$09" str="Lilith" />
-			<entry byte="$0a" str="Magic Effect #1" />
+			<entry byte="$0a" str="Ripasheiku / Grieve Magic" />
 			<entry byte="$0b" str="Yuinaru" />
 			<entry byte="$0c" str="Snowman" />
 			<entry byte="$0d" str="Nash" />
@@ -376,9 +376,9 @@
 			<entry byte="$0f" str="Ishiisu" />
 			<entry byte="$10" str="Execution Hood" />
 			<entry byte="$11" str="Rokusutahn" />
-			<entry byte="$12" str="Unused $12" />
-			<entry byte="$13" str="Enemy Death" />
-			<entry byte="$14" str="Lightning Ball" />
+			<entry byte="$12" str="Unused Snake" />
+			<entry byte="$13" str="Enemy Death Effect #1" />
+			<entry byte="$14" str="Enemy Death Effect #2" />
 			<entry byte="$15" str="Charron" />
 			<entry byte="$16" str="Invisble, Stationary" />
 			<entry byte="$17" str="Geributa" />
@@ -387,21 +387,21 @@
 			<entry byte="$1a" str="Giant Bees" />
 			<entry byte="$1b" str="Myconid" />
 			<entry byte="$1c" str="Naga" />
-			<entry byte="$1d" str="Unused $1d" />
+			<entry byte="$1d" str="Unused Sword-Wielder" />
 			<entry byte="$1e" str="Giant Strider" />
 			<entry byte="$1f" str="Sir Gawaine" />
 			<entry byte="$20" str="Maskman" />
 			<entry byte="$21" str="Wolfman" />
 			<entry byte="$22" str="Yareeka" />
 			<entry byte="$23" str="Magman" />
-			<entry byte="$24" str="Unused $24" />
+			<entry byte="$24" str="Unused Spear-Wielder" />
 			<entry byte="$25" str="Invisible, Stationary #2" />
 			<entry byte="$26" str="Ikeda" />
-			<entry byte="$27" str="Unused $27" />
+			<entry byte="$27" str="Unused Blue Monster" />
 			<entry byte="$28" str="Lamprey" />
 			<entry byte="$29" str="Invisible, stationary #3" />
 			<entry byte="$2a" str="Monodron" />
-			<entry byte="$2b" str="Unused $2b" />
+			<entry byte="$2b" str="Unused Winged Monster" />
 			<entry byte="$2c" str="Tamazutsu" />
 			<entry byte="$2d" str="Ripasheiku" />
 			<entry byte="$2e" str="Zoradohna" />
@@ -439,10 +439,10 @@
 			<entry byte="$4e" str="Ointment" />
 			<entry byte="$4f" str="Invisible Dialogue" />
 			<entry byte="$50" str="Mattock" />
-			<entry byte="$51" str="Magic Effect #2" />
+			<entry byte="$51" str="Magic Effect (Star)" />
 			<entry byte="$52" str="Final Fountain" />
-			<entry byte="$53" str="Magic Effect #3" />
-			<entry byte="$54" str="Magic Effect #4" />
+			<entry byte="$53" str="Magic Effect (Shadow Eura)" />
+			<entry byte="$54" str="Magic Effect (Player)" />
 			<entry byte="$55" str="Wing Boots" />
 			<entry byte="$56" str="Hour Glass" />
 			<entry byte="$57" str="Magical Rod" />
@@ -458,7 +458,7 @@
 			<entry byte="$61" str="Tower Spring" />
 			<entry byte="$62" str="Sky Spring" />
 			<entry byte="$63" str="Dungeon Spring" />
-			<entry byte="$64" str="Boss Death" />
+			<entry byte="$64" str="Enemy Death Effect #3" />
 		</byte_to_string_map>
 		<!-- labels for palettes -->
 		<byte_to_string_map name="palette_labels">
@@ -1285,7 +1285,7 @@
 			<entry byte="$06" str="3" />
 			<entry byte="$07" str="2" />
 			<entry byte="$08" str="2" />
-			<entry byte="$09" str="5" />
+			<entry byte="$09" str="2" />
 			<entry byte="$0a" str="2" />
 			<entry byte="$0b" str="2" />
 			<entry byte="$0c" str="2" />
@@ -1353,6 +1353,10 @@
 			<entry byte="$62" str="7" />
 			<entry byte="$63" str="7" />
 			<entry byte="$64" str="5" />
+		</byte_to_string_map>
+		<!-- a few npc frames have an index delta applied to the tilemap -->
+		<byte_to_string_map name="npc_frame_idx_translate">
+			<entry byte="$0a" str="$80" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>

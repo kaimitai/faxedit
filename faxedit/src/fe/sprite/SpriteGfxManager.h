@@ -48,6 +48,7 @@ namespace fe {
 
 		SpriteFrameCollection c_portraits, c_player, c_npcs;
 		std::vector<std::vector<byte>> m_shield_load_lists;
+		std::vector<byte> shield_frame_indexes;
 		std::vector<std::size_t> npc_start_frames;
 		std::vector<std::size_t> npc_frame_counts;
 		std::set<std::size_t> npc_using_common_gfx;
@@ -62,13 +63,13 @@ namespace fe {
 
 		// calculating functions
 		std::size_t get_sprite_chr_cutoff(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
-		void canonsort_everything(void);
 		void canonsort_gfx_collection_chr_bank(SpriteFrameCollection& coll, std::size_t p_bank_idx);
 		void canonicalize_gfx_collection_bank(SpriteFrameCollection& coll, std::size_t bank_idx);
 		void dedup_gfx_collection_bank(SpriteFrameCollection& coll, std::size_t bank_idx);
 		void sort_gfx_collection_bank(SpriteFrameCollection& coll, std::size_t bank_idx);
 
 		int normalize_frame(const std::vector<byte>& ppu_order, fe::SpriteAnimationFrame& frame);
+		void normalize_frame(byte linear_value, fe::SpriteAnimationFrame& frame);
 
 		// animation frame helpers
 		std::vector<fe::SpriteAnimationFrame> extract_animation_frames(const std::vector<byte>& p_rom,

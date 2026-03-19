@@ -9,6 +9,16 @@ namespace fe {
 
 	namespace c {
 
+		// constants internal to the sprite gfx manager - bank and collection keys
+		constexpr std::size_t KEY_COLL_NPCS{ 0 };
+		constexpr std::size_t KEY_COLL_PLAYER{ 1 };
+		constexpr std::size_t KEY_COLL_PORTRAITS{ 2 };
+
+		constexpr std::size_t KEY_BANK_ARMOR{ 0 };
+		constexpr std::size_t KEY_BANK_WEAPONS{ 1 };
+		constexpr std::size_t KEY_BANK_SHIELDS{ 2 };
+		constexpr std::size_t KEY_BANK_PORTRAITS{ 0 };
+
 		// set of all sprites using absolute ppu idx in their animation frames
 		constexpr char ID_ABSOLUTE_PPU_IDX_SPRITES[]{ "common_gfx_sprites" };
 
@@ -72,11 +82,11 @@ namespace fe {
 
 		// portrait constants
 		constexpr char ID_GFX_PORTRAIT_CHR_TILE_COUNT[]{ "gfx_portrait_chr_tile_count" };
-		constexpr char ID_GFX_PORTRAIT_TOTAL_FRAME_COUNT[]{ "gfx_portrait_total_frame_count" };
 
 		// player constants
 		constexpr char ID_GFX_PLAYER_TILE_COUNT_OFFSET[]{ "gfx_player_tile_count_offset" };
 		constexpr char ID_GFX_WEAPON_TILE_COUNT_OFFSET[]{ "gfx_weapon_tile_count_offset" };
+		constexpr char ID_GFX_SHIELD_FRAME_IDX_OFFSET[]{ "gfx_shield_frame_idx_offset" };
 		constexpr std::size_t SHIELD_LOAD_LIST_COUNT{ 5 };
 
 		// npc constants
@@ -85,6 +95,7 @@ namespace fe {
 
 		// npc maps
 		constexpr char ID_GFX_NPC_FRAME_COUNT[]{ "npc_animation_frame_counts" };
+		constexpr char ID_GFX_NPC_FRAME_IDX_TRANSLATE[]{ "npc_frame_idx_translate" };
 	}
 
 }
