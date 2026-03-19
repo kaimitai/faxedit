@@ -443,7 +443,7 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 		);
 
 		// extract chr-banks and frames
-		l_game.m_sprite_gfx_manager.c_npcs = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_NPC_GFX));
+		l_game.m_sprite_gfx_manager.c_npcs = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_NPC_GFX), true);
 		l_game.m_sprite_gfx_manager.c_player = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_PLAYER_GFX));
 		l_game.m_sprite_gfx_manager.c_portraits = read_sprite_gfx_container(n_sprite_gfx.child(c::TAG_PORTRAIT_GFX));
 
@@ -1039,7 +1039,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	);
 
 	auto n_npcs{ n_sprite_gfx.append_child(c::TAG_NPC_GFX) };
-	add_sprite_gfx_container(n_npcs, p_game.m_sprite_gfx_manager.c_npcs);
+	add_sprite_gfx_container(n_npcs, p_game.m_sprite_gfx_manager.c_npcs, true);
 	auto n_player{ n_sprite_gfx.append_child(c::TAG_PLAYER_GFX) };
 	add_sprite_gfx_container(n_player, p_game.m_sprite_gfx_manager.c_player);
 	auto n_portraits{ n_sprite_gfx.append_child(c::TAG_PORTRAIT_GFX) };
@@ -1051,11 +1051,14 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 }
 
 // sprite gfx helpers
-void fe::xml::add_sprite_gfx_container(pugi::xml_node p_node, const fe::SpriteFrameCollection& p_coll) {
+void fe::xml::add_sprite_gfx_container(pugi::xml_node p_node, const fe::SpriteFrameCollection& p_coll,
+	bool sparsify_last_bank) {
 	auto n_chr_banks{ p_node.append_child(c::TAG_CHR_BANKS) };
 
 	for (std::size_t i{ 0 }; i < p_coll.banks.size(); ++i)
-		add_chr_bank(n_chr_banks, i, p_coll.banks[i]);
+		add_chr_bank(n_chr_banks, i,
+			p_coll.get_chr_bank(i, sparsify_last_bank)
+		);
 
 	auto n_frames{ p_node.append_child(c::TAG_FRAMES) };
 
@@ -1120,7 +1123,8 @@ void fe::xml::add_chr_bank(pugi::xml_node p_node, std::size_t p_bank_no, const s
 	}
 }
 
-fe::SpriteFrameCollection fe::xml::read_sprite_gfx_container(pugi::xml_node p_node) {
+fe::SpriteFrameCollection fe::xml::read_sprite_gfx_container(pugi::xml_node p_node,
+	bool expand_last_bank) {
 	fe::SpriteFrameCollection result;
 
 	auto n_chr_banks{ p_node.child(c::TAG_CHR_BANKS) };
@@ -1130,6 +1134,9 @@ fe::SpriteFrameCollection fe::xml::read_sprite_gfx_container(pugi::xml_node p_no
 	auto n_frames{ p_node.child(c::TAG_FRAMES) };
 	for (auto n_frame{ n_frames.child(c::TAG_FRAME) }; n_frame; n_frame = n_frame.next_sibling(c::TAG_FRAME))
 		result.add_frame(read_frame(n_frame));
+
+	if (expand_last_bank)
+		result.expand_last_bank();
 
 	return result;
 }

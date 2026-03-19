@@ -7,6 +7,7 @@
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
 #include "./../common/klib/Kfile.h"
+#include "./../fe/sprite/fe_sprite_constants.h"
 #include <format>
 
 using byte = unsigned char;
@@ -50,13 +51,57 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 
 			ui::imgui_slider_with_arrows("###sprsf", "", lr_spr_first_frames.at(ls_sel_sprite),
 				0, m_game->m_sprite_gfx_manager.c_npcs.frames.size() - 1);
+
+			ImGui::SeparatorText("Collection bmp export");
+
+			if (ui::imgui_button("Export all NPC frames as bmps", 2)) {
+				const auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
+				for (std::size_t i{ 0 }; i <= m_sprite_count; ++i)
+					export_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
+			}
+			if (ui::imgui_button("Export all player frames as bmps", 2)) {
+				const auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
+				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
+				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
+			}
+			if (ui::imgui_button("Export all portrait frames as bmps", 2)) {
+				const auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
+				export_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, c::KEY_BANK_PORTRAITS);
+			}
+
+			ImGui::SeparatorText("Collection bmp import");
+
+			if (ui::imgui_button("Import all NPC frame bmps", 4)) {
+				auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
+
+				for (std::size_t i{ 0 }; i < m_sprite_count; ++i) {
+					try {
+						import_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
+					}
+					catch (const std::exception& ex) {
+						add_message(ex.what(), 1);
+					}
+
+				}
+			}
+
+			if (ui::imgui_button("Import all player frame bmps", 4)) {
+				auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
+				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
+				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
+			}
+			if (ui::imgui_button("Import all portrait frame bmps", 4)) {
+				auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
+				import_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, 0);
+			}
+
 		}
 		else if (editmode == fe::SpriteGfxEditMode::Portraits)
-			show_sprite_gfx_editor(p_rnd, 2, m_game->m_sprite_gfx_manager.c_portraits);
+			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_PORTRAITS, m_game->m_sprite_gfx_manager.c_portraits);
 		else if (editmode == fe::SpriteGfxEditMode::Player)
-			show_sprite_gfx_editor(p_rnd, 1, m_game->m_sprite_gfx_manager.c_player);
+			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_PLAYER, m_game->m_sprite_gfx_manager.c_player);
 		else if (editmode == fe::SpriteGfxEditMode::NPC) {
-			show_sprite_gfx_editor(p_rnd, 0, m_game->m_sprite_gfx_manager.c_npcs);
+			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_NPCS, m_game->m_sprite_gfx_manager.c_npcs);
 		}
 
 	}
@@ -228,42 +273,65 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 	}
 
 	if (ui::imgui_button("Export bmps", 2)) {
-
-		const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_collection, ls_resolved_bank) };
-
-		m_gfx.save_sprite_frames_bmp(p_collection,
-			ls_resolved_bank,
-			impact.frame_indexes,
-			m_game->m_palettes.at(p_coll < 2 ? 28 : 30),
-			get_bmp_path(),
-			get_file_prefix(p_coll));
-
-		add_message(std::format("Saved bmps as {}", m_gfx.get_sprite_frame_bmp_wc_filpath(get_bmp_path(),
-			get_file_prefix(p_coll), ls_resolved_bank)), 2);
+		export_sprite_frame_bmps(p_collection, p_coll, ls_resolved_bank);
 	}
 
 	ImGui::SameLine();
 
 	if (ui::imgui_button("Import bmps", 2)) {
-		const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_collection, ls_resolved_bank) };
+		import_sprite_frame_bmps(p_collection, p_coll, ls_resolved_bank);
+		m_gfx.clear_sprite_selected_texture();
+	}
+}
 
-		if (impact.banks_identical) {
-			const auto impres{ m_gfx.import_sprite_frames_from_folder(get_bmp_path(), get_file_prefix(p_coll),
-				ls_resolved_bank, impact.frame_indexes, m_game->m_palettes.at(p_coll < 2 ? 28 : 30),
-				255, 3) };
+void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
+	std::size_t p_bank_id) {
 
-			if (impres.approximated_tile_count > 0)
-				throw std::runtime_error("Imported bmps required creating too many chr-tiles");
+	const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_coll, p_bank_id) };
 
-			p_collection.banks.at(ls_resolved_bank) = impres.tiles;
-			for (std::size_t i{ 0 }; i < impres.frames.size(); ++i)
-				p_collection.frames.at(impact.frame_indexes.at(i)).frame.tilemap = impres.frames[i].tilemap;
+	if (impact.frame_indexes.empty())
+		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
+	else if (impact.banks_identical) {
+		const auto impres{ m_gfx.import_sprite_frames_from_folder(get_bmp_path(), get_file_prefix(p_coll_id),
+			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(p_coll_id < 2 ? 28 : 30),
+			255, 3) };
 
-			m_gfx.clear_sprite_selected_texture();
-		}
-		else {
-			throw std::runtime_error("bmp import not possible; frames referenced by more than one unique chr-bank");
-		}
+		if (impres.approximated_tile_count > 0)
+			throw std::runtime_error("Imported bmps required creating too many chr-tiles");
+
+		for (std::size_t l_bank_id : impact.chr_bank_indexes)
+			p_coll.banks.at(l_bank_id) = impres.tiles;
+		for (std::size_t i{ 0 }; i < impres.frames.size(); ++i)
+			p_coll.frames.at(impact.frame_indexes.at(i)).frame.tilemap = impres.frames[i].tilemap;
+
+		add_message(std::format("Imported {} bmp files", impact.frame_indexes.size()), 2);
+	}
+	else {
+		throw std::runtime_error(
+			std::format("bmp import for bank {} not possible; frames referenced by more than one unique chr-bank",
+				p_bank_id));
+	}
+}
+
+void fe::MainWindow::export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll,
+	std::size_t p_coll_id, std::size_t p_bank_id) {
+
+	const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_coll, p_bank_id) };
+
+	if (impact.frame_indexes.empty()) {
+		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
+	}
+	else {
+		m_gfx.save_sprite_frames_bmp(p_coll,
+			p_bank_id,
+			impact.frame_indexes,
+			m_game->m_palettes.at(p_coll_id < 2 ? 28 : 30),
+			get_bmp_path(),
+			get_file_prefix(p_coll_id));
+
+		add_message(std::format("Saved {} bmps as {}", impact.frame_indexes.size(),
+			m_gfx.get_sprite_frame_bmp_wc_filpath(get_bmp_path(),
+				get_file_prefix(p_coll_id), p_bank_id)), 2);
 	}
 }
 

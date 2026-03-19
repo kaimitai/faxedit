@@ -252,6 +252,11 @@ namespace fe {
 		std::string get_file_prefix(std::size_t p_gfx_key) const;
 		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
 
+		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
+			std::size_t p_bank_id);
+		void import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
+			std::size_t p_bank_id);
+
 		// load functions
 		void validate_game_data(fe::Game& p_game);
 		void load_xml(SDL_Renderer* p_rnd);

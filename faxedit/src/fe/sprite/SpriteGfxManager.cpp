@@ -132,13 +132,7 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 	};
 
 	// sprite chr - many banks (already extracted), plus one common bank we tack on at the end
-	// we already know its tile count
-
-	std::vector<klib::NES_tile> commonbank(256, klib::NES_tile());
-	const auto commontiles{ extract_chr_tiles(p_rom, bank8_common_chr_offset, c::PPU_COMMON_TILE_COUNT) };
-	for (std::size_t i{ 0 }; i < commontiles.size(); ++i)
-		commonbank.at(i + c::PPU_COMMON_TILE_START) = commontiles[i];
-	c_npcs.add_chr_bank(commonbank);
+	c_npcs.add_chr_bank(extract_chr_tiles(p_rom, bank8_common_chr_offset, c::PPU_COMMON_TILE_COUNT), true);
 
 	// player chr - 3 banks: player, weapon, shields
 	c_player.add_chr_bank(extract_chr_tiles(p_rom, bank8_player_chr_offset, BANK8_MASTER_PTR_DESTS));
@@ -751,7 +745,7 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 
 	// common chr-tiles
 	p_rom_mgr.patch_ptr(p_rom, COMMON_CHR_PTR.first, l_rom_cursor - COMMON_CHR_PTR.second);
-	chr_bank_bytes = flatten_common_chr_bank();
+	chr_bank_bytes = flatten_chr_bank(c_npcs.get_chr_bank(c_npcs.banks.size() - 1, true));
 	p_rom_mgr.patch_bytes(chr_bank_bytes, p_rom, l_rom_cursor);
 	l_rom_cursor += chr_bank_bytes.size();
 	final_result.bank8_common_chr = chr_bank_bytes.size();

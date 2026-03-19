@@ -52,11 +52,13 @@ namespace fe {
 		std::string byte_to_hex(byte p_byte);
 
 		// sprite gfx helpers
-		void add_sprite_gfx_container(pugi::xml_node p_node, const fe::SpriteFrameCollection& p_coll);
+		void add_sprite_gfx_container(pugi::xml_node p_node, const fe::SpriteFrameCollection& p_coll,
+			bool sparsify_last_bank = false);
 		void add_chr_bank(pugi::xml_node p_node, std::size_t p_bank_no, const std::vector<klib::NES_tile>& p_tiles);
 		void add_frame(pugi::xml_node p_node, std::size_t p_frame_no, const fe::SpriteAnimationFrame& p_frame);
 
-		fe::SpriteFrameCollection read_sprite_gfx_container(pugi::xml_node p_node);
+		fe::SpriteFrameCollection read_sprite_gfx_container(pugi::xml_node p_node,
+			bool expand_last_bank = false);
 		std::vector<klib::NES_tile> read_chr_bank(pugi::xml_node p_node);
 		fe::SpriteAnimationFrame read_frame(pugi::xml_node p_node);
 	}
