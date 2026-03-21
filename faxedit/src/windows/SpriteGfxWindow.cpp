@@ -66,8 +66,10 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				"How far a pixel color can deviate from hot pink and still be considered transparent");
 
 			ImGui::Separator();
-			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI"))
+			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI")) {
 				generate_editor_sprite_gfx(p_rnd);
+				add_message("GUI sprite textures regenerated", 2);
+			}
 		}
 		else if (editmode == fe::SpriteGfxEditMode::Portraits) {
 			ImGui::Separator();
@@ -274,9 +276,10 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	ImGui::Separator();
 
+	const auto& framebanks{ p_collection.frames[ls_frame] };
 	if (ui::imgui_slider_with_arrows("###selbank",
-		std::format("chr-bank #{}/{} ({}: {} tiles)", ls_bank, p_collection.frames[ls_frame].chrbanks.size() - 1,
-			ls_resolved_bank, p_collection.banks[ls_resolved_bank].size()),
+		get_sprite_gfx_bank_name(p_coll, ls_bank, ls_resolved_bank, framebanks.chrbanks.size(),
+			p_collection.banks.at(ls_resolved_bank).size()),
 		ls_bank, 0, p_collection.frames[ls_frame].chrbanks.size() - 1, "", false, true))
 		ls_redraw_bank = true;
 
@@ -284,7 +287,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 		m_sprite_gfx_settings.scale_bank, ls_sel_bank_chr_x, ls_sel_bank_chr_y);
 
 	/*
-	TODO: Decide if users should be allowed to canonicalize. bmp import will do this up to sorting
+	TODO: Decide if users should be allowed to canonicalize. bmp import will do this up to sorting anyway
 	if (ui::imgui_button("Canonicalize", 2)) {
 		m_game->m_sprite_gfx_manager.canonsort_gfx_collection_chr_bank(p_collection, p_collection.frames[ls_frame].chrbanks[ls_bank]);
 		ls_redraw_bank = true;
@@ -460,8 +463,15 @@ void fe::MainWindow::import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, s
 	for (std::size_t i{ 0 }; i < tiles_flat.size(); i += 16)
 		imp_bank.push_back(klib::NES_tile(tiles_flat, i));
 
-	if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == p_coll.banks.size() - 1)
+	if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == p_coll.banks.size() - 1) {
 		fe::SpriteFrameCollection::expand_bank(imp_bank);
+		std::vector<byte> ZERO_HIT_CHR_BYTES(std::begin(c::SPRITE_0_HIT_CHR), std::end(c::SPRITE_0_HIT_CHR));
+		klib::NES_tile ZERO_HIT_TILE(ZERO_HIT_CHR_BYTES);
+
+		if (imp_bank.at(c::SPRITE_0_PPU_IDX) != ZERO_HIT_TILE) {
+			add_message(std::format("Warning: chr-tile {} is not equal to the original 0-hit sprite. See the documentation.", c::SPRITE_0_PPU_IDX), 1);
+		}
+	}
 
 	// store bank after making snapshot
 	m_sprite_snap_manager.apply_chr_import(p_coll, p_coll_id, p_bank_id, imp_bank);
@@ -574,6 +584,31 @@ std::string fe::MainWindow::get_sprite_gfx_file_prefix(std::size_t p_coll_key) c
 		return "portraits";
 	else
 		return "unknown";
+}
+
+std::string fe::MainWindow::get_sprite_gfx_bank_name(std::size_t p_coll_id, std::size_t p_sel_bank_id,
+	std::size_t p_bank_id, std::size_t p_bank_count, std::size_t p_tile_count) const {
+	if (p_coll_id == c::KEY_COLL_PORTRAITS) {
+		return std::format("Bank #{}/{} - {}: 'Portraits' ({} tiles)", p_sel_bank_id, p_bank_count, p_bank_id, p_tile_count);
+	}
+	else if (p_coll_id == c::KEY_COLL_PLAYER) {
+		std::string bank_name;
+		if (p_bank_id == c::KEY_BANK_ARMOR)
+			bank_name = "Armor";
+		else if (p_bank_id == c::KEY_BANK_WEAPONS)
+			bank_name = "Weapons";
+		else
+			bank_name = "Shields";
+		return std::format("Bank #{}/{} - {}: '{}' ({} tiles)", p_sel_bank_id, p_bank_count, p_bank_id, bank_name, p_tile_count);
+	}
+	else {
+		std::string bank_name;
+		if (p_bank_id == m_sprite_count)
+			bank_name = "Common";
+		else
+			bank_name = get_description(static_cast<byte>(p_bank_id), m_labels_sprites);
+		return std::format("Bank #{}/{} - {}: '{}' ({} tiles)", p_sel_bank_id, p_bank_count, p_bank_id, bank_name, p_tile_count);
+	}
 }
 
 // only call this once the sprite data has been populated

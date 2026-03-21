@@ -253,6 +253,8 @@ namespace fe {
 		void show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 			std::size_t p_coll, fe::SpriteFrameCollection& p_collection);
 		std::string get_sprite_gfx_file_prefix(std::size_t p_gfx_key) const;
+		std::string get_sprite_gfx_bank_name(std::size_t p_coll_id, std::size_t p_sel_bank_id,
+			std::size_t p_bank_id, std::size_t p_bank_count, std::size_t p_tile_count) const;
 		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
 		std::optional<std::pair<int, int>> imgui_select_tile_image(SDL_Texture* tex, float scale, int& p_sel_x, int& p_sel_y) const;
 

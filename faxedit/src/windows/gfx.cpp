@@ -1693,6 +1693,8 @@ SDL_Surface* fe::gfx::gen_chr_bank_surface(const std::vector<klib::NES_tile> p_t
 	const std::vector<std::vector<byte>>& p_palette) const {
 	int width = 16;
 	int height = (static_cast<int>(p_tiles.size()) + width - 1) / width;
+	if (height == 0)
+		height = 1;
 
 	auto srf{ create_sdl_surface(width * 8, height * 8, true, true) };
 

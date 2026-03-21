@@ -669,8 +669,10 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::Separator();
 
-		if (ui::imgui_button("Add metatile", 2, "", p_chunk.m_metatiles.size() >= 256)) {
-			p_chunk.m_metatiles.push_back(fe::Metatile());
+		if (ui::imgui_button("Add metatile", 2,
+			"Create a copy of the selected metatile",
+			p_chunk.m_metatiles.size() >= 256)) {
+			p_chunk.m_metatiles.push_back(l_mt_def);
 			generate_metatile_textures(p_rnd,
 				p_chunk.m_metatiles.size() - 1);
 		}
