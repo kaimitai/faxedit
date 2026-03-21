@@ -10,6 +10,7 @@
 #include "./../fe/sprite/fe_sprite_constants.h"
 #include <format>
 #include <SDL3/SDL.h>
+#include "./../fe/sprite/SpriteGUILoader.h"
 
 using byte = unsigned char;
 
@@ -558,4 +559,16 @@ std::string fe::MainWindow::get_sprite_gfx_file_prefix(std::size_t p_coll_key) c
 		return "portraits";
 	else
 		return "unknown";
+}
+
+// only call this once the sprite data has been populated
+void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
+	fe::SpriteGUILoader gui_sprites;
+	gui_sprites.load_sprites_for_gui(m_game->m_sprite_gfx_manager, m_game->m_rom_data,
+		m_config.constant(c::ID_SPRITE_TYPE_OFFSET));
+
+	m_sprite_dims = gui_sprites.get_animation_dimension_data();
+
+	// pass the resolved frames on to the gfx handler to make sprite textures
+	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(28));
 }

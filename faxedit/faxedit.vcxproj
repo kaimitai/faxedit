@@ -172,7 +172,7 @@
     <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp" />
     <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp" />
     <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp" />
-    <ClCompile Include="src\fe\Sprite_definitions.cpp" />
+    <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
@@ -234,7 +234,7 @@
     <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h" />
     <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h" />
     <ClInclude Include="src\fe\sprite\SpriteGfxManager.h" />
-    <ClInclude Include="src\fe\Sprite_definitions.h" />
+    <ClInclude Include="src\fe\sprite\SpriteGUILoader.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />
     <ClInclude Include="src\fe\StageManager.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />

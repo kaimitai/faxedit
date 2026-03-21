@@ -5,7 +5,6 @@
 #include "Game.h"
 #include "fe_constants.h"
 #include "./../common/klib/NES_tile.h"
-#include "./../fe/Sprite_definitions.h"
 #include <map>
 #include <stdexcept>
 #include <utility>
@@ -119,10 +118,6 @@ namespace fe {
 		std::vector<byte> read_bytes(const std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_count) const;
 		std::size_t get_ptr_table_entry_count(const std::vector<byte>& p_rom,
 			std::size_t p_ptr_rom_address, std::size_t p_zero_addr) const;
-
-		// gfx
-		const std::map<std::size_t, fe::Sprite_gfx_definiton> extract_sprite_data(
-			const std::vector<byte>& p_rom) const;
 
 		// cahcing utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;

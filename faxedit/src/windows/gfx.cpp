@@ -543,22 +543,24 @@ void fe::gfx::clear_bank_chr_textures(void) {
 	m_chr_bank_gfx.clear();
 }
 
-void fe::gfx::gen_sprites(SDL_Renderer* p_rnd,
-	const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs) {
+void fe::gfx::gen_sprites(SDL_Renderer* p_rnd, const fe::SpriteGUILoader& loader,
+	const std::vector<byte>& p_palette) {
+	// clear the old sprite gfx
 	for (auto& kv : m_sprite_gfx)
 		for (auto& txt : kv.second)
 			delete_texture(txt);
 	m_sprite_gfx.clear();
 
-	for (const auto& kv : p_defs) {
-		const auto& l_sprpal{ kv.second.m_sprite_palette };
-		const auto& tiles{ kv.second.m_nes_tiles };
+	const auto palette{ flat_pal_to_2d_pal(p_palette) };
 
-		for (const auto& frame : kv.second.m_frames) {
-			if (frame.m_disabled)
-				continue;
-			m_sprite_gfx[kv.first].push_back(
-				anim_frame_to_texture(p_rnd, frame, tiles, l_sprpal)
+	for (std::size_t i{ 0 }; i < loader.animations.size(); ++i) {
+		const auto& tiles{ loader.banks.at(loader.npc_to_bank_idx.at(i)) };
+
+		for (const auto& frame : loader.animations[i]) {
+			m_sprite_gfx[i].push_back(
+				surface_to_texture(p_rnd,
+					gen_sprite_frame_surface(frame, tiles, palette)
+				)
 			);
 		}
 	}
@@ -580,39 +582,6 @@ void fe::gfx::gen_door_req_gfx(SDL_Renderer* p_rnd,
 		delete_texture(m_door_req_gfx[p_req_no]);
 
 	m_door_req_gfx[p_req_no] = surface_to_texture(p_rnd, srf);
-}
-
-SDL_Texture* fe::gfx::anim_frame_to_texture(SDL_Renderer* p_rnd,
-	const fe::AnimationFrame& p_frame,
-	const std::vector<klib::NES_tile>& p_tiles,
-	const std::vector<std::vector<byte>>& p_palette) {
-
-	std::size_t w{ static_cast<std::size_t>(p_frame.m_w) };
-	std::size_t h{ static_cast<std::size_t>(p_frame.m_h) };
-
-	auto srf{ create_sdl_surface(static_cast<int>(8 * w),
-		static_cast<int>(8 * h), true) };
-
-	for (int y{ 0 }; y < p_frame.m_tilemap.size(); ++y)
-		for (int x{ 0 }; x < p_frame.m_tilemap.at(y).size(); ++x) {
-			const auto& opttile{ p_frame.m_tilemap.at(y).at(x) };
-
-			if (opttile.has_value() &&
-				opttile.value().first < p_tiles.size()) {
-				byte tile_ctrl{ opttile.value().second };
-
-				draw_nes_tile_on_surface(
-					srf, static_cast<int>(8 * x),
-					static_cast<int>(8 * y),
-					p_tiles[opttile.value().first],
-					p_palette.at(tile_ctrl & 0b11),
-					true,
-					tile_ctrl & 0x40,
-					tile_ctrl & 0x80);
-			}
-		}
-
-	return surface_to_texture(p_rnd, srf);
 }
 
 SDL_Texture* fe::gfx::get_tileset_txt(std::size_t p_key) const {

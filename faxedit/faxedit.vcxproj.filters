@@ -171,9 +171,6 @@
     <ClCompile Include="src\common\klib\IPS_Patch.cpp">
       <Filter>Source Files\common\klib</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\Sprite_definitions.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\fi\FaxString.cpp">
       <Filter>Source Files\fi</Filter>
     </ClCompile>
@@ -220,6 +217,9 @@
       <Filter>Source Files\fe</Filter>
     </ClCompile>
     <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp">
       <Filter>Source Files\fe\sprite</Filter>
     </ClCompile>
   </ItemGroup>
@@ -332,9 +332,6 @@
     <ClInclude Include="src\fe\fe_app_constants.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\Sprite_definitions.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\stb_image.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
@@ -387,6 +384,9 @@
       <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteGUILoader.h">
       <Filter>Header Files\fe\sprite</Filter>
     </ClInclude>
   </ItemGroup>

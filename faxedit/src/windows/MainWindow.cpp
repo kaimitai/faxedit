@@ -385,7 +385,7 @@ std::string fe::MainWindow::get_description(byte p_index,
 std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 	return std::format("{} ({})",
 		m_labels_sprites[p_sprite_id],
-		fe::Sprite_gfx_definiton::SpriteCatToString(m_sprite_dims[p_sprite_id].m_cat));
+		fe::SpriteGUILoader::SpriteCatToString(m_sprite_dims[p_sprite_id].category));
 }
 
 void fe::MainWindow::add_message(const std::string& p_msg, int p_status,
@@ -778,34 +778,12 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		// extract sprite definitions
 		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
-		const auto& gfx_def{ m_rom_manager.extract_sprite_data(bytes) };
-
-		// use it to extract sprite sizes before it is sent off and discarded
-		// sprite sizes are given here in nes tiles, not metatiles
-		for (const auto& kv : gfx_def) {
-			std::vector<std::pair<int, int>> l_frame_offsets;
-			for (const auto& frame : kv.second.m_frames) {
-				if (frame.m_disabled)
-					continue;
-
-				l_frame_offsets.push_back(std::make_pair(
-					static_cast<int>(frame.m_offset_x),
-					static_cast<int>(frame.m_offset_y)
-				));
-			}
-
-			m_sprite_dims.at(kv.first).w = kv.second.w;
-			m_sprite_dims[kv.first].h = kv.second.h;
-			m_sprite_dims[kv.first].offsets = l_frame_offsets;
-			m_sprite_dims[kv.first].m_cat = kv.second.m_category;
-		}
 
 		// gen NES palette
 		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
 		// gen door requirement gfx
 		generate_door_req_gfx(p_rnd);
-		// pass it on the gfx handler to make sprite textures
-		m_gfx.gen_sprites(p_rnd, gfx_def);
+		generate_editor_sprite_gfx(p_rnd);
 
 		// extract scripts
 		try {
@@ -877,10 +855,6 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
 	m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
 		m_config.constant(c::ID_WORLD_TILESET_COUNT));
-
-	// need sprite count to populate the sprite dimension metadata
-	m_sprite_dims = std::vector<fe::AnimationGUIData>(m_sprite_count,
-		fe::AnimationGUIData(8, 8, fe::SpriteCategory::Glitched));
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {

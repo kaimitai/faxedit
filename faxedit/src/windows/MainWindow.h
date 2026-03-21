@@ -28,15 +28,6 @@ namespace fe {
 		std::size_t x, y, w, h;
 	};
 
-	struct AnimationGUIData {
-		// w and h for the sprite
-		int w, h;
-		// sprite category
-		fe::SpriteCategory m_cat;
-		// x and y offsets per frame
-		std::vector<std::pair<int, int>> offsets;
-	};
-
 	struct Message {
 		std::string text;
 		int status; // 0=neutral, 1=good, 2=bad
@@ -96,7 +87,7 @@ namespace fe {
 
 		// sprite dimensions; holding sprite size and
 		// cartesian offsets per animation frame
-		std::vector<fe::AnimationGUIData> m_sprite_dims;
+		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 
 		// clipboard maps from chunk id -> rectangle with data
 		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
@@ -263,6 +254,7 @@ namespace fe {
 			std::size_t p_bank_id);
 
 		void update_sgfx_result_for_common_bank(fe::SpriteImportResult& import);
+		void generate_editor_sprite_gfx(SDL_Renderer* p_rnd);
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);

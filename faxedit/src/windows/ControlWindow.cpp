@@ -215,6 +215,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		m_gfx.clear_bank_chr_textures();
 		// update cached gfx
 		generate_door_req_gfx(p_rnd);
+		generate_editor_sprite_gfx(p_rnd);
 
 		// update gui cache for world tilesets
 		generate_world_tilesets();

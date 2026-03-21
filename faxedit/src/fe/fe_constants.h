@@ -147,6 +147,9 @@ namespace fe {
 		constexpr char ID_CHR_HUD_TILE_OFFSET[]{ "chr_hud_tile_offset" };
 		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
 
+		// other
+		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
+
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };

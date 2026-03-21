@@ -10,9 +10,9 @@
 #include <tuple>
 #include <vector>
 #include "./../common/klib/NES_tile.h"
-#include "./../fe/Sprite_definitions.h"
 #include "./../fe/ChrStructures.h"
 #include "./../fe/sprite/SpriteGfxManager.h"
+#include "./../fe/sprite/SpriteGUILoader.h"
 
 using byte = unsigned char;
 using NES_Palette = std::vector<byte>;
@@ -176,16 +176,12 @@ namespace fe {
 		SDL_Texture* get_bank_chr_gfx(const std::string& p_bank_id) const;
 		void clear_bank_chr_textures(void);
 
-		void gen_sprites(SDL_Renderer* p_rnd,
-			const std::map<std::size_t, fe::Sprite_gfx_definiton>& p_defs);
+		void gen_sprites(SDL_Renderer* p_rnd, const SpriteGUILoader& loader,
+			const std::vector<byte>& p_palette);
 		void gen_door_req_gfx(SDL_Renderer* p_rnd,
 			byte p_req_no,
 			const std::vector<klib::NES_tile>& p_tiles,
 			const std::vector<byte>& p_palette);
-		SDL_Texture* anim_frame_to_texture(SDL_Renderer* p_rnd,
-			const fe::AnimationFrame& p_frame,
-			const std::vector<klib::NES_tile>& p_tiles,
-			const std::vector<std::vector<byte>>& p_palette);
 		SDL_Texture* get_tileset_txt(std::size_t p_key) const;
 		void clear_tileset_textures(void);
 

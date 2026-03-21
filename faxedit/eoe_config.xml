@@ -1295,8 +1295,8 @@
 			<entry byte="$10" str="2" />
 			<entry byte="$11" str="4" />
 			<entry byte="$12" str="5" />
-			<entry byte="$13" str="5" />
-			<entry byte="$14" str="5" />
+			<entry byte="$13" str="4" />
+			<entry byte="$14" str="4" />
 			<entry byte="$15" str="3" />
 			<entry byte="$17" str="3" />
 			<entry byte="$18" str="2" />
@@ -1352,7 +1352,7 @@
 			<entry byte="$61" str="7" />
 			<entry byte="$62" str="7" />
 			<entry byte="$63" str="7" />
-			<entry byte="$64" str="5" />
+			<entry byte="$64" str="4" />
 		</byte_to_string_map>
 		<!-- a few npc frames have an index delta applied to the tilemap -->
 		<byte_to_string_map name="npc_frame_idx_translate">
