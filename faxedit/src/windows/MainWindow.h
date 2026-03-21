@@ -22,7 +22,14 @@ namespace fe {
 	enum EditMode { TilemapEditMode, Sprites, Doors, Scrolling, Transitions, Other };
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
-	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player, Weapons, Shields };
+	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player };
+
+	struct SpriteGfxSettings {
+		bool m_redraw, m_patch_rom;
+		std::vector<std::size_t> coll_palettes;
+		float scale_frame, scale_bank;
+		int transp_tolerance;
+	};
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -39,6 +46,9 @@ namespace fe {
 		fe::Config m_config;
 		// tilemap undo interface
 		std::optional<fe::UndoInterface> m_undo;
+
+		// settings
+		SpriteGfxSettings m_sprite_gfx_settings;
 
 		// config values we will cache
 		std::map<byte, std::string> m_labels_cmd_byte,

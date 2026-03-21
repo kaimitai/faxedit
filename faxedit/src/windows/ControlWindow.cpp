@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
@@ -9,6 +8,7 @@
 #include "./../common/klib/IPS_Patch.h"
 #include "./../fe/ROM_manager.h"
 #include "./../fe/fe_app_constants.h"
+#include "./../fe/sprite/fe_sprite_constants.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
@@ -148,6 +148,18 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 				if (unique_door_pos.size() != doorcnt)
 					add_message(std::format("World {}, Screen {}: Several doors defined at the same position", c, s), 1);
+
+				// validate sprite counts and total ppu tile counts
+				const auto& sprites{ scr.m_sprite_set.m_sprites };
+				std::size_t total_ppu_tile_count{ 0 };
+				for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr)
+					total_ppu_tile_count += m_game->m_sprite_gfx_manager.get_sprite_chr_bank_size(sprites[spr].m_id);
+				if (total_ppu_tile_count > c::PPU_DYNAMIC_TILE_COUNT)
+					add_message(
+						std::format("World {}, Screen {}: Sprites use {} dynamic sprite chr-tiles, but the maximum is {}",
+							c, s, total_ppu_tile_count, c::PPU_DYNAMIC_TILE_COUNT),
+						1
+					);
 			}
 		}
 
@@ -174,10 +186,15 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button(std::format("{} gfx editor",
-		m_gfx_window ? "Hide" : "Show"),
+	if (ui::imgui_button("BG gfx editor",
 		m_gfx_window ? 4 : 2))
 		m_gfx_window = !m_gfx_window;
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Sprite gfx editor",
+		m_sprite_gfx_window ? 4 : 2))
+		m_sprite_gfx_window = !m_sprite_gfx_window;
 
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
 		load_xml(p_rnd);
@@ -256,16 +273,19 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
 	if (!p_exclude_dynamic) {
-		auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
-		l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
-		l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
-		l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
-		l_good &= spritegfxres.success;
-		report_sprite_gfx_patch(spritegfxres);
-		if (spritegfxres.success)
-			add_message("Sprite Gfx data patched!", 2);
-		else
-			add_message("Could not patch Sprite Gfx data", 1);
+
+		if (m_sprite_gfx_settings.m_patch_rom) {
+			auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
+			l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
+			l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
+			l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
+			l_good &= spritegfxres.success;
+			report_sprite_gfx_patch(spritegfxres);
+			if (spritegfxres.success)
+				add_message("Sprite Gfx data patched!", 2);
+			else
+				add_message("Could not patch Sprite Gfx data", 1);
+		}
 
 		if (m_config.has_constant(c::ID_SW_TRANS_DATA_END)) {
 			l_bret = m_rom_manager.encode_sw_transitions(m_config, m_game.value(), x_rom);

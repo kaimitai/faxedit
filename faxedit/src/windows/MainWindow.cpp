@@ -43,7 +43,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_anim_frame{ 0 },
 	m_iscript_window{ false },
 	m_gfx_window{ false },
-	m_sprite_gfx_window{ true },
+	m_sprite_gfx_window{ false },
 	m_iscript_win_set_focus{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
@@ -57,7 +57,18 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_music_count{ 0 },
 	// exit handler variables
 	m_exit_app_requested{ false },
-	m_exit_app_granted{ false }
+	m_exit_app_granted{ false },
+	// settings
+	m_sprite_gfx_settings{
+		fe::SpriteGfxSettings {
+			.m_redraw = false,
+			.m_patch_rom = true,
+			.coll_palettes = {28, 28, 30},
+			.scale_frame = 3.0f,
+			.scale_bank = 2.0f,
+			.transp_tolerance = 3
+			}
+	}
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("For script and music editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
@@ -482,7 +493,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	ImGui::SeparatorText("Add or remove sprites");
 
-	if (ui::imgui_button("Add sprite", 2, "", l_sprites.size() == 0xff))
+	if (ui::imgui_button("Add sprite", 2, "", l_sprites.size() >= 8))
 		p_sprites.push_back(fe::Sprite(0x2a, 0, 0));
 
 	if (!p_sprites.empty()) {

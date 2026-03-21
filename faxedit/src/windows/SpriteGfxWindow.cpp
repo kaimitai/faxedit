@@ -15,12 +15,12 @@
 using byte = unsigned char;
 
 void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
-	static SpriteGfxEditMode editmode{ fe::SpriteGfxEditMode::Portraits };
+	static SpriteGfxEditMode editmode{ fe::SpriteGfxEditMode::NPC };
 	static std::size_t ls_sel_npc{ 0 };
 
 	ui::imgui_screen("Sprite Graphics Editor",
 		c::WIN_TILEMAP_X + 50, c::WIN_TILEMAP_Y + 50,
-		c::WIN_TILEMAP_W, c::WIN_TILEMAP_H);
+		c::WIN_TILEMAP_W / 2, c::WIN_TILEMAP_H + 50);
 
 	try {
 		ImGui::SeparatorText("Edit Mode");
@@ -41,68 +41,44 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			editmode == fe::SpriteGfxEditMode::Settings))
 			editmode = fe::SpriteGfxEditMode::Settings;
 
-		ImGui::Separator();
-
 		if (editmode == fe::SpriteGfxEditMode::Settings) {
-			static std::size_t ls_sel_sprite;
-			auto& lr_spr_first_frames{ m_game->m_sprite_gfx_manager.npc_start_frames };
+			ImGui::SeparatorText("Patching");
+			ui::imgui_checkbox("Patch sprite gfx data", m_sprite_gfx_settings.m_patch_rom,
+				"Whether sprite gfx data should be written when patching ROM");
+			ImGui::SeparatorText("Palettes");
+			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
+				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[0]), m_labels_palettes)),
+				m_sprite_gfx_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);
+			ui::imgui_slider_with_arrows("###plapal", std::format("Player: {}",
+				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[1]), m_labels_palettes)),
+				m_sprite_gfx_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1);
+			ui::imgui_slider_with_arrows("###porpal", std::format("Portraits: {}",
+				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[2]), m_labels_palettes)),
+				m_sprite_gfx_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1);
 
-			ui::imgui_slider_with_arrows("###sprssf",
-				get_description(static_cast<byte>(ls_sel_sprite), m_labels_sprites),
-				ls_sel_sprite, 0, m_sprite_count - 1, "", false, true);
+			ImGui::SeparatorText("Rendering Scales");
+			ImGui::SliderFloat("animation frames", &m_sprite_gfx_settings.scale_frame, 1.0f, 5.0f);
+			ImGui::SliderFloat("chr-banks", &m_sprite_gfx_settings.scale_bank, 1.0f, 5.0f);
 
-			ui::imgui_slider_with_arrows("###sprsf", "", lr_spr_first_frames.at(ls_sel_sprite),
-				0, m_game->m_sprite_gfx_manager.c_npcs.frames.size() - 1);
+			ImGui::SeparatorText("bmp-import");
+			ui::imgui_slider_with_arrows("###tratol", "Transparency Tolerance",
+				m_sprite_gfx_settings.transp_tolerance, 0, 10,
+				"How far a pixel color can deviate from hot pink and still be considered transparent");
 
-			ImGui::SeparatorText("Collection bmp export");
-
-			if (ui::imgui_button("Export all NPC frames as bmps", 2)) {
-				const auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
-				for (std::size_t i{ 0 }; i <= m_sprite_count; ++i)
-					export_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
-			}
-			if (ui::imgui_button("Export all player frames as bmps", 2)) {
-				const auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
-				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
-				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
-			}
-			if (ui::imgui_button("Export all portrait frames as bmps", 2)) {
-				const auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
-				export_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, c::KEY_BANK_PORTRAITS);
-			}
-
-			ImGui::SeparatorText("Collection bmp import");
-
-			if (ui::imgui_button("Import all NPC frame bmps", 4)) {
-				auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
-
-				for (std::size_t i{ 0 }; i < m_sprite_count; ++i) {
-					try {
-						import_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
-					}
-					catch (const std::exception& ex) {
-						add_message(ex.what(), 1);
-					}
-
-				}
-			}
-
-			if (ui::imgui_button("Import all player frame bmps", 4)) {
-				auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
-				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
-				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
-			}
-			if (ui::imgui_button("Import all portrait frame bmps", 4)) {
-				auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
-				import_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, 0);
-			}
-
+			ImGui::Separator();
+			if (ui::imgui_button("Regenerate GUI sprites", 4, ""))
+				generate_editor_sprite_gfx(p_rnd);
 		}
-		else if (editmode == fe::SpriteGfxEditMode::Portraits)
+		else if (editmode == fe::SpriteGfxEditMode::Portraits) {
+			ImGui::Separator();
 			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_PORTRAITS, m_game->m_sprite_gfx_manager.c_portraits);
-		else if (editmode == fe::SpriteGfxEditMode::Player)
+		}
+		else if (editmode == fe::SpriteGfxEditMode::Player) {
+			ImGui::Separator();
 			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_PLAYER, m_game->m_sprite_gfx_manager.c_player);
+		}
 		else if (editmode == fe::SpriteGfxEditMode::NPC) {
+			ImGui::Separator();
 			show_sprite_gfx_editor(p_rnd, c::KEY_COLL_NPCS, m_game->m_sprite_gfx_manager.c_npcs);
 		}
 
@@ -121,6 +97,13 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 	static int ls_sel_frame_x{ 0 }, ls_sel_frame_y{ 0 }, ls_sel_bank_x{ 0 }, ls_sel_bank_y{ 0 },
 		ls_sel_bank_chr_x{ 0 }, ls_sel_bank_chr_y{ 0 };
 	static bool ls_redraw_bank{ true }, ls_redraw_frame{ true };
+
+	// force a redraw from the outside
+	if (m_sprite_gfx_settings.m_redraw) {
+		ls_redraw_frame = true;
+		ls_redraw_bank = true;
+		m_sprite_gfx_settings.m_redraw = false;
+	}
 
 	if (!ls_coll || *ls_coll != p_coll) {
 		ls_redraw_frame = true;
@@ -149,23 +132,20 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	if (ls_redraw_bank) {
 		m_gfx.gen_sprite_selected_chr_bank(p_rnd, p_collection.banks[ls_resolved_bank],
-			m_game->m_palettes.at(p_coll < 2 ? 28 : 30));
+			m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll]));
 		ls_redraw_bank = false;
 		ls_redraw_frame = true;
 	}
 
 	if (ls_redraw_frame) {
 		m_gfx.gen_sprite_selected_texture(p_rnd, p_collection.frames[ls_frame].frame,
-			p_collection.banks[ls_resolved_bank], m_game->m_palettes.at(p_coll < 2 ? 28 : 30));
+			p_collection.banks[ls_resolved_bank], m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll]));
 		ls_redraw_frame = false;
 	}
 
-	constexpr float FRAME_GFX_SCALE{ 3.0f };
-	constexpr float FRAME_TILE_SIZE{ 8.0f * FRAME_GFX_SCALE };
-	constexpr float BANK_GFX_SCALE{ 2.0f };
-	constexpr float BANK_TILE_SIZE{ 8.0f * BANK_GFX_SCALE };
-
 	// draw the frame itself
+	bool is_shield_frame{ p_coll == c::KEY_COLL_PLAYER && ls_resolved_bank == c::KEY_BANK_SHIELDS };
+
 	if (!p_collection.frames.empty()) {
 		if (ls_frame >= p_collection.frames.size())
 			ls_frame = p_collection.frames.size() - 1;
@@ -190,94 +170,101 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 		auto& lr_frame{ p_collection.frames[ls_frame].frame };
 
-		ImGui::SeparatorText("Frame Metadata");
+		if (!is_shield_frame) {
 
-		ui::imgui_slider_with_arrows("###sfofx", "x-offset", lr_frame.offset_x, -128, 127);
-		ui::imgui_slider_with_arrows("###sfofy", "y-offset", lr_frame.offset_y, -128, 127);
-		ui::imgui_slider_with_arrows("###sfpivx", "x-pivot", lr_frame.pivot_x, -128, 127);
+			ImGui::SeparatorText("Frame Metadata");
 
-		ImGui::SeparatorText("Dimensions");
+			ui::imgui_slider_with_arrows("###sfofx", "x-offset", lr_frame.offset_x, -128, 127);
+			ui::imgui_slider_with_arrows("###sfofy", "y-offset", lr_frame.offset_y, -128, 127);
+			ui::imgui_slider_with_arrows("###sfpivx", "x-pivot", lr_frame.pivot_x, -128, 127);
 
-		if (ui::imgui_button("+row", 2))
-			if (lr_frame.add_row())
-				ls_redraw_frame = true;
-		ImGui::SameLine();
-		if (ui::imgui_button("-row", 1))
-			if (lr_frame.pop_row())
-				ls_redraw_frame = true;
+			ImGui::SeparatorText("Dimensions");
 
-		if (ui::imgui_button("+col", 2))
-			if (lr_frame.add_col())
-				ls_redraw_frame = true;
-		ImGui::SameLine();
-		if (ui::imgui_button("-col", 1))
-			if (lr_frame.pop_col())
-				ls_redraw_frame = true;
+			if (ui::imgui_button("+row", 2))
+				if (lr_frame.add_row())
+					ls_redraw_frame = true;
+			ImGui::SameLine();
+			if (ui::imgui_button("-row", 1))
+				if (lr_frame.pop_row())
+					ls_redraw_frame = true;
 
-		ImGui::SeparatorText("Rendered Frame");
+			if (ui::imgui_button("+col", 2))
+				if (lr_frame.add_col())
+					ls_redraw_frame = true;
+			ImGui::SameLine();
+			if (ui::imgui_button("-col", 1))
+				if (lr_frame.pop_col())
+					ls_redraw_frame = true;
 
-		// draw the frame texture - we have a valid animation frame and bank index
-		auto paint_tile{ imgui_select_tile_image(m_gfx.get_sprite_selected_texture(),
-			FRAME_GFX_SCALE, ls_sel_frame_x, ls_sel_frame_y) };
+			ImGui::SeparatorText("Rendered Frame");
 
-		if (paint_tile) {
-			std::size_t bank_idx{ static_cast<std::size_t>(ls_sel_bank_chr_y * 16 + ls_sel_bank_chr_x) };
-			if (ls_resolved_bank < p_collection.banks.size() &&
-				bank_idx < p_collection.banks[ls_resolved_bank].size() &&
-				paint_tile->first < lr_frame.w() &&
-				paint_tile->second < lr_frame.h()) {
-				auto& tile{ lr_frame.tilemap.at(paint_tile->second).at(paint_tile->first) };
-				if (tile) {
-					if (tile->index != static_cast<byte>(bank_idx)) {
-						tile->index = static_cast<byte>(bank_idx);
+			// draw the frame texture - we have a valid animation frame and bank index
+			auto paint_tile{ imgui_select_tile_image(m_gfx.get_sprite_selected_texture(),
+				m_sprite_gfx_settings.scale_frame, ls_sel_frame_x, ls_sel_frame_y) };
+
+			if (paint_tile) {
+				std::size_t bank_idx{ static_cast<std::size_t>(ls_sel_bank_chr_y * 16 + ls_sel_bank_chr_x) };
+				if (ls_resolved_bank < p_collection.banks.size() &&
+					bank_idx < p_collection.banks[ls_resolved_bank].size() &&
+					paint_tile->first < lr_frame.w() &&
+					paint_tile->second < lr_frame.h()) {
+					auto& tile{ lr_frame.tilemap.at(paint_tile->second).at(paint_tile->first) };
+					if (tile) {
+						if (tile->index != static_cast<byte>(bank_idx)) {
+							tile->index = static_cast<byte>(bank_idx);
+							ls_redraw_frame = true;
+						}
+					}
+					else {
+						tile = fe::SpriteFrameTile(static_cast<byte>(bank_idx), 0, false, false);
 						ls_redraw_frame = true;
 					}
 				}
-				else {
-					tile = fe::SpriteFrameTile(static_cast<byte>(bank_idx), 0, false, false);
-					ls_redraw_frame = true;
-				}
 			}
-		}
 
-		ImGui::SeparatorText("Selected Tile");
+			ImGui::SeparatorText("Selected Tile");
 
-		if (static_cast<std::size_t>(ls_sel_frame_x) < lr_frame.w() &&
-			static_cast<std::size_t>(ls_sel_frame_y) < lr_frame.h()) {
-			auto& lr_tile{ lr_frame.tilemap.at(static_cast<std::size_t>(ls_sel_frame_y)).at(static_cast<std::size_t>(ls_sel_frame_x)) };
+			if (static_cast<std::size_t>(ls_sel_frame_x) < lr_frame.w() &&
+				static_cast<std::size_t>(ls_sel_frame_y) < lr_frame.h()) {
+				auto& lr_tile{ lr_frame.tilemap.at(static_cast<std::size_t>(ls_sel_frame_y)).at(static_cast<std::size_t>(ls_sel_frame_x)) };
 
-			if (!lr_tile) {
-				ImGui::Text("No tile");
-				if (ui::imgui_button("Add tile", 2))
-					lr_tile = fe::SpriteFrameTile(0, 0, false, false);
+				if (!lr_tile) {
+					ImGui::Text("No tile");
+					if (ui::imgui_button("Add tile", 2))
+						lr_tile = fe::SpriteFrameTile(0, 0, false, false);
+				}
+				else {
+					if (ui::imgui_slider_with_arrows("###stchrind",
+						std::format("chr-tile {}", lr_tile->index),
+						lr_tile->index, 0, p_collection.banks.at(ls_resolved_bank).size()))
+						ls_redraw_frame = true;
+
+					if (ui::imgui_slider_with_arrows("###stsp",
+						std::format("sub-palette {}", lr_tile->sub_palette),
+						lr_tile->sub_palette, 0, 3))
+						ls_redraw_frame = true;
+
+					if (ui::imgui_checkbox("v-flip", lr_tile->v_flip))
+						ls_redraw_frame = true;
+					ImGui::SameLine();
+					if (ui::imgui_checkbox("h-flip", lr_tile->h_flip))
+						ls_redraw_frame = true;;
+
+					if (ui::imgui_button("Clear tile", 1)) {
+						lr_tile = std::nullopt;
+						ls_redraw_frame = true;
+					}
+				}
+
 			}
 			else {
-				if (ui::imgui_slider_with_arrows("###stchrind",
-					std::format("chr-tile {}", lr_tile->index),
-					lr_tile->index, 0, p_collection.banks.at(ls_resolved_bank).size()))
-					ls_redraw_frame = true;
-
-				if (ui::imgui_slider_with_arrows("###stsp",
-					std::format("sub-palette {}", lr_tile->sub_palette),
-					lr_tile->sub_palette, 0, 3))
-					ls_redraw_frame = true;
-
-				if (ui::imgui_checkbox("v-flip", lr_tile->v_flip))
-					ls_redraw_frame = true;
-				ImGui::SameLine();
-				if (ui::imgui_checkbox("h-flip", lr_tile->h_flip))
-					ls_redraw_frame = true;;
-
-				if (ui::imgui_button("Clear tile", 1)) {
-					lr_tile = std::nullopt;
-					ls_redraw_frame = true;
-				}
+				imgui_text("No tile selected");
 			}
-
 		}
 		else {
-			imgui_text("No tile selected");
+			ImGui::Text("Shield frames are not supported outside of chr-import/export. See the documentation for details.");
 		}
+
 	}
 	else {
 		imgui_text("Collection has no animation frames");
@@ -293,7 +280,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 		ls_redraw_bank = true;
 
 	imgui_select_tile_image(m_gfx.get_sprite_selected_chr_bank(),
-		BANK_GFX_SCALE, ls_sel_bank_chr_x, ls_sel_bank_chr_y);
+		m_sprite_gfx_settings.scale_bank, ls_sel_bank_chr_x, ls_sel_bank_chr_y);
 
 	/*
 	TODO: Decide if users should be allowed to canonicalize. bmp import will do this up to sorting
@@ -305,13 +292,13 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	ImGui::SeparatorText("File Operations");
 
-	if (ui::imgui_button("Export bmps", 2)) {
+	if (ui::imgui_button("Export bmps", 2, "", is_shield_frame)) {
 		export_sprite_frame_bmps(p_collection, p_coll, ls_resolved_bank);
 	}
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Import bmps", 4)) {
+	if (ui::imgui_button("Import bmps", 4, "Import bmps for all frames using the selected chr-bank", is_shield_frame)) {
 		import_sprite_frame_bmps(p_collection, p_coll, ls_resolved_bank);
 		ls_redraw_bank = true;
 	}
@@ -447,7 +434,7 @@ void fe::MainWindow::import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, s
 	if (p_coll_id == c::KEY_COLL_NPCS)
 		p_coll.expand_bank_if_last(p_bank_id);
 
-	const auto chrbytes{ klib::file::read_file_as_bytes(in_file) };
+	add_message(std::format("Imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), 2);
 }
 
 void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
@@ -459,12 +446,12 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
 	else if (impact.banks_identical) {
 		auto impres{ m_gfx.import_sprite_frames_from_folder(get_bmp_path(), get_sprite_gfx_file_prefix(p_coll_id),
-			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(p_coll_id < 2 ? 28 : 30),
-			255, 3) };
+			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll_id]),
+			256, m_sprite_gfx_settings.transp_tolerance) };
 
 		// check overflow
 		if (impres.approximated_tile_count > 0)
-			throw std::runtime_error("Imported bmps required creating too many chr-tiles");
+			throw std::runtime_error("Imported bmps required creating more than 256 chr-tiles");
 
 		for (std::size_t l_bank_id : impact.chr_bank_indexes) {
 			const auto tilerange{ m_game->m_sprite_gfx_manager.get_chr_tile_count_range(p_coll_id, p_bank_id) };
@@ -506,7 +493,7 @@ void fe::MainWindow::export_sprite_frame_bmps(const fe::SpriteFrameCollection& p
 		m_gfx.save_sprite_frames_bmp(p_coll,
 			p_bank_id,
 			impact.frame_indexes,
-			m_game->m_palettes.at(p_coll_id < 2 ? 28 : 30),
+			m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll_id]),
 			get_bmp_path(),
 			get_sprite_gfx_file_prefix(p_coll_id));
 
@@ -570,5 +557,7 @@ void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
 	m_sprite_dims = gui_sprites.get_animation_dimension_data();
 
 	// pass the resolved frames on to the gfx handler to make sprite textures
-	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(28));
+	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[0]));
+	// force a redraw in the sprite gfx window
+	m_sprite_gfx_settings.m_redraw = true;
 }
