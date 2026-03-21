@@ -1,5 +1,4 @@
 #include "SpriteAnimationFrame.h"
-#include <format>
 #include <stdexcept>
 
 fe::SpriteAnimationFrame::SpriteAnimationFrame(const std::vector<byte>& p_rom, std::size_t p_offset) :
@@ -38,6 +37,24 @@ fe::SpriteAnimationFrame::SpriteAnimationFrame(const std::vector<byte>& p_rom, s
 	}
 }
 
+// applies a linear transform to the animation frame
+// also moves any references to the zero-hit tile to a relocation index
+fe::SpriteAnimationFrame::SpriteAnimationFrame(const fe::SpriteAnimationFrame& rhs, byte linear_delta,
+	byte zero_hit_index, byte relocated_zero_hit_index) {
+	*this = rhs;
+
+	for (auto& row : tilemap)
+		for (auto& tile : row)
+			if (tile) {
+				if (tile->index == zero_hit_index)
+					tile->index = relocated_zero_hit_index;
+				tile->index += linear_delta;
+
+				if (tile->index == 0xff)
+					throw std::runtime_error("An animation frame used a chr-tile index which turned into 0xff on encoding");
+			}
+}
+
 // warning about this constructor: it leaves an empty frame, which cannot be byte-encoded
 fe::SpriteAnimationFrame::SpriteAnimationFrame(void) :
 	offset_x{ 0 }, offset_y{ 0 }, pivot_x{ 0 }
@@ -54,9 +71,15 @@ std::size_t fe::SpriteAnimationFrame::h(void) const {
 
 std::vector<byte> fe::SpriteAnimationFrame::to_bytes(byte linear_delta) const {
 	std::map<byte, byte> remap;
+	const auto& usage{ get_tile_usage() };
 
-	for (byte i{ linear_delta }; i < 0xff; ++i)
-		remap.insert(std::make_pair(i, i - linear_delta));
+	for (const auto& kv : usage) {
+		byte remap_value{ static_cast<byte>(kv.first - linear_delta) };
+		if (remap_value == 0xff)
+			throw std::runtime_error("An animation frame used a chr-tile index which turned into 0xff on encoding");
+
+		remap.insert(std::make_pair(kv.first, remap_value));
+	}
 
 	return to_bytes(remap);
 }
@@ -116,6 +139,45 @@ int fe::SpriteAnimationFrame::get_empty_tile_count(void) const {
 	return result;
 }
 
+
+bool fe::SpriteAnimationFrame::add_row(void) {
+	if (h() < 16) {
+		tilemap.push_back(std::vector<std::optional<SpriteFrameTile>>(w(), std::nullopt));
+		return true;
+	}
+	else
+		return false;
+}
+
+bool fe::SpriteAnimationFrame::add_col(void) {
+	if (w() < 16) {
+		for (auto& row : tilemap)
+			row.push_back(std::nullopt);
+		return true;
+	}
+	else
+		return false;
+}
+
+bool fe::SpriteAnimationFrame::pop_row(void) {
+	if (h() > 1) {
+		tilemap.pop_back();
+		return true;
+	}
+	else
+		return false;
+}
+
+bool fe::SpriteAnimationFrame::pop_col(void) {
+	if (w() > 1) {
+		for (auto& row : tilemap)
+			row.pop_back();
+		return true;
+	}
+	else
+		return false;
+}
+
 std::vector<byte> fe::SpriteFrameTile::to_bytes(const std::map<byte, byte>& remap) const {
 	std::vector<byte> result;
 
@@ -132,34 +194,6 @@ std::vector<byte> fe::SpriteFrameTile::to_bytes(const std::map<byte, byte>& rema
 	// bit 7: v-flip
 	if (v_flip) attr |= 0x80;
 	result.push_back(attr);
-
-	return result;
-}
-
-std::string fe::SpriteAnimationFrame::to_string(void) const {
-	std::string result{ std::format("w={} h={} x={} y={} pivot={}\n",
-		w(), h(), offset_x, offset_y, pivot_x) };
-
-	for (const auto& row : tilemap) {
-		for (std::size_t i{ 0 }; i < row.size(); ++i) {
-			if (row[i]) {
-				result += std::format("{:2x}:{}:", row[i]->index, row[i]->sub_palette);
-				if (row[i]->v_flip)
-					result.push_back('v');
-				else
-					result.push_back('_');
-				if (row[i]->h_flip)
-					result.push_back('h');
-				else
-					result.push_back('_');
-
-			}
-			else {
-				result += "__:_:__ ";
-			}
-		}
-		result += "\n";
-	}
 
 	return result;
 }

@@ -65,6 +65,7 @@ fe::gfx::~gfx(void) {
 	for (auto& kv : m_chr_bank_gfx)
 		delete_texture(kv.second);
 	clear_sprite_selected_texture();
+	clear_sprite_bank_selected_texture();
 }
 
 void fe::gfx::delete_texture(SDL_Texture* p_txt) {
@@ -1642,41 +1643,33 @@ std::string fe::gfx::get_sprite_frame_bmp_wc_filpath(
 }
 
 // sprite gfx collection rendering
-SDL_Texture* fe::gfx::get_sprite_selected_texture(std::size_t p_coll_type, std::size_t p_frame_no,
-	std::size_t p_chr_bank_no) const {
-	if (m_sprite_selected_key &&
-		std::get<0>(m_sprite_selected_key.value()) == p_coll_type &&
-		std::get<1>(m_sprite_selected_key.value()) == p_frame_no &&
-		std::get<2>(m_sprite_selected_key.value()) == p_chr_bank_no)
-		return m_sprite_selected_gfx;
-	else
-		return nullptr;
+SDL_Texture* fe::gfx::get_sprite_selected_texture(void) const {
+	return m_sprite_selected_gfx;
 }
 
-SDL_Texture* fe::gfx::get_sprite_selected_chr_bank(std::size_t p_coll_type, std::size_t p_chr_bank_no) const {
-	if (m_sprite_selected_key &&
-		std::get<0>(m_sprite_selected_key.value()) == p_coll_type &&
-		std::get<2>(m_sprite_selected_key.value()) == p_chr_bank_no)
-		return m_sprite_selected_bank;
-	else
-		return nullptr;
+SDL_Texture* fe::gfx::get_sprite_selected_chr_bank(void) const {
+	return m_sprite_selected_bank;
 }
 
-void fe::gfx::gen_sprite_selected_texture(SDL_Renderer* p_rnd, std::size_t p_coll_type, std::size_t p_frame_no,
-	std::size_t p_chr_bank_no, const fe::SpriteAnimationFrame& p_frame,
+void fe::gfx::gen_sprite_selected_texture(SDL_Renderer* p_rnd, const fe::SpriteAnimationFrame& p_frame,
 	const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette) {
 	clear_sprite_selected_texture();
-
 	m_sprite_selected_gfx = surface_to_texture(p_rnd, gen_sprite_frame_surface(p_frame, p_chr_bank,
 		flat_pal_to_2d_pal(p_palette)));
+}
+
+void fe::gfx::gen_sprite_selected_chr_bank(SDL_Renderer* p_rnd,
+	const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette) {
+	clear_sprite_bank_selected_texture();
 	m_sprite_selected_bank = surface_to_texture(p_rnd, gen_chr_bank_surface(p_chr_bank, flat_pal_to_2d_pal(p_palette)));
-	m_sprite_selected_key = std::make_tuple(p_coll_type, p_frame_no, p_chr_bank_no);
+}
+
+void fe::gfx::clear_sprite_bank_selected_texture(void) {
+	delete_texture(m_sprite_selected_bank);
 }
 
 void fe::gfx::clear_sprite_selected_texture(void) {
 	delete_texture(m_sprite_selected_gfx);
-	delete_texture(m_sprite_selected_bank);
-	m_sprite_selected_key = std::nullopt;
 }
 
 // functions for bmp export

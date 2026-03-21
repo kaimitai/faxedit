@@ -9,6 +9,10 @@ namespace fe {
 
 	namespace c {
 
+		// this chr-tile is used for zero-hit
+		constexpr byte SPRITE_0_HIT_CHR[]{ 0xfc, 0xc6, 0xe6, 0xe6, 0xdc, 0xc0, 0xc0, 0x00, 0xfc,
+			0xc6, 0xe6, 0xe6, 0xdc, 0xc0, 0xc0, 0x00 };
+
 		// constants internal to the sprite gfx manager - bank and collection keys
 		constexpr std::size_t KEY_COLL_NPCS{ 0 };
 		constexpr std::size_t KEY_COLL_PLAYER{ 1 };
@@ -33,6 +37,8 @@ namespace fe {
 		constexpr std::size_t PPU_DYNAMIC_TILE_COUNT{ 0x100 - PPU_DYNAMIC_TILE_START };
 		constexpr std::size_t PPU_PORTRAIT_TILE_COUNT{ PPU_DYNAMIC_TILE_COUNT };
 		constexpr std::size_t PPU_NPC_TILE_COUNT{ PPU_DYNAMIC_TILE_COUNT };
+		constexpr std::size_t SPRITE_0_PPU_IDX{ 0x7f };
+		constexpr std::size_t SPRITE_0_PPU_IDX_REL_ZERO{ SPRITE_0_PPU_IDX - PPU_COMMON_TILE_START };
 
 		// immutables
 		constexpr std::size_t PLAYER_TYPE_COUNT{ 8 };

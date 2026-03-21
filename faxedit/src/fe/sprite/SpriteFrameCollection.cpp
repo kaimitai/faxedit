@@ -17,6 +17,11 @@ void fe::SpriteFrameCollection::expand_last_bank(void) {
 	lastbank = l_bank;
 }
 
+void fe::SpriteFrameCollection::expand_bank_if_last(std::size_t p_bank_id) {
+	if (p_bank_id == banks.size() - 1)
+		expand_last_bank();
+}
+
 void fe::SpriteFrameCollection::add_frame(const fe::SpriteAnimationFrame& p_frame) {
 	frames.push_back({ p_frame });
 }

@@ -108,7 +108,6 @@ namespace fe {
 		std::map<std::size_t, SDL_Texture*> m_tilemap_gfx;
 		std::map<std::size_t, ChrTilemap> m_tilemap_import_results;
 
-		std::optional<std::tuple<std::size_t, std::size_t, std::size_t>> m_sprite_selected_key;
 		SDL_Texture* m_sprite_selected_gfx;
 		SDL_Texture* m_sprite_selected_bank;
 
@@ -336,14 +335,15 @@ namespace fe {
 		) const;
 
 		// rendering
-		SDL_Texture* get_sprite_selected_texture(std::size_t p_coll_type, std::size_t p_frame_no,
-			std::size_t p_chr_bank_no) const;
-		SDL_Texture* get_sprite_selected_chr_bank(std::size_t p_coll_type, std::size_t p_chr_bank_no) const;
+		SDL_Texture* get_sprite_selected_texture(void) const;
+		SDL_Texture* get_sprite_selected_chr_bank(void) const;
 
-		void gen_sprite_selected_texture(SDL_Renderer* p_rnd, std::size_t p_coll_type, std::size_t p_frame_no,
-			std::size_t p_chr_bank_no, const fe::SpriteAnimationFrame& p_frame,
+		void gen_sprite_selected_texture(SDL_Renderer* p_rnd, const fe::SpriteAnimationFrame& p_frame,
+			const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette);
+		void gen_sprite_selected_chr_bank(SDL_Renderer* p_rnd,
 			const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette);
 		void clear_sprite_selected_texture(void);
+		void clear_sprite_bank_selected_texture(void);
 
 		// functions for bmp export
 		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;

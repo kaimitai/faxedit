@@ -236,7 +236,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	}
 }
 
-std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynamic) {
+std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynamic) try {
 	if (p_exclude_dynamic)
 		add_message("*** using semi-static patching mode ***", 4);
 
@@ -337,6 +337,10 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 		add_message("Could not patch ROM data", 1);
 		return std::nullopt;
 	}
+}
+catch (const std::exception& ex) {
+	add_message(ex.what(), 1);
+	return std::nullopt;
 }
 
 void fe::MainWindow::report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result) {

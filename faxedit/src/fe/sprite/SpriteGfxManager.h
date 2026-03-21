@@ -117,6 +117,7 @@ namespace fe {
 			const fe::ROM_Manager& p_rom_mgr);
 		fe::SpriteGfxPatchResult patch_rom(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fe::ROM_Manager& p_rom_mgr);
+		std::pair<std::size_t, std::size_t> get_chr_tile_count_range(std::size_t p_coll_id, std::size_t p_bank_id) const;
 	};
 
 }

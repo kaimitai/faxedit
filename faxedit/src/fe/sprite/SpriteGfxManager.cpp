@@ -1058,3 +1058,17 @@ std::vector<byte> fe::SpriteGfxManager::flatten_common_chr_bank(void) const {
 
 	return flatten_chr_bank(out_tiles);
 }
+
+std::pair<std::size_t, std::size_t> fe::SpriteGfxManager::get_chr_tile_count_range(std::size_t p_coll_id,
+	std::size_t p_bank_id) const {
+	if (p_coll_id == c::KEY_COLL_PLAYER)
+		return std::make_pair(0, 256);
+	else if (p_coll_id == c::KEY_COLL_PORTRAITS)
+		return std::make_pair(0, 255);
+	else {
+		if (p_bank_id == c_npcs.banks.size() - 1)
+			return std::make_pair(0, c::PPU_COMMON_TILE_COUNT);
+		else
+			return std::make_pair(0, c::PPU_DYNAMIC_TILE_COUNT);
+	}
+}

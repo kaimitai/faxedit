@@ -249,13 +249,20 @@ namespace fe {
 		// sprite gfx functions and procedures
 		void show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 			std::size_t p_coll, fe::SpriteFrameCollection& p_collection);
-		std::string get_file_prefix(std::size_t p_gfx_key) const;
+		std::string get_sprite_gfx_file_prefix(std::size_t p_gfx_key) const;
 		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
+		std::optional<std::pair<int, int>> imgui_select_tile_image(SDL_Texture* tex, float scale, int& p_sel_x, int& p_sel_y) const;
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);
 		void import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);
+		void export_sprite_chr_bank(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
+			std::size_t p_bank_id);
+		void import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
+			std::size_t p_bank_id);
+
+		void update_sgfx_result_for_common_bank(fe::SpriteImportResult& import);
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);
