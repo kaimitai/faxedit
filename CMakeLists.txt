@@ -39,9 +39,14 @@ set(SOURCES
     faxedit/src/fe/ROM_Manager.cpp
     faxedit/src/fe/Screen.cpp
     faxedit/src/fe/Sprite.cpp
-    faxedit/src/fe/Sprite_definitions.cpp
     faxedit/src/fe/Sprite_set.cpp
     faxedit/src/fe/StageManager.cpp
+	faxedit/src/fe/GodAllocator.cpp
+	faxedit/src/fe/sprite/SpriteAnimationFrame.cpp
+	faxedit/src/fe/sprite/SpriteFrameCollection.cpp
+	faxedit/src/fe/sprite/SpriteGfxManager.cpp
+	faxedit/src/fe/sprite/SpriteGfxSnapshotManager.cpp
+	faxedit/src/fe/sprite/SpriteGUILoader.cpp
     faxedit/src/fe/xml/Xml_helper.cpp
 
     faxedit/src/fi/FaxString.cpp
@@ -58,6 +63,7 @@ set(SOURCES
     faxedit/src/windows/MetaDataWindow.cpp
     faxedit/src/windows/TilemapWindow.cpp
     faxedit/src/windows/UndoInterface.cpp
+	faxedit/src/windows/SpriteGfxWindow.cpp
 )
 
 add_executable(faxedit ${SOURCES})
