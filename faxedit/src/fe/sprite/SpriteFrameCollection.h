@@ -27,6 +27,7 @@ namespace fe {
 		void add_frame_chr_bank_index(std::size_t p_frame_idx, std::size_t p_chr_bank_idx);
 
 		ChrBank get_chr_bank(std::size_t p_bank_no, bool make_sparse_ppu_if_last = false) const;
+		static void expand_bank(ChrBank& p_bank);
 	};
 
 }

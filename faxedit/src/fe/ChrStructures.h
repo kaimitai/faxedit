@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 #include "./../common/klib/NES_tile.h"
+#include "./sprite/SpriteAnimationFrame.h"
 
 using byte = unsigned char;
 
@@ -43,6 +44,13 @@ namespace fe {
 
 		static std::vector<std::vector<byte>> flat_pal_to_2d_pal(
 			const std::vector<byte>& p_flat_pal);
+	};
+
+	// Result type after importing sprite gfx from bmp, must be visible from several places
+	struct SpriteImportResult {
+		std::vector<fe::SpriteAnimationFrame> frames;
+		std::vector<klib::NES_tile> tiles;
+		int approximated_tile_count;
 	};
 
 }

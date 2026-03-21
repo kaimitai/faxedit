@@ -66,7 +66,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				"How far a pixel color can deviate from hot pink and still be considered transparent");
 
 			ImGui::Separator();
-			if (ui::imgui_button("Regenerate GUI sprites", 4, ""))
+			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI"))
 				generate_editor_sprite_gfx(p_rnd);
 		}
 		else if (editmode == fe::SpriteGfxEditMode::Portraits) {
@@ -236,7 +236,8 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 				else {
 					if (ui::imgui_slider_with_arrows("###stchrind",
 						std::format("chr-tile {}", lr_tile->index),
-						lr_tile->index, 0, p_collection.banks.at(ls_resolved_bank).size()))
+						lr_tile->index, 0, p_collection.banks.at(ls_resolved_bank).empty() ? 0 :
+						p_collection.banks.at(ls_resolved_bank).size() - 1))
 						ls_redraw_frame = true;
 
 					if (ui::imgui_slider_with_arrows("###stsp",
@@ -298,7 +299,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Import bmps", 4, "Import bmps for all frames using the selected chr-bank", is_shield_frame)) {
+	if (ui::imgui_button("Import bmps", 4, "Makes a snapshot, and imports bmps for all frames using the selected chr-bank", is_shield_frame)) {
 		import_sprite_frame_bmps(p_collection, p_coll, ls_resolved_bank);
 		ls_redraw_bank = true;
 	}
@@ -308,9 +309,36 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Import chr", 4)) {
+	if (ui::imgui_button("Import chr", 4, "Makes a snapshot, and imports the selected chr-bank from file")) {
 		import_sprite_chr_bank(p_collection, p_coll, ls_resolved_bank);
 		ls_redraw_bank = true;
+	}
+
+	ImGui::SeparatorText("Snapshots");
+	if (ui::imgui_button("Store Snapshot", 2, "Store snapshot of related chr-banks and frames")) {
+		const auto l_impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_collection, ls_resolved_bank) };
+		m_sprite_snap_manager.add_snapshot(p_collection, p_coll,
+			l_impact);
+
+		add_message(std::format("Stored {} chr-banks and {} frames as snapshot",
+			l_impact.chr_bank_indexes.size(), l_impact.frame_indexes.size()), 2);
+	}
+	ImGui::SameLine();
+	if (ui::imgui_button("Restore Snapshot", 4, "Restore snapshot of related chr-banks and frames",
+		!m_sprite_snap_manager.has_snapshot(p_coll))
+		) {
+		auto restore_result{ m_sprite_snap_manager.restore_snapshot(p_collection, p_coll) };
+		ls_redraw_bank = true;
+		ls_redraw_frame = true;
+		add_message(std::format("Restored {} chr-bank(s) and {} frame(s) from snapshot", restore_result.first, restore_result.second), 2);
+	}
+	ImGui::SameLine();
+	if (ui::imgui_button("Query Snapshot", 4, "Check count of banks and frames stored in the most recent snapshot",
+		!m_sprite_snap_manager.has_snapshot(p_coll))
+		) {
+		const auto queryres{ m_sprite_snap_manager.query_snapshot(p_coll) };
+		add_message(std::format("Most recent snapshot contains {} chr-bank(s) and {} frame(s)",
+			queryres.first, queryres.second), 2);
 	}
 }
 
@@ -430,11 +458,13 @@ void fe::MainWindow::import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, s
 	for (std::size_t i{ 0 }; i < tiles_flat.size(); i += 16)
 		imp_bank.push_back(klib::NES_tile(tiles_flat, i));
 
-	p_coll.banks.at(p_bank_id) = imp_bank;
-	if (p_coll_id == c::KEY_COLL_NPCS)
-		p_coll.expand_bank_if_last(p_bank_id);
+	if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == p_coll.banks.size() - 1)
+		fe::SpriteFrameCollection::expand_bank(imp_bank);
 
-	add_message(std::format("Imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), 2);
+	// store bank after making snapshot
+	m_sprite_snap_manager.apply_chr_import(p_coll, p_coll_id, p_bank_id, imp_bank);
+
+	add_message(std::format("Created snapshot, and imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), 2);
 }
 
 void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
@@ -454,7 +484,7 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 			throw std::runtime_error("Imported bmps required creating more than 256 chr-tiles");
 
 		for (std::size_t l_bank_id : impact.chr_bank_indexes) {
-			const auto tilerange{ m_game->m_sprite_gfx_manager.get_chr_tile_count_range(p_coll_id, p_bank_id) };
+			const auto tilerange{ m_game->m_sprite_gfx_manager.get_chr_tile_count_range(p_coll_id, l_bank_id) };
 			std::size_t tilecount{ impres.tiles.size() };
 
 			if (tilecount < tilerange.first || tilecount > tilerange.second)
@@ -465,14 +495,10 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 		if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == m_game->m_sprite_gfx_manager.c_npcs.banks.size() - 1)
 			update_sgfx_result_for_common_bank(impres);
 
-		for (std::size_t l_bank_id : impact.chr_bank_indexes) {
-			p_coll.banks.at(l_bank_id) = impres.tiles;
-		}
-		for (std::size_t i{ 0 }; i < impres.frames.size(); ++i) {
-			p_coll.frames.at(impact.frame_indexes.at(i)).frame.tilemap = impres.frames[i].tilemap;
-		}
+		// run bmp import through snapshot manager after validation
+		m_sprite_snap_manager.apply_bmp_import(p_coll, p_coll_id, impres, impact);
 
-		add_message(std::format("Imported {} bmp files", impact.frame_indexes.size()), 2);
+		add_message(std::format("Created snapshot, and imported {} bmp files", impact.frame_indexes.size()), 2);
 	}
 	else {
 		throw std::runtime_error(

@@ -9,6 +9,7 @@
 #include <string>
 #include "gfx.h"
 #include "UndoInterface.h"
+#include "./../fe/sprite/SpriteGfxSnapshotManager.h"
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
 #include "./../fe/ROM_Manager.h"
@@ -46,6 +47,7 @@ namespace fe {
 		fe::Config m_config;
 		// tilemap undo interface
 		std::optional<fe::UndoInterface> m_undo;
+		fe::SpriteGfxSnapshotManager m_sprite_snap_manager;
 
 		// settings
 		SpriteGfxSettings m_sprite_gfx_settings;

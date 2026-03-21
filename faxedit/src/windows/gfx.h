@@ -77,12 +77,6 @@ namespace fe {
 		int score;
 	};
 
-	struct SpriteImportResult {
-		std::vector<fe::SpriteAnimationFrame> frames;
-		std::vector<klib::NES_tile> tiles;
-		int approximated_tile_count;
-	};
-
 	enum ChrDedupMode {
 		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
 		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically

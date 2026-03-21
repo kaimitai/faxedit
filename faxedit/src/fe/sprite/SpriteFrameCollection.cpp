@@ -8,13 +8,7 @@ void fe::SpriteFrameCollection::add_chr_bank(const ChrBank& p_bank, bool make_fu
 }
 
 void fe::SpriteFrameCollection::expand_last_bank(void) {
-	ChrBank l_bank{ std::vector<klib::NES_tile>(256, klib::NES_tile()) };
-	auto& lastbank{ banks.back() };
-
-	for (std::size_t i{ 0 }; i < lastbank.size(); ++i)
-		l_bank.at(c::PPU_COMMON_TILE_START + i) = lastbank[i];
-
-	lastbank = l_bank;
+	expand_bank(banks.back());
 }
 
 void fe::SpriteFrameCollection::expand_bank_if_last(std::size_t p_bank_id) {
@@ -48,4 +42,13 @@ ChrBank fe::SpriteFrameCollection::get_chr_bank(std::size_t p_bank_no,
 	else {
 		return banks.at(p_bank_no);
 	}
+}
+
+void fe::SpriteFrameCollection::expand_bank(ChrBank& p_bank) {
+	ChrBank l_bank{ std::vector<klib::NES_tile>(256, klib::NES_tile()) };
+
+	for (std::size_t i{ 0 }; i < p_bank.size(); ++i)
+		l_bank.at(fe::c::PPU_COMMON_TILE_START + i) = p_bank[i];
+
+	p_bank = l_bank;
 }
