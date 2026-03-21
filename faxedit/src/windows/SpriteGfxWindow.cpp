@@ -343,6 +343,8 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 }
 
 std::optional<std::pair<int, int>> fe::MainWindow::imgui_select_tile_image(SDL_Texture* tex, float scale, int& sel_x, int& sel_y) const {
+	if (!tex)
+		return std::nullopt;
 	std::optional<std::pair<int, int>> result;
 	const float FRAME_TILE_SIZE{ 8.0f * scale };
 
