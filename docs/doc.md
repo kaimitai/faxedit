@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-5.31), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-6), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -45,7 +45,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Screen Doors](#screen-doors)
   - [Screen Scrolling](#screen-scrolling)
   - [Screen Transitions](#screen-transitions)
-- [Graphics](#graphics)
+- [Background Graphics](#background-graphics)
   - [World gfx](#world-gfx)
   - [World palettes](#world-palettes)
   - [Background gfx](#background-gfx)
@@ -53,6 +53,12 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [HUD](#hud)
   - [chr banks](#chr-banks)
   - [Tips for bmp import](#tips-for-bmp-import)
+- [Sprite Graphics](#sprite-graphics)
+  - [Frame-Centric Editing](#frame-centric-editing)
+  - [NPC Frames](#npc-frames-and-general-information)
+  - [Player Frames](#player-frames)
+  - [Portrait Frames](#portrait-frames)
+  - [Sprite Gfx Settings](#sprite-gfx-settings)
 - [Configuration Files](#configuration-files)
 
 <hr>
@@ -67,7 +73,8 @@ This is the screen used for file operations and data analysis.
 * Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes (hold shift to patch the ROM in-place)
 * Save ips: Generates an ips patch file
 * Data Integrity Analysis: Does some checking on whether there is problems in your data
-* Show/Hide gfx editor: Opens or closes the Graphics Editor window
+* BG gfx editor: Opens or closes the Background Graphics Editor window
+* Sprite gfx editor: Opens or closes the Sprite Graphics Editor window
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Output Messages: The messages from the editor
 
@@ -266,7 +273,7 @@ No metatiles in the original game use this functionality. In the original game a
   * Show All: Will show all chr-tiles, including those which update dynamically during gameplay for text and such. Will cause visual glitches if used in a metatile definition, but could possibly be used creatively.
 
 
-* Add / Remove metatile: Adds a new metatile, or deletes the selected metatile. Metatiles which are placed on any screen tilemap cannot be deleted. The same goes for metatiles that are part of mattock animations and block-push parameters.
+* Add / Remove metatile: Adds a new metatile (as a copy of the currently selected metatile), or deletes the selected metatile. Metatiles which are placed on any screen tilemap cannot be deleted. The same goes for metatiles that are part of mattock animations and block-push parameters.
 
 ## Scenes
 
@@ -456,7 +463,7 @@ You can define these transitions between any two worlds (apart from the Building
 
 When in Transitions-editing mode, Shift+left Click moves the other-world destination position to the clicked position on the tilemap. Ctrl+Left Click moves the same-world destination position.
 
-# Graphics
+# Background Graphics
 
 We have functionality for editing the graphics by importing bmp files. The NES does not support arbitraty bitmaps, and there are some strict rules we need to follow for our graphics to look good.
 
@@ -590,6 +597,237 @@ When loading a bmp an output message will tell you how many chr-tiles were recla
 For some images, if you import a bmp you exported from ROM, it will still fail to stay within the limits. This might seem counter-intuitive, but this is because there were palettes with the same color within a sub-palette - and it therefore failed to match it to chr-tiles it potentially could have matched it if the same-color was distributed to different indexes in some way. It becomes computationally prohibitive to try all such combinations however. You can temporarily alter palettes like that to have all colors distinct within each 4-color sub-palette, and then change the colors back after the import.
 
 Experiment and have fun!
+
+<hr>
+
+# Sprite Graphics
+
+Sprite graphics are used for the following:
+
+  - Player animations
+  - Weapon animations
+  - Shield Animations
+  - NPC and item animations
+  - Portraits
+  - UI elements (arrows, question marks etc)
+
+Sprite graphics are drawn in the context of animation frames. Animation frames are rectangular tilemaps which are drawn in the context of sprite chr-banks. A difference between background and sprite graphics, is that sprite tiles can be flipped horizontally or vertically (or both) and that each individual tile can be drawn with one sub-palette. There are no attribute tables when it comes to sprites. In addition to this, sprites can have transparent pixels.
+
+Therefore, animation frames do not only reference chr-tiles; for each chr-tile there is also metadata which says whether the sprite has any flips, and which sub-palette it uses when drawn.
+
+In addition to this, tiles in animation frames are optional. A tile can be defined to be empty, in which case nothing is drawn, and there is no associated metadata.
+
+Each animation frame also has three metadata items associated with it:
+
+  - x-offset: How many pixels to translate the entire frame in the x-direction
+  - y-offset: How many pixels to translate the entire frame in the y-direction
+  - x-pivot: The vertical midpoint of the sprite, used when flipping it - when an npc changes direction for example. This will usually be half the pixel width of a frame.
+
+There are three pools of animation frames in the game:
+
+  - NPC pool: Defines NPCs, items and UI elements
+  - Player pool: Defines player animation frames for each armor, weapon and shield type
+  - Portrait pool: Defines portraits, with five frames each; body, eyes (2 frames) and mouth (2 frames)
+
+Sprite chr-tiles are swapped in dynamically during gameplay, and to understand the limitations we're working under, we need to consider how the 256-tile pool in the PPU is allocated.
+
+![Sprite PPU](./img/sprite_gfx_ppu_tiles.png)
+
+The yellow block at the top is where the player tiles are loaded during gameplay. These have indexes $00-$2f when the player has a shield.
+
+The red block goes from $30 to roughly $38 when the player has a shield, otherwise the player body can extend into it.
+
+The blue block goes from rougly $38 to $3f, and contains the tiles for the currently held weapon. (roughly means it depends, and details will follow below)
+
+The green block goes from $40 to $8f, and is what I call the "common chr-bank". These tiles are always loaded in the PPU during gameplay, and contains the tiles necessary to draw UI elements, magic effects, coins and bread.
+
+The last block goes from $90-$ff, and is what I call the "dynamic chr-bank". This is where tiles for NPCs and items are loaded when entering a new screen. This region is also used for portraits. When a portrait is loaded all other sprites are hidden, and this block is used exclusively for portrait tiles.
+
+The tile with index $7f, while not part of any animation frames, has a special meaning in the game, and is used for sprite 0-hit detection. If this tile is empty the game will enter an infinite loop waiting for a hit that never comes.
+
+## Frame-Centric Editing
+
+The Sprite Gfx Editor lets you selecte any of the three animation frame collections, and browse through all the animation frames. Each frame will be associated with a chr-bank in which context it is drawn. Some frames can be associated with more than one chr-bank.
+
+The chr-banks are as follows:
+
+  - NPCs: The "common" chr-bank (for magic effects, UI elements etc), or npc-specific chr-banks (monsters, items)
+  - Player: Armor chr-bank, Weapons chr-bank or Shields chr-bank
+  - Portraits: One portraits-specific chr-bank
+
+When the player enters a new screen, all sprites defined for that screen are loaded into the PPU starting at tile index $90. In this case the chr-tiles are always pulled from the npc-specific chr-bank, even if it is empty or points to garbage gfx. Some sprites are only meant to be spawned during gameplay, in which case this chr-loading will not happen. These sprites will have animation frames that in reality reference the common chr-bank, so when explicitly making them part of a screen we are forcing them to be drawn in the wrong context. This is why some sprites look garbled when placed on screens.
+
+The editor will associate the right sprites with the common chr-bank when appropriate, and with sprite-specific banks when appropriate.
+
+## NPC Frames and general information
+
+The sprite gfx editor will look the same for all frame collections. The radio buttons at the top will set the collection context.
+
+When NPCs are selected the following window will be shown:
+
+![Sprite Gfx Editor: NPCs](./img/win_sprite_gfx_npc.png)
+
+At the top is the frame selector, which allows you to select any frame in the collection.
+
+Then come the metadata sliders, which allows users to change the frame metadata:
+
+ - x-offset
+ - y-offset
+ - x-pivot
+
+ The dimension buttons will allow changing the dimensions of the frame, by adding or removing rows or columns.
+
+ Then comes the actual rendered frame, with a pulsating background color so transparency can be seen at a glance.
+
+ If a tile on the frame is selected, the following section allows you to set the metadata for that tile:
+
+  - chr-index (in the corresponding chr-bank)
+  - sub-palette (0-3)
+  - v- and/or h-flip
+
+If the selected tile is empty, you can add a tile at the cursor position. If a tile is defined, it can be cleared.
+
+Then comes the bank-selector. Usually there will only be one bank, but for NPCs there are several banks in some cases. For example the four springs, the two mattocks, the two red potions and such. The chr-bank description will say which sprite it belongs to.
+
+You can select tiles from the chr-bank and "draw" on the animation frames by holding the right mouse button.
+
+So while there is a rudimentary editor to work on the animation frames directly, it is expected that new graphics will be made with the bmp-import functionality. The editor round-trips all 430 or so animation frames with bmp-export and re-import. (Round-trip means: Export all frames to bmps, import them again and patch ROM - then export BMPs from patched ROM - and all bmps, both new and original, will be identical) Not only that, the importer often generates fewer chr-tiles than the original game to describe the same graphics.
+
+In other words, the bmp import functionality is powerful, but you need to obey the restrictions of the NES that the original developers had to obey:
+
+  - Each chr-tile describes an 8x8 pixel area
+  - Each chr-tile can only use 3 different colors + transparency, and these 3 colors must be part of a sub-palette. Sub-palette index 0 means transparency, while indexes 1, 2 and 3 are actual colors.
+
+The bmp-importer is helped by obeying these rules, and by using colors close to the ones defined in the sprite palettes. Also, when there is symmetry tiles can be re-used by applying flip flags.
+
+Export bmps will extract all animation frames using the currently selected chr-bank.
+
+Import bmps will import all animation frame bmps necessary to rebuild the currently selected chr-bank, and generates all the animation frames from scratch. The frame metadata however will be taken from the existing frames, as they can not be deduced from pure gfx data represented by bmp files. This metadata can be manually adjusted in the editor however.
+
+If the current bank is the common chr-bank, the bmp importer will ensure that the 0-hit tile lands on the correct index even if it is not part of any bmp.
+
+Since the bmp-import regenerates animation-frames, bmp import will not be possible for frames that are referenced by different chr-banks - unless all those chr-banks are identical. If so, the bmp importer will update all the chr-banks at the same time. If you really want to use the same frame in the context of actually different chr-banks, you need to use the chr-import, described below.
+
+The bmp import will fail if it has to generate too many chr-tiles to describe the bmps. In that case you need to simplify your graphics or look for more symmetry.
+
+After the bmp import/export is the chr import/export. chr-files are binary representations of the chr-tiles making up the selected bank. These operations happen on banks, and not on frames. So you can freely export and import chr-files without having any changes done to any animation frames.
+
+If you want to have different graphics for the different mattocks (quest and non-quest), for example, you can navigate to NPC frame 227 where you see that two chr-banks are defined; 80 and 91. 80 and 91 are the sprite IDs of these sprites. If you import chr for bank 80 you can make it look different from the mattock using bank 91, but since they use the same animation frame you need to ensure that the layouts of the bank are the same - so that the animation frame makes sense in both contexts. The editor will show you how it will look in game.
+
+When importing chr for the common bank, a warning will be issued if you do not include the 0-hit tile at index $7f - but it will not be added to the bank by force.
+
+At the very bottom are the snapshot operations. These can be used as an undo-interface for sprite gfx editing. There is one snapshot-stack for each of the three frame collection types.
+
+  - Store Snapshot: Pushes the selected bank(s) and all related frames to the snapshot stack. Useful if you want to manually edit some frames but want the option to go back.
+  - Restore Snapshot: Pops the snapshot from the stack and applies it to the related banks and frames.
+  - Query Snapshot: Tells you how many banks and frames are in the snapshot at the top of the stack.
+
+When importing bmp-files, a snapshot will be made of all related chr-banks and animation frames, so you can immediately undo if you don't like the result.
+When importing a chr-file, a snapshot will be made of the chr-bank you are replacing.
+
+## Player Frames
+
+Player frames draw from three chr-banks; player, weapons and shields.
+
+The player itself has eight animation states:
+
+  0. Walking #1
+  1. Walking #2
+  2. Walking #3
+  3. Jumping
+  4. Prepare Attack/Use Item
+  5. Idle
+  6. Attack
+  7. Climb
+
+  The player also has eight armor/shield states:
+
+  0. Leather Armor
+  1. Leather Armor and shield
+  2. Studded Mail
+  3. Studded Mail and shield
+  4. Full Plate
+  5. Full Plate and shield
+  6. Battle Suit
+  7. Battle Suit and shield
+
+In the game there is no shield when wearing the Battle Suit, since the shield is the helmet. So the last two sets of frames can safely be identical.
+
+The animation frames come in the order of armor state, and then animation state.
+
+It is possible that bmp import will succeed for these frames, but ROM patching could still fail. This could be if the total chr-bank is less than 256-tiles, safely within limits, but that one of the armor states can not be fully encoded within the player chr-area of the PPU. If you want to alter the player graphics of state "Leather Armor and Shield", for example, you should ensure there is enough tile re-use within frames 8-15.
+
+TODO: Give exact limits for all armor states
+
+The next 32 frames describe the weapons, in order:
+
+  0. Hand Dagger
+  1. Long Sword
+  2. Giant Blade
+  3. Dragon Slayer
+
+Each of the four weapons use eight frames, and these frames are syncronized with the player animations above.
+
+These frames also use a weapons chr-bank.
+
+TODO: Give exact chr-count limits per weapon
+
+When a shield is equipped, this will always occupy exactly 6 tiles in the PPU, indexes $30-$35.
+
+When a shield is not equipped, the player chr can grow all the way up to the weapon tile which starts at $38 - or $34 for the Dragon Slayer. (when Dragon Slayer is equipped, no shield chr will be loaded, so this will always be safe)
+
+The next 3 frames, 96-98, describe the shields, but in this case the different shields use the same animation frames. Under the hood they have metadata which influences how the frames are drawn - and therefore we do not support editing shield frames in this version. You can still import chr-files however to edit the graphics.
+
+TODO: Describe the shield frames under all three load-lists for more context
+
+Frames 99-106 use the player chr-bank once again. This is a simple 1-tile animation frame which is used to extend the player's arm when attacking. The order is different to the armor states given above.
+
+   99. Leather Armor
+  100. Studded Mail
+  101. Full Plate
+  102. Dragon Slayer
+  103. Leather Armor and Shield
+  104. Studded Mail and Shield
+  105. Full Plate and Shield
+  106. Dragon Slayer and Shield
+
+## Portrait Frames
+
+Portraits all draw from one chr-bank, and benefit greatly from symmetry for tile re-use. Each portrait consists of five frames. The first frame is the static body, without eyes or a mouth.
+
+The next two frames are the eyes, which are animated - and the x- and y-offsets are defined so that they land on the empty eye-area of the body.
+
+The next two frames are the mouth, which is also animated - and the x- and y-offsets are also defined so that they land on the empty mouth-area of the body.
+
+Since all portrait frames use the same chr-bank, all frames will have to be regenerated on bmp-import.
+
+If an error message occurrs during ROM patching, it will refer to "player n" or "weapon n", where n is the armor state in the case of player frames, or weapon number in the case of weapon frames.
+
+## Sprite Gfx Settings
+
+![Sprite Gfx Settings](./img/win_sprite_gfx_settings.png)
+
+This window contains some settings regarding sprite gfx editing.
+
+A checkbox will let you decide whether to patch sprite gfx at all when patching ROM.
+
+The palettes can be set for NPCs, Player and Portrait frames. These palettes will be used for rendering, and for bmp export and import. The palettes themselves can be viewed and edited in the "World Palettes" in the BG Gfx Editor.
+
+The rendering scales will decide the scales of the rendered animation frames and chr-banks.
+
+Transparency tolerance is how far off the hot-pink color a color can be and still be considered transparent.
+
+Ideally you want to match the hot-pink transparency color exactly, as seen in exported bmps.
+
+The color is
+
+```(r, g, b) = (255, 105, 180)```
+
+If the transparency is set to 3, which is the default, any color in the range
+
+```(r, g, b) = (252-255, 102-108, 177-183)```
+
+will be considered transparent.
 
 <hr>
 
