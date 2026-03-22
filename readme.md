@@ -2,6 +2,8 @@
 
 Welcome to the Echoes of Eolis code repository and release page. The code is standard C++20, and the project files were created using Microsoft Visual Studio Community 2022. You can compile the application from source, or get the latest precompiled Windows x64 build under the [repository releases](https://github.com/kaimitai/faxedit/releases/).
 
+A MacOS-build is also available. See instructions on [how to run an unsigned DMG-file](https://discord.com/channels/859610833323556884/1434979888049426532/1476410785851772928), or you can build from source.
+
 Make sure to read the [documentation](./docs/doc.md) for a detailed overview of all the inter-connected data in this game.
 
 This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
@@ -87,6 +89,8 @@ If you use a configuration file override (eoe_config_override.xml) this should u
   * Basic animation frame editor (manual editing)
   * Snapshot stack (undo for frames and CHR banks)
   * Updated sprite names and improved GUI rendering
+  * The data integrity analysis will warn you if the total number of dynamic chr-tiles loaded into the ppu for any screen exceeds the limit of what the game can handle. (when having too many big sprites on the same screen, for example)
+  * Can no longer add more than 8 sprites to a screen, which is the maximum allowed by the game engine
   * World Metadata: New metatiles are created as copies of the selected metatile
 
 * 2025-03-05: version beta-5.31
@@ -192,7 +196,7 @@ Special thanks to the following contributors and fellow digital archaeologists:
 
 [Jessica](https://www.romhacking.net/community/9037/) - for testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
 
-[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts
+[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries.
 
 <hr>
 
