@@ -700,7 +700,7 @@ In other words, the bmp import functionality is powerful, but you need to obey t
   - Each chr-tile describes an 8x8 pixel area
   - Each chr-tile can only use 3 different colors + transparency, and these 3 colors must be part of a sub-palette. Sub-palette index 0 means transparency, while indexes 1, 2 and 3 are actual colors.
 
-The bmp-importer is helped by obeying these rules, and by using colors close to the ones defined in the sprite palettes. Also, when there is symmetry tiles can be re-used by applying flip flags. An image editor which can show gridlines for each 8 pixels in the x and y direction could be useful to ensure you always know what are will be converted to a chr-tile on import.
+The bmp-importer is helped by obeying these rules, and by using colors close to the ones defined in the sprite palettes. Also, when there is symmetry tiles can be re-used by applying flip flags. An image editor which can show gridlines for each 8 pixels in the x and y direction could be useful to ensure you always know which areas will be converted to a chr-tile on import.
 
 Export bmps will extract all animation frames using the currently selected chr-bank.
 
@@ -753,7 +753,7 @@ The player itself has eight animation states:
   6. Battle Suit (frames 48-55)
   7. Battle Suit and shield (frames 56-63, unused)
 
-In the game there is no shield when wearing the Battle Suit, since the shield is the helmet. So the last two sets of frames can safely be identical, or frames 56-56 and 106 can be left blank.
+In the game there is no shield when wearing the Battle Suit, since the shield is the helmet. So the last two sets of frames can safely be identical, or frames 56-63 and 106 can be left blank.
 
 The animation frames come in the order of armor state, and then animation state.
 
@@ -820,6 +820,8 @@ Frames 99-106 use the player chr-bank once again. This is a simple 1-tile animat
   105. Full Plate and Shield arm-extend
   106. Dragon Slayer and Shield arm-extend (unused)
 
+If an error message occurrs during ROM patching, it will refer to "player n" or "weapon n", where n is the armor state in the case of player frames, or weapon number in the case of weapon frames.
+
 ## Portrait Frames
 
 Portraits all draw from one chr-bank, and benefit greatly from symmetry for tile re-use. Each portrait consists of five frames. The first frame is the static body, without eyes or a mouth.
@@ -829,8 +831,6 @@ The next two frames are the eyes, which are animated - and the x- and y-offsets 
 The next two frames are the mouth, which is also animated - and the x- and y-offsets are also defined so that they land on the empty mouth-area of the body.
 
 Since all portrait frames use the same chr-bank, all frames will have to be regenerated on bmp-import.
-
-If an error message occurrs during ROM patching, it will refer to "player n" or "weapon n", where n is the armor state in the case of player frames, or weapon number in the case of weapon frames.
 
 ## Sprite Gfx Settings
 

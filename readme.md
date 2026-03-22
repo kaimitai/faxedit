@@ -38,6 +38,7 @@ The following data is editable:
 ### Graphics
 * Tilesets for metatiles
 * Images used in the game
+* Sprite Graphics and animation frames
 
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
@@ -75,6 +76,18 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 <hr>
 
 ### Version History
+
+* 2025-03-22: version beta-6
+
+  * New sprite graphics pipeline (BMP import/export for frames: NPCs, items, UI, player, portraits)
+  * Verified lossless round-trip on original data (all regions)
+  * ~1800+ bytes saved on original data via improved deduplication and packing
+  * Full rebuild of sprite data (banks 6, 7, 8)
+  * CHR import/export support
+  * Basic animation frame editor (manual editing)
+  * Snapshot stack (undo for frames and CHR banks)
+  * Updated sprite names and improved GUI rendering
+  * World Metadata: New metatiles are created as copies of the selected metatile
 
 * 2025-03-05: version beta-5.31
 
