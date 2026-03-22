@@ -33,6 +33,7 @@ set(SOURCES
     faxedit/src/fe/Door.cpp
     faxedit/src/fe/Game.cpp
     faxedit/src/fe/GfxTilemapManager.cpp
+    faxedit/src/fe/GodAllocator.cpp
     faxedit/src/fe/InterChunkScroll.cpp
     faxedit/src/fe/IntraChunkScroll.cpp
     faxedit/src/fe/Metatile.cpp
@@ -41,13 +42,13 @@ set(SOURCES
     faxedit/src/fe/Sprite.cpp
     faxedit/src/fe/Sprite_set.cpp
     faxedit/src/fe/StageManager.cpp
-	faxedit/src/fe/GodAllocator.cpp
-	faxedit/src/fe/sprite/SpriteAnimationFrame.cpp
-	faxedit/src/fe/sprite/SpriteFrameCollection.cpp
-	faxedit/src/fe/sprite/SpriteGfxManager.cpp
-	faxedit/src/fe/sprite/SpriteGfxSnapshotManager.cpp
-	faxedit/src/fe/sprite/SpriteGUILoader.cpp
     faxedit/src/fe/xml/Xml_helper.cpp
+
+    faxedit/src/fe/sprite/SpriteAnimationFrame.cpp
+    faxedit/src/fe/sprite/SpriteFrameCollection.cpp
+    faxedit/src/fe/sprite/SpriteGfxManager.cpp
+    faxedit/src/fe/sprite/SpriteGfxSnapshotManager.cpp
+    faxedit/src/fe/sprite/SpriteGUILoader.cpp
 
     faxedit/src/fi/FaxString.cpp
     faxedit/src/fi/IScriptLoader.cpp
@@ -62,8 +63,8 @@ set(SOURCES
     faxedit/src/windows/MainWindow.cpp
     faxedit/src/windows/MetaDataWindow.cpp
     faxedit/src/windows/TilemapWindow.cpp
+    faxedit/src/windows/SpriteGfxWindow.cpp
     faxedit/src/windows/UndoInterface.cpp
-	faxedit/src/windows/SpriteGfxWindow.cpp
 )
 
 add_executable(faxedit ${SOURCES})
@@ -76,6 +77,7 @@ target_include_directories(faxedit PRIVATE
     faxedit/src/common/klib
     faxedit/src/common/pugixml
     faxedit/src/fe
+    faxedit/src/fe/sprite
     faxedit/src/fi
     faxedit/src/windows
 )

@@ -1,5 +1,9 @@
 #include "SpriteGfxSnapshotManager.h"
 
+void fe::SpriteGfxSnapshotManager::reset(void) {
+	history.clear();
+}
+
 bool fe::SpriteGfxSnapshotManager::has_snapshot(std::size_t p_coll_id) const {
 	auto iter{ history.find(p_coll_id) };
 	if (iter != end(history) && !iter->second.empty())

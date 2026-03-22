@@ -54,8 +54,8 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [chr banks](#chr-banks)
   - [Tips for bmp import](#tips-for-bmp-import)
 - [Sprite Graphics](#sprite-graphics)
-  - [Frame-Centric Editing](#frame-centric-editing)
-  - [NPC Frames](#npc-frames-and-general-information)
+  - [Frame-Centric Viewing, Bank-Centric Editing](#frame-centric-viewing)
+  - [NPC Frames and General Information](#npc-frames-and-general-information)
   - [Player Frames](#player-frames)
   - [Portrait Frames](#portrait-frames)
   - [Sprite Gfx Settings](#sprite-gfx-settings)
@@ -617,6 +617,8 @@ Therefore, animation frames do not only reference chr-tiles; for each chr-tile t
 
 In addition to this, tiles in animation frames are optional. A tile can be defined to be empty, in which case nothing is drawn, and there is no associated metadata.
 
+Each frame has tile-dimensions of at least 1x1.
+
 Each animation frame also has three metadata items associated with it:
 
   - x-offset: How many pixels to translate the entire frame in the x-direction
@@ -698,7 +700,7 @@ In other words, the bmp import functionality is powerful, but you need to obey t
   - Each chr-tile describes an 8x8 pixel area
   - Each chr-tile can only use 3 different colors + transparency, and these 3 colors must be part of a sub-palette. Sub-palette index 0 means transparency, while indexes 1, 2 and 3 are actual colors.
 
-The bmp-importer is helped by obeying these rules, and by using colors close to the ones defined in the sprite palettes. Also, when there is symmetry tiles can be re-used by applying flip flags.
+The bmp-importer is helped by obeying these rules, and by using colors close to the ones defined in the sprite palettes. Also, when there is symmetry tiles can be re-used by applying flip flags. An image editor which can show gridlines for each 8 pixels in the x and y direction could be useful to ensure you always know what are will be converted to a chr-tile on import.
 
 Export bmps will extract all animation frames using the currently selected chr-bank.
 
@@ -708,7 +710,7 @@ If the current bank is the common chr-bank, the bmp importer will ensure that th
 
 Since the bmp-import regenerates animation-frames, bmp import will not be possible for frames that are referenced by different chr-banks - unless all those chr-banks are identical. If so, the bmp importer will update all the chr-banks at the same time. If you really want to use the same frame in the context of actually different chr-banks, you need to use the chr-import, described below.
 
-The bmp import will fail if it has to generate too many chr-tiles to describe the bmps. In that case you need to simplify your graphics or look for more symmetry.
+The bmp import will fail if it has to generate too many chr-tiles to describe the bmps. In that case you need to simplify your graphics or look for more symmetry. Note that if an 8x8-area on a bmp is fully transparent, no chr-tile will be created - instead that tile will be marked as blank in the generated animation frame.
 
 After the bmp import/export is the chr import/export. chr-files are binary representations of the chr-tiles making up the selected bank. These operations happen on banks, and not on frames. So you can freely export and import chr-files without having any changes done to any animation frames.
 
@@ -742,35 +744,51 @@ The player itself has eight animation states:
 
   The player also has eight armor/shield states:
 
-  0. Leather Armor
-  1. Leather Armor and shield
-  2. Studded Mail
-  3. Studded Mail and shield
-  4. Full Plate
-  5. Full Plate and shield
-  6. Battle Suit
-  7. Battle Suit and shield
+  0. Leather Armor (frames 0-7)
+  1. Leather Armor and shield (frames 8-15)
+  2. Studded Mail (frames 16-23)
+  3. Studded Mail and shield (frames 24-31)
+  4. Full Plate (frames 32-39)
+  5. Full Plate and shield (frames 40-47)
+  6. Battle Suit (frames 48-55)
+  7. Battle Suit and shield (frames 56-63, unused)
 
-In the game there is no shield when wearing the Battle Suit, since the shield is the helmet. So the last two sets of frames can safely be identical.
+In the game there is no shield when wearing the Battle Suit, since the shield is the helmet. So the last two sets of frames can safely be identical, or frames 56-56 and 106 can be left blank.
 
 The animation frames come in the order of armor state, and then animation state.
 
 It is possible that bmp import will succeed for these frames, but ROM patching could still fail. This could be if the total chr-bank is less than 256-tiles, safely within limits, but that one of the armor states can not be fully encoded within the player chr-area of the PPU. If you want to alter the player graphics of state "Leather Armor and Shield", for example, you should ensure there is enough tile re-use within frames 8-15.
 
-TODO: Give exact limits for all armor states
+The maximum number of tiles that can be used for each player armor state across all its eight animation frames are is as follows:
+
+  0. Leather Armor - 56 tiles
+  1. Leather Armor and shield - 50 tiles
+  2. Studded Mail - 56 tiles
+  3. Studded Mail and shield - 50 tiles
+  4. Full Plate - 56 tiles
+  5. Full Plate and shield - 50 tiles
+  6. Battle Suit - 52 tiles
+  7. Battle Suit and shield - 52 tiles
 
 The next 32 frames describe the weapons, in order:
 
-  0. Hand Dagger
-  1. Long Sword
-  2. Giant Blade
-  3. Dragon Slayer
+  0. Hand Dagger (frames 64-71)
+  1. Long Sword (frames 72-79)
+  2. Giant Blade (frames 80-87)
+  3. Dragon Slayer (frames 88-95)
 
-Each of the four weapons use eight frames, and these frames are syncronized with the player animations above.
+Each of the four weapons use eight frames, and these frames are syncronized with the player animation states above.
 
 These frames also use a weapons chr-bank.
 
-TODO: Give exact chr-count limits per weapon
+The maximum number of tiles that can be used for each weapon across all its eight animation frames are is as follows:
+
+  0. Hand Dagger - 8 tiles
+  1. Hand Dagger - 8 tiles
+  2. Long Sword - 8 tiles
+  3. Dragon Slayer - 12 tiles
+
+The chr-bank for weapons is quite small, and since the frames are small too - it could potentially be easier to use chr-import rather than bmp-import for editing weapons.
 
 When a shield is equipped, this will always occupy exactly 6 tiles in the PPU, indexes $30-$35.
 
@@ -778,18 +796,29 @@ When a shield is not equipped, the player chr can grow all the way up to the wea
 
 The next 3 frames, 96-98, describe the shields, but in this case the different shields use the same animation frames. Under the hood they have metadata which influences how the frames are drawn - and therefore we do not support editing shield frames in this version. You can still import chr-files however to edit the graphics.
 
-TODO: Describe the shield frames under all three load-lists for more context
+The shield frames are syncronized with the player state as follows:
+
+  96. Walking #1, #2 and #3, Jumping, Idle
+  97. Prepare Attack/Use Item
+  98. Attack
+  66. Climb (note that this is the same frame as "hand dagger, walking #3" and is an empty frame)
+
+The chr-bank doesn't need more than the 18 tiles it has, because there are three shields and only 6 shield frames can be in the PPU at the same time. The shields and their chr-bank indexes are:
+
+  0. Small Shield (chr tile-indexes 0, 1, 6, 7, 12, 13)
+  1. Large Shield (chr tile-indexes 2, 3, 8, 9, 14, 15)
+  2. Magic Shield (chr tile-indexes 4, 5, 10, 11, 16, 17)
 
 Frames 99-106 use the player chr-bank once again. This is a simple 1-tile animation frame which is used to extend the player's arm when attacking. The order is different to the armor states given above.
 
-   99. Leather Armor
-  100. Studded Mail
-  101. Full Plate
-  102. Dragon Slayer
-  103. Leather Armor and Shield
-  104. Studded Mail and Shield
-  105. Full Plate and Shield
-  106. Dragon Slayer and Shield
+   99. Leather Armor arm-extend
+  100. Studded Mail arm-extend
+  101. Full Plate arm-extend
+  102. Dragon Slayer arm-extend
+  103. Leather Armor and Shield arm-extend
+  104. Studded Mail and Shield arm-extend
+  105. Full Plate and Shield arm-extend
+  106. Dragon Slayer and Shield arm-extend (unused)
 
 ## Portrait Frames
 
@@ -828,6 +857,8 @@ If the transparency is set to 3, which is the default, any color in the range
 ```(r, g, b) = (252-255, 102-108, 177-183)```
 
 will be considered transparent.
+
+The "Regenerate UI Sprites" button will syncronize how the NPCs and items look in the GUI with how the sprite graphics are defined.
 
 <hr>
 

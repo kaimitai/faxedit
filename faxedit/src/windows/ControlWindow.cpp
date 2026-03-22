@@ -225,6 +225,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 
 		// extract sprite gfx (even if we got values from the xml we need to populate some config)
 		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
+		m_sprite_snap_manager.reset();
 
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();

@@ -70,6 +70,56 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				generate_editor_sprite_gfx(p_rnd);
 				add_message("GUI sprite textures regenerated", 2);
 			}
+
+			// DEVELOPER-CODE - BEGIN
+			/*
+			static std::size_t ls_sel_sprite;
+			auto& lr_spr_first_frames{ m_game->m_sprite_gfx_manager.npc_start_frames };
+
+			ImGui::SeparatorText("Collection bmp export");
+
+			if (ui::imgui_button("Export all NPC frames as bmps", 2)) {
+				const auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
+				for (std::size_t i{ 0 }; i <= m_sprite_count; ++i)
+					export_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
+			}
+			if (ui::imgui_button("Export all player frames as bmps", 2)) {
+				const auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
+				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
+				export_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
+			}
+			if (ui::imgui_button("Export all portrait frames as bmps", 2)) {
+				const auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
+				export_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, c::KEY_BANK_PORTRAITS);
+			}
+
+			ImGui::SeparatorText("Collection bmp import");
+
+			if (ui::imgui_button("Import all NPC frame bmps", 4)) {
+				auto& npccoll{ m_game->m_sprite_gfx_manager.c_npcs };
+
+				for (std::size_t i{ 0 }; i <= m_sprite_count; ++i) {
+					try {
+						import_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
+					}
+					catch (const std::exception& ex) {
+						add_message(ex.what(), 1);
+					}
+
+				}
+			}
+
+			if (ui::imgui_button("Import all player frame bmps", 4)) {
+				auto& playercoll{ m_game->m_sprite_gfx_manager.c_player };
+				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_ARMOR);
+				import_sprite_frame_bmps(playercoll, c::KEY_COLL_PLAYER, c::KEY_BANK_WEAPONS);
+			}
+			if (ui::imgui_button("Import all portrait frame bmps", 4)) {
+				auto& portraitcoll{ m_game->m_sprite_gfx_manager.c_portraits };
+				import_sprite_frame_bmps(portraitcoll, c::KEY_COLL_PORTRAITS, 0);
+			}
+			*/
+			// DEVELOPER-CODE - END
 		}
 		else if (editmode == fe::SpriteGfxEditMode::Portraits) {
 			ImGui::Separator();

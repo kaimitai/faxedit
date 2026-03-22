@@ -25,6 +25,7 @@ namespace fe {
 		void add_entry(std::size_t p_coll_id, const SpriteGfxSnapshot& snapshot);
 
 	public:
+		void reset(void);
 		bool has_snapshot(std::size_t p_coll_id) const;
 		std::pair<std::size_t, std::size_t> query_snapshot(std::size_t p_coll_id) const;
 		std::pair<std::size_t, std::size_t> restore_snapshot(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id);
@@ -34,8 +35,6 @@ namespace fe {
 			const fe::SpriteImportResult& impres, const fe::ChrBankImpact& impact);
 		void add_snapshot(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			const fe::ChrBankImpact& impact);
-
-		
 	};
 
 }
