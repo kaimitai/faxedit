@@ -9,6 +9,7 @@
 #include <string>
 #include "gfx.h"
 #include "UndoInterface.h"
+#include "ClipBoardManager.h"
 #include "./../fe/sprite/SpriteGfxSnapshotManager.h"
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
@@ -101,8 +102,8 @@ namespace fe {
 		// cartesian offsets per animation frame
 		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 
-		// clipboard maps from chunk id -> rectangle with data
-		std::map<std::size_t, std::vector<std::vector<byte>>> m_clipboard;
+		// clipboard
+		fe::ClipboardManager m_clip_manager;
 
 		// rendering options
 		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,

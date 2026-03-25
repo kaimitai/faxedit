@@ -182,6 +182,7 @@
     <ClCompile Include="src\fi\Opcode.cpp" />
     <ClCompile Include="src\fi\Shop.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\windows\ClipBoardManager.cpp" />
     <ClCompile Include="src\windows\GfxWindow.cpp" />
     <ClCompile Include="src\windows\IScriptWindow.cpp" />
     <ClCompile Include="src\windows\MetaDataWindow.cpp" />
@@ -246,6 +247,7 @@
     <ClInclude Include="src\fi\IScriptLoader.h" />
     <ClInclude Include="src\fi\Opcode.h" />
     <ClInclude Include="src\fi\Shop.h" />
+    <ClInclude Include="src\windows\ClipBoardManager.h" />
     <ClInclude Include="src\windows\gfx.h" />
     <ClInclude Include="src\windows\Imgui_helper.h" />
     <ClInclude Include="src\windows\MainWindow.h" />

@@ -131,33 +131,40 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 		bool l_alt{ ImGui::IsKeyDown(ImGuiMod_Alt) };
 
-		if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
-			save_xml();
-		else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
-			patch_nes_rom(l_shift, l_alt);
-		else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
-			load_xml(p_rnd);
+		try {
 
-		// input handling, move to separate function later
-		if (m_emode == fe::EditMode::TilemapEditMode) {
-			if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
-				clipboard_copy();
-			}
-			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
-				clipboard_paste();
-			}
-			else if (l_shift && ImGui::IsKeyPressed(ImGuiKey_V)) {
-				clipboard_paste(false);
+			if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
+				save_xml();
+			else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
+				patch_nes_rom(l_shift, l_alt);
+			else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
+				load_xml(p_rnd);
+
+			// input handling, move to separate function later
+			if (m_emode == fe::EditMode::TilemapEditMode) {
+				if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_C)) {
+					clipboard_copy();
+				}
+				else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_V)) {
+					clipboard_paste();
+				}
+				else if (l_shift && ImGui::IsKeyPressed(ImGuiKey_V)) {
+					clipboard_paste(false);
+				}
+
+				else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
+					if (!m_undo->undo(m_sel_chunk, m_sel_screen))
+						add_message("No tilemap changes to undo", 4);
+				}
+				else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
+					if (!m_undo->redo(m_sel_chunk, m_sel_screen))
+						add_message("No tilemap changes to redo", 4);
+				}
 			}
 
-			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
-				if (!m_undo->undo(m_sel_chunk, m_sel_screen))
-					add_message("No tilemap changes to undo", 4);
-			}
-			else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
-				if (!m_undo->redo(m_sel_chunk, m_sel_screen))
-					add_message("No tilemap changes to redo", 4);
-			}
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
 		}
 
 		// input handling end
@@ -618,23 +625,34 @@ void fe::MainWindow::clipboard_copy(void) {
 		l_clip.push_back(l_tmp);
 	}
 
-	m_clipboard[m_sel_chunk] = l_clip;
+	m_clip_manager.copy_tilemap(l_clip);
 
-	add_message(std::format("Copied {}x{} rectangle to world {} clipboard",
-		l_clip.at(0).size(), l_clip.size(), m_sel_chunk));
+	add_message(std::format("Copied {}x{} rectangle to clipboard",
+		l_clip.at(0).size(), l_clip.size()));
 }
 
 void fe::MainWindow::clipboard_paste(bool l_update_data) {
-	const auto& l_clip{ m_clipboard[m_sel_chunk] };
+	const auto l_clip{ m_clip_manager.paste_tilemap() };
 
 	if (l_clip.empty())
-		add_message(std::format("Clipboard for world {} is empty", m_sel_chunk));
+		add_message("Clipboard is empty");
 	else if (m_sel_tile_y + l_clip.size() > 13 ||
 		m_sel_tile_x + l_clip[0].size() > 16)
 		add_message("Clipboard data does not fit.");
 	// all good, paste or at least show selection rectangle
 	else {
 		if (l_update_data) {
+			// validate the metatile indexes
+			std::size_t max_index{ m_game->m_chunks.at(m_sel_chunk).m_metatiles.size() - 1 };
+			for (std::size_t j{ 0 }; j < l_clip.size(); ++j)
+				for (std::size_t i{ 0 }; i < l_clip[j].size(); ++i) {
+					if (l_clip[j][i] > max_index)
+						throw std::runtime_error(
+							std::format("Clipboard tilemap index {} at ({}, {}) exceeds max metatile-index {}",
+								l_clip[j][i], i, j, max_index)
+						);
+				}
+
 			m_undo->apply_tilemap_edit(m_sel_chunk, m_sel_screen,
 				m_sel_tile_x, m_sel_tile_y, l_clip);
 		}

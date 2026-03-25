@@ -531,7 +531,6 @@ bool fe::MainWindow::show_palette_window(std::size_t p_pal_key, std::vector<byte
 	// selected palette index
 	static std::size_t ls_sel_pal_idx{ 1 };
 	static bool ls_edit_bg_col{ false };
-	static std::vector<byte> ls_pal_clipboard;
 
 	const auto nescols{ m_gfx.get_nes_palette() };
 
@@ -638,13 +637,18 @@ bool fe::MainWindow::show_palette_window(std::size_t p_pal_key, std::vector<byte
 	}
 
 	if (ui::imgui_button("Copy###palcpy", 4, "Copy entire palette to clipboard"))
-		ls_pal_clipboard = p_palette;
+		m_clip_manager.copy_palette(p_palette);
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Paste###palpaste", 4, "Paste entire palette from clipboard",
-		ls_pal_clipboard.empty()))
-		was_changed = m_undo->apply_palette_edit(p_pal_key, p_palette, ls_pal_clipboard);
+	if (ui::imgui_button("Paste###palpaste", 4, "Paste entire palette from clipboard")) try {
+		auto newpalette{ m_clip_manager.paste_palette() };
+		was_changed = m_undo->apply_palette_edit(p_pal_key, p_palette,
+			newpalette);
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), 1);
+	}
 
 	return was_changed;
 }

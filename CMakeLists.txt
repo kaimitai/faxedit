@@ -65,6 +65,7 @@ set(SOURCES
     faxedit/src/windows/TilemapWindow.cpp
     faxedit/src/windows/SpriteGfxWindow.cpp
     faxedit/src/windows/UndoInterface.cpp
+    faxedit/src/windows/ClipBoardManager.cpp
 )
 
 add_executable(faxedit ${SOURCES})
