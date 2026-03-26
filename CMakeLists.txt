@@ -24,6 +24,7 @@ set(SOURCES
     faxedit/src/common/klib/Kfile.cpp
     faxedit/src/common/klib/NES_tile.cpp
     faxedit/src/common/klib/SDL_WindowConfig.cpp
+	faxedit/src/common/klib/Kstring.cpp
 
     faxedit/src/common/pugixml/pugixml.cpp
 

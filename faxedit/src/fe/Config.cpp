@@ -80,6 +80,16 @@ std::map<std::string, byte> fe::Config::bmap_reverse(const std::string& p_id) co
 	return result;
 }
 
+std::map<std::size_t, byte> fe::Config::bmap_numeric_reverse(const std::string& p_id) const {
+	std::map<std::size_t, byte> result;
+	const auto& l_bmap{ bmap(p_id) };
+
+	for (const auto& kv : l_bmap)
+		result.insert(std::make_pair(xml::parse_numeric(kv.second), kv.first));
+
+	return result;
+}
+
 std::vector<std::string> fe::Config::bmap_as_vec(const std::string& p_id,
 	std::size_t p_size) const {
 	const auto& l_map{ bmap(p_id) };

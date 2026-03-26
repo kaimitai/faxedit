@@ -136,11 +136,13 @@ namespace fe {
 			// sprite gfx tags and attributes
 			constexpr char TAG_SPRITE_GFX[]{ "sprite_gfx" };
 			constexpr char TAG_NPC_START_FRAMES[]{ "npc_start_frames" };
+			constexpr char TAG_NPC_UPDATE_HANDLERS[]{ "npc_update_handlers" };
 			constexpr char TAG_SHIELD_LOAD_LISTS[]{ "shield_load_lists" };
 			constexpr char TAG_LOAD_LIST[]{ "load_list" };
 			constexpr char TAG_SHIELD_FRAME_INDEXES[]{ "shield_frame_indexes" };
 			constexpr char TAG_FRAMES[]{ "frames" };
 			constexpr char TAG_FRAME[]{ "frame" };
+			constexpr char ATTR_HANDLER[]{ "handler" };
 			constexpr char TAG_TILE[]{ "tile" };
 			constexpr char TAG_NPC_GFX[]{ "npc_gfx" };
 			constexpr char TAG_PLAYER_GFX[]{ "player_gfx" };

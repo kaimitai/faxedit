@@ -49,6 +49,7 @@ namespace fe {
 		SpriteFrameCollection c_portraits, c_player, c_npcs;
 		std::vector<std::vector<byte>> m_shield_load_lists;
 		std::vector<byte> shield_frame_indexes;
+		std::vector<std::size_t> sprite_id_to_handler_id;
 		std::vector<std::size_t> npc_start_frames;
 		std::vector<std::size_t> npc_frame_counts;
 		std::set<std::size_t> npc_using_common_gfx;
@@ -63,6 +64,8 @@ namespace fe {
 
 		// calculating functions
 		std::size_t get_sprite_chr_cutoff(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
+		std::vector<std::size_t> sprite_id_to_update_handler_id(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fe::ROM_Manager& p_rom_mgr, std::size_t p_sprite_count) const;
 		void canonsort_gfx_collection_chr_bank(SpriteFrameCollection& coll, std::size_t p_bank_idx);
 		void canonicalize_gfx_collection_bank(SpriteFrameCollection& coll, std::size_t bank_idx);
 		void dedup_gfx_collection_bank(SpriteFrameCollection& coll, std::size_t bank_idx);
@@ -109,6 +112,12 @@ namespace fe {
 			std::size_t p_offset, std::size_t p_count) const;
 		std::vector<klib::NES_tile> extract_chr_tiles(const std::vector<byte>& p_rom,
 			std::size_t p_offset, const std::set<std::size_t>& p_all_master_ptr_dests) const;
+
+		// update handler queries
+		std::set<byte> query_npc_using_common_gfx(const fe::Config& p_config) const;
+		std::vector<std::size_t> query_npc_frame_counts(const fe::Config& p_config) const;
+		std::map<std::size_t, byte> query_npc_frame_translate(const fe::Config& p_config) const;
+		std::set<std::size_t> query_npcs_using_handler(std::size_t p_handler_id) const;
 
 	public:
 		SpriteGfxManager(void) = default;

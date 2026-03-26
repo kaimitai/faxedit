@@ -153,6 +153,7 @@
     <ClCompile Include="src\common\klib\Bitwriter.cpp" />
     <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
+    <ClCompile Include="src\common\klib\Kstring.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="src\common\klib\Bitwriter.h" />
     <ClInclude Include="src\common\klib\IPS_Patch.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
+    <ClInclude Include="src\common\klib\Kstring.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />

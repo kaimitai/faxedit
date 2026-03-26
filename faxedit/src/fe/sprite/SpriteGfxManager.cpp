@@ -15,18 +15,16 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 	// set up constants from config
 	std::size_t SPRITE_COUNT{ p_config.constant(c::ID_SPRITE_COUNT) };
 
+	// get the sprite id -> handler "id" from ROM
+	// could have been fetched from xml already
+	if (sprite_id_to_handler_id.empty())
+		sprite_id_to_handler_id = sprite_id_to_update_handler_id(p_config, p_rom, p_rom_mgr, SPRITE_COUNT);
 	// sprite indexes using the common ppu 
-	const auto commongfxsprites{ p_config.vset_as_set(c::ID_ABSOLUTE_PPU_IDX_SPRITES) };
-	for (byte b : commongfxsprites)
+	const auto spr_id_to_common_gfx{ query_npc_using_common_gfx(p_config) };
+	for (byte b : spr_id_to_common_gfx)
 		npc_using_common_gfx.insert(static_cast<std::size_t>(b));
-
 	// frame counts per sprite
-	const auto npcframecounts{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_COUNT) };
-	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i)
-		if (npcframecounts.find(static_cast<byte>(i)) != end(npcframecounts))
-			npc_frame_counts.push_back(npcframecounts.at(static_cast<byte>(i)));
-		else
-			npc_frame_counts.push_back(1);
+	npc_frame_counts = query_npc_frame_counts(p_config);
 
 	// if the data was loaded from elsewhere (xml) we return after populating the frame to chr-banks mappings
 	if (!npc_start_frames.empty()) {
@@ -84,10 +82,10 @@ void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vecto
 		p_rom_mgr.get_ptr_to_rom_offset(p_rom, bank7_portrait_frame_master_ptr), bank7_portrait_frame_master_ptr.second));
 
 	// add constant to all frame indexes (given in config, but hard coded in asm for a few frames)
-	const auto NPC_LINEAR_TRANSLATE{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_IDX_TRANSLATE) };
+	const auto NPC_LINEAR_TRANSLATE{ query_npc_frame_translate(p_config) };
 	for (const auto& kv : NPC_LINEAR_TRANSLATE) {
 		std::size_t frame_idx{ npcstartframes.at(kv.first) };
-		std::size_t frame_count{ npcframecounts.at(kv.first) };
+		std::size_t frame_count{ npc_frame_counts.at(kv.first) };
 
 		for (std::size_t i{ 0 }; i < frame_count; ++i)
 			if (frame_idx + i < c_npcs.frames.size())
@@ -215,6 +213,62 @@ void fe::SpriteGfxManager::calculate_all_chr_bank_mappings(void) {
 	calculate_npc_chr_bank_mappings();
 	calculate_player_chr_bank_mappings();
 	calculate_portrait_chr_bank_mappings();
+}
+
+// update handler query functions
+std::vector<std::size_t> fe::SpriteGfxManager::query_npc_frame_counts(const fe::Config& p_config) const {
+	const auto HANDLER_FRAME_COUNTS{ p_config.bmap_numeric(c::ID_SPRITE_UPDATE_HANDLER_FRAME_COUNTS) };
+	std::size_t SPRITE_COUNT{ p_config.constant(c::ID_SPRITE_COUNT) };
+
+	// by default we assume each sprite has one frame
+	std::vector<std::size_t> result(SPRITE_COUNT, 1);
+
+	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i) {
+		auto iter{ HANDLER_FRAME_COUNTS.find(static_cast<byte>(sprite_id_to_handler_id.at(i))) };
+		if (iter != end(HANDLER_FRAME_COUNTS))
+			result[i] = iter->second;
+	}
+	return result;
+}
+
+std::map<std::size_t, byte> fe::SpriteGfxManager::query_npc_frame_translate(const fe::Config& p_config) const {
+	const auto HANDLER_TRANSLATIONS{ p_config.bmap_numeric(c::ID_FRAME_IDX_TRANSLATIONS) };
+	std::size_t SPRITE_COUNT{ p_config.constant(c::ID_SPRITE_COUNT) };
+
+	std::map<std::size_t, byte> result;
+
+	for (std::size_t i = 0; i < SPRITE_COUNT; ++i) {
+		auto handler_id = sprite_id_to_handler_id.at(i);
+
+		auto iter = HANDLER_TRANSLATIONS.find(static_cast<byte>(handler_id));
+		if (iter != end(HANDLER_TRANSLATIONS))
+			result.insert(std::make_pair(i, static_cast<byte>(iter->second)));
+	}
+
+	return result;
+}
+
+std::set<std::size_t> fe::SpriteGfxManager::query_npcs_using_handler(std::size_t p_handler_id) const {
+	std::set<std::size_t> result;
+	for (std::size_t i{ 0 }; i < sprite_id_to_handler_id.size(); ++i)
+		if (sprite_id_to_handler_id[i] == p_handler_id)
+			result.insert(i);
+	return result;
+}
+
+std::set<byte> fe::SpriteGfxManager::query_npc_using_common_gfx(const fe::Config& p_config) const {
+	const auto PPU_COMMON_HANDLERS{ p_config.vset_as_set(c::ID_COMMON_GFX_HANDLER_IDXS) };
+	std::size_t SPRITE_COUNT{ p_config.constant(c::ID_SPRITE_COUNT) };
+
+	std::set<byte> result;
+
+	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i) {
+		auto iter{ PPU_COMMON_HANDLERS.find(static_cast<byte>(sprite_id_to_handler_id.at(i))) };
+		if (iter != end(PPU_COMMON_HANDLERS))
+			result.insert(static_cast<byte>(i));
+	}
+
+	return result;
 }
 
 fe::ChrBankImpact fe::SpriteGfxManager::analyze_bank_impact(const SpriteFrameCollection& p_coll,
@@ -546,6 +600,31 @@ std::size_t fe::SpriteGfxManager::get_sprite_chr_cutoff(const fe::Config& p_conf
 	return result;
 }
 
+// this function maps sprites to update handlers - we index the handlers by cpu address ascending
+// we do not care about the actual addresses, just the indexes - and from the npc to handler mapping
+// we later on deduce whether a sprite should have its own chr bank or not
+std::vector<std::size_t> fe::SpriteGfxManager::sprite_id_to_update_handler_id(const fe::Config& p_config,
+	const std::vector<byte>& p_rom, const fe::ROM_Manager& p_rom_mgr, std::size_t p_sprite_count) const {
+	std::size_t HANDLER_OFFSET{ p_config.constant(c::ID_SPRITE_UPDATE_HANDLERS_OFFSET) };
+	const auto HANDLER_MAP{ p_config.bmap_numeric_reverse(c::ID_SPRITE_UPDATE_HANDLER_CPU_ADDR) };
+
+	std::vector<std::size_t> sprite_id_to_handler_id;
+
+	for (std::size_t i{ 0 }; i < p_sprite_count; ++i) {
+		auto spr_handler_addr{ p_rom_mgr.read_uint16_le(p_rom, HANDLER_OFFSET + 2 * i) };
+		auto iter{ HANDLER_MAP.find(spr_handler_addr) };
+
+		if (iter != end(HANDLER_MAP))
+			sprite_id_to_handler_id.push_back(iter->second);
+		else
+			throw std::runtime_error(
+				std::format("Sprite {} uses update handler with cpu addr 0e:{:04x}, but this does not match any config",
+					i, spr_handler_addr));
+	}
+
+	return sprite_id_to_handler_id;
+}
+
 fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fe::ROM_Manager& p_rom_mgr) {
 	fe::SpriteGfxPatchResult final_result{
@@ -555,7 +634,8 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	const std::size_t NPC_COUNT{ p_config.constant(c::ID_SPRITE_COUNT) };
 
 	// bank 6: sprite chr-banks
-	const auto absolute_idx_sprites{ p_config.vset_as_set(c::ID_ABSOLUTE_PPU_IDX_SPRITES) };
+	const auto absolute_idx_sprites{ query_npc_using_common_gfx(p_config) };
+
 	const auto chr_bank6_master_ptr{ p_config.pointer(c::ID_GFX_NPC_CHR_BANK6_PTR) };
 	std::pair<std::size_t, std::size_t> chr_bank6_chr_ptr{
 		std::make_pair(chr_bank6_master_ptr.first + 2, chr_bank6_master_ptr.second)
@@ -610,7 +690,7 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 	p_rom_mgr.patch_ptr(p_rom, bank7_npc_anim_frame_ptr.first,
 		bank7chr_result.value() - chr_bank7_chr_ptr.second);
 
-	const auto NPC_LINEAR_TRANSLATE{ p_config.bmap_numeric(c::ID_GFX_NPC_FRAME_IDX_TRANSLATE) };
+	const auto NPC_LINEAR_TRANSLATE{ query_npc_frame_translate(p_config) };
 	std::vector<byte> linear_deltas{ std::vector<byte>(c_npcs.frames.size(), 0) };
 	for (const auto& kv : NPC_LINEAR_TRANSLATE) {
 		std::size_t frame_idx{ npc_start_frames.at(kv.first) };
@@ -802,6 +882,18 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 		p_rom.at(PPU_TILE_COUNT_WEAPON + i) = static_cast<byte>(weapon_load_lists[i].size() - 1);
 
 	p_rom_mgr.patch_bytes(shield_frame_indexes, p_rom, p_config.constant(c::ID_GFX_SHIELD_FRAME_IDX_OFFSET));
+
+	// patch sprite update handler ptr table - although this is not exposed front-end yet
+	const std::size_t SPR_UPDATE_HANDLER_TBL_OFFSET{ p_config.constant(c::ID_SPRITE_UPDATE_HANDLERS_OFFSET) };
+	const auto SPR_UPD_HANDLER_ADDRS{ p_config.bmap_numeric(c::ID_SPRITE_UPDATE_HANDLER_CPU_ADDR) };
+	for (std::size_t i{ 0 }; i < sprite_id_to_handler_id.size(); ++i) {
+		byte upd_handler_idx{ static_cast<byte>(sprite_id_to_handler_id[i]) };
+		if (!SPR_UPD_HANDLER_ADDRS.contains(upd_handler_idx))
+			throw std::runtime_error(std::format("Sprite update handler {} has no defined cpu-address in the configuration", upd_handler_idx));
+		std::size_t cpu_target_addr{ SPR_UPD_HANDLER_ADDRS.at(upd_handler_idx) };
+		p_rom.at(SPR_UPDATE_HANDLER_TBL_OFFSET + 2 * i) = static_cast<byte>(cpu_target_addr % 256);
+		p_rom.at(SPR_UPDATE_HANDLER_TBL_OFFSET + 2 * i + 1) = static_cast<byte>(cpu_target_addr / 256);
+	}
 
 	final_result.success = (final_result.bank6_used.value() <= 0x4000 &&
 		final_result.bank7_used.value() <= 0x4000 &&

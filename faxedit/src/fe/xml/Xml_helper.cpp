@@ -428,6 +428,14 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 				parse_numeric(n_start_frame.attribute(c::ATTR_NPC_FRAME_NO).as_string()));
 		}
 
+		// extract sprite update handler map
+		auto n_npc_upd_handlers{ n_sprite_gfx.child(c::TAG_NPC_UPDATE_HANDLERS) };
+		for (auto n_handler{ n_npc_upd_handlers.child(c::TAG_SPRITE) }; n_handler;
+			n_handler = n_handler.next_sibling(c::TAG_SPRITE)) {
+			l_game.m_sprite_gfx_manager.sprite_id_to_handler_id.push_back(
+				parse_numeric(n_handler.attribute(c::ATTR_HANDLER).as_string()));
+		}
+
 		// extract shield load lists
 		auto n_shield_lls{ n_sprite_gfx.child(c::TAG_SHIELD_LOAD_LISTS) };
 		for (auto n_load_list{ n_shield_lls.child(c::TAG_LOAD_LIST) }; n_load_list;
@@ -1018,6 +1026,18 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 		n_start_frame.attribute(c::ATTR_NO).set_value(i);
 		n_start_frame.append_attribute(c::ATTR_NPC_FRAME_NO);
 		n_start_frame.attribute(c::ATTR_NPC_FRAME_NO).set_value(npc_start_frame_vec[i]);
+	}
+
+	// npcs - store the update handler index per npc
+	auto n_npc_handlers{ n_sprite_gfx.append_child(c::TAG_NPC_UPDATE_HANDLERS) };
+	const auto& npc_handler_vec{ p_game.m_sprite_gfx_manager.sprite_id_to_handler_id };
+
+	for (std::size_t i{ 0 }; i < npc_handler_vec.size(); ++i) {
+		auto n_handler{ n_npc_handlers.append_child(c::TAG_SPRITE) };
+		n_handler.append_attribute(c::ATTR_NO);
+		n_handler.attribute(c::ATTR_NO).set_value(i);
+		n_handler.append_attribute(c::ATTR_HANDLER);
+		n_handler.attribute(c::ATTR_HANDLER).set_value(npc_handler_vec[i]);
 	}
 
 	// shield load lists - store them for now (highly special case)

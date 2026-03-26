@@ -228,6 +228,9 @@
     <ClCompile Include="src\windows\ClipBoardManager.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\klib\Kstring.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -400,6 +403,9 @@
     </ClInclude>
     <ClInclude Include="src\windows\ClipBoardManager.h">
       <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Kstring.h">
+      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

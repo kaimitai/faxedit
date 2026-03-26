@@ -207,34 +207,39 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	try {
 		add_message("Attempting to load xml " + get_xml_path(), 5);
-		auto l_rom{ m_game->m_rom_data };
-		m_game = xml::load_xml(get_xml_path());
-		validate_game_data(m_game.value());
-		m_game->m_rom_data = l_rom;
+
+		// keep old game around until we know everything succeeded
+		auto old_game{ m_game.value() };
+
+		// load new game into a temporary
+		fe::Game new_game{ xml::load_xml(get_xml_path()) };
+
+		// restore rom data from old game
+		auto l_rom{ old_game.m_rom_data };
+		new_game.m_rom_data = l_rom;
+
+		// validate and extract everything on the temporary
+		validate_game_data(new_game);
+		new_game.extract_scenes_if_empty(m_config);
+		new_game.extract_palette_to_music(m_config);
+		new_game.extract_hud_attributes(m_config);
+		new_game.generate_tilesets(m_config);
+		new_game.m_gfx_manager.initialize(m_config, new_game.m_rom_data);
+		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
+
+		// everything succeeded, so commit at this point
+		*m_game = std::move(new_game);
 		m_undo->clear_history();
-
-		// extract values not present in previous xml versions
-		// none of this should do anything if we got values from the xml
-		m_game->extract_scenes_if_empty(m_config);
-		m_game->extract_palette_to_music(m_config);
-		m_game->extract_hud_attributes(m_config);
-
-		// extract gfx
-		m_game->generate_tilesets(m_config);
-		m_game->m_gfx_manager.initialize(m_config, m_game->m_rom_data);
-
-		// extract sprite gfx (even if we got values from the xml we need to populate some config)
-		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
 		m_sprite_snap_manager.reset();
 
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();
 		m_gfx.clear_tileset_textures();
 		m_gfx.clear_bank_chr_textures();
+
 		// update cached gfx
 		generate_door_req_gfx(p_rnd);
 		generate_editor_sprite_gfx(p_rnd);
-
 		// update gui cache for world tilesets
 		generate_world_tilesets();
 		m_atlas_force_update = true;

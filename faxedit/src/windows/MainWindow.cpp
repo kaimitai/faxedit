@@ -628,17 +628,17 @@ void fe::MainWindow::clipboard_copy(void) {
 	m_clip_manager.copy_tilemap(l_clip);
 
 	add_message(std::format("Copied {}x{} rectangle to clipboard",
-		l_clip.at(0).size(), l_clip.size()));
+		l_clip.at(0).size(), l_clip.size()), 6);
 }
 
 void fe::MainWindow::clipboard_paste(bool l_update_data) {
 	const auto l_clip{ m_clip_manager.paste_tilemap() };
 
 	if (l_clip.empty())
-		add_message("Clipboard is empty");
+		add_message("Clipboard is empty", 6);
 	else if (m_sel_tile_y + l_clip.size() > 13 ||
 		m_sel_tile_x + l_clip[0].size() > 16)
-		add_message("Clipboard data does not fit.");
+		add_message("Clipboard data does not fit.", 6);
 	// all good, paste or at least show selection rectangle
 	else {
 		if (l_update_data) {
@@ -661,7 +661,7 @@ void fe::MainWindow::clipboard_paste(bool l_update_data) {
 		m_sel_tile_y2 = m_sel_tile_y + l_clip.size() - 1;
 
 		if (l_update_data)
-			add_message("Clipboard data pasted");
+			add_message("Clipboard data pasted", 6);
 	}
 }
 

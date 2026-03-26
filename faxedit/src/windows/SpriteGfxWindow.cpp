@@ -664,8 +664,7 @@ std::string fe::MainWindow::get_sprite_gfx_bank_name(std::size_t p_coll_id, std:
 // only call this once the sprite data has been populated
 void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
 	fe::SpriteGUILoader gui_sprites;
-	gui_sprites.load_sprites_for_gui(m_game->m_sprite_gfx_manager, m_game->m_rom_data,
-		m_config.constant(c::ID_SPRITE_TYPE_OFFSET));
+	gui_sprites.load_sprites_for_gui(m_config, m_game->m_sprite_gfx_manager, m_game->m_rom_data);
 
 	m_sprite_dims = gui_sprites.get_animation_dimension_data();
 

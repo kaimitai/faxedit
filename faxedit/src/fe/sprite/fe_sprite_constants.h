@@ -23,8 +23,16 @@ namespace fe {
 		constexpr std::size_t KEY_BANK_SHIELDS{ 2 };
 		constexpr std::size_t KEY_BANK_PORTRAITS{ 0 };
 
-		// set of all sprites using absolute ppu idx in their animation frames
-		constexpr char ID_ABSOLUTE_PPU_IDX_SPRITES[]{ "common_gfx_sprites" };
+		// where the sprite update handler ptrs start
+		constexpr char ID_SPRITE_UPDATE_HANDLERS_OFFSET[]{ "sprite_update_handlers_offset" };
+		// a sorted list of cpu addresses for the update handlers - used to determine the handler for each sprite
+		constexpr char ID_SPRITE_UPDATE_HANDLER_CPU_ADDR[]{ "sprite_update_handler_cpu_addr" };
+		// all update handler ids which frames use the common chr
+		constexpr char ID_COMMON_GFX_HANDLER_IDXS[]{ "common_gfx_sprite_update_handlers" };
+		// map from update handler id -> frame count
+		constexpr char ID_SPRITE_UPDATE_HANDLER_FRAME_COUNTS[]{ "sprite_update_handler_anim_frame_counts" };
+		// map from update handler id -> animation frame tilemap translation value
+		constexpr char ID_FRAME_IDX_TRANSLATIONS[]{ "frame_idx_translations" };
 
 		// constants enforced by the game engine
 		// player + shield + weapon (TODO: separate out weapon and shield)
@@ -98,10 +106,6 @@ namespace fe {
 		// npc constants
 		constexpr char ID_GFX_NPC_ANIM_IDX_OFFSET[]{ "gfx_npc_anim_index_offset" };
 		constexpr char ID_GFX_NPC_TILE_COUNT_OFFSET[]{ "gfx_npc_ppu_tile_count_offset" };
-
-		// npc maps
-		constexpr char ID_GFX_NPC_FRAME_COUNT[]{ "npc_animation_frame_counts" };
-		constexpr char ID_GFX_NPC_FRAME_IDX_TRANSLATE[]{ "npc_frame_idx_translate" };
 	}
 
 }

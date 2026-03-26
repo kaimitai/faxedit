@@ -276,6 +276,8 @@
 		<!-- wing boot timer -->
 		<const name="wing_boots_time_count" value="4" />
 		<const name="wing_boots_time_offset" value="0x3c5a9" />
+		<!-- offset of sprite update handler ptr table -->
+		<const name="sprite_update_handlers_offset" value="0x38097" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -285,9 +287,9 @@
 		<!-- ppu-indexed chr-tiles which are part of the fog animation -->
 		<!-- should be considered read-only on bmp import -->
 		<set name="reserved_fog_chr_indexes" values="$80,$82,$84,$86" />
-		<!-- sprites which use the common tile gfx, rather than having their own chr-banks -->
-		<!-- generally sprites that spawn during gameplay; coins, breads and effects -->
-		<set name="common_gfx_sprites" values="0,1,2,3,10,19,20,22,37,41,79,81,83,84,100" />
+		<!-- sprites connected to these update handlers use common sprite chr, rather than their own chr-bank -->
+		<set name="common_gfx_sprite_update_handlers"
+		values="0,1,2,3,4,45,48,49,50,51,65" />
 	</sets>
 
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
@@ -1275,15 +1277,157 @@
 			<entry byte="$03" str="RAM_SPRITE_HIT_COUNTER:$034c" />
 			<entry byte="$04" str="RAM_SPRITE_VALUES:$036c" />
 		</byte_to_string_map>
-		<!-- how many frames an npc uses - if not given assumed to be one -->
+		<!-- bank14 cpu addresses of the sprite handlers - unfortunately the only kind of key we can use -->
+		<byte_to_string_map name="sprite_update_handler_cpu_addr">
+			<!-- enemy death (by weapon) -->
+			<entry byte="$00" str="$822d" />
+			<!-- boss death -->
+			<entry byte="$01" str="$8278" />
+			<!-- enemy death (by magic) -->
+			<entry byte="$02" str="$828a" />
+			<!-- invisible -->
+			<entry byte="$03" str="$8c97" />
+			<!-- coin -->
+			<entry byte="$04" str="$8d6d" />
+			<!-- raiden -->
+			<entry byte="$05" str="$8d7f" />
+			<!-- necron aides -->
+			<entry byte="$06" str="$8e43" />
+			<!-- zombie -->
+			<entry byte="$07" str="$8e56" />
+			<!-- hornet -->
+			<entry byte="$08" str="$8ec1" />
+			<!-- bihoruda -->
+			<entry byte="$09" str="$8f17" />
+			<!-- lilith -->
+			<entry byte="$0a" str="$8fd8" />
+			<!-- yuinaru -->
+			<entry byte="$0b" str="$9032" />
+			<!-- snowman -->
+			<entry byte="$0c" str="$9043" />
+			<!-- nash -->
+			<entry byte="$0d" str="$90de" />
+			<!-- fire giant -->
+			<entry byte="$0e" str="$910e" />
+			<!-- ishiisu -->
+			<entry byte="$0f" str="$918d" />
+			<!-- execution hood -->
+			<entry byte="$10" str="$921e" />
+			<!-- charron -->
+			<entry byte="$11" str="$9260" />
+			<!-- geributa -->
+			<entry byte="$12" str="$9286" />
+			<!-- sugata -->
+			<entry byte="$13" str="$929e" />
+			<!-- grimlock -->
+			<entry byte="$14" str="$92af" />
+			<!-- giant bees -->
+			<entry byte="$15" str="$93ab" />
+			<!-- myconid -->
+			<entry byte="$16" str="$93bc" />
+			<!-- naga -->
+			<entry byte="$17" str="$9441" />
+			<!-- unused sword-wielder -->
+			<entry byte="$18" str="$9452" />
+			<!-- giant strider -->
+			<entry byte="$19" str="$947c" />
+			<!-- sir gawaine -->
+			<entry byte="$1a" str="$9512" />
+			<!-- maskman -->
+			<entry byte="$1b" str="$951b" />
+			<!-- wolman -->
+			<entry byte="$1c" str="$9534" />
+			<!-- yareeka -->
+			<entry byte="$1d" str="$95ad" />
+			<!-- magman -->
+			<entry byte="$1e" str="$961a" />
+			<!-- unused spear-wielder -->
+			<entry byte="$1f" str="$96e9" />
+			<!-- ikeda -->
+			<entry byte="$20" str="$9703" />
+			<!-- unused blue monster -->
+			<entry byte="$21" str="$975d" />
+			<!-- lamprey -->
+			<entry byte="$22" str="$976f" />
+			<!-- monodron -->
+			<entry byte="$23" str="$979a" />
+			<!-- unused winged monster -->
+			<entry byte="$24" str="$9852" />
+			<!-- tamazutsu -->
+			<entry byte="$25" str="$98b2" />
+			<!-- rokusatahn -->
+			<entry byte="$26" str="$990a" />
+			<!-- unused snake boss -->
+			<entry byte="$27" str="$9adb" />
+			<!-- ripasheiku -->
+			<entry byte="$28" str="$9c50" />
+			<!-- zoradohna -->
+			<entry byte="$29" str="$9c7a" />
+			<!-- borabohra -->
+			<entry byte="$2a" str="$9ccf" />
+			<!-- pakukame -->
+			<entry byte="$2b" str="$9d93" />
+			<!-- zorugeriru -->
+			<entry byte="$2c" str="$9e4e" />
+			<!-- zorugeriru rock -->
+			<entry byte="$2d" str="$9ee3" />
+			<!-- king grieve -->
+			<entry byte="$2e" str="$9fc3" />
+			<!-- shadow eura -->
+			<entry byte="$2f" str="$a06d" />
+			<!-- star magic -->
+			<entry byte="$30" str="$a0e7" />
+			<!-- wyveren/grieve magic -->
+			<entry byte="$31" str="$a11f" />
+			<!-- shadow eura magic -->
+			<entry byte="$32" str="$a1c1" />
+			<!-- player magic -->
+			<entry byte="$33" str="$a1f4" />
+			<!-- walking man #1 -->
+			<entry byte="$34" str="$a26a" />
+			<!-- blue lady -->
+			<entry byte="$35" str="$a289" />
+			<!-- child -->
+			<entry byte="$36" str="$a28c" />
+			<!-- armor salesman -->
+			<entry byte="$37" str="$a28f" />
+			<!-- martial arts -->
+			<entry byte="$38" str="$a29f" />
+			<!-- guru -->
+			<entry byte="$39" str="$a2ae" />
+			<!-- king -->
+			<entry byte="$3a" str="$a2bd" />
+			<!-- magic teacher / spring wise man -->
+			<entry byte="$3b" str="$a2d7" />
+			<!-- key salesman++ -->
+			<entry byte="$3c" str="$a2e6" />
+			<!-- tavern dining man -->
+			<entry byte="$3d" str="$a2f6" />
+			<!-- meat vendor++ -->
+			<entry byte="$3e" str="$a2fd" />
+			<!-- eyeball/zozura -->
+			<entry byte="$3f" str="$a303" />
+			<!-- items -->
+			<entry byte="$40" str="$a309" />
+			<!-- bread -->
+			<entry byte="$41" str="$a312" />
+			<!-- final spring -->
+			<entry byte="$42" str="$a334" />
+			<!-- special items -->
+			<entry byte="$43" str="$a34a" />
+			<!-- springs -->
+			<entry byte="$44" str="$a5d1" />
+		</byte_to_string_map>
+		<!-- how many frames an update handler uses - if not given assumed to be one -->
 		<!-- this is kept in config since it is not feasible to deduce it from the game logic -->
-		<byte_to_string_map name="npc_animation_frame_counts">
-			<entry byte="$02" str="2" />
-			<entry byte="$03" str="6" />
-			<entry byte="$04" str="4" />
-			<entry byte="$05" str="2" />
-			<entry byte="$06" str="3" />
-			<entry byte="$07" str="2" />
+		<byte_to_string_map name="sprite_update_handler_anim_frame_counts">
+			<entry byte="$00" str="4" />
+			<entry byte="$01" str="4" />
+			<entry byte="$02" str="4" />
+			<entry byte="$04" str="2" />
+			<entry byte="$05" str="4" />
+			<entry byte="$06" str="2" />
+			<entry byte="$07" str="3" />
 			<entry byte="$08" str="2" />
 			<entry byte="$09" str="2" />
 			<entry byte="$0a" str="2" />
@@ -1293,38 +1437,41 @@
 			<entry byte="$0e" str="3" />
 			<entry byte="$0f" str="4" />
 			<entry byte="$10" str="2" />
-			<entry byte="$11" str="4" />
-			<entry byte="$12" str="5" />
-			<entry byte="$13" str="4" />
+			<entry byte="$11" str="3" />
+			<entry byte="$12" str="3" />
+			<entry byte="$13" str="2" />
 			<entry byte="$14" str="4" />
-			<entry byte="$15" str="3" />
-			<entry byte="$17" str="3" />
-			<entry byte="$18" str="2" />
-			<entry byte="$19" str="4" />
-			<entry byte="$1a" str="2" />
-			<entry byte="$1b" str="2" />
-			<entry byte="$1c" str="2" />
-			<entry byte="$1d" str="4" />
-			<entry byte="$1e" str="3" />
-			<entry byte="$1f" str="3" />
-			<entry byte="$20" str="5" />
-			<entry byte="$21" str="3" />
-			<entry byte="$22" str="2" />
-			<entry byte="$23" str="2" />
-			<entry byte="$24" str="4" />
-			<entry byte="$26" str="3" />
-			<entry byte="$27" str="2" />
+			<entry byte="$15" str="2" />
+			<entry byte="$16" str="2" />
+			<entry byte="$17" str="2" />
+			<entry byte="$18" str="4" />
+			<entry byte="$19" str="3" />
+			<entry byte="$1a" str="3" />
+			<entry byte="$1b" str="5" />
+			<entry byte="$1c" str="3" />
+			<entry byte="$1d" str="2" />
+			<entry byte="$1e" str="2" />
+			<entry byte="$1f" str="4" />
+			<entry byte="$20" str="3" />
+			<entry byte="$21" str="2" />
+			<entry byte="$22" str="4" />
+			<entry byte="$23" str="3" />
+			<entry byte="$24" str="2" />
+			<entry byte="$25" str="7" />
+			<entry byte="$26" str="4" />
+			<entry byte="$27" str="5" />
 			<entry byte="$28" str="4" />
-			<entry byte="$2a" str="3" />
-			<entry byte="$2b" str="2" />
-			<entry byte="$2c" str="7" />
-			<entry byte="$2d" str="4" />
-			<entry byte="$2e" str="4" />
-			<entry byte="$2f" str="8" />
-			<entry byte="$30" str="3" />
-			<entry byte="$31" str="6" />
+			<entry byte="$29" str="4" />
+			<entry byte="$2a" str="8" />
+			<entry byte="$2b" str="3" />
+			<entry byte="$2c" str="6" />
+			<entry byte="$2d" str="6" />
+			<entry byte="$2e" str="3" />
+			<entry byte="$2f" str="10" />
+			<entry byte="$30" str="2" />
+			<entry byte="$31" str="2" />
 			<entry byte="$32" str="3" />
-			<entry byte="$33" str="10" />
+			<entry byte="$33" str="20" />
 			<entry byte="$34" str="3" />
 			<entry byte="$35" str="3" />
 			<entry byte="$36" str="3" />
@@ -1337,26 +1484,26 @@
 			<entry byte="$3d" str="2" />
 			<entry byte="$3e" str="2" />
 			<entry byte="$3f" str="2" />
-			<entry byte="$40" str="2" />
-			<entry byte="$41" str="2" />
-			<entry byte="$42" str="2" />
-			<entry byte="$43" str="2" />
-			<entry byte="$44" str="2" />
-			<entry byte="$45" str="2" />
-			<entry byte="$46" str="2" />
-			<entry byte="$47" str="2" />
-			<entry byte="$51" str="2" />
-			<entry byte="$52" str="7" />
-			<entry byte="$53" str="3" />
-			<entry byte="$54" str="20" />
-			<entry byte="$61" str="7" />
-			<entry byte="$62" str="7" />
-			<entry byte="$63" str="7" />
-			<entry byte="$64" str="4" />
+			<entry byte="$42" str="7" />
+			<entry byte="$44" str="7" />
 		</byte_to_string_map>
-		<!-- a few npc frames have an index delta applied to the tilemap -->
-		<byte_to_string_map name="npc_frame_idx_translate">
-			<entry byte="$0a" str="$80" />
+		<!-- an update handler applies a delta to the frame tile idxs -->
+		<byte_to_string_map name="frame_idx_translations">
+			<entry byte="49" str="$80" />
+		</byte_to_string_map>
+		<!-- adjustmens to render npc animations in the GUI, keyed by handler -->
+		<byte_to_string_map name="sprite_update_handler_gui">
+			<!-- hide "scantily clad woman" within maskman -->
+			<entry byte="27" str="hide_frames:2,3" />
+			<!-- stack snake body parts -->
+			<entry byte="39" str="stack" />
+			<!-- zorugeriruk; hide non-rock frames -->
+			<entry byte="44" str="hide_frames:3,4,5" />
+			<!-- zorugeriru rock; use zorugeriru chr-bank and hide non-rock frames -->
+			<entry byte="45" str="hide_frames:0,1,2;chr_bank_from:44" />
+			<!-- add +8 to x-offset for all springs (done in bScripts) -->
+			<entry byte="66" str="add_x_offset:8" />
+			<entry byte="68" str="add_x_offset:8" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
 </eoe_config>

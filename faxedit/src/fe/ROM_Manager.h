@@ -115,6 +115,7 @@ namespace fe {
 			std::size_t p_zero_addr) const;
 		std::size_t get_ptr_to_rom_offset(const std::vector<byte>& p_rom,
 			std::pair<std::size_t, std::size_t> p_ptr) const;
+		std::size_t read_uint16_le(const std::vector<byte>& p_rom, std::size_t p_offset) const;
 		std::vector<byte> read_bytes(const std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_count) const;
 		std::size_t get_ptr_table_entry_count(const std::vector<byte>& p_rom,
 			std::size_t p_ptr_rom_address, std::size_t p_zero_addr) const;
