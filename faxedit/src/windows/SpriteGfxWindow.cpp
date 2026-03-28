@@ -45,7 +45,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText("Patching");
 			ui::imgui_checkbox("Patch sprite gfx data", m_settings.m_patch_sprite_gfx,
 				"Whether sprite gfx data should be written when patching ROM");
-			ImGui::SeparatorText("Palettes");
+			ImGui::SeparatorText("Palettes (for GUI rendering and bmp-import/export)");
 			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
 				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_labels_palettes)),
 				m_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);

@@ -136,14 +136,23 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 				std::size_t doorcnt{ scr.m_doors.size() };
 
 				for (std::size_t d{ 0 }; d < doorcnt; ++d) {
+					const auto& door{ scr.m_doors[d] };
+
 					if (m_game->m_chunks[c].m_metatiles.at(
-						scr.get_mt_at_pos(scr.m_doors[d].m_coords.first,
-							scr.m_doors[d].m_coords.second)).m_block_property
+						scr.get_mt_at_pos(door.m_coords.first,
+							door.m_coords.second)).m_block_property
 						!= 0x03) {
-						add_message(std::format("World {}, Screen {}, Door {}: Not placed on door-type metatile",
-							c, s, d), 1);
+						add_message(std::format("World {}, Screen {}, Door ({},{}): Not placed on door-type metatile",
+							c, s, door.m_coords.first, door.m_coords.second), 1);
 					}
-					unique_door_pos.insert(scr.m_doors[d].m_coords);
+
+					if (door.m_door_type == fe::DoorType::SameWorld &&
+						door.m_dest_coords.first == 0 &&
+						door.m_dest_coords.second == 0)
+						add_message(std::format("World {}, Screen {}, Door ({},{}): Destination coords are (0, 0) - was this intentional?",
+							c, s, door.m_coords.first, door.m_coords.second), 6);
+
+					unique_door_pos.insert(door.m_coords);
 				}
 
 				if (unique_door_pos.size() != doorcnt)
@@ -427,6 +436,26 @@ void fe::MainWindow::validate_game_data(fe::Game& p_game) {
 			}
 		};
 
+	const auto validate_door_dest_palette = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
+		if (door.m_dest_palette_id >= p_game.m_palettes.size()) {
+			door.m_dest_palette_id = 0;
+			add_message(
+				std::format("Invalid destination palette for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
+					door.m_coords.first, door.m_coords.second), 1
+			);
+		}
+		};
+
+	const auto validate_door_dest_screen = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
+		if (door.m_dest_screen_id >= p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size()) {
+			door.m_dest_screen_id = 0;
+			add_message(
+				std::format("Invalid destination screen for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
+					door.m_coords.first, door.m_coords.second), 1
+			);
+		}
+		};
+
 	// check worlds
 	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
 		auto& world{ p_game.m_chunks[w] };
@@ -441,6 +470,15 @@ void fe::MainWindow::validate_game_data(fe::Game& p_game) {
 			validate_screen_connection(screen.m_scroll_right, w, s, screen_count);
 			validate_screen_connection(screen.m_scroll_up, w, s, screen_count);
 			validate_screen_connection(screen.m_scroll_down, w, s, screen_count);
+
+			// validate doors
+			for (std::size_t d{ 0 }; d < screen.m_doors.size(); ++d) {
+				auto& door{ screen.m_doors[d] };
+				if (door.m_door_type == fe::DoorType::SameWorld)
+					validate_door_dest_palette(door, w, s);
+				else if (door.m_door_type == fe::DoorType::Building)
+					validate_door_dest_screen(door, w, s);
+			}
 
 			// validate tilemap
 			for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
