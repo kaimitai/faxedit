@@ -43,29 +43,33 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 
 		if (editmode == fe::SpriteGfxEditMode::Settings) {
 			ImGui::SeparatorText("Patching");
-			ui::imgui_checkbox("Patch sprite gfx data", m_sprite_gfx_settings.m_patch_rom,
+			ui::imgui_checkbox("Patch sprite gfx data", m_settings.m_patch_sprite_gfx,
 				"Whether sprite gfx data should be written when patching ROM");
 			ImGui::SeparatorText("Palettes");
 			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
-				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[0]), m_labels_palettes)),
-				m_sprite_gfx_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);
+				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_labels_palettes)),
+				m_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);
 			ui::imgui_slider_with_arrows("###plapal", std::format("Player: {}",
-				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[1]), m_labels_palettes)),
-				m_sprite_gfx_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1);
+				get_description(static_cast<byte>(m_settings.coll_palettes[1]), m_labels_palettes)),
+				m_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1);
 			ui::imgui_slider_with_arrows("###porpal", std::format("Portraits: {}",
-				get_description(static_cast<byte>(m_sprite_gfx_settings.coll_palettes[2]), m_labels_palettes)),
-				m_sprite_gfx_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1);
+				get_description(static_cast<byte>(m_settings.coll_palettes[2]), m_labels_palettes)),
+				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1);
 
 			ImGui::SeparatorText("Rendering Scales");
-			ImGui::SliderFloat("animation frames", &m_sprite_gfx_settings.scale_frame, 1.0f, 5.0f);
-			ImGui::SliderFloat("chr-banks", &m_sprite_gfx_settings.scale_bank, 1.0f, 5.0f);
+			ImGui::SliderFloat("animation frames", &m_settings.scale_frame, 1.0f, 5.0f);
+			ImGui::SliderFloat("chr-banks", &m_settings.scale_bank, 1.0f, 5.0f);
 
 			ImGui::SeparatorText("bmp-import");
 			ui::imgui_slider_with_arrows("###tratol", "Transparency Tolerance",
-				m_sprite_gfx_settings.transp_tolerance, 0, 10,
+				m_settings.transp_tolerance, 0, 10,
 				"How far a pixel color can deviate from hot pink and still be considered transparent");
 
 			ImGui::Separator();
+			if (ui::imgui_button("Reset settings", 4, "Reset to default settings")) {
+				m_settings = fe::EditorSettings();
+			}
+			ImGui::SeparatorText("GUI");
 			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI")) {
 				generate_editor_sprite_gfx(p_rnd);
 				add_message("GUI sprite textures regenerated", 2);
@@ -151,10 +155,10 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 	static bool ls_redraw_bank{ true }, ls_redraw_frame{ true };
 
 	// force a redraw from the outside
-	if (m_sprite_gfx_settings.m_redraw) {
+	if (m_settings.m_redraw_sprite_gfx) {
 		ls_redraw_frame = true;
 		ls_redraw_bank = true;
-		m_sprite_gfx_settings.m_redraw = false;
+		m_settings.m_redraw_sprite_gfx = false;
 	}
 
 	if (!ls_coll || *ls_coll != p_coll) {
@@ -184,14 +188,14 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 	if (ls_redraw_bank) {
 		m_gfx.gen_sprite_selected_chr_bank(p_rnd, p_collection.banks[ls_resolved_bank],
-			m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll]));
+			m_game->m_palettes.at(m_settings.coll_palettes[p_coll]));
 		ls_redraw_bank = false;
 		ls_redraw_frame = true;
 	}
 
 	if (ls_redraw_frame) {
 		m_gfx.gen_sprite_selected_texture(p_rnd, p_collection.frames[ls_frame].frame,
-			p_collection.banks[ls_resolved_bank], m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll]));
+			p_collection.banks[ls_resolved_bank], m_game->m_palettes.at(m_settings.coll_palettes[p_coll]));
 		ls_redraw_frame = false;
 	}
 
@@ -252,7 +256,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 
 			// draw the frame texture - we have a valid animation frame and bank index
 			auto paint_tile{ imgui_select_tile_image(m_gfx.get_sprite_selected_texture(),
-				m_sprite_gfx_settings.scale_frame, ls_sel_frame_x, ls_sel_frame_y) };
+				m_settings.scale_frame, ls_sel_frame_x, ls_sel_frame_y) };
 
 			if (paint_tile) {
 				std::size_t bank_idx{ static_cast<std::size_t>(ls_sel_bank_chr_y * 16 + ls_sel_bank_chr_x) };
@@ -334,7 +338,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 		ls_redraw_bank = true;
 
 	imgui_select_tile_image(m_gfx.get_sprite_selected_chr_bank(),
-		m_sprite_gfx_settings.scale_bank, ls_sel_bank_chr_x, ls_sel_bank_chr_y);
+		m_settings.scale_bank, ls_sel_bank_chr_x, ls_sel_bank_chr_y);
 
 	/*
 	TODO: Decide if users should be allowed to canonicalize. bmp import will do this up to sorting anyway
@@ -538,8 +542,8 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
 	else if (impact.banks_identical) {
 		auto impres{ m_gfx.import_sprite_frames_from_folder(get_bmp_path(), get_sprite_gfx_file_prefix(p_coll_id),
-			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll_id]),
-			256, m_sprite_gfx_settings.transp_tolerance) };
+			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(m_settings.coll_palettes[p_coll_id]),
+			256, m_settings.transp_tolerance) };
 
 		// check overflow
 		if (impres.approximated_tile_count > 0)
@@ -581,7 +585,7 @@ void fe::MainWindow::export_sprite_frame_bmps(const fe::SpriteFrameCollection& p
 		m_gfx.save_sprite_frames_bmp(p_coll,
 			p_bank_id,
 			impact.frame_indexes,
-			m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[p_coll_id]),
+			m_game->m_palettes.at(m_settings.coll_palettes[p_coll_id]),
 			get_bmp_path(),
 			get_sprite_gfx_file_prefix(p_coll_id));
 
@@ -669,7 +673,7 @@ void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
 	m_sprite_dims = gui_sprites.get_animation_dimension_data();
 
 	// pass the resolved frames on to the gfx handler to make sprite textures
-	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(m_sprite_gfx_settings.coll_palettes[0]));
+	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(m_settings.coll_palettes[0]));
 	// force a redraw in the sprite gfx window
-	m_sprite_gfx_settings.m_redraw = true;
+	m_settings.m_redraw_sprite_gfx = true;
 }

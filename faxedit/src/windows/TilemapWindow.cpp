@@ -127,7 +127,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
 
 					bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
-					bool l_allow_sprite_edit{ !l_building || m_show_sprite_sets_in_buildings };
+					bool l_allow_sprite_edit{ !l_building || m_settings.m_show_sprite_sets_in_buildings };
 
 					if (l_allow_sprite_edit &&
 						m_emode == fe::EditMode::Sprites &&
@@ -257,14 +257,14 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 				if (m_sel_chunk != c::CHUNK_IDX_BUILDINGS)
 					show_sprite_screen(l_screen.m_sprite_set, m_sel_sprite);
-				else if (m_show_sprite_sets_in_buildings)
+				else if (m_settings.m_show_sprite_sets_in_buildings)
 					show_sprite_npc_bundle_screen();
 
 				ImGui::PopID();
 
 				if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
 					ui::imgui_checkbox("Edit Building Sprite Sets (advanced)",
-						m_show_sprite_sets_in_buildings,
+						m_settings.m_show_sprite_sets_in_buildings,
 						"Check the documentation before using this functionality");
 
 				ImGui::EndTabItem();
@@ -304,9 +304,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (ImGui::BeginCombo("Door Type", c::LABELS_DOOR_TYPES[l_dtype])) {
 						for (std::size_t i = 0; i < 4; ++i) {
 
-							// can't make same-world door for the town world
-							// the door destination index is reduced by 0x20 before indexing
-							bool is_disabled = (i == 0 && m_sel_chunk == c::CHUNK_IDX_TOWNS);
+							// can't make same-world door for the town world without rom hacking
+							// the door destination index is reduced by 0x20 before indexing by default
+							bool is_disabled = (i == 0 && m_sel_chunk == c::CHUNK_IDX_TOWNS &&
+								!m_settings.m_sw_doors_in_towns);
 
 							if (is_disabled) ImGui::BeginDisabled();
 
@@ -414,6 +415,14 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							ImGui::SeparatorText("Sprite Set content");
 
 							show_sprite_set_contents(l_door.m_npc_bundle);
+						}
+
+						ImGui::Separator();
+
+						// if the padding byte is enabled - show it
+						if (m_settings.m_door_pad_byte) {
+							ui::imgui_slider_with_arrows("###padbyte", "Padding Byte",
+								l_door.m_unknown, 0, 255, "Not used for anything in the base game");
 						}
 
 						ImGui::Separator();

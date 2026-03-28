@@ -43,7 +43,7 @@ namespace fe {
 			const std::vector<std::vector<byte>>& p_data) const;
 
 	public:
-		ROM_Manager(void);
+		ROM_Manager(void) = default;
 
 		// encode tilemaps, ensure a packing if found if any is possible
 		fe::TileMapPackingResult encode_game_tilemaps(const fe::Config& p_config,

@@ -10,6 +10,7 @@
 #include "gfx.h"
 #include "UndoInterface.h"
 #include "ClipBoardManager.h"
+#include "./../fe/EditorSettings.h"
 #include "./../fe/sprite/SpriteGfxSnapshotManager.h"
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
@@ -25,13 +26,6 @@ namespace fe {
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
 	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player };
-
-	struct SpriteGfxSettings {
-		bool m_redraw, m_patch_rom;
-		std::vector<std::size_t> coll_palettes;
-		float scale_frame, scale_bank;
-		int transp_tolerance;
-	};
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -51,7 +45,7 @@ namespace fe {
 		fe::SpriteGfxSnapshotManager m_sprite_snap_manager;
 
 		// settings
-		SpriteGfxSettings m_sprite_gfx_settings;
+		fe::EditorSettings m_settings;
 
 		// config values we will cache
 		std::map<byte, std::string> m_labels_cmd_byte,
@@ -115,9 +109,6 @@ namespace fe {
 		// world tileset cache (for all 256 ppu tiles, not only tileset tiles)
 		std::vector<std::vector<klib::NES_tile>> world_ppu_tilesets;
 
-		// functionality toggles
-		bool m_show_sprite_sets_in_buildings;
-
 		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
@@ -150,6 +141,7 @@ namespace fe {
 		std::string get_xml_path(void) const;
 		std::string get_nes_path(void) const;
 		std::string get_filepath(const std::string& p_ext, bool p_add_out = false) const;
+		std::string get_settings_xml_path(void) const;
 
 		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;

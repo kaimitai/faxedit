@@ -14,6 +14,7 @@ namespace fe {
 
 		constexpr char CONFIG_FILE_NAME[]{ "eoe_config.xml" };
 		constexpr char CONFIG_OVERRIDE_FILE_NAME[]{ "eoe_config_override.xml" };
+		constexpr char SETTINGS_FILE_NAME[]{ "eoe_settings.xml" };
 
 		// pointers
 		constexpr char ID_METADATA_PTR[]{ "metadata_ptr" };

@@ -50,25 +50,13 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_door_req_overlay{ true },
 	m_show_grid{ false },
 	m_overlays{ std::vector<char>(16, false) },
-	m_show_sprite_sets_in_buildings{ false },
 	// config variables, will be loaded with the config xml
 	m_sprite_count{ 0 },
 	m_iscript_count{ 0 },
 	m_music_count{ 0 },
 	// exit handler variables
 	m_exit_app_requested{ false },
-	m_exit_app_granted{ false },
-	// settings
-	m_sprite_gfx_settings{
-		fe::SpriteGfxSettings {
-			.m_redraw = false,
-			.m_patch_rom = true,
-			.coll_palettes = {28, 28, 30},
-			.scale_frame = 3.0f,
-			.scale_bank = 2.0f,
-			.transp_tolerance = 3
-			}
-	}
+	m_exit_app_granted{ false }
 {
 	add_message("It is recommended to read the documentation for usage tips", 5);
 	add_message("For script and music editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
@@ -82,6 +70,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message(std::format("Version: {}", c::APP_VERSION), 5);
 	add_message("https://github.com/kaimitai/faxedit", 2);
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
+
+	fe::xml::load_settings_xml(get_settings_xml_path(), m_settings);
 
 	if (!p_filepath.empty())
 		load_rom(p_rnd, p_filepath, p_region);
@@ -227,7 +217,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		}
 		else if (m_emode == fe::EditMode::Sprites) {
 			bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
-			bool l_showsprites{ !l_building || m_show_sprite_sets_in_buildings };
+			bool l_showsprites{ !l_building || m_settings.m_show_sprite_sets_in_buildings };
 
 			if (l_showsprites)
 				draw_sprites(p_rnd,
@@ -693,8 +683,15 @@ void fe::MainWindow::draw_exit_app_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Exit", 1))
+	if (ui::imgui_button("Exit", 1)) {
+		try {
+			xml::save_settings_xml(get_settings_xml_path(), m_settings);
+		}
+		catch (const std::exception&) {
+			// ignore for now - no harm done
+		}
 		m_exit_app_granted = true;
+	}
 
 	ImGui::End();
 
@@ -911,6 +908,12 @@ std::string fe::MainWindow::get_filepath(const std::string& p_ext, bool p_add_ou
 	}
 
 	return outputPath.string();
+}
+
+std::string fe::MainWindow::get_settings_xml_path(void) const {
+	const char* basePath = SDL_GetBasePath();
+	std::string dir = basePath ? basePath : "./";
+	return (std::filesystem::path(dir) / c::SETTINGS_FILE_NAME).string();
 }
 
 // screen element draw routines

@@ -161,6 +161,7 @@
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Config.cpp" />
     <ClCompile Include="src\fe\Door.cpp" />
+    <ClCompile Include="src\fe\EditorSettings.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\GfxTilemapManager.cpp" />
     <ClCompile Include="src\fe\GodAllocator.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Config.h" />
     <ClInclude Include="src\fe\Door.h" />
+    <ClInclude Include="src\fe\EditorSettings.h" />
     <ClInclude Include="src\fe\fe_app_constants.h" />
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />

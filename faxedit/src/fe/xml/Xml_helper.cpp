@@ -1204,8 +1204,104 @@ fe::SpriteAnimationFrame fe::xml::read_frame(pugi::xml_node p_node) {
 	return result;
 }
 
-// eoe config helpers
+// editor settings
+void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorSettings& p_settings) {
+	pugi::xml_document doc;
 
+	// add comments about editor
+	auto n_comments = doc.append_child(pugi::node_comment);
+	n_comments.set_value(c::COMMENTS_SETTINGS_ROOT);
+
+	auto n_settings = doc.append_child(c::TAG_SETTINGS_ROOT);
+	n_settings.append_attribute(c::ATTR_ROOT_VERSION);
+	n_settings.attribute(c::ATTR_ROOT_VERSION).set_value(fe::c::APP_VERSION);
+
+	add_setting(n_settings, c::SETTINGS_PARAM_TRANSP_TOLERANCE, p_settings.transp_tolerance);
+	for (std::size_t i{ 0 }; i < p_settings.coll_palettes.size(); ++i)
+		add_setting(n_settings, std::format("{}-{}", c::SETTINGS_PARAM_SPRITE_PALETTE, i),
+			p_settings.coll_palettes[i]);
+	add_setting(n_settings, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
+	add_setting(n_settings, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
+	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
+	add_setting(n_settings, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
+	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
+
+	// save document to disk
+	if (!doc.save_file(p_filepath.c_str()))
+		throw std::runtime_error("Could not save " + p_filepath);
+}
+
+void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSettings& p_settings) {
+	try {
+		pugi::xml_document l_doc;
+		if (!l_doc.load_file(p_filepath.c_str()))
+			throw std::runtime_error("Could not load xml file " + p_filepath);
+
+		auto n_root{ l_doc.child(c::TAG_SETTINGS_ROOT) };
+
+		read_setting_int(n_root, c::SETTINGS_PARAM_TRANSP_TOLERANCE, p_settings.transp_tolerance);
+		for (std::size_t i{ 0 }; i < p_settings.coll_palettes.size(); ++i)
+			read_setting_uint(n_root,
+				std::format("{}-{}", c::SETTINGS_PARAM_SPRITE_PALETTE, i),
+				p_settings.coll_palettes[i]);
+
+		read_setting_float(n_root, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
+		read_setting_float(n_root, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
+
+		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
+	}
+	catch (const std::exception&) {
+		// ignore - not critical
+	}
+
+	p_settings.sanitize();
+}
+
+pugi::xml_attribute fe::xml::find_settings_param_attr(pugi::xml_node p_root_node,
+	const std::string p_param) {
+	for (auto n_param{ p_root_node.child(c::TAG_PARAM) }; n_param;
+		n_param = n_param.next_sibling(c::TAG_PARAM)) {
+		auto attr{ n_param.attribute(c::ATTR_NAME) };
+		if (attr && attr.as_string() == p_param)
+			return n_param.attribute(c::ATTR_VALUE);
+	}
+
+	return pugi::xml_attribute();
+}
+
+void fe::xml::read_setting_float(pugi::xml_node p_root_node, const std::string& p_param_name,
+	float& p_value) {
+	auto n_attr{ find_settings_param_attr(p_root_node, p_param_name) };
+	if (n_attr)
+		p_value = n_attr.as_float();
+}
+
+void fe::xml::read_setting_int(pugi::xml_node p_root_node, const std::string& p_param_name,
+	int& p_value) {
+	auto n_attr{ find_settings_param_attr(p_root_node, p_param_name) };
+	if (n_attr)
+		p_value = n_attr.as_int();
+}
+
+void fe::xml::read_setting_uint(pugi::xml_node p_root_node, const std::string& p_param_name,
+	std::size_t& p_value) {
+	auto n_attr{ find_settings_param_attr(p_root_node, p_param_name) };
+	if (n_attr)
+		p_value = n_attr.as_uint();
+}
+
+void fe::xml::read_setting_bool(pugi::xml_node p_root_node, const std::string& p_param_name,
+	bool& p_value) {
+	auto n_attr{ find_settings_param_attr(p_root_node, p_param_name) };
+	if (n_attr)
+		p_value = n_attr.as_bool();
+}
+
+// eoe config helpers
 void fe::xml::load_configuration(const std::string& p_config_xml,
 	const std::string& p_region_name,
 	std::map<std::string, std::size_t>& p_constants,

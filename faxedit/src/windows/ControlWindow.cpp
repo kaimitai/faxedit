@@ -280,7 +280,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 
 	if (!p_exclude_dynamic) {
 
-		if (m_sprite_gfx_settings.m_patch_rom) {
+		if (m_settings.m_patch_sprite_gfx) {
 			auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
 			l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
 			l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);

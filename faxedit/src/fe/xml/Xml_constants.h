@@ -11,6 +11,20 @@ namespace fe {
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
+			constexpr char TAG_SETTINGS_ROOT[]{ "eoe_settings" };
+			constexpr char COMMENTS_SETTINGS_ROOT[]{ "Echoes of Eolis settings file (https://github.com/kaimitai/faxedit) " };
+			constexpr char TAG_PARAM[]{ "param" };
+
+
+			constexpr char SETTINGS_PARAM_FRAME_SCALING[]{ "frame_scaling" };
+			constexpr char SETTINGS_PARAM_BANK_SCALING[]{ "bank_scaling" };
+			constexpr char SETTINGS_PARAM_TRANSP_TOLERANCE[]{ "transparency_tolerance" };
+			constexpr char SETTINGS_PARAM_SPRITE_PALETTE[]{ "sprite_palette" };
+			constexpr char SETTINGS_PARAM_PATCH_SPRITE_GFX[]{ "patch_sprite_gfx" };
+			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
+			constexpr char SETTINGS_PARAM_SW_DOORS_IN_TOWNS[]{ "sw_doors_in_town" };
+			constexpr char SETTINGS_PARAM_SHOW_DOOR_PADDING[]{ "show_door_padding_byte" };
+
 			constexpr char TAG_STAGES[]{ "stages" };
 			constexpr char TAG_STAGE[]{ "stage" };
 			constexpr char ATTR_NEXT_STAGE[]{ "next_stage" };

@@ -8,9 +8,6 @@
 #include "./../common/klib/Kstring.h"
 #include "fe_constants.h"
 
-fe::ROM_Manager::ROM_Manager(void) {
-}
-
 // this function will extract all tilemaps and try to pack them across the 3
 // tilemap banks, and update the tilemap metadata
 fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config& p_config,
