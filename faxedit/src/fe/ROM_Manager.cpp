@@ -5,6 +5,7 @@
 #include <format>
 #include "Config.h"
 #include "./../common/klib/Kfile.h"
+#include "./../common/klib/Kstring.h"
 #include "fe_constants.h"
 
 fe::ROM_Manager::ROM_Manager(void) {
@@ -426,73 +427,63 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 	return std::make_pair(l_sprite_data.size(), l_sprite_data_size);
 }
 
-// call this if you want to pack both transition types together in free space
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	std::size_t l_free_space_offset{ p_config.constant(c::ID_TRANS_DATA_START) };
-	std::size_t l_free_space_size{ p_config.constant(c::ID_TRANS_DATA_END) -
-	l_free_space_offset };
+	constexpr bool PAD_WITH_FF{ false };
 
+	const auto freespace_strs{ p_config.bmap(c::ID_BANK15_FREE_SPACE) };
+	std::vector<std::pair<std::size_t, std::size_t>> free_ranges;
+	std::size_t total_free_space{ 0 }, total_used_space{ 0 };
+
+	for (const auto& kv : freespace_strs) {
+		auto endpoints{ klib::str::split_string(kv.second, ':') };
+		if (endpoints.size() != 2)
+			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
+
+		std::size_t start_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(0)))) };
+		std::size_t end_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(1)))) };
+		if (start_ep >= end_ep)
+			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
+
+		free_ranges.push_back(std::make_pair(start_ep, end_ep));
+		total_free_space += end_ep - start_ep;
+	}
+
+	// pack all transition data
+	std::vector<std::vector<std::vector<byte>>> all_trans_data;
 	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
-
 	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
 		l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
 		l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
 	}
+	all_trans_data.push_back(l_all_sw_trans_data);
+	all_trans_data.push_back(l_all_ow_trans_data);
 
-	// generate same-world ptr table and data
-	auto l_sameworld_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
-	auto l_sw_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
-		l_sameworld_ptr.first,
-		l_sameworld_ptr.second,
-		l_free_space_offset, l_all_sw_trans_data) };
+	const std::vector<Pointer> ptrs{
+		p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR),
+		p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR)
+	};
 
-	// generate other-world ptr table and data
-	// let this data start immediately after the same-world data
-	auto l_otherworld_ptr{ p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR) };
-	auto l_ow_trans_encoded{ build_pointer_table_and_data_aggressive_decoupled(
-	l_otherworld_ptr.first,
-	l_otherworld_ptr.second,
-	l_free_space_offset + l_sw_trans_encoded.second.size(), l_all_ow_trans_data) };
+	fe::GodAllocator allocator;
+	const auto allocresult{ allocator.init_and_allocate(ptrs, all_trans_data, free_ranges,
+		PAD_WITH_FF) };
 
-	std::size_t l_total_size{ l_sw_trans_encoded.second.size() + l_ow_trans_encoded.second.size() };
+	if (!allocresult)
+		throw std::runtime_error(std::format("Could not pack all transition data within {} bytes",
+			total_free_space));
+	else {
+		const auto& ptrtablewrites{ allocresult->ptr_table_writes };
+		const auto& datawrites{ allocresult->bucket_writes };
 
-	if (l_total_size <= l_free_space_size) {
-		patch_bytes(l_sw_trans_encoded.first, p_rom, l_sameworld_ptr.first);
-		patch_bytes(l_sw_trans_encoded.second, p_rom, l_free_space_offset);
-		patch_bytes(l_ow_trans_encoded.first, p_rom, l_otherworld_ptr.first);
-		patch_bytes(l_ow_trans_encoded.second, p_rom, l_free_space_offset + l_sw_trans_encoded.second.size());
+		for (const auto& ptrwrite : ptrtablewrites)
+			patch_bytes(ptrwrite.data, p_rom, ptrwrite.rom_offset);
+		for (const auto& datawrite : datawrites) {
+			patch_bytes(datawrite.data, p_rom, datawrite.rom_offset);
+			total_used_space += datawrite.data.size();
+		}
 	}
 
-	return std::make_pair(l_total_size, l_free_space_size);
-}
-
-// call this if you want to pack same-world transitions in the original location
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sw_transitions(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	auto l_sw_trans_ptr{ p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR) };
-	std::size_t l_sw_data_size{ p_config.constant(c::ID_SW_TRANS_DATA_END) -
-	l_sw_trans_ptr.first };
-
-	const auto l_sw_trans_data{ encode_game_sameworld_trans(p_config, p_game) };
-
-	if (l_sw_trans_data.size() <= l_sw_data_size)
-		patch_bytes(l_sw_trans_data, p_rom, l_sw_trans_ptr.first);
-	return std::make_pair(l_sw_trans_data.size(), l_sw_data_size);
-}
-
-// call this if you want to pack other-world transitions in the original location
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_ow_transitions(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	auto l_ow_trans_ptr{ p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR) };
-	std::size_t l_ow_data_size{ p_config.constant(c::ID_OW_TRANS_DATA_END) -
-	l_ow_trans_ptr.first };
-
-	const auto l_ow_trans_data{ encode_game_otherworld_trans(p_config, p_game) };
-
-	if (l_ow_trans_data.size() <= l_ow_data_size)
-		patch_bytes(l_ow_trans_data, p_rom, l_ow_trans_ptr.first);
-	return std::make_pair(l_ow_trans_data.size(), l_ow_data_size);
+	return std::make_pair(total_used_space, total_free_space);
 }
 
 // all static data patching
@@ -808,108 +799,6 @@ void fe::ROM_Manager::encode_palette_to_music(const fe::Config& p_config,
 		p_rom.at(l_slot_offset + i) = pal_to_mus[i].m_palette;
 		p_rom.at(l_slot_offset + l_slots + i) = pal_to_mus[i].m_music;
 	}
-}
-
-// this function generates pointer tables and data offsets for several pieces of data at once,
-// and generates a vector of <data table number> -> {ptr value, data pointed to}
-// it uses global deduplication across all the data
-// TODO: Test and actually use this
-std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> fe::ROM_Manager::generate_multi_pointer_tables(
-	const std::vector<std::vector<std::vector<byte>>>& all_data_sets,
-	const std::vector<std::size_t>& pointer_table_offsets,
-	std::size_t rom_zero_address,
-	const std::vector<std::pair<std::size_t, std::size_t>>& p_available
-) {
-
-	// Internal structure to track placed data and its ROM address
-	struct PlacedBlock {
-		std::size_t rom_address;       // ROM offset where this block starts
-		std::vector<byte> data;        // Actual data placed at that address
-	};
-
-	if (all_data_sets.size() != pointer_table_offsets.size()) {
-		throw std::runtime_error("Mismatch between number of data sets and pointer table offsets.");
-	}
-
-	// Flatten all blocks with metadata and sort by descending size
-	struct BlockInfo {
-		std::size_t table_index;
-		std::size_t block_index;
-		std::vector<byte> data;
-	};
-
-	std::vector<BlockInfo> all_blocks;
-	for (std::size_t table_idx = 0; table_idx < all_data_sets.size(); ++table_idx) {
-		const auto& table = all_data_sets[table_idx];
-		for (std::size_t block_idx = 0; block_idx < table.size(); ++block_idx) {
-			all_blocks.push_back({ table_idx, block_idx, table[block_idx] });
-		}
-	}
-
-	std::sort(all_blocks.begin(), all_blocks.end(), [](const BlockInfo& a, const BlockInfo& b) {
-		return a.data.size() > b.data.size(); // Largest blocks first
-		});
-
-	// Result structure: one vector per pointer table
-	std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> result(all_data_sets.size());
-
-	// Track available chunks
-	std::vector<std::pair<std::size_t, std::size_t>> available_chunks = p_available;
-
-	// Track all placed blocks for subvector matching
-	std::vector<PlacedBlock> placed_blocks;
-
-	for (const auto& block_info : all_blocks) {
-		const auto& data = block_info.data;
-
-		// Try to find a subvector match in previously placed blocks
-		bool matched = false;
-		for (const auto& placed : placed_blocks) {
-			auto it = std::search(placed.data.begin(), placed.data.end(), data.begin(), data.end());
-			if (it != placed.data.end()) {
-				// Match found — compute offset and pointer address
-				std::size_t offset_in_block = std::distance(placed.data.begin(), it);
-				std::size_t rom_address = placed.rom_address + offset_in_block;
-				std::size_t pointer_address = rom_address - rom_zero_address;
-
-				// Record pointer and empty data (since it's reused)
-				result[block_info.table_index].emplace_back(pointer_address, std::vector<byte>{});
-				matched = true;
-				break;
-			}
-		}
-
-		if (matched) continue;
-
-		// No match found — allocate full block in available space
-		bool placed = false;
-		for (auto& chunk : available_chunks) {
-			std::size_t& chunk_offset = chunk.first;
-			std::size_t& chunk_remaining = chunk.second;
-
-			if (chunk_remaining >= data.size()) {
-				std::size_t rom_address = chunk_offset;
-				std::size_t pointer_address = rom_address - rom_zero_address;
-
-				// Record placement
-				result[block_info.table_index].emplace_back(pointer_address, data);
-				placed_blocks.push_back({ rom_address, data });
-
-				// Update chunk
-				chunk_offset += data.size();
-				chunk_remaining -= data.size();
-
-				placed = true;
-				break;
-			}
-		}
-
-		if (!placed) {
-			throw std::runtime_error("Not enough space to place all data blocks.");
-		}
-	}
-
-	return result;
 }
 
 std::size_t fe::ROM_Manager::get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const {

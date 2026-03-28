@@ -78,16 +78,6 @@
 		<!-- end offsets for dynamic data -->
 		<const name="metadata_end" value="0x10010" />
 		<const name="sprite_data_end" value="0x30010" />
-		<!-- randumizer uses free space for functions, we need to keep the original limits -->
-		<!-- if these constants are defined for a region we keep original limits -->
-		<!-- otherwise we use transition_data_start and transition_data_end -->
-		<const name="sameworld_trans_data_end" region="randum" value="0x3ea60" />
-		<const name="otherworld_trans_data_end" region="randum" value="0x3eb3f" />
-		<!-- we combine same-world and other-world transition data if we use the bank 15 free space -->
-		<const name="transition_data_start" region="en-transl" value="0x3fe0a" />
-		<const name="transition_data_start" region="jp" value="0x3fdc2" />
-		<const name="transition_data_start" region="eu,us,us-rev-a" value="0x3fcdd" />
-		<const name="transition_data_end" value="0x3fff0" />
 		<!-- palettes -->
 		<const name="palette_offset" value="0x2c010" />
 		<const name="palette_count" value="31" />
@@ -531,6 +521,26 @@
 			<entry byte="$00" str="Final Spring Opening" />
 			<entry byte="$01" str="Boss Room" />
 			<entry byte="$02" str="End-Game Room" />
+		</byte_to_string_map>
+		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
+		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
+			<entry byte="$00" str="0x3ea57:0x3ea60" />
+			<entry byte="$01" str="0x3eabc:0x3eb3f" />
+			<entry byte="$02" str="0x3fcdd:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="jp">
+			<entry byte="$00" str="0x3ea57:0x3ea60" />
+			<entry byte="$01" str="0x3eabc:0x3eb3f" />
+			<entry byte="$02" str="0x3fdc2:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="en-transl">
+			<entry byte="$00" str="0x3ea57:0x3ea60" />
+			<entry byte="$01" str="0x3eabc:0x3eb3f" />
+			<entry byte="$02" str="0x3fe0a:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="randum">
+			<entry byte="$00" str="0x3ea57:0x3ea60" />
+			<entry byte="$01" str="0x3eabc:0x3eb3f" />
 		</byte_to_string_map>
 		<!-- mapping from world no to door destination index subtract value (default: 0) -->
 		<byte_to_string_map name="door_dest_index_sub">

@@ -25,13 +25,6 @@ namespace fe {
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
 		constexpr char ID_SPRITE_DATA_END[]{ "sprite_data_end" };
-		// combined transition data
-		constexpr char ID_TRANS_DATA_START[]{ "transition_data_start" };
-		constexpr char ID_TRANS_DATA_END[]{ "transition_data_end" };
-		// individual transition data; if used, the data start is immediately
-		// following each pointer table
-		constexpr char ID_SW_TRANS_DATA_END[]{ "sameworld_trans_data_end" };
-		constexpr char ID_OW_TRANS_DATA_END[]{ "otherworld_trans_data_end" };
 
 		// constant sizes
 		constexpr char ID_WORLD_TILEMAP_MAX_SIZE[]{ "world_tilemap_max_size" };
@@ -151,6 +144,7 @@ namespace fe {
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
 		constexpr char ID_DOOR_DEST_INDEX_SUB[]{ "door_dest_index_sub" };
+		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

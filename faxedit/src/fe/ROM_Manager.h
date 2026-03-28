@@ -41,23 +41,6 @@ namespace fe {
 			std::size_t p_ptr_base_rom_offset,
 			std::size_t p_rom_loc_data,
 			const std::vector<std::vector<byte>>& p_data) const;
-		/*
-		template<class T, class U = T>
-		std::size_t get_vector_index(const std::vector<T>& p_data, U p_val) const {
-			for (std::size_t i{ 0 }; i < p_data.size(); ++i)
-				if (p_data[i] == static_cast<T>(p_val))
-					return i;
-			throw std::runtime_error("No such element");
-		}
-		*/
-		// this function generates pointer tables and data offsets for several pieces of data at once,
-		// and generates a vector of <data table number> -> {ptr value, data pointed to}
-		// it uses global deduplication across all the data
-		std::vector<std::vector<std::pair<std::size_t, std::vector<byte>>>> generate_multi_pointer_tables(
-			const std::vector<std::vector<std::vector<byte>>>& all_data_sets,
-			const std::vector<std::size_t>& pointer_table_offsets,
-			std::size_t rom_zero_address,
-			const std::vector<std::pair<std::size_t, std::size_t>>& p_available);
 
 	public:
 		ROM_Manager(void);
@@ -87,8 +70,6 @@ namespace fe {
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		std::pair<std::size_t, std::size_t> encode_sw_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		std::pair<std::size_t, std::size_t> encode_ow_transitions(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 
 		// encoding data in-place using a given address and stride-indexed
 		// no need to return anything here as the data is of fixed length
