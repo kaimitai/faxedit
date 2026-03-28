@@ -37,8 +37,11 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	}
 
 	// extract various
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		set_various(p_config, i);
+	const auto bld_door_sub{ p_config.bmap_numeric(c::ID_DOOR_DEST_INDEX_SUB) };
+	for (std::size_t i{ 0 }; i < 8; ++i) {
+		set_various(p_config, i,
+			bld_door_sub.contains(static_cast<byte>(i)) ? bld_door_sub.at(static_cast<byte>(i)) : 0);
+	}
 
 	// extract sprites
 	auto l_sprite_ptr{ p_config.pointer(c::ID_SPRITE_PTR) };
@@ -255,7 +258,8 @@ std::vector<std::size_t> fe::Game::get_screen_pointers(const std::vector<std::si
 	*/
 }
 
-void fe::Game::set_various(const fe::Config& p_config, std::size_t p_chunk_no) {
+void fe::Game::set_various(const fe::Config& p_config, std::size_t p_chunk_no,
+	std::size_t p_door_to_bld_sub) {
 	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
 
 	// get address from the 16-bit metatable relating to the chunk we want
@@ -291,7 +295,7 @@ void fe::Game::set_various(const fe::Config& p_config, std::size_t p_chunk_no) {
 	// the doors for the town chunk offsets the index by 0x20 (hard coded game logic)
 	// probably to save space since all the doors there go to buildings
 	m_chunks[p_chunk_no].set_screen_doors(m_rom_data, l_chunk_door_data, l_chunk_door_dest_data,
-		p_chunk_no == c::CHUNK_IDX_TOWNS ? 0x20 : 0x00);
+		static_cast<byte>(p_door_to_bld_sub));
 }
 
 void fe::Game::set_sprites(std::size_t p_chunk_no,

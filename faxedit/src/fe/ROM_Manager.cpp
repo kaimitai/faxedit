@@ -345,6 +345,7 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_
 	const fe::Game& p_game) const {
 	std::vector<std::vector<byte>> l_all_chunk_meta_data;
 	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
+	const auto bld_door_sub{ p_config.bmap_numeric(c::ID_DOOR_DEST_INDEX_SUB) };
 
 	std::size_t l_cur_rom_offset{ l_md_ptr.first + 2 + 2 * p_game.m_chunks.size() };
 
@@ -361,7 +362,9 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_
 		l_chunk_md.push_back(chunk.get_block_property_bytes());
 		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
 
-		auto l_door_data{ chunk.get_door_bytes(c == c::CHUNK_IDX_TOWNS) };
+		auto l_door_data{ chunk.get_door_bytes(c,
+			bld_door_sub.contains(static_cast<byte>(c)) ? bld_door_sub.at(static_cast<byte>(c)) : 0
+			) };
 
 		// door data followed by door destination table
 		l_chunk_md.push_back(l_door_data.first);

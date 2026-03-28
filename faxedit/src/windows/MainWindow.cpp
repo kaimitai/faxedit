@@ -784,17 +784,22 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 				m_config.get_region()), 4);
 		}
 		else {
-			add_message(std::format("Region specified as '{}'", p_region));
+			add_message(std::format("Region specified as '{}'", p_region), 4);
 			m_config.set_region(p_region);
 		}
 
 		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path);
-		cache_config_variables();
 
-		m_game = fe::Game(m_config, bytes);
-		validate_game_data(m_game.value());
+		fe::Game l_game{ fe::Game(m_config, bytes) };
+		l_game.m_sprite_gfx_manager.load_rom(m_config, l_game.m_rom_data, m_rom_manager);
+		l_game.generate_tilesets(m_config);
+		validate_game_data(l_game);
+
+		// the game object constructed correctly - commit and build caches
+		m_game = std::move(l_game);
+		cache_config_variables();
 		m_shared_palettes = m_game->get_shared_palettes(m_config);
-		m_game->generate_tilesets(m_config);
+
 		// the game object has world tilesets, let us make a cache of 256
 		// tile big tilesets for the UI to send to the renderer
 		generate_world_tilesets();
@@ -804,9 +809,6 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		m_path = romPath.parent_path();
 		m_filename = romPath.stem().string();
-
-		// extract sprite definitions
-		m_game->m_sprite_gfx_manager.load_rom(m_config, m_game->m_rom_data, m_rom_manager);
 
 		// gen NES palette
 		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
@@ -861,7 +863,6 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 	catch (...) {
 		add_message("Unknown error occurred", 1);
 	}
-
 }
 
 // copy some config vars to the GUI so we don't need to look them up

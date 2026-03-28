@@ -532,6 +532,10 @@
 			<entry byte="$01" str="Boss Room" />
 			<entry byte="$02" str="End-Game Room" />
 		</byte_to_string_map>
+		<!-- mapping from world no to door destination index subtract value (default: 0) -->
+		<byte_to_string_map name="door_dest_index_sub">
+			<entry byte="$03" str="$20" />
+		</byte_to_string_map>
 		<!-- world tilemaps bank ROM offsets -->
 		<byte_to_string_map name="tilemap_bank_offsets">
 			<entry byte="$00" str="0x0010" />

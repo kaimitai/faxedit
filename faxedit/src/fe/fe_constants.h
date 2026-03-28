@@ -150,6 +150,7 @@ namespace fe {
 		// other
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
+		constexpr char ID_DOOR_DEST_INDEX_SUB[]{ "door_dest_index_sub" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

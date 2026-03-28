@@ -44,7 +44,8 @@ namespace fe {
 		// ROM data - in the metadata master pointer table order
 		std::vector<byte> get_block_property_bytes(void) const;
 		std::vector<byte> get_screen_scroll_bytes(void) const;
-		std::pair<std::vector<byte>, std::vector<byte>> get_door_bytes(bool p_is_town = false) const;
+		std::pair<std::vector<byte>, std::vector<byte>> get_door_bytes(std::size_t p_world_no,
+			std::size_t p_index_sub) const;
 		std::vector<byte> get_palette_attribute_bytes(void) const;
 		std::vector<byte> get_metatile_top_left_bytes(void) const;
 		std::vector<byte> get_metatile_top_right_bytes(void) const;

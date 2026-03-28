@@ -2,6 +2,7 @@
 #include "./../common/klib/Bitreader.h"
 #include "./../common/klib/Kutil.h"
 
+#include <format>
 #include <map>
 #include <stdexcept>
 
@@ -138,12 +139,34 @@ std::vector<byte> fe::Chunk::get_metatile_bottom_right_bytes(void) const {
 }
 
 // a little complicated - we need to build the door entry and destination
-// tables simultaneously. the p_idx_offset is 0x20 for the town chunk
-// TODO: possible optimization; reuse duplicate destination table entries
-std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p_is_town) const {
-	std::vector<byte> l_door_bytes, l_tmp_sw_bytes, l_tmp_bld_bytes;
+// tables simultaneously. p_sub is what the calling asm code subtracts from the door dest byte
+// to get its index (by default 32 for towns world, 0 for any other)
+std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::size_t p_world_no,
+	std::size_t p_sub) const {
+	constexpr bool DEDUP_DOOR_DEST_DATA{ true };
 
-	byte l_sw_door_cnt{ 0 }, l_bld_door_cnt{ 0 };
+	if (p_sub > 0x20)
+		throw std::runtime_error(std::format("Invalid door index base ({}) - must be <= 32", p_sub));
+	std::size_t sw_capacity{ 0x20 - p_sub };
+	std::size_t bld_capacity{ 0x40 - sw_capacity };
+
+	std::vector<byte> l_door_bytes;
+	std::vector<std::vector<byte>> sw_dests, bld_dests;
+
+	const auto intern_dest = [](std::vector<std::vector<byte>>& dests,
+		const std::vector<byte>& dest) -> std::size_t
+		{
+			// linear search — totally fine for small data like this
+			if constexpr (DEDUP_DOOR_DEST_DATA) {
+				for (std::size_t i = 0; i < dests.size(); ++i) {
+					if (dests[i] == dest)
+						return i;
+				}
+			}
+			// not found - append and return index
+			dests.push_back(dest);
+			return dests.size() - 1;
+		};
 
 	for (std::size_t scr{ 0 }; scr < m_screens.size(); ++scr) {
 		for (std::size_t d{ 0 }; d < m_screens[scr].m_doors.size(); ++d) {
@@ -159,40 +182,36 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p
 			else if (l_door.m_door_type == fe::DoorType::PrevWorld)
 				l_door_bytes.push_back(0xfe);
 			else if (l_door.m_door_type == fe::DoorType::SameWorld) {
-				if (p_is_town)
-					throw std::runtime_error("Can not have intra-world doors in town world");
-				else if (l_sw_door_cnt == 0x20)
-					throw std::runtime_error("More than 31 same-world doors");
-				else {
-					// set index byte to be same-world
-					l_door_bytes.push_back(l_sw_door_cnt++);
+				// generate the same-world destination
+				std::vector<byte> sw_dest{
+					l_door.m_dest_screen_id,
+					l_door.m_dest_palette_id,
+					l_door.m_requirement,
+					l_door.m_unknown };
 
-					// make a new entry in the destination table with idx < 0x20
+				std::size_t sw_slot{ intern_dest(sw_dests, sw_dest) };
+				if (sw_slot >= sw_capacity)
+					throw std::runtime_error(std::format("World {} exceeds limit of {} unique same-world door destinations",
+						p_world_no, sw_capacity));
 
-					// the following screen id is in the current chunk
-					l_tmp_sw_bytes.push_back(l_door.m_dest_screen_id);
-					l_tmp_sw_bytes.push_back(l_door.m_dest_palette_id);
-					l_tmp_sw_bytes.push_back(l_door.m_requirement);
-					l_tmp_sw_bytes.push_back(l_door.m_unknown);
-				}
-
+				l_door_bytes.push_back(static_cast<byte>(sw_slot + p_sub));
 			}
 			// we necessarily have a door to building
 			else {
-				if (0x20 + l_bld_door_cnt == 0xfe)
-					throw std::runtime_error("More than 221 doors to buildings");
-				else {
-					// set index byte to be building
-					l_door_bytes.push_back(0x20 + l_bld_door_cnt++);
+				// generate the other-world destination
+				std::vector<byte> bld_dest{
+					l_door.m_npc_bundle,
+					l_door.m_dest_screen_id,
+					l_door.m_requirement,
+					l_door.m_unknown };
 
-					// make a new entry in the destination table with idx >= 0x20
-					// and idx < 0xfe
-					l_tmp_bld_bytes.push_back(l_door.m_npc_bundle);
-					// the following screen id is in the buildings chunk
-					l_tmp_bld_bytes.push_back(l_door.m_dest_screen_id);
-					l_tmp_bld_bytes.push_back(l_door.m_requirement);
-					l_tmp_bld_bytes.push_back(l_door.m_unknown);
-				}
+				std::size_t bld_slot{ intern_dest(bld_dests, bld_dest) };
+				if (bld_slot >= bld_capacity)
+					throw std::runtime_error(std::format(
+						"World {} exceeds limit of {} unique door-to-building destinations",
+						p_world_no, bld_capacity));
+
+				l_door_bytes.push_back(static_cast<byte>(bld_slot + 0x20));
 			}
 
 			// fourth byte is destination location (y*16 + x)
@@ -200,22 +219,23 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(bool p
 		}
 	}
 
-	// pad the first part of the destination table until it reaches
-	// buildings, if there are any building doors defined
-	// if we are in a town chunk keep this vector empty so no special
-	// handling is needed, other than this check
-	if (l_bld_door_cnt != 0 && !p_is_town)
-		while (l_tmp_sw_bytes.size() < static_cast<std::size_t>(0x20 * 4))
-			l_tmp_sw_bytes.push_back(0xff);
+	std::vector<byte> dest_bytes;
+	for (const auto& sw_dest_bytes : sw_dests)
+		dest_bytes.insert(end(dest_bytes), begin(sw_dest_bytes), end(sw_dest_bytes));
+
+	// pad with 0xff until we hit the lowest door-to-building index
+	if (!bld_dests.empty())
+		while (dest_bytes.size() < 4 * sw_capacity)
+			dest_bytes.push_back(0xff);
 
 	// append the destination entries for doors to buildings
-	l_tmp_sw_bytes.insert(end(l_tmp_sw_bytes),
-		begin(l_tmp_bld_bytes), end(l_tmp_bld_bytes));
+	for (const auto& bld_dest_bytes : bld_dests)
+		dest_bytes.insert(end(dest_bytes), begin(bld_dest_bytes), end(bld_dest_bytes));
 
-	// 0xff delimiter
+	// 0xff delimiter for the door data
 	l_door_bytes.push_back(0xff);
 
-	return std::make_pair(std::move(l_door_bytes), std::move(l_tmp_sw_bytes));
+	return std::make_pair(std::move(l_door_bytes), std::move(dest_bytes));
 }
 
 std::vector<byte> fe::Chunk::get_sameworld_transition_bytes(void) const {
