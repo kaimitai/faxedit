@@ -10,15 +10,15 @@ fe::Door::Door(byte p_coords, byte p_param, byte p_dest_coords,
 	if (p_param < p_param_value_offset)
 		throw std::runtime_error("Invalid door parameters");
 
-	byte l_param{ static_cast<byte>(p_param - p_param_value_offset) };
-
-	if (l_param == 0xff) {
+	if (p_param == 0xff) {
 		m_door_type = fe::DoorType::NextWorld;
 	}
-	else if (l_param == 0xfe) {
+	else if (p_param == 0xfe) {
 		m_door_type = fe::DoorType::PrevWorld;
 	}
 	else {
+		byte l_param{ static_cast<byte>(p_param - p_param_value_offset) };
+
 		std::size_t l_param_idx{ static_cast<std::size_t>(l_param) };
 		std::size_t l_param_offset{ p_door_param_offset + 4 * l_param_idx };
 

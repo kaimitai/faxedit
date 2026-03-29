@@ -3,15 +3,25 @@
 
 fe::EditorSettings::EditorSettings(void) :
 	m_show_sprite_sets_in_buildings{ false },
+	m_show_grid{ false },
+	m_animate{ true },
+	m_mattock_overlay{ false },
+	m_door_req_overlay{ true },
+	m_overlays{ std::vector<char>(16, 0) },
 	m_redraw_sprite_gfx{ false },
-	m_patch_sprite_gfx{ true },
-	scale_frame{ 3.0f },
-	scale_bank{ 2.0f },
-	transp_tolerance{ 3 },
 	m_sw_doors_in_towns{ false },
 	m_door_pad_byte{ false }
 {
+	set_sprite_gfx_defaults();
 	sanitize();
+}
+
+void fe::EditorSettings::set_sprite_gfx_defaults(void) {
+	m_patch_sprite_gfx = true;
+	scale_frame = 3.0f;
+	scale_bank = 2.0f;
+	transp_tolerance = 3;
+	coll_palettes = { 28, 28, 30 };
 }
 
 void fe::EditorSettings::sanitize_float(float& p_val, float p_default) {
@@ -29,7 +39,11 @@ void fe::EditorSettings::sanitize(void) {
 
 	if (coll_palettes.size() != 3)
 		coll_palettes = { 28, 28, 30 };
+	if (m_overlays.size() != 16)
+		m_overlays = std::vector<char>(16, 0);
 
+	for (auto& c : m_overlays)
+		clamp_value(c, static_cast<char>(0), static_cast<char>(1));
 	for (auto& p : coll_palettes)
 		clamp_value(p, static_cast<std::size_t>(0), static_cast<std::size_t>(30));
 }

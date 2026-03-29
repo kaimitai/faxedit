@@ -680,9 +680,9 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 		if (ImGui::BeginChild("Renderoptions", ImVec2(0.0f, 0.0f), true)) {
 
-			ui::imgui_checkbox("Animate Sprites", m_animate);
+			ui::imgui_checkbox("Animate Sprites", m_settings.m_animate);
 			ImGui::SameLine();
-			ui::imgui_checkbox("Show Grid", m_show_grid);
+			ui::imgui_checkbox("Show Grid", m_settings.m_show_grid);
 
 			ImGui::SeparatorText("Block-Property Icon Overlays");
 
@@ -690,7 +690,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 				for (std::size_t i{ 0 }; i < 8; ++i) {
 					ui::imgui_checkbox(std::format("###io{}", j * 8 + i),
-						m_overlays[j * 8 + i],
+						m_settings.m_overlays[j * 8 + i],
 						get_description(static_cast<byte>(j * 8 + i),
 							m_labels_block_props));
 					ImGui::SameLine();
@@ -699,10 +699,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				ImGui::Spacing();
 				ImGui::SameLine();
 				if (j == 0) {
-					ui::imgui_checkbox("Mattock-Breakable", m_mattock_overlay);
+					ui::imgui_checkbox("Mattock-Breakable", m_settings.m_mattock_overlay);
 				}
 				else if (j == 1) {
-					ui::imgui_checkbox("Door Requirements", m_door_req_overlay);
+					ui::imgui_checkbox("Door Requirements", m_settings.m_door_req_overlay);
 				}
 
 				ImGui::NewLine();
@@ -722,7 +722,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 	ImGui::End();
 }
-
 
 std::optional<byte> fe::MainWindow::show_screen_scroll_section(const std::string& p_direction,
 	std::size_t p_screen_count, std::optional<byte> p_scroll_data) {

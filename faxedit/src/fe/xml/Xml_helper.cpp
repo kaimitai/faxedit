@@ -1223,6 +1223,17 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
 	add_setting(n_settings, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
+	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
+	add_setting(n_settings, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
+
+	for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
+		bool io_enabled{ static_cast<bool>(p_settings.m_overlays[i]) };
+		add_setting(n_settings, std::format("{}-{}", c::SETTINGS_PARAM_IO_BLOCK_PROPERTY, i),
+			io_enabled);
+	}
+
+	add_setting(n_settings, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
+	add_setting(n_settings, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
 	add_setting(n_settings, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
@@ -1248,8 +1259,19 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 
 		read_setting_float(n_root, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
 		read_setting_float(n_root, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
-
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
+
+		for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
+			bool io_enabled{ false };
+			read_setting_bool(n_root, std::format("{}-{}", c::SETTINGS_PARAM_IO_BLOCK_PROPERTY, i),
+				io_enabled);
+			p_settings.m_overlays[i] = io_enabled;
+		}
+
+		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);

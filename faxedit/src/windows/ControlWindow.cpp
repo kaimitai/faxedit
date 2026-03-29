@@ -146,7 +146,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 							c, s, door.m_coords.first, door.m_coords.second), 1);
 					}
 
-					if (door.m_door_type == fe::DoorType::SameWorld &&
+					// no need to check dest coords for doors to building - they come from the scene data
+					if (door.m_door_type != fe::DoorType::Building &&
 						door.m_dest_coords.first == 0 &&
 						door.m_dest_coords.second == 0)
 						add_message(std::format("World {}, Screen {}, Door ({},{}): Destination coords are (0, 0) - was this intentional?",

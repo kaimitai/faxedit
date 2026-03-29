@@ -100,16 +100,13 @@ namespace fe {
 		fe::ClipboardManager m_clip_manager;
 
 		// rendering options
-		bool m_animate, m_mattock_overlay, m_door_req_overlay, m_iscript_window,
-			m_show_grid, m_iscript_win_set_focus,
+		bool m_iscript_window, m_iscript_win_set_focus,
 			m_gfx_window, m_sprite_gfx_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
 		// world tileset cache (for all 256 ppu tiles, not only tileset tiles)
 		std::vector<std::vector<klib::NES_tile>> world_ppu_tilesets;
-
-		std::vector<char> m_overlays;
 
 		fe::EditMode m_emode;
 		fe::GfxEditMode m_gfx_emode;

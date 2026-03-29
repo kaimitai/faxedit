@@ -67,7 +67,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 
 			ImGui::Separator();
 			if (ui::imgui_button("Reset settings", 4, "Reset to default settings")) {
-				m_settings = fe::EditorSettings();
+				m_settings.set_sprite_gfx_defaults();
 			}
 			ImGui::SeparatorText("GUI");
 			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI")) {

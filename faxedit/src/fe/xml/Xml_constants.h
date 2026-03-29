@@ -22,6 +22,11 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_SPRITE_PALETTE[]{ "sprite_palette" };
 			constexpr char SETTINGS_PARAM_PATCH_SPRITE_GFX[]{ "patch_sprite_gfx" };
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
+			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
+			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };
+			constexpr char SETTINGS_PARAM_IO_BLOCK_PROPERTY[]{ "icon_overlay_block_property" };
+			constexpr char SETTINGS_PARAM_IO_MATTOCK[]{ "icon_overlay_mattock" };
+			constexpr char SETTINGS_PARAM_IO_DOOR_REQS[]{ "icon_overlay_door_reqs" };
 			constexpr char SETTINGS_PARAM_SW_DOORS_IN_TOWNS[]{ "sw_doors_in_town" };
 			constexpr char SETTINGS_PARAM_SHOW_DOOR_PADDING[]{ "show_door_padding_byte" };
 

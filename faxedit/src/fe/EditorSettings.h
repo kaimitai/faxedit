@@ -10,7 +10,9 @@ namespace fe {
 		// patch settings
 		bool m_patch_sprite_gfx;
 		// gui settings
-		bool m_show_sprite_sets_in_buildings;
+		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,
+			m_mattock_overlay, m_door_req_overlay;
+		std::vector<char> m_overlays;
 		// sprite gfx settings
 		bool m_redraw_sprite_gfx;
 		std::vector<std::size_t> coll_palettes;
@@ -33,6 +35,7 @@ namespace fe {
 
 	public:
 		EditorSettings(void);
+		void set_sprite_gfx_defaults(void);
 	};
 
 }

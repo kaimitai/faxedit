@@ -45,11 +45,6 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_gfx_window{ false },
 	m_sprite_gfx_window{ false },
 	m_iscript_win_set_focus{ false },
-	m_animate{ true },
-	m_mattock_overlay{ false },
-	m_door_req_overlay{ true },
-	m_show_grid{ false },
-	m_overlays{ std::vector<char>(16, false) },
 	// config variables, will be loaded with the config xml
 	m_sprite_count{ 0 },
 	m_iscript_count{ 0 },
@@ -189,14 +184,14 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
 
 				// draw overlay
-				if (m_overlays[blockprop])
+				if (blockprop < m_settings.m_overlays.size() && m_settings.m_overlays[blockprop])
 					m_gfx.draw_icon_overlay(p_rnd, x, y, blockprop);
-				if (mt_no == mattock_mt_id && m_mattock_overlay)
+				if (mt_no == mattock_mt_id && m_settings.m_mattock_overlay)
 					m_gfx.draw_icon_overlay(p_rnd, x, y, 16);
 			}
 
 		// draw grid if enabled
-		if (m_show_grid)
+		if (m_settings.m_show_grid)
 			m_gfx.draw_gridlines_on_screen(p_rnd);
 
 		// draw selected rectangle
@@ -236,7 +231,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				);
 
 				// draw requirement
-				if (m_door_req_overlay) {
+				if (m_settings.m_door_req_overlay) {
 					byte l_dreq{ 0 };
 					if (l_door.m_door_type == fe::DoorType::Building ||
 						l_door.m_door_type == fe::DoorType::SameWorld) {
@@ -922,7 +917,7 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 	std::size_t p_sel_sprite_no) const {
 
 	for (std::size_t i{ 0 }; i < p_sprites.size(); ++i) {
-		std::size_t l_anim_frame{ m_animate ?
+		std::size_t l_anim_frame{ m_settings.m_animate ?
 			m_anim_frame % m_gfx.get_anim_frame_count(p_sprites[i].m_id) :
 			m_gfx.get_anim_frame_count(p_sprites[i].m_id) - 1
 		};
