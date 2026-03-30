@@ -59,6 +59,7 @@ namespace fe {
 			std::map<byte, std::size_t>& p_used_bank_bytes,
 			std::vector<int>& p_bank_assignments,
 			std::size_t p_bank_max_size) const;
+		std::vector<std::size_t> get_world_tilemap_sizes(const fe::Game& p_game) const;
 
 		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Config& p_config, const fe::Game& p_game) const;

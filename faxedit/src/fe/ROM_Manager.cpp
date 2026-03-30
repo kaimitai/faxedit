@@ -17,27 +17,8 @@ fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config&
 	auto l_predef{ p_config.bmap_numeric(c::ID_TILEMAP_TO_PREDEFINED_BANK) };
 	std::size_t l_max_bank_size{ p_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
 
-	// calculate all world tilemap data total size (all ptrs + data)
-
-	// initialize the size with 2, as each world ptr consumes 2 bytes
-	std::vector<std::size_t> l_world_tilemap_sizes(8, 2);
-
-	for (std::size_t world{ 0 }; world < 8; ++world) {
-		// keep a set of all unique tilemaps in case we have duplicates
-		std::set<std::vector<byte>> l_unique_tilemaps;
-
-		for (const auto& screen : p_game.m_chunks.at(world).m_screens) {
-			const auto l_scr_tilemap{ screen.get_tilemap_bytes() };
-
-			// add the screen tilemap size plus the two pointers it consumes
-			if (l_unique_tilemaps.find(l_scr_tilemap) == end(l_unique_tilemaps)) {
-				l_world_tilemap_sizes[world] += 2 + l_scr_tilemap.size();
-				l_unique_tilemaps.insert(l_scr_tilemap);
-			}
-			else
-				l_world_tilemap_sizes[world] += 2;
-		}
-	}
+	// precompute all world tilemaps' total sizes (all ptrs + data)
+	auto l_world_tilemap_sizes{ get_world_tilemap_sizes(p_game) };
 
 	// we now have all the total sizes, let us recurse and assign everything
 	std::vector<int> l_assignments(8, -1);
@@ -180,6 +161,25 @@ bool fe::ROM_Manager::pack_tilemaps_recursively(const std::vector<std::size_t>& 
 
 	return false;
 
+}
+
+// return the total size each set of world tilemaps take - including ptrs and ptr to ptrs
+std::vector<std::size_t> fe::ROM_Manager::get_world_tilemap_sizes(const fe::Game& p_game) const {
+	std::vector<std::size_t> result;
+
+	for (std::size_t world{ 0 }; world < 8; ++world) {
+		// extract all tilemaps for this world
+		std::vector<std::vector<byte>> l_tilemp_data;
+		for (const auto& screen : p_game.m_chunks.at(world).m_screens)
+			l_tilemp_data.push_back(screen.get_tilemap_bytes());
+
+		// simulate a ptr table + data section generation, and keep the sizes
+		auto l_data{ build_pointer_table_and_data(0, 0, l_tilemp_data) };
+		// add 2 bytes for the master ptr
+		result.push_back(l_data.size() + 2);
+	}
+
+	return result;
 }
 
 std::size_t fe::ROM_Manager::get_ptr_to_rom_offset(const std::vector<byte>& p_rom,

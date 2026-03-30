@@ -91,6 +91,16 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 	if (ui::imgui_button("Data Integrity Analysis", 4)) {
 		add_message("Starting integrity analysis", 4);
 
+		// check tilemap sizes
+		const auto tilemap_sizes{ m_rom_manager.get_world_tilemap_sizes(m_game.value()) };
+		for (std::size_t w{ 0 }; w < tilemap_sizes.size(); ++w) {
+			float pct{ 100.0f * static_cast<float>(tilemap_sizes[w]) / static_cast<float>(0x4000) };
+			if (pct >= 95.0f)
+				add_message(std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
+					w, tilemap_sizes[w], 0x4000, pct),
+					pct >= 100.0f ? 1 : 4);
+		}
+
 		for (std::size_t c{ 0 }; c < m_game->m_chunks.size(); ++c) {
 			const auto l_ref_scr{ m_game->get_referenced_screens(c) };
 			for (std::size_t s{ 0 }; s < m_game->m_chunks[c].m_screens.size(); ++s) {
