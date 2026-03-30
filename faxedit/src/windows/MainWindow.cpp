@@ -747,21 +747,10 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) {
-	std::string l_config_xml_path;
-
-	const char* basePath{ SDL_GetBasePath() };
-	if (!basePath) {
-		l_config_xml_path = "./";
-	}
-	else {
-		l_config_xml_path = basePath;
-	}
-
-	std::string l_config_override_xml_path{ l_config_xml_path };
-	l_config_xml_path += c::CONFIG_FILE_NAME;
-	l_config_override_xml_path += c::CONFIG_OVERRIDE_FILE_NAME;
-
 	add_message("Attempting to load file " + p_filepath, 5);
+	const auto config_files{ get_config_file_paths() };
+	auto l_config_xml_path{ config_files.first };
+	auto l_config_override_xml_path{ config_files.second };
 
 	// Load file as bytes and create game
 	try {
@@ -774,10 +763,12 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_config.determine_region(bytes);
 			add_message(std::format("ROM region detected: '{}'",
 				m_config.get_region()), 4);
+			m_region_override.clear();
 		}
 		else {
 			add_message(std::format("Region specified as '{}'", p_region), 4);
 			m_config.set_region(p_region);
+			m_region_override = p_region;
 		}
 
 		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path);
@@ -801,6 +792,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		m_path = romPath.parent_path();
 		m_filename = romPath.stem().string();
+		m_loaded_rom_path = p_filepath;
 
 		// gen NES palette
 		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
@@ -808,35 +800,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		generate_door_req_gfx(p_rnd);
 		generate_editor_sprite_gfx(p_rnd);
 
-		// extract scripts
-		try {
-			fi::IScriptLoader loader(m_config, bytes);
-			m_iscript_count = loader.get_script_count();
-			add_message(std::format("Detected {} interaction scripts", m_iscript_count), 4);
-
-			for (std::size_t i{ 0 }; i < m_iscript_count; ++i) {
-				try {
-					m_iscripts[i] = loader.parse_script(bytes, i);
-				}
-				catch (...) {
-					add_message(std::format("Unable to parse iScript #{}", i));
-				}
-			}
-
-			m_game->m_spawn_to_script_no = loader.m_spawn_scripts;
-		}
-		catch (...) {
-			add_message("Malformed script section - script count could not be deduced", 1);
-		}
-
-		// extract music count
-		try {
-			m_music_count = m_rom_manager.get_music_count(m_config, bytes);
-			add_message(std::format("Detected {} music tracks", m_music_count), 4);
-		}
-		catch (...) {
-			add_message("Music count could not be deduced", 1);
-		}
+		load_external_rom_data(bytes, true);
 
 		if (m_game->m_chunks.size() > 0)
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
@@ -846,15 +810,83 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		add_message("Loaded " + p_filepath, 2);
 	}
-	catch (const std::runtime_error& ex) {
-		add_message(ex.what(), 1);
-	}
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);
 	}
 	catch (...) {
 		add_message("Unknown error occurred", 1);
 	}
+}
+
+std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) const {
+	std::string l_config_xml_path;
+
+	const char* basePath{ SDL_GetBasePath() };
+	if (!basePath) {
+		l_config_xml_path = "./";
+	}
+	else {
+		l_config_xml_path = basePath;
+	}
+
+	std::string l_config_override_xml_path{ l_config_xml_path };
+	l_config_xml_path += c::CONFIG_FILE_NAME;
+	l_config_override_xml_path += c::CONFIG_OVERRIDE_FILE_NAME;
+
+	return std::make_pair(l_config_xml_path, l_config_override_xml_path);
+}
+
+void fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial) {
+
+	if (!p_initial && m_region_override.empty()) {
+		const auto l_config_files{ get_config_file_paths() };
+
+		fe::Config tmp_config;
+		tmp_config.load_definitions(l_config_files.first, l_config_files.second);
+		tmp_config.determine_region(p_bytes);
+
+		if (tmp_config.get_region() != m_config.get_region())
+			throw std::runtime_error(std::format("Reloaded ROM's region {} does not match current region ({})",
+				tmp_config.get_region(), m_config.get_region()));
+	}
+
+	// extract scripts and music
+	m_iscripts.clear();
+	m_game->m_spawn_to_script_no.clear();
+
+	try {
+		fi::IScriptLoader loader(m_config, p_bytes);
+		m_iscript_count = loader.get_script_count();
+		add_message(std::format("Detected {} interaction scripts", m_iscript_count), 4);
+
+		for (std::size_t i{ 0 }; i < m_iscript_count; ++i) {
+			try {
+				m_iscripts[i] = loader.parse_script(p_bytes, i);
+			}
+			catch (...) {
+				add_message(std::format("Unable to parse iScript #{}", i));
+			}
+		}
+
+		m_game->m_spawn_to_script_no = loader.m_spawn_scripts;
+	}
+	catch (...) {
+		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
+		m_iscript_count = 152;
+	}
+
+	// extract music count
+	try {
+		m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
+		add_message(std::format("Detected {} music tracks", m_music_count), 4);
+	}
+	catch (...) {
+		add_message("Music count could not be deduced - using default (16)", 1);
+		m_music_count = 16;
+	}
+
+	if (!p_initial)
+		m_game->m_rom_data = p_bytes;
 }
 
 // copy some config vars to the GUI so we don't need to look them up

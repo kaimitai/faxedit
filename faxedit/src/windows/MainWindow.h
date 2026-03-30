@@ -62,7 +62,7 @@ namespace fe {
 
 		// file info
 		std::filesystem::path m_path;
-		std::string m_filename;
+		std::string m_filename, m_loaded_rom_path, m_region_override;
 
 		std::size_t
 			// world, screen
@@ -132,6 +132,8 @@ namespace fe {
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 			const std::string& p_region = std::string());
+		std::pair<std::string, std::string> get_config_file_paths(void) const;
+		void load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial);
 		void cache_config_variables(void);
 
 		std::string get_ips_path(void) const;

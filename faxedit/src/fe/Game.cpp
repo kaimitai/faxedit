@@ -710,7 +710,7 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 			// other-world transitions - could possibly come from the same world
 			// if user wants to waste a byte
 			if (l_scr[s].m_intrachunk_scroll.has_value() &&
-				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == i)
+				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == p_chunk_no)
 				l_result.insert(l_scr[s].m_intrachunk_scroll.value().m_dest_screen);
 		}
 

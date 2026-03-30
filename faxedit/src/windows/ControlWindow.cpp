@@ -28,7 +28,7 @@ void fe::MainWindow::patch_nes_rom(bool p_in_place, bool p_exclude_dynamic) {
 	auto l_patched_rom{ patch_rom(p_exclude_dynamic) };
 
 	if (l_patched_rom.has_value()) {
-		std::string l_out_file{ p_in_place ? get_filepath("nes") : get_nes_path() };
+		std::string l_out_file{ p_in_place ? m_loaded_rom_path : get_nes_path() };
 
 		try {
 			klib::file::write_bytes_to_file(l_patched_rom.value(), l_out_file);
@@ -218,6 +218,17 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
 		load_xml(p_rnd);
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Apply External ROM Changes", 4,
+		"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
+		load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path), false);
+		add_message(std::format("Applied external changes from {}", m_loaded_rom_path), 2);
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), 1);
+	}
 
 	show_output_messages();
 
