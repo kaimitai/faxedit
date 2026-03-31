@@ -128,6 +128,7 @@ namespace fe {
 			const fe::ROM_Manager& p_rom_mgr);
 		std::size_t get_sprite_chr_bank_size(std::size_t p_sprite_id) const;
 		std::pair<std::size_t, std::size_t> get_chr_tile_count_range(std::size_t p_coll_id, std::size_t p_bank_id) const;
+		klib::NES_tile get_sprite_0_hit_tile(void) const;
 	};
 
 }

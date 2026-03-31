@@ -519,10 +519,7 @@ void fe::MainWindow::import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, s
 
 	if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == p_coll.banks.size() - 1) {
 		fe::SpriteFrameCollection::expand_bank(imp_bank);
-		std::vector<byte> ZERO_HIT_CHR_BYTES(std::begin(c::SPRITE_0_HIT_CHR), std::end(c::SPRITE_0_HIT_CHR));
-		klib::NES_tile ZERO_HIT_TILE(ZERO_HIT_CHR_BYTES);
-
-		if (imp_bank.at(c::SPRITE_0_PPU_IDX) != ZERO_HIT_TILE) {
+		if (imp_bank.at(c::SPRITE_0_PPU_IDX) != m_game->m_sprite_gfx_manager.get_sprite_0_hit_tile()) {
 			add_message(std::format("Warning: chr-tile {} is not equal to the original 0-hit sprite. See the documentation.", c::SPRITE_0_PPU_IDX), 1);
 		}
 	}
@@ -606,10 +603,7 @@ void fe::MainWindow::update_sgfx_result_for_common_bank(fe::SpriteImportResult& 
 			"Common chr-bank import generated {} tiles, but at most {} are allowed (one slot is reserved for the sprite-0 tile)",
 import.tiles.size(), c::PPU_COMMON_TILE_COUNT - 1));
 
-		std::vector<byte> ZERO_HIT_CHR_BYTES(std::begin(c::SPRITE_0_HIT_CHR), std::end(c::SPRITE_0_HIT_CHR));
-	klib::NES_tile ZERO_HIT_TILE(ZERO_HIT_CHR_BYTES);
-
-	std::size_t forbidden_chr_idx{ c::SPRITE_0_PPU_IDX_REL_ZERO };
+		std::size_t forbidden_chr_idx{ c::SPRITE_0_PPU_IDX_REL_ZERO };
 	std::size_t new_7f_index{ import.tiles.size() };
 	if (import.tiles.size() > c::SPRITE_0_PPU_IDX_REL_ZERO) {
 		// move the generated chr tile to the end
@@ -620,7 +614,8 @@ import.tiles.size(), c::PPU_COMMON_TILE_COUNT - 1));
 		l_bank.at(c::PPU_COMMON_TILE_START + i) = import.tiles[i];
 
 	// set the zero-hit tile to its necessary location
-	l_bank[c::PPU_COMMON_TILE_START + c::SPRITE_0_PPU_IDX_REL_ZERO] = ZERO_HIT_TILE;
+	l_bank[c::PPU_COMMON_TILE_START + c::SPRITE_0_PPU_IDX_REL_ZERO] =
+		m_game->m_sprite_gfx_manager.get_sprite_0_hit_tile();
 
 	for (const auto& frame : import.frames)
 		l_frames.push_back(fe::SpriteAnimationFrame(frame, c::PPU_COMMON_TILE_START,

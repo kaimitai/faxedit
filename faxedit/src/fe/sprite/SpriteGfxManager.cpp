@@ -3,6 +3,7 @@
 #include "./../Config.h"
 #include "./../ROM_Manager.h"
 #include <algorithm>
+#include <cassert>
 #include <map>
 #include <format>
 #include <set>
@@ -1172,4 +1173,15 @@ std::pair<std::size_t, std::size_t> fe::SpriteGfxManager::get_chr_tile_count_ran
 		else
 			return std::make_pair(0, c::PPU_DYNAMIC_TILE_COUNT);
 	}
+}
+
+klib::NES_tile fe::SpriteGfxManager::get_sprite_0_hit_tile(void) const {
+	assert(!c_npcs.banks.empty() && c::SPRITE_0_PPU_IDX < c_npcs.banks.back().size());
+
+	if (!c_npcs.banks.empty() && c::SPRITE_0_PPU_IDX < c_npcs.banks.back().size())
+		return c_npcs.banks.back()[c::SPRITE_0_PPU_IDX];
+
+	// default to the hard coded value, this should never reasonably happen
+	std::vector<byte> ZERO_HIT_CHR_BYTES(std::begin(c::SPRITE_0_HIT_CHR), std::end(c::SPRITE_0_HIT_CHR));
+	return klib::NES_tile(ZERO_HIT_CHR_BYTES);
 }
