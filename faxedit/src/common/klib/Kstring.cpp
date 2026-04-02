@@ -184,7 +184,7 @@ std::map<std::string, std::string> klib::str::extract_keyval_str(const std::stri
 		auto kv{ split_string(trim(str), p_delim) };
 
 		if (kv.empty())
-			throw std::exception("Empty key-value pair");
+			throw std::runtime_error("Empty key-value pair");
 		else if (kv.size() > 2)
 			throw std::runtime_error("Invalid key-value pair for arg " + kv[0]);
 		else {

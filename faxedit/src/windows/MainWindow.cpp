@@ -836,7 +836,21 @@ std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) 
 	return std::make_pair(l_config_xml_path, l_config_override_xml_path);
 }
 
-void fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial) {
+int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial) {
+	int byte_diffs{ 0 };
+
+	// check if there actually are any changes
+	if (!p_initial) {
+
+		if (p_bytes.size() != m_game->m_rom_data.size())
+			throw std::runtime_error("ROM file size mismatch - cannot partially reload");
+
+		for (std::size_t i{ 0 }; i < p_bytes.size(); ++i)
+			if (m_game->m_rom_data[i] != p_bytes[i])
+				++byte_diffs;
+		if (byte_diffs == 0)
+			return 0;
+	}
 
 	if (!p_initial && m_region_override.empty()) {
 		const auto l_config_files{ get_config_file_paths() };
@@ -887,6 +901,8 @@ void fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, bo
 
 	if (!p_initial)
 		m_game->m_rom_data = p_bytes;
+
+	return byte_diffs;
 }
 
 // copy some config vars to the GUI so we don't need to look them up

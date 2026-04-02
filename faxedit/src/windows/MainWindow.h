@@ -133,7 +133,7 @@ namespace fe {
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 			const std::string& p_region = std::string());
 		std::pair<std::string, std::string> get_config_file_paths(void) const;
-		void load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial);
+		int load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial);
 		void cache_config_variables(void);
 
 		std::string get_ips_path(void) const;

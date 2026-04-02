@@ -76,6 +76,7 @@ This is the screen used for file operations and data analysis.
 * BG gfx editor: Opens or closes the Background Graphics Editor window
 * Sprite gfx editor: Opens or closes the Sprite Graphics Editor window
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
+* Apply External ROM Changes: Re-reads the loaded rom from disk, and regenerates iScripts and music track counts. Should be used if the ROM undergoes external changes.
 * Output Messages: The messages from the editor
 
 The tilemaps are stored in four different banks in ROM, but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
@@ -423,7 +424,23 @@ When in Door-editing mode, Shift+Click moves the door entry position to the clic
 
 If the door destination is unambiguous, an "Enter Door"-button will let you go to the door destination while taking palette setting into account.
 
-Note: The "Towns" world does not support same-world doors due to special handling in the game's logic.
+Note: A world can have 64 unique door destinations. The number of actual doors is not the limiting factor. Most worlds have space for 32 same-world door destinations, and 32 door-to-building destinations. The destination bytes are as follows:
+
+Same-World Doors:
+  * Destination Screen
+  * Destination Palette
+  * Door Requirement
+  * Unused padding byte (always 0 in the original game)
+
+Doors to Building:
+  * Destination Screen (building room)
+  * Sprite-Set
+  * Door Requirement
+  * Unused padding byte (always 0 in the original game)
+
+The editor will deduplicate identical destination parameter sets, if any exist for any world.
+
+Note: The "Towns" world does not support same-world doors due to special handling in the game's logic by default. This can be overriden with an assembly hack if the index normalization constant is brought down from $20 to a lower value [here](https://chipx86.com/faxanadu/PRG15_MIRROR.html#e83b). In that case same-world door destinations will be ($20 minus new override value).
 
 ## Screen Scrolling
 

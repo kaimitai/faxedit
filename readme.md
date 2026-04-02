@@ -79,6 +79,22 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 
 ### Version History
 
+* 2025-04-02: version beta-6.1
+
+  * Move tilemap and palette clipboards to OS-level (text-based, supports copy/paste across editor instances, and even text editors)
+  * Add partial ROM reload (re-read loaded ROM from disk and set it as the new base ROM, and refresh iScript contents and music count) This makes it possible to keep a ROM open in the editor while applying changes to it from the outside.
+  * Make NPC sprite gfx config handler-centric rather than being based on Sprite IDs; move GUI sprite rendering overrides into config and improve load robustness. This ensures no configuration changes are needed even if new npcs are re-defined with different handlers.
+  * Deduplicate door destination data; replace door-count limits with the true constraints, which is the number of unique destinations
+  * Replace fixed range transition allocation with free-range allocator in bank 15 (cross-range packing + deduplication) "Free space"-blocks can be arbitrarily defined in config, so no bytes are left unused. This also leaves more space for custom ROM hacks at the end of bank 15.
+  * Add persistent editor settings (eoe_settings.xml)
+  * Improve data integrity analysis:
+    * Validate (0,0) door destinations
+    * Add tilemap size tracking with 95% / 100% warnings
+  * Preserve sprite-0 hit CHR tile during BMP import for the common sprite chr-bank (no longer hardcoded)
+  * Bug fixes:
+	* Fix decoding bug for next/previous-stage doors in the Towns world (no such doors exist in the original game)
+	* Ensure that Other-World transitions are taken into account when determining if a screen has references
+
 * 2025-03-22: version beta-6
 
   * New sprite graphics pipeline (BMP import/export for frames: NPCs, items, UI, player, portraits)
@@ -196,7 +212,7 @@ Special thanks to the following contributors and fellow digital archaeologists:
 
 [Jessica](https://www.romhacking.net/community/9037/) - for testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
 
-[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries.
+[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries, and for helping out with testing, bug-reports and new suggestions.
 
 <hr>
 
