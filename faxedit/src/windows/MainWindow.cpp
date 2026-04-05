@@ -49,6 +49,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sprite_count{ 0 },
 	m_iscript_count{ 0 },
 	m_music_count{ 0 },
+	// cache
+	m_cache{ .m_disable_pal2_mus = false },
 	// exit handler variables
 	m_exit_app_requested{ false },
 	m_exit_app_granted{ false }
@@ -925,6 +927,9 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
 	m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
 		m_config.constant(c::ID_WORLD_TILESET_COUNT));
+
+	// bools
+	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {

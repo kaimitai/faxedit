@@ -21,6 +21,8 @@ namespace fe {
 		constexpr char ID_SPRITE_PTR[]{ "sprite_ptr" };
 		constexpr char ID_SAMEWORLD_TRANS_PTR[]{ "sameworld_trans_ptr" };
 		constexpr char ID_OTHERWORLD_TRANS_PTR[]{ "otherworld_trans_ptr" };
+		constexpr char ID_PAL2MUS_PALETTE_PTR[]{ "pal2mus_palette_ptr" };
+		constexpr char ID_PAL2MUS_MUSIC_PTR[]{ "pal2mus_music_ptr" };
 		constexpr char ID_MUSIC_PTR[]{ "music_ptr" };
 
 		// start and end offsets
@@ -46,7 +48,7 @@ namespace fe {
 		constexpr char ID_GAME_START_HP_OFFSET[]{ "game_start_hp_offset" };
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
-		constexpr char ID_PALETTE_TO_MUSIC_OFFSET[]{ "palette_to_music_offset" };
+		constexpr char ID_PAL2MUS_ENTRY_COUNT_OFFSET[]{ "pal2mus_entry_count_offset" };
 
 		// scene definition start offsets
 		constexpr char ID_WORLD_SCENE_OFFSET[]{ "world_scene_offset" };
@@ -133,7 +135,6 @@ namespace fe {
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
-		constexpr char ID_PALETTE_TO_MUSIC_SLOTS[]{ "palette_to_music_slots" };
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };
@@ -146,6 +147,9 @@ namespace fe {
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
 		constexpr char ID_DOOR_DEST_INDEX_SUB[]{ "door_dest_index_sub" };
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
+
+		// bools
+		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

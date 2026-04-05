@@ -324,8 +324,9 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 				add_message("Could not patch Sprite Gfx data", 1);
 		}
 
-		l_bret = m_rom_manager.encode_transitions(m_config, m_game.value(), x_rom);
-		l_good &= check_patched_size("Transition Data", l_bret.first, l_bret.second);
+		l_bret = m_rom_manager.encode_bank_15_data(m_config, m_game.value(), x_rom,
+			true, !m_cache.m_disable_pal2_mus);
+		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music)", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 
 		l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);

@@ -851,14 +851,23 @@ void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
 }
 
 void fe::Game::extract_palette_to_music(const fe::Config& p_config) {
-	auto l_slots{ p_config.constant(c::ID_PALETTE_TO_MUSIC_SLOTS) };
-	auto l_slot_offset{ p_config.constant(c::ID_PALETTE_TO_MUSIC_OFFSET) };
-	std::size_t l_start{ m_pal_to_music.m_slots.size() };
+	if (!m_pal_to_music.m_slots.empty())
+		return;
 
-	for (std::size_t i{ l_start }; i < l_slots; ++i)
+	const auto palptr{ p_config.pointer(c::ID_PAL2MUS_PALETTE_PTR) };
+	const auto musptr{ p_config.pointer(c::ID_PAL2MUS_MUSIC_PTR) };
+	std::size_t l_slots{ static_cast<std::size_t>(
+		(m_rom_data.at(p_config.constant(c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) +
+		static_cast<byte>(1)) & 0xff
+		) };
+
+	std::size_t paloffset{ get_pointer_address(palptr.first, palptr.second) };
+	std::size_t musoffset{ get_pointer_address(musptr.first, musptr.second) };
+
+	for (std::size_t i{ 0 }; i < l_slots; ++i)
 		m_pal_to_music.m_slots.push_back(fe::PaletteMusicSlot(
-			m_rom_data.at(l_slot_offset + i),
-			m_rom_data.at(l_slot_offset + l_slots + i)
+			m_rom_data.at(paloffset + i),
+			m_rom_data.at(musoffset + i)
 		));
 }
 

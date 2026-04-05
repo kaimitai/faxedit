@@ -31,6 +31,10 @@ namespace fe {
 		std::size_t x, y, w, h;
 	};
 
+	struct MainCache {
+		bool m_disable_pal2_mus;
+	};
+
 	struct Message {
 		std::string text;
 		int status; // 0=neutral, 1=good, 2=bad
@@ -46,6 +50,9 @@ namespace fe {
 
 		// settings
 		fe::EditorSettings m_settings;
+
+		// cache
+		fe::MainCache m_cache;
 
 		// config values we will cache
 		std::map<byte, std::string> m_labels_cmd_byte,

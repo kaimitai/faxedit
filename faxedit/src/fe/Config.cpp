@@ -13,9 +13,9 @@ void fe::Config::load_definitions(const std::string& p_config_xml,
 void fe::Config::load_config_data(const std::string& p_config_xml,
 	const std::string& p_config_override_xml) {
 	xml::load_configuration(p_config_override_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, false);
+		m_pointers, m_sets, m_byte_maps, m_bools, false);
 	xml::load_configuration(p_config_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps);
+		m_pointers, m_sets, m_byte_maps, m_bools);
 }
 
 std::size_t fe::Config::constant(const std::string& p_id) const {
@@ -127,6 +127,20 @@ std::map<byte, std::vector<byte>> fe::Config::bmap_as_numeric_vectors(const std:
 			xml::parse_byte_list(kv.second)));
 
 	return result;
+}
+
+bool fe::Config::boolean(const std::string& p_id) const {
+	if (m_bools.find(p_id) == end(m_bools))
+		throw std::runtime_error(std::format("Configuration Boolean '{}' not found", p_id));
+	else
+		return m_bools.at(p_id);
+}
+
+bool fe::Config::boolean_or(const std::string& p_id, bool p_default) const {
+	if (m_bools.find(p_id) == end(m_bools))
+		return p_default;
+	else
+		return m_bools.at(p_id);
 }
 
 void fe::Config::determine_region(const std::vector<byte>& p_rom) {

@@ -18,6 +18,10 @@
 	<sets>
 	</sets>
 
+	<!-- boolean overrides -->
+	<bools>
+	</bools>
+
 	<!-- byte map overrides -->
 	<byte_to_string_maps>
 	</byte_to_string_maps>

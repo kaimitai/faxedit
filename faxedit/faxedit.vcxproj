@@ -168,6 +168,7 @@
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />
     <ClCompile Include="src\fe\IntraChunkScroll.cpp" />
     <ClCompile Include="src\fe\Metatile.cpp" />
+    <ClCompile Include="src\fe\PaletteMusicMap.cpp" />
     <ClCompile Include="src\fe\ROM_Manager.cpp" />
     <ClCompile Include="src\fe\Screen.cpp" />
     <ClCompile Include="src\fe\Sprite.cpp" />

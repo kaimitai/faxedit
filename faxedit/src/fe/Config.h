@@ -24,6 +24,7 @@ namespace fe {
 		std::map<std::string, std::pair<std::size_t, std::size_t>> m_pointers;
 		std::map<std::string, std::vector<byte>> m_sets;
 		std::map<std::string, std::map<byte, std::string>> m_byte_maps;
+		std::map<std::string, bool> m_bools;
 
 	public:
 		Config(void) = default;
@@ -52,6 +53,8 @@ namespace fe {
 		std::vector<std::string> bmap_as_vec(const std::string& p_id, std::size_t p_size) const;
 		std::vector<std::size_t> bmap_as_numeric_vec(const std::string& p_id, std::size_t p_size) const;
 		std::map<byte, std::vector<byte>> bmap_as_numeric_vectors(const std::string& p_id) const;
+		bool boolean(const std::string& p_id) const;
+		bool boolean_or(const std::string& p_id, bool p_default) const;
 	};
 
 }

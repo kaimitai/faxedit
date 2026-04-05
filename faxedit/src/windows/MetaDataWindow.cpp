@@ -344,27 +344,56 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				// GAME - JUMP-ON ANIMATION - END
 
-				if (ImGui::BeginTabItem("Pal2Mus")) {
+				if (!m_cache.m_disable_pal2_mus && ImGui::BeginTabItem("Pal2Mus")) {
 					static std::size_t ls_p2m_slot{ 0 };
 					auto& slots{ m_game->m_pal_to_music };
+					bool slots_empty{ slots.get_slot_count() == 0 };
 
-					ui::imgui_slider_with_arrows("###p2ms",
-						"Slot", ls_p2m_slot, 0, slots.m_slots.size() - 1,
-						"", false, true);
+					imgui_text("Define mappings from same-world door destination palettes to music tracks");
 
-					ImGui::SeparatorText("Palette to Music mapping");
+					ImGui::Separator();
 
-					auto& slot{ slots.m_slots[ls_p2m_slot] };
+					if (!slots_empty) {
+						if (ls_p2m_slot >= slots.get_slot_count())
+							ls_p2m_slot = slots.get_slot_count() - 1;
 
-					ui::imgui_slider_with_arrows("###p2mp",
-						std::format("Palette: {}",
-							get_description(slot.m_palette, m_labels_palettes)),
-						slot.m_palette, 0, m_game->m_palettes.size() - 1);
+						ui::imgui_slider_with_arrows("###p2ms",
+							"Slot", ls_p2m_slot, 0, slots.m_slots.size() - 1,
+							"", false, true);
 
-					ui::imgui_slider_with_arrows("###p2mm",
-						std::format("Music: {}",
-							get_description(slot.m_music, m_labels_music)),
-						slot.m_music, 0, m_music_count);
+						ImGui::SeparatorText("Palette to Music mapping");
+
+						auto& slot{ slots.m_slots[ls_p2m_slot] };
+
+						ui::imgui_slider_with_arrows("###p2mp",
+							std::format("Palette: {}",
+								get_description(slot.m_palette, m_labels_palettes)),
+							slot.m_palette, 0, m_game->m_palettes.size() - 1);
+
+						ui::imgui_slider_with_arrows("###p2mm",
+							std::format("Music: {}",
+								get_description(slot.m_music, m_labels_music)),
+							slot.m_music, 0, m_music_count);
+
+					}
+					else
+						imgui_text("No palette-to-music slots defined");
+
+					ImGui::SeparatorText("Slot Operations");
+
+					if (ui::imgui_button("Add slot", 2, "Add a new palette-to-music mapping",
+						slots.get_slot_count() >= m_game->m_palettes.size())) {
+						slots.add_slot();
+						ls_p2m_slot = slots.get_slot_count() - 1;
+					}
+
+					ImGui::SameLine();
+
+					if (ui::imgui_button("Delete slot", 1, "Delete this palette-to-music mapping",
+						slots.get_slot_count() <= 1 || ls_p2m_slot >= slots.get_slot_count())) {
+						slots.delete_slot(ls_p2m_slot);
+						ls_p2m_slot = (ls_p2m_slot == 0 ? 0 : ls_p2m_slot - 1);
+					}
 
 					ImGui::EndTabItem();
 				}

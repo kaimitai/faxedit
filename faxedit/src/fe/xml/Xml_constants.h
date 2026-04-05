@@ -193,6 +193,8 @@ namespace fe {
 			constexpr char TAG_BYTE_TO_STR_MAPS[]{ "byte_to_string_maps" };
 			constexpr char TAG_BYTE_TO_STR_MAP[]{ "byte_to_string_map" };
 			constexpr char TAG_ENTRY[]{ "entry" };
+			constexpr char TAG_BOOLS[]{ "bools" };
+			constexpr char TAG_BOOL[]{ "bool" };
 
 			constexpr char ATTR_NAME[]{ "name" };
 			constexpr char ATTR_FILE_SIZE[]{ "file_size" };

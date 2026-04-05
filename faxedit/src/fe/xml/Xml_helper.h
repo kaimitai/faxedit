@@ -62,6 +62,7 @@ namespace fe {
 			std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 			std::map<std::string, std::vector<byte>>& p_sets,
 			std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+			std::map<std::string, bool>& p_bools,
 			bool p_throw_on_file_not_exists = true);
 
 		// utility

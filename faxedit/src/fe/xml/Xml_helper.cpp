@@ -1330,6 +1330,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 	std::map<std::string, std::vector<byte>>& p_sets,
 	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, bool>& p_bools,
 	bool p_throw_on_file_not_exists) {
 	pugi::xml_document l_doc;
 
@@ -1413,6 +1414,25 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 				if (p_sets.find(l_name) == end(p_sets))
 					p_sets.insert(std::make_pair(l_name,
 						parse_byte_list(n_set.attribute(c::ATTR_VALUES).as_string())
+					));
+			}
+		}
+	}
+
+	// bools
+	auto n_bools{ n_root.child(c::TAG_BOOLS) };
+	if (n_bools) {
+		for (auto n_bool{ n_bools.child(c::TAG_BOOL) }; n_bool;
+			n_bool = n_bool.next_sibling(c::TAG_BOOL)) {
+
+			if (!n_bool.attribute(c::TAG_REGION) ||
+				region_match(p_region_name, n_bool.attribute(c::TAG_REGION).as_string())) {
+
+				std::string l_name{ n_bool.attribute(c::ATTR_NAME).as_string() };
+
+				if (p_bools.find(l_name) == end(p_bools))
+					p_bools.insert(std::make_pair(l_name,
+						n_bool.attribute(c::ATTR_VALUE).as_bool()
 					));
 			}
 		}

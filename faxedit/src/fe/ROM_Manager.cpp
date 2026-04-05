@@ -424,8 +424,9 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 	return std::make_pair(l_sprite_data.size(), l_sprite_data_size);
 }
 
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom) const {
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_config,
+	const fe::Game& p_game, std::vector<byte>& p_rom,
+	bool p_encode_transitions, bool p_encode_pal2mus) const {
 	constexpr bool PAD_WITH_FF{ false };
 
 	const auto freespace_strs{ p_config.bmap(c::ID_BANK15_FREE_SPACE) };
@@ -446,23 +447,39 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_transitions(const fe
 		total_free_space += end_ep - start_ep;
 	}
 
-	// pack all transition data
-	std::vector<std::vector<std::vector<byte>>> all_trans_data;
-	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
-	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
-		l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
-		l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
-	}
-	all_trans_data.push_back(l_all_sw_trans_data);
-	all_trans_data.push_back(l_all_ow_trans_data);
+	std::vector<std::vector<std::vector<byte>>> all_bank15_data;
+	std::vector<Pointer> ptrs;
 
-	const std::vector<Pointer> ptrs{
-		p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR),
-		p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR)
-	};
+	// pack pal2mus
+	if (p_encode_pal2mus) {
+		all_bank15_data.push_back({ p_game.m_pal_to_music.get_palette_bytes() });
+		all_bank15_data.push_back({ p_game.m_pal_to_music.get_music_bytes() });
+
+		ptrs.push_back(p_config.pointer(c::ID_PAL2MUS_PALETTE_PTR));
+		ptrs.push_back(p_config.pointer(c::ID_PAL2MUS_MUSIC_PTR));
+
+		// patch the pal2mus entry count - not premature since if alloc fails the patch will be rolled back
+		p_rom.at(p_config.constant(c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) =
+			static_cast<byte>(p_game.m_pal_to_music.get_slot_count()) - 1;
+	}
+
+	// pack all transition data
+	if (p_encode_transitions) {
+		std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
+		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+			l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
+			l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
+		}
+
+		all_bank15_data.push_back(l_all_sw_trans_data);
+		all_bank15_data.push_back(l_all_ow_trans_data);
+
+		ptrs.push_back(p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR));
+		ptrs.push_back(p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR));
+	}
 
 	fe::GodAllocator allocator;
-	const auto allocresult{ allocator.init_and_allocate(ptrs, all_trans_data, free_ranges,
+	const auto allocresult{ allocator.init_and_allocate(ptrs, all_bank15_data, free_ranges,
 		PAD_WITH_FF) };
 
 	if (!allocresult)
@@ -492,7 +509,6 @@ void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::G
 	encode_push_block(p_config, p_game, p_rom);
 	encode_jump_on_tiles(p_config, p_game, p_rom);
 	encode_scene_data(p_config, p_game, p_rom);
-	encode_palette_to_music(p_config, p_game, p_rom);
 	encode_fog_data(p_config, p_game, p_rom);
 
 	// TODO: The title screen uses one of the "world palettes" - so make sure this is patched last
@@ -783,19 +799,6 @@ void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Ga
 void fe::ROM_Manager::encode_fog_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	p_rom.at(p_config.constant(c::ID_FOG_WORLD_OFFSET)) = p_game.m_fog.m_world_no;
 	p_rom.at(p_config.constant(c::ID_FOG_PALETTE_OFFSET)) = p_game.m_fog.m_palette_no;
-}
-
-void fe::ROM_Manager::encode_palette_to_music(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	auto l_slots{ p_config.constant(c::ID_PALETTE_TO_MUSIC_SLOTS) };
-	auto l_slot_offset{ p_config.constant(c::ID_PALETTE_TO_MUSIC_OFFSET) };
-
-	const auto& pal_to_mus{ p_game.m_pal_to_music.m_slots };
-
-	for (std::size_t i{ 0 }; i < pal_to_mus.size(); ++i) {
-		p_rom.at(l_slot_offset + i) = pal_to_mus[i].m_palette;
-		p_rom.at(l_slot_offset + l_slots + i) = pal_to_mus[i].m_music;
-	}
 }
 
 std::size_t fe::ROM_Manager::get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const {

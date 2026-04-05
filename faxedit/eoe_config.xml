@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-6.1">
+<eoe_config app_version="beta-6.2">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -41,6 +41,9 @@
 		<pointer name="sprite_ptr" value="0x2c220" zero_addr="0x24010" />
 		<pointer name="sameworld_trans_ptr" value="0x3ea47" zero_addr="0x30010" />
 		<pointer name="otherworld_trans_ptr" value="0x3eaac" zero_addr="0x30010" />
+		<!-- palette to music ptrs: palette list and music list -->
+		<pointer name="pal2mus_palette_ptr" value="0x3e55f" zero_addr="0x30010" />
+		<pointer name="pal2mus_music_ptr" value="0x3e569" zero_addr="0x30010" />
 		<!-- ROM offset of iScript pointer table lo bytes; this will not be changed by the assembler (start of hi might, however) -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
@@ -95,8 +98,7 @@
 		<const name="spawn_loc_data_start" value="0x3ddbd" />
 		<const name="mattock_animations_offset" value="0x3c69f" />
 		<const name="jump_on_animation_offset" value="0x3d6ff" />
-		<const name="palette_to_music_offset" value="0x3e579" />
-		<const name="palette_to_music_slots" value="7" />
+		<const name="pal2mus_entry_count_offset" value="0x3e55b" />
 		<!-- path to mascon line-drawing constants -->
 		<const name="ptm_stage_no_offset" value="0x3d782" />
 		<const name="ptm_screen_no_offset" value="0x3d788" />
@@ -281,7 +283,11 @@
 		<set name="common_gfx_sprite_update_handlers"
 		values="0,1,2,3,4,45,48,49,50,51,65" />
 	</sets>
-
+	<!-- boolean flags -->
+	<bools>
+		<!-- disable pal2mus patching for the randomizer as there may or may not be relocation -->
+		<bool name="disable_pal2mus" value="true" region="randum" />
+	</bools>
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
 	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
 	<!-- &lt; is less-than and &gt; is greater-than - used here for escaping xml syntax -->
@@ -524,19 +530,22 @@
 		</byte_to_string_map>
 		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
 		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
-			<entry byte="$00" str="0x3ea57:0x3ea60" />
-			<entry byte="$01" str="0x3eabc:0x3eb3f" />
-			<entry byte="$02" str="0x3fcdd:0x3fff0" />
+			<entry byte="$00" str="0x3e579:0x3e587" />
+			<entry byte="$01" str="0x3ea57:0x3ea60" />
+			<entry byte="$02" str="0x3eabc:0x3eb3f" />
+			<entry byte="$03" str="0x3fcdd:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="jp">
-			<entry byte="$00" str="0x3ea57:0x3ea60" />
-			<entry byte="$01" str="0x3eabc:0x3eb3f" />
-			<entry byte="$02" str="0x3fdc2:0x3fff0" />
+			<entry byte="$00" str="0x3e579:0x3e587" />
+			<entry byte="$01" str="0x3ea57:0x3ea60" />
+			<entry byte="$02" str="0x3eabc:0x3eb3f" />
+			<entry byte="$03" str="0x3fdc2:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="en-transl">
-			<entry byte="$00" str="0x3ea57:0x3ea60" />
-			<entry byte="$01" str="0x3eabc:0x3eb3f" />
-			<entry byte="$02" str="0x3fe0a:0x3fff0" />
+			<entry byte="$00" str="0x3e579:0x3e587" />
+			<entry byte="$01" str="0x3ea57:0x3ea60" />
+			<entry byte="$02" str="0x3eabc:0x3eb3f" />
+			<entry byte="$03" str="0x3fe0a:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="randum">
 			<entry byte="$00" str="0x3ea57:0x3ea60" />
