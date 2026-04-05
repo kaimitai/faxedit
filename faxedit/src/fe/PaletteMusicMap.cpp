@@ -17,7 +17,7 @@ void fe::PaletteMusicMap::set_slot_music(std::size_t p_index, byte p_music_no) {
 }
 
 void fe::PaletteMusicMap::add_slot(void) {
-	m_slots.push_back(fe::PaletteMusicSlot(0xff, 0xff));
+	m_slots.push_back(fe::PaletteMusicSlot(0, 0));
 }
 
 void fe::PaletteMusicMap::delete_slot(std::size_t p_slot_no) {
