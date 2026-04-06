@@ -135,6 +135,7 @@ namespace fe {
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
+		constexpr char ID_COMMAND_BYTE_COUNT[]{ "command_byte_count" };
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };

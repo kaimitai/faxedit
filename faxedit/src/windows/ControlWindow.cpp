@@ -12,7 +12,7 @@
 
 void fe::MainWindow::save_xml(void) {
 	try {
-		m_game->sync_palettes(m_shared_palettes);
+		m_game->sync_palettes(m_cache.m_shared_palettes);
 		xml::save_xml(get_xml_path(), m_game.value());
 		add_message("xml file written to " + get_xml_path(), 2, true);
 	}
@@ -298,7 +298,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	bool l_good{ true };
 	std::size_t l_dyndata_bytes{ 0 };
 
-	m_game->sync_palettes(m_shared_palettes);
+	m_game->sync_palettes(m_cache.m_shared_palettes);
 	auto x_rom{ m_game->m_rom_data };
 
 	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom);
@@ -355,7 +355,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 				l_bank_byte_size += l_byte_size;
 				l_dyndata_bytes += l_byte_size;
 				l_bank_output += std::format("({} {} bytes) ",
-					m_labels_worlds[w], l_byte_size);
+					m_cache.m_labels_worlds[w], l_byte_size);
 			}
 
 			add_message(std::format("Bank {}: {}- total bytes: {}/{} ({:.2f}%)",
@@ -371,7 +371,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 			l_max_tm_byte_size), 1);
 		for (std::size_t i{ 0 }; i < 8; ++i) {
 			add_message(std::format("Byte size for {}: {}",
-				m_labels_worlds[i],
+				m_cache.m_labels_worlds[i],
 				l_tm_result.m_sizes[i]), 6);
 		}
 	}

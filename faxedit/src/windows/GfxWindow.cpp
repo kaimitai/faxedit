@@ -67,18 +67,18 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	if (m_gfx_emode == fe::GfxEditMode::WorldChr) {
 
 		ui::imgui_slider_with_arrows("###tsw",
-			std::format("World: {}", m_labels_worlds.at(m_sel_gfx_ts_world)), m_sel_gfx_ts_world, 0, 7);
+			std::format("World: {}", m_cache.m_labels_worlds.at(m_sel_gfx_ts_world)), m_sel_gfx_ts_world, 0, 7);
 
 		if (m_sel_gfx_ts_world == c::CHUNK_IDX_BUILDINGS)
 			ui::imgui_slider_with_arrows("###tss",
-				m_labels_buildings.at(m_sel_gfx_ts_screen), m_sel_gfx_ts_screen, 0, c::WORLD_BUILDINGS_SCREEN_COUNT - 1);
+				m_cache.m_labels_buildings.at(m_sel_gfx_ts_screen), m_sel_gfx_ts_screen, 0, c::WORLD_BUILDINGS_SCREEN_COUNT - 1);
 
 		std::size_t l_ts_no{ m_game->get_default_tileset_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
 		std::size_t l_palette_no{ m_game->get_default_palette_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
 
-		imgui_text(std::format("Tileset {}: {}", l_ts_no, m_labels_tilesets.at(l_ts_no)));
+		imgui_text(std::format("Tileset {}: {}", l_ts_no, m_cache.m_labels_tilesets.at(l_ts_no)));
 		imgui_text(std::format("Palette: {}",
-			get_description(static_cast<byte>(l_palette_no), m_labels_palettes)
+			get_description(static_cast<byte>(l_palette_no), m_cache.m_labels_palettes)
 		));
 
 		ImGui::Separator();
@@ -261,7 +261,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText(
 				std::format("Preview result under palette: {}",
 					get_description(static_cast<byte>(ls_rerender_pal),
-						m_labels_palettes)).c_str()
+						m_cache.m_labels_palettes)).c_str()
 			);
 
 			ui::imgui_slider_with_arrows("###gfxrerender",
@@ -377,12 +377,12 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		ui::imgui_slider_with_arrows("###wpal",
 			std::format("Palette: {}", get_description(static_cast<byte>(ls_sel_wpal),
-				m_labels_palettes)),
+				m_cache.m_labels_palettes)),
 			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
 			"", false, true);
 
-		auto spal_iter{ m_shared_palettes.find(ls_sel_wpal) };
-		if (spal_iter != end(m_shared_palettes)) {
+		auto spal_iter{ m_cache.m_shared_palettes.find(ls_sel_wpal) };
+		if (spal_iter != end(m_cache.m_shared_palettes)) {
 			imgui_text(std::format("This palette is used by gfx \"{}\" - Edit under BG Palettes", spal_iter->second));
 		}
 		else if (show_palette_window(ls_sel_wpal, wpal)) {
@@ -430,7 +430,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		if (ui::imgui_slider_with_arrows("###hpal",
 			std::format("Palette: {}", get_description(static_cast<byte>(ls_sel_wpal),
-				m_labels_palettes)),
+				m_cache.m_labels_palettes)),
 			ls_sel_wpal, 0, m_game->m_palettes.size() - 1,
 			"", false, true))
 			regen_hud(p_rnd, ls_sel_wpal);
@@ -993,7 +993,7 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
 	ui::imgui_slider_with_arrows("###wchrb", std::format("Tileset {}: {}", ls_tileset_no,
-		get_description(static_cast<byte>(ls_tileset_no), m_labels_tilesets)).c_str(),
+		get_description(static_cast<byte>(ls_tileset_no), m_cache.m_labels_tilesets)).c_str(),
 		ls_tileset_no, 0, m_game->m_tilesets.size() - 1, "", false, true);
 
 	std::string bank_id{ std::format("tileset-{}", ls_tileset_no) };

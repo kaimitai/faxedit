@@ -45,12 +45,14 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_gfx_window{ false },
 	m_sprite_gfx_window{ false },
 	m_iscript_win_set_focus{ false },
-	// config variables, will be loaded with the config xml
-	m_sprite_count{ 0 },
-	m_iscript_count{ 0 },
-	m_music_count{ 0 },
-	// cache
-	m_cache{ .m_disable_pal2_mus = false },
+	// cached values
+	m_cache{
+		.m_sprite_count = 0,
+		.m_iscript_count = 0,
+		.m_music_count = 0,
+		.m_command_byte_count = 0,
+		.m_disable_pal2_mus = false
+	},
 	// exit handler variables
 	m_exit_app_requested{ false },
 	m_exit_app_granted{ false }
@@ -389,8 +391,8 @@ std::string fe::MainWindow::get_description(byte p_index,
 
 std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 	return std::format("{} ({})",
-		m_labels_sprites[p_sprite_id],
-		fe::SpriteGUILoader::SpriteCatToString(m_sprite_dims[p_sprite_id].category));
+		m_cache.m_labels_sprites[p_sprite_id],
+		fe::SpriteGUILoader::SpriteCatToString(m_cache.m_sprite_dims[p_sprite_id].category));
 }
 
 void fe::MainWindow::add_message(const std::string& p_msg, int p_status,
@@ -448,7 +450,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 		ui::imgui_slider_with_arrows("###spriteid",
 			get_sprite_label(l_sprite.m_id),
-			l_sprite.m_id, 0, m_sprite_count - 1);
+			l_sprite.m_id, 0, m_cache.m_sprite_count - 1);
 
 		ImGui::SeparatorText("Position");
 
@@ -470,7 +472,7 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		else {
 			ui::imgui_slider_with_arrows("###sprdiag",
 				std::format("Script: {}", l_sprite.m_text_id.value()),
-				l_sprite.m_text_id.value(), 0, m_iscript_count - 1);
+				l_sprite.m_text_id.value(), 0, m_cache.m_iscript_count - 1);
 
 			if (ui::imgui_button("View script", 4)) {
 				m_sel_iscript = l_sprite.m_text_id.value();
@@ -502,8 +504,8 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	if (l_cb.has_value()) {
 		ui::imgui_slider_with_arrows("###sscb",
-			std::format("Value: {}", get_description(l_cb.value(), m_labels_cmd_byte)),
-			p_sprites.m_command_byte.value(), 0, 2, "Special events for the screen");
+			std::format("Value: {}", get_description(l_cb.value(), m_cache.m_labels_cmd_byte)),
+			p_sprites.m_command_byte.value(), 0, m_cache.m_command_byte_count - 1, "Special events for the screen");
 		if (ui::imgui_button("Delete command byte", 1))
 			p_sprites.m_command_byte.reset();
 	}
@@ -530,9 +532,9 @@ void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
 	show_sprite_screen(m_game->m_npc_bundles.at(m_sel_npc_bundle),
 		m_sel_npc_bundle_sprite);
 
-	auto sbp{ m_labels_spec_sprite_sets.find(static_cast<byte>(m_sel_npc_bundle)) };
+	auto sbp{ m_cache.m_labels_spec_sprite_sets.find(static_cast<byte>(m_sel_npc_bundle)) };
 
-	if (sbp != end(m_labels_spec_sprite_sets)) {
+	if (sbp != end(m_cache.m_labels_spec_sprite_sets)) {
 		ImGui::Separator();
 		imgui_text(std::format("Special Significance: {}", sbp->second));
 	}
@@ -783,7 +785,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		// the game object constructed correctly - commit and build caches
 		m_game = std::move(l_game);
 		cache_config_variables();
-		m_shared_palettes = m_game->get_shared_palettes(m_config);
+		m_cache.m_shared_palettes = m_game->get_shared_palettes(m_config);
 
 		// the game object has world tilesets, let us make a cache of 256
 		// tile big tilesets for the UI to send to the renderer
@@ -867,17 +869,17 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 	}
 
 	// extract scripts and music
-	m_iscripts.clear();
+	m_cache.m_iscripts.clear();
 	m_game->m_spawn_to_script_no.clear();
 
 	try {
 		fi::IScriptLoader loader(m_config, p_bytes);
-		m_iscript_count = loader.get_script_count();
-		add_message(std::format("Detected {} interaction scripts", m_iscript_count), 4);
+		m_cache.m_iscript_count = loader.get_script_count();
+		add_message(std::format("Detected {} interaction scripts", m_cache.m_iscript_count), 4);
 
-		for (std::size_t i{ 0 }; i < m_iscript_count; ++i) {
+		for (std::size_t i{ 0 }; i < m_cache.m_iscript_count; ++i) {
 			try {
-				m_iscripts[i] = loader.parse_script(p_bytes, i);
+				m_cache.m_iscripts[i] = loader.parse_script(p_bytes, i);
 			}
 			catch (...) {
 				add_message(std::format("Unable to parse iScript #{}", i));
@@ -888,17 +890,17 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 	}
 	catch (...) {
 		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
-		m_iscript_count = 152;
+		m_cache.m_iscript_count = 152;
 	}
 
 	// extract music count
 	try {
-		m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
-		add_message(std::format("Detected {} music tracks", m_music_count), 4);
+		m_cache.m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
+		add_message(std::format("Detected {} music tracks", m_cache.m_music_count), 4);
 	}
 	catch (...) {
 		add_message("Music count could not be deduced - using default (16)", 1);
-		m_music_count = 16;
+		m_cache.m_music_count = 16;
 	}
 
 	if (!p_initial)
@@ -911,21 +913,22 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 // every draw frame
 void fe::MainWindow::cache_config_variables(void) {
 	// maps that can be sparse or even empty
-	m_labels_cmd_byte = m_config.bmap(c::ID_CMD_BYTE_LABELS);
-	m_labels_door_reqs = m_config.bmap(c::ID_DOOR_REQ_LABELS);
-	m_labels_block_props = m_config.bmap(c::ID_BLOCK_PROP_LABELS);
-	m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
-	m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
-	m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
+	m_cache.m_labels_cmd_byte = m_config.bmap(c::ID_CMD_BYTE_LABELS);
+	m_cache.m_labels_door_reqs = m_config.bmap(c::ID_DOOR_REQ_LABELS);
+	m_cache.m_labels_block_props = m_config.bmap(c::ID_BLOCK_PROP_LABELS);
+	m_cache.m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
+	m_cache.m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
+	m_cache.m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
 
 	// constants
-	m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
+	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
+	m_cache.m_command_byte_count = m_config.constant_or(c::ID_COMMAND_BYTE_COUNT, 3);
 
 	// maps we convert to vectors
-	m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
-	m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_sprite_count);
-	m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
-	m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
+	m_cache.m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
+	m_cache.m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_cache.m_sprite_count);
+	m_cache.m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
+	m_cache.m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
 		m_config.constant(c::ID_WORLD_TILESET_COUNT));
 
 	// bools
@@ -980,9 +983,9 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 			l_spriteid,
 			l_anim_frame,
 			16 * static_cast<int>(p_sprites[i].m_x) +
-			m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
+			m_cache.m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
 			16 * static_cast<int>(p_sprites[i].m_y) +
-			m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
+			m_cache.m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
 		);
 	}
 
@@ -993,8 +996,8 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 		m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
 			16 * static_cast<int>(l_sprite.m_x),
 			16 * static_cast<int>(l_sprite.m_y),
-			m_sprite_dims[l_sprite.m_id].w,
-			m_sprite_dims[l_sprite.m_id].h
+			m_cache.m_sprite_dims[l_sprite.m_id].w,
+			m_cache.m_sprite_dims[l_sprite.m_id].h
 		);
 	}
 

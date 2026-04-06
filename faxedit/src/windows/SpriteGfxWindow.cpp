@@ -47,13 +47,13 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				"Whether sprite gfx data should be written when patching ROM");
 			ImGui::SeparatorText("Palettes (for GUI rendering and bmp-import/export)");
 			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
-				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_labels_palettes)),
+				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_cache.m_labels_palettes)),
 				m_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);
 			ui::imgui_slider_with_arrows("###plapal", std::format("Player: {}",
-				get_description(static_cast<byte>(m_settings.coll_palettes[1]), m_labels_palettes)),
+				get_description(static_cast<byte>(m_settings.coll_palettes[1]), m_cache.m_labels_palettes)),
 				m_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1);
 			ui::imgui_slider_with_arrows("###porpal", std::format("Portraits: {}",
-				get_description(static_cast<byte>(m_settings.coll_palettes[2]), m_labels_palettes)),
+				get_description(static_cast<byte>(m_settings.coll_palettes[2]), m_cache.m_labels_palettes)),
 				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1);
 
 			ImGui::SeparatorText("Rendering Scales");
@@ -207,7 +207,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 			ls_frame = p_collection.frames.size() - 1;
 
 		if (ui::imgui_slider_with_arrows("###selframe",
-			std::format("Frame #{}/{} ({}x{})", ls_frame, p_collection.frames.size() - 1,
+			std::format("Frame #{}/{} ({}x{})", ls_frame, p_collection.frames.size(),
 				p_collection.frames.at(ls_frame).frame.w(),
 				p_collection.frames.at(ls_frame).frame.h()),
 			ls_frame, 0, p_collection.frames.size() - 1, "", false, true))
@@ -652,10 +652,10 @@ std::string fe::MainWindow::get_sprite_gfx_bank_name(std::size_t p_coll_id, std:
 	}
 	else {
 		std::string bank_name;
-		if (p_bank_id == m_sprite_count)
+		if (p_bank_id == m_cache.m_sprite_count)
 			bank_name = "Common";
 		else
-			bank_name = get_description(static_cast<byte>(p_bank_id), m_labels_sprites);
+			bank_name = get_description(static_cast<byte>(p_bank_id), m_cache.m_labels_sprites);
 		return std::format("Bank #{}/{} - {}: '{}' ({} tiles)", p_sel_bank_id, p_bank_count, p_bank_id, bank_name, p_tile_count);
 	}
 }
@@ -665,7 +665,7 @@ void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
 	fe::SpriteGUILoader gui_sprites;
 	gui_sprites.load_sprites_for_gui(m_config, m_game->m_sprite_gfx_manager, m_game->m_rom_data);
 
-	m_sprite_dims = gui_sprites.get_animation_dimension_data();
+	m_cache.m_sprite_dims = gui_sprites.get_animation_dimension_data();
 
 	// pass the resolved frames on to the gfx handler to make sprite textures
 	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(m_settings.coll_palettes[0]));

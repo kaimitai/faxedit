@@ -25,6 +25,13 @@ std::size_t fe::Config::constant(const std::string& p_id) const {
 		return m_constants.at(p_id);
 }
 
+std::size_t fe::Config::constant_or(const std::string& p_id, std::size_t p_default) const {
+	if (has_constant(p_id))
+		return constant(p_id);
+	else
+		return p_default;
+}
+
 std::pair<std::size_t, std::size_t> fe::Config::pointer(const std::string& p_id) const {
 	if (m_pointers.find(p_id) == end(m_pointers))
 		throw std::runtime_error("Pointer '" + p_id + "' not found");

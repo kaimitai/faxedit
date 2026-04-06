@@ -110,6 +110,7 @@
 		<const name="ptm_cover_pos_offset" value="0x3ef8a" />
 		<!-- counts -->
 		<const name="sprite_count" value="101" />
+		<const name="command_byte_count" value="3" />
 		<!-- minimum number of iScripts we require when assembling; hard-coded ref to index #151 in game code -->
 		<const name="iscript_min_count" value="152" />
 		<const name="string_data_start" region="eu,us,randum,us-rev-a" value="0x34310" />

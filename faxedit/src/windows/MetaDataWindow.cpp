@@ -18,7 +18,8 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 		ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[4].active);
 		ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[4].hovered);
 
-		if (ImGui::BeginTabItem(std::format("World {} ({}) Metadata###wmdtabi", m_sel_chunk, m_labels_worlds[m_sel_chunk]).c_str())) {
+		if (ImGui::BeginTabItem(std::format("World {} ({}) Metadata###wmdtabi", m_sel_chunk,
+			m_cache.m_labels_worlds[m_sel_chunk]).c_str())) {
 
 			if (ImGui::BeginTabBar("WorldMetaTabs")) {
 
@@ -146,7 +147,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					auto& l_spawn{ m_game->m_spawn_locations.at(m_sel_spawn_location) };
 
 					ui::imgui_slider_with_arrows("spawnworld",
-						std::format("World: {}", m_labels_worlds.at(l_spawn.m_world)),
+						std::format("World: {}", m_cache.m_labels_worlds.at(l_spawn.m_world)),
 						l_spawn.m_world, 0, 7);
 
 					ui::imgui_slider_with_arrows("spawnscr", "Screen",
@@ -208,7 +209,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ui::imgui_slider_with_arrows("###pbstage",
 						std::format("Stage {} ({})",
-							l_pb.m_stage, m_labels_worlds[l_world]),
+							l_pb.m_stage, m_cache.m_labels_worlds[l_world]),
 						l_pb.m_stage, 0, 5, "");
 
 					ui::imgui_slider_with_arrows("pbs",
@@ -367,13 +368,13 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 						ui::imgui_slider_with_arrows("###p2mp",
 							std::format("Palette: {}",
-								get_description(slot.m_palette, m_labels_palettes)),
+								get_description(slot.m_palette, m_cache.m_labels_palettes)),
 							slot.m_palette, 0, m_game->m_palettes.size() - 1);
 
 						ui::imgui_slider_with_arrows("###p2mm",
 							std::format("Music: {}",
-								get_description(slot.m_music, m_labels_music)),
-							slot.m_music, 0, m_music_count);
+								get_description(slot.m_music, m_cache.m_labels_music)),
+							slot.m_music, 0, m_cache.m_music_count);
 
 					}
 					else
@@ -410,13 +411,13 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ui::imgui_slider_with_arrows("###fogw",
 						std::format("World: {}",
-							get_description(l_fog.m_world_no, m_labels_worlds)),
+							get_description(l_fog.m_world_no, m_cache.m_labels_worlds)),
 						l_fog.m_world_no, 0, m_game->m_chunks.size()
 					);
 
 					ui::imgui_slider_with_arrows("###fogp",
 						std::format("Palette: {}",
-							get_description(l_fog.m_palette_no, m_labels_palettes)),
+							get_description(l_fog.m_palette_no, m_cache.m_labels_palettes)),
 						l_fog.m_palette_no, 0, m_game->m_palettes.size() - 1
 					);
 
@@ -456,7 +457,7 @@ void fe::MainWindow::show_stages_data(void) {
 
 	if (ui::imgui_slider_with_arrows("###stedw",
 		std::format("Stage World: {} ({})", l_world_no,
-			m_labels_worlds[l_world_no]),
+			m_cache.m_labels_worlds[l_world_no]),
 		l_world_no, 0, 7,
 		"Mapping from stage to world - currently the stage 0 world cannot be edited",
 		m_sel_stage == 0))
@@ -467,30 +468,30 @@ void fe::MainWindow::show_stages_data(void) {
 	ui::imgui_slider_with_arrows("###stens",
 		std::format("Next Stage: {} ({})",
 			l_stage.m_next_stage,
-			m_labels_worlds[l_stages.m_stages[l_stage.m_next_stage].m_world_id]),
+			m_cache.m_labels_worlds[l_stages.m_stages[l_stage.m_next_stage].m_world_id]),
 		l_stage.m_next_stage, 0, 5);
 	ui::imgui_slider_with_arrows("###stenscr", "Next Screen",
 		l_stage.m_next_screen, 0, m_game->m_chunks.at(
 			l_stages.m_stages[l_stage.m_next_stage].m_world_id
 		).m_screens.size() - 1);
 	ui::imgui_slider_with_arrows("###stenr", std::format("Next-Stage Door Requirement: {}",
-		get_description(l_stage.m_next_requirement, m_labels_door_reqs)),
-		l_stage.m_next_requirement, 0, m_labels_door_reqs.size() - 1);
+		get_description(l_stage.m_next_requirement, m_cache.m_labels_door_reqs)),
+		l_stage.m_next_requirement, 0, m_cache.m_labels_door_reqs.size() - 1);
 
 	ImGui::SeparatorText("Previous Stage Parameters");
 
 	ui::imgui_slider_with_arrows("###steps",
 		std::format("Previous Stage: {} ({})",
 			l_stage.m_prev_stage,
-			m_labels_worlds[l_stages.m_stages[l_stage.m_prev_stage].m_world_id]),
+			m_cache.m_labels_worlds[l_stages.m_stages[l_stage.m_prev_stage].m_world_id]),
 		l_stage.m_prev_stage, 0, 5);
 	ui::imgui_slider_with_arrows("###stepscr", "Previous Screen",
 		l_stage.m_prev_screen, 0, m_game->m_chunks.at(
 			l_stages.m_stages[l_stage.m_prev_stage].m_world_id
 		).m_screens.size() - 1);
 	ui::imgui_slider_with_arrows("###stepr", std::format("Previous-Stage Door Requirement: {}",
-		get_description(l_stage.m_prev_requirement, m_labels_door_reqs)),
-		l_stage.m_prev_requirement, 0, m_labels_door_reqs.size() - 1);
+		get_description(l_stage.m_prev_requirement, m_cache.m_labels_door_reqs)),
+		l_stage.m_prev_requirement, 0, m_cache.m_labels_door_reqs.size() - 1);
 
 	ImGui::SeparatorText("Start Parameters");
 
@@ -627,7 +628,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::SeparatorText(std::format("Block property: {}",
 			get_description(l_mt_def.m_block_property,
-				m_labels_block_props)).c_str());
+				m_cache.m_labels_block_props)).c_str());
 
 		ui::imgui_slider_with_arrows("mtblprop", "",
 			l_mt_def.m_block_property, 0x00, 0x0f);
@@ -745,7 +746,8 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_show_pos) {
 
 	if (fe::ui::imgui_slider_with_arrows("##wsp",
-		std::format("Palette: {}", get_description(static_cast<byte>(p_scene.m_palette), m_labels_palettes)),
+		std::format("Palette: {}",
+			get_description(static_cast<byte>(p_scene.m_palette), m_cache.m_labels_palettes)),
 		p_scene.m_palette, 0,
 		m_game->m_palettes.size() - 1,
 		"Default palette used by all screens in this world. Can be overridden in-game by door and transition parameters.")) {
@@ -753,14 +755,16 @@ void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_show_pos) {
 	}
 
 	if (fe::ui::imgui_slider_with_arrows("###wst",
-		std::format("Tileset: {}", get_description(static_cast<byte>(p_scene.m_tileset), m_labels_tilesets)),
+		std::format("Tileset: {}", get_description(static_cast<byte>(p_scene.m_tileset),
+			m_cache.m_labels_tilesets)),
 		p_scene.m_tileset, 0,
 		m_game->m_tilesets.size() - 1))
 		m_atlas_new_tileset_no = p_scene.m_tileset;
 
 	fe::ui::imgui_slider_with_arrows("###wsm",
-		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music), m_labels_music)),
-		p_scene.m_music, 0, m_music_count);
+		std::format("Music: {}", get_description(static_cast<byte>(p_scene.m_music),
+			m_cache.m_labels_music)),
+		p_scene.m_music, 0, m_cache.m_music_count);
 
 	if (p_show_pos) {
 		ImGui::SeparatorText("Entry Position");

@@ -43,6 +43,7 @@ namespace fe {
 		void load_config_data(const std::string& p_config_xml, const std::string& p_config_override_xml);
 
 		std::size_t constant(const std::string& p_id) const;
+		std::size_t constant_or(const std::string& p_id, std::size_t p_default) const;
 		std::pair<std::size_t, std::size_t> pointer(const std::string& p_id) const;
 		const std::vector<byte>& vset(const std::string& p_id) const;
 		std::set<byte> vset_as_set(const std::string& p_id) const;

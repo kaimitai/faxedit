@@ -32,7 +32,24 @@ namespace fe {
 	};
 
 	struct MainCache {
+		// labels
+		std::map<byte, std::string> m_labels_cmd_byte,
+			m_labels_door_reqs, m_labels_block_props,
+			m_labels_palettes, m_labels_spec_sprite_sets,
+			m_labels_music;
+		std::vector<std::string> m_labels_worlds, m_labels_sprites,
+			m_labels_buildings, m_labels_tilesets;
+		// counts
+		std::size_t m_sprite_count, m_iscript_count, m_music_count,
+			m_command_byte_count;
+		// palettes shared between worlds and game gfx images
+		std::map<std::size_t, std::string> m_shared_palettes;
+		// flags
 		bool m_disable_pal2_mus;
+		// sprite dimensions; holding sprite size and cartesian offsets per animation frame
+		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
+		// iscripts
+		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
 	};
 
 	struct Message {
@@ -47,30 +64,16 @@ namespace fe {
 		// tilemap undo interface
 		std::optional<fe::UndoInterface> m_undo;
 		fe::SpriteGfxSnapshotManager m_sprite_snap_manager;
-
 		// settings
 		fe::EditorSettings m_settings;
-
 		// cache
 		fe::MainCache m_cache;
-
-		// config values we will cache
-		std::map<byte, std::string> m_labels_cmd_byte,
-			m_labels_door_reqs, m_labels_block_props,
-			m_labels_palettes, m_labels_spec_sprite_sets,
-			m_labels_music;
-		std::vector<std::string> m_labels_worlds, m_labels_sprites,
-			m_labels_buildings, m_labels_tilesets;
-
-		std::size_t m_sprite_count, m_iscript_count, m_music_count;
-
-		// palettes shared between worlds and game gfx images
-		std::map<std::size_t, std::string> m_shared_palettes;
-
 		// file info
 		std::filesystem::path m_path;
 		std::string m_filename, m_loaded_rom_path, m_region_override;
 
+		// selectors
+		// TODO: Move to separate struct, and turn suitable vars into local statics instead of class members
 		std::size_t
 			// world, screen
 			m_sel_chunk, m_sel_screen,
@@ -82,10 +85,8 @@ namespace fe {
 			m_sel_tile_x2, m_sel_tile_y2,
 			// metatile select editor
 			m_sel_metatile, m_sel_tilemap_sub_palette,
-
 			// metatile definition editor
 			m_sel_nes_tile,
-
 			// spawn location editor
 			m_sel_spawn_location,
 			// npc bundles aka building parameters
@@ -94,18 +95,11 @@ namespace fe {
 			m_sel_stage,
 			// selected iscript
 			m_sel_iscript,
-
 			// gfx selectors
 			m_sel_gfx_ts_world,
 			m_sel_gfx_ts_screen;
-
-		// sprite dimensions; holding sprite size and
-		// cartesian offsets per animation frame
-		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
-
 		// clipboard
 		fe::ClipboardManager m_clip_manager;
-
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
 			m_gfx_window, m_sprite_gfx_window;
@@ -125,7 +119,6 @@ namespace fe {
 		fe::gfx m_gfx;
 		std::deque<fe::Message> m_messages;
 		fe::ROM_Manager m_rom_manager;
-		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
 
 		// oscillating color for selected object
 		SDL_Color m_pulse_color;
