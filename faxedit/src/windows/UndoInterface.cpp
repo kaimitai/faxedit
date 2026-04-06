@@ -39,6 +39,47 @@ void fe::UndoInterface::apply_tilemap_edit(std::size_t p_world_no, std::size_t p
 	}
 }
 
+bool fe::UndoInterface::apply_metatile_edit(std::size_t p_world_no, std::size_t p_metatile_no,
+	std::size_t p_x, std::size_t p_y, byte p_value) {
+	auto& mt_tilemap{ game.m_chunks[p_world_no].m_metatiles[p_metatile_no].m_tilemap };
+
+	// only add an undo entry if the value is different
+	byte old_val{ mt_tilemap.at(p_y).at(p_x) };
+	if (old_val != p_value) {
+		const auto key{ make_key(p_world_no, p_metatile_no) };
+		TilemapEdit edit;
+
+		edit.positions = { std::make_pair(p_x, p_y) };
+		edit.after = { p_value };
+		edit.before = { old_val };
+
+		// apply new value
+		mt_tilemap.at(p_y).at(p_x) = p_value;
+
+		// Push to undo stack
+		auto& undoStack = m_metatile_undo[key];
+		undoStack.push_back(std::move(edit));
+		trim_history(undoStack);
+
+		// New edit invalidates redo history
+		m_metatile_redo[key].clear();
+
+		return true;
+	}
+
+	return false;
+}
+
+bool fe::UndoInterface::has_metatile_undo(std::size_t p_world_no, std::size_t p_metatile_no) const {
+	const auto key{ make_key(p_world_no, p_metatile_no) };
+	return m_metatile_undo.contains(key) && !m_metatile_undo.at(key).empty();
+}
+
+bool fe::UndoInterface::has_metatile_redo(std::size_t p_world_no, std::size_t p_metatile_no) const {
+	const auto key{ make_key(p_world_no, p_metatile_no) };
+	return m_metatile_redo.contains(key) && !m_metatile_redo.at(key).empty();
+}
+
 void fe::UndoInterface::apply_edit(const Key& p_key, const std::vector<Coord>& positions,
 	const std::vector<byte>& p_data) {
 	TilemapEdit edit;
@@ -107,6 +148,47 @@ bool fe::UndoInterface::redo(std::size_t p_world, std::size_t p_screen) {
 	return true;
 }
 
+bool fe::UndoInterface::undo_metatile(std::size_t p_world, std::size_t p_metatile) {
+	Key key = make_key(p_world, p_metatile);
+	auto it = m_metatile_undo.find(key);
+	if (it == m_metatile_undo.end() || it->second.empty())
+		return false;
+
+	auto& undoStack = it->second;
+	TilemapEdit edit = std::move(undoStack.back());
+	undoStack.pop_back();
+
+	// Apply "before" values
+	auto& mt{ game.m_chunks[key.first].m_metatiles[key.second] };
+	for (std::size_t i = 0; i < edit.positions.size(); ++i)
+		mt.m_tilemap[edit.positions[i].second][edit.positions[i].first] = edit.before[i];
+
+	// Move this edit to the redo stack
+	m_metatile_redo[key].push_back(std::move(edit));
+	return true;
+}
+
+bool fe::UndoInterface::redo_metatile(std::size_t p_world, std::size_t p_metatile) {
+	Key key = make_key(p_world, p_metatile);
+	auto it = m_metatile_redo.find(key);
+	if (it == m_metatile_redo.end() || it->second.empty())
+		return false;
+
+	auto& redoStack = it->second;
+	TilemapEdit edit = std::move(redoStack.back());
+	redoStack.pop_back();
+
+	// Apply "after" values
+	auto& mt{ game.m_chunks[key.first].m_metatiles[key.second] };
+	for (std::size_t i = 0; i < edit.positions.size(); ++i) {
+		mt.m_tilemap[edit.positions[i].second][edit.positions[i].first] = edit.after[i];
+	}
+
+	// Move this edit back to the undo stack
+	m_metatile_undo[key].push_back(std::move(edit));
+	return true;
+}
+
 Key fe::UndoInterface::make_key(std::size_t p_world_no,
 	std::size_t p_screen_no) const {
 	return std::make_pair(p_world_no, p_screen_no);
@@ -118,6 +200,7 @@ void fe::UndoInterface::clear_history(void) {
 	m_redo.clear();
 	m_palette_undo.clear();
 	m_palette_redo.clear();
+	clear_metatile_history();
 }
 
 // clear all undo and redo for a world
@@ -125,8 +208,23 @@ void fe::UndoInterface::clear_history(std::size_t p_world_no) {
 	for (auto& kv : m_undo)
 		if (kv.first.first == p_world_no)
 			kv.second.clear();
-
 	for (auto& kv : m_redo)
+		if (kv.first.first == p_world_no)
+			kv.second.clear();
+
+	clear_metatile_history(p_world_no);
+}
+
+void fe::UndoInterface::clear_metatile_history(void) {
+	m_metatile_undo.clear();
+	m_metatile_redo.clear();
+}
+
+void fe::UndoInterface::clear_metatile_history(std::size_t p_world_no) {
+	for (auto& kv : m_metatile_undo)
+		if (kv.first.first == p_world_no)
+			kv.second.clear();
+	for (auto& kv : m_metatile_redo)
 		if (kv.first.first == p_world_no)
 			kv.second.clear();
 }

@@ -243,8 +243,9 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			if (l_ts_no == m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen))
 				m_atlas_force_update = true;
 
-			// make life easy for ourselves and wipe all staging data on commit
+			// make life easy for ourselves and wipe all staging and undo data on commit
 			m_gfx.clear_all_tilemap_import_results();
+			m_undo->clear_metatile_history();
 
 			add_message("Imported graphics committed to ROM", 2);
 		}
@@ -1051,6 +1052,7 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 		auto completebank{ get_complete_world_tileset_w_metadata(ls_tileset_no) };
 		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
 			completebank.first, completebank.second);
+		m_undo->clear_metatile_history();
 	}
 
 }

@@ -8,7 +8,7 @@
 
 // tilemap edits
 using Coord = std::pair<std::size_t, std::size_t>; // metatile x, y
-using Key = std::pair<std::size_t, std::size_t>;   // world, screen
+using Key = std::pair<std::size_t, std::size_t>;   // (world, screen) or (world, metatile index)
 using byte = unsigned char;
 // palette edits
 using Palette = std::vector<byte>;
@@ -34,6 +34,9 @@ namespace fe {
 		// tilemap edits
 		std::map<Key, std::vector<TilemapEdit>> m_undo;
 		std::map<Key, std::vector<TilemapEdit>> m_redo;
+		// metatile edits
+		std::map<Key, std::vector<TilemapEdit>> m_metatile_undo;
+		std::map<Key, std::vector<TilemapEdit>> m_metatile_redo;
 		// palette edits
 		std::map<std::size_t, std::vector<PaletteEdit>> m_palette_undo;
 		std::map<std::size_t, std::vector<PaletteEdit>> m_palette_redo;
@@ -52,15 +55,28 @@ namespace fe {
 		explicit UndoInterface(fe::Game& p_game);
 
 		// tilemap edits
-		bool undo(std::size_t p_world_no, std::size_t p_screen_no);
-		bool redo(std::size_t p_world_no, std::size_t p_screen_no);
 		void clear_history(void);
 		void clear_history(std::size_t p_world_no);
+		void clear_metatile_history(void);
+		void clear_metatile_history(std::size_t p_world_no);
+
+		bool undo(std::size_t p_world_no, std::size_t p_screen_no);
+		bool redo(std::size_t p_world_no, std::size_t p_screen_no);
 
 		void apply_tilemap_edit(std::size_t p_world_no, std::size_t p_screen_no,
 			std::size_t p_x, std::size_t p_y, byte p_value);
 		void apply_tilemap_edit(std::size_t p_world_no, std::size_t p_screen_no,
 			std::size_t p_x, std::size_t p_y, const std::vector<std::vector<byte>>& p_data);
+
+		// metatile edits
+		bool undo_metatile(std::size_t p_world_no, std::size_t p_metatile_no);
+		bool redo_metatile(std::size_t p_world_no, std::size_t p_metatile_no);
+
+		bool apply_metatile_edit(std::size_t p_world_no, std::size_t p_metatile_no,
+			std::size_t p_x, std::size_t p_y, byte p_value);
+
+		bool has_metatile_undo(std::size_t p_world_no, std::size_t p_metatile_no) const;
+		bool has_metatile_redo(std::size_t p_world_no, std::size_t p_metatile_no) const;
 
 		// palette edits
 		bool undo_palette(std::size_t p_pal_key, Palette& p_palette);

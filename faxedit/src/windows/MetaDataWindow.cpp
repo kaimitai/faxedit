@@ -136,15 +136,16 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 				}
 
 				if (ImGui::BeginTabItem("Spawns")) {
+					static std::size_t ls_sel_spawn_location{ 0 };
 
 					ImGui::SeparatorText("Spawn locations after dying or restoring from mantra");
 
 					ui::imgui_slider_with_arrows("spawnloc", "",
-						m_sel_spawn_location, 0, 7, "", false, true);
+						ls_sel_spawn_location, 0, 7, "", false, true);
 
-					ImGui::SeparatorText(std::format("Location for spawn point #{}", m_sel_spawn_location).c_str());
+					ImGui::SeparatorText(std::format("Location for spawn point #{}", ls_sel_spawn_location).c_str());
 
-					auto& l_spawn{ m_game->m_spawn_locations.at(m_sel_spawn_location) };
+					auto& l_spawn{ m_game->m_spawn_locations.at(ls_sel_spawn_location) };
 
 					ui::imgui_slider_with_arrows("spawnworld",
 						std::format("World: {}", m_cache.m_labels_worlds.at(l_spawn.m_world)),
@@ -441,17 +442,18 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 }
 
 void fe::MainWindow::show_stages_data(void) {
+	static std::size_t ls_sel_stage{ 0 };
 	auto& l_stages{ m_game->m_stages };
 
 	ImGui::SeparatorText("Stage Data");
 
 	ui::imgui_slider_with_arrows("###stagesel",
-		std::format("Selected Stage: ", m_sel_stage),
-		m_sel_stage, 0, 5, "", false, true);
+		std::format("Selected Stage: ", ls_sel_stage),
+		ls_sel_stage, 0, 5, "", false, true);
 
 	ImGui::Separator();
 
-	auto& l_stage{ l_stages.m_stages[m_sel_stage] };
+	auto& l_stage{ l_stages.m_stages[ls_sel_stage] };
 
 	std::size_t l_world_no{ l_stage.m_world_id };
 
@@ -460,8 +462,8 @@ void fe::MainWindow::show_stages_data(void) {
 			m_cache.m_labels_worlds[l_world_no]),
 		l_world_no, 0, 7,
 		"Mapping from stage to world - currently the stage 0 world cannot be edited",
-		m_sel_stage == 0))
-		l_stages.set_stage_world(m_sel_stage, l_world_no);
+		ls_sel_stage == 0))
+		l_stages.set_stage_world(ls_sel_stage, l_world_no);
 
 	ImGui::SeparatorText("Next Stage Parameters");
 
@@ -574,6 +576,15 @@ void fe::MainWindow::show_screen_scroll_data(void) {
 
 void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_chunk) {
 	if (ImGui::BeginTabItem("Metatiles")) {
+		static std::optional<std::size_t> mt_no_to_regen;
+		static fe::ChrPickerMode ls_chr_picker_mode{ fe::ChrPickerMode::HUD };
+		static std::size_t ls_sel_nes_tile{ 0x80 };
+		static std::size_t ls_sel_tilemap_sub_palette{ 0x00 };
+
+		if (mt_no_to_regen) {
+			generate_metatile_textures(p_rnd, mt_no_to_regen.value());
+			mt_no_to_regen.reset();
+		}
 
 		if (m_sel_metatile >= p_chunk.m_metatiles.size())
 			m_sel_metatile = 0;
@@ -598,17 +609,14 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 					mouse_pos.y >= quad_pos.y && mouse_pos.y < quad_end.y;
 
 				if (hovered && ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-					byte oldval{ l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) };
-					byte newval{ static_cast<byte>(m_sel_nes_tile) };
+					bool waschanged{ m_undo->apply_metatile_edit(m_sel_chunk, m_sel_metatile,
+						quadrant % 2, quadrant / 2, static_cast<byte>(ls_sel_nes_tile)) };
 
-					if (oldval != newval) {
-						l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2) = static_cast<byte>(m_sel_nes_tile);
-						generate_metatile_textures(p_rnd, m_sel_metatile);
-					}
+					if (waschanged)
+						mt_no_to_regen = m_sel_metatile;
 				}
 				else if (hovered && ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-					m_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
-
+					ls_sel_nes_tile = l_mt_def.m_tilemap.at(quadrant / 2).at(quadrant % 2);
 				}
 
 				// Optional: draw outline on hover
@@ -633,6 +641,18 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		ui::imgui_slider_with_arrows("mtblprop", "",
 			l_mt_def.m_block_property, 0x00, 0x0f);
 
+		ImGui::Separator();
+
+		if (ui::imgui_button("Undo", 4, "", !m_undo->has_metatile_undo(m_sel_chunk, m_sel_metatile))) {
+			m_undo->undo_metatile(m_sel_chunk, m_sel_metatile);
+			mt_no_to_regen = m_sel_metatile;
+		}
+		ImGui::SameLine();
+		if (ui::imgui_button("Redo", 4, "", !m_undo->has_metatile_redo(m_sel_chunk, m_sel_metatile))) {
+			m_undo->redo_metatile(m_sel_chunk, m_sel_metatile);
+			mt_no_to_regen = m_sel_metatile;
+		}
+
 		std::size_t l_tileset_no{ m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
 		std::size_t l_tileset_start{ m_game->m_tilesets.at(l_tileset_no).start_idx };
 		std::size_t l_tileset_end{ m_game->m_tilesets.at(l_tileset_no).end_index() };
@@ -644,22 +664,22 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		for (std::size_t i{ 0 }; i < 256; ++i) {
 
-			if (i < l_tileset_start && m_chr_picker_mode == fe::ChrPickerMode::Default)
+			if (i < l_tileset_start && ls_chr_picker_mode == fe::ChrPickerMode::Default)
 				continue;
-			else if (i < l_tileset_start && i >= c::CHR_HUD_TILE_COUNT && m_chr_picker_mode != fe::ChrPickerMode::All)
+			else if (i < l_tileset_start && i >= c::CHR_HUD_TILE_COUNT && ls_chr_picker_mode != fe::ChrPickerMode::All)
 				continue;
-			else if (i >= l_tileset_end && m_chr_picker_mode != fe::ChrPickerMode::All)
+			else if (i >= l_tileset_end && ls_chr_picker_mode != fe::ChrPickerMode::All)
 				continue;
 
 			// Compute UVs for tile i
 			float u0 = (i * 8.0f) / (float)l_atlas->w;
-			float v0 = (8.0f * static_cast<float>(m_sel_tilemap_sub_palette)) / (float)l_atlas->h;
+			float v0 = (8.0f * static_cast<float>(ls_sel_tilemap_sub_palette)) / (float)l_atlas->h;
 			float u1 = ((i + 1) * 8.0f) / (float)l_atlas->w;
-			float v1 = 8.0f * static_cast<float>(m_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
+			float v1 = 8.0f * static_cast<float>(ls_sel_tilemap_sub_palette + 1) / (float)l_atlas->h;
 
 			if (ImGui::ImageButton(std::format("###stile{}", i).c_str(),
 				l_atlas, ImVec2(32.0f, 32.0f), ImVec2(u0, v0), ImVec2(u1, v1))) {
-				m_sel_nes_tile = i;
+				ls_sel_nes_tile = i;
 			}
 
 			if (ImGui::IsItemHovered()) {
@@ -669,7 +689,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 			}
 
 			// Highlight if selected
-			if (i == m_sel_nes_tile) {
+			if (i == ls_sel_nes_tile) {
 				ImVec2 button_pos = ImGui::GetItemRectMin();
 				ImVec2 button_end = ImGui::GetItemRectMax();
 				ImGui::GetWindowDrawList()->AddRect(
@@ -689,7 +709,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		if (ui::imgui_slider_with_arrows("mtdeftl", "Top-Left",
 			l_mt_def.m_attr_tl, 0, 3))
-			generate_metatile_textures(p_rnd, m_sel_metatile);
+			mt_no_to_regen = m_sel_metatile;
 		ui::imgui_slider_with_arrows("mtdeftr", "Top-Right",
 			l_mt_def.m_attr_tr, 0, 3);
 		ui::imgui_slider_with_arrows("mtdefbl", "Bottom-Left",
@@ -703,8 +723,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 			"Create a copy of the selected metatile",
 			p_chunk.m_metatiles.size() >= 256)) {
 			p_chunk.m_metatiles.push_back(l_mt_def);
-			generate_metatile_textures(p_rnd,
-				p_chunk.m_metatiles.size() - 1);
+			mt_no_to_regen = p_chunk.m_metatiles.size() - 1;
 		}
 
 		ImGui::SameLine();
@@ -717,7 +736,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 				else {
 					m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
 					m_undo->clear_history(m_sel_chunk);
-					generate_metatile_textures(p_rnd);
+					mt_no_to_regen = 256; // regenerate all
 				}
 			}
 			else
@@ -726,19 +745,20 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::SeparatorText("Display chr-tiles");
 
-		if (ImGui::RadioButton("Tileset###mtchrdef", (m_chr_picker_mode == fe::ChrPickerMode::Default)))
-			m_chr_picker_mode = fe::ChrPickerMode::Default;
+		if (ImGui::RadioButton("Tileset###mtchrdef", (ls_chr_picker_mode == fe::ChrPickerMode::Default)))
+			ls_chr_picker_mode = fe::ChrPickerMode::Default;
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Include HUD tiles###mtchrhud", (m_chr_picker_mode == fe::ChrPickerMode::HUD)))
-			m_chr_picker_mode = fe::ChrPickerMode::HUD;
+		if (ImGui::RadioButton("Include HUD tiles###mtchrhud", (ls_chr_picker_mode == fe::ChrPickerMode::HUD)))
+			ls_chr_picker_mode = fe::ChrPickerMode::HUD;
 		ImGui::SameLine();
-		if (ImGui::RadioButton("Show All###mtchrall", (m_chr_picker_mode == fe::ChrPickerMode::All)))
-			m_chr_picker_mode = fe::ChrPickerMode::All;
+		if (ImGui::RadioButton("Show All###mtchrall", (ls_chr_picker_mode == fe::ChrPickerMode::All)))
+			ls_chr_picker_mode = fe::ChrPickerMode::All;
 
 		ImGui::SeparatorText("Sub-palette for rendering chr-tiles");
 
-		ui::imgui_slider_with_arrows("###mtsp", "", m_sel_tilemap_sub_palette, 0, 3, "",
+		ui::imgui_slider_with_arrows("###mtsp", "", ls_sel_tilemap_sub_palette, 0, 3, "",
 			false, true);
+
 		ImGui::EndTabItem();
 	}
 }

@@ -84,15 +84,9 @@ namespace fe {
 			m_sel_tile_x, m_sel_tile_y,
 			m_sel_tile_x2, m_sel_tile_y2,
 			// metatile select editor
-			m_sel_metatile, m_sel_tilemap_sub_palette,
-			// metatile definition editor
-			m_sel_nes_tile,
-			// spawn location editor
-			m_sel_spawn_location,
+			m_sel_metatile,
 			// npc bundles aka building parameters
 			m_sel_npc_bundle, m_sel_npc_bundle_sprite,
-			// selected stage
-			m_sel_stage,
 			// selected iscript
 			m_sel_iscript,
 			// gfx selectors
@@ -111,7 +105,6 @@ namespace fe {
 
 		fe::EditMode m_emode;
 		fe::GfxEditMode m_gfx_emode;
-		fe::ChrPickerMode m_chr_picker_mode;
 		std::size_t m_atlas_tileset_no, m_atlas_palette_no,
 			m_atlas_new_tileset_no, m_atlas_new_palette_no;
 		bool m_atlas_force_update;
