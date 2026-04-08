@@ -44,6 +44,13 @@
 		<!-- palette to music ptrs: palette list and music list -->
 		<pointer name="pal2mus_palette_ptr" value="0x3e55f" zero_addr="0x30010" />
 		<pointer name="pal2mus_music_ptr" value="0x3e569" zero_addr="0x30010" />
+		<!-- spawn point ptrs to lookup tables -->
+		<pointer name="spawn_screen_ptr" value="0x3dd75" zero_addr="0x30010" />
+		<pointer name="spawn_stage_ptr" value="0x3dd7a" zero_addr="0x30010" />
+		<pointer name="spawn_x_pos_ptr" value="0x3dd80" zero_addr="0x30010" />
+		<pointer name="spawn_y_pos_ptr" value="0x3dd85" zero_addr="0x30010" />
+		<pointer name="spawn_sprite_set_ptr" value="0x3dd8a" zero_addr="0x30010" />
+		<pointer name="spawn_world_ptr" value="0x3dd90" zero_addr="0x30010" />
 		<!-- ROM offset of iScript pointer table lo bytes; this will not be changed by the assembler (start of hi might, however) -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
@@ -99,6 +106,14 @@
 		<const name="mattock_animations_offset" value="0x3c69f" />
 		<const name="jump_on_animation_offset" value="0x3d6ff" />
 		<const name="pal2mus_entry_count_offset" value="0x3e55b" />
+		<!-- default spawn point count, can be overridden front-end (can not be deduced from rom with certainty) -->
+		<const name="spawn_count" value="8" />
+		<!-- offsets to the constants saying how many bits the spawn point uses when stored in a mantra -->
+		<const name="spawn_bit_count_decode_offset" region="us,us-rev-a,eu,randum" value="0x31607" />
+		<const name="spawn_bit_count_decode_offset" region="jp,en-transl" value="0x31a03" />
+		<const name="spawn_bit_count_encode_offset" region="us,randum" value="0x31780" />
+		<const name="spawn_bit_count_encode_offset" region="us-rev-a,eu" value="0x317c4" />
+		<const name="spawn_bit_count_encode_offset" region="jp,en-transl" value="0x31b93" />
 		<!-- path to mascon line-drawing constants -->
 		<const name="ptm_stage_no_offset" value="0x3d782" />
 		<const name="ptm_screen_no_offset" value="0x3d788" />
@@ -534,23 +549,28 @@
 			<entry byte="$00" str="0x3e579:0x3e587" />
 			<entry byte="$01" str="0x3ea57:0x3ea60" />
 			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3fcdd:0x3fff0" />
+			<entry byte="$03" str="0x3ddbd:0x3dded" />
+			<entry byte="$04" str="0x3fcdd:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="jp">
 			<entry byte="$00" str="0x3e579:0x3e587" />
 			<entry byte="$01" str="0x3ea57:0x3ea60" />
 			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3fdc2:0x3fff0" />
+			<entry byte="$03" str="0x3ddbd:0x3dded" />
+			<entry byte="$04" str="0x3fdc2:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="en-transl">
 			<entry byte="$00" str="0x3e579:0x3e587" />
 			<entry byte="$01" str="0x3ea57:0x3ea60" />
 			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3fe0a:0x3fff0" />
+			<entry byte="$03" str="0x3ddbd:0x3dded" />
+			<entry byte="$04" str="0x3fe0a:0x3fff0" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="randum">
-			<entry byte="$00" str="0x3ea57:0x3ea60" />
-			<entry byte="$01" str="0x3eabc:0x3eb3f" />
+			<entry byte="$00" str="0x3dfa9:0x3dfd5" />
+			<entry byte="$01" str="0x3ddbd:0x3dded" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" />
 		</byte_to_string_map>
 		<!-- mapping from world no to door destination index subtract value (default: 0) -->
 		<byte_to_string_map name="door_dest_index_sub">

@@ -71,7 +71,7 @@ namespace fe {
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_bank_15_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom,
-			bool p_encode_transitions = true, bool p_encode_pal2mus = true) const;
+			bool p_encode_pal2mus = true) const;
 
 		// encoding data in-place using a given address and stride-indexed
 		// no need to return anything here as the data is of fixed length
@@ -79,7 +79,6 @@ namespace fe {
 
 		void encode_palette_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_stage_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		void encode_spawn_locations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_mattock_animations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_push_block(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		void encode_jump_on_tiles(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
@@ -101,6 +100,7 @@ namespace fe {
 		std::vector<byte> read_bytes(const std::vector<byte>& p_rom, std::size_t p_offset, std::size_t p_count) const;
 		std::size_t get_ptr_table_entry_count(const std::vector<byte>& p_rom,
 			std::size_t p_ptr_rom_address, std::size_t p_zero_addr) const;
+		byte bits_needed(std::size_t p_count) const;
 
 		// cahcing utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;

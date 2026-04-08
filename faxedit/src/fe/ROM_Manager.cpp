@@ -223,6 +223,17 @@ std::size_t fe::ROM_Manager::get_ptr_table_entry_count(const std::vector<byte>& 
 	return result;
 }
 
+byte fe::ROM_Manager::bits_needed(std::size_t p_count) const {
+	if (p_count <= 1 || p_count >= 256)
+		return 1;
+
+	unsigned bits = 0;
+	while ((static_cast<std::size_t>(1) << bits) < p_count)
+		++bits;
+
+	return static_cast<byte>(bits);
+}
+
 // this function encodes the game sprite data in the same way as the original game
 std::vector<byte> fe::ROM_Manager::encode_game_sprite_data_new(const fe::Config& p_config,
 	const fe::Game& p_game) const {
@@ -425,8 +436,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 }
 
 std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_config,
-	const fe::Game& p_game, std::vector<byte>& p_rom,
-	bool p_encode_transitions, bool p_encode_pal2mus) const {
+	const fe::Game& p_game, std::vector<byte>& p_rom, bool p_encode_pal2mus) const {
 	constexpr bool PAD_WITH_FF{ false };
 
 	const auto freespace_strs{ p_config.bmap(c::ID_BANK15_FREE_SPACE) };
@@ -464,19 +474,47 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 	}
 
 	// pack all transition data
-	if (p_encode_transitions) {
-		std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
-		for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
-			l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
-			l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
-		}
-
-		all_bank15_data.push_back(l_all_sw_trans_data);
-		all_bank15_data.push_back(l_all_ow_trans_data);
-
-		ptrs.push_back(p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR));
-		ptrs.push_back(p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR));
+	std::vector<std::vector<byte>> l_all_sw_trans_data, l_all_ow_trans_data;
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		l_all_sw_trans_data.push_back(p_game.m_chunks[i].get_sameworld_transition_bytes());
+		l_all_ow_trans_data.push_back(p_game.m_chunks[i].get_otherworld_transition_bytes());
 	}
+
+	all_bank15_data.push_back(l_all_sw_trans_data);
+	all_bank15_data.push_back(l_all_ow_trans_data);
+
+	ptrs.push_back(p_config.pointer(c::ID_SAMEWORLD_TRANS_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_OTHERWORLD_TRANS_PTR));
+
+	// pack all spawn point data
+	std::vector<byte> spawn_world, spawn_screen, spawn_stage, spawn_xpos, spawn_ypos, spawn_spriteset;
+	for (const auto& spawn : p_game.m_spawn_locations) {
+		spawn_world.push_back(spawn.m_world);
+		spawn_screen.push_back(spawn.m_screen);
+		spawn_stage.push_back(spawn.m_stage);
+		spawn_xpos.push_back(spawn.m_x << 4);
+		spawn_ypos.push_back(spawn.m_y << 4);
+		spawn_spriteset.push_back(spawn.m_sprite_set);
+	}
+
+	all_bank15_data.push_back({ spawn_world });
+	all_bank15_data.push_back({ spawn_screen });
+	all_bank15_data.push_back({ spawn_stage });
+	all_bank15_data.push_back({ spawn_xpos });
+	all_bank15_data.push_back({ spawn_ypos });
+	all_bank15_data.push_back({ spawn_spriteset });
+
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_WORLD_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_SCREEN_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_STAGE_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_XPOS_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_YPOS_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_SPAWN_SPRITE_SET_PTR));
+
+	// patch the bit count part of the mantra - it needs to be wide enough to encode/decode all spawns
+	byte l_bits{ bits_needed(p_game.m_spawn_locations.size() - 1) };
+	p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET)) = l_bits;
+	p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
 
 	fe::GodAllocator allocator;
 	const auto allocresult{ allocator.init_and_allocate(ptrs, all_bank15_data, free_ranges,
@@ -504,7 +542,6 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 void fe::ROM_Manager::encode_static_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
 	encode_palette_data(p_config, p_game, p_rom);
 	encode_stage_data(p_config, p_game, p_rom);
-	encode_spawn_locations(p_config, p_game, p_rom);
 	encode_mattock_animations(p_config, p_game, p_rom);
 	encode_push_block(p_config, p_game, p_rom);
 	encode_jump_on_tiles(p_config, p_game, p_rom);
@@ -718,21 +755,6 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::ROM_Manager::build_pointer_t
 
 	// Step 4: Return pointer table and data section separately
 	return { pointer_table, data_section };
-}
-
-void fe::ROM_Manager::encode_spawn_locations(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	std::size_t l_spawn_loc_data_start{ p_config.constant(c::ID_SPAWN_LOC_DATA_START) };
-
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		const auto& l_sl{ p_game.m_spawn_locations.at(i) };
-
-		p_rom.at(l_spawn_loc_data_start + i) = static_cast<byte>(l_sl.m_world);
-		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(5 * 8) + i) = l_sl.m_screen;
-		p_rom.at(l_spawn_loc_data_start + 8 + i) = l_sl.m_x << 4;
-		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(2 * 8) + i) = l_sl.m_y << 4;
-		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(4 * 8) + i) = l_sl.m_stage;
-		p_rom.at(l_spawn_loc_data_start + static_cast<std::size_t>(3 * 8) + i) = l_sl.m_sprite_set;
-	}
 }
 
 void fe::ROM_Manager::encode_mattock_animations(const fe::Config& p_config,

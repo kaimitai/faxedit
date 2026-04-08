@@ -847,8 +847,6 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 		for (std::size_t i{ 0 }; i < p_bytes.size(); ++i)
 			if (m_game->m_rom_data[i] != p_bytes[i])
 				++byte_diffs;
-		if (byte_diffs == 0)
-			return 0;
 	}
 
 	if (!p_initial && m_region_override.empty()) {

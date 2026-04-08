@@ -113,6 +113,7 @@ namespace fe {
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 
+		void extract_spawn_points(const fe::Config& p_config, std::size_t p_spawn_count);
 		void extract_scenes_if_empty(const fe::Config& p_config);
 		void extract_palette_to_music(const fe::Config& p_config);
 		void extract_fog_parameters(const fe::Config& p_config);
@@ -123,6 +124,7 @@ namespace fe {
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;
+		std::size_t get_pointer_address(const std::pair<std::size_t, std::size_t>& p_ptr) const;
 		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;
 		std::vector<std::size_t> get_screen_pointers(std::size_t p_world_ptr) const;
 		void set_various(const fe::Config& p_config, std::size_t p_chunk_no,

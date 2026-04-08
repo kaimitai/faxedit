@@ -24,6 +24,13 @@ namespace fe {
 		constexpr char ID_PAL2MUS_PALETTE_PTR[]{ "pal2mus_palette_ptr" };
 		constexpr char ID_PAL2MUS_MUSIC_PTR[]{ "pal2mus_music_ptr" };
 		constexpr char ID_MUSIC_PTR[]{ "music_ptr" };
+		// spawn point ptrs
+		constexpr char ID_SPAWN_SCREEN_PTR[]{ "spawn_screen_ptr" };
+		constexpr char ID_SPAWN_STAGE_PTR[]{ "spawn_stage_ptr" };
+		constexpr char ID_SPAWN_XPOS_PTR[]{ "spawn_x_pos_ptr" };
+		constexpr char ID_SPAWN_YPOS_PTR[]{ "spawn_y_pos_ptr" };
+		constexpr char ID_SPAWN_SPRITE_SET_PTR[]{ "spawn_sprite_set_ptr" };
+		constexpr char ID_SPAWN_WORLD_PTR[]{ "spawn_world_ptr" };
 
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
@@ -49,6 +56,10 @@ namespace fe {
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
 		constexpr char ID_PAL2MUS_ENTRY_COUNT_OFFSET[]{ "pal2mus_entry_count_offset" };
+
+		// spawn point bit size offsets (mantra)
+		constexpr char ID_SPAWN_BIT_COUNT_DECODE_OFFSET[]{ "spawn_bit_count_decode_offset" };
+		constexpr char ID_SPAWN_BIT_COUNT_ENCODE_OFFSET[]{ "spawn_bit_count_encode_offset" };
 
 		// scene definition start offsets
 		constexpr char ID_WORLD_SCENE_OFFSET[]{ "world_scene_offset" };
@@ -136,6 +147,7 @@ namespace fe {
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
 		constexpr char ID_COMMAND_BYTE_COUNT[]{ "command_byte_count" };
+		constexpr char ID_SPAWN_COUNT[]{ "spawn_count" };
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };

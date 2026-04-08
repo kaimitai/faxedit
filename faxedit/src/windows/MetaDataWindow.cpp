@@ -137,48 +137,98 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				if (ImGui::BeginTabItem("Spawns")) {
 					static std::size_t ls_sel_spawn_location{ 0 };
+					static std::size_t ls_sel_spawn_count{ m_config.constant(c::ID_SPAWN_COUNT) };
 
 					ImGui::SeparatorText("Spawn locations after dying or restoring from mantra");
 
-					ui::imgui_slider_with_arrows("spawnloc", "",
-						ls_sel_spawn_location, 0, 7, "", false, true);
+					if (!m_game->m_spawn_locations.empty()) {
+						if (ls_sel_spawn_location >= m_game->m_spawn_locations.size())
+							ls_sel_spawn_location = 0;
 
-					ImGui::SeparatorText(std::format("Location for spawn point #{}", ls_sel_spawn_location).c_str());
+						ui::imgui_slider_with_arrows("spawnloc", "",
+							ls_sel_spawn_location, 0, m_game->m_spawn_locations.size() - 1, "", false, true);
 
-					auto& l_spawn{ m_game->m_spawn_locations.at(ls_sel_spawn_location) };
+						ImGui::SeparatorText(std::format("Location for spawn point #{}", ls_sel_spawn_location).c_str());
 
-					ui::imgui_slider_with_arrows("spawnworld",
-						std::format("World: {}", m_cache.m_labels_worlds.at(l_spawn.m_world)),
-						l_spawn.m_world, 0, 7);
+						auto& l_spawn{ m_game->m_spawn_locations.at(ls_sel_spawn_location) };
 
-					ui::imgui_slider_with_arrows("spawnscr", "Screen",
-						l_spawn.m_screen, 0, m_game->m_chunks.at(m_sel_chunk).m_screens.size() - 1);
+						ui::imgui_slider_with_arrows("spawnworld",
+							std::format("World: {}", get_description(l_spawn.m_world, m_cache.m_labels_worlds)),
+							l_spawn.m_world, 0, 7);
 
-					auto l_newpos = show_position_slider(l_spawn.m_x, l_spawn.m_y);
+						ui::imgui_slider_with_arrows("spawnscr", "Screen",
+							l_spawn.m_screen, 0, l_spawn.m_world < m_game->m_chunks.size() ?
+							m_game->m_chunks[l_spawn.m_world].m_screens.size() - 1 : 0);
 
-					if (l_newpos.has_value()) {
-						l_spawn.m_x = l_newpos.value().first;
-						l_spawn.m_y = l_newpos.value().second;
+						auto l_newpos = show_position_slider(l_spawn.m_x, l_spawn.m_y);
+
+						if (l_newpos.has_value()) {
+							l_spawn.m_x = l_newpos.value().first;
+							l_spawn.m_y = l_newpos.value().second;
+						}
+
+						ImGui::SeparatorText("Stage Number");
+
+						ui::imgui_slider_with_arrows("spawnstage", "",
+							l_spawn.m_stage, 0, 5);
+
+						ImGui::SeparatorText("Building Sprite Set for the spawn's Guru room");
+
+						ui::imgui_slider_with_arrows("spawnspriteset", "",
+							l_spawn.m_sprite_set, 0, m_game->m_npc_bundles.size() - 1);
+
+						if (l_spawn.m_sprite_set < m_game->m_npc_bundles.size())
+							show_sprite_set_contents(l_spawn.m_sprite_set);
+
+						ImGui::SeparatorText("Automatic Deduction");
+
+						if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
+
+							if (m_game->m_spawn_to_script_no.empty())
+								add_message("Use button 'Apply External ROM Changes' before trying to deduce spawn points", 6);
+							else
+								add_message(std::format("Fully deduced {} of {} spawn points",
+									m_game->calculate_spawn_locations_by_guru(),
+									m_game->m_spawn_locations.size()),
+									4);
+						}
+
+					}
+					else
+						ImGui::Text("No Spawn Points defined");
+
+					ImGui::SeparatorText("Spawn Point Operations");
+
+					if (ui::imgui_button("Add Spawn", 2, "Add a new spawn location",
+						m_game->m_spawn_locations.size() >= 0xff)) {
+						m_game->m_spawn_locations.push_back(fe::Spawn_location{
+							.m_world = 0,
+							.m_screen = 0,
+							.m_stage = 0,
+							.m_x = 0,
+							.m_y = 0,
+							.m_sprite_set = 0
+							});
 					}
 
-					ImGui::SeparatorText("Stage Number");
+					ImGui::SameLine();
 
-					ui::imgui_slider_with_arrows("spawnstage", "",
-						l_spawn.m_stage, 0, 5);
+					if (ui::imgui_button("Delete Spawn", 1, "Delete last spawn point",
+						m_game->m_spawn_locations.size() <= 1 ||
+						ls_sel_spawn_location != m_game->m_spawn_locations.size() - 1)) {
+						m_game->m_spawn_locations.pop_back();
+						--ls_sel_spawn_location;
+					}
 
-					ImGui::SeparatorText("Building Sprite Set for the spawn's Guru room");
+					ImGui::SeparatorText("Advanced option to load non-standard spawn counts directly from ROM");
 
-					ui::imgui_slider_with_arrows("spawnspriteset", "",
-						l_spawn.m_sprite_set, 0, m_game->m_npc_bundles.size() - 1);
+					ui::imgui_slider_with_arrows("###spwnreload",
+						std::format("ROM Spawns: {}", ls_sel_spawn_count),
+						ls_sel_spawn_count, 1, 255, "", false, true);
 
-					show_sprite_set_contents(l_spawn.m_sprite_set);
-
-					ImGui::SeparatorText("Automatic Deduction");
-
-					if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
-						add_message(std::format("Fully deduced {} of 8 spawn points",
-							m_game->calculate_spawn_locations_by_guru()),
-							4);
+					if (ui::imgui_button("Load Spawn Points from ROM", 4,
+						"Load the selected amount of spawn points directly from ROM (not necessary if you loaded from xml)")) {
+						m_game->extract_spawn_points(m_config, ls_sel_spawn_count);
 					}
 
 					ImGui::EndTabItem();

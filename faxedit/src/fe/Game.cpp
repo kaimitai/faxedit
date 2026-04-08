@@ -99,17 +99,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	}
 
 	// get the 8 spawn locations
-	std::size_t l_spawn_loc_data_start{ p_config.constant(c::ID_SPAWN_LOC_DATA_START) };
-	for (std::size_t i{ 0 }; i < 8; ++i) {
-		m_spawn_locations.push_back(fe::Spawn_location(
-			m_rom_data.at(l_spawn_loc_data_start + i),
-			m_rom_data.at(l_spawn_loc_data_start + 5 * 8 + i),
-			m_rom_data.at(l_spawn_loc_data_start + 4 * 8 + i),
-			m_rom_data.at(l_spawn_loc_data_start + 8 + i) >> 4,
-			m_rom_data.at(l_spawn_loc_data_start + 2 * 8 + i) >> 4,
-			m_rom_data.at(l_spawn_loc_data_start + 3 * 8 + i)
-		));
-	}
+	extract_spawn_points(p_config, p_config.constant_or(c::ID_SPAWN_COUNT, 8));
 
 	// extract mattock animations
 	std::size_t l_mattock_anim_offset{ p_config.constant(c::ID_MATTOCK_ANIM_OFFSET) };
@@ -217,6 +207,10 @@ std::size_t fe::Game::get_pointer_address(std::size_t p_offset,
 	};
 
 	return l_total_offset + l_value;
+}
+
+std::size_t fe::Game::get_pointer_address(const std::pair<std::size_t, std::size_t>& p_ptr) const {
+	return get_pointer_address(p_ptr.first, p_ptr.second);
 }
 
 std::vector<std::size_t> fe::Game::get_screen_pointers(std::size_t p_world_ptr) const {
@@ -376,7 +370,7 @@ int fe::Game::calculate_spawn_locations_by_guru(void) {
 
 					// if we match, update the spawn points vector with the chunk no,
 					// screen no and door location
-					if (l_sprite_found) {
+					if (l_sprite_found && l_spawn_no < m_spawn_locations.size()) {
 						std::optional<byte> l_stage_id;
 
 						const auto l_stage_idx{ m_stages.get_stage_idx_from_world(c) };
@@ -808,6 +802,31 @@ std::size_t fe::Game::get_default_palette_no(std::size_t p_chunk_no, std::size_t
 		return m_building_scenes.at(p_screen_no).m_palette;
 	else
 		return m_chunks.at(p_chunk_no).m_scene.m_palette;
+}
+
+void fe::Game::extract_spawn_points(const fe::Config& p_config, std::size_t p_spawn_count) {
+	const auto ptr_worlds{ p_config.pointer(c::ID_SPAWN_WORLD_PTR) };
+	const auto ptr_screens{ p_config.pointer(c::ID_SPAWN_SCREEN_PTR) };
+	const auto ptr_stage{ p_config.pointer(c::ID_SPAWN_STAGE_PTR) };
+	const auto ptr_xpos{ p_config.pointer(c::ID_SPAWN_XPOS_PTR) };
+	const auto ptr_ypos{ p_config.pointer(c::ID_SPAWN_YPOS_PTR) };
+	const auto ptr_sprite_set{ p_config.pointer(c::ID_SPAWN_SPRITE_SET_PTR) };
+
+	std::vector<fe::Spawn_location> l_spawns;
+
+	for (std::size_t i{ 0 }; i < p_spawn_count; ++i) {
+		l_spawns.push_back(fe::Spawn_location{
+			.m_world = m_rom_data.at(get_pointer_address(ptr_worlds) + i),
+			.m_screen = m_rom_data.at(get_pointer_address(ptr_screens) + i),
+			.m_stage = m_rom_data.at(get_pointer_address(ptr_stage) + i),
+			.m_x = static_cast<byte>(m_rom_data.at(get_pointer_address(ptr_xpos) + i) >> 4),
+			.m_y = static_cast<byte>(m_rom_data.at(get_pointer_address(ptr_ypos) + i) >> 4),
+			.m_sprite_set = m_rom_data.at(get_pointer_address(ptr_sprite_set) + i)
+			}
+		);
+	}
+
+	m_spawn_locations = l_spawns;
 }
 
 void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
