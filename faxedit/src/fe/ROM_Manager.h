@@ -102,7 +102,7 @@ namespace fe {
 			std::size_t p_ptr_rom_address, std::size_t p_zero_addr) const;
 		byte bits_needed(std::size_t p_count) const;
 
-		// cahcing utils
+		// caching utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
 	};
 

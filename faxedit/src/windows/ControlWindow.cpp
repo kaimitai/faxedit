@@ -326,7 +326,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 
 		l_bret = m_rom_manager.encode_bank_15_data(m_config, m_game.value(), x_rom,
 			!m_cache.m_disable_pal2_mus);
-		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music)", l_bret.first, l_bret.second);
+		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns)", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 
 		l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);

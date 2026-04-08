@@ -200,7 +200,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::SeparatorText("Spawn Point Operations");
 
 					if (ui::imgui_button("Add Spawn", 2, "Add a new spawn location",
-						m_game->m_spawn_locations.size() >= 0xff)) {
+						m_game->m_spawn_locations.size() > 0xff)) {
 						m_game->m_spawn_locations.push_back(fe::Spawn_location{
 							.m_world = 0,
 							.m_screen = 0,
@@ -209,6 +209,8 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 							.m_y = 0,
 							.m_sprite_set = 0
 							});
+
+						ls_sel_spawn_location = m_game->m_spawn_locations.size() - 1;
 					}
 
 					ImGui::SameLine();
