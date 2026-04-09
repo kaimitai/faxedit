@@ -110,10 +110,10 @@
 		<const name="spawn_count" value="8" />
 		<!-- offsets to the constants saying how many bits the spawn point uses when stored in a mantra -->
 		<const name="spawn_bit_count_decode_offset" region="us,us-rev-a,eu,randum" value="0x31607" />
-		<const name="spawn_bit_count_decode_offset" region="jp,en-transl" value="0x31a03" />
+		<const name="spawn_bit_count_decode_offset" region="jp" value="0x31a03" />
 		<const name="spawn_bit_count_encode_offset" region="us,randum" value="0x31780" />
 		<const name="spawn_bit_count_encode_offset" region="us-rev-a,eu" value="0x317c4" />
-		<const name="spawn_bit_count_encode_offset" region="jp,en-transl" value="0x31b93" />
+		<const name="spawn_bit_count_encode_offset" region="jp" value="0x31b93" />
 		<!-- path to mascon line-drawing constants -->
 		<const name="ptm_stage_no_offset" value="0x3d782" />
 		<const name="ptm_screen_no_offset" value="0x3d788" />

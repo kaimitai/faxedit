@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-6), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-6.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -118,21 +118,77 @@ The bottom section represents some start parameters:
 * y: Start y-Position on that screen
 * Starting Health: The health you start the game with
 
+<hr>
+
 ## Spawn Points
 
-During gameplay you will hold a spawn point value, which ranges from 0 to 7. When you speak to a spawn-point setting guru your value will be set. When you die, or restore the game from a mantra, the spawn point will also be restored. Whenever you die or restore, you are placed in the Guru room, and the spawn point is associated with some data that determines where in the game you will be when you exit the Guru room.
+During gameplay, the player always holds a spawn point value, starting at 0 and increasing upward.
+
+In the original game, there are eight spawn points (0–7). When you speak to a spawn‑setting Guru, your current spawn point is updated. When you die or restore from a mantra, the spawn point is restored as well.
+
+Whenever you die or restore, you appear inside the Guru room. The spawn point determines where you will be placed when exiting that room, including world, screen, coordinates, and stage.
 
 ![Spawn Points](./img/win_metadata_game_spawns.png)
 
-* Spawn location: Slider for selecting which spawn point to edit
-* World: The world you will be on when exiting the Guru room
-* Screen: The screen of that world you will be on
-* x and y: The position of that screen you will be on
-* Stage Number: The stage you will be on
+* **Spawn location** — Select which spawn point index to edit.
+* **World** — The world you will appear in after leaving the Guru room.
+* **Screen** — The screen within that world.
+* **x / y** — Your position on that screen.
+* **Stage Number** — The stage you will be on.
+* **Building Sprite Set** - The index of the Building Sprite Set the guru room will be populated with when you spawn. This will be the same sprite set that has a sprite which has a script that sets the spawn's index value. (iScript opcode SetSpawn)
 
-Note that stage cannot be deduced from the world, since most Guru doors are in the Towns world, which is not associated with a stage - it is therefore stored separately in the game.
+**Note**: Stage cannot be deduced from world alone. Many Guru doors are in the Towns world, which has no stage association, so the stage must be stored separately.
 
-* Deduce: The editor traverses all doors in the game and looks for spawn-setting gurus. Whenever it finds one, it sets the parameters for that spawn point based on the door entries. To determine stage number for doors not on a stage-world, it traverses the screens left and right until it finds and other-world transition - and if that world is associated with exactly one stage that stage number will be used. An output message will say whether deduction was successful or not. If you have one world mapped to several stages, for example, you need to handle some of these settings manually.
+### Deduce
+
+The Deduce button analyzes the ROM and attempts to infer spawn‑point data automatically:
+It scans all doors to buildings in the game.
+
+Whenever it finds a spawn‑setting NPC inside a building, it fills in the spawn‑point parameters based on the door’s destination.
+
+If a door is not on a stage‑world (Tows for example, where most Gurus are), the editor walks screens left and right of the door until it finds a world transition.
+
+If there is a transition to another worlds, and that world maps to exactly one stage, that stage is used.
+
+A message will indicate for how many spawn points deduction fully succeeded. Usually deduction can not happen for spawn 0, unless a script explicitly sets a spawn point to 0 somewhere - which is not done in the original game's scripts.
+
+If a world maps to multiple stages, for example, some spawn points must be set manually. Then deduction can not fully take place.
+
+**Important**: If you reload from XML, script information is not preserved, so deduction cannot run. Use Apply External ROM Changes in the Project Control window to refresh scripts before deducing.
+
+**Add Spawn**: Creates a new spawn point.
+
+To make the game actually use it, you must add a script (via [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) for example) that sets this spawn index when talking to an NPC.
+
+**Delete Spawn**: Removes the last spawn point.
+
+### Advanced Options
+
+These options allow extraction of a non‑standard number of spawn points from the ROM.
+
+By default, the editor loads 8 spawn points because the ROM does not explicitly store how many exist. If you know your ROM contains more (e.g., 12), you can:
+
+Set the slider to the desired number.
+
+Hold Shift.
+
+Click Load Spawn Points from ROM.
+
+Using the XML format is recommended because it explicitly records the number of spawn points.
+
+### Mantra Compatibility
+The original game encodes the spawn index using three bits, allowing values 0–7.
+If you add more spawn points, Echoes of Eolis will patch the mantra logic so all spawn points can be encoded and decoded correctly.
+
+However:
+
+All mantras will change.
+
+You cannot rely on mantras found online.
+
+Rest assured mantras will still be internally consistent within your modified ROM.
+
+You can generate mantras for non‑standard spawn counts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) for the US version of the ROM.
 
 ## Building Sprite Sets
 
@@ -204,7 +260,9 @@ Same-world doors can come with a palette change, which is part of the door's par
 
 ![pal2mus](./img/win_metadata_game_pal2mus.png)
 
-There are seven slots for palette to music definitions. If a palette change occurs and it has no entry in this map, the current music will keep playing as you enter the same-world door.
+If a palette change occurs and it has no entry in this map, the current music will keep playing as you enter the same-world door.
+
+You can also resize the mapping table with the Add and Delete buttons.
 
 ## Fog Metadata
 
@@ -231,6 +289,8 @@ Metatiles are defined on a per-world basis, and are used to make tilemaps for al
 The tiles on the bottom are chr-tiles used by this world's tilemap, and are used to define the metatile graphics. One chr-tile for each of the four quadrants of the metatile.
 
 Right-clicking on the metatile will place the selected NES-tile on the clicked quadrant. Ctrl+Left Click will select the NES-tile from the clicked quadrant. ("color picker").
+
+The Undo and Redo buttons interface with an edit history for each individual metatile - but only the tilemap portion; which chr-tiles it is composed of. Deleting screens or metatiles will clear all undo history, as will bmp import for world tilesets.
 
 The other things you can change for a metatile are the following:
 
@@ -272,7 +332,6 @@ No metatiles in the original game use this functionality. In the original game a
   * Tileset: Show only the chr-tiles which belong to the current world
   * Include HUD tiles: The same as above, but include the HUD tiles which are always loaded in the ppu during gameplay. Stable metatiles can be made out of these.
   * Show All: Will show all chr-tiles, including those which update dynamically during gameplay for text and such. Will cause visual glitches if used in a metatile definition, but could possibly be used creatively.
-
 
 * Add / Remove metatile: Adds a new metatile (as a copy of the currently selected metatile), or deletes the selected metatile. Metatiles which are placed on any screen tilemap cannot be deleted. The same goes for metatiles that are part of mattock animations and block-push parameters.
 

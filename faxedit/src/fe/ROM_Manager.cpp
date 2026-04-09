@@ -513,15 +513,18 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 
 	// patch the bit count part of the mantra - it needs to be wide enough to encode/decode all spawns
 	byte l_bits{ bits_needed(p_game.m_spawn_locations.size()) };
-	p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET)) = l_bits;
-	p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
+
+	if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET))
+		p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET)) = l_bits;
+	if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET))
+		p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
 
 	fe::GodAllocator allocator;
 	const auto allocresult{ allocator.init_and_allocate(ptrs, all_bank15_data, free_ranges,
 		PAD_WITH_FF) };
 
 	if (!allocresult)
-		throw std::runtime_error(std::format("Could not pack all bank 15 data within {} bytes",
+		throw std::runtime_error(std::format("Could not pack all bank 15 data (transitions, palette-to-music, spawns) within {} bytes",
 			total_free_space));
 	else {
 		const auto& ptrtablewrites{ allocresult->ptr_table_writes };

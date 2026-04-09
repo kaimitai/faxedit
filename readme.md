@@ -8,6 +8,8 @@ Make sure to read the [documentation](./docs/doc.md) for a detailed overview of 
 
 This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
 
+The application is compatible out of the box with the following ROM regions: US, US Revision A, EU, JP and a well-known [English Translation Hack](https://www.romhacking.net/translations/4281/).
+
 <hr>
 
 ## Editor Capabilities
@@ -78,6 +80,12 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 <hr>
 
 ### Version History
+
+* 2025-04-09: version beta-6.2
+
+  * Dynamic palette to music mapping! You’re no longer limited to the original fixed table. Every palette used when passing through a same‑world door can now have its own music track. This opens the door to region‑specific ambience, thematic transitions, and custom world moods.
+  * Spawn points are no longer capped at the original 0–7 range. You can now create additional spawn‑setting scripts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) and assign them to new building NPCs. Echoes of Eolis automatically updates mantra encoding/decoding logic to support any number of spawn points you define.
+  * Added undo/redo for manual metatile definitions
 
 * 2025-04-02: version beta-6.1
 

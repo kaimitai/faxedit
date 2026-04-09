@@ -226,10 +226,11 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					ui::imgui_slider_with_arrows("###spwnreload",
 						std::format("ROM Spawns: {}", ls_sel_spawn_count),
-						ls_sel_spawn_count, 1, 255, "", false, true);
+						ls_sel_spawn_count, 1, 256, "", false, true);
 
 					if (ui::imgui_button("Load Spawn Points from ROM", 4,
-						"Load the selected amount of spawn points directly from ROM (not necessary if you loaded from xml)")) {
+						"Load the selected amount of spawn points directly from ROM (not necessary if you loaded from xml, or if the rom has a standard spawn count)",
+						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						m_game->extract_spawn_points(m_config, ls_sel_spawn_count);
 					}
 
