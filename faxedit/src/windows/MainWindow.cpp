@@ -912,6 +912,7 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_cache.m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
 	m_cache.m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
 	m_cache.m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
+	m_cache.m_labels_buildings = m_config.bmap(c::ID_BUILDING_LABELS);
 
 	// constants
 	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
@@ -920,7 +921,6 @@ void fe::MainWindow::cache_config_variables(void) {
 	// maps we convert to vectors
 	m_cache.m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
 	m_cache.m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_cache.m_sprite_count);
-	m_cache.m_labels_buildings = m_config.bmap_as_vec(c::ID_BUILDING_LABELS, c::WORLD_BUILDINGS_SCREEN_COUNT);
 	m_cache.m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
 		m_config.constant(c::ID_WORLD_TILESET_COUNT));
 

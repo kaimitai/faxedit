@@ -31,6 +31,11 @@ namespace fe {
 		constexpr char ID_SPAWN_YPOS_PTR[]{ "spawn_y_pos_ptr" };
 		constexpr char ID_SPAWN_SPRITE_SET_PTR[]{ "spawn_sprite_set_ptr" };
 		constexpr char ID_SPAWN_WORLD_PTR[]{ "spawn_world_ptr" };
+		// building scene ptrs
+		constexpr char ID_BLD_SCENE_PALETTE_PTR[]{ "building_scene_palette_ptr" };
+		constexpr char ID_BLD_SCENE_TILESET_PTR[]{ "building_scene_tileset_ptr" };
+		constexpr char ID_BLD_SCENE_POS_PTR[]{ "building_scene_pos_ptr" };
+		constexpr char ID_BLD_SCENE_MUSIC_PTR[]{ "building_scene_music_ptr" };
 
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
@@ -63,7 +68,6 @@ namespace fe {
 
 		// scene definition start offsets
 		constexpr char ID_WORLD_SCENE_OFFSET[]{ "world_scene_offset" };
-		constexpr char ID_BUILDING_SCENE_OFFSET[]{ "building_scene_offset" };
 
 		// fog parameter offsets
 		constexpr char ID_FOG_WORLD_OFFSET[]{ "fog_world_offset" };
@@ -168,7 +172,6 @@ namespace fe {
 		// move them to xml if it becomes necessary
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
-		constexpr std::size_t WORLD_BUILDINGS_SCREEN_COUNT{ 10 };
 		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
 
 		// gfx tilemap image keys

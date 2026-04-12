@@ -384,7 +384,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 						if (ui::imgui_slider_with_arrows("doordestscreen",
 							l_door.m_door_type == fe::DoorType::Building ?
-							"Destination Screen: " + m_cache.m_labels_buildings[l_dest_screen] : "Destination Screen"
+							std::format("Destination Screen: {}", get_description(l_dest_screen, m_cache.m_labels_buildings)) :
+							"Destination Screen"
 							, l_dest_screen, 0, m_game->m_chunks.at(l_dest_world).m_screens.size() - 1,
 							l_dest_tooltip))
 							l_door.m_dest_screen_id = l_dest_screen;
@@ -652,26 +653,42 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 			ImGui::SeparatorText("Add / Remove Screens");
 
-			if (ui::imgui_button("Add Screen", 2, "", m_sel_chunk == c::CHUNK_IDX_BUILDINGS || l_chunk.m_screens.size() == 0xff)) {
-				l_chunk.m_screens.push_back(fe::Screen());
-				l_chunk.m_screens.back().initialize_tilemap();
+			if (ui::imgui_button("Add Screen", 2, "", l_chunk.m_screens.size() == 0xff)) {
+
+				if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS) {
+					if (m_sel_screen < l_chunk.m_screens.size()) {
+						l_chunk.m_screens.push_back(l_chunk.m_screens.at(m_sel_screen));
+						m_game->m_building_scenes.push_back(m_game->m_building_scenes.at(m_sel_screen));
+					}
+				}
+				else {
+					l_chunk.m_screens.push_back(fe::Screen());
+					l_chunk.m_screens.back().initialize_tilemap();
+				}
+
 				m_sel_screen = l_chunk.m_screens.size() - 1;
 			}
 
 			ImGui::SameLine();
 
 			if (ui::imgui_button("Delete Screen", 1, "",
-				l_chunk.m_screens.size() == 1 || m_sel_chunk == c::CHUNK_IDX_BUILDINGS ||
-				!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+				l_chunk.m_screens.size() <= 1 || !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
 				if (m_game->is_screen_referenced(m_sel_chunk,
 					m_sel_screen))
 					add_message("Screen has references", 1);
 				else {
 					m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
 					m_undo->clear_history(m_sel_chunk);
+
 					if (m_sel_screen >= l_chunk.m_screens.size())
 						--m_sel_screen;
+
+					if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
+						set_atlas_update_values();
 				}
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
 			}
 
 		}
@@ -904,4 +921,9 @@ void fe::MainWindow::show_sprite_set_contents(std::size_t p_sprite_set) {
 		if (l_spr_count - s != 1)
 			ImGui::Separator();
 	}
+}
+
+void fe::MainWindow::set_atlas_update_values(void) {
+	m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+	m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 }

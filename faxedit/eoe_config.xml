@@ -51,6 +51,11 @@
 		<pointer name="spawn_y_pos_ptr" value="0x3dd85" zero_addr="0x30010" />
 		<pointer name="spawn_sprite_set_ptr" value="0x3dd8a" zero_addr="0x30010" />
 		<pointer name="spawn_world_ptr" value="0x3dd90" zero_addr="0x30010" />
+		<!-- building scene ptrs to lookup tables -->
+		<pointer name="building_scene_palette_ptr" value="0x3e592" zero_addr="0x30010" />
+		<pointer name="building_scene_tileset_ptr" value="0x3e597" zero_addr="0x30010" />
+		<pointer name="building_scene_pos_ptr" value="0x3e59d" zero_addr="0x30010" />
+		<pointer name="building_scene_music_ptr" value="0x3e5a8" zero_addr="0x30010" />
 		<!-- ROM offset of iScript pointer table lo bytes; this will not be changed by the assembler (start of hi might, however) -->
 		<pointer name="iscript_ptr_lo" region="jp,en-transl" value="0x32377" zero_addr="0x28010" />
 		<pointer name="iscript_ptr_lo" region="us,randum" value="0x31f7b" zero_addr="0x28010" />
@@ -164,9 +169,6 @@
 		<const name="chr_hud_tile_offset" value="0x28150" />
 		<const name="world_tileset_to_addr_offset" value="0x3cf17" />
 		<!-- scene offsets -->
-		<!-- 10 entries, one for each building room -->
-		<!-- music, palettes, tilesets and start positions  -->
-		<const name="building_scene_offset" value="0x3e60f" />
 		<!-- 8 entries, one for each world -->
 		<!-- tileset, palettes, start pos (unused) and music -->
 		<const name="world_scene_offset" value="0x3df54" />
@@ -546,31 +548,35 @@
 		</byte_to_string_map>
 		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
 		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
-			<entry byte="$00" str="0x3e579:0x3e587" />
-			<entry byte="$01" str="0x3ea57:0x3ea60" />
-			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3ddbd:0x3dded" />
-			<entry byte="$04" str="0x3fcdd:0x3fff0" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="jp">
-			<entry byte="$00" str="0x3e579:0x3e587" />
-			<entry byte="$01" str="0x3ea57:0x3ea60" />
-			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3ddbd:0x3dded" />
-			<entry byte="$04" str="0x3fdc2:0x3fff0" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="en-transl">
-			<entry byte="$00" str="0x3e579:0x3e587" />
-			<entry byte="$01" str="0x3ea57:0x3ea60" />
-			<entry byte="$02" str="0x3eabc:0x3eb3f" />
-			<entry byte="$03" str="0x3ddbd:0x3dded" />
-			<entry byte="$04" str="0x3fe0a:0x3fff0" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="randum">
-			<entry byte="$00" str="0x3dfa9:0x3dfd5" />
-			<entry byte="$01" str="0x3ddbd:0x3dded" />
+			<entry byte="$00" str="0x3e60f:0x3e637" />
+			<entry byte="$01" str="0x3e579:0x3e587" />
 			<entry byte="$02" str="0x3ea57:0x3ea60" />
 			<entry byte="$03" str="0x3eabc:0x3eb3f" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" />
+			<entry byte="$05" str="0x3fcdd:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="jp">
+			<entry byte="$00" str="0x3e60f:0x3e637" />
+			<entry byte="$01" str="0x3e579:0x3e587" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" />
+			<entry byte="$05" str="0x3fdc2:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="en-transl">
+			<entry byte="$00" str="0x3e60f:0x3e637" />
+			<entry byte="$01" str="0x3e579:0x3e587" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" />
+			<entry byte="$05" str="0x3fe0a:0x3fff0" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="randum">
+			<entry byte="$00" str="0x3e60f:0x3e637" />
+			<entry byte="$01" str="0x3dfa9:0x3dfd5" />
+			<entry byte="$02" str="0x3ddbd:0x3dded" />
+			<entry byte="$03" str="0x3ea57:0x3ea60" />
+			<entry byte="$04" str="0x3eabc:0x3eb3f" />
 		</byte_to_string_map>
 		<!-- mapping from world no to door destination index subtract value (default: 0) -->
 		<byte_to_string_map name="door_dest_index_sub">

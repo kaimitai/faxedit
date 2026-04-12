@@ -561,9 +561,9 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 		m_push_block.m_screen = remap[m_push_block.m_screen];
 
 	// spawn locations
-	for (std::size_t i{ 0 }; i < 8; ++i)
-		if (m_spawn_locations.at(i).m_world == p_chunk_no)
-			m_spawn_locations[i].m_screen = remap[m_spawn_locations[i].m_screen];
+	for (auto& spawn : m_spawn_locations)
+		if (spawn.m_world == p_chunk_no)
+			spawn.m_screen = remap[spawn.m_screen];
 
 	// stage screens
 	for (auto& l_stage : m_stages.m_stages) {
@@ -593,12 +593,6 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 				if (l_scr[s].m_scroll_down.has_value())
 					l_scr[s].m_scroll_down = remap[l_scr[s].m_scroll_down.value()];
 
-				// re-index same-world door destinations
-				for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
-					if (l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
-						l_scr[s].m_doors[d].m_dest_screen_id = remap[l_scr[s].m_doors[d].m_dest_screen_id];
-				}
-
 				// re-index same-world transitions
 				if (l_scr[s].m_interchunk_scroll.has_value()) {
 					l_scr[s].m_interchunk_scroll.value().m_dest_screen =
@@ -607,14 +601,34 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 
 			}
 
-			// re-index same-world transitions
+			// doors
+			for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
+				// re-index same-world door destinations
+				if (c == p_chunk_no && l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
+					l_scr[s].m_doors[d].m_dest_screen_id = remap[l_scr[s].m_doors[d].m_dest_screen_id];
+				// re-index doors to buildings
+				if (p_chunk_no == c::CHUNK_IDX_BUILDINGS &&
+					l_scr[s].m_doors[d].m_door_type == fe::DoorType::Building)
+					l_scr[s].m_doors[d].m_dest_screen_id =
+					remap[l_scr[s].m_doors[d].m_dest_screen_id];
+			}
+
+			// re-index other-world transitions
 			if (l_scr[s].m_intrachunk_scroll.has_value() &&
 				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == p_chunk_no) {
 				l_scr[s].m_intrachunk_scroll.value().m_dest_screen =
 					remap[l_scr[s].m_intrachunk_scroll.value().m_dest_screen];
 			}
 		}
+	}
 
+	// for buildings screens, we have to delete the corresponding scene objects
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS) {
+		std::vector<byte> to_delete(p_scr_to_delete.begin(), p_scr_to_delete.end());
+		std::sort(to_delete.rbegin(), to_delete.rend());
+
+		for (byte idx : to_delete)
+			m_building_scenes.erase(m_building_scenes.begin() + idx);
 	}
 }
 
@@ -654,7 +668,7 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 		l_result.insert(m_push_block.m_screen);
 
 	// spawn locations
-	for (std::size_t i{ 0 }; i < 8; ++i)
+	for (std::size_t i{ 0 }; i < m_spawn_locations.size(); ++i)
 		if (m_spawn_locations.at(i).m_world == p_chunk_no)
 			l_result.insert(m_spawn_locations[i].m_screen);
 
@@ -692,13 +706,6 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 				// same-world transition ref
 				if (l_scr[s].m_interchunk_scroll.has_value())
 					l_result.insert(l_scr[s].m_interchunk_scroll.value().m_dest_screen);
-
-				// door refs - only need to check same-world
-				// we don't delete building screens, and other-world doors
-				// are defined in chunk metadata
-				for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d)
-					if (l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
-						l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
 			}
 
 			// other-world transitions - could possibly come from the same world
@@ -706,8 +713,25 @@ std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 			if (l_scr[s].m_intrachunk_scroll.has_value() &&
 				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == p_chunk_no)
 				l_result.insert(l_scr[s].m_intrachunk_scroll.value().m_dest_screen);
+
+			// doors
+			for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
+				// same-world doors
+				if (i == p_chunk_no && l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
+					l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
+				// doors to building - only relevant for the buildings world
+				if (p_chunk_no == c::CHUNK_IDX_BUILDINGS &&
+					l_scr[s].m_doors[d].m_door_type == fe::DoorType::Building)
+					l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
+			}
 		}
 
+	}
+
+	// buildings screens 0 and 1 are referenced directly in game code
+	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS) {
+		l_result.insert(0);
+		l_result.insert(1);
 	}
 
 	return l_result;
@@ -748,6 +772,11 @@ std::size_t fe::Game::delete_unreferenced_screens(std::size_t p_chunk_no) {
 	for (std::size_t i{ 0 }; i < l_chunk.m_screens.size(); ++i)
 		if (l_refs.find(static_cast<byte>(i)) == end(l_refs))
 			scrs_to_delete.insert(static_cast<byte>(i));
+
+	// make sure not all screens are deleted!
+	if (!l_chunk.m_screens.empty() &&
+		scrs_to_delete.size() == l_chunk.m_screens.size())
+		scrs_to_delete.erase(*scrs_to_delete.begin());
 
 	delete_screens(p_chunk_no, scrs_to_delete);
 
@@ -804,6 +833,10 @@ std::size_t fe::Game::get_default_palette_no(std::size_t p_chunk_no, std::size_t
 		return m_chunks.at(p_chunk_no).m_scene.m_palette;
 }
 
+std::size_t fe::Game::get_building_screen_count(void) const {
+	return m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size();
+}
+
 void fe::Game::extract_spawn_points(const fe::Config& p_config, std::size_t p_spawn_count) {
 	const auto ptr_worlds{ p_config.pointer(c::ID_SPAWN_WORLD_PTR) };
 	const auto ptr_screens{ p_config.pointer(c::ID_SPAWN_SCREEN_PTR) };
@@ -830,25 +863,25 @@ void fe::Game::extract_spawn_points(const fe::Config& p_config, std::size_t p_sp
 }
 
 void fe::Game::extract_scenes_if_empty(const fe::Config& p_config) {
-
 	// set building scenes
-	while (m_building_scenes.size() < c::WORLD_BUILDINGS_SCREEN_COUNT)
-		m_building_scenes.push_back(fe::Scene());
+	const auto ptr_bld_scene_pal{ p_config.pointer(c::ID_BLD_SCENE_PALETTE_PTR) };
+	const auto ptr_bld_scene_tileset{ p_config.pointer(c::ID_BLD_SCENE_TILESET_PTR) };
+	const auto ptr_bld_scene_pos{ p_config.pointer(c::ID_BLD_SCENE_POS_PTR) };
+	const auto ptr_bld_scene_music{ p_config.pointer(c::ID_BLD_SCENE_MUSIC_PTR) };
 
-	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_SCENE_OFFSET) };
+	// std::size_t p_palette, std::size_t p_tileset, std::size_t p_music, byte p_x, byte p_y
 
-	for (std::size_t i{ 0 }; i < m_building_scenes.size(); ++i) {
-		if (m_building_scenes[i].m_palette == 256)
-			m_building_scenes[i].m_palette = m_rom_data.at(l_bscene_start + c::WORLD_BUILDINGS_SCREEN_COUNT + i);
-		if (m_building_scenes[i].m_tileset == 256)
-			m_building_scenes[i].m_tileset = m_rom_data.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i);
-		if (m_building_scenes[i].m_music == 256)
-			m_building_scenes[i].m_music = m_rom_data.at(l_bscene_start + i);
-		if (m_building_scenes[i].m_x >= 16) {
-			byte pos{ m_rom_data.at(l_bscene_start + 3 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) };
-			m_building_scenes[i].m_x = pos % 16;
-			m_building_scenes[i].m_y = pos / 16;
-		}
+	for (std::size_t i{ m_building_scenes.size() };
+		i < m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size();
+		++i) {
+		byte l_pos{ m_rom_data.at(get_pointer_address(ptr_bld_scene_pos) + i) };
+
+		m_building_scenes.push_back(fe::Scene(
+			static_cast<std::size_t>(m_rom_data.at(get_pointer_address(ptr_bld_scene_pal) + i)),
+			static_cast<std::size_t>(m_rom_data.at(get_pointer_address(ptr_bld_scene_tileset) + i)),
+			static_cast<std::size_t>(m_rom_data.at(get_pointer_address(ptr_bld_scene_music) + i)),
+			l_pos % 16, l_pos / 16)
+		);
 	}
 
 	// set scene values for each world

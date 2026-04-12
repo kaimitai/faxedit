@@ -519,12 +519,31 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 	if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET))
 		p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
 
+	// pack all building scene data
+	std::vector<byte> bld_scene_pal, bld_scene_tileset, bld_scene_pos, bld_scene_mus;
+	for (const auto& bscene : p_game.m_building_scenes) {
+		bld_scene_pal.push_back(static_cast<byte>(bscene.m_palette));
+		bld_scene_tileset.push_back(static_cast<byte>(bscene.m_tileset));
+		bld_scene_pos.push_back(static_cast<byte>(bscene.m_x + 16 * bscene.m_y));
+		bld_scene_mus.push_back(static_cast<byte>(bscene.m_music));
+	}
+
+	all_bank15_data.push_back({ bld_scene_pal });
+	all_bank15_data.push_back({ bld_scene_tileset });
+	all_bank15_data.push_back({ bld_scene_pos });
+	all_bank15_data.push_back({ bld_scene_mus });
+
+	ptrs.push_back(p_config.pointer(c::ID_BLD_SCENE_PALETTE_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_BLD_SCENE_TILESET_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_BLD_SCENE_POS_PTR));
+	ptrs.push_back(p_config.pointer(c::ID_BLD_SCENE_MUSIC_PTR));
+
 	fe::GodAllocator allocator;
 	const auto allocresult{ allocator.init_and_allocate(ptrs, all_bank15_data, free_ranges,
 		PAD_WITH_FF) };
 
 	if (!allocresult)
-		throw std::runtime_error(std::format("Could not pack all bank 15 data (transitions, palette-to-music, spawns) within {} bytes",
+		throw std::runtime_error(std::format("Could not pack all bank 15 data (transitions, palette-to-music, spawns, building scenes) within {} bytes",
 			total_free_space));
 	else {
 		const auto& ptrtablewrites{ allocresult->ptr_table_writes };
@@ -797,18 +816,6 @@ void fe::ROM_Manager::encode_jump_on_tiles(const fe::Config& p_config,
 
 void fe::ROM_Manager::encode_scene_data(const fe::Config& p_config, const fe::Game& p_game,
 	std::vector<byte>& p_rom) const {
-
-	// patch building screen scenes
-	std::size_t l_bscene_start{ p_config.constant(c::ID_BUILDING_SCENE_OFFSET) };
-	const auto& bscenes{ p_game.m_building_scenes };
-
-	for (std::size_t i{ 0 }; i < bscenes.size(); ++i) {
-		p_rom.at(l_bscene_start + i) = static_cast<byte>(bscenes[i].m_music);
-		p_rom.at(l_bscene_start + c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_palette);
-		p_rom.at(l_bscene_start + 2 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) = static_cast<byte>(bscenes[i].m_tileset);
-		p_rom.at(l_bscene_start + 3 * c::WORLD_BUILDINGS_SCREEN_COUNT + i) = bscenes[i].get_pos_as_byte();
-	}
-
 	// patch scenes for each world
 	std::size_t l_wscene_start{ p_config.constant(c::ID_WORLD_SCENE_OFFSET) };
 	const auto& wscenes{ p_game.m_chunks };

@@ -187,7 +187,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		std::map<byte, std::set<std::size_t>> l_mt_usage; // <metatile no> -> set <tileset no>
 		const auto& buildingscreens{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens };
 
-		for (std::size_t i{ 0 }; i < c::WORLD_BUILDINGS_SCREEN_COUNT; ++i) {
+		for (std::size_t i{ 0 }; i < buildingscreens.size(); ++i) {
 			std::size_t tileset_no{ m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) };
 
 			for (std::size_t y{ 0 }; y < 13; ++y)
@@ -326,7 +326,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 
 		l_bret = m_rom_manager.encode_bank_15_data(m_config, m_game.value(), x_rom,
 			!m_cache.m_disable_pal2_mus);
-		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns)", l_bret.first, l_bret.second);
+		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns, building scenes)", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 
 		l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);

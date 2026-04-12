@@ -99,7 +99,7 @@ namespace fe {
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;
 
 		bool is_metatile_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
-		bool is_screen_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
+		bool is_screen_referenced(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 
 		void delete_metatiles(std::size_t p_chunk_no, const std::unordered_set<byte>& p_mt_to_delete);
 		void delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete);
@@ -112,6 +112,7 @@ namespace fe {
 
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 		std::size_t get_default_palette_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::size_t get_building_screen_count(void) const;
 
 		void extract_spawn_points(const fe::Config& p_config, std::size_t p_spawn_count);
 		void extract_scenes_if_empty(const fe::Config& p_config);
