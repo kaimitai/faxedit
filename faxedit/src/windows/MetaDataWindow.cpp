@@ -112,8 +112,8 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 							if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
 								set_atlas_update_values();
 						}
-						add_message(std::format("{} screens deleted from world {}",
-							l_del_cnt, m_sel_chunk), 5);
+						add_message(std::format("{} screen(s) deleted from world {}",
+							l_del_cnt, m_sel_chunk), 6);
 					}
 
 					ImGui::EndTabItem();

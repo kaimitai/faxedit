@@ -7,6 +7,7 @@
 #include <vector>
 #include "./../common/klib/NES_tile.h"
 #include "Chunk.h"
+#include "ScreenRef.h"
 #include "StageManager.h"
 #include "Scene.h"
 #include "PaletteMusicMap.h"
@@ -97,9 +98,11 @@ namespace fe {
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_chunk_no) const;
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;
+		std::vector<ScreenRef> collect_screen_refs(void) const;
+		std::vector<ScreenRef> get_refs_to_screen(std::size_t p_world, std::size_t p_screen) const;
 
 		bool is_metatile_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
-		bool is_screen_referenced(std::size_t p_chunk_no, std::size_t p_screen_no) const;
+		std::size_t get_screen_reference_count(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 
 		void delete_metatiles(std::size_t p_chunk_no, const std::unordered_set<byte>& p_mt_to_delete);
 		void delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete);

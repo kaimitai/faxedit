@@ -52,7 +52,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_exit_app_requested{ false },
 	m_exit_app_granted{ false }
 {
-	add_message("It is recommended to read the documentation for usage tips", 5);
+	add_message("It is recommended to read the documentation for usage tips", 6);
 	add_message("For script and music editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
@@ -60,8 +60,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", 4);
 	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
 	add_message(std::format("Build date: {} {} CET",
-		__DATE__, __TIME__), 5);
-	add_message(std::format("Version: {}", c::APP_VERSION), 5);
+		__DATE__, __TIME__), 6);
+	add_message(std::format("Version: {}", c::APP_VERSION), 6);
 	add_message("https://github.com/kaimitai/faxedit", 2);
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
@@ -746,7 +746,7 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) {
-	add_message("Attempting to load file " + p_filepath, 5);
+	add_message("Attempting to load file " + p_filepath, 6);
 	const auto config_files{ get_config_file_paths() };
 	auto l_config_xml_path{ config_files.first };
 	auto l_config_override_xml_path{ config_files.second };

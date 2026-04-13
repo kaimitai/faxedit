@@ -237,7 +237,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	try {
-		add_message("Attempting to load xml " + get_xml_path(), 5);
+		add_message("Attempting to load xml " + get_xml_path(), 6);
 
 		// keep old game around until we know everything succeeded
 		auto old_game{ m_game.value() };

@@ -673,9 +673,12 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 			if (ui::imgui_button("Delete Screen", 1, "",
 				l_chunk.m_screens.size() <= 1 || !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
-				if (m_game->is_screen_referenced(m_sel_chunk,
-					m_sel_screen))
-					add_message("Screen has references", 1);
+				std::size_t l_scr_ref_count{ m_game->get_screen_reference_count(
+				m_sel_chunk, m_sel_screen
+				) };
+
+				if (l_scr_ref_count > 0)
+					add_message(std::format("Cannot delete screen ({} references)", l_scr_ref_count), 1);
 				else {
 					m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
 					m_undo->clear_history(m_sel_chunk);
@@ -685,6 +688,30 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 					if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
 						set_atlas_update_values();
+
+					add_message("Screen deleted", 2);
+				}
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SameLine();
+
+			if (ui::imgui_button("List References", 4, "")) try {
+				const auto screenrefs{ m_game->get_refs_to_screen(m_sel_chunk, m_sel_screen) };
+
+				if (screenrefs.empty())
+					add_message("Screen has no references", 6);
+				else {
+					if (screenrefs.size() > 10)
+						add_message(std::format("...and {} more", screenrefs.size() - 10), 6);
+
+					for (std::size_t i{ 0 }; i < screenrefs.size() && i < 10; ++i)
+						add_message(screenrefs[i].to_string(), 6);
+
+					add_message(std::format("References to World {}, Screen {} ({})",
+						m_sel_chunk, m_sel_screen, screenrefs.size()), 4);
 				}
 			}
 			catch (const std::exception& ex) {

@@ -660,81 +660,150 @@ std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const 
 
 std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
 	std::set<byte> l_result;
+	const auto screenrefs{ collect_screen_refs() };
 
-	// handle metadata
+	for (const auto& screenref : screenrefs)
+		if (screenref.dst_world == p_chunk_no)
+			l_result.insert(static_cast<byte>(screenref.dst_screen));
+
+	return l_result;
+}
+
+std::vector<fe::ScreenRef> fe::Game::collect_screen_refs(void) const {
+	std::vector<ScreenRef> refs;
+
+	const auto add_ref = [&](std::optional<std::size_t> src_world,
+		std::optional<std::size_t> src_screen,
+		std::size_t dst_world,
+		std::size_t dst_screen,
+		ScreenRef::Type type) {
+			refs.push_back({
+				src_world,
+				src_screen,
+				dst_world,
+				dst_screen,
+				type
+				});
+		};
 
 	// push-block
-	if (m_push_block.m_stage == p_chunk_no)
-		l_result.insert(m_push_block.m_screen);
+	if (m_push_block.m_stage < m_stages.m_stages.size()) {
+		add_ref(std::nullopt, std::nullopt,
+			m_stages.m_stages[m_push_block.m_stage].m_world_id,
+			m_push_block.m_screen,
+			ScreenRef::Type::PushBlock);
+	}
 
-	// spawn locations
-	for (std::size_t i{ 0 }; i < m_spawn_locations.size(); ++i)
-		if (m_spawn_locations.at(i).m_world == p_chunk_no)
-			l_result.insert(m_spawn_locations[i].m_screen);
+	// spawns
+	for (const auto& spawn : m_spawn_locations) {
+		add_ref(std::nullopt, std::nullopt,
+			spawn.m_world,
+			spawn.m_screen,
+			ScreenRef::Type::Spawn);
+	}
 
-	// stage screens
-	for (const auto& l_stage : m_stages.m_stages) {
-		if (m_stages.m_stages[l_stage.m_next_stage].m_world_id == static_cast<byte>(p_chunk_no))
-			l_result.insert(static_cast<byte>(l_stage.m_next_screen));
-		if (m_stages.m_stages[l_stage.m_prev_stage].m_world_id == static_cast<byte>(p_chunk_no))
-			l_result.insert(static_cast<byte>(l_stage.m_prev_screen));
+	// stages
+	for (const auto& stage : m_stages.m_stages) {
+		const auto& next = m_stages.m_stages[stage.m_next_stage];
+		if (next.m_world_id < m_chunks.size()) {
+			add_ref(std::nullopt, std::nullopt,
+				next.m_world_id,
+				stage.m_next_screen,
+				ScreenRef::Type::StageNext);
+		}
+
+		const auto& prev = m_stages.m_stages[stage.m_prev_stage];
+		if (prev.m_world_id < m_chunks.size()) {
+			add_ref(std::nullopt, std::nullopt,
+				prev.m_world_id,
+				stage.m_prev_screen,
+				ScreenRef::Type::StagePrev);
+		}
 	}
 
 	// start screen
-	if (m_stages.m_stages[0].m_world_id == p_chunk_no)
-		l_result.insert(static_cast<byte>(m_stages.m_start_screen));
+	if (!m_stages.m_stages.empty()) {
+		const auto& start = m_stages.m_stages[0];
+		add_ref(std::nullopt, std::nullopt,
+			start.m_world_id,
+			m_stages.m_start_screen,
+			ScreenRef::Type::StageStart);
+	}
 
-	for (std::size_t i{ 0 }; i < 8; ++i) {
+	for (std::size_t chunk = 0; chunk < m_chunks.size(); ++chunk) {
+		const auto& screens = m_chunks[chunk].m_screens;
 
-		const auto& l_scr{ m_chunks[i].m_screens };
+		for (std::size_t s = 0; s < screens.size(); ++s) {
+			const auto& scr = screens[s];
 
-		for (std::size_t s{ 0 }; s < l_scr.size(); ++s) {
+			// scrolling
+			if (scr.m_scroll_left)
+				add_ref(chunk, s, chunk, *scr.m_scroll_left, ScreenRef::Type::Scroll);
+			if (scr.m_scroll_right)
+				add_ref(chunk, s, chunk, *scr.m_scroll_right, ScreenRef::Type::Scroll);
+			if (scr.m_scroll_up)
+				add_ref(chunk, s, chunk, *scr.m_scroll_up, ScreenRef::Type::Scroll);
+			if (scr.m_scroll_down)
+				add_ref(chunk, s, chunk, *scr.m_scroll_down, ScreenRef::Type::Scroll);
 
-			if (i == p_chunk_no) {
-				// handle screens in the same world
-
-				// scrolling refs
-				if (l_scr[s].m_scroll_left.has_value())
-					l_result.insert(l_scr[s].m_scroll_left.value());
-				if (l_scr[s].m_scroll_right.has_value())
-					l_result.insert(l_scr[s].m_scroll_right.value());
-				if (l_scr[s].m_scroll_up.has_value())
-					l_result.insert(l_scr[s].m_scroll_up.value());
-				if (l_scr[s].m_scroll_down.has_value())
-					l_result.insert(l_scr[s].m_scroll_down.value());
-
-				// same-world transition ref
-				if (l_scr[s].m_interchunk_scroll.has_value())
-					l_result.insert(l_scr[s].m_interchunk_scroll.value().m_dest_screen);
+			// same-world transition
+			if (scr.m_interchunk_scroll) {
+				add_ref(chunk, s,
+					chunk,
+					scr.m_interchunk_scroll->m_dest_screen,
+					ScreenRef::Type::TransitionSameWorld);
 			}
 
-			// other-world transitions - could possibly come from the same world
-			// if user wants to waste a byte
-			if (l_scr[s].m_intrachunk_scroll.has_value() &&
-				l_scr[s].m_intrachunk_scroll.value().m_dest_chunk == p_chunk_no)
-				l_result.insert(l_scr[s].m_intrachunk_scroll.value().m_dest_screen);
+			// other-world transition
+			if (scr.m_intrachunk_scroll) {
+				add_ref(chunk, s,
+					scr.m_intrachunk_scroll->m_dest_chunk,
+					scr.m_intrachunk_scroll->m_dest_screen,
+					ScreenRef::Type::TransitionOtherWorld);
+			}
 
 			// doors
-			for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
-				// same-world doors
-				if (i == p_chunk_no && l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
-					l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
-				// doors to building - only relevant for the buildings world
-				if (p_chunk_no == c::CHUNK_IDX_BUILDINGS &&
-					l_scr[s].m_doors[d].m_door_type == fe::DoorType::Building)
-					l_result.insert(l_scr[s].m_doors[d].m_dest_screen_id);
+			for (const auto& door : scr.m_doors) {
+
+				if (door.m_door_type == fe::DoorType::SameWorld) {
+					add_ref(chunk, s,
+						chunk,
+						door.m_dest_screen_id,
+						ScreenRef::Type::DoorSameWorld);
+				}
+
+				if (door.m_door_type == fe::DoorType::Building) {
+					add_ref(chunk, s,
+						c::CHUNK_IDX_BUILDINGS,
+						door.m_dest_screen_id,
+						ScreenRef::Type::DoorBuilding);
+				}
 			}
 		}
-
 	}
 
-	// buildings screens 0 and 1 are referenced directly in game code
-	if (p_chunk_no == c::CHUNK_IDX_BUILDINGS) {
-		l_result.insert(0);
-		l_result.insert(1);
-	}
+	// hard-coded references
+	add_ref(std::nullopt, std::nullopt,
+		c::CHUNK_IDX_BUILDINGS, 0,
+		ScreenRef::Type::Hardcoded);
 
-	return l_result;
+	add_ref(std::nullopt, std::nullopt,
+		c::CHUNK_IDX_BUILDINGS, 1,
+		ScreenRef::Type::Hardcoded);
+
+	return refs;
+}
+
+std::vector<fe::ScreenRef> fe::Game::get_refs_to_screen(std::size_t p_world, std::size_t p_screen) const {
+	std::vector<fe::ScreenRef> result;
+
+	const auto allrefs{ collect_screen_refs() };
+
+	for (const auto& ref : allrefs)
+		if (ref.dst_world == p_world && ref.dst_screen == p_screen)
+			result.push_back(ref);
+
+	return result;
 }
 
 bool fe::Game::is_metatile_referenced(std::size_t p_chunk_no,
@@ -744,10 +813,15 @@ bool fe::Game::is_metatile_referenced(std::size_t p_chunk_no,
 	return l_refs.find(static_cast<byte>(p_metatile_no)) != end(l_refs);
 }
 
-bool fe::Game::is_screen_referenced(std::size_t p_chunk_no, std::size_t p_screen_no) const {
-	const auto l_refs{ get_referenced_screens(p_chunk_no) };
+std::size_t fe::Game::get_screen_reference_count(std::size_t p_chunk_no, std::size_t p_screen_no) const {
+	std::size_t count{ 0 };
+	const auto l_refs{ collect_screen_refs() };
 
-	return l_refs.find(static_cast<byte>(p_screen_no)) != end(l_refs);
+	for (const auto& ref : l_refs)
+		if (ref.dst_world == p_chunk_no && ref.dst_screen == p_screen_no)
+			++count;
+
+	return count;
 }
 
 std::size_t fe::Game::delete_unreferenced_metatiles(std::size_t p_chunk_no) {
@@ -766,11 +840,12 @@ std::size_t fe::Game::delete_unreferenced_metatiles(std::size_t p_chunk_no) {
 
 std::size_t fe::Game::delete_unreferenced_screens(std::size_t p_chunk_no) {
 	auto& l_chunk{ m_chunks.at(p_chunk_no) };
+
+	const auto l_refs{ get_referenced_screens(p_chunk_no) };
 	std::unordered_set<byte> scrs_to_delete;
-	auto l_refs{ get_referenced_screens(p_chunk_no) };
 
 	for (std::size_t i{ 0 }; i < l_chunk.m_screens.size(); ++i)
-		if (l_refs.find(static_cast<byte>(i)) == end(l_refs))
+		if (!l_refs.contains(static_cast<byte>(i)))
 			scrs_to_delete.insert(static_cast<byte>(i));
 
 	// make sure not all screens are deleted!
