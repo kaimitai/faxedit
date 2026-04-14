@@ -260,6 +260,7 @@ namespace fe {
 
 		// load functions
 		void validate_game_data(fe::Game& p_game);
+		void validate_spawn_points(fe::Game& p_game);
 		void load_xml(SDL_Renderer* p_rnd);
 
 		// save functions

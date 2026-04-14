@@ -530,6 +530,127 @@ void fe::MainWindow::validate_game_data(fe::Game& p_game) {
 			bScene.m_palette = 0;
 		}
 	}
+
+	// stages
+	auto& stages = p_game.m_stages.m_stages;
+
+	for (std::size_t i = 0; i < stages.size(); ++i) {
+		auto& stage = stages[i];
+
+		if (stage.m_next_stage >= stages.size()) {
+			add_message(
+				std::format("Invalid next_stage index {} in stage {}: set to 0",
+					stage.m_next_stage, i), 1
+			);
+			stage.m_next_stage = 0;
+		}
+
+		if (stage.m_prev_stage >= stages.size()) {
+			add_message(
+				std::format("Invalid prev_stage index {} in stage {}: set to 0",
+					stage.m_prev_stage, i), 1
+			);
+			stage.m_prev_stage = 0;
+		}
+
+		// validate next screen
+		const auto& next = stages[stage.m_next_stage];
+		if (next.m_world_id < p_game.m_chunks.size()) {
+			const auto& world = p_game.m_chunks[next.m_world_id];
+			if (stage.m_next_screen >= world.m_screens.size()) {
+				add_message(
+					std::format("Invalid next_screen {} in stage {}: set to 0",
+						stage.m_next_screen, i), 1
+				);
+				stage.m_next_screen = 0;
+			}
+		}
+
+		// validate prev screen
+		const auto& prev = stages[stage.m_prev_stage];
+		if (prev.m_world_id < p_game.m_chunks.size()) {
+			const auto& world = p_game.m_chunks[prev.m_world_id];
+			if (stage.m_prev_screen >= world.m_screens.size()) {
+				add_message(
+					std::format("Invalid prev_screen {} in stage {}: set to 0",
+						stage.m_prev_screen, i), 1
+				);
+				stage.m_prev_screen = 0;
+			}
+		}
+	}
+
+	// start screen
+	if (!p_game.m_stages.m_stages.empty()) {
+		const auto& start = p_game.m_stages.m_stages[0];
+
+		if (start.m_world_id < p_game.m_chunks.size()) {
+			const auto& world = p_game.m_chunks[start.m_world_id];
+
+			if (p_game.m_stages.m_start_screen >= world.m_screens.size()) {
+				add_message(
+					std::format("Invalid start screen {}: set to 0",
+						p_game.m_stages.m_start_screen), 1
+				);
+				p_game.m_stages.m_start_screen = 0;
+			}
+		}
+	}
+
+	// push-block
+	if (p_game.m_push_block.m_stage >= p_game.m_stages.m_stages.size()) {
+		add_message("Invalid push-block stage: set to 0", 1);
+		p_game.m_push_block.m_stage = 0;
+	}
+
+	const auto pb_world =
+		p_game.m_stages.m_stages[p_game.m_push_block.m_stage].m_world_id;
+
+	if (pb_world < p_game.m_chunks.size()) {
+		const auto& world = p_game.m_chunks[pb_world];
+
+		auto clamp_mt = [&](byte& mt) {
+			if (mt >= world.m_metatiles.size()) {
+				add_message("Invalid push-block metatile: set to 0", 1);
+				mt = 0;
+			}
+			};
+
+		clamp_mt(p_game.m_push_block.m_draw_block);
+		clamp_mt(p_game.m_push_block.m_source_0);
+		clamp_mt(p_game.m_push_block.m_source_1);
+		clamp_mt(p_game.m_push_block.m_target_0);
+		clamp_mt(p_game.m_push_block.m_target_1);
+
+		if (p_game.m_push_block.m_screen >= world.m_screens.size()) {
+			add_message("Invalid push-block screen: set to 0", 1);
+			p_game.m_push_block.m_screen = 0;
+		}
+	}
+
+	validate_spawn_points(p_game);
+}
+
+void fe::MainWindow::validate_spawn_points(fe::Game& p_game) {
+	for (auto& spawn : p_game.m_spawn_locations) {
+
+		if (spawn.m_world >= p_game.m_chunks.size()) {
+			add_message(
+				std::format("Invalid spawn world {}: set to 0", spawn.m_world), 1
+			);
+			spawn.m_world = 0;
+		}
+
+		const auto& world = p_game.m_chunks[spawn.m_world];
+
+		if (spawn.m_screen >= world.m_screens.size()) {
+			add_message(
+				std::format("Invalid spawn screen {} in world {}: set to 0",
+					spawn.m_screen, spawn.m_world), 1
+			);
+			spawn.m_screen = 0;
+		}
+	}
 }
 
 void fe::MainWindow::request_exit_app(void) {
