@@ -93,7 +93,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
 						add_message(std::format("{} metatiles deleted from world {}",
-							l_del_cnt, m_sel_chunk), 5);
+							l_del_cnt, m_sel_chunk), 6);
 						if (l_del_cnt > 0) {
 							generate_metatile_textures(p_rnd);
 							// clear undo history for this world if a metatile was deleted
@@ -773,7 +773,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		ui::imgui_slider_with_arrows("mtdefbr", "Bottom-Right",
 			l_mt_def.m_attr_br, 0, 3);
 
-		ImGui::Separator();
+		ImGui::SeparatorText("Metatile Operations");
 
 		if (ui::imgui_button("Add metatile", 2,
 			"Create a copy of the selected metatile",
@@ -784,19 +784,40 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::SameLine();
 
-		if (ui::imgui_button("Delete metatile", 1)) {
-			if (ImGui::IsKeyDown(ImGuiKey_ModShift)) {
-				if (m_game->is_metatile_referenced(m_sel_chunk,
-					m_sel_metatile))
-					add_message("Metatile is in use", 1, true);
-				else {
-					m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
-					m_undo->clear_history(m_sel_chunk);
-					mt_no_to_regen = 256; // regenerate all
-				}
+		if (ui::imgui_button("Delete metatile", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
+			std::size_t l_mt_refs{ m_game->get_metatile_reference_count(m_sel_chunk, m_sel_metatile) };
+			if (l_mt_refs > 0)
+				add_message("Metatile is in use", 1, true);
+			else {
+				m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
+				m_undo->clear_history(m_sel_chunk);
+				add_message("Metatile deleted", 2);
+				mt_no_to_regen = 256; // regenerate all
 			}
-			else
-				add_message("Hold shift to delete metatile");
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
+
+		ImGui::SameLine();
+
+		if (ui::imgui_button("List References", 4, "")) try {
+			const auto metatilerefs{ m_game->get_refs_to_metatile(m_sel_chunk, m_sel_metatile) };
+			if (metatilerefs.empty())
+				add_message("Metatile has no references", 6);
+			else {
+				if (metatilerefs.size() > 10)
+					add_message(std::format("...and {} more", metatilerefs.size() - 10), 6);
+
+				for (std::size_t i{ 0 }; i < metatilerefs.size() && i < 10; ++i)
+					add_message(metatilerefs[i].to_string(), 6);
+
+				add_message(std::format("References to World {}, Metatile {} ({})",
+					m_sel_chunk, m_sel_metatile, metatilerefs.size()), 4);
+			}
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
 		}
 
 		ImGui::SeparatorText("Display chr-tiles");

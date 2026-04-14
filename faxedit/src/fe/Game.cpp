@@ -509,6 +509,11 @@ void fe::Game::delete_metatiles(std::size_t p_chunk_no,
 
 	l_mt = std::move(new_metatiles);
 
+	const auto remap_mt = [&](byte& mt) {
+		if (mt < remap.size() && remap[mt] != -1)
+			mt = static_cast<byte>(remap[mt]);
+		};
+
 	// re-index screen tilemaps
 	for (auto& scr : l_chunk.m_screens)
 		for (auto& row : scr.m_tilemap)
@@ -520,14 +525,16 @@ void fe::Game::delete_metatiles(std::size_t p_chunk_no,
 		b = static_cast<byte>(remap[b]);
 
 	// if the push-block happens on this world, make sure we re-index the tiles involved
-	if (m_push_block.m_stage == static_cast<byte>(p_chunk_no)) {
-		m_push_block.m_draw_block = static_cast<byte>(remap[m_push_block.m_draw_block]);
-		m_push_block.m_source_0 = static_cast<byte>(remap[m_push_block.m_source_0]);
-		m_push_block.m_source_1 = static_cast<byte>(remap[m_push_block.m_source_1]);
-		m_push_block.m_target_0 = static_cast<byte>(remap[m_push_block.m_target_0]);
-		m_push_block.m_target_1 = static_cast<byte>(remap[m_push_block.m_target_1]);
+	if (m_push_block.m_stage < m_stages.m_stages.size()) {
+		const auto pb_world = m_stages.m_stages[m_push_block.m_stage].m_world_id;
+		if (pb_world == p_chunk_no) {
+			remap_mt(m_push_block.m_draw_block);
+			remap_mt(m_push_block.m_source_0);
+			remap_mt(m_push_block.m_source_1);
+			remap_mt(m_push_block.m_target_0);
+			remap_mt(m_push_block.m_target_1);
+		}
 	}
-
 }
 
 void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<byte>& p_scr_to_delete) {
@@ -554,16 +561,22 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 
 	lr_scr = std::move(new_screens);
 
-	// re-index screens
+	const auto remap_screen = [&](byte& screen) {
+		if (screen < remap.size() && remap[screen] != -1)
+			screen = static_cast<byte>(remap[screen]);
+		};
 
 	// game metadata - push blocks
-	if (m_stages.m_stages[m_push_block.m_stage].m_world_id == p_chunk_no)
-		m_push_block.m_screen = remap[m_push_block.m_screen];
+	if (m_push_block.m_stage < m_stages.m_stages.size()) {
+		const auto pb_world = m_stages.m_stages[m_push_block.m_stage].m_world_id;
+		if (pb_world == p_chunk_no)
+			remap_screen(m_push_block.m_screen);
+	}
 
 	// spawn locations
 	for (auto& spawn : m_spawn_locations)
 		if (spawn.m_world == p_chunk_no)
-			spawn.m_screen = remap[spawn.m_screen];
+			remap_screen(spawn.m_screen);
 
 	// stage screens
 	for (auto& l_stage : m_stages.m_stages) {
@@ -605,12 +618,11 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 			for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
 				// re-index same-world door destinations
 				if (c == p_chunk_no && l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
-					l_scr[s].m_doors[d].m_dest_screen_id = remap[l_scr[s].m_doors[d].m_dest_screen_id];
+					remap_screen(l_scr[s].m_doors[d].m_dest_screen_id);
 				// re-index doors to buildings
 				if (p_chunk_no == c::CHUNK_IDX_BUILDINGS &&
 					l_scr[s].m_doors[d].m_door_type == fe::DoorType::Building)
-					l_scr[s].m_doors[d].m_dest_screen_id =
-					remap[l_scr[s].m_doors[d].m_dest_screen_id];
+					remap_screen(l_scr[s].m_doors[d].m_dest_screen_id);
 			}
 
 			// re-index other-world transitions
@@ -632,30 +644,100 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 	}
 }
 
-std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_chunk_no) const {
-	std::set<byte> l_result;
-	const auto& l_chunk{ m_chunks.at(p_chunk_no) };
+std::set<byte> fe::Game::get_referenced_metatiles(std::size_t p_world_no) const {
+	std::set<byte> result;
 
-	// screen tilemaps refer to metatiles of course
-	for (const auto& scr : l_chunk.m_screens)
-		for (const auto& row : scr.m_tilemap)
-			for (byte b : row)
-				l_result.insert(b);
+	const auto refs = collect_metatile_refs(p_world_no);
 
-	// mattock animations refer to 4 metatiles
-	for (byte b : l_chunk.m_mattock_animation)
-		l_result.insert(b);
+	for (const auto& ref : refs)
+		result.insert(static_cast<byte>(ref.metatile));
 
-	// the push-block happens on this world, make sure we re-index the tiles involved
-	if (m_push_block.m_stage == static_cast<byte>(p_chunk_no)) {
-		l_result.insert(m_push_block.m_draw_block);
-		l_result.insert(m_push_block.m_source_0);
-		l_result.insert(m_push_block.m_source_1);
-		l_result.insert(m_push_block.m_target_0);
-		l_result.insert(m_push_block.m_target_1);
+	return result;
+}
+
+std::vector<fe::MetatileRef> fe::Game::collect_metatile_refs(std::size_t p_world_no) const {
+	std::vector<MetatileRef> refs;
+
+	const auto& world = m_chunks.at(p_world_no);
+
+	const auto add_ref = [&](std::optional<std::size_t> src_screen,
+		std::size_t mt,
+		MetatileRef::Type type) {
+
+			if (mt < world.m_metatiles.size())
+				refs.push_back({ src_screen, mt, type });
+		};
+
+	// screen tilemaps
+	for (std::size_t s{ 0 }; s < world.m_screens.size(); ++s) {
+		const auto& scr = world.m_screens[s];
+
+		std::unordered_set<byte> seen; // dedupe per screen
+
+		for (const auto& row : scr.m_tilemap) {
+			for (byte b : row) {
+				if (!seen.insert(b).second)
+					continue;
+
+				add_ref(s, b, MetatileRef::Type::ScreenTilemap);
+			}
+		}
 	}
 
-	return l_result;
+	// mattock animation
+	{
+		std::unordered_set<byte> seen;
+
+		for (byte b : world.m_mattock_animation) {
+			if (!seen.insert(b).second)
+				continue;
+			add_ref(std::nullopt, b, MetatileRef::Type::MattockAnimation);
+		}
+	}
+
+	// push-block metadata
+	if (m_push_block.m_stage < m_stages.m_stages.size()) {
+		const auto pb_world =
+			m_stages.m_stages[m_push_block.m_stage].m_world_id;
+
+		if (pb_world == p_world_no) {
+			add_ref(std::nullopt,
+				m_push_block.m_draw_block,
+				MetatileRef::Type::PushBlockDrawBlock);
+
+			add_ref(std::nullopt,
+				m_push_block.m_source_0,
+				MetatileRef::Type::PushBlockSource);
+
+			add_ref(std::nullopt,
+				m_push_block.m_source_1,
+				MetatileRef::Type::PushBlockSource);
+
+			add_ref(std::nullopt,
+				m_push_block.m_target_0,
+				MetatileRef::Type::PushBlockTarget);
+
+			add_ref(std::nullopt,
+				m_push_block.m_target_1,
+				MetatileRef::Type::PushBlockTarget);
+		}
+	}
+
+	return refs;
+}
+
+std::vector<fe::MetatileRef> fe::Game::get_refs_to_metatile(std::size_t p_world_no,
+	std::size_t mt) const {
+	std::vector<fe::MetatileRef> result;
+
+	const auto refs{ collect_metatile_refs(p_world_no) };
+
+	for (const auto& ref : refs) {
+		if (ref.metatile == mt)
+			result.push_back(ref);
+	}
+
+	return result;
 }
 
 std::set<byte> fe::Game::get_referenced_screens(std::size_t p_chunk_no) const {
@@ -806,11 +888,17 @@ std::vector<fe::ScreenRef> fe::Game::get_refs_to_screen(std::size_t p_world, std
 	return result;
 }
 
-bool fe::Game::is_metatile_referenced(std::size_t p_chunk_no,
+std::size_t fe::Game::get_metatile_reference_count(std::size_t p_world_no,
 	std::size_t p_metatile_no) const {
-	const auto l_refs{ get_referenced_metatiles(p_chunk_no) };
+	std::size_t count{ 0 };
 
-	return l_refs.find(static_cast<byte>(p_metatile_no)) != end(l_refs);
+	const auto refs = collect_metatile_refs(p_world_no);
+
+	for (const auto& ref : refs)
+		if (ref.metatile == p_metatile_no)
+			++count;
+
+	return count;
 }
 
 std::size_t fe::Game::get_screen_reference_count(std::size_t p_chunk_no, std::size_t p_screen_no) const {

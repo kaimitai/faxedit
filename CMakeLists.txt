@@ -46,6 +46,7 @@ set(SOURCES
 	faxedit/src/fe/PaletteMusicMap.cpp
 	faxedit/src/fe/EditorSettings.cpp
 	faxedit/src/fe/ScreenRef.cpp
+	faxedit/src/fe/MetatileRef.cpp
     faxedit/src/fe/xml/Xml_helper.cpp
 
     faxedit/src/fe/sprite/SpriteAnimationFrame.cpp

@@ -28,7 +28,7 @@ namespace fe {
             Hardcoded
         } type;
 
-        std::string to_string(void) const;
+        std::string to_string(bool p_incl_destination = false) const;
     };
 
 }

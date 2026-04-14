@@ -1,7 +1,7 @@
 #include "ScreenRef.h"
 #include <format>
 
-std::string fe::ScreenRef::to_string(void) const {
+std::string fe::ScreenRef::to_string(bool p_incl_destination) const {
 	std::string out;
 
 	if (src_world && src_screen)
@@ -24,7 +24,8 @@ std::string fe::ScreenRef::to_string(void) const {
 	default: out += "Unknown"; break;
 	}
 
-	out += std::format(" -> World {}, Screen {}", dst_world, dst_screen);
+	if (p_incl_destination)
+		out += std::format(" -> World {}, Screen {}", dst_world, dst_screen);
 
 	return out;
 }

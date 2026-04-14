@@ -8,6 +8,7 @@
 #include "./../common/klib/NES_tile.h"
 #include "Chunk.h"
 #include "ScreenRef.h"
+#include "MetatileRef.h"
 #include "StageManager.h"
 #include "Scene.h"
 #include "PaletteMusicMap.h"
@@ -96,12 +97,16 @@ namespace fe {
 		int calculate_spawn_locations_by_guru(void);
 		bool calculate_push_block_parameters(void);
 
-		std::set<byte> get_referenced_metatiles(std::size_t p_chunk_no) const;
+		std::set<byte> get_referenced_metatiles(std::size_t p_world_no) const;
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;
+		
 		std::vector<ScreenRef> collect_screen_refs(void) const;
 		std::vector<ScreenRef> get_refs_to_screen(std::size_t p_world, std::size_t p_screen) const;
 
-		bool is_metatile_referenced(std::size_t p_chunk_no, std::size_t p_metatile_no) const;
+		std::vector<MetatileRef> collect_metatile_refs(std::size_t p_world_no) const;
+		std::vector<MetatileRef> get_refs_to_metatile(std::size_t p_world, std::size_t mt) const;
+
+		std::size_t get_metatile_reference_count(std::size_t p_world_no, std::size_t p_metatile_no) const;
 		std::size_t get_screen_reference_count(std::size_t p_chunk_no, std::size_t p_screen_no) const;
 
 		void delete_metatiles(std::size_t p_chunk_no, const std::unordered_set<byte>& p_mt_to_delete);
