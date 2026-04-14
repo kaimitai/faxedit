@@ -90,11 +90,7 @@ namespace fe {
 		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);
 
-		// map from spawn point no to iscript no
-		// the script in which the spawn is set to the key
-		std::map<byte, byte> m_spawn_to_script_no;
-
-		int calculate_spawn_locations_by_guru(void);
+		int calculate_spawn_locations_by_guru(const std::map<byte, byte>& p_spawn_to_script_no);
 		bool calculate_push_block_parameters(void);
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_world_no) const;

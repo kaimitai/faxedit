@@ -50,6 +50,7 @@ namespace fe {
 		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 		// iscripts
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
+		std::map<byte, byte> m_spawn_to_script_no;
 	};
 
 	struct Message {

@@ -48,13 +48,13 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText("Palettes (for GUI rendering and bmp-import/export)");
 			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
 				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_cache.m_labels_palettes)),
-				m_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1);
+				m_settings.coll_palettes[0], 0, m_game->m_palettes.size() - 1, "", false, true);
 			ui::imgui_slider_with_arrows("###plapal", std::format("Player: {}",
 				get_description(static_cast<byte>(m_settings.coll_palettes[1]), m_cache.m_labels_palettes)),
-				m_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1);
+				m_settings.coll_palettes[1], 0, m_game->m_palettes.size() - 1, "", false, true);
 			ui::imgui_slider_with_arrows("###porpal", std::format("Portraits: {}",
 				get_description(static_cast<byte>(m_settings.coll_palettes[2]), m_cache.m_labels_palettes)),
-				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1);
+				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1, "", false, true);
 
 			ImGui::SeparatorText("Rendering Scales");
 			ImGui::SliderFloat("animation frames", &m_settings.scale_frame, 1.0f, 5.0f);
@@ -63,7 +63,8 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText("bmp-import");
 			ui::imgui_slider_with_arrows("###tratol", "Transparency Tolerance",
 				m_settings.transp_tolerance, 0, 10,
-				"How far a pixel color can deviate from hot pink and still be considered transparent");
+				"How far a pixel color can deviate from hot pink and still be considered transparent",
+				false, true);
 
 			ImGui::Separator();
 			if (ui::imgui_button("Reset settings", 4, "Reset to default settings")) {

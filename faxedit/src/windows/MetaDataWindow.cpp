@@ -3,6 +3,7 @@
 #include "./../common/klib/Bitreader.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
+#include <algorithm>
 #include <unordered_map>
 
 void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
@@ -155,9 +156,10 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 						auto& l_spawn{ m_game->m_spawn_locations.at(ls_sel_spawn_location) };
 
-						ui::imgui_slider_with_arrows("spawnworld",
+						if (ui::imgui_slider_with_arrows("spawnworld",
 							std::format("World: {}", get_description(l_spawn.m_world, m_cache.m_labels_worlds)),
-							l_spawn.m_world, 0, 7);
+							l_spawn.m_world, 0, 7))
+							l_spawn.m_screen = std::min(l_spawn.m_screen, static_cast<byte>(m_game->m_chunks.at(l_spawn.m_world).m_screens.size() - 1));
 
 						ui::imgui_slider_with_arrows("spawnscr", "Screen",
 							l_spawn.m_screen, 0, l_spawn.m_world < m_game->m_chunks.size() ?
@@ -187,11 +189,11 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 						if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
 
-							if (m_game->m_spawn_to_script_no.empty())
-								add_message("Use button 'Apply External ROM Changes' before trying to deduce spawn points", 6);
+							if (m_cache.m_spawn_to_script_no.empty())
+								add_message("No iScript information loaded - can not deduce spawns", 1);
 							else
 								add_message(std::format("Fully deduced {} of {} spawn points",
-									m_game->calculate_spawn_locations_by_guru(),
+									m_game->calculate_spawn_locations_by_guru(m_cache.m_spawn_to_script_no),
 									m_game->m_spawn_locations.size()),
 									4);
 						}

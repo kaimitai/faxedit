@@ -341,12 +341,12 @@ void fe::Game::set_interchunk_scrolling(const fe::Config& p_config, std::size_t 
 
 // find all guru (with spawn point) door entrances
 // and update the spawn location with the door data
-int fe::Game::calculate_spawn_locations_by_guru(void) {
+int fe::Game::calculate_spawn_locations_by_guru(const std::map<byte, byte>& p_spawn_to_script_no) {
 	int l_cnt{ 0 };
 
 	std::map<byte, byte> script_to_spawn;
 	// reverse the map
-	for (const auto& kv : m_spawn_to_script_no)
+	for (const auto& kv : p_spawn_to_script_no)
 		script_to_spawn[kv.second] = kv.first;
 
 	for (std::size_t c{ 0 }; c < m_chunks.size(); ++c)
