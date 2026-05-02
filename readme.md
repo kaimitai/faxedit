@@ -240,6 +240,7 @@ Here is the animation:
 
 * You can find me on the **Faxanadu Randomizer & Romhacking** Discord server, the main hub for all things Faxanadu.
 
-  [![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/K65uxXhA)
+  [![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/AyJErR8kyV)
 
+* Dont't miss [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala!
 * Check out [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/), a full music replacement hack for Faxanadu!

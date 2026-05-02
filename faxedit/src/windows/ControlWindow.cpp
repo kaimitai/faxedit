@@ -122,7 +122,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 							}
 
 					if (!l_ow_block)
-						add_message(std::format("World {}, Screen {}: Other-world transition is defined, but no metatiles with ow transition is used",
+						add_message(std::format("World {}, Screen {}: Other-world transition is defined, but no metatile with property ow-transition is used",
 							c, s), 1);
 				}
 

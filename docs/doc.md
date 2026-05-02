@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-6.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-6.3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -335,6 +335,8 @@ No metatiles in the original game use this functionality. In the original game a
 
 * Add / Remove metatile: Adds a new metatile (as a copy of the currently selected metatile), or deletes the selected metatile. Metatiles which are placed on any screen tilemap cannot be deleted. The same goes for metatiles that are part of mattock animations and block-push parameters.
 
+* List References: Shows a list of all screens (if any) using this on its tilemap, or global references like push-block and mattock animations. Metatiles in use cannot be deleted. This functionality can be used to find building screens which use the same metatile under different tilesets, which should be avoided if you plan on using bmp-import for building screens metatiles.
+
 ## Scenes
 
 This tab allows you to change some default settings of the current world; palette, music and tileset.
@@ -372,7 +374,9 @@ The Screen window consists of three parts. On the left part is the screen tilema
 
 If for example you want to see a Mist Tower or Trunk Tower, it is best to go to the screen containing a door to that tower and using the button "Enter Door" - as the palette info from the door will be taken into account when rendering from then on. If you navigate to another world, the default palette will be used again.
 
-You can add or remove (hold shift to use button) screens for all worlds apart from Buildings. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
+You can add or remove (hold shift to use button) screens for all worlds. Screens that are referenced from other screens cannot be deleted, in that case you need to remove the references first.
+
+The "List References"-button will show all incoming references to the current screen; doors, transitions and such, as well as global references - like start screen, spawn point screens and so on.
 
 This tab also has some checkboxes for adding icon overlays to:
 * Block properties (0-15)
@@ -449,7 +453,7 @@ Doors come in different types, and the different types have different parameters
 * Selected door: The screen's door you are currently editing
 * Door Type: Each door is one of four types; Buildings, Same-World, Next-Stage and Previous-Stage.
 * Door coordinates: The entry coordinates of the door on the screen. This must be on top of a metatile with the door-property, or else the game will not look for your door definitions when you try to enter.
-* Destination coordinates: Where you appear on the destination screen after entering the door. Does not seem to matter for doors to buildings however, as these use a hard-coded position not currently imported to the editor.
+* Destination coordinates: Where you appear on the destination screen after entering the door. Does not seem to matter for doors to buildings however, as these positions come from the building scene objects.
 
 These parameters are common to all door types. The rest of the parameters depend on door type.
 
@@ -573,7 +577,7 @@ In this edit mode, you can extract a world's (or building screen's) metatiles as
 
 When loading a bmp to a world's chr-data, we have to make sure we don't ruin the chr-data of any other world using the same tilset. In the original game Dartmoor and Zenis use the same tileset. If importing for Zenis, the importer will keep chr-tiles used by metatile definitions in Dartmoor fixed - and the other way around.
 
-For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason. For the buildings world, if you want to import graphics for new metatiles, it is not enough to just make a new metatile for the world - the metatile actually has to be used in the screen you are importing for. The gfx importer looks at actual metatile usage so that unrelated metatiles do not get clobbered.
+For buildings screens the opposite is true. Here different screens in the same world can use different tilesets, but the metatile definitions are shared. The importer will not touch the metatile definitions used by screens which do not use the same tileset as the one that is being imported. It is important that users make separate metatile definitions for each tileset for this reason. For the buildings world, if you want to import graphics for new metatiles, it is not enough to just make a new metatile for the world - the metatile actually has to be used in the screen you are importing for. The gfx importer looks at actual metatile usage so that unrelated metatiles do not get clobbered. In other words, you need to declare to the bmp importer which metatiles it is allowed to touch by actually using those metatiles on screen tilemaps.
 
 The data integrity analysis will check if a metatile is used on several building screens with different tilesets. This should be avoided.
 
