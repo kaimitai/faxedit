@@ -81,6 +81,17 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 
 ### Version History
 
+* 2025-05-02: version beta-6.3
+
+  * Full Buildings World Support
+	* The buildings world now behaves like all other worlds; you can freely add and remove screens.
+	* Note: Each added building screen consumes 4 bytes in bank 15.
+  * Screen Reference Listing
+	* Added functionality to list all incoming references to a selected screen.
+  * Metatile Reference Listing
+	* Added functionality to list all references to a selected metatile.
+	* This is especially useful for identifying metatiles that are used across screens with different tilesets. During BMP import, metatiles associated with other tilesets will be left unchanged, which may lead to unwanted results. The data integrity analysis will warn when such cross-tileset usage is detected.
+
 * 2025-04-09: version beta-6.2
 
   * Dynamic palette to music mapping! You’re no longer limited to the original fixed table. Every palette used when passing through a same‑world door can now have its own music track. This opens the door to region‑specific ambience, thematic transitions, and custom world moods.
