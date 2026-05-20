@@ -83,6 +83,14 @@ namespace fe {
 		void add_chr_bank(pugi::xml_node p_node, std::size_t p_bank_no, const std::vector<klib::NES_tile>& p_tiles);
 		void add_frame(pugi::xml_node p_node, std::size_t p_frame_no, const fe::SpriteAnimationFrame& p_frame);
 
+		// cinematic helpers
+		void add_player_animation(pugi::xml_node p_node, std::size_t p_animation_no,
+			const fe::SplashPlayerAnimationData& p_anim);
+		void add_ripple_animation(pugi::xml_node p_node, std::size_t p_animation_no,
+			const fe::SplashRippleAnimationData& p_anim);
+
+		void read_cinematic_data(pugi::xml_node p_node, fe::Game& p_game);
+
 		fe::SpriteFrameCollection read_sprite_gfx_container(pugi::xml_node p_node,
 			bool expand_last_bank = false);
 		std::vector<klib::NES_tile> read_chr_bank(pugi::xml_node p_node);

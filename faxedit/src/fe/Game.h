@@ -14,6 +14,7 @@
 #include "PaletteMusicMap.h"
 #include "GfxTilemapManager.h"
 #include "./sprite/SpriteGfxManager.h"
+#include "Cinematic.h"
 
 using byte = unsigned char;
 using Tilemap = std::vector<std::vector<byte>>;
@@ -86,6 +87,7 @@ namespace fe {
 		// gfx objects which can be loaded and patched (bg gfx and sprite gfx)
 		fe::GfxTilemapManager m_gfx_manager;
 		fe::SpriteGfxManager m_sprite_gfx_manager;
+		fe::Cinematic cinematic;
 
 		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);

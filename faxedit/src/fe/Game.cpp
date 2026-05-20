@@ -136,6 +136,8 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 
 	// initialize gfx metadata and load gfx images
 	m_gfx_manager.initialize(p_config, p_rom_data);
+	// initialize cinematic data
+	cinematic.parse_rom(p_config, p_rom_data);
 }
 
 // generate PPU tiles 0-58 which are static and available for any world

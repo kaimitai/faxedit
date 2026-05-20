@@ -457,7 +457,85 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 
 	}
 
+	// extract cinematic data if defined in the xml, otherwise read from rom bytes afterward
+	auto n_cinematic{ n_root.child(c::TAG_CINEMATIC) };
+	read_cinematic_data(n_cinematic, l_game);
+
 	return l_game;
+}
+
+void fe::xml::read_cinematic_data(pugi::xml_node p_node, fe::Game& p_game) {
+	if (!p_node)
+		return;
+
+	auto& cinematic{ p_game.cinematic };
+
+	// parse chr bank
+	auto n_chr_bank{ p_node.child(c::TAG_CHR_BANK) };
+	if (n_chr_bank)
+		cinematic.tiles = read_chr_bank(n_chr_bank);
+
+	// parse animation frames
+	auto n_frames{ p_node.child(c::TAG_FRAMES) };
+	if (n_frames) {
+		for (auto n_frame{ n_frames.child(c::TAG_FRAME) }; n_frame;
+			n_frame = n_frame.next_sibling(c::TAG_FRAME))
+			cinematic.frames.push_back(read_frame(n_frame));
+	}
+
+	// parse sprite palettes
+	auto n_intro_pal{ p_node.child(c::TAG_SPRITE_PALETTE_INTRO) };
+	if (n_intro_pal)
+		cinematic.sprite_palette_intro = parse_byte_list(n_intro_pal.attribute(c::ATTR_BYTES).as_string());
+	auto n_outro_pal{ p_node.child(c::TAG_SPRITE_PALETTE_OUTRO) };
+	if (n_outro_pal)
+		cinematic.sprite_palette_outro = parse_byte_list(n_outro_pal.attribute(c::ATTR_BYTES).as_string());
+
+	// parse waterfall
+	auto n_waterfall{ p_node.child(c::TAG_WATERFALL) };
+	if (n_waterfall) {
+		cinematic.waterfall_position.x = parse_numeric_byte(n_waterfall.attribute(c::ATTR_X).as_string());
+		cinematic.waterfall_position.y = parse_numeric_byte(n_waterfall.attribute(c::ATTR_Y).as_string());
+	}
+
+	// parse ripples
+	auto n_ripples{ p_node.child(c::TAG_RIPPLES) };
+	if (n_ripples) {
+		for (auto n_ripple{ n_ripples.child(c::TAG_RIPPLE) }; n_ripple;
+			n_ripple = n_ripple.next_sibling(c::TAG_RIPPLE)) {
+			fe::SplashRippleAnimationData ripple;
+			ripple.initial_position.x = parse_numeric_byte(n_ripple.attribute(c::ATTR_X).as_string());
+			ripple.initial_position.y = parse_numeric_byte(n_ripple.attribute(c::ATTR_Y).as_string());
+			ripple.velocity.vel_x = n_ripple.attribute(c::ATTR_VELOCITY_X).as_int();
+			ripple.velocity.vel_y = n_ripple.attribute(c::ATTR_VELOCITY_Y).as_int();
+			cinematic.ripple_data.push_back(ripple);
+		}
+	}
+
+	// parse player animations
+	auto n_anims{ p_node.child(c::TAG_PLAYER_ANIMATIONS) };
+	if (n_anims) {
+		for (auto n_anim{ n_anims.child(c::TAG_PLAYER_ANIMATION) }; n_anim;
+			n_anim = n_anim.next_sibling(c::TAG_PLAYER_ANIMATION)) {
+			fe::SplashPlayerAnimationData anim;
+			anim.initial_position.x = parse_numeric_byte(n_anim.attribute(c::ATTR_X).as_string());
+			anim.initial_position.y = parse_numeric_byte(n_anim.attribute(c::ATTR_Y).as_string());
+
+			auto n_depths{ n_anim.child(c::TAG_DEPTH_STAGES) };
+			for (auto n_depth{ n_depths.child(c::TAG_DEPTH_STAGE) }; n_depth;
+				n_depth = n_depth.next_sibling(c::TAG_DEPTH_STAGE)) {
+				fe::DepthState stage{};
+
+				stage.y_threshold = parse_numeric_byte(n_depth.attribute(c::ATTR_CUTOFF_Y).as_string());
+				stage.velocity.vel_x = n_depth.attribute(c::ATTR_VELOCITY_X).as_int();
+				stage.velocity.vel_y = n_depth.attribute(c::ATTR_VELOCITY_Y).as_int();
+
+				anim.depth_stages.push_back(stage);
+			}
+
+			cinematic.player_data.push_back(anim);
+		}
+	}
 }
 
 void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
@@ -1065,6 +1143,43 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	auto n_portraits{ n_sprite_gfx.append_child(c::TAG_PORTRAIT_GFX) };
 	add_sprite_gfx_container(n_portraits, p_game.m_sprite_gfx_manager.c_portraits);
 
+	// cinematic
+	const auto& cinema{ p_game.cinematic };
+	auto n_cinematic{ n_metadata.append_child(c::TAG_CINEMATIC) };
+
+	// add cinematic player animation data
+	auto n_player_anims{ n_cinematic.append_child(c::TAG_PLAYER_ANIMATIONS) };
+	for (std::size_t i{ 0 }; i < cinema.player_data.size(); ++i)
+		add_player_animation(n_player_anims, i, cinema.player_data[i]);
+
+	// add cinematic player animation data
+	auto n_ripple_anims{ n_cinematic.append_child(c::TAG_RIPPLES) };
+	for (std::size_t i{ 0 }; i < cinema.ripple_data.size(); ++i)
+		add_ripple_animation(n_ripple_anims, i, cinema.ripple_data[i]);
+
+	// add cinematic waterfall animation data
+	auto n_waterfall{ n_cinematic.append_child(c::TAG_WATERFALL) };
+	n_waterfall.append_attribute(c::ATTR_X);
+	n_waterfall.attribute(c::ATTR_X).set_value(cinema.waterfall_position.x);
+	n_waterfall.append_attribute(c::ATTR_Y);
+	n_waterfall.attribute(c::ATTR_Y).set_value(cinema.waterfall_position.y);
+
+	// add cinematic sprite palettes
+	auto n_intro_pal{ n_cinematic.append_child(c::TAG_SPRITE_PALETTE_INTRO) };
+	n_intro_pal.append_attribute(c::ATTR_BYTES);
+	n_intro_pal.attribute(c::ATTR_BYTES).set_value(join_bytes(cinema.sprite_palette_intro, true));
+	auto n_outro_pal{ n_cinematic.append_child(c::TAG_SPRITE_PALETTE_OUTRO) };
+	n_outro_pal.append_attribute(c::ATTR_BYTES);
+	n_outro_pal.attribute(c::ATTR_BYTES).set_value(join_bytes(cinema.sprite_palette_outro, true));
+
+	// add cinematic chr bank
+	add_chr_bank(n_cinematic, 0, cinema.tiles);
+
+	// add cinematic animation frames
+	auto n_cinema_frames{ n_cinematic.append_child(c::TAG_FRAMES) };
+	for (std::size_t i{ 0 }; i < cinema.frames.size(); ++i)
+		add_frame(n_cinema_frames, i, cinema.frames[i]);
+
 	// save document to disk
 	if (!doc.save_file(p_filepath.c_str()))
 		throw std::runtime_error("Could not save " + p_filepath);
@@ -1141,6 +1256,49 @@ void fe::xml::add_chr_bank(pugi::xml_node p_node, std::size_t p_bank_no, const s
 		n_chr_tile.append_attribute(c::ATTR_BYTES);
 		n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(p_tiles[i].to_bytes(), true));
 	}
+}
+
+void fe::xml::add_player_animation(pugi::xml_node p_node, std::size_t p_animation_no,
+	const fe::SplashPlayerAnimationData& p_anim) {
+	auto n_anim{ p_node.append_child(c::TAG_PLAYER_ANIMATION) };
+	n_anim.append_attribute(c::ATTR_NO);
+	n_anim.attribute(c::ATTR_NO).set_value(p_animation_no);
+	n_anim.append_attribute(c::ATTR_X);
+	n_anim.attribute(c::ATTR_X).set_value(p_anim.initial_position.x);
+	n_anim.append_attribute(c::ATTR_Y);
+	n_anim.attribute(c::ATTR_Y).set_value(p_anim.initial_position.y);
+
+	auto n_stages{ n_anim.append_child(c::TAG_DEPTH_STAGES) };
+
+	for (std::size_t i{ 0 }; i < p_anim.depth_stages.size(); ++i) {
+		const auto& cin_stage{ p_anim.depth_stages[i] };
+
+		auto n_stage{ n_stages.append_child(c::TAG_DEPTH_STAGE) };
+		n_stage.append_attribute(c::ATTR_NO);
+		n_stage.attribute(c::ATTR_NO).set_value(i);
+
+		n_stage.append_attribute(c::ATTR_CUTOFF_Y);
+		n_stage.attribute(c::ATTR_CUTOFF_Y).set_value(cin_stage.y_threshold);
+		n_stage.append_attribute(c::ATTR_VELOCITY_X);
+		n_stage.attribute(c::ATTR_VELOCITY_X).set_value(cin_stage.velocity.vel_x);
+		n_stage.append_attribute(c::ATTR_VELOCITY_Y);
+		n_stage.attribute(c::ATTR_VELOCITY_Y).set_value(cin_stage.velocity.vel_y);
+	}
+}
+
+void fe::xml::add_ripple_animation(pugi::xml_node p_node, std::size_t p_animation_no,
+	const fe::SplashRippleAnimationData& p_anim) {
+	auto n_anim{ p_node.append_child(c::TAG_RIPPLE) };
+	n_anim.append_attribute(c::ATTR_NO);
+	n_anim.attribute(c::ATTR_NO).set_value(p_animation_no);
+	n_anim.append_attribute(c::ATTR_X);
+	n_anim.attribute(c::ATTR_X).set_value(p_anim.initial_position.x);
+	n_anim.append_attribute(c::ATTR_Y);
+	n_anim.attribute(c::ATTR_Y).set_value(p_anim.initial_position.y);
+	n_anim.append_attribute(c::ATTR_VELOCITY_X);
+	n_anim.attribute(c::ATTR_VELOCITY_X).set_value(p_anim.velocity.vel_x);
+	n_anim.append_attribute(c::ATTR_VELOCITY_Y);
+	n_anim.attribute(c::ATTR_VELOCITY_Y).set_value(p_anim.velocity.vel_y);
 }
 
 fe::SpriteFrameCollection fe::xml::read_sprite_gfx_container(pugi::xml_node p_node,
@@ -1235,6 +1393,8 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
 	add_setting(n_settings, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.patch_cinematic);
+	add_setting(n_settings, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
 	add_setting(n_settings, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 
@@ -1273,6 +1433,8 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.patch_cinematic);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SW_DOORS_IN_TOWNS, p_settings.m_sw_doors_in_towns);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 	}

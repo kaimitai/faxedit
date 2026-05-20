@@ -21,6 +21,8 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_TRANSP_TOLERANCE[]{ "transparency_tolerance" };
 			constexpr char SETTINGS_PARAM_SPRITE_PALETTE[]{ "sprite_palette" };
 			constexpr char SETTINGS_PARAM_PATCH_SPRITE_GFX[]{ "patch_sprite_gfx" };
+			constexpr char SETTINGS_PARAM_PATCH_CINEMATICS[]{ "patch_cinematics" };
+			constexpr char SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW[]{ "throw_on_cinematic_overflow" };
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
 			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };
@@ -176,6 +178,23 @@ namespace fe {
 			constexpr char ATTR_SUB_PAL[]{ "sp" };
 			constexpr char ATTR_HFLIP[]{ "h" };
 			constexpr char ATTR_VFLIP[]{ "v" };
+
+			// cinematic tags and attributes
+			constexpr char TAG_CINEMATIC[]{ "cinematic" };
+			constexpr char TAG_SPRITE_PALETTE_INTRO[]{ "sprite_palette_intro" };
+			constexpr char TAG_SPRITE_PALETTE_OUTRO[]{ "sprite_palette_outro" };
+			constexpr char TAG_SPRITE_CHR_BANK[]{ "sprite_chr_bank" };
+			constexpr char TAG_PLAYER_ANIMATIONS[]{ "player_animations" };
+			constexpr char TAG_PLAYER_ANIMATION[]{ "player_animation" };
+			constexpr char TAG_DEPTH_STAGES[]{ "depth_stages" };
+			constexpr char TAG_DEPTH_STAGE[]{ "depth_stage" };
+			constexpr char TAG_WATERFALL[]{ "waterfall" };
+			constexpr char TAG_RIPPLES[]{ "ripples" };
+			constexpr char TAG_RIPPLE[]{ "ripple" };
+
+			constexpr char ATTR_CUTOFF_Y[]{ "cutoff_y" };
+			constexpr char ATTR_VELOCITY_X[]{ "velocity_x" };
+			constexpr char ATTR_VELOCITY_Y[]{ "velocity_y" };
 
 			// config file tags
 			constexpr char TAG_CONFIG_ROOT[]{ "eoe_config" };

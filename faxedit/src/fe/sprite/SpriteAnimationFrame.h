@@ -30,6 +30,7 @@ namespace fe {
 		std::vector<byte> to_bytes(const std::map<byte, byte>& remap = std::map<byte, byte>()) const;
 		std::vector<byte> to_bytes(const std::vector<byte>& load_list) const;
 		std::vector<byte> to_bytes(byte linear_delta) const;
+		std::vector<byte> to_cinematic_bytes(void) const;
 		std::map<byte, int> get_tile_usage(void) const;
 		int get_empty_tile_count(void) const;
 

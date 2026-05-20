@@ -117,6 +117,30 @@ std::vector<byte> fe::SpriteAnimationFrame::to_bytes(const std::map<byte, byte>&
 	return result;
 }
 
+// slighly different header format for the frames used in cinematics
+std::vector<byte> fe::SpriteAnimationFrame::to_cinematic_bytes(void) const {
+	std::vector<byte> result;
+
+	result.push_back(static_cast<byte>(static_cast<char>(offset_x)));
+	result.push_back(static_cast<byte>(static_cast<char>(offset_y)));
+	result.push_back(static_cast<byte>(w()));
+	result.push_back(static_cast<byte>(h()));
+
+	const auto no_remap{ std::map<byte, byte>() };
+
+	for (const auto& row : tilemap)
+		for (const auto& tile : row) {
+			if (tile) {
+				auto tilebytes{ tile->to_bytes(no_remap) };
+				result.insert(end(result), begin(tilebytes), end(tilebytes));
+			}
+			else
+				result.push_back(0xff);
+		}
+
+	return result;
+}
+
 std::map<byte, int> fe::SpriteAnimationFrame::get_tile_usage(void) const {
 	std::map<byte, int> result;
 

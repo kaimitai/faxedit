@@ -257,6 +257,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.generate_tilesets(m_config);
 		new_game.m_gfx_manager.initialize(m_config, new_game.m_rom_data);
 		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
+		new_game.cinematic.parse_rom(m_config, new_game.m_rom_data);
 
 		// everything succeeded, so commit at this point
 		*m_game = std::move(new_game);
@@ -310,6 +311,27 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
 	if (!p_exclude_dynamic) {
+
+		if (m_settings.patch_cinematic) {
+			auto cinema_res{ m_game->cinematic.patch_rom(m_config, x_rom) };
+			std::size_t used_space{ cinema_res.data_section_end - cinema_res.data_section_start };
+			std::size_t free_space_end{ m_settings.throw_on_cinematic_overflow ?
+				m_config.constant(c::ID_ISCRIPT_DATA_RG2_START) :
+			m_config.constant(c::ID_ISCRIPT_DATA_RG2_END) };
+
+			bool cinematic_patched_ok{ check_patched_size("Cinematic Data", used_space,
+				free_space_end - cinema_res.data_section_start) };
+
+			l_good &= cinematic_patched_ok;
+
+			if (!cinematic_patched_ok && m_settings.throw_on_cinematic_overflow)
+				add_message(
+					std::format(
+						"Cinematic data overflow: constant '{}' must be set to at least 0x{:05x} (see the documentation)",
+						c::ID_ISCRIPT_DATA_RG2_START,
+						cinema_res.data_section_end),
+					4);
+		}
 
 		if (m_settings.m_patch_sprite_gfx) {
 			auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };

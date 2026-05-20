@@ -36,6 +36,8 @@ namespace fe {
 		constexpr char ID_BLD_SCENE_TILESET_PTR[]{ "building_scene_tileset_ptr" };
 		constexpr char ID_BLD_SCENE_POS_PTR[]{ "building_scene_pos_ptr" };
 		constexpr char ID_BLD_SCENE_MUSIC_PTR[]{ "building_scene_music_ptr" };
+		// intro/outro animation offsets
+		constexpr char ID_GFX_CINEMATIC_ANIM_PTR_LO[]{ "gfx_cinematic_anim_frame_ptr_lo" };
 
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
@@ -129,6 +131,30 @@ namespace fe {
 
 		constexpr char ID_ALPHABET_CHR_OFFSET[]{ "alphabet_chr_offset" };
 		constexpr char ID_NUMERIC_CHR_OFFSET[]{ "numeric_chr_offset" };
+
+		constexpr char ID_CINEMATIC_SPRITE_CHR_OFFSET[]{ "cinematic_sprite_chr_offset" };
+		constexpr char ID_CINEMATIC_SPRITE_CHR_COUNT[]{ "cinematic_sprite_chr_count" };
+		constexpr char ID_CINEMATIC_ANIM_FRAME_COUNT[]{ "cinematic_anim_frame_count" };
+		constexpr char ID_CINEMATIC_WATERFALL_X_OFFSET[]{ "cinematic_waterfall_x_offset" };
+		constexpr char ID_CINEMATIC_WATERFALL_Y_OFFSET[]{ "cinematic_waterfall_y_offset" };
+		constexpr char ID_CINEMATIC_RIPPLE_DATA_OFFSET[]{ "cinematic_ripple_data_offset" };
+
+		constexpr char ID_CINEMATIC_INTRO_PLAYER_X_OFFSET[]{ "cinematic_intro_player_x_offset" };
+		constexpr char ID_CINEMATIC_INTRO_PLAYER_Y_OFFSET[]{ "cinematic_intro_player_y_offset" };
+		constexpr char ID_CINEMATIC_INTRO_VEL_X_OFFSET[]{ "cinematic_intro_vel_x_offset" };
+		constexpr char ID_CINEMATIC_INTRO_VEL_Y_OFFSET[]{ "cinematic_intro_vel_y_offset" };
+		constexpr char ID_CINEMATIC_INTRO_THRESHOLD_OFFSET[]{ "cinematic_intro_threshold_offset" };
+
+		constexpr char ID_CINEMATIC_OUTRO_PLAYER_X_OFFSET[]{ "cinematic_outro_player_x_offset" };
+		constexpr char ID_CINEMATIC_OUTRO_PLAYER_Y_OFFSET[]{ "cinematic_outro_player_y_offset" };
+		constexpr char ID_CINEMATIC_OUTRO_VEL_X_OFFSET[]{ "cinematic_outro_vel_x_offset" };
+		constexpr char ID_CINEMATIC_OUTRO_VEL_Y_OFFSET[]{ "cinematic_outro_vel_y_offset" };
+		constexpr char ID_CINEMATIC_OUTRO_THRESHOLD_OFFSET[]{ "cinematic_outro_threshold_offset" };
+		constexpr char ID_CINEMATIC_OUTRO_TERMINAL_THRESHOLD_OFFSET[]{ "cinematic_outro_terminal_threshold_offset" };
+
+		// iScript constants needed for size validation when patching cinematic data
+		constexpr char ID_ISCRIPT_DATA_RG2_START[]{ "iscript_data_rg2_start" };
+		constexpr char ID_ISCRIPT_DATA_RG2_END[]{ "iscript_data_rg2_end" };
 
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };

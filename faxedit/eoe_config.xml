@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-6.3">
+<eoe_config app_version="beta-7">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -82,6 +82,10 @@
 		<pointer name="gfx_portrait_anim_frame_ptr" value="0x1c01a" zero_addr="0x1c010" />
 		<pointer name="gfx_portrait_tile_index_table_ptr" value="0x2001e" zero_addr="0x20010" />
 		<pointer name="gfx_portrait_chr_data_ptr" value="0x20020" zero_addr="0x20010" />
+		<!-- cinematic animations -->
+		<pointer name="gfx_cinematic_anim_frame_ptr_lo" region="us,randum" value="0x32b27" zero_addr="0x28010" />
+		<pointer name="gfx_cinematic_anim_frame_ptr_lo" region="eu,us-rev-a" value="0x32b72" zero_addr="0x28010" />
+		<pointer name="gfx_cinematic_anim_frame_ptr_lo" region="jp,en-transl" value="0x32f23" zero_addr="0x28010" />
 	</pointers>
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
@@ -288,6 +292,55 @@
 		<const name="wing_boots_time_offset" value="0x3c5a9" />
 		<!-- offset of sprite update handler ptr table -->
 		<const name="sprite_update_handlers_offset" value="0x38097" />
+		<!-- cinematics (intro/outro animations) -->
+		<const name="cinematic_sprite_chr_offset" value="0x29bb0" />
+		<const name="cinematic_sprite_chr_count" value="$90" />
+		<const name="cinematic_anim_frame_count" value="32" />
+		<!-- cinematic data for region US -->
+		<const name="cinematic_waterfall_x_offset" region="us,randum" value="0x32a7d" />
+		<const name="cinematic_waterfall_y_offset" region="us,randum" value="0x32a82" />
+		<const name="cinematic_ripple_data_offset" region="us,randum" value="0x329a4" />
+		<const name="cinematic_intro_player_x_offset" region="us,randum" value="0x32824" />
+		<const name="cinematic_intro_player_y_offset" region="us,randum" value="0x32829" />
+		<const name="cinematic_intro_vel_x_offset" region="us,randum" value="0x3283c" />
+		<const name="cinematic_intro_vel_y_offset" region="us,randum" value="0x32841" />
+		<const name="cinematic_intro_threshold_offset" region="us,randum" value="0x32869" />
+		<const name="cinematic_outro_player_x_offset" region="us,randum" value="0x32847" />
+		<const name="cinematic_outro_player_y_offset" region="us,randum" value="0x3284c" />
+		<const name="cinematic_outro_vel_x_offset" region="us,randum" value="0x3285f" />
+		<const name="cinematic_outro_vel_y_offset" region="us,randum" value="0x32864" />
+		<const name="cinematic_outro_threshold_offset" region="us,randum" value="0x32876" />
+		<const name="cinematic_outro_terminal_threshold_offset" region="us,randum" value="0x32970" />
+		<!-- cinematic data for region EU / US rev A -->
+		<const name="cinematic_waterfall_x_offset" region="eu,us-rev-a" value="0x32ac8" />
+		<const name="cinematic_waterfall_y_offset" region="eu,us-rev-a" value="0x32acd" />
+		<const name="cinematic_ripple_data_offset" region="eu,us-rev-a" value="0x329ef" />
+		<const name="cinematic_intro_player_x_offset" region="eu,us-rev-a" value="0x3286f" />
+		<const name="cinematic_intro_player_y_offset" region="eu,us-rev-a" value="0x32874" />
+		<const name="cinematic_intro_vel_x_offset" region="eu,us-rev-a" value="0x32887" />
+		<const name="cinematic_intro_vel_y_offset" region="eu,us-rev-a" value="0x3288c" />
+		<const name="cinematic_intro_threshold_offset" region="eu,us-rev-a" value="0x328b4" />
+		<const name="cinematic_outro_player_x_offset" region="eu,us-rev-a" value="0x32892" />
+		<const name="cinematic_outro_player_y_offset" region="eu,us-rev-a" value="0x32897" />
+		<const name="cinematic_outro_vel_x_offset" region="eu,us-rev-a" value="0x328aa" />
+		<const name="cinematic_outro_vel_y_offset" region="eu,us-rev-a" value="0x328af" />
+		<const name="cinematic_outro_threshold_offset" region="eu,us-rev-a" value="0x328c1" />
+		<const name="cinematic_outro_terminal_threshold_offset" region="eu,us-rev-a" value="0x329bb" />
+		<!-- cinematic data for region JP / en-transl -->
+		<const name="cinematic_waterfall_x_offset" region="jp,en-transl" value="0x32e79" />
+		<const name="cinematic_waterfall_y_offset" region="jp,en-transl" value="0x32e7e" />
+		<const name="cinematic_ripple_data_offset" region="jp,en-transl" value="0x32da0" />
+		<const name="cinematic_intro_player_x_offset" region="jp,en-transl" value="0x32c20" />
+		<const name="cinematic_intro_player_y_offset" region="jp,en-transl" value="0x32c25" />
+		<const name="cinematic_intro_vel_x_offset" region="jp,en-transl" value="0x32c38" />
+		<const name="cinematic_intro_vel_y_offset" region="jp,en-transl" value="0x32c3d" />
+		<const name="cinematic_intro_threshold_offset" region="jp,en-transl" value="0x32c65" />
+		<const name="cinematic_outro_player_x_offset" region="jp,en-transl" value="0x32c43" />
+		<const name="cinematic_outro_player_y_offset" region="jp,en-transl" value="0x32c48" />
+		<const name="cinematic_outro_vel_x_offset" region="jp,en-transl" value="0x32c5b" />
+		<const name="cinematic_outro_vel_y_offset" region="jp,en-transl" value="0x32c60" />
+		<const name="cinematic_outro_threshold_offset" region="jp,en-transl" value="0x32c72" />
+		<const name="cinematic_outro_terminal_threshold_offset" region="jp,en-transl" value="0x32d6c" />
 	</consts>
 	<!-- value sets -->
 	<sets>
