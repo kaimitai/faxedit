@@ -14,7 +14,7 @@ namespace fe {
 			m_mattock_overlay, m_door_req_overlay;
 		std::vector<char> m_overlays;
 		// sprite gfx settings
-		bool m_redraw_sprite_gfx;
+		bool m_redraw_sprite_gfx, m_redraw_cinema_gfx;
 		std::vector<std::size_t> coll_palettes;
 		float scale_frame, scale_bank;
 		int transp_tolerance;

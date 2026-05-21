@@ -254,6 +254,12 @@ namespace fe {
 		void show_cinematic_position(fe::AnimPosition& p_pos) const;
 		void show_cinematic_threshold(fe::DepthState& p_pos) const;
 		void show_cinematic_velocity(fe::Velocity& p_velocity) const;
+		void show_cinematic_frames(SDL_Renderer* p_rnd);
+
+		void export_cinematic_chr_bank(const std::vector<klib::NES_tile>& p_bank);
+		void import_cinematic_chr_bank(std::vector<klib::NES_tile>& p_cinematic_bank);
+		void export_cinematic_frame_bmps(void);
+		void import_cinematic_frame_bmps(void);
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);

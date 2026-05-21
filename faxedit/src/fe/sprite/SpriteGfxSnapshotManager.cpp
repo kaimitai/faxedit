@@ -39,6 +39,24 @@ std::pair<std::size_t, std::size_t> fe::SpriteGfxSnapshotManager::restore_snapsh
 	return result;
 }
 
+std::pair<std::size_t, std::size_t> fe::SpriteGfxSnapshotManager::restore_flat_snapshot(ChrBank& p_bank,
+	std::vector<fe::SpriteAnimationFrame>& p_frames, std::size_t p_coll_id) {
+	if (!has_snapshot(p_coll_id))
+		return std::make_pair(0, 0);
+
+	fe::SpriteGfxSnapshot snap{ std::move(history[p_coll_id].back()) };
+	history[p_coll_id].pop_back();
+
+	auto result{ std::make_pair(snap.bank_ids.size(), snap.frame_ids.size()) };
+
+	if (!snap.banks.empty())
+		p_bank = snap.banks.at(0);
+	if (!snap.frames.empty())
+		p_frames = snap.frames;
+
+	return result;
+}
+
 void fe::SpriteGfxSnapshotManager::apply_chr_import(fe::SpriteFrameCollection& p_coll,
 	std::size_t p_coll_id, std::size_t p_bank_id, const ChrBank& p_bank) {
 
@@ -48,6 +66,18 @@ void fe::SpriteGfxSnapshotManager::apply_chr_import(fe::SpriteFrameCollection& p
 	};
 
 	p_coll.banks.at(p_bank_id) = p_bank;
+
+	add_entry(p_coll_id, snap);
+}
+
+void fe::SpriteGfxSnapshotManager::apply_flat_chr_import(std::size_t p_coll_id, std::size_t p_bank_id,
+	const ChrBank& p_bank, ChrBank& bank_ref) {
+	fe::SpriteGfxSnapshot snap{
+	.bank_ids = {p_bank_id},
+	.banks = {bank_ref}
+	};
+
+	bank_ref = p_bank;
 
 	add_entry(p_coll_id, snap);
 }
@@ -78,6 +108,33 @@ void fe::SpriteGfxSnapshotManager::apply_bmp_import(fe::SpriteFrameCollection& p
 		});
 }
 
+void fe::SpriteGfxSnapshotManager::apply_flat_bmp_import(std::size_t p_coll_id,
+	const ChrBank& p_bank, const std::vector<fe::SpriteAnimationFrame>& p_frames,
+	ChrBank& bank_ref, std::vector<fe::SpriteAnimationFrame>& p_frame_ref) {
+
+	std::vector<std::size_t> dummy_frame_ids;
+	for (std::size_t i{ 0 }; i < p_frame_ref.size(); ++i)
+		dummy_frame_ids.push_back(i);
+
+	add_entry(p_coll_id, fe::SpriteGfxSnapshot{
+	.bank_ids = {0},
+	.banks = {bank_ref},
+	.frame_ids = dummy_frame_ids,
+	.frames = {p_frame_ref}
+		});
+
+	auto tmp_frames{ p_frames };
+
+	for (std::size_t i{ 0 }; i < p_frames.size() && i < p_frame_ref.size(); ++i) {
+		tmp_frames[i].offset_x = p_frame_ref[i].offset_x;
+		tmp_frames[i].offset_y = p_frame_ref[i].offset_y;
+		tmp_frames[i].pivot_x = p_frame_ref[i].pivot_x;
+	}
+
+	bank_ref = p_bank;
+	p_frame_ref = tmp_frames;
+}
+
 void fe::SpriteGfxSnapshotManager::add_snapshot(const fe::SpriteFrameCollection& p_coll,
 	std::size_t p_coll_id, const fe::ChrBankImpact& impact) {
 
@@ -96,6 +153,20 @@ void fe::SpriteGfxSnapshotManager::add_snapshot(const fe::SpriteFrameCollection&
 		.banks = banks,
 		.frame_ids = frame_idxs,
 		.frames = frames
+		});
+}
+
+void fe::SpriteGfxSnapshotManager::add_flat_snapshot(std::size_t p_coll_id, const ChrBank& p_bank,
+	const std::vector<fe::SpriteAnimationFrame>& p_frames) {
+	std::vector<std::size_t> dummy_frame_ids;
+	for (std::size_t i{ 0 }; i < p_frames.size(); ++i)
+		dummy_frame_ids.push_back(i);
+
+	add_entry(p_coll_id, fe::SpriteGfxSnapshot{
+	.bank_ids = {0},
+	.banks = {p_bank},
+	.frame_ids = dummy_frame_ids,
+	.frames = {p_frames}
 		});
 }
 

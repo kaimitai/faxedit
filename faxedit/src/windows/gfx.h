@@ -105,8 +105,10 @@ namespace fe {
 		SDL_Texture* m_sprite_selected_gfx;
 		SDL_Texture* m_sprite_selected_bank;
 
-		SDL_Palette* m_nes_palette;
+		SDL_Texture* m_cinema_selected_gfx;
+		SDL_Texture* m_cinema_selected_bank;
 
+		SDL_Palette* m_nes_palette;
 		SDL_Color m_hot_pink;
 
 		// surface operations
@@ -357,7 +359,44 @@ namespace fe {
 			const std::vector<byte>& p_palette,
 			const std::string& p_path,
 			const std::string& p_file_prefix) const;
+		void save_cinema_frames_bmp(const std::vector<fe::SpriteAnimationFrame> p_frames,
+			const std::vector<klib::NES_tile>& p_tiles,
+			const std::vector<byte>& p_intro_palette,
+			const std::vector<byte>& p_outro_palette,
+			const std::string& p_path,
+			const std::string& p_file_prefix,
+			std::size_t p_palette_cutoff = 12) const;
 		std::vector<std::vector<byte>> flat_pal_to_2d_pal(const std::vector<byte>& p_palette) const;
+
+		// cinematics
+		void clear_cinema_bank_selected_texture(void);
+		void clear_cinema_selected_texture(void);
+
+		// cinematic rendering
+		SDL_Texture* get_cinema_selected_texture(void) const;
+		SDL_Texture* get_cinema_selected_chr_bank(void) const;
+
+		// cinematic bmp import
+		fe::SpriteImportResult import_cinematic_frames_from_folder(
+			const std::string& folder,
+			const std::string& prefix,
+			const std::vector<byte>& p_intro_palette,
+			const std::vector<byte>& p_outro_palette,
+			std::size_t max_bank_size,
+			int tolerance,
+			std::size_t p_palette_cutoff = 12) const;
+		fe::SpriteImportResult import_cinema_frames_from_bmps(
+			const std::vector<std::string>& bmp_files,
+			const std::vector<std::vector<byte>>& p_intro_palette,
+			const std::vector<std::vector<byte>>& p_outro_palette,
+			std::size_t max_bank_size,
+			int p_tolerance,
+			std::size_t p_palette_cutoff) const;
+
+		void gen_cinema_selected_texture(SDL_Renderer* p_rnd, const fe::SpriteAnimationFrame& p_frame,
+			const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette);
+		void gen_cinema_selected_chr_bank(SDL_Renderer* p_rnd,
+			const std::vector<klib::NES_tile>& p_chr_bank, const std::vector<byte>& p_palette);
 
 		// palette
 		const SDL_Palette* get_nes_palette(void) const;

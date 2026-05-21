@@ -632,6 +632,8 @@ std::string fe::MainWindow::get_sprite_gfx_file_prefix(std::size_t p_coll_key) c
 		return "player";
 	else if (p_coll_key == 2)
 		return "portraits";
+	else if (p_coll_key == c::CINEMATIC_NUM_ID_GFX_COLL)
+		return "cinematic";
 	else
 		return "unknown";
 }
@@ -672,4 +674,6 @@ void fe::MainWindow::generate_editor_sprite_gfx(SDL_Renderer* p_rnd) {
 	m_gfx.gen_sprites(p_rnd, gui_sprites, m_game->m_palettes.at(m_settings.coll_palettes[0]));
 	// force a redraw in the sprite gfx window
 	m_settings.m_redraw_sprite_gfx = true;
+	// force a redraw in the cinema gfx window
+	m_settings.m_redraw_cinema_gfx = true;
 }
