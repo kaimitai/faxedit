@@ -39,6 +39,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_iscript_window{ false },
 	m_gfx_window{ false },
 	m_sprite_gfx_window{ false },
+	m_cinematic_window{ false },
 	m_iscript_win_set_focus{ false },
 	// cached values
 	m_cache{
@@ -259,12 +260,12 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 		if (m_iscript_window)
 			draw_iscript_window(p_rnd);
-
 		if (m_gfx_window)
 			draw_gfx_window(p_rnd);
-
 		if (m_sprite_gfx_window)
 			draw_sprite_gfx_window(p_rnd);
+		if (m_cinematic_window)
+			draw_cinematic_window(p_rnd);
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);

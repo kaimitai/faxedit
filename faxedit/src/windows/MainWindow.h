@@ -26,6 +26,7 @@ namespace fe {
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
 	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player };
+	enum class CinematicEditMode { Player, Ripples, Waterfall, Palette, AnimationFrames, Settings };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -97,7 +98,7 @@ namespace fe {
 		fe::ClipboardManager m_clip_manager;
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
-			m_gfx_window, m_sprite_gfx_window;
+			m_gfx_window, m_sprite_gfx_window, m_cinematic_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -154,6 +155,7 @@ namespace fe {
 		void draw_sprite_gfx_window(SDL_Renderer* p_rnd);
 		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
 		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
+		void draw_cinematic_window(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 
@@ -246,6 +248,12 @@ namespace fe {
 			std::size_t p_bank_id, std::size_t p_bank_count, std::size_t p_tile_count) const;
 		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
 		std::optional<std::pair<int, int>> imgui_select_tile_image(SDL_Texture* tex, float scale, int& p_sel_x, int& p_sel_y) const;
+
+		// cinematic ui helpers
+		void show_cinematic_edit_mode(bool& p_mode);
+		void show_cinematic_position(fe::AnimPosition& p_pos) const;
+		void show_cinematic_threshold(fe::DepthState& p_pos) const;
+		void show_cinematic_velocity(fe::Velocity& p_velocity) const;
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);

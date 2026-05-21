@@ -216,6 +216,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_sprite_gfx_window ? 4 : 2))
 		m_sprite_gfx_window = !m_sprite_gfx_window;
 
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Cinematic editor",
+		m_cinematic_window ? 4 : 2))
+		m_cinematic_window = !m_cinematic_window;
+
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
 		load_xml(p_rnd);
 

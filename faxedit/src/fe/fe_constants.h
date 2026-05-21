@@ -209,6 +209,11 @@ namespace fe {
 		CHR_GFX_ID_TITLE, CHR_GFX_ID_INTRO, CHR_GFX_ID_OUTRO, CHR_GFX_ID_ITEMS
 		};
 
+		// cinematic gfx keys - unique identifiers needed by various pipelines
+		constexpr std::size_t CINEMATIC_NUM_ID_INTRO{ 25000 };
+		constexpr std::size_t CINEMATIC_NUM_ID_OUTRO{ CINEMATIC_NUM_ID_INTRO + 1 };
+		constexpr std::size_t CINEMATIC_NUM_ID_GFX_COLL{ 10 };
+
 		// make sure this has the same order in enum fe::DoorType
 		// used for door type dropdowns in the guid
 		inline const char* LABELS_DOOR_TYPES[]{
