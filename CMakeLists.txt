@@ -47,6 +47,7 @@ set(SOURCES
 	faxedit/src/fe/EditorSettings.cpp
 	faxedit/src/fe/ScreenRef.cpp
 	faxedit/src/fe/MetatileRef.cpp
+	faxedit/src/fe/Cinematic.cpp
     faxedit/src/fe/xml/Xml_helper.cpp
 
     faxedit/src/fe/sprite/SpriteAnimationFrame.cpp
@@ -71,6 +72,7 @@ set(SOURCES
     faxedit/src/windows/SpriteGfxWindow.cpp
     faxedit/src/windows/UndoInterface.cpp
     faxedit/src/windows/ClipBoardManager.cpp
+	faxedit/src/windows/CinematicWindow.cpp
 )
 
 add_executable(faxedit ${SOURCES})
