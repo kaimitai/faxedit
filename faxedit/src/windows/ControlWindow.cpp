@@ -222,6 +222,23 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_cinematic_window ? 4 : 2))
 		m_cinematic_window = !m_cinematic_window;
 
+	if (m_settings.m_enable_config_dump) {
+
+		ImGui::SameLine();
+
+		if (ui::imgui_button("Dump configuration", 4)) try {
+			std::filesystem::path outputPath{ m_path / (m_filename + "-config_dump.txt") };
+
+			std::string config_dump_out_file{ outputPath.string() };
+
+			klib::file::write_string_to_file(m_config.to_string(), config_dump_out_file);
+			add_message(std::format("Resolved configuration dumped to file {}", config_dump_out_file), 2);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), 1);
+		}
+	}
+
 	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
 		load_xml(p_rnd);
 

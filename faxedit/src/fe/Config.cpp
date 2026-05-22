@@ -200,6 +200,7 @@ void fe::Config::clear(void) {
 	m_constants.clear();
 	m_pointers.clear();
 	m_sets.clear();
+	m_bools.clear();
 }
 
 bool fe::Config::has_constant(const std::string& p_id) const {
@@ -216,4 +217,39 @@ bool fe::Config::is_byte_match(const std::vector<byte>& p_rom, std::size_t p_off
 			return false;
 
 	return true;
+}
+
+std::string fe::Config::to_string(void) const {
+	std::string result{ std::format("Region: '{}'\n", m_region) };
+
+	result += "\n--- constants ---\n";
+	for (const auto& kv : m_constants)
+		result += std::format("{}=${:x}\n", kv.first, kv.second);
+
+	result += "\n--- pointers ---\n";
+	for (const auto& kv : m_pointers)
+		result += std::format("{}: offset=${:x}, zero={:x}\n", kv.first,
+			kv.second.first, kv.second.second);
+
+	result += "\n--- byte to string maps ---\n";
+	for (const auto& kv : m_byte_maps) {
+		result += std::format("map name: {}\n", kv.first);
+		for (const auto& kkv : kv.second)
+			result += std::format("  ${:02x}: '{}'\n", kkv.first, kkv.second);
+	}
+
+	result += "\n--- sets ---\n";
+	for (const auto& kv : m_sets) {
+		result += std::format("{}: ", kv.first);
+
+		for (byte b : kv.second)
+			result += std::format("${:02x} ", b);
+		result += "\n";
+	}
+
+	result += "\n--- booleans ---\n";
+	for (const auto& kv : m_bools)
+		result += std::format("{}={}\n", kv.first, kv.second);
+
+	return result;
 }

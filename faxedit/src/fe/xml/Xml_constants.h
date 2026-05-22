@@ -31,6 +31,7 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_IO_DOOR_REQS[]{ "icon_overlay_door_reqs" };
 			constexpr char SETTINGS_PARAM_SW_DOORS_IN_TOWNS[]{ "sw_doors_in_town" };
 			constexpr char SETTINGS_PARAM_SHOW_DOOR_PADDING[]{ "show_door_padding_byte" };
+			constexpr char SETTINGS_PARAM_ENABLE_CONFIG_DUMP[]{ "enable_config_dump" };
 
 			constexpr char TAG_STAGES[]{ "stages" };
 			constexpr char TAG_STAGE[]{ "stage" };

@@ -28,6 +28,8 @@ namespace fe {
 
 	public:
 		Config(void) = default;
+		std::string to_string(void) const;
+
 		std::string get_region(void) const;
 		std::vector<std::string> get_region_names(void) const;
 		void set_region(const std::string& p_region_name);

@@ -12,6 +12,7 @@ fe::EditorSettings::EditorSettings(void) :
 	m_redraw_cinema_gfx{ false },
 	m_sw_doors_in_towns{ false },
 	m_door_pad_byte{ false },
+	m_enable_config_dump{ false },
 	patch_cinematic{ true },
 	throw_on_cinematic_overflow{ true }
 {

@@ -20,7 +20,7 @@ namespace fe {
 		int transp_tolerance;
 		// advanced settings
 		bool m_sw_doors_in_towns;
-		bool m_door_pad_byte;
+		bool m_door_pad_byte, m_enable_config_dump;
 
 		void sanitize(void);
 		void sanitize_float(float& p_val, float p_default);
