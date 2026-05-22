@@ -92,8 +92,8 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText("Patching");
 			ui::imgui_checkbox("Patch ROM", m_settings.patch_cinematic,
 				"Whether cinematic data should be written when patching ROM");
-			ui::imgui_checkbox("Allow overflow", m_settings.throw_on_cinematic_overflow,
-				"Whether to allow patching if cinematic data could potentially overwrite script data (see documentation)");
+			ui::imgui_checkbox("Disallow overflow", m_settings.throw_on_cinematic_overflow,
+				"Whether to fail patching if cinematic data could potentially overwrite script data (see documentation)");
 		}
 		else if (editmode == fe::CinematicEditMode::AnimationFrames) {
 			show_cinematic_frames(p_rnd);
@@ -113,7 +113,8 @@ void fe::MainWindow::show_cinematic_frames(SDL_Renderer* p_rnd) {
 	static bool ls_redraw_bank{ true }, ls_redraw_frame{ true };
 	static int ls_sel_frame_x{ 0 }, ls_sel_frame_y{ 0 },
 		ls_sel_bank_chr_x{ 0 }, ls_sel_bank_chr_y{ 0 };
-	static std::size_t ls_sel_frame{ 0 };
+	static std::size_t ls_sel_frame{ 0 },
+		ls_palette_cutoff{ m_config.constant(c::ID_CINEMATIC_PALETTE_CUTOFF) };
 
 	auto& cinema{ m_game->cinematic };
 
@@ -135,7 +136,7 @@ void fe::MainWindow::show_cinematic_frames(SDL_Renderer* p_rnd) {
 	}
 	if (ls_redraw_frame) {
 		m_gfx.gen_cinema_selected_texture(p_rnd, cinema.frames.at(ls_sel_frame),
-			cinema.tiles, ls_sel_frame >= 12 ? cinema.sprite_palette_outro : cinema.sprite_palette_intro);
+			cinema.tiles, ls_sel_frame >= ls_palette_cutoff ? cinema.sprite_palette_outro : cinema.sprite_palette_intro);
 		ls_redraw_frame = false;
 	}
 
@@ -335,7 +336,8 @@ void fe::MainWindow::import_cinematic_frame_bmps(void) {
 		get_sprite_gfx_file_prefix(c::CINEMATIC_NUM_ID_GFX_COLL),
 		cinema.sprite_palette_intro, cinema.sprite_palette_outro,
 		max_tile_count, m_settings.transp_tolerance,
-		12) };
+		m_config.constant(c::ID_CINEMATIC_PALETTE_CUTOFF),
+		m_config.constant(c::ID_CINEMATIC_MIN_ANIM_FRAME_COUNT)) };
 
 	if (impres.approximated_tile_count > 0)
 		throw std::runtime_error(
@@ -359,7 +361,8 @@ void fe::MainWindow::export_cinematic_frame_bmps(void) {
 
 	m_gfx.save_cinema_frames_bmp(cinema.frames, cinema.tiles, cinema.sprite_palette_intro,
 		cinema.sprite_palette_outro, get_bmp_path(),
-		get_sprite_gfx_file_prefix(c::CINEMATIC_NUM_ID_GFX_COLL));
+		get_sprite_gfx_file_prefix(c::CINEMATIC_NUM_ID_GFX_COLL),
+		m_config.constant(c::ID_CINEMATIC_PALETTE_CUTOFF));
 
 	add_message(std::format("Saved {} bmps as {}", cinema.frames.size(),
 		m_gfx.get_sprite_frame_bmp_wc_filpath(get_bmp_path(),

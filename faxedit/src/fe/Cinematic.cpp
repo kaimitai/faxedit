@@ -20,18 +20,13 @@ fe::CinematicPatchResult fe::Cinematic::patch_rom(const fe::Config& p_config,
 fe::CinematicPatchResult fe::Cinematic::patch_frame_data(const fe::Config& p_config,
 	std::vector<byte>& p_rom) const {
 	fe::GodAllocator alloc;
-	const std::size_t frame_count{ p_config.constant(c::ID_CINEMATIC_ANIM_FRAME_COUNT) };
-
-	if (frames.size() != frame_count)
-		throw std::runtime_error(
-			std::format("Cinematic animation frame count is {}, but configuration only allows exactly {}",
-				frames.size(), frame_count)
-		);
+	const std::size_t frame_count{ frames.size() };
 
 	const auto frameptr{ p_config.pointer(c::ID_GFX_CINEMATIC_ANIM_PTR_LO) };
 
 	std::size_t ptr_table_start{ frameptr.first };
-	std::size_t ptr_table_end{ ptr_table_start + frame_count * 2 };
+	std::size_t ptr_table_hi_start{ frameptr.first + frame_count };
+	std::size_t ptr_table_end{ ptr_table_hi_start + frame_count };
 	std::size_t free_space_end{ p_config.constant(c::ID_ISCRIPT_DATA_RG2_END) };
 
 	std::vector<std::vector<byte>> all_framebytes;
@@ -47,12 +42,16 @@ fe::CinematicPatchResult fe::Cinematic::patch_frame_data(const fe::Config& p_con
 		const auto& ptrbytes{ allocres->ptr_table_writes[0].data };
 		for (std::size_t i{ 0 }; i < frame_count; ++i) {
 			p_rom.at(ptr_table_start + i) = ptrbytes.at(2 * i);
-			p_rom.at(ptr_table_start + frame_count + i) = ptrbytes.at(2 * i + 1);
+			p_rom.at(ptr_table_hi_start + i) = ptrbytes.at(2 * i + 1);
 		}
 
 		const auto& datawrites{ allocres->bucket_writes[0] };
 		fe::ROM_Manager mgr;
 		mgr.patch_bytes(datawrites.data, p_rom, datawrites.rom_offset);
+
+		// and patch the reference to hi bytes
+		mgr.patch_ptr(p_rom, p_config.constant(c::ID_CINEMATIC_FRAME_PTR_HI_REF_OFFSET),
+			ptr_table_hi_start - frameptr.second);
 
 		return fe::CinematicPatchResult{
 			.data_section_start = ptr_table_start,
@@ -165,7 +164,7 @@ void fe::Cinematic::parse_rom(const fe::Config& p_config, const std::vector<byte
 
 	parse_palettes(p_config, p_rom, mgr);
 	parse_chr_data(p_config, p_rom);
-	parse_animation_frames(p_config, p_rom);
+	parse_animation_frames(p_config, p_rom, mgr);
 	parse_waterfall_data(p_config, p_rom);
 	parse_ripple_data(p_config, p_rom);
 	parse_player_intro(p_config, p_rom);
@@ -290,11 +289,14 @@ void fe::Cinematic::parse_chr_data(const fe::Config& p_config,
 }
 
 void fe::Cinematic::parse_animation_frames(const fe::Config& p_config,
-	const std::vector<byte>& p_rom) {
+	const std::vector<byte>& p_rom, const fe::ROM_Manager& p_mgr) {
 	const auto frameptr{ p_config.pointer(c::ID_GFX_CINEMATIC_ANIM_PTR_LO) };
 	std::size_t l_lo{ frameptr.first };
-	std::size_t frame_cnt{ p_config.constant(c::ID_CINEMATIC_ANIM_FRAME_COUNT) };
-	std::size_t l_hi{ l_lo + frame_cnt };
+
+	const auto hi_ref_rom_offset{ p_config.constant(c::ID_CINEMATIC_FRAME_PTR_HI_REF_OFFSET) };
+	const auto l_hi{ p_mgr.read_uint16_le(p_rom, hi_ref_rom_offset) + frameptr.second };
+
+	std::size_t frame_cnt{ l_hi - l_lo };
 
 	for (std::size_t i{ frames.size() }; i < frame_cnt; ++i) {
 		fe::SpriteAnimationFrame frame;

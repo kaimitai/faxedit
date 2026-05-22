@@ -134,7 +134,10 @@ namespace fe {
 
 		constexpr char ID_CINEMATIC_SPRITE_CHR_OFFSET[]{ "cinematic_sprite_chr_offset" };
 		constexpr char ID_CINEMATIC_SPRITE_CHR_COUNT[]{ "cinematic_sprite_chr_count" };
-		constexpr char ID_CINEMATIC_ANIM_FRAME_COUNT[]{ "cinematic_anim_frame_count" };
+		constexpr char ID_CINEMATIC_MIN_ANIM_FRAME_COUNT[]{ "cinematic_min_anim_frame_count" };
+		constexpr char ID_CINEMATIC_PALETTE_CUTOFF[]{ "cinematic_palette_cutoff" };
+
+		constexpr char ID_CINEMATIC_FRAME_PTR_HI_REF_OFFSET[]{ "cinematic_frame_ptr_hi_ref_offset" };
 		constexpr char ID_CINEMATIC_WATERFALL_X_OFFSET[]{ "cinematic_waterfall_x_offset" };
 		constexpr char ID_CINEMATIC_WATERFALL_Y_OFFSET[]{ "cinematic_waterfall_y_offset" };
 		constexpr char ID_CINEMATIC_RIPPLE_DATA_OFFSET[]{ "cinematic_ripple_data_offset" };

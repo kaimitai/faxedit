@@ -365,7 +365,7 @@ namespace fe {
 			const std::vector<byte>& p_outro_palette,
 			const std::string& p_path,
 			const std::string& p_file_prefix,
-			std::size_t p_palette_cutoff = 12) const;
+			std::size_t p_palette_cutoff) const;
 		std::vector<std::vector<byte>> flat_pal_to_2d_pal(const std::vector<byte>& p_palette) const;
 
 		// cinematics
@@ -384,7 +384,8 @@ namespace fe {
 			const std::vector<byte>& p_outro_palette,
 			std::size_t max_bank_size,
 			int tolerance,
-			std::size_t p_palette_cutoff = 12) const;
+			std::size_t p_palette_cutoff,
+			std::size_t p_min_frame_count) const;
 		fe::SpriteImportResult import_cinema_frames_from_bmps(
 			const std::vector<std::string>& bmp_files,
 			const std::vector<std::vector<byte>>& p_intro_palette,

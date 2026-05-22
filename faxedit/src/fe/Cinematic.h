@@ -47,7 +47,7 @@ namespace fe {
 			const fe::ROM_Manager& p_mgr);
 		void parse_chr_data(const fe::Config& p_config, const std::vector<byte>& p_rom);
 		void parse_animation_frames(const fe::Config& p_config,
-			const std::vector<byte>& p_rom);
+			const std::vector<byte>& p_rom, const fe::ROM_Manager& p_mgr);
 		void parse_waterfall_data(const fe::Config& p_config, const std::vector<byte>& p_rom);
 		void parse_ripple_data(const fe::Config& p_config, const std::vector<byte>& p_rom);
 		void parse_player_intro(const fe::Config& p_config, const std::vector<byte>& p_rom);

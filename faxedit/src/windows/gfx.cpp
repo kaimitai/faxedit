@@ -1706,7 +1706,8 @@ fe::SpriteImportResult fe::gfx::import_cinematic_frames_from_folder(
 	const std::vector<byte>& p_outro_palette,
 	std::size_t max_bank_size,
 	int tolerance,
-	std::size_t p_palette_cutoff) const {
+	std::size_t p_palette_cutoff,
+	std::size_t p_min_frame_count) const {
 
 	std::vector<std::string> files;
 
@@ -1715,7 +1716,7 @@ fe::SpriteImportResult fe::gfx::import_cinematic_frames_from_folder(
 		auto fullpath{ std::format("{}/{}", folder, filename) };
 
 		if (!std::filesystem::exists(fullpath)) {
-			if (files.empty())
+			if (files.size() < p_min_frame_count)
 				throw std::runtime_error(std::format("Could not find bmp file {}", fullpath));
 			else
 				break;

@@ -295,8 +295,10 @@
 		<!-- cinematics (intro/outro animations) -->
 		<const name="cinematic_sprite_chr_offset" value="0x29bb0" />
 		<const name="cinematic_sprite_chr_count" value="$90" />
-		<const name="cinematic_anim_frame_count" value="32" />
+		<const name="cinematic_min_anim_frame_count" value="32" />
+		<const name="cinematic_palette_cutoff" value="12" />
 		<!-- cinematic data for region US -->
+		<const name="cinematic_frame_ptr_hi_ref_offset" region="us,randum" value="0x32aab" />
 		<const name="cinematic_waterfall_x_offset" region="us,randum" value="0x32a7d" />
 		<const name="cinematic_waterfall_y_offset" region="us,randum" value="0x32a82" />
 		<const name="cinematic_ripple_data_offset" region="us,randum" value="0x329a4" />
@@ -312,6 +314,7 @@
 		<const name="cinematic_outro_threshold_offset" region="us,randum" value="0x32876" />
 		<const name="cinematic_outro_terminal_threshold_offset" region="us,randum" value="0x32970" />
 		<!-- cinematic data for region EU / US rev A -->
+		<const name="cinematic_frame_ptr_hi_ref_offset" region="eu,us-rev-a" value="0x32af6" />
 		<const name="cinematic_waterfall_x_offset" region="eu,us-rev-a" value="0x32ac8" />
 		<const name="cinematic_waterfall_y_offset" region="eu,us-rev-a" value="0x32acd" />
 		<const name="cinematic_ripple_data_offset" region="eu,us-rev-a" value="0x329ef" />
@@ -327,6 +330,7 @@
 		<const name="cinematic_outro_threshold_offset" region="eu,us-rev-a" value="0x328c1" />
 		<const name="cinematic_outro_terminal_threshold_offset" region="eu,us-rev-a" value="0x329bb" />
 		<!-- cinematic data for region JP / en-transl -->
+		<const name="cinematic_frame_ptr_hi_ref_offset" region="jp,en-transl" value="0x32ea7" />
 		<const name="cinematic_waterfall_x_offset" region="jp,en-transl" value="0x32e79" />
 		<const name="cinematic_waterfall_y_offset" region="jp,en-transl" value="0x32e7e" />
 		<const name="cinematic_ripple_data_offset" region="jp,en-transl" value="0x32da0" />
