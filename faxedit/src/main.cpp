@@ -59,16 +59,19 @@ int main(int argc, char** argv) try {
 			// Setup Platform/Renderer backends
 			ImGui_ImplSDL3_InitForSDLRenderer(l_window, l_rnd);
 			ImGui_ImplSDLRenderer3_Init(l_rnd);
-			#ifdef __APPLE__
+#ifdef __APPLE__
 			ImFontConfig cfg; cfg.SizePixels = 13.0f * 1.5f; ImGui::GetIO().Fonts->AddFontDefault(&cfg);
 			ImGui::GetStyle().ScaleAllSizes(1.5f);
-			#endif
+#endif
 			ImGui::GetIO().IniFilename = IMGUI_WIN_FILENAME;
 			ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
 			fe::gfx::set_app_icon(l_window, fe::c::APP_ICON);
 
-			fe::MainWindow l_main_window(l_rnd, argc > 1 ? argv[1] : "");
+			fe::MainWindow l_main_window(l_rnd,
+				argc > 1 ? argv[1] : "", // filename parameter
+				argc > 2 ? argv[2] : ""  // region override parameter
+			);
 
 			uint64_t last_logic_time = SDL_GetTicks() - 1;
 			uint64_t last_draw_time = SDL_GetTicks() - 17;

@@ -4,6 +4,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include "./xml/Xml_helper.h"
@@ -12,9 +13,14 @@ using byte = unsigned char;
 
 namespace fe {
 
+	struct ConfigRegion {
+		std::string region;
+		std::unordered_set<std::string> compatible_regions;
+	};
+
 	class Config {
 		std::vector<RegionDefinition> m_region_defs;
-		std::string m_region;
+		ConfigRegion m_region;
 
 		bool is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
 			const std::vector<byte>& p_vals) const;

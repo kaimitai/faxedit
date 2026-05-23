@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "./xml/Xml_helper.h"
+#include <algorithm>
 #include <format>
 #include <stdexcept>
 
@@ -165,7 +166,8 @@ void fe::Config::determine_region(const std::vector<byte>& p_rom) {
 
 		// we found a region match
 		if (l_match) {
-			m_region = reg.m_name;
+			m_region.region = reg.m_name;
+			m_region.compatible_regions = reg.m_compatible_regions;
 			// no need to keep this in memory anymore
 			m_region_defs.clear();
 			return;
@@ -176,7 +178,7 @@ void fe::Config::determine_region(const std::vector<byte>& p_rom) {
 }
 
 std::string fe::Config::get_region(void) const {
-	return m_region;
+	return m_region.region;
 }
 
 std::vector<std::string> fe::Config::get_region_names(void) const {
@@ -189,12 +191,17 @@ std::vector<std::string> fe::Config::get_region_names(void) const {
 }
 
 void fe::Config::set_region(const std::string& p_region_name) {
-	m_region = p_region_name;
+	m_region.region = p_region_name;
+	for (const auto& reg : m_region_defs)
+		if (reg.m_name == p_region_name)
+			m_region.compatible_regions = reg.m_compatible_regions;
+
 	m_region_defs.clear();
 }
 
 void fe::Config::clear(void) {
-	m_region.clear();
+	m_region.region.clear();
+	m_region.compatible_regions.clear();
 	m_region_defs.clear();
 	m_byte_maps.clear();
 	m_constants.clear();
@@ -220,7 +227,17 @@ bool fe::Config::is_byte_match(const std::vector<byte>& p_rom, std::size_t p_off
 }
 
 std::string fe::Config::to_string(void) const {
-	std::string result{ std::format("Region: '{}'\n", m_region) };
+	std::string result{ std::format("Region: '{}'\n", m_region.region) };
+
+	if (!m_region.compatible_regions.empty()) {
+		result += std::format("Compatible regions ({}): ", m_region.compatible_regions.size());
+
+		std::vector<std::string> regs{ begin(m_region.compatible_regions), end(m_region.compatible_regions) };
+		std::sort(begin(regs), end(regs));
+
+		for (const auto& reg : regs)
+			result += std::format("{} ", reg);
+	}
 
 	result += "\n--- constants ---\n";
 	for (const auto& kv : m_constants)

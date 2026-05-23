@@ -216,6 +216,9 @@ namespace fe {
 			constexpr char TAG_BOOLS[]{ "bools" };
 			constexpr char TAG_BOOL[]{ "bool" };
 
+			constexpr char ATTR_COMPATIBLE_REGIONS[]{ "compatible_regions" };
+			constexpr char ATTR_EXACT_MATCH_ONLY[]{ "exact_match_only" };
+
 			constexpr char ATTR_NAME[]{ "name" };
 			constexpr char ATTR_FILE_SIZE[]{ "file_size" };
 			constexpr char ATTR_OFFSET[]{ "offset" };
