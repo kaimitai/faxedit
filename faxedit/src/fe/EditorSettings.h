@@ -19,7 +19,6 @@ namespace fe {
 		float scale_frame, scale_bank;
 		int transp_tolerance;
 		// advanced settings
-		bool m_sw_doors_in_towns;
 		bool m_door_pad_byte, m_enable_config_dump;
 
 		void sanitize(void);

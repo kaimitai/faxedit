@@ -10,7 +10,6 @@ fe::EditorSettings::EditorSettings(void) :
 	m_overlays{ std::vector<char>(16, 0) },
 	m_redraw_sprite_gfx{ false },
 	m_redraw_cinema_gfx{ false },
-	m_sw_doors_in_towns{ false },
 	m_door_pad_byte{ false },
 	m_enable_config_dump{ false },
 	patch_cinematic{ true },

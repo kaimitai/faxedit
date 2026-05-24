@@ -63,7 +63,8 @@ namespace fe {
 
 		// encoding data with variable locations, needing pointer tables
 		std::vector<byte> encode_game_sprite_data_new(const fe::Config& p_config, const fe::Game& p_game) const;
-		std::vector<byte> encode_game_metadata_all(const fe::Config& p_config, const fe::Game& p_game) const;
+		std::vector<byte> encode_game_metadata_all(const fe::Config& p_config, const fe::Game& p_game,
+			byte p_door_dest_sub_world, std::optional<byte>& p_door_dest_sub_value) const;
 		std::vector<byte> encode_game_otherworld_trans(const fe::Config& p_config, const fe::Game& p_game) const;
 		std::vector<byte> encode_game_sameworld_trans(const fe::Config& p_config, const fe::Game& p_game) const;
 

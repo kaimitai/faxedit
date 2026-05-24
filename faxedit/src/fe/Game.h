@@ -135,7 +135,7 @@ namespace fe {
 		std::vector<std::size_t> get_screen_pointers(const std::vector<std::size_t>& p_offsets, std::size_t p_chunk_no) const;
 		std::vector<std::size_t> get_screen_pointers(std::size_t p_world_ptr) const;
 		void set_various(const fe::Config& p_config, std::size_t p_chunk_no,
-			std::size_t p_door_to_bld_sub);
+			byte p_door_to_bld_sub);
 		void set_sprites(size_t p_chunk_no, std::pair<std::size_t, std::size_t> pt_to_sprites);
 		void set_interchunk_scrolling(const fe::Config& p_config, std::size_t p_chunk_no);
 		void set_intrachunk_scrolling(const fe::Config& p_config, std::size_t p_chunk_no);

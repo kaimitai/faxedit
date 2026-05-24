@@ -351,10 +351,10 @@ std::size_t fe::ROM_Manager::from_uint16_le(const std::pair<byte, byte>& p_value
 }
 
 std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_config,
-	const fe::Game& p_game) const {
+	const fe::Game& p_game, byte p_door_dest_sub_world,
+	std::optional<byte>& p_door_dest_sub_value) const {
 	std::vector<std::vector<byte>> l_all_chunk_meta_data;
 	auto l_md_ptr{ p_config.pointer(c::ID_METADATA_PTR) };
-	const auto bld_door_sub{ p_config.bmap_numeric(c::ID_DOOR_DEST_INDEX_SUB) };
 
 	std::size_t l_cur_rom_offset{ l_md_ptr.first + 2 + 2 * p_game.m_chunks.size() };
 
@@ -371,13 +371,13 @@ std::vector<byte> fe::ROM_Manager::encode_game_metadata_all(const fe::Config& p_
 		l_chunk_md.push_back(chunk.get_block_property_bytes());
 		l_chunk_md.push_back(chunk.get_screen_scroll_bytes());
 
-		auto l_door_data{ chunk.get_door_bytes(c,
-			bld_door_sub.contains(static_cast<byte>(c)) ? bld_door_sub.at(static_cast<byte>(c)) : 0
-			) };
+		auto l_door_data{ chunk.get_door_bytes(c, c == p_door_dest_sub_world) };
 
 		// door data followed by door destination table
-		l_chunk_md.push_back(l_door_data.first);
-		l_chunk_md.push_back(l_door_data.second);
+		l_chunk_md.push_back(l_door_data.door_bytes);
+		l_chunk_md.push_back(l_door_data.door_destination_bytes);
+		if (l_door_data.normalization_value)
+			p_door_dest_sub_value = l_door_data.normalization_value;
 
 		l_chunk_md.push_back(chunk.get_palette_attribute_bytes());
 
@@ -413,10 +413,17 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_metadata(const fe::C
 	std::size_t l_md_end{ p_config.constant(c::ID_METADATA_END) };
 	std::size_t l_md_size{ l_md_end - (l_md_ptr.first + 2) };
 
-	auto l_metadata{ encode_game_metadata_all(p_config, p_game) };
+	std::optional<byte> door_dest_sub_val;
+	byte door_dest_sub_world{ p_rom.at(p_config.constant(c::ID_DOOR_DEST_SUB_WORLD_OFFSET)) };
+
+	auto l_metadata{ encode_game_metadata_all(p_config, p_game, door_dest_sub_world, door_dest_sub_val) };
 
 	if (l_metadata.size() <= l_md_size)
 		patch_bytes(l_metadata, p_rom, l_md_ptr.first + 2);
+
+	if (door_dest_sub_val)
+		p_rom.at(p_config.constant(c::ID_DOOR_DEST_SUB_VALUE_OFFSET)) = *door_dest_sub_val;
+
 	return std::make_pair(l_metadata.size(), l_md_size);
 }
 

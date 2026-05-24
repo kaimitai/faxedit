@@ -38,6 +38,9 @@ namespace fe {
 		constexpr char ID_BLD_SCENE_MUSIC_PTR[]{ "building_scene_music_ptr" };
 		// intro/outro animation offsets
 		constexpr char ID_GFX_CINEMATIC_ANIM_PTR_LO[]{ "gfx_cinematic_anim_frame_ptr_lo" };
+		// special case door destination index normalization (no same-world doors in towns originally)
+		constexpr char ID_DOOR_DEST_SUB_WORLD_OFFSET[]{ "door_dest_sub_world_offset" };
+		constexpr char ID_DOOR_DEST_SUB_VALUE_OFFSET[]{ "door_dest_sub_value_offset" };
 
 		// start and end offsets
 		constexpr char ID_METADATA_END[]{ "metadata_end" };
@@ -191,7 +194,6 @@ namespace fe {
 		// other
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
-		constexpr char ID_DOOR_DEST_INDEX_SUB[]{ "door_dest_index_sub" };
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
 
 		// bools

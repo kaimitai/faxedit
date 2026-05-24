@@ -139,19 +139,19 @@ std::vector<byte> fe::Chunk::get_metatile_bottom_right_bytes(void) const {
 }
 
 // a little complicated - we need to build the door entry and destination
-// tables simultaneously. p_sub is what the calling asm code subtracts from the door dest byte
-// to get its index (by default 32 for towns world, 0 for any other)
-std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::size_t p_world_no,
-	std::size_t p_sub) const {
-	constexpr bool DEDUP_DOOR_DEST_DATA{ true };
+// tables simultaneously. if normalization is enabled for this world,
+// we dynamically reduce the same-world range and later patch the asm
+// subtract immediate accordingly
+fe::DoorEncodeResult fe::Chunk::get_door_bytes(std::size_t p_world_no,
+	bool p_normalization_enabled) const {
 
-	if (p_sub > 0x20)
-		throw std::runtime_error(std::format("Invalid door index base ({}) - must be <= 32", p_sub));
-	std::size_t sw_capacity{ 0x20 - p_sub };
-	std::size_t bld_capacity{ 0x40 - sw_capacity };
+	constexpr bool DEDUP_DOOR_DEST_DATA{ true };
 
 	std::vector<byte> l_door_bytes;
 	std::vector<std::vector<byte>> sw_dests, bld_dests;
+
+	// offset into l_door_bytes + corresponding same-world slot
+	std::vector<std::pair<std::size_t, std::size_t>> sw_param_fixups;
 
 	const auto intern_dest = [](std::vector<std::vector<byte>>& dests,
 		const std::vector<byte>& dest) -> std::size_t
@@ -163,6 +163,7 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::s
 						return i;
 				}
 			}
+
 			// not found - append and return index
 			dests.push_back(dest);
 			return dests.size() - 1;
@@ -170,18 +171,25 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::s
 
 	for (std::size_t scr{ 0 }; scr < m_screens.size(); ++scr) {
 		for (std::size_t d{ 0 }; d < m_screens[scr].m_doors.size(); ++d) {
+
 			const auto& l_door{ m_screens[scr].m_doors[d] };
 
 			// first byte of door data is screen id
 			l_door_bytes.push_back(static_cast<byte>(scr));
+
 			// second byte is location (y*16 + x)
-			l_door_bytes.push_back(l_door.m_coords.first + 16 * l_door.m_coords.second);
+			l_door_bytes.push_back(
+				l_door.m_coords.first + 16 * l_door.m_coords.second);
+
 			// third byte depends on door type
 			if (l_door.m_door_type == fe::DoorType::NextWorld)
 				l_door_bytes.push_back(0xff);
+
 			else if (l_door.m_door_type == fe::DoorType::PrevWorld)
 				l_door_bytes.push_back(0xfe);
+
 			else if (l_door.m_door_type == fe::DoorType::SameWorld) {
+
 				// generate the same-world destination
 				std::vector<byte> sw_dest{
 					l_door.m_dest_screen_id,
@@ -189,15 +197,19 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::s
 					l_door.m_requirement,
 					l_door.m_unknown };
 
-				std::size_t sw_slot{ intern_dest(sw_dests, sw_dest) };
-				if (sw_slot >= sw_capacity)
-					throw std::runtime_error(std::format("World {} exceeds limit of {} unique same-world door destinations",
-						p_world_no, sw_capacity));
+				std::size_t sw_slot{
+					intern_dest(sw_dests, sw_dest) };
 
-				l_door_bytes.push_back(static_cast<byte>(sw_slot + p_sub));
+				// reserve param byte for later patching
+				sw_param_fixups.emplace_back(
+					l_door_bytes.size(), sw_slot);
+
+				l_door_bytes.push_back(0);
 			}
+
 			// we necessarily have a door to building
 			else {
+
 				// generate the other-world destination
 				std::vector<byte> bld_dest{
 					l_door.m_npc_bundle,
@@ -205,23 +217,50 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::s
 					l_door.m_requirement,
 					l_door.m_unknown };
 
-				std::size_t bld_slot{ intern_dest(bld_dests, bld_dest) };
-				if (bld_slot >= bld_capacity)
-					throw std::runtime_error(std::format(
-						"World {} exceeds limit of {} unique door-to-building destinations",
-						p_world_no, bld_capacity));
+				std::size_t bld_slot{
+					intern_dest(bld_dests, bld_dest) };
 
-				l_door_bytes.push_back(static_cast<byte>(bld_slot + 0x20));
+				l_door_bytes.push_back(
+					static_cast<byte>(bld_slot + 0x20));
 			}
 
 			// fourth byte is destination location (y*16 + x)
-			l_door_bytes.push_back(l_door.m_dest_coords.first + 16 * l_door.m_dest_coords.second);
+			l_door_bytes.push_back(
+				l_door.m_dest_coords.first
+				+ 16 * l_door.m_dest_coords.second);
 		}
 	}
 
+	std::size_t sub{ 0 };
+
+	if (p_normalization_enabled)
+		sub = 0x20 - sw_dests.size();
+
+	std::size_t sw_capacity{ 0x20 - sub };
+	std::size_t bld_capacity{ 0x40 - sw_capacity };
+
+	if (sw_dests.size() > sw_capacity)
+		throw std::runtime_error(std::format(
+			"World {} exceeds limit of {} unique same-world door destinations",
+			p_world_no, sw_capacity));
+
+	if (bld_dests.size() > bld_capacity)
+		throw std::runtime_error(std::format(
+			"World {} exceeds limit of {} unique door-to-building destinations",
+			p_world_no, bld_capacity));
+
+	// now that final sub is known, patch the reserved param bytes
+	for (const auto& fixup : sw_param_fixups)
+		l_door_bytes.at(fixup.first) =
+		static_cast<byte>(fixup.second + sub);
+
 	std::vector<byte> dest_bytes;
+
 	for (const auto& sw_dest_bytes : sw_dests)
-		dest_bytes.insert(end(dest_bytes), begin(sw_dest_bytes), end(sw_dest_bytes));
+		dest_bytes.insert(
+			end(dest_bytes),
+			begin(sw_dest_bytes),
+			end(sw_dest_bytes));
 
 	// pad with 0xff until we hit the lowest door-to-building index
 	if (!bld_dests.empty())
@@ -230,12 +269,21 @@ std::pair<std::vector<byte>, std::vector<byte>> fe::Chunk::get_door_bytes(std::s
 
 	// append the destination entries for doors to buildings
 	for (const auto& bld_dest_bytes : bld_dests)
-		dest_bytes.insert(end(dest_bytes), begin(bld_dest_bytes), end(bld_dest_bytes));
+		dest_bytes.insert(
+			end(dest_bytes),
+			begin(bld_dest_bytes),
+			end(bld_dest_bytes));
 
 	// 0xff delimiter for the door data
 	l_door_bytes.push_back(0xff);
 
-	return std::make_pair(std::move(l_door_bytes), std::move(dest_bytes));
+	return {
+		std::move(l_door_bytes),
+		std::move(dest_bytes),
+		p_normalization_enabled ?
+		std::optional<byte>{ static_cast<byte>(sub) } :
+		std::nullopt
+	};
 }
 
 std::vector<byte> fe::Chunk::get_sameworld_transition_bytes(void) const {

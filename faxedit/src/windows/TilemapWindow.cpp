@@ -298,28 +298,16 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					// door type
 					int l_newtype{ static_cast<int>(l_dtype) };
 
-					// chunks 2 (towns) and 6 (buildings) do not have
-					// the metadata needed for prev and next world doors
-					// and should be impossible to select in the dropdown
-
 					if (ImGui::BeginCombo("Door Type", c::LABELS_DOOR_TYPES[l_dtype])) {
 						for (std::size_t i = 0; i < 4; ++i) {
 
-							// can't make same-world door for the town world without rom hacking
-							// the door destination index is reduced by 0x20 before indexing by default
-							bool is_disabled = (i == 0 && m_sel_chunk == c::CHUNK_IDX_TOWNS &&
-								!m_settings.m_sw_doors_in_towns);
-
-							if (is_disabled) ImGui::BeginDisabled();
-
 							bool is_selected = (l_dtype == i);
 
-							if (ImGui::Selectable(c::LABELS_DOOR_TYPES[i], is_selected) && !is_disabled) {
+							if (ImGui::Selectable(c::LABELS_DOOR_TYPES[i], is_selected)) {
 								l_door.m_door_type = static_cast<fe::DoorType>(i);
 								l_door.m_dest_screen_id = 0;
 							}
 
-							if (is_disabled) ImGui::EndDisabled();
 						}
 						ImGui::EndCombo();
 					}
