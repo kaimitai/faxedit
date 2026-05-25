@@ -8,7 +8,7 @@
 			<!-- look for "Dialogue" left behind after dialogue section relocation -->
 			<signature no="0" offset="0x35f50" values="$44,$69,$61,$6c,$6f,$67,$75,$65" />
 			<!-- look for code near the end of bank 15 -->
-			<signature no="0" offset="0x3ffd0" values="$03,$ce,$c3,$03,$4c,$7d,$ff,$ad,$be,$03,$d0,$f8,$f0,$e6" />
+			<signature no="1" offset="0x3ffd0" values="$03,$ce,$c3,$03,$4c,$7d,$ff,$ad,$be,$03,$d0,$f8,$f0,$e6" />
 		</region>
 		<region name="en-transl" file_size="524304">
 			<!-- look for "Dialogue" left behind after dialogue section relocation -->
