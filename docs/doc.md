@@ -62,6 +62,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
 - [Cinematics](#cinematics)
   - [Intro](#intro)
   - [Outro](#outro)
+  - [Cinematic Editor Window](#the-cinematic-editor-window)
 - [Configuration Files](#configuration-files)
 
 <hr>
@@ -491,7 +492,7 @@ When in Door-editing mode, Shift+Click moves the door entry position to the clic
 
 If the door destination is unambiguous, an "Enter Door"-button will let you go to the door destination while taking palette setting into account.
 
-Note: A world can have 64 unique door destinations. The number of actual doors is not the limiting factor. Most worlds have space for 32 same-world door destinations, and 32 door-to-building destinations. The destination bytes are as follows:
+Note: A world can have 64 unique door destinations. The number of actual doors is not the limiting factor. Each world has space for 32 same-world door destinations, and 32 door-to-building destinations. The destination bytes are as follows:
 
 Same-World Doors:
   * Destination Screen
@@ -507,7 +508,7 @@ Doors to Building:
 
 The editor will deduplicate identical destination parameter sets, if any exist for any world.
 
-Note: The "Towns" world does not support same-world doors due to special handling in the game's logic by default. This can be overriden with an assembly hack if the index normalization constant is brought down from $20 to a lower value [here](https://chipx86.com/faxanadu/PRG15_MIRROR.html#e83b). In that case same-world door destinations will be ($20 minus new override value).
+Note: The "Towns" world does not support same-world doors in the original game, but the editor will update a normalization constant in the door logic to accomodate it. The towns world allows more than 32 door to building destinations, but the sum of same world and building destinations must still be no more than 64.
 
 ## Screen Scrolling
 
@@ -948,7 +949,7 @@ The "Regenerate UI Sprites" button will syncronize how the NPCs and items look i
 
 ## Cinematics
 
-The intro and outro animations in Faxanadu are driven by a cinematic state engine. The player character moves "into the screen" during the intro, and "out of the screen" during the outro, giving a 3d-effect.
+The intro and outro animations in Faxanadu are driven by a cinematic state engine. The player character moves "into the screen" during the intro, and "out of the screen" during the outro, giving a 3D-effect.
 
 The player character is drawn with different animation frames depending on 5 different depths stages. During the outro there are also three other animated objects on screen; a waterfall and two ripple effects on the water.
 
@@ -979,7 +980,7 @@ This picture shows some editable attributes for the intro cinematic
 
 When the player character reaches a new line, the depth stage value increases and the player is rendered with a different subset of animation frames.
 
-Once the player reaches the final line, a palette fadeout happens and the game begins.
+Once the player reaches the final line (which is the second to last y-cutoff), a palette fadeout happens and the game begins.
 
 <hr>
 
@@ -991,6 +992,7 @@ This picture shows some editable attributes for the outro cinematic
 
 - Yellow circle: Player start position
 - Yellow lines: Depth thresholds (y-positions)
+- Orange line: Final threshold
 - Green circle: Waterfall position
 - Red circle: Ripple (left) start position
 - Blue circle: Ripple (down/left) start position
@@ -1013,27 +1015,33 @@ Each stage has a y-cutoff threshold value. This is the y-value the character mus
 
 Each stage also has a velocity, which is the speed the character moves at in the x- and y-directions until it reaches the next y-cutoff. These are given as sub-pixel velocities.
 
-During the intro, once the player reaches the y-cutoff for threshold 3, the palette fade-out begins and the game starts. Therefor the last cutoff is not used directly, although it is used for lookup during palette fade-out. It is best to leave it at 0.
+During the intro, once the player reaches the y-cutoff for threshold 3, the palette fade-out begins and the game starts. Therefore the last cutoff is not used directly, although it is used for lookup during palette fade-out. It is best to leave it at 0.
 
 For the intro the y-values need to decrease for each depth stage, and the velocity needs to all have negative y-values - so that the character keeps moving up the screen and triggering depth changes.
 
 During the outro, once the player character reaches the last cutoff value, the sprite is removed and no longer rendered. The outro animation will still play until the music ends. In the original game the last y-cutoff is 250, which is beyond the bottom border of the screen - meaning the player walks entirely off screen and is then removed from the scene.
 
-The cinematic engine uses a fractional accumulator to move the player character, and this seems to be sensitive to values. The intro seems to handle any velocities, whereas the outro seems to cause visual glitches for x-velocities outside of a certain range. In particular the x-velocity for outro depth stage 1 must be chosen carefully.
+The cinematic engine uses a fractional accumulator to move the player character, and this seems to be sensitive to changes. The intro seems to handle any velocities, whereas the outro seems to cause visual glitches for x-velocities outside of a certain range. In particular the x-velocity for outro depth stage 1 must be chosen carefully.
 
-If you want to test the outro, keep an eye on RAM address $068f in an emulator. This is the y-value of the player sprite. At the end of the outro, this ram variable is supposed to reach the value given as y-cutoff in depth stage 4. If this does not happen, it might glitch and start counting backward at the point it was supposed to end. If this happens try with different x-velocities, espescially for depth stage 1.
+If you want to test the outro, keep an eye on RAM address $068f in an emulator. This is the y-value of the player sprite. At the end of the outro, this ram variable is supposed to reach the value given as y-cutoff in depth stage 4. If this does not happen, it might glitch and start counting backward at the point it was supposed to end, while also rendering animation frames from garbage locations. If this happens try with different x-velocities, espescially for depth stage 1. It needs to be ensured that $068f actually hits the final y-cutoff value defined in the last outro depth stage data. (250 in the original game)
 
 Once this behavior is better understood, the documentation will be updated. It is possible we can fix this with changes to assembly code.
 
 <hr>
 
-### Waterfall
+### The Cinematic Editor Window
+
+<hr>
+
+#### Waterfall
 
 ![Cinematic Waterfall](./img/cinematic_editor_waterfall.png)
 
 The waterfall is animated with two animation frames, and doesn't move. This simple edit mode allows you to set the pixel position (top left position) of the waterfall.
 
-### Ripples
+<hr>
+
+#### Ripples
 
 ![Cinematic Ripples](./img/cinematic_editor_ripples.png)
 
@@ -1041,13 +1049,17 @@ There are two animated ripple objects. Each of them are rendered with three diff
 
 The yellow slider allows you to select a ripple, and for each ripple you can set the pixel start-position as well as its velocity. These velocities are not fraction, but actual pixels per tick. Therefore conservative values are used.
 
-### Palettes
+<hr>
+
+#### Palettes
 
 ![Cinematic Palettes](./img/cinematic_editor_palettes.png)
 
 There are two palettes used by the cinematic engine. One during the intro animation, and one during the outro. This edit mode lets you change these palettes.
 
-### Animation Frames
+<hr>
+
+#### Animation Frames
 
 ![Cinematic Animation Frames](./img/cinematic_editor_animation_frames.png)
 
@@ -1057,7 +1069,9 @@ Note that the bmp import and export uses the intro palette for the first 12 fram
 
 The chr-bank for cinematic frames can accomodate 144 chr-tiles, and the original game uses all of them. bmp import will fail if more than 144 chr-tiles are required to describe all frames.
 
-### Cinematic Settings
+<hr>
+
+#### Cinematic Settings
 
 The last mode, settings, lets you set two toggles:
 

@@ -44,6 +44,11 @@ The following data is editable:
 * Images used in the game
 * Sprite Graphics and animation frames
 
+### Cinematics
+* Intro animaton metadata
+* Outro animation metadata
+* All cinematic animation graphics
+
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
 The editor can save your project as a patched NES ROM file or as an IPS patch. We also support our own XML format, which allows users to more easily compare file versions, use version control systems to track file history, and collaborate on projects.
@@ -80,6 +85,22 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 <hr>
 
 ### Version History
+
+* 2025-05-25: version beta-7
+
+  * Cinematic Editor
+	* Added a cinematic editor for the intro and outro sequences
+	* Player traversal paths, positions, velocities, and depth thresholds can now be edited
+	* Added editing support for decorative outro objects such as waterfall placement and ripple movement
+	* Added BMP import/export support for all cinematic animation frames
+	* Sprite palettes for cinematic sequences can now be edited directly in the frontend
+	* The original engine’s outro cinematic logic appears sensitive to modifications of the first outro X-velocity entry. Certain altered trajectories may prevent the sequence from terminating correctly. This behavior reproduces on an unmodified original ROM and is considered an original engine quirk rather than an editor issue.
+  * Same-World Doors in Towns
+	* Added support for same-world doors in the Towns world
+	* The editor now patches the original engine’s destination allocation logic, allowing same-world and building doors to coexist in Towns as long as the total number of unique destinations remains below 64
+  * Configuration
+	* Added support for sparse region configuration inheritance, reducing duplication between compatible ROM regions
+	* Added configuration for [New Game+](https://github.com/UnsavoryMaggot/Faxanadu-Retranslation)
 
 * 2025-05-02: version beta-6.3
 
@@ -247,11 +268,14 @@ Here is the animation:
 
 <hr>
 
-**Links**
+**ROM Hack Project Links**
 
 * You can find me on the **Faxanadu Randomizer & Romhacking** Discord server, the main hub for all things Faxanadu.
 
   [![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/AyJErR8kyV)
 
+<hr>
+
 * Dont't miss [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala!
 * Check out [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/), a full music replacement hack for Faxanadu!
+* Songbirder's [Faxanadu 40th Anniversary edition](https://fax40.net/) ROM hack (currently in beta) is available!
