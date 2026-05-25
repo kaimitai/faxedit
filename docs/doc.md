@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-6.3), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-7), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -59,6 +59,9 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Player Frames](#player-frames)
   - [Portrait Frames](#portrait-frames)
   - [Sprite Gfx Settings](#sprite-gfx-settings)
+- [Cinematics](#cinematics)
+  - [Intro](#intro)
+  - [Outro](#outro)
 - [Configuration Files](#configuration-files)
 
 <hr>
@@ -75,6 +78,7 @@ This is the screen used for file operations and data analysis.
 * Data Integrity Analysis: Does some checking on whether there is problems in your data
 * BG gfx editor: Opens or closes the Background Graphics Editor window
 * Sprite gfx editor: Opens or closes the Sprite Graphics Editor window
+* Cinematic editor: Opens or closes the Cinematic Editor window
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Apply External ROM Changes: Re-reads the loaded rom from disk, and regenerates iScripts and music track counts. Should be used if the ROM undergoes external changes.
 * Output Messages: The messages from the editor
@@ -939,6 +943,134 @@ If the transparency is set to 3, which is the default, any color in the range
 will be considered transparent.
 
 The "Regenerate UI Sprites" button will syncronize how the NPCs and items look in the GUI with how the sprite graphics are defined.
+
+<hr>
+
+## Cinematics
+
+The intro and outro animations in Faxanadu are driven by a cinematic state engine. The player character moves "into the screen" during the intro, and "out of the screen" during the outro, giving a 3d-effect.
+
+The player character is drawn with different animation frames depending on 5 different depths stages. During the outro there are also three other animated objects on screen; a waterfall and two ripple effects on the water.
+
+We enable users to change the depth stage definition, the initial positions of the player during the intro and outro, as well as the velocities per stage. We also enable setting the initial position and velocities of the decorative objects.
+
+To change the actual animation graphics we provide an interface which works the same as for the other sprite graphics.
+
+All the positions are given in pixel coordinates (x, y) where x and y can range from 0 to 255. The screen is 256 pixels wide and 240 pixels high. Any object with a y-position higher than 240 will not be visible on screen.
+
+The top left pixel has coordinates (0, 0) and y increases as you go downward, and x increases as you go right.
+
+If you want to make your own cinematic, use an emulator which shows the entire screen to be sure you get the correct pixel coordinates. Also keep in mind that the (x, y)-positions are added to the x- and y-offset of any given animation frame. For the player animation frames the offsets are -(w/2) and -(h/2) where w and h are the pixel dimensions of the frame. This ensures that the frame is drawn centered on the traversal trajectory even when the frame sizes shrink or expand.
+
+Velocities are given as delta-x and delta-y where the delta ranges between -128 and 127.
+
+To show or hide the cinematic editor window, use the button "Cinematic editor" in the Project Control window.
+
+<hr>
+
+### Intro
+
+![Intro](./img/cinematic-intro-info.png)
+
+This picture shows some editable attributes for the intro cinematic
+
+- Yellow circle: Player start position
+- Yellow lines: Depth thresholds (y-positions)
+
+When the player character reaches a new line, the depth stage value increases and the player is rendered with a different subset of animation frames.
+
+Once the player reaches the final line, a palette fadeout happens and the game begins.
+
+<hr>
+
+### Outro
+
+![Outro](./img/cinematic-outro-info.png)
+
+This picture shows some editable attributes for the outro cinematic
+
+- Yellow circle: Player start position
+- Yellow lines: Depth thresholds (y-positions)
+- Green circle: Waterfall position
+- Red circle: Ripple (left) start position
+- Blue circle: Ripple (down/left) start position
+
+<hr>
+
+### Player
+
+![Cinematic Player](./img/cinematic_editor_player.png)
+
+The first edit mode is "Player", used to define the player character animation.
+
+There are two contexts; intro and outro.
+
+For each of these, you can set the player character start position.
+
+There are five depth stages, which can be selected with the yellow slider.
+
+Each stage has a y-cutoff threshold value. This is the y-value the character must reach to trigger the next depth stage.
+
+Each stage also has a velocity, which is the speed the character moves at in the x- and y-directions until it reaches the next y-cutoff. These are given as sub-pixel velocities.
+
+During the intro, once the player reaches the y-cutoff for threshold 3, the palette fade-out begins and the game starts. Therefor the last cutoff is not used directly, although it is used for lookup during palette fade-out. It is best to leave it at 0.
+
+For the intro the y-values need to decrease for each depth stage, and the velocity needs to all have negative y-values - so that the character keeps moving up the screen and triggering depth changes.
+
+During the outro, once the player character reaches the last cutoff value, the sprite is removed and no longer rendered. The outro animation will still play until the music ends. In the original game the last y-cutoff is 250, which is beyond the bottom border of the screen - meaning the player walks entirely off screen and is then removed from the scene.
+
+The cinematic engine uses a fractional accumulator to move the player character, and this seems to be sensitive to values. The intro seems to handle any velocities, whereas the outro seems to cause visual glitches for x-velocities outside of a certain range. In particular the x-velocity for outro depth stage 1 must be chosen carefully.
+
+If you want to test the outro, keep an eye on RAM address $068f in an emulator. This is the y-value of the player sprite. At the end of the outro, this ram variable is supposed to reach the value given as y-cutoff in depth stage 4. If this does not happen, it might glitch and start counting backward at the point it was supposed to end. If this happens try with different x-velocities, espescially for depth stage 1.
+
+Once this behavior is better understood, the documentation will be updated. It is possible we can fix this with changes to assembly code.
+
+<hr>
+
+### Waterfall
+
+![Cinematic Waterfall](./img/cinematic_editor_waterfall.png)
+
+The waterfall is animated with two animation frames, and doesn't move. This simple edit mode allows you to set the pixel position (top left position) of the waterfall.
+
+### Ripples
+
+![Cinematic Ripples](./img/cinematic_editor_ripples.png)
+
+There are two animated ripple objects. Each of them are rendered with three different animation frames, and are hidden for 7 out of 10 animation steps. They are only shown part of the time.
+
+The yellow slider allows you to select a ripple, and for each ripple you can set the pixel start-position as well as its velocity. These velocities are not fraction, but actual pixels per tick. Therefore conservative values are used.
+
+### Palettes
+
+![Cinematic Palettes](./img/cinematic_editor_palettes.png)
+
+There are two palettes used by the cinematic engine. One during the intro animation, and one during the outro. This edit mode lets you change these palettes.
+
+### Animation Frames
+
+![Cinematic Animation Frames](./img/cinematic_editor_animation_frames.png)
+
+This edit mode lets you edit the actual animation frame graphics, and set their metadata. This works more or less exactly like the sprite graphics editor.
+
+Note that the bmp import and export uses the intro palette for the first 12 frames, and the outro palette for the rest. This is given by configuration constant *cinematic_palette_cutoff*.
+
+The chr-bank for cinematic frames can accomodate 144 chr-tiles, and the original game uses all of them. bmp import will fail if more than 144 chr-tiles are required to describe all frames.
+
+### Cinematic Settings
+
+The last mode, settings, lets you set two toggles:
+
+- Whether or not to patch cinematic data at all. Enabled by default.
+- Whether or not to fail patching on potential data overflow. Enabled by default.
+
+If the animation frame graphics are expanded, they will spill into the free space in bank 12. This space is also potentially used by iScript bytecode. Configuration constant **iscript_data_rg2_start** defines where the free space region for overflowing iScript bytecode code can be stored, and if cinematic data patching needs to use this space, it will fail by default. The error message will tell you a minimum value for **iscript_data_rg2_start** which would allow cinematic data patching, so that you can make a configuration override.
+
+There is quite a lot of free space at the end of bank 12, so letting iScript bytecode start later should normally be unproblematic. If you encounter this problem;
+
+- Make a configuration override with an increased value for **iscript_data_rg2_start**
+- Re-assemble your scripts with this new constant active. The script code will now be relocated to start later in the bank.
+- Patch your cinematic data once again now that you are sure it will not overwrite any scripts.
 
 <hr>
 

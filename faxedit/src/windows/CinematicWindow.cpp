@@ -90,8 +90,8 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 		}
 		else if (editmode == fe::CinematicEditMode::Settings) {
 			ImGui::SeparatorText("Patching");
-			ui::imgui_checkbox("Patch ROM", m_settings.patch_cinematic,
-				"Whether cinematic data should be written when patching ROM");
+			ui::imgui_checkbox("Patch Cinematic Data", m_settings.patch_cinematic,
+				"Whether cinematic data should be written to rom during patching");
 			ui::imgui_checkbox("Disallow overflow", m_settings.throw_on_cinematic_overflow,
 				"Whether to fail patching if cinematic data could potentially overwrite script data (see documentation)");
 		}
