@@ -249,6 +249,12 @@
     <ClCompile Include="src\windows\CinematicWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\fe\WorldVisualizer.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\lodepng.cpp">
+      <Filter>Source Files\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -392,9 +398,6 @@
     <ClInclude Include="src\fe\GfxTilemapManager.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\ChrStructures.h">
-      <Filter>Header Files\fe\xml</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows\UndoInterface.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
@@ -436,6 +439,15 @@
     </ClInclude>
     <ClInclude Include="src\fe\Cinematic.h">
       <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\WorldVisualizer.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\ChrStructures.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\lodepng.h">
+      <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

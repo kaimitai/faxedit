@@ -156,6 +156,7 @@
     <ClCompile Include="src\common\klib\Kstring.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
+    <ClCompile Include="src\common\lodepng.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
     <ClCompile Include="src\fe\ChrStructures.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp" />
     <ClCompile Include="src\fe\Sprite_set.cpp" />
     <ClCompile Include="src\fe\StageManager.cpp" />
+    <ClCompile Include="src\fe\WorldVisualizer.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\fi\FaxString.cpp" />
     <ClCompile Include="src\fi\IScriptLoader.cpp" />
@@ -220,6 +222,7 @@
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />
+    <ClInclude Include="src\common\lodepng.h" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\common\stb_image.h" />
@@ -252,6 +255,7 @@
     <ClInclude Include="src\fe\sprite\SpriteGUILoader.h" />
     <ClInclude Include="src\fe\Sprite_set.h" />
     <ClInclude Include="src\fe\StageManager.h" />
+    <ClInclude Include="src\fe\WorldVisualizer.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
     <ClInclude Include="src\fi\FaxString.h" />

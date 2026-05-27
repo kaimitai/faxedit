@@ -9,6 +9,8 @@ find_package(SDL3 REQUIRED)
 set(SOURCES
     faxedit/src/main.cpp
 
+    faxedit/src/common/lodepng.cpp
+
     faxedit/src/common/imgui/imgui.cpp
     faxedit/src/common/imgui/imgui_draw.cpp
     faxedit/src/common/imgui/imgui_impl_sdl3.cpp
@@ -48,6 +50,7 @@ set(SOURCES
 	faxedit/src/fe/ScreenRef.cpp
 	faxedit/src/fe/MetatileRef.cpp
 	faxedit/src/fe/Cinematic.cpp
+	faxedit/src/fe/WorldVisualizer.cpp
     faxedit/src/fe/xml/Xml_helper.cpp
 
     faxedit/src/fe/sprite/SpriteAnimationFrame.cpp

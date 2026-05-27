@@ -401,6 +401,10 @@ namespace fe {
 
 		// palette
 		const SDL_Palette* get_nes_palette(void) const;
+
+		// world visualizer
+		void save_world_visualizer_png(const fe::WorldVisualization& p_data,
+			const std::string& p_folder, const std::string& p_filename) const;
 	};
 
 }

@@ -1,6 +1,7 @@
 #include "gfx.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "./../common/stb_image.h"
+#include "./../common/lodepng.h"
 #include "./../common/klib/Kfile.h"
 #include <array>
 #include <filesystem>
@@ -1964,4 +1965,89 @@ void fe::gfx::gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_t
 
 const SDL_Palette* fe::gfx::get_nes_palette(void) const {
 	return m_nes_palette;
+}
+
+void fe::gfx::save_world_visualizer_png(const fe::WorldVisualization& p_data,
+	const std::string& p_folder, const std::string& p_filename) const {
+	constexpr std::size_t GRAPH_SEPARATOR_PX{ 16 };
+
+	klib::file::create_directories(p_folder);
+
+	const std::string out_file{ std::format("{}/{}.png", p_folder, p_filename) };
+
+	if (p_data.layout.empty())
+		throw std::runtime_error("Layout is empty");
+	if (p_data.tilemaps.empty())
+		throw std::runtime_error("No tilemaps");
+
+	// dimensions
+	const auto& first_tilemap{ p_data.tilemaps.begin()->second };
+	const std::size_t screen_h{ first_tilemap.size() };
+	const std::size_t screen_w{ first_tilemap.front().size() };
+	const std::size_t layout_h{ p_data.layout.size() };
+	const std::size_t layout_w{ p_data.layout.front().size() };
+	const std::size_t final_w{ layout_w * screen_w };
+	const std::size_t final_h{ layout_h * screen_h +
+		p_data.graph_breaks.size() * GRAPH_SEPARATOR_PX };
+
+	// image buffer (initialize with black)
+	std::vector<unsigned char> image(final_w * final_h * 3, 0);
+
+	// render
+	for (std::size_t gy{ 0 }; gy < layout_h; ++gy) {
+		for (std::size_t gx{ 0 }; gx < layout_w; ++gx) {
+			const auto& cell{ p_data.layout[gy][gx] };
+			if (!cell.has_value())
+				continue;
+
+			const auto& tilemap{ p_data.tilemaps.at(*cell) };
+			const std::size_t dst_x0{ gx * screen_w };
+
+			std::size_t separator_y{ 0 };
+
+			for (const auto break_row : p_data.graph_breaks) {
+
+				if (gy >= break_row)
+					separator_y += GRAPH_SEPARATOR_PX;
+			}
+
+			const std::size_t dst_y0{ gy * screen_h + separator_y };
+
+			for (std::size_t y{ 0 }; y < screen_h; ++y) {
+				for (std::size_t x{ 0 }; x < screen_w; ++x) {
+
+					const auto palette_index{ tilemap[y][x] };
+					const SDL_Color& color{ m_nes_palette->colors[palette_index] };
+
+					const std::size_t dst{
+						3 * (
+							(dst_y0 + y) * final_w +
+							(dst_x0 + x)
+						)
+					};
+
+					image[dst + 0] = color.r;
+					image[dst + 1] = color.g;
+					image[dst + 2] = color.b;
+				}
+			}
+		}
+	}
+
+	// encode png
+	const auto err{
+	lodepng::encode(
+		out_file,
+		image,
+		static_cast<unsigned>(final_w),
+		static_cast<unsigned>(final_h),
+		LCT_RGB)
+	};
+
+	if (err) {
+
+		throw std::runtime_error(
+			std::string("PNG encode failed: ") +
+			lodepng_error_text(err));
+	}
 }

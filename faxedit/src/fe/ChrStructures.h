@@ -2,6 +2,7 @@
 #define FE_CHR_STRUCTURES_H
 
 #include <optional>
+#include <unordered_map>
 #include <vector>
 #include "./../common/klib/NES_tile.h"
 #include "./sprite/SpriteAnimationFrame.h"
@@ -10,6 +11,14 @@ using byte = unsigned char;
 
 // structures needed to exhange chr-related data across the application
 namespace fe {
+
+	// type used for world visualization
+	struct WorldVisualization {
+		std::vector<std::vector<std::optional<std::size_t>>> layout;
+		std::unordered_map<std::size_t, std::vector<std::vector<byte>>> tilemaps;
+		// layout row index before which renderer could insert blank space
+		std::vector<std::size_t> graph_breaks;
+	};
 
 	// chr-tile with metadata
 	// read-only: can be used for deduplication bmp-import etc, but cannot be re-indexed or touched
