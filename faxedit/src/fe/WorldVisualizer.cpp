@@ -12,6 +12,7 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 	ScreenId start_screen, const fe::SpriteGUILoader& p_sprites) const {
 	std::unordered_set<ScreenId> handled;
 	std::unordered_map<ScreenId, ResolvedScreen> resolved;
+	std::map<BuildingKey, std::size_t> building_lookup;
 	std::deque<PlacementGraph> graphs;
 
 	auto recurse = [&](auto&& self, ScreenId screen, std::size_t palette, IntPosition pos,
@@ -77,10 +78,22 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 				}
 			}
 
-			// same-world doors
+			// doors
 			for (const auto& door : scr.m_doors) {
+				if (door.m_door_type == fe::DoorType::Building) {
+					const BuildingKey bld_key{
+						.screen = door.m_dest_screen_id,
+						.sprite_set = door.m_npc_bundle
+					};
 
-				if (door.m_door_type != fe::DoorType::SameWorld ||
+					if (!building_lookup.contains(bld_key)) {
+						const auto idx{ building_lookup.size() };
+						building_lookup.insert(std::make_pair(bld_key, idx));
+					}
+
+					continue;
+				}
+				else if (door.m_door_type != fe::DoorType::SameWorld ||
 					handled.contains(door.m_dest_screen_id))
 					continue;
 
@@ -130,6 +143,10 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 			max_width = std::max(max_width, grid.front().size());
 	}
 
+	max_width = std::max(
+		max_width,
+		std::min<std::size_t>(BUILDING_GRAPH_WIDTH, building_lookup.size()));
+
 	for (const auto& graph : graphs) {
 
 		auto grid{ graph.make_grid() };
@@ -140,13 +157,42 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 		}
 
 		// separator row
-		graph_breaks.push_back(final_layout.size());
+		if (!grid.empty())
+			graph_breaks.push_back(final_layout.size());
+	}
+
+	// add building screens
+	if (!building_lookup.empty()) {
+		std::vector<std::optional<ScreenId>> row;
+
+		for (const auto& [bld_key, idx] : building_lookup) {
+
+			row.push_back(static_cast<ScreenId>(BUILDING_SCREEN_IDX_OFFSET + idx));
+
+			if (row.size() == BUILDING_GRAPH_WIDTH) {
+				row.resize(max_width, std::nullopt);
+				final_layout.push_back(std::move(row));
+				row.clear();
+			}
+		}
+
+		if (!row.empty()) {
+			row.resize(max_width, std::nullopt);
+			final_layout.push_back(std::move(row));
+		}
 	}
 
 	// render tilemaps
 	std::unordered_map<ScreenId, Tilemap> tilemaps;
 	for (const auto& [screen, info] : resolved)
 		tilemaps[screen] = render_screen(game, world_no, screen, info.palette, p_sprites);
+
+	// render building screens
+	for (const auto& kv : building_lookup)
+		tilemaps[kv.second + BUILDING_SCREEN_IDX_OFFSET] =
+		render_screen(game, BUILDING_WORLD_IDX, kv.first.screen,
+			game.get_default_palette_no(BUILDING_WORLD_IDX, kv.first.screen),
+			game.m_npc_bundles.at(kv.first.sprite_set), p_sprites);
 
 	return {
 	.layout = std::move(final_layout),
@@ -160,6 +206,16 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game,
 	std::size_t p_screen_no,
 	std::size_t p_palette_no,
 	const fe::SpriteGUILoader& p_sprites) const {
+	return render_screen(p_game, p_world_no, p_screen_no, p_palette_no,
+		p_game.m_chunks.at(p_world_no).m_screens.at(p_screen_no).m_sprite_set,
+		p_sprites);
+}
+
+GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game, std::size_t p_world_no,
+	std::size_t p_screen_no,
+	std::size_t p_palette_no,
+	const fe::Sprite_set& p_sprite_set,
+	const fe::SpriteGUILoader& p_sprites) const {
 
 	GfxTilemap tilemap(13 * 16, std::vector<byte>(16 * 16, 0x0));
 	const auto& world{ p_game.m_chunks.at(p_world_no) };
@@ -171,7 +227,7 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game,
 		p_game.m_palettes.at(p_palette_no)
 	);
 
-	for (const auto& sprite : screen.m_sprite_set.m_sprites) {
+	for (const auto& sprite : p_sprite_set.m_sprites) {
 		const auto& frames{ p_sprites.animations.at(sprite.m_id) };
 		std::size_t frame_id{ frames.size() - 1 };
 

@@ -27,6 +27,13 @@ namespace fe {
 			std::size_t palette;
 		};
 
+		struct BuildingKey {
+			ScreenId screen;
+			std::size_t sprite_set;
+
+			auto operator<=>(const BuildingKey&) const = default;
+		};
+
 		struct PlacementGraph {
 
 			std::map<IntPosition, ScreenId> placements;
@@ -75,10 +82,20 @@ namespace fe {
 			std::size_t p_palette_no,
 			const fe::SpriteGUILoader& p_sprites) const;
 
+		GfxTilemap render_screen(const fe::Game& p_game, std::size_t p_world_no,
+			std::size_t p_screen_no,
+			std::size_t p_palette_no,
+			const fe::Sprite_set& p_sprite_set,
+			const fe::SpriteGUILoader& p_sprites) const;
+
 		std::optional<IntPosition> get_sw_trans_offset(const fe::Chunk& p_world,
 			std::size_t p_screen_id) const;
 
 		std::vector<std::vector<klib::NES_tile>> tilesets;
+
+		static constexpr std::size_t BUILDING_GRAPH_WIDTH{ 4 };
+		static constexpr std::size_t BUILDING_SCREEN_IDX_OFFSET{ 0x100 };
+		static constexpr std::size_t BUILDING_WORLD_IDX{ 4 };
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets);
