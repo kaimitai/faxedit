@@ -26,6 +26,9 @@ namespace fi {
 		constexpr char ID_DEFINES_RANK[]{ "defines_rank" };
 
 		constexpr byte OPCODE_SET_SPAWN{ 0x06 };
+		constexpr byte OPCODE_GET_ITEM{ 0x07 };
+		constexpr byte OPCODE_SHOP_BUY{ 0x08 };
+		constexpr byte OPCODE_SHOP_SELL{ 0x11 };
 
 	}
 

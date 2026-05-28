@@ -6,8 +6,9 @@
 #include <string>
 
 fe::WorldVisualizer::WorldVisualizer(
-	const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets) :
-	tilesets{ p_complete_tilesets }
+	const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,
+	const std::unordered_map<byte, fe::ScriptSemanticInfo>& p_scripts) :
+	tilesets{ p_complete_tilesets }, scripts{ p_scripts }
 {
 }
 
@@ -47,6 +48,11 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 			};
 
 			const auto& scr{ game.m_chunks.at(world_no).m_screens.at(screen) };
+
+			// draw commands if needed
+			maybe_emit_script_item_draws(p_config,
+				screen, scr.m_sprite_set,
+				screenDraw);
 
 			// traversal helper
 			auto try_scroll = [&](std::optional<ScreenId> dest, IntPosition offs,
@@ -106,6 +112,11 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 							.param = it->second,
 							.param_palette = 2
 							});
+
+						// draw gifts in the building screen, if any
+						maybe_emit_script_item_draws(p_config,
+							it->second, game.m_npc_bundles.at(door.m_npc_bundle),
+							buildingDraw);
 					}
 
 					screenDraw[screen].push_back(DrawCommand{
@@ -632,4 +643,61 @@ void fe::WorldVisualizer::maybe_add_door_requirement_item_draw(
 		.param = req_items.at(p_requirement),
 		.param_palette = 0
 		});
+}
+
+std::optional<byte> fe::WorldVisualizer::normalize_item_id(byte script_item_id) const {
+	if (script_item_id <= 0x03)
+		return script_item_id;
+	else if (script_item_id >= 0x20 && script_item_id <= 0x23)
+		return 4 + (script_item_id - 0x20);
+	else if (script_item_id >= 0x40 && script_item_id <= 0x43)
+		return 8 + (script_item_id - 0x40);
+	else if (script_item_id >= 0x60 && script_item_id <= 0x64)
+		return 12 + (script_item_id - 0x60);
+	else if (script_item_id >= 0x80 && script_item_id <= 0x95)
+		return 17 + (script_item_id - 0x80);
+	else
+		return std::nullopt;
+}
+
+void fe::WorldVisualizer::maybe_emit_script_item_draws(const fe::Config& p_config,
+	ScreenId p_screen, const fe::Sprite_set& p_sprite_set,
+	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map) const {
+	std::unordered_set<byte> shop_items;
+
+	for (const auto& sprite : p_sprite_set.m_sprites)
+		if (sprite.m_text_id && scripts.contains(*sprite.m_text_id)) {
+			int y{ sprite.m_y * 16 - 16 };
+
+			const auto& semantic{ scripts.at(*sprite.m_text_id) };
+
+			for (const auto item_id : semantic.gifts) {
+				auto norm_item_id{ normalize_item_id(item_id) };
+
+				if (norm_item_id) {
+					p_draw_map[p_screen].push_back(DrawCommand{
+					.x = 16 * sprite.m_x,
+					.y = y,
+					.type = DrawCommandType::Item,
+					.param = *norm_item_id,
+					.param_palette = 0 });
+					y -= 16;
+				}
+			}
+
+			for (const auto item_id : semantic.shop_items) {
+				auto norm_item_id{ normalize_item_id(item_id) };
+				if (norm_item_id)
+					shop_items.insert(*norm_item_id);
+			}
+		}
+
+	int x{ 8 };
+	int y{ 11 * 16 + 8 };
+	for (const auto shop_item : shop_items) {
+		p_draw_map[p_screen].push_back(DrawCommand{
+			.x = x, .y = y, .type = DrawCommandType::Item,
+			.param = shop_item, .param_palette = 0 });
+		x += 16;
+	}
 }

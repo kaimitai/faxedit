@@ -41,6 +41,20 @@ std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte
 	return get_asm_code(p_script_no);
 }
 
+const std::map<size_t, fi::Instruction>& fi::IScriptLoader::parse_script_raw(const std::vector<byte>& p_rom,
+	std::size_t p_script_no) {
+	m_instructions.clear();
+	m_jump_targets.clear();
+
+	parse_blob_from_entrypoint(p_rom, m_ptr_table[p_script_no], true);
+
+	return m_instructions;
+}
+
+const std::vector<fi::Shop> fi::IScriptLoader::get_shops(void) const {
+	return m_shops;
+}
+
 void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vector<byte>& p_rom) {
 	auto l_char_map{ p_config.bmap(c::ID_STRING_CHAR_MAP) };
 	std::size_t l_string_offset{ p_config.constant(c::ID_STRING_DATA_START) };

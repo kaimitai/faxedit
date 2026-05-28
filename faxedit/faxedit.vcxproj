@@ -202,6 +202,7 @@
     <ClCompile Include="src\windows\SpriteGfxWindow.cpp" />
     <ClCompile Include="src\windows\TilemapWindow.cpp" />
     <ClCompile Include="src\windows\UndoInterface.cpp" />
+    <ClCompile Include="src\windows\WorldVisualizationWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialog.h" />

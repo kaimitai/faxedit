@@ -261,7 +261,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		visual_sprites.load_sprites_for_gui(m_config,
 			m_game->m_sprite_gfx_manager, m_game->m_rom_data);
 
-		auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets) };
+		auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets,
+			extract_script_semantics()) };
 
 		const auto res{ visualizer.visualize_world(m_config, *m_game, m_sel_chunk, 0,
 			visual_sprites) };

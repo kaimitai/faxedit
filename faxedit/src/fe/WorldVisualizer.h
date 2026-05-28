@@ -22,12 +22,12 @@ namespace fe {
 
 	class Config;
 
-	class WorldVisualizer {
+	struct ScriptSemanticInfo {
+		std::vector<byte> gifts;
+		std::unordered_set<byte> shop_items;
+	};
 
-		struct ScriptSemanticInfo {
-			std::vector<std::size_t> gifts;
-			std::vector<std::size_t> shop_items;
-		};
+	class WorldVisualizer {
 
 		enum class DrawCommandType { Number, Item };
 
@@ -117,6 +117,7 @@ namespace fe {
 			std::size_t p_screen_id) const;
 
 		std::vector<std::vector<klib::NES_tile>> tilesets;
+		std::unordered_map<byte, fe::ScriptSemanticInfo> scripts;
 
 		static constexpr std::size_t BUILDING_GRAPH_WIDTH{ 4 };
 		static constexpr std::size_t BUILDING_SCREEN_IDX_OFFSET{ 0x100 };
@@ -132,8 +133,15 @@ namespace fe {
 			const fe::Config& p_config, std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
 			ScreenId p_screen, int p_x, int p_y, byte p_requirement) const;
 
+		std::optional<byte> normalize_item_id(byte script_item_id) const;
+
+		void maybe_emit_script_item_draws(const fe::Config& p_config, ScreenId p_screen,
+			const fe::Sprite_set& p_sprite_set,
+			std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map) const;
+
 	public:
-		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets);
+		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,
+			const std::unordered_map<byte, fe::ScriptSemanticInfo>& p_scripts);
 
 		fe::WorldVisualization visualize_world(const fe::Config& p_config,
 			const fe::Game& game, std::size_t world_no,

@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include "gfx.h"
 #include "UndoInterface.h"
 #include "ClipBoardManager.h"
@@ -14,6 +15,7 @@
 #include "./../fe/sprite/SpriteGfxSnapshotManager.h"
 #include "./../fe/Config.h"
 #include "./../fe/Game.h"
+#include "./../fe/WorldVisualizer.h"
 #include "./../fe/ROM_Manager.h"
 #include "./../fi/IScriptLoader.h"
 #include "./../common/imgui/imgui.h"
@@ -260,6 +262,9 @@ namespace fe {
 		void import_cinematic_chr_bank(std::vector<klib::NES_tile>& p_cinematic_bank);
 		void export_cinematic_frame_bmps(void);
 		void import_cinematic_frame_bmps(void);
+
+		// world visualization helpers
+		std::unordered_map<byte, fe::ScriptSemanticInfo> extract_script_semantics(void);
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);
