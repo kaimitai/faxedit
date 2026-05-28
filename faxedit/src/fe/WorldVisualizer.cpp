@@ -1,6 +1,7 @@
 #include "WorldVisualizer.h"
 #include <algorithm>
 #include <deque>
+#include <string>
 
 fe::WorldVisualizer::WorldVisualizer(
 	const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets) :
@@ -14,6 +15,8 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 	std::unordered_map<ScreenId, ResolvedScreen> resolved;
 	std::map<BuildingKey, std::size_t> building_lookup;
 	std::deque<PlacementGraph> graphs;
+	std::unordered_map<ScreenId, std::vector<DrawCommand>> screenDraw, buildingDraw;
+	std::size_t current_door_id{ 0 };
 
 	auto recurse = [&](auto&& self, ScreenId screen, std::size_t palette, IntPosition pos,
 		PlacementGraph& graph) -> void {
@@ -81,25 +84,62 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 			// doors
 			for (const auto& door : scr.m_doors) {
 				if (door.m_door_type == fe::DoorType::Building) {
+
 					const BuildingKey bld_key{
 						.screen = door.m_dest_screen_id,
 						.sprite_set = door.m_npc_bundle
 					};
 
-					if (!building_lookup.contains(bld_key)) {
+					auto it{ building_lookup.find(bld_key) };
+
+					if (it == end(building_lookup)) {
 						const auto idx{ building_lookup.size() };
-						building_lookup.insert(std::make_pair(bld_key, idx));
+						it = building_lookup.insert(std::make_pair(bld_key, idx)).first;
+
+						// draw numeric label for the building screen
+						buildingDraw[it->second].push_back(DrawCommand{
+							.x = 8,	.y = 8,
+							.type = DrawCommandType::Number,
+							.param = it->second,
+							.param_palette = 2
+							});
 					}
 
-					continue;
+					screenDraw[screen].push_back(DrawCommand{
+						.x = 16 * door.m_coords.first,
+						.y = 16 * door.m_coords.second,
+						.type = DrawCommandType::Number,
+						.param = it->second,
+						.param_palette = 2
+						});
 				}
-				else if (door.m_door_type != fe::DoorType::SameWorld ||
-					handled.contains(door.m_dest_screen_id))
-					continue;
+				else if (door.m_door_type == fe::DoorType::SameWorld) {
 
-				graphs.emplace_back();
+					// make a draw command for this door at position
+					const auto door_id{ current_door_id++ };
 
-				self(self, door.m_dest_screen_id, door.m_dest_palette_id, { 0, 0 }, graphs.back());
+					screenDraw[screen].push_back(DrawCommand{
+						.x = 16 * door.m_coords.first,
+						.y = 16 * door.m_coords.second,
+						.type = DrawCommandType::Number,
+						.param = door_id,
+						.param_palette = 0
+						});
+
+					// and for the destination
+					screenDraw[door.m_dest_screen_id].push_back(DrawCommand{
+						.x = 16 * door.m_dest_coords.first,
+						.y = 16 * (door.m_dest_coords.second + 1),
+						.type = DrawCommandType::Number,
+						.param = door_id,
+						.param_palette = 1
+						});
+
+					if (!handled.contains(door.m_dest_screen_id)) {
+						graphs.emplace_back();
+						self(self, door.m_dest_screen_id, door.m_dest_palette_id, { 0, 0 }, graphs.back());
+					}
+				}
 			}
 		};
 
@@ -165,9 +205,10 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 	if (!building_lookup.empty()) {
 		std::vector<std::optional<ScreenId>> row;
 
-		for (const auto& [bld_key, idx] : building_lookup) {
+		for (std::size_t idx{ 0 }; idx < building_lookup.size(); ++idx) {
 
-			row.push_back(static_cast<ScreenId>(BUILDING_SCREEN_IDX_OFFSET + idx));
+			row.push_back(static_cast<ScreenId>(
+				BUILDING_SCREEN_IDX_OFFSET + idx));
 
 			if (row.size() == BUILDING_GRAPH_WIDTH) {
 				row.resize(max_width, std::nullopt);
@@ -193,6 +234,35 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Game& game
 		render_screen(game, BUILDING_WORLD_IDX, kv.first.screen,
 			game.get_default_palette_no(BUILDING_WORLD_IDX, kv.first.screen),
 			game.m_npc_bundles.at(kv.first.sprite_set), p_sprites);
+
+	// apply draw commands
+	for (const auto& kv : screenDraw) {
+		std::size_t screen_id{ kv.first };
+		if (tilemaps.contains(screen_id)) {
+			for (const auto& cmd : kv.second) {
+				if (cmd.type == DrawCommandType::Number)
+					draw_number_on_tilemap(tilemaps.at(screen_id),
+						cmd.param,
+						tilesets.at(0),
+						cmd.param_palette,
+						cmd.x, cmd.y);
+			}
+		}
+	}
+
+	for (const auto& kv : buildingDraw) {
+		std::size_t screen_id{ kv.first + BUILDING_SCREEN_IDX_OFFSET };
+		if (tilemaps.contains(screen_id)) {
+			for (const auto& cmd : kv.second) {
+				if (cmd.type == DrawCommandType::Number)
+					draw_number_on_tilemap(tilemaps.at(screen_id),
+						cmd.param,
+						tilesets.at(0),
+						cmd.param_palette,
+						cmd.x, cmd.y);
+			}
+		}
+	}
 
 	return {
 	.layout = std::move(final_layout),
@@ -444,4 +514,33 @@ std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Ch
 	}
 
 	return std::nullopt;
+}
+
+// draw-command helpers
+void fe::WorldVisualizer::draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
+	const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
+	int x, int y) const {
+	const auto str{ std::to_string(p_number) };
+
+	for (std::size_t i{ 0 }; i < str.size(); ++i) {
+
+		const char c{ str[i] };
+
+		if (c < '0' || c > '9')
+			continue;
+
+		const std::size_t chr_idx{ 0x30 + static_cast<std::size_t>(c - '0') };
+
+		draw_chr_tile_on_tilemap(
+			p_tilemap,
+			DRAW_COMMAND_PALETTES.at(p_palette),
+			0,
+			p_alphanumeric.at(chr_idx),
+			x + static_cast<int>(8 * i),
+			y,
+			false,
+			false,
+			false
+		);
+	}
 }

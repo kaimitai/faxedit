@@ -22,6 +22,17 @@ namespace fe {
 
 	class WorldVisualizer {
 
+		enum class DrawCommandType { Number, Item };
+
+		struct DrawCommand {
+			int x;
+			int y;
+
+			DrawCommandType type;
+			std::size_t param;
+			byte param_palette{ 0 };
+		};
+
 		struct ResolvedScreen {
 			IntPosition pos;
 			std::size_t palette;
@@ -88,6 +99,10 @@ namespace fe {
 			const fe::Sprite_set& p_sprite_set,
 			const fe::SpriteGUILoader& p_sprites) const;
 
+		void draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
+			const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
+			int x, int y) const;
+
 		std::optional<IntPosition> get_sw_trans_offset(const fe::Chunk& p_world,
 			std::size_t p_screen_id) const;
 
@@ -96,6 +111,12 @@ namespace fe {
 		static constexpr std::size_t BUILDING_GRAPH_WIDTH{ 4 };
 		static constexpr std::size_t BUILDING_SCREEN_IDX_OFFSET{ 0x100 };
 		static constexpr std::size_t BUILDING_WORLD_IDX{ 4 };
+
+		static const inline std::vector<GfxPalette> DRAW_COMMAND_PALETTES{
+			{ 0x0f, 0x30, 0x30, 0x30 }, // door labels
+			{ 0x0f, 0x38, 0x38, 0x38 }, // door destination labels
+			{ 0x0f, 0x28, 0x28, 0x28 }  // (door to building) labels
+		};
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets);
