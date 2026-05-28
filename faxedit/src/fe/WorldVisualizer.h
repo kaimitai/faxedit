@@ -20,7 +20,14 @@ using IntPosition = std::pair<int, int>;
 
 namespace fe {
 
+	class Config;
+
 	class WorldVisualizer {
+
+		struct ScriptSemanticInfo {
+			std::vector<std::size_t> gifts;
+			std::vector<std::size_t> shop_items;
+		};
 
 		enum class DrawCommandType { Number, Item };
 
@@ -103,6 +110,9 @@ namespace fe {
 			const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
 			int x, int y) const;
 
+		void draw_item_on_tilemap(GfxTilemap& p_tilemap, const fe::Game& p_game,
+			std::size_t p_item, int x, int y) const;
+
 		std::optional<IntPosition> get_sw_trans_offset(const fe::Chunk& p_world,
 			std::size_t p_screen_id) const;
 
@@ -118,10 +128,15 @@ namespace fe {
 			{ 0x0f, 0x28, 0x28, 0x28 }  // (door to building) labels
 		};
 
+		void maybe_add_door_requirement_item_draw(
+			const fe::Config& p_config, std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+			ScreenId p_screen, int p_x, int p_y, byte p_requirement) const;
+
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets);
 
-		fe::WorldVisualization visualize_world(const fe::Game& game, std::size_t world_no,
+		fe::WorldVisualization visualize_world(const fe::Config& p_config,
+			const fe::Game& game, std::size_t world_no,
 			ScreenId start_screen, const fe::SpriteGUILoader& p_sprites) const;
 	};
 

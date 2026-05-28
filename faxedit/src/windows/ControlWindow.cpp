@@ -263,7 +263,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 		auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets) };
 
-		const auto res{ visualizer.visualize_world(*m_game, m_sel_chunk, 0,
+		const auto res{ visualizer.visualize_world(m_config, *m_game, m_sel_chunk, 0,
 			visual_sprites) };
 
 		std::string png_path{ std::format("{}/{}-png", m_path.string(), m_filename) };
