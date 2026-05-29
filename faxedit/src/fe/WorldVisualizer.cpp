@@ -174,6 +174,11 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 						self(self, door.m_dest_screen_id, door.m_dest_palette_id, { 0, 0 }, graphs.back());
 					}
 				}
+				else {
+					if (p_options.show_door_requirements)
+						maybe_add_stage_door_requirement_item_draw(p_config, game,
+							world_no, screenDraw, screen, door);
+				}
 			}
 		};
 
@@ -661,6 +666,27 @@ void fe::WorldVisualizer::maybe_add_door_requirement_item_draw(
 		.param = req_items.at(p_requirement),
 		.param_palette = 0
 		});
+}
+
+void fe::WorldVisualizer::maybe_add_stage_door_requirement_item_draw(
+	const fe::Config& p_config,
+	const fe::Game& p_game, std::size_t p_world,
+	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+	ScreenId p_screen, const fe::Door& p_door) const {
+	const auto& l_stages{ p_game.m_stages.m_stages };
+	const auto& l_stage{ p_game.m_stages.get_stage_from_world(p_world) };
+
+	if (l_stage) {
+		bool l_next{ p_door.m_door_type == fe::DoorType::NextWorld };
+		const auto& l_stg{ l_stage.value() };
+		byte l_dest_req{ l_next ? l_stg->m_next_requirement : l_stg->m_prev_requirement };
+
+		maybe_add_door_requirement_item_draw(p_config, p_draw_map,
+			p_screen,
+			16 * p_door.m_coords.first,
+			16 * p_door.m_coords.second - 16,
+			l_dest_req);
+	}
 }
 
 std::optional<byte> fe::WorldVisualizer::normalize_item_id(const fe::Config& p_config,

@@ -157,6 +157,12 @@ namespace fe {
 			const fe::Config& p_config, std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
 			ScreenId p_screen, int p_x, int p_y, byte p_requirement) const;
 
+		void maybe_add_stage_door_requirement_item_draw(
+			const fe::Config& p_config,
+			const fe::Game& p_game, std::size_t p_world,
+			std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+			ScreenId p_screen, const fe::Door& p_door) const;
+
 		std::optional<byte> normalize_item_id(const fe::Config& p_config, byte script_item_id) const;
 
 		void maybe_emit_script_item_draws(const fe::Config& p_config, ScreenId p_screen,

@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-7">
+<eoe_config app_version="beta-7.1">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -434,8 +434,8 @@
 			<entry byte="$03" str="23" />
 			<entry byte="$04" str="24" />
 			<entry byte="$05" str="25" />
-			<entry byte="$06" str="19" />
-			<entry byte="$07" str="17" />
+			<entry byte="$06" str="17" />
+			<entry byte="$07" str="19" />
 			<entry byte="$08" str="20" />
 		</byte_to_string_map>
 		<!-- labels for sprites -->
