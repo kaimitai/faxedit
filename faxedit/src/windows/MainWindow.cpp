@@ -40,6 +40,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_gfx_window{ false },
 	m_sprite_gfx_window{ false },
 	m_cinematic_window{ false },
+	m_visualization_window{ false },
 	m_iscript_win_set_focus{ false },
 	// cached values
 	m_cache{
@@ -266,6 +267,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			draw_sprite_gfx_window(p_rnd);
 		if (m_cinematic_window)
 			draw_cinematic_window(p_rnd);
+		if (m_visualization_window)
+			draw_visualization_window(p_rnd);
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
@@ -420,6 +423,22 @@ std::optional<std::pair<byte, byte>> fe::MainWindow::show_position_slider(byte p
 		return std::make_pair(l_x, l_y);
 	else
 		return std::nullopt;
+}
+
+void fe::MainWindow::show_world_screen_slider(std::size_t& p_world, std::size_t& p_screen) {
+	if (fe::ui::imgui_slider_with_arrows("##vws",
+		std::format("World {}: {}", p_world, get_description(static_cast<byte>(p_world), m_cache.m_labels_worlds)),
+		p_world, static_cast<std::size_t>(0), m_game->m_chunks.size() - 1,
+		"",
+		false, true)) {
+		p_screen = std::min(p_screen, m_game->m_chunks.at(p_world).m_screens.size() - 1);
+	}
+
+	const auto& screens{ m_game->m_chunks.at(p_world).m_screens };
+
+	fe::ui::imgui_slider_with_arrows("###vss",
+		std::format("Screen #{}/{}", p_screen, screens.size()),
+		p_screen, 0, screens.size() - 1, "", false, true);
 }
 
 void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite) {

@@ -100,7 +100,8 @@ namespace fe {
 		fe::ClipboardManager m_clip_manager;
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
-			m_gfx_window, m_sprite_gfx_window, m_cinematic_window;
+			m_gfx_window, m_sprite_gfx_window, m_cinematic_window,
+			m_visualization_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -158,6 +159,7 @@ namespace fe {
 		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
 		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
 		void draw_cinematic_window(SDL_Renderer* p_rnd);
+		void draw_visualization_window(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 
@@ -167,6 +169,7 @@ namespace fe {
 			std::size_t p_screen_count, std::optional<byte> p_scroll_data);
 
 		std::optional<std::pair<byte, byte>> show_position_slider(byte p_x, byte p_y);
+		void show_world_screen_slider(std::size_t& p_world, std::size_t& p_screen);
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
 		void show_sprite_npc_bundle_screen(void);
 		void show_stage_door_data(fe::Door& p_door);

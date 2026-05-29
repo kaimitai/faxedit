@@ -27,6 +27,29 @@ namespace fe {
 		std::unordered_set<byte> shop_items;
 	};
 
+	struct WorldVisualizationOptions {
+		// screen selection
+		bool skip_unreferenced_screens{ true };
+
+		// sprite rendering
+		bool draw_enemies{ true };
+		bool draw_npcs{ true };
+		bool draw_items{ true };
+		bool draw_other{ true };
+		bool use_last_anim_frame{ true };
+
+		// semantic overlays
+		bool show_gifts{ true };
+		bool show_shops{ true };
+
+		// graph overlays
+		bool show_door_labels{ true };
+		bool show_door_requirements{ true };
+
+		// integral parameters
+		std::size_t sameworld_trans_tolerance{ 0 };
+	};
+
 	class WorldVisualizer {
 
 		enum class DrawCommandType { Number, Item };
@@ -98,34 +121,35 @@ namespace fe {
 		GfxTilemap render_screen(const fe::Game& p_game, std::size_t p_world_no,
 			std::size_t p_screen_no,
 			std::size_t p_palette_no,
-			const fe::SpriteGUILoader& p_sprites) const;
+			const fe::SpriteGUILoader& p_sprites,
+			const fe::WorldVisualizationOptions& p_options) const;
 
 		GfxTilemap render_screen(const fe::Game& p_game, std::size_t p_world_no,
 			std::size_t p_screen_no,
 			std::size_t p_palette_no,
 			const fe::Sprite_set& p_sprite_set,
-			const fe::SpriteGUILoader& p_sprites) const;
+			const fe::SpriteGUILoader& p_sprites,
+			const fe::WorldVisualizationOptions& p_options) const;
 
 		void draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
 			const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
-			int x, int y) const;
+			int x, int y, bool p_add_one = true) const;
 
 		void draw_item_on_tilemap(GfxTilemap& p_tilemap, const fe::Game& p_game,
 			std::size_t p_item, int x, int y) const;
 
 		std::optional<IntPosition> get_sw_trans_offset(const fe::Chunk& p_world,
-			std::size_t p_screen_id) const;
+			std::size_t p_screen_id, std::size_t p_tolerance) const;
 
 		std::vector<std::vector<klib::NES_tile>> tilesets;
 		std::unordered_map<byte, fe::ScriptSemanticInfo> scripts;
 
 		static constexpr std::size_t BUILDING_GRAPH_WIDTH{ 4 };
 		static constexpr std::size_t BUILDING_SCREEN_IDX_OFFSET{ 0x100 };
-		static constexpr std::size_t BUILDING_WORLD_IDX{ 4 };
 
 		static const inline std::vector<GfxPalette> DRAW_COMMAND_PALETTES{
 			{ 0x0f, 0x30, 0x30, 0x30 }, // door labels
-			{ 0x0f, 0x38, 0x38, 0x38 }, // door destination labels
+			{ 0x06, 0x20, 0x20, 0x20 }, // door destination labels
 			{ 0x0f, 0x28, 0x28, 0x28 }  // (door to building) labels
 		};
 
@@ -133,11 +157,12 @@ namespace fe {
 			const fe::Config& p_config, std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
 			ScreenId p_screen, int p_x, int p_y, byte p_requirement) const;
 
-		std::optional<byte> normalize_item_id(byte script_item_id) const;
+		std::optional<byte> normalize_item_id(const fe::Config& p_config, byte script_item_id) const;
 
 		void maybe_emit_script_item_draws(const fe::Config& p_config, ScreenId p_screen,
 			const fe::Sprite_set& p_sprite_set,
-			std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map) const;
+			std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+			bool p_show_gifts, bool p_show_shops) const;
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,
@@ -145,7 +170,8 @@ namespace fe {
 
 		fe::WorldVisualization visualize_world(const fe::Config& p_config,
 			const fe::Game& game, std::size_t world_no,
-			ScreenId start_screen, const fe::SpriteGUILoader& p_sprites) const;
+			ScreenId start_screen, const fe::SpriteGUILoader& p_sprites,
+			const fe::WorldVisualizationOptions& p_options) const;
 	};
 
 }

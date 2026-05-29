@@ -223,6 +223,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_cinematic_window ? 4 : 2))
 		m_cinematic_window = !m_cinematic_window;
 
+	ImGui::SameLine();
+
+	if (ui::imgui_button("World Visualizer",
+		m_visualization_window ? 4 : 2))
+		m_visualization_window = !m_visualization_window;
+
 	if (m_settings.m_enable_config_dump) {
 
 		ImGui::SameLine();
@@ -249,31 +255,6 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
 		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path), false) };
 		add_message(std::format("Applied external changes from {} ({} bytes different)", m_loaded_rom_path, byte_diffs), 2);
-	}
-	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
-	}
-
-	ImGui::SameLine();
-
-	if (ui::imgui_button("Export png (dev)", 2)) try {
-		fe::SpriteGUILoader visual_sprites;
-		visual_sprites.load_sprites_for_gui(m_config,
-			m_game->m_sprite_gfx_manager, m_game->m_rom_data);
-
-		auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets,
-			extract_script_semantics()) };
-
-		const auto res{ visualizer.visualize_world(m_config, *m_game, m_sel_chunk, 0,
-			visual_sprites) };
-
-		std::string png_path{ std::format("{}/{}-png", m_path.string(), m_filename) };
-		std::string png_filename{ std::format("world-{:02}", m_sel_chunk) };
-
-		m_gfx.save_world_visualizer_png(res, png_path, png_filename);
-
-		add_message(std::format("Saved world {} as {}/{}.png", m_sel_chunk,
-			png_path, png_filename), 2);
 	}
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);

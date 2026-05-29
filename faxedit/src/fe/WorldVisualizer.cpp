@@ -14,7 +14,8 @@ fe::WorldVisualizer::WorldVisualizer(
 
 fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_config,
 	const fe::Game& game, std::size_t world_no,
-	ScreenId start_screen, const fe::SpriteGUILoader& p_sprites) const {
+	ScreenId start_screen, const fe::SpriteGUILoader& p_sprites,
+	const fe::WorldVisualizationOptions& p_options) const {
 	std::unordered_set<ScreenId> handled;
 	std::unordered_map<ScreenId, ResolvedScreen> resolved;
 	std::map<BuildingKey, std::size_t> building_lookup;
@@ -52,7 +53,7 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 			// draw commands if needed
 			maybe_emit_script_item_draws(p_config,
 				screen, scr.m_sprite_set,
-				screenDraw);
+				screenDraw, p_options.show_gifts, p_options.show_shops);
 
 			// traversal helper
 			auto try_scroll = [&](std::optional<ScreenId> dest, IntPosition offs,
@@ -76,7 +77,10 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 
 			// same-world transitions
 			if (scr.m_interchunk_scroll) {
-				const auto offs{ get_sw_trans_offset(game.m_chunks.at(world_no), screen) };
+				const auto offs{
+					get_sw_trans_offset(game.m_chunks.at(world_no), screen,
+						p_options.sameworld_trans_tolerance)
+				};
 
 				if (offs) {
 					self(
@@ -106,71 +110,64 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 						it = building_lookup.insert(std::make_pair(bld_key, idx)).first;
 
 						// draw numeric label for the building screen
-						buildingDraw[it->second].push_back(DrawCommand{
-							.x = 8,	.y = 8,
+						if (p_options.show_door_labels)
+							buildingDraw[it->second].push_back(DrawCommand{
+								.x = 8,	.y = 8,
+								.type = DrawCommandType::Number,
+								.param = it->second,
+								.param_palette = 2
+								});
+
+						// draw gifts in the building screen, if any
+						maybe_emit_script_item_draws(p_config,
+							it->second, game.m_npc_bundles.at(door.m_npc_bundle),
+							buildingDraw, p_options.show_gifts, p_options.show_shops);
+					}
+
+					if (p_options.show_door_labels)
+						screenDraw[screen].push_back(DrawCommand{
+							.x = 16 * door.m_coords.first,
+							.y = 16 * door.m_coords.second,
 							.type = DrawCommandType::Number,
 							.param = it->second,
 							.param_palette = 2
 							});
 
-						// draw gifts in the building screen, if any
-						maybe_emit_script_item_draws(p_config,
-							it->second, game.m_npc_bundles.at(door.m_npc_bundle),
-							buildingDraw);
-					}
-
-					screenDraw[screen].push_back(DrawCommand{
-						.x = 16 * door.m_coords.first,
-						.y = 16 * door.m_coords.second,
-						.type = DrawCommandType::Number,
-						.param = it->second,
-						.param_palette = 2
-						});
-
-					maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
-						16 * door.m_coords.first,
-						16 * door.m_coords.second - 16,
-						door.m_requirement);
+					if (p_options.show_door_requirements)
+						maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
+							16 * door.m_coords.first,
+							16 * door.m_coords.second - 16,
+							door.m_requirement);
 				}
 				else if (door.m_door_type == fe::DoorType::SameWorld) {
 
 					// make a draw command for this door at position
 					const auto door_id{ current_door_id++ };
 
-					screenDraw[screen].push_back(DrawCommand{
-						.x = 16 * door.m_coords.first,
-						.y = 16 * door.m_coords.second,
-						.type = DrawCommandType::Number,
-						.param = door_id,
-						.param_palette = 0
-						});
-
-					// draw the requirement gfx if it exists
-					const auto& req_items{ p_config.bmap_numeric(c::ID_DOOR_REQ_ITEM_GFX) };
-
-					if (req_items.contains(door.m_requirement)) {
+					if (p_options.show_door_labels)
 						screenDraw[screen].push_back(DrawCommand{
 							.x = 16 * door.m_coords.first,
-							.y = 16 * door.m_coords.second - 16,
-							.type = DrawCommandType::Item,
-							.param = req_items.at(door.m_requirement),
+							.y = 16 * door.m_coords.second,
+							.type = DrawCommandType::Number,
+							.param = door_id,
 							.param_palette = 0
 							});
-					}
 
-					maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
-						16 * door.m_coords.first,
-						16 * door.m_coords.second - 16,
-						door.m_requirement);
+					if (p_options.show_door_requirements)
+						maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
+							16 * door.m_coords.first,
+							16 * door.m_coords.second - 16,
+							door.m_requirement);
 
 					// and the label for the destination
-					screenDraw[door.m_dest_screen_id].push_back(DrawCommand{
-						.x = 16 * door.m_dest_coords.first,
-						.y = 16 * (door.m_dest_coords.second + 1),
-						.type = DrawCommandType::Number,
-						.param = door_id,
-						.param_palette = 1
-						});
+					if (p_options.show_door_labels)
+						screenDraw[door.m_dest_screen_id].push_back(DrawCommand{
+							.x = 16 * door.m_dest_coords.first,
+							.y = 16 * (door.m_dest_coords.second + 1),
+							.type = DrawCommandType::Number,
+							.param = door_id,
+							.param_palette = 1
+							});
 
 					if (!handled.contains(door.m_dest_screen_id)) {
 						graphs.emplace_back();
@@ -182,11 +179,13 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 
 	graphs.emplace_back();
 
-	// let's weed out unreachable screens immediately
-	const auto l_refs{ game.get_referenced_screens(world_no) };
-	for (std::size_t i{ 0 }; i < game.m_chunks.at(world_no).m_screens.size(); ++i)
-		if (!l_refs.contains(static_cast<byte>(i)))
-			handled.insert(i);
+	// let's weed out unreachable screens immediately if the options tell us to
+	if (p_options.skip_unreferenced_screens) {
+		const auto l_refs{ game.get_referenced_screens(world_no) };
+		for (std::size_t i{ 0 }; i < game.m_chunks.at(world_no).m_screens.size(); ++i)
+			if (!l_refs.contains(static_cast<byte>(i)))
+				handled.insert(i);
+	}
 
 	// initial graph
 	recurse(recurse, start_screen, game.get_default_palette_no(world_no, start_screen),
@@ -263,14 +262,15 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 	// render tilemaps
 	std::unordered_map<ScreenId, Tilemap> tilemaps;
 	for (const auto& [screen, info] : resolved)
-		tilemaps[screen] = render_screen(game, world_no, screen, info.palette, p_sprites);
+		tilemaps[screen] = render_screen(game, world_no, screen, info.palette, p_sprites, p_options);
 
 	// render building screens
 	for (const auto& kv : building_lookup)
 		tilemaps[kv.second + BUILDING_SCREEN_IDX_OFFSET] =
-		render_screen(game, BUILDING_WORLD_IDX, kv.first.screen,
-			game.get_default_palette_no(BUILDING_WORLD_IDX, kv.first.screen),
-			game.m_npc_bundles.at(kv.first.sprite_set), p_sprites);
+		render_screen(game, c::CHUNK_IDX_BUILDINGS, kv.first.screen,
+			game.get_default_palette_no(c::CHUNK_IDX_BUILDINGS, kv.first.screen),
+			game.m_npc_bundles.at(kv.first.sprite_set), p_sprites,
+			p_options);
 
 	const auto apply_draw_commands = [&](const auto& draw_map, bool building_idx) -> void {
 		for (const auto& kv : draw_map) {
@@ -318,17 +318,19 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game,
 	std::size_t p_world_no,
 	std::size_t p_screen_no,
 	std::size_t p_palette_no,
-	const fe::SpriteGUILoader& p_sprites) const {
+	const fe::SpriteGUILoader& p_sprites,
+	const fe::WorldVisualizationOptions& p_options) const {
 	return render_screen(p_game, p_world_no, p_screen_no, p_palette_no,
 		p_game.m_chunks.at(p_world_no).m_screens.at(p_screen_no).m_sprite_set,
-		p_sprites);
+		p_sprites, p_options);
 }
 
 GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game, std::size_t p_world_no,
 	std::size_t p_screen_no,
 	std::size_t p_palette_no,
 	const fe::Sprite_set& p_sprite_set,
-	const fe::SpriteGUILoader& p_sprites) const {
+	const fe::SpriteGUILoader& p_sprites,
+	const fe::WorldVisualizationOptions& p_options) const {
 
 	GfxTilemap tilemap(13 * 16, std::vector<byte>(16 * 16, 0x0));
 	const auto& world{ p_game.m_chunks.at(p_world_no) };
@@ -341,14 +343,29 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game, std::size_
 	);
 
 	for (const auto& sprite : p_sprite_set.m_sprites) {
-		const auto& frames{ p_sprites.animations.at(sprite.m_id) };
-		std::size_t frame_id{ frames.size() - 1 };
+		auto sprcat{ p_sprites.sprite_cats.at(sprite.m_id) };
 
-		draw_animation_frame_on_tilemap(tilemap,
-			frames.at(frame_id),
-			static_cast<int>(16 * sprite.m_x), static_cast<int>(16 * sprite.m_y),
-			p_sprites.banks.at(p_sprites.npc_to_bank_idx.at(sprite.m_id)),
-			p_game.m_palettes.at(28));
+		bool draw_sprite{ false };
+		if (sprcat == fe::SpriteGUICategory::Enemy ||
+			sprcat == fe::SpriteGUICategory::Boss)
+			draw_sprite = p_options.draw_enemies;
+		else if (sprcat == fe::SpriteGUICategory::Item)
+			draw_sprite = p_options.draw_items;
+		else if (sprcat == fe::SpriteGUICategory::NPC)
+			draw_sprite = p_options.draw_npcs;
+		else
+			draw_sprite = p_options.draw_other;
+
+		if (draw_sprite) {
+			const auto& frames{ p_sprites.animations.at(sprite.m_id) };
+			std::size_t frame_id{ p_options.use_last_anim_frame ? frames.size() - 1 : 0 };
+
+			draw_animation_frame_on_tilemap(tilemap,
+				frames.at(frame_id),
+				static_cast<int>(16 * sprite.m_x), static_cast<int>(16 * sprite.m_y),
+				p_sprites.banks.at(p_sprites.npc_to_bank_idx.at(sprite.m_id)),
+				p_game.m_palettes.at(28));
+		}
 	}
 
 	return tilemap;
@@ -530,7 +547,7 @@ fe::WorldVisualizer::PlacementGraph::make_grid(void) const {
 
 // logical helpers
 std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Chunk& p_world,
-	std::size_t p_screen_id) const {
+	std::size_t p_screen_id, std::size_t p_tolerance) const {
 	if (p_screen_id >= p_world.m_screens.size())
 		return std::nullopt;
 
@@ -544,13 +561,13 @@ std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Ch
 				const auto& metatile{ p_world.m_metatiles.at(screen.m_tilemap[y][x]) };
 
 				if (metatile.m_block_property == 0x09 || metatile.m_block_property == 0x0a) {
-					if (x == 0)
+					if (x <= p_tolerance)
 						return IntPosition(-1, 0);
-					else if (x == 15)
+					else if (x >= 15 - p_tolerance)
 						return IntPosition(1, 0);
-					else if (y == 0)
+					else if (y <= p_tolerance)
 						return IntPosition(0, -1);
-					else if (y == 12)
+					else if (y >= 12 - p_tolerance)
 						return IntPosition(0, 1);
 				}
 			}
@@ -562,8 +579,9 @@ std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Ch
 // draw-command helpers
 void fe::WorldVisualizer::draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
 	const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
-	int x, int y) const {
-	const auto str{ std::to_string(p_number) };
+	int x, int y, bool p_add_one) const {
+
+	const auto str{ std::to_string(p_add_one ? (p_number + 1) : p_number) };
 
 	for (std::size_t i{ 0 }; i < str.size(); ++i) {
 
@@ -645,7 +663,16 @@ void fe::WorldVisualizer::maybe_add_door_requirement_item_draw(
 		});
 }
 
-std::optional<byte> fe::WorldVisualizer::normalize_item_id(byte script_item_id) const {
+std::optional<byte> fe::WorldVisualizer::normalize_item_id(const fe::Config& p_config,
+	byte script_item_id) const {
+
+	const auto& item_id_to_gfx{ p_config.bmap_numeric(c::ID_SCRIPT_ITEM_GFX) };
+
+	const auto iter{ item_id_to_gfx.find(script_item_id) };
+	if (iter != end(item_id_to_gfx))
+		return static_cast<byte>(iter->second);
+
+	// fallback to known calculations
 	if (script_item_id <= 0x03)
 		return script_item_id;
 	else if (script_item_id >= 0x20 && script_item_id <= 0x23)
@@ -662,7 +689,8 @@ std::optional<byte> fe::WorldVisualizer::normalize_item_id(byte script_item_id) 
 
 void fe::WorldVisualizer::maybe_emit_script_item_draws(const fe::Config& p_config,
 	ScreenId p_screen, const fe::Sprite_set& p_sprite_set,
-	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map) const {
+	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+	bool p_show_gifts, bool p_show_shops) const {
 	std::unordered_set<byte> shop_items;
 
 	for (const auto& sprite : p_sprite_set.m_sprites)
@@ -672,9 +700,9 @@ void fe::WorldVisualizer::maybe_emit_script_item_draws(const fe::Config& p_confi
 			const auto& semantic{ scripts.at(*sprite.m_text_id) };
 
 			for (const auto item_id : semantic.gifts) {
-				auto norm_item_id{ normalize_item_id(item_id) };
+				auto norm_item_id{ normalize_item_id(p_config, item_id) };
 
-				if (norm_item_id) {
+				if (p_show_gifts && norm_item_id) {
 					p_draw_map[p_screen].push_back(DrawCommand{
 					.x = 16 * sprite.m_x,
 					.y = y,
@@ -686,18 +714,20 @@ void fe::WorldVisualizer::maybe_emit_script_item_draws(const fe::Config& p_confi
 			}
 
 			for (const auto item_id : semantic.shop_items) {
-				auto norm_item_id{ normalize_item_id(item_id) };
+				auto norm_item_id{ normalize_item_id(p_config, item_id) };
 				if (norm_item_id)
 					shop_items.insert(*norm_item_id);
 			}
 		}
 
-	int x{ 8 };
-	int y{ 11 * 16 + 8 };
-	for (const auto shop_item : shop_items) {
-		p_draw_map[p_screen].push_back(DrawCommand{
-			.x = x, .y = y, .type = DrawCommandType::Item,
-			.param = shop_item, .param_palette = 0 });
-		x += 16;
+	if (p_show_shops) {
+		int x{ 8 };
+		int y{ 11 * 16 + 8 };
+		for (const auto shop_item : shop_items) {
+			p_draw_map[p_screen].push_back(DrawCommand{
+				.x = x, .y = y, .type = DrawCommandType::Item,
+				.param = shop_item, .param_palette = 0 });
+			x += 16;
+		}
 	}
 }

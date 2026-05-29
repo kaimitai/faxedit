@@ -179,6 +179,7 @@ namespace fe {
 		constexpr char ID_NES_PALETTE[]{ "nes_palette" };
 		constexpr char ID_HUD_TILEMAP[]{ "hud_tilemap" };
 		constexpr char ID_DOOR_REQ_ITEM_GFX[]{ "door_requirement_item_gfx" };
+		constexpr char ID_SCRIPT_ITEM_GFX[]{ "script_item_gfx" };
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };

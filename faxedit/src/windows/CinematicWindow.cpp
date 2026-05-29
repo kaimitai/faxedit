@@ -20,7 +20,7 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 
 	ui::imgui_screen("Cinematic Editor",
 		c::WIN_TILEMAP_X + 50, c::WIN_TILEMAP_Y + 50,
-		c::WIN_TILEMAP_W / 2, c::WIN_TILEMAP_H + 50);
+		c::WIN_TILEMAP_W - 50, c::WIN_TILEMAP_H + 50);
 
 	try {
 
