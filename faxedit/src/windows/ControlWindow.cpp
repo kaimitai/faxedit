@@ -171,10 +171,23 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 					add_message(std::format("World {}, Screen {}: Several doors defined at the same position", c, s), 1);
 
 				// validate sprite counts and total ppu tile counts
+				// also check that only NPCs have scripts attached
 				const auto& sprites{ scr.m_sprite_set.m_sprites };
 				std::size_t total_ppu_tile_count{ 0 };
-				for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr)
+				for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr) {
 					total_ppu_tile_count += m_game->m_sprite_gfx_manager.get_sprite_chr_bank_size(sprites[spr].m_id);
+
+					if (sprites[spr].m_text_id && sprites[spr].m_id < m_cache.m_sprite_dims.size()) {
+						const auto sprite_cat{ m_cache.m_sprite_dims[sprites[spr].m_id].category };
+						if (sprite_cat != fe::SpriteGUICategory::NPC &&
+							sprite_cat != fe::SpriteGUICategory::GameTrigger)
+							add_message(
+								std::format("World {}, Screen {}, Sprite {}: Script attached, but sprite category is not compatible",
+									c, s, spr),
+								1);
+					}
+
+				}
 				if (total_ppu_tile_count > c::PPU_DYNAMIC_TILE_COUNT)
 					add_message(
 						std::format("World {}, Screen {}: Sprites use {} dynamic sprite chr-tiles, but the maximum is {}",

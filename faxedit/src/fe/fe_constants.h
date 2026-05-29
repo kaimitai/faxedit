@@ -206,6 +206,9 @@ namespace fe {
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
 		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
 
+		constexpr std::size_t PALETTE_SPRITES_NON_BUILDING{ 28 };
+		constexpr std::size_t PALETTE_SPRITES_BUILDINGS{ 29 };
+
 		// gfx tilemap image keys
 		constexpr char CHR_GFX_ID_TITLE[]{ "title" };
 		constexpr char CHR_GFX_ID_INTRO[]{ "intro" };

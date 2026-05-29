@@ -369,7 +369,8 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game, std::size_
 				frames.at(frame_id),
 				static_cast<int>(16 * sprite.m_x), static_cast<int>(16 * sprite.m_y),
 				p_sprites.banks.at(p_sprites.npc_to_bank_idx.at(sprite.m_id)),
-				p_game.m_palettes.at(28));
+				p_game.m_palettes.at(p_world_no == c::CHUNK_IDX_BUILDINGS ?
+					c::PALETTE_SPRITES_BUILDINGS : c::PALETTE_SPRITES_NON_BUILDING));
 		}
 	}
 
