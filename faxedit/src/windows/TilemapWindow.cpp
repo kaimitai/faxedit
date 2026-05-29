@@ -647,11 +647,13 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (m_sel_screen < l_chunk.m_screens.size()) {
 						l_chunk.m_screens.push_back(l_chunk.m_screens.at(m_sel_screen));
 						m_game->m_building_scenes.push_back(m_game->m_building_scenes.at(m_sel_screen));
+						add_message("New building screen created (copied from the previously selected screen)", 2, true);
 					}
 				}
 				else {
 					l_chunk.m_screens.push_back(fe::Screen());
 					l_chunk.m_screens.back().initialize_tilemap();
+					add_message(std::format("Added new screen to world {}", m_sel_chunk), 2, true);
 				}
 
 				m_sel_screen = l_chunk.m_screens.size() - 1;

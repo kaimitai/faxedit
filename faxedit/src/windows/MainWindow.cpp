@@ -504,8 +504,10 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 
 	ImGui::SeparatorText("Add or remove sprites");
 
-	if (ui::imgui_button("Add sprite", 2, "", l_sprites.size() >= 8))
+	if (ui::imgui_button("Add sprite", 2, "", l_sprites.size() >= 8)) {
 		p_sprites.push_back(fe::Sprite(0x2a, 0, 0));
+		p_sel_sprite = p_sprites.size() - 1;
+	}
 
 	if (!p_sprites.empty()) {
 		ImGui::SameLine();
