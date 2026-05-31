@@ -199,6 +199,7 @@ namespace fe {
 
 		// bools
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
+		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

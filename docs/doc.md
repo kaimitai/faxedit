@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-7), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-7.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -63,6 +63,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Intro](#intro)
   - [Outro](#outro)
   - [Cinematic Editor Window](#the-cinematic-editor-window)
+- [World Visualizer](#world-visualizer)
 - [Configuration Files](#configuration-files)
 
 <hr>
@@ -80,6 +81,7 @@ This is the screen used for file operations and data analysis.
 * BG gfx editor: Opens or closes the Background Graphics Editor window
 * Sprite gfx editor: Opens or closes the Sprite Graphics Editor window
 * Cinematic editor: Opens or closes the Cinematic Editor window
+* World Visualizer: Opens a window which lets you export an entire world to a png-image, with certain parameters
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Apply External ROM Changes: Re-reads the loaded rom from disk, and regenerates iScripts and music track counts. Should be used if the ROM undergoes external changes.
 * Output Messages: The messages from the editor
@@ -1085,6 +1087,75 @@ There is quite a lot of free space at the end of bank 12, so letting iScript byt
 - Make a configuration override with an increased value for **iscript_data_rg2_start**
 - Re-assemble your scripts with this new constant active. The script code will now be relocated to start later in the bank.
 - Patch your cinematic data once again now that you are sure it will not overwrite any scripts.
+
+<hr>
+
+## World Visualizer
+
+The World Visualizer generates a graphical representation of a world by traversing the game's connection data and laying out screens according to their relationships.
+
+Generation begins from a user-specified world and starting screen. From this screen, the visualizer recursively follows:
+
+* Scroll connections
+* Same-world transitions
+* Same-world doors
+* Building doors
+
+As connected screens are discovered, they are placed into the current section of the generated map.
+
+When a same-world door is encountered, the visualizer follows the door destination and begins a new section from the destination screen. This helps separate areas that are connected through doors rather than direct world traversal.
+
+After the initial traversal is complete, the visualizer performs a final pass over all screens in the selected world. Any screen that has not yet been processed is treated as the starting point of a new section, and the same recursive traversal logic is applied. This ensures that disconnected regions, unused areas, and data inconsistencies can still be represented in the final output.
+
+As a result, a generated world may contain multiple independent sections. Each section represents a group of screens that can be connected through the traversal rules described above.
+
+If Skip Unreferenced Screens is enabled, screens that have no incoming references are omitted from the final image.
+
+If two screens have a scroll connection defined it will be taken, even if the connection physically is impossible to trigger. This can cause trouble if a same-world door can be scrolled to, and entered from the wrong side.
+
+In the original game, world 5 (Branches) has a scroll-up connection from screen 13 to screen 15 which causes this to happen. To render this world correctly you can delete this scroll-connection.
+
+### Handling Inconsistent Connections
+
+Some worlds intentionally or unintentionally contain inconsistent connection data. A common example is a maze-like arrangement where a scroll connection is not bidirectional. For example, screen A may scroll right to B, while B scrolls left to C instead of back to A.
+
+When the visualizer encounters such conflicts, it prioritizes the first established placement and avoids relocating screens that have already been positioned. Any screen that cannot be placed consistently within the current section will instead become the starting point of a new section during the final traversal pass.
+
+As a result, maze-like worlds or worlds containing inconsistent connection data may produce multiple sections in the final image. This behavior is intentional and helps preserve the logical structure of the world's connection graph without introducing overlapping or contradictory screen placements.
+
+If two screens are adjacent in the final output image, there is a genuine connection between them in the game data in at least one direction.
+
+### World Visualizer Window
+
+![World Visualizer Window](./img/win_world_visualizer.png)
+
+#### Sprite Options
+
+* Draw Enemies, NPCs, Items, Other (anything else) on top of their corresponding screens.
+* First/Last Frame: Whether to render the sprites with the first or last animation frame in their animation cycle.
+
+#### Door Options
+
+* Door Labels: Draw labels on doors and their destinations
+  * Yellow number on black background - Door to building entry
+  * White number on black background - Sameworld door entry
+  * White number on red background - Sameworld door destination
+* Door Requirements: Render the requirement to enter a door above that door. Also applies to stage-doors.
+
+The door destinations are drawn a little lower (16 pixels lower) than their true positions, since many doors are two-way. We want to avoid drawing the entries and destinations on top of each other.
+The randomizer uses a certain hack to make the game engine treat certain sameworld doors as stage doors, which will cause wrong labels in the visualizer for the time being - because some stage-doors will be treated as sameworld doors.
+
+#### Script Options
+
+* Gifts: Render the items an NPC will give you, above that NPCs head
+* Shops: Render the items a shop contains as a strip of items low on the screen (usually building screens)
+
+#### Other Options
+* Skip Unreferenced Screens: Disable rendering for screens with no incoming references.
+  
+Should not be used for randomizer ROMs, since the door-hack makes the editor might incorrectly treat screens and unreferenced when they are in fact referenced via randomizer stage-doors.
+
+* SW-Transition tolerance: Controls the maximum distance from a screen edge at which a same-world transition metatile may be interpreted as a scroll connection. Since same-world transitions are directionless in the underlying game data, the visualizer infers a direction based on the nearest screen edge. Increasing this value causes more edge-adjacent transitions to be rendered as scroll connections.
 
 <hr>
 

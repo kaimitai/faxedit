@@ -49,6 +49,9 @@ The following data is editable:
 * Outro animation metadata
 * All cinematic animation graphics
 
+### Visualizer
+* World maps can be exported as parametrized png-images
+
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
 The editor can save your project as a patched NES ROM file or as an IPS patch. We also support our own XML format, which allows users to more easily compare file versions, use version control systems to track file history, and collaborate on projects.
@@ -85,6 +88,12 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 <hr>
 
 ### Version History
+
+* 2025-05-31: version beta-7.1
+
+  * Added parameterized world visualization as PNG-image exports
+  * Updated item graphics configuration to match the most common in-game palette
+  * Added automatic selection of newly created sprites
 
 * 2025-05-25: version beta-7
 

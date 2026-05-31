@@ -14,7 +14,9 @@
 #include <unordered_set>
 
 void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
-	static fe::WorldVisualizationOptions options;
+	static fe::WorldVisualizationOptions options{
+		.skip_unreferenced_screens = !m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false)
+	};
 	static std::size_t l_world{ 0 }, l_screen{ 0 };
 
 	ui::imgui_screen("World Visualizer",
