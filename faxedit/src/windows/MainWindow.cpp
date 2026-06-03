@@ -238,6 +238,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 					if (l_door.m_door_type == fe::DoorType::Building ||
 						l_door.m_door_type == fe::DoorType::SameWorld) {
 						l_dreq = l_door.m_requirement;
+						if (m_cache.m_randomizer_doors && l_door.m_door_type == fe::DoorType::SameWorld)
+							l_dreq %= 16;
 					}
 					else {
 						auto l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };

@@ -173,6 +173,7 @@ namespace fe {
 		void show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& p_sel_sprite);
 		void show_sprite_npc_bundle_screen(void);
 		void show_stage_door_data(fe::Door& p_door);
+		void show_randomizer_sameworld_door_data(fe::Door& p_door);
 		void show_stages_data(void);
 		void show_screen_scroll_data(void);
 
@@ -197,6 +198,8 @@ namespace fe {
 		void enter_door_button(const fe::Screen& p_screen);
 		void transition_sw_button(const fe::Screen& p_screen);
 		void transition_ow_button(const fe::Screen& p_screen);
+
+		void enter_randomizer_stage_door(const fe::Door& p_door);
 
 		// logical helper functions
 		void set_atlas_update_values(void);

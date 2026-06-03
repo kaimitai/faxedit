@@ -337,6 +337,10 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (l_door.m_door_type == fe::NextWorld || l_door.m_door_type == fe::PrevWorld) {
 						show_stage_door_data(l_door);
 					}
+					else if (l_door.m_door_type == fe::DoorType::SameWorld &&
+						m_cache.m_randomizer_doors) {
+						show_randomizer_sameworld_door_data(l_door);
+					}
 					else {
 						// requirements - common to buildings and sameworld doors
 						byte l_req{ l_door.m_requirement };
@@ -358,13 +362,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 							l_dest_world = static_cast<byte>(m_sel_chunk);
 							l_dest_tooltip = "Same-World door";
 						}
-						/*
-						ui::imgui_slider_with_arrows("doordestchunk",
-							"Destination world", l_dest_world, 0, m_game->m_chunks.size() - 1,
-							l_dest_tooltip, true);
-							*/
 
-							// now do the same for destination screens
+						// now do the same for destination screens
 						byte l_dest_screen;
 						l_dest_tooltip.clear();
 
@@ -864,8 +863,13 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 		const auto& l_door{ p_screen.m_doors[m_sel_door] };
 
 		if (l_door.m_door_type == fe::SameWorld) {
-			m_sel_screen = l_door.m_dest_screen_id;
-			m_atlas_new_palette_no = l_door.m_dest_palette_id;
+			if (m_cache.m_randomizer_doors) {
+				enter_randomizer_stage_door(l_door);
+			}
+			else {
+				m_sel_screen = l_door.m_dest_screen_id;
+				m_atlas_new_palette_no = l_door.m_dest_palette_id;
+			}
 		}
 		else if (l_door.m_door_type == fe::Building) {
 			m_sel_screen = l_door.m_dest_screen_id;
@@ -942,5 +946,47 @@ void fe::MainWindow::show_sprite_set_contents(std::size_t p_sprite_set) {
 
 void fe::MainWindow::set_atlas_update_values(void) {
 	m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+	m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
+}
+
+// randomizer helpers
+void fe::MainWindow::show_randomizer_sameworld_door_data(fe::Door& p_door) {
+	byte l_req{ p_door.m_requirement };
+	byte l_subreq{ static_cast<byte>(l_req % 16) };
+	byte l_deststage{ static_cast<byte>(l_req / 16) };
+	const auto& stages{ m_game->m_stages.m_stages };
+
+	byte l_world_no{ static_cast<byte>(stages.at(l_deststage).m_world_id) };
+	const auto& worlds{ m_game->m_chunks };
+
+	ui::imgui_slider_with_arrows("rndreq",
+		std::format("Requirement: {}", get_description(l_subreq, m_cache.m_labels_door_reqs)),
+		l_subreq, 0, m_cache.m_labels_door_reqs.size() - 1);
+
+	ui::imgui_slider_with_arrows("rndpal",
+		std::format("Palette: {}", get_description(p_door.m_dest_palette_id, m_cache.m_labels_palettes)),
+		p_door.m_dest_palette_id, 0, m_game->m_palettes.size() - 1);
+
+	ImGui::Separator();
+
+	ui::imgui_slider_with_arrows("rndstg",
+		std::format("Stage: {} {}", l_deststage, get_description(l_world_no, m_cache.m_labels_worlds)),
+		l_deststage, 0, stages.size() - 1);
+
+	ui::imgui_slider_with_arrows("rndscr",
+		std::format("Screen: {}", p_door.m_dest_screen_id),
+		p_door.m_dest_screen_id, 0, m_game->m_chunks.at(l_world_no).m_screens.size() - 1);
+
+	ImGui::Separator();
+
+	ImGui::Text("Note: This is a randomizer stage-door");
+
+	p_door.m_requirement = static_cast<byte>(l_deststage * 16) + static_cast<byte>(l_subreq);
+}
+
+void fe::MainWindow::enter_randomizer_stage_door(const fe::Door& p_door) {
+	m_sel_screen = p_door.m_dest_screen_id;
+	m_sel_chunk = m_game->m_stages.m_stages.at(p_door.m_requirement / 16).m_world_id;
+	m_atlas_new_palette_no = p_door.m_dest_palette_id;
 	m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 }
