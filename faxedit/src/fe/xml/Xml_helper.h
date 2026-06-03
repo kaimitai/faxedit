@@ -67,6 +67,7 @@ namespace fe {
 			std::map<std::string, std::vector<byte>>& p_sets,
 			std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
 			std::map<std::string, bool>& p_bools,
+			const std::vector<byte>& p_rom,
 			bool p_throw_on_file_not_exists = true);
 
 		// utility
@@ -74,6 +75,10 @@ namespace fe {
 			bool exact_match_only);
 		bool matches_config_region(const pugi::xml_node& p_node,
 			const fe::ConfigRegion& p_region);
+		bool is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
+			const std::vector<byte>& p_vals);
+		bool evaluate_bool_condition(const std::vector<byte>& p_rom,
+			const std::string& p_condition);
 
 		std::string join_bytes(const std::vector<byte>& p_bytes, bool p_hex = false);
 		std::vector<byte> parse_byte_list(const std::string& input);

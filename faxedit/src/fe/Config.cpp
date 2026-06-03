@@ -12,11 +12,12 @@ void fe::Config::load_definitions(const std::string& p_config_xml,
 }
 
 void fe::Config::load_config_data(const std::string& p_config_xml,
-	const std::string& p_config_override_xml) {
+	const std::string& p_config_override_xml,
+	const std::vector<byte>& p_rom) {
 	xml::load_configuration(p_config_override_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, m_bools, false);
+		m_pointers, m_sets, m_byte_maps, m_bools, p_rom, false);
 	xml::load_configuration(p_config_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, m_bools);
+		m_pointers, m_sets, m_byte_maps, m_bools, p_rom);
 }
 
 std::size_t fe::Config::constant(const std::string& p_id) const {
@@ -158,7 +159,7 @@ void fe::Config::determine_region(const std::vector<byte>& p_rom) {
 		bool l_match{ true };
 
 		for (const auto& sig : reg.m_defs) {
-			if (!is_byte_match(p_rom, sig.first, sig.second)) {
+			if (!fe::xml::is_byte_match(p_rom, sig.first, sig.second)) {
 				l_match = false;
 				break;
 			}
@@ -212,18 +213,6 @@ void fe::Config::clear(void) {
 
 bool fe::Config::has_constant(const std::string& p_id) const {
 	return m_constants.find(p_id) != end(m_constants);
-}
-
-bool fe::Config::is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
-	const std::vector<byte>& p_vals) const {
-	if (p_rom.size() < (p_offset + p_vals.size()))
-		return false;
-
-	for (std::size_t i{ 0 }; i < p_vals.size(); ++i)
-		if (p_vals[i] != p_rom[p_offset + i])
-			return false;
-
-	return true;
 }
 
 std::string fe::Config::to_string(void) const {

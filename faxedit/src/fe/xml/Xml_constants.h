@@ -223,6 +223,7 @@ namespace fe {
 			constexpr char ATTR_OFFSET[]{ "offset" };
 			constexpr char ATTR_VALUES[]{ "values" };
 			constexpr char ATTR_VALUE[]{ "value" };
+			constexpr char ATTR_CONDITION[]{ "condition" };
 			constexpr char ATTR_ZERO_ADDR[]{ "zero_addr" };
 			constexpr char ATTR_BYTE[]{ "byte" };
 			constexpr char ATTR_STRING[]{ "str" };

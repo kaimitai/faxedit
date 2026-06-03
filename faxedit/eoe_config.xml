@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-7.1">
+<eoe_config app_version="beta-7.2">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -371,7 +371,7 @@
 	<bools>
 		<!-- disable pal2mus patching for the randomizer as there may or may not be relocation -->
 		<bool name="disable_pal2mus" value="true" region="randum" />
-		<bool name="randomizer_doors" value="true" region="randum" />
+		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
 	</bools>
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
 	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
@@ -415,6 +415,31 @@
 			<entry byte="$0b" str="Unknown (orig. breakable)" />
 			<entry byte="$0c" str="OW/Return" />
 			<entry byte="$0d" str="OW/Return (fg)" />
+		</byte_to_string_map>
+		<!-- labels for door requirements (randomizer) -->
+		<byte_to_string_map name="door_requirement_labels" region="randum">
+			<entry byte="$00" str="None" />
+			<entry byte="$01" str="Key A" />
+			<entry byte="$02" str="Key K" />
+			<entry byte="$03" str="Key Q" />
+			<entry byte="$04" str="Key J" />
+			<entry byte="$05" str="Key Jo" />
+			<entry byte="$06" str="Ring of Elf" />
+			<entry byte="$07" str="Ring of Dwarf" />
+			<entry byte="$08" str="Demon's Ring" />
+			<entry byte="$09" str="Extra Requirement" />
+		</byte_to_string_map>
+		<!-- item gfx for door requirements - used to draw door icon overlays (randomizer) -->
+		<byte_to_string_map name="door_requirement_item_gfx" region="randum">
+			<entry byte="$01" str="21" />
+			<entry byte="$02" str="22" />
+			<entry byte="$03" str="23" />
+			<entry byte="$04" str="24" />
+			<entry byte="$05" str="25" />
+			<entry byte="$06" str="17" />
+			<entry byte="$07" str="19" />
+			<entry byte="$08" str="20" />
+			<entry byte="$09" str="3" />
 		</byte_to_string_map>
 		<!-- labels for door requirements -->
 		<byte_to_string_map name="door_requirement_labels">

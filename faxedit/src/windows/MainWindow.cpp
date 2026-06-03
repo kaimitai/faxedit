@@ -48,7 +48,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 		.m_iscript_count = 0,
 		.m_music_count = 0,
 		.m_command_byte_count = 0,
-		.m_disable_pal2_mus = false
+		.m_disable_pal2_mus = false,
+		.m_randomizer_doors = false
 	},
 	// exit handler variables
 	m_exit_app_requested{ false },
@@ -792,7 +793,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_region_override = p_region;
 		}
 
-		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path);
+		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path, bytes);
 
 		fe::Game l_game{ fe::Game(m_config, bytes) };
 		l_game.m_sprite_gfx_manager.load_rom(m_config, l_game.m_rom_data, m_rom_manager);
@@ -948,6 +949,7 @@ void fe::MainWindow::cache_config_variables(void) {
 
 	// bools
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
+	m_cache.m_randomizer_doors = m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false);
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {

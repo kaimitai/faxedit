@@ -48,7 +48,7 @@ namespace fe {
 		// palettes shared between worlds and game gfx images
 		std::map<std::size_t, std::string> m_shared_palettes;
 		// flags
-		bool m_disable_pal2_mus;
+		bool m_disable_pal2_mus, m_randomizer_doors;
 		// sprite dimensions; holding sprite size and cartesian offsets per animation frame
 		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 		// iscripts

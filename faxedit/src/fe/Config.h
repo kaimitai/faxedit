@@ -22,9 +22,6 @@ namespace fe {
 		std::vector<RegionDefinition> m_region_defs;
 		ConfigRegion m_region;
 
-		bool is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
-			const std::vector<byte>& p_vals) const;
-
 		// actual config data
 		std::map<std::string, std::size_t> m_constants;
 		std::map<std::string, std::pair<std::size_t, std::size_t>> m_pointers;
@@ -48,7 +45,8 @@ namespace fe {
 		// then, determine the region for our ROM
 		void determine_region(const std::vector<byte>& p_rom);
 		// finally load all the data for our region
-		void load_config_data(const std::string& p_config_xml, const std::string& p_config_override_xml);
+		void load_config_data(const std::string& p_config_xml, const std::string& p_config_override_xml,
+			const std::vector<byte>& p_rom);
 
 		std::size_t constant(const std::string& p_id) const;
 		std::size_t constant_or(const std::string& p_id, std::size_t p_default) const;

@@ -1494,6 +1494,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 	std::map<std::string, std::vector<byte>>& p_sets,
 	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
 	std::map<std::string, bool>& p_bools,
+	const std::vector<byte>& p_rom,
 	bool p_throw_on_file_not_exists) {
 	pugi::xml_document l_doc;
 
@@ -1589,10 +1590,24 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 
 				std::string l_name{ n_bool.attribute(c::ATTR_NAME).as_string() };
 
-				if (p_bools.find(l_name) == end(p_bools))
-					p_bools.insert(std::make_pair(l_name,
-						n_bool.attribute(c::ATTR_VALUE).as_bool()
-					));
+				if (p_bools.find(l_name) == end(p_bools)) {
+					bool final_bool_value{ false };
+
+					if (n_bool.attribute(c::ATTR_VALUE)) {
+						final_bool_value = n_bool.attribute(c::ATTR_VALUE).as_bool();
+					}
+					else if (n_bool.attribute(c::ATTR_CONDITION)) {
+						final_bool_value = evaluate_bool_condition(
+							p_rom,
+							n_bool.attribute(c::ATTR_CONDITION).as_string());
+					}
+					else
+						throw std::runtime_error(
+							std::format("Boolean '{}' has neither value nor condition", l_name)
+						);
+
+					p_bools.insert(std::make_pair(l_name, final_bool_value));
+				}
 			}
 		}
 	}
@@ -1737,6 +1752,67 @@ bool fe::xml::matches_config_region(const pugi::xml_node& p_node,
 		p_node.attribute(c::TAG_REGION).as_string(),
 		exact_match_only
 	);
+}
+
+bool fe::xml::is_byte_match(const std::vector<byte>& p_rom, std::size_t p_offset,
+	const std::vector<byte>& p_vals) {
+	if (p_rom.size() < (p_offset + p_vals.size()))
+		return false;
+
+	for (std::size_t i{ 0 }; i < p_vals.size(); ++i)
+		if (p_vals[i] != p_rom[p_offset + i])
+			return false;
+
+	return true;
+}
+
+bool fe::xml::evaluate_bool_condition(const std::vector<byte>& p_rom,
+	const std::string& p_condition) {
+	std::size_t pos{ 0 };
+
+	while (pos < p_condition.size()) {
+
+		// skip whitespace
+		while (pos < p_condition.size() &&
+			std::isspace(static_cast<unsigned char>(p_condition[pos])))
+			++pos;
+
+		if (pos >= p_condition.size())
+			break;
+
+		auto eq_pos{ p_condition.find('=', pos) };
+
+		if (eq_pos == std::string::npos)
+			throw std::runtime_error(
+				"Invalid condition expression: " + p_condition);
+
+		std::string offset_str{
+			trim_whitespace(
+				p_condition.substr(pos, eq_pos - pos))
+		};
+
+		pos = eq_pos + 1;
+
+		std::size_t end_pos{ pos };
+
+		while (end_pos < p_condition.size() &&
+			!std::isspace(static_cast<unsigned char>(p_condition[end_pos])))
+			++end_pos;
+
+		std::string bytes_str{
+			p_condition.substr(pos, end_pos - pos)
+		};
+
+		pos = end_pos;
+
+		const auto offset{ parse_numeric(offset_str) };
+		const auto bytes{ parse_byte_list(bytes_str) };
+
+		if (!is_byte_match(p_rom, offset, bytes))
+			return false;
+	}
+
+	return true;
 }
 
 std::string fe::xml::join_bytes(const std::vector<byte>& p_bytes, bool p_hex) {
