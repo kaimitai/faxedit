@@ -3,6 +3,7 @@
 #include "Config.h"
 #include <algorithm>
 #include <deque>
+#include <format>
 #include <string>
 
 fe::WorldVisualizer::WorldVisualizer(
@@ -51,6 +52,14 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 			const auto& scr{ game.m_chunks.at(world_no).m_screens.at(screen) };
 
 			// draw commands if needed
+			if (p_options.show_screen_numbers)
+				screenDraw[screen].push_back(DrawCommand{
+					.x = 8,
+					.y = 8,
+					.type = DrawCommandType::IdNumber,
+					.param = screen,
+					.param_palette = 0
+					});
 			maybe_emit_script_item_draws(p_config,
 				screen, scr.m_sprite_set,
 				screenDraw, p_options.show_gifts, p_options.show_shops);
@@ -92,6 +101,17 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 							pos.second + offs->second),
 						graph);
 				}
+			}
+
+			// other-world transitions
+			if (scr.m_intrachunk_scroll && p_options.show_ow_transitions) {
+				const auto offs{ get_ow_trans_offset(game.m_chunks.at(world_no), screen) };
+
+				if (offs)
+					emit_otherworld_connection(screenDraw, screen,
+						offs->first, offs->second,
+						scr.m_intrachunk_scroll->m_dest_chunk,
+						scr.m_intrachunk_scroll->m_dest_screen);
 			}
 
 			// doors
@@ -139,7 +159,27 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 							16 * door.m_coords.second - 16,
 							door.m_requirement);
 				}
+				// randomizer sameworld door which in actuality goes to another stage
+				else if (door.m_door_type == fe::DoorType::SameWorld &&
+					p_options.rnd_stage_doors &&
+					randomizer_door_world(game, door) != world_no) {
+
+					if (p_options.show_door_requirements)
+						maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
+							16 * door.m_coords.first,
+							16 * door.m_coords.second - 16,
+							door.m_requirement % 16);
+					if (p_options.show_stage_door_dests)
+						emit_otherworld_connection(screenDraw, screen,
+							16 * door.m_coords.first, 16 * door.m_coords.second,
+							static_cast<byte>(randomizer_door_world(game, door)),
+							door.m_dest_screen_id);
+				}
 				else if (door.m_door_type == fe::DoorType::SameWorld) {
+					auto l_req{ door.m_requirement };
+
+					if (p_options.rnd_stage_doors)
+						l_req %= 16;
 
 					// make a draw command for this door at position
 					const auto door_id{ current_door_id++ };
@@ -157,7 +197,7 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 						maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
 							16 * door.m_coords.first,
 							16 * door.m_coords.second - 16,
-							door.m_requirement);
+							l_req);
 
 					// and the label for the destination
 					if (p_options.show_door_labels)
@@ -178,6 +218,26 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 					if (p_options.show_door_requirements)
 						maybe_add_stage_door_requirement_item_draw(p_config, game,
 							world_no, screenDraw, screen, door);
+
+					if (p_options.show_stage_door_dests) {
+						const auto& l_stages{ game.m_stages.m_stages };
+						const auto& l_stage{ game.m_stages.get_stage_from_world(world_no) };
+
+						if (l_stage) {
+							bool l_next{ door.m_door_type == fe::DoorType::NextWorld };
+							const auto& l_stg{ l_stage.value() };
+							std::size_t l_dest_stage{ l_next ? l_stg->m_next_stage : l_stg->m_prev_stage };
+							std::size_t l_dest_world{ l_stages[l_dest_stage].m_world_id };
+							std::size_t l_dest_screen{ l_next ? l_stg->m_next_screen : l_stg->m_prev_screen };
+
+							emit_otherworld_connection(screenDraw, screen,
+								16 * door.m_coords.first,
+								16 * door.m_coords.second,
+								static_cast<byte>(l_dest_world),
+								static_cast<byte>(l_dest_screen));
+						}
+
+					}
 				}
 			}
 		};
@@ -287,14 +347,16 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 				continue;
 
 			for (const auto& cmd : kv.second) {
-				if (cmd.type == DrawCommandType::Number) {
+				if (cmd.type == DrawCommandType::Number ||
+					cmd.type == DrawCommandType::IdNumber) {
 					draw_number_on_tilemap(
 						tilemaps.at(screen_id),
 						cmd.param,
 						tilesets.at(0),
 						cmd.param_palette,
 						cmd.x,
-						cmd.y);
+						cmd.y,
+						cmd.type == DrawCommandType::Number, true);
 				}
 				else if (cmd.type == DrawCommandType::Item) {
 					draw_item_on_tilemap(
@@ -381,8 +443,37 @@ void fe::WorldVisualizer::draw_pixel_on_tilemap(GfxTilemap& p_tilemap,
 	const GfxPalette& p_palette,
 	std::size_t p_sub_palette,
 	byte p_sub_palette_index,
-	std::size_t p_pixel_x, std::size_t p_pixel_y) const {
-	p_tilemap.at(p_pixel_y).at(p_pixel_x) = p_palette.at(p_sub_palette * 4 + p_sub_palette_index);
+	int p_pixel_x, int p_pixel_y) const {
+	if (p_pixel_x >= 0 && p_pixel_y >= 0 &&
+		p_pixel_y < static_cast<int>(p_tilemap.size()) &&
+		p_pixel_x < static_cast<int>(p_tilemap[static_cast<std::size_t>(p_pixel_y)].size()))
+		p_tilemap[static_cast<std::size_t>(p_pixel_y)][static_cast<std::size_t>(p_pixel_x)] = p_palette.at(p_sub_palette * 4 + p_sub_palette_index);
+}
+
+void fe::WorldVisualizer::draw_rectangle_on_tilemap(
+	GfxTilemap& p_tilemap,
+	byte p_palette,
+	int x, int y,
+	int w, int h) const {
+
+	if (w <= 0 || h <= 0)
+		return;
+
+	const auto pal{ DRAW_COMMAND_PALETTES.at(p_palette) };
+
+	// top + bottom
+	for (int xx{ x }; xx < x + w; ++xx) {
+		draw_pixel_on_tilemap(p_tilemap, pal, 0, 1, xx, y);
+		if (h > 1)
+			draw_pixel_on_tilemap(p_tilemap, pal, 0, 1, xx, static_cast<std::size_t>(y + h - 1));
+	}
+
+	// left + right
+	for (int yy{ y + 1 }; yy < y + h - 1; ++yy) {
+		draw_pixel_on_tilemap(p_tilemap, pal, 0, 1, static_cast<std::size_t>(x), static_cast<std::size_t>(yy));
+		if (w > 1)
+			draw_pixel_on_tilemap(p_tilemap, pal, 0, 1, static_cast<std::size_t>(x + w - 1), yy);
+	}
 }
 
 void fe::WorldVisualizer::draw_chr_tile_on_tilemap(
@@ -423,8 +514,8 @@ void fe::WorldVisualizer::draw_chr_tile_on_tilemap(
 				p_palette,
 				p_sub_palette,
 				pixel,
-				static_cast<std::size_t>(dst_x),
-				static_cast<std::size_t>(dst_y)
+				dst_x,
+				dst_y
 			);
 		}
 	}
@@ -582,10 +673,32 @@ std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Ch
 	return std::nullopt;
 }
 
+std::optional<IntPosition> fe::WorldVisualizer::get_ow_trans_offset(const fe::Chunk& p_world,
+	std::size_t p_screen_id) const {
+	if (p_screen_id >= p_world.m_screens.size())
+		return std::nullopt;
+
+	const auto& screen{ p_world.m_screens[p_screen_id] };
+
+	if (!screen.m_intrachunk_scroll)
+		return std::nullopt;
+	else {
+
+		for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
+			for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x) {
+				const auto& metatile{ p_world.m_metatiles.at(screen.m_tilemap[y][x]) };
+				if (metatile.m_block_property == 0x0c ||
+					metatile.m_block_property == 0x0d)
+					return IntPosition(16 * static_cast<int>(x), 16 * static_cast<int>(y));
+			}
+	}
+	return std::nullopt;
+}
+
 // draw-command helpers
 void fe::WorldVisualizer::draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
 	const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
-	int x, int y, bool p_add_one) const {
+	int x, int y, bool p_add_one, bool p_border) const {
 
 	const auto str{ std::to_string(p_add_one ? (p_number + 1) : p_number) };
 
@@ -610,6 +723,9 @@ void fe::WorldVisualizer::draw_number_on_tilemap(GfxTilemap& p_tilemap, std::siz
 			false
 		);
 	}
+
+	if (p_border)
+		draw_rectangle_on_tilemap(p_tilemap, p_palette, x - 1, y - 1, static_cast<int>(str.size() * 8 + 2), 10);
 }
 
 void fe::WorldVisualizer::draw_item_on_tilemap(GfxTilemap& p_tilemap, const fe::Game& p_game,
@@ -757,4 +873,34 @@ void fe::WorldVisualizer::maybe_emit_script_item_draws(const fe::Config& p_confi
 			x += 16;
 		}
 	}
+}
+
+void fe::WorldVisualizer::emit_otherworld_connection(
+	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+	ScreenId p_screen, int x, int y, byte p_target_world, byte p_target_screen) const {
+	p_draw_map[p_screen].push_back(DrawCommand{
+		.x = x,
+		.y = y,
+		.type = DrawCommandType::IdNumber,
+		.param = p_target_world,
+		.param_palette = 3
+		});
+
+	p_draw_map[p_screen].push_back(DrawCommand{
+		.x = x,
+		.y = y + 12,
+		.type = DrawCommandType::IdNumber,
+		.param = p_target_screen,
+		.param_palette = 3
+		});
+}
+
+std::size_t fe::WorldVisualizer::randomizer_door_world(const fe::Game& p_game, const fe::Door& p_door) const {
+	const auto& stages{ p_game.m_stages.m_stages };
+	std::size_t stage_no{ static_cast<std::size_t>(p_door.m_requirement / 16) };
+
+	if (stage_no < stages.size())
+		return stages[stage_no].m_world_id;
+	else
+		throw std::runtime_error(std::format("Invalid stage no: {}", stage_no));
 }

@@ -826,6 +826,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		load_external_rom_data(bytes, true);
 
+		if (m_cache.m_randomizer_doors)
+			add_message("Randomizer door hack detected; Sameworld doors are stage doors!", 4);
+
 		if (m_game->m_chunks.size() > 0)
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
 

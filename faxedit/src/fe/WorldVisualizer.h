@@ -45,14 +45,20 @@ namespace fe {
 		// graph overlays
 		bool show_door_labels{ true };
 		bool show_door_requirements{ true };
+		bool show_screen_numbers{ true };
+		bool show_ow_transitions{ true };
+		bool show_stage_door_dests{ true };
 
 		// integral parameters
 		std::size_t sameworld_trans_tolerance{ 0 };
+
+		// implicit parameters
+		bool rnd_stage_doors{ false };
 	};
 
 	class WorldVisualizer {
 
-		enum class DrawCommandType { Number, Item };
+		enum class DrawCommandType { Number, IdNumber, Item };
 
 		struct DrawCommand {
 			int x;
@@ -89,7 +95,13 @@ namespace fe {
 			const GfxPalette& p_palette,
 			std::size_t p_sub_palette,
 			byte p_sub_palette_index,
-			std::size_t p_pixel_x, std::size_t p_pixel_y) const;
+			int p_pixel_x, int p_pixel_y) const;
+
+		void draw_rectangle_on_tilemap(
+			GfxTilemap& p_tilemap,
+			byte p_palette,
+			int x, int y,
+			int w, int h) const;
 
 		void draw_chr_tile_on_tilemap(GfxTilemap& p_tilemap,
 			const GfxPalette& p_palette,
@@ -133,13 +145,15 @@ namespace fe {
 
 		void draw_number_on_tilemap(GfxTilemap& p_tilemap, std::size_t p_number,
 			const std::vector<klib::NES_tile>& p_alphanumeric, byte p_palette,
-			int x, int y, bool p_add_one = true) const;
+			int x, int y, bool p_add_one = true, bool p_border = true) const;
 
 		void draw_item_on_tilemap(GfxTilemap& p_tilemap, const fe::Game& p_game,
 			std::size_t p_item, int x, int y) const;
 
 		std::optional<IntPosition> get_sw_trans_offset(const fe::Chunk& p_world,
 			std::size_t p_screen_id, std::size_t p_tolerance) const;
+		std::optional<IntPosition> get_ow_trans_offset(const fe::Chunk& p_world,
+			std::size_t p_screen_id) const;
 
 		std::vector<std::vector<klib::NES_tile>> tilesets;
 		std::unordered_map<byte, fe::ScriptSemanticInfo> scripts;
@@ -150,7 +164,8 @@ namespace fe {
 		static const inline std::vector<GfxPalette> DRAW_COMMAND_PALETTES{
 			{ 0x0f, 0x30, 0x30, 0x30 }, // door labels
 			{ 0x06, 0x20, 0x20, 0x20 }, // door destination labels
-			{ 0x0f, 0x28, 0x28, 0x28 }  // (door to building) labels
+			{ 0x0f, 0x28, 0x28, 0x28 }, // (door to building) labels
+			{ 0x01, 0x31, 0x31, 0x31 }  // otherworld connections
 		};
 
 		void maybe_add_door_requirement_item_draw(
@@ -169,6 +184,13 @@ namespace fe {
 			const fe::Sprite_set& p_sprite_set,
 			std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
 			bool p_show_gifts, bool p_show_shops) const;
+
+		void emit_otherworld_connection(std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+			ScreenId p_screen, int x, int y,
+			byte p_target_world, byte p_target_screen) const;
+
+		// randomizer door helpers
+		std::size_t randomizer_door_world(const fe::Game& p_game, const fe::Door& p_door) const;
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,

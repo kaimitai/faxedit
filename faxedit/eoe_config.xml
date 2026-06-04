@@ -371,6 +371,7 @@
 	<bools>
 		<!-- disable pal2mus patching for the randomizer as there may or may not be relocation -->
 		<bool name="disable_pal2mus" value="true" region="randum" />
+		<!-- detect the randomizer sameworld door to stage door hack -->
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
 	</bools>
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
