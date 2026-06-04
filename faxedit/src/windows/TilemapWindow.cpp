@@ -36,30 +36,41 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 	// Layout constants
 	const float rightPanelWidth = 500.0f;
 	const float sharedHeight = 200.0f;
-	const float tilemapPixelWidth = static_cast<float>(l_screen_tilemap->w); // 256.0f;
-	const float tilemapPixelHeight = static_cast<float>(l_screen_tilemap->h); // 208.0f;
+
 	const float tileSize = 16.0f;
-	const float tilemapAspect = tilemapPixelWidth / tilemapPixelHeight;
 
 	// Available space
 	const float availableWidth = ImGui::GetContentRegionAvail().x;
 	const float availableHeight = ImGui::GetContentRegionAvail().y;
+
 	const float leftPanelWidth = availableWidth - rightPanelWidth;
 	const float panelHeight = availableHeight - sharedHeight;
 
-	// Scale tilemap to fit left panel
-	float scaledWidth = leftPanelWidth;
-	float scaledHeight = scaledWidth / tilemapAspect;
-	if (scaledHeight > panelHeight) {
-		scaledHeight = panelHeight;
-		scaledWidth = scaledHeight * tilemapAspect;
-	}
+	// Viewport fills entire panel
+	const float viewportWidth = leftPanelWidth;
+	const float viewportHeight = panelHeight;
+	const auto vp = get_viewport(viewportWidth, viewportHeight);
 
 	// --- Left Panel: Tilemap ---
 	if (ImGui::BeginChild("Tilemap", ImVec2(leftPanelWidth, panelHeight))) {
 		ImVec2 imagePos = ImGui::GetCursorScreenPos();
-		ImVec2 imageSize = ImVec2(scaledWidth, scaledHeight);
-		ImGui::Image(m_gfx.get_screen_texture(), imageSize);
+		ImVec2 imageSize{ viewportWidth, viewportHeight };
+
+		ImVec2 uv0{
+			vp.src_x0_px / TILEMAP_VIEW_PX_W,
+			vp.src_y0_px / TILEMAP_VIEW_PX_H
+		};
+
+		ImVec2 uv1{
+			vp.src_x1_px / TILEMAP_VIEW_PX_W,
+			vp.src_y1_px / TILEMAP_VIEW_PX_H
+		};
+
+		ImGui::Image(
+			m_gfx.get_screen_texture(),
+			imageSize,
+			uv0,
+			uv1);
 
 		ImVec2 mousePos = ImGui::GetMousePos();
 		bool insideImage =
@@ -70,18 +81,127 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 		bool l_mouse_right_down{ ImGui::IsMouseDown(ImGuiMouseButton_Right) };
 		bool l_win_active{ ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) };
 
+		constexpr float tilemapPixelWidth{ static_cast<float>(TILEMAP_VIEW_PX_W) };
+		constexpr float tilemapPixelHeight{ static_cast<float>(TILEMAP_VIEW_PX_H) };
+
 		if (insideImage) {
-			float scaleX = imageSize.x / tilemapPixelWidth;
-			float scaleY = imageSize.y / tilemapPixelHeight;
 
-			float localX = (mousePos.x - imagePos.x) / scaleX;
-			float localY = (mousePos.y - imagePos.y) / scaleY;
+			const float u{
+				(mousePos.x - imagePos.x) / imageSize.x
+			};
 
-			std::size_t tileX = std::min(static_cast<std::size_t>(localX / tileSize), std::size_t(15));
-			std::size_t tileY = std::min(static_cast<std::size_t>(localY / tileSize), std::size_t(12));
+			const float v{
+				(mousePos.y - imagePos.y) / imageSize.y
+			};
+
+			const float textureX{
+				vp.src_x0_px + u * vp.visible_w_px
+			};
+
+			const float textureY{
+				vp.src_y0_px + v * vp.visible_h_px
+			};
+
+			const auto [worldXpx, worldYpx] {
+				view_px_to_world_px(textureX, textureY)
+				};
+
+			float localX{ worldXpx };
+			float localY{ worldYpx };
+
+			const int worldTileX{ static_cast<int>(std::floor(worldXpx / tileSize)) };
+			const int worldTileY{ static_cast<int>(std::floor(worldYpx / tileSize)) };
+
+			const bool insideEditableScreen{
+				worldTileX >= 0 &&
+				worldTileX < TILEMAP_SCREEN_MT_W &&
+				worldTileY >= 0 &&
+				worldTileY < TILEMAP_SCREEN_MT_H
+			};
+
+			std::size_t tileX{ 0 };
+			std::size_t tileY{ 0 };
+
+			if (insideEditableScreen) {
+				tileX = static_cast<std::size_t>(worldTileX);
+				tileY = static_cast<std::size_t>(worldTileY);
+			}
+
+			const bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
+			const bool l_mouse_left_dragging{ ImGui::IsMouseDragging(ImGuiMouseButton_Left) };
+
+			bool try_to_drag{ ImGui::IsKeyDown(ImGuiKey_Space) ||
+			ImGui::IsMouseDown(ImGuiMouseButton_Middle) };
+			bool zoom_or_pan{ try_to_drag };
+
+			if (l_mouse_left_dragging && try_to_drag) {
+				const ImVec2 drag_delta{ ImGui::GetMouseDragDelta(ImGuiMouseButton_Left) };
+
+				const float tex_per_screen_x{ vp.visible_w_px / imageSize.x };
+				const float tex_per_screen_y{ vp.visible_h_px / imageSize.y };
+
+				camera.center_x_px -= drag_delta.x * tex_per_screen_x;
+				camera.center_y_px -= drag_delta.y * tex_per_screen_y;
+
+				ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+				zoom_or_pan = true;
+			}
+			else if (l_ctrl) {
+				const float wheel{ ImGui::GetIO().MouseWheel };
+
+				if (wheel != 0.0f) {
+
+					// Mouse position within displayed image [0..1]
+					const float u{
+						(mousePos.x - imagePos.x) / imageSize.x
+					};
+
+					const float v{
+						(mousePos.y - imagePos.y) / imageSize.y
+					};
+
+					// Texture pixel currently under cursor
+					const float anchor_x{
+						vp.src_x0_px + u * vp.visible_w_px
+					};
+
+					const float anchor_y{
+						vp.src_y0_px + v * vp.visible_h_px
+					};
+
+					// Apply zoom
+					if (wheel > 0.0f)
+						camera.zoom *= 1.2f;
+					else
+						camera.zoom /= 1.2f;
+
+					camera.zoom = std::clamp(
+						camera.zoom,
+						1.0f,
+						16.0f);
+
+					// Recompute visible size after zoom
+					const float new_visible_w{
+						static_cast<float>(TILEMAP_VIEW_PX_W) / camera.zoom
+					};
+
+					const float new_visible_h{
+						static_cast<float>(TILEMAP_VIEW_PX_H) / camera.zoom
+					};
+
+					// Move camera so anchor stays under mouse
+					camera.center_x_px =
+						anchor_x - (u - 0.5f) * new_visible_w;
+
+					camera.center_y_px =
+						anchor_y - (v - 0.5f) * new_visible_h;
+
+					zoom_or_pan = true;
+				}
+			}
 
 			// show tile position as tooltip - begin
-			if (m_emode != fe::EditMode::TilemapEditMode) {
+			if (insideEditableScreen && m_emode != fe::EditMode::TilemapEditMode) {
 				ImGui::SetNextWindowPos(ImVec2(5, 5));
 				ImGui::Begin("TilemapTooltip", nullptr,
 					ImGuiWindowFlags_NoDecoration |
@@ -94,7 +214,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			}
 			// show tile position as tooltip - end
 
-			if (l_win_active && (l_mouse_left_down || l_mouse_right_down)) {
+			if (insideEditableScreen && !zoom_or_pan &&
+				l_win_active && (l_mouse_left_down || l_mouse_right_down)) {
 
 				if (m_emode == fe::EditMode::TilemapEditMode) {
 					if (l_mouse_left_down) {
@@ -717,6 +838,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			ui::imgui_checkbox("Animate Sprites", m_settings.m_animate);
 			ImGui::SameLine();
 			ui::imgui_checkbox("Show Grid", m_settings.m_show_grid);
+			ImGui::SameLine();
+			ui::imgui_checkbox("Adjacent", m_settings.m_show_adjacent_screens);
 
 			ImGui::SeparatorText("Block-Property Icon Overlays");
 

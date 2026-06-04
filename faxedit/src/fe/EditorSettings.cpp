@@ -4,6 +4,7 @@
 fe::EditorSettings::EditorSettings(void) :
 	m_show_sprite_sets_in_buildings{ false },
 	m_show_grid{ false },
+	m_show_adjacent_screens{ true },
 	m_animate{ true },
 	m_mattock_overlay{ false },
 	m_door_req_overlay{ true },

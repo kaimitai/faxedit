@@ -24,17 +24,16 @@ constexpr unsigned char OVERLAY_ICONS_PNG[]{ 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a,
 	0x38, 0x4b, 0x19, 0x88, 0x25, 0x16, 0x25, 0xfb, 0x67, 0x89, 0x85, 0x27, 0xfb, 0xb0, 0xbe, 0xdb, 0x7a, 0xdd, 0x75, 0x9f, 0x9d, 0xfa, 0x27, 0xaa, 0x4c, 0x55, 0x37, 0x26, 0x92, 0x68, 0x93, 0xe4, 0xd2, 0x5d, 0xef, 0xd8, 0x54, 0xbf, 0x18, 0x9e, 0x54, 0xbb, 0xe6, 0xbe, 0x39, 0xf0, 0xdc, 0x54, 0x80, 0x59, 0x02, 0x12, 0xea, 0x46, 0x5f, 0x30, 0xde, 0x93, 0x61, 0x48, 0x20, 0x28, 0xb9, 0xb5, 0xd4, 0xed, 0x56, 0x9d, 0x44, 0xae, 0x9f, 0x35, 0x96, 0x58, 0x6d, 0xa9, 0xec, 0x42, 0x0a, 0x07, 0xfb, 0xa1, 0xae, 0xd6, 0x17, 0x0f, 0x25, 0xe3, 0xd1, 0x37, 0xb7, 0x7f, 0x84, 0xfd, 0xf4, 0xfe, 0xa5, 0x04, 0x02, 0x82, 0xa2, 0xdb, 0x43, 0x9d, 0xd3, 0x2f, 0xf9, 0x2c, 0xcd, 0xf2, 0x57, 0xf6, 0x3d, 0x20, 0x17, 0x80, 0x16, 0xff, 0x5b, 0x40, 0xb6, 0x09, 0xfc, 0x2f, 0x7d, 0x3d, 0xc9, 0x09, 0xc8, 0x36, 0x99, 0x62, 0xff, 0x4a, 0xcf, 0x37, 0xbc, 0x02, 0x42, 0x62, 0x7d, 0x17, 0x01, 0xd9, 0x03, 0xe4, 0x46, 0x97, 0x20, 0x03, 0xb0, 0x86, 0x5c, 0x00, 0x6e, 0x8b, 0x43, 0xf7, 0x7f, 0xce, 0xf9, 0x2f, 0x02, 0xb2,
 	0xb0, 0xb0, 0x50, 0xc9, 0xd1, 0xd1, 0x1f, 0xdb, 0x2e, 0x83, 0x73, 0x06, 0xa1, 0x47, 0xe2, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82 };
 
-fe::gfx::gfx(SDL_Renderer* p_rnd) :
+fe::gfx::gfx(SDL_Renderer* p_rnd, int p_screen_txt_w, int p_screen_txt_h) :
 	m_nes_palette{ SDL_CreatePalette(256) },
 	m_atlas{ nullptr },
 	m_metatile_gfx{ std::vector<SDL_Texture*>(256, nullptr) },
 	m_hot_pink{ SDL_Color(0xff, 0x69, 0xb4, 0x00) }
 {
 	// SDL_SetTextureBlendMode(m_screen_texture, SDL_BLENDMODE_NONE); // if no alpha blending
-	// SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
-
 	m_screen_texture = SDL_CreateTexture(p_rnd, SDL_PIXELFORMAT_ABGR8888,
-		SDL_TEXTUREACCESS_TARGET, TILEMAP_SCALE * 16 * 16, TILEMAP_SCALE * 13 * 16);
+		SDL_TEXTUREACCESS_TARGET, p_screen_txt_w, p_screen_txt_h);
+	SDL_SetTextureScaleMode(m_screen_texture, SDL_SCALEMODE_NEAREST);
 }
 
 SDL_Color fe::gfx::uint24_to_SDL_Color(std::size_t p_col) const {
@@ -94,6 +93,7 @@ void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::ve
 		16, 16);
 
 	SDL_SetTextureBlendMode(metatile, SDL_BLENDMODE_BLEND);
+	SDL_SetTextureScaleMode(metatile, SDL_SCALEMODE_NEAREST);
 	SDL_SetRenderTarget(p_rnd, metatile);
 	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, 255); // Transparent background
 	SDL_RenderClear(p_rnd);
@@ -310,6 +310,7 @@ void fe::gfx::put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index
 
 SDL_Texture* fe::gfx::surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf, bool p_destroy_surface) {
 	SDL_Texture* result = SDL_CreateTextureFromSurface(p_rnd, p_srf);
+	SDL_SetTextureScaleMode(result, SDL_SCALEMODE_NEAREST);
 
 	if (p_destroy_surface)
 		SDL_DestroySurface(p_srf);
@@ -403,6 +404,15 @@ void fe::gfx::draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const
 	}
 }
 
+void fe::gfx::clear_screen_texture(SDL_Renderer* p_rnd) {
+	if (!m_screen_texture) return;
+
+	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, 255);
+	SDL_RenderClear(p_rnd);
+	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
 void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
@@ -416,28 +426,47 @@ void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, 
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
-void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd) const {
+void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd,
+	int origin_mt_x, int origin_mt_y,
+	int width_mt, int height_mt) const {
 	// Set render target to your texture
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 
 	// Choose grid line color (semi-transparent gray)
 	SDL_SetRenderDrawColor(p_rnd, 200, 200, 200, 128);
 
-	// Vertical lines (skip x=0 and x=texW-1)
-	for (int x = 16; x < 16 * 16 - 1; x += 16) {
-		SDL_RenderLine(p_rnd, static_cast<float>(x),
-			0.0f,
+	const int left_px{ origin_mt_x * 16 };
+	const int top_px{ origin_mt_y * 16 };
+
+	const int right_px{ left_px + width_mt * 16 };
+	const int bottom_px{ top_px + height_mt * 16 };
+
+	// vertical lines
+	for (int x{ left_px + 16 }; x < right_px; x += 16) {
+		SDL_RenderLine(p_rnd,
 			static_cast<float>(x),
-			16.0f * 13.0f - 1.0f);
+			static_cast<float>(top_px),
+			static_cast<float>(x),
+			static_cast<float>(bottom_px - 1));
 	}
 
-	// Horizontal lines (skip y=0 and y=texH-1)
-	for (int y = 16; y < 16 * 13 - 1; y += 16) {
-		SDL_RenderLine(p_rnd, 0.0f,
+	// horizontal lines
+	for (int y{ top_px + 16 }; y < bottom_px; y += 16) {
+		SDL_RenderLine(p_rnd,
+			static_cast<float>(left_px),
 			static_cast<float>(y),
-			16.0f * 16.0f - 1.0f,
+			static_cast<float>(right_px - 1),
 			static_cast<float>(y));
 	}
+
+	// outer border around the editable screen
+	SDL_FRect border_rect{
+		static_cast<float>(left_px - 1),
+		static_cast<float>(top_px - 1),
+		static_cast<float>(width_mt * 16 + 2),
+		static_cast<float>(height_mt * 16 + 2)
+	};
+	SDL_RenderRect(p_rnd, &border_rect);
 
 	// Reset render target back to default (the window)
 	SDL_SetRenderTarget(p_rnd, nullptr);

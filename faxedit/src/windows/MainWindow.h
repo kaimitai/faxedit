@@ -61,6 +61,22 @@ namespace fe {
 		int status; // 0=neutral, 1=good, 2=bad
 	};
 
+	struct Camera {
+		float center_x_px{ 192.0f }; // TILEMAP_VIEW_PX_W / 2.0f;
+		float center_y_px{ 168.0f }; // TILEMAP_VIEW_PX_H / 2.0f;
+		float zoom{ 1.0f };
+	};
+
+	struct Viewport {
+		float src_x0_px;
+		float src_y0_px;
+		float src_x1_px;
+		float src_y1_px;
+
+		float visible_w_px;
+		float visible_h_px;
+	};
+
 	class MainWindow {
 
 		// config
@@ -75,6 +91,8 @@ namespace fe {
 		// file info
 		std::filesystem::path m_path;
 		std::string m_filename, m_loaded_rom_path, m_region_override;
+		// screen rendering
+		Camera camera;
 
 		// selectors
 		// TODO: Move to separate struct, and turn suitable vars into local statics instead of class members
@@ -293,6 +311,28 @@ namespace fe {
 		void save_xml(void);
 		void patch_nes_rom(bool p_in_place, bool p_exclude_dynamic = false);
 		std::optional<std::vector<byte>> patch_rom(bool p_exclude_dynamic = false);
+
+		// screen renderer constants and helpers
+		static constexpr int TILEMAP_SCREEN_MT_W{ 16 };
+		static constexpr int TILEMAP_SCREEN_MT_H{ 13 };
+		static constexpr int TILEMAP_BORDER_MT_W{ 4 };
+		static constexpr int TILEMAP_BORDER_MT_H{ 4 };
+		static constexpr int TILEMAP_VIEW_MT_W{ TILEMAP_SCREEN_MT_W + 2 * TILEMAP_BORDER_MT_W };
+		static constexpr int TILEMAP_VIEW_MT_H{ TILEMAP_SCREEN_MT_H + 2 * TILEMAP_BORDER_MT_H };
+		static constexpr int TILEMAP_VIEW_PX_W{ TILEMAP_VIEW_MT_W * 16 };
+		static constexpr int TILEMAP_VIEW_PX_H{ TILEMAP_VIEW_MT_H * 16 };
+		static constexpr float VIEW_CENTER_X{ TILEMAP_VIEW_MT_W / 2.0f };
+		static constexpr float VIEW_CENTER_Y{ TILEMAP_VIEW_MT_H / 2.0f };
+
+		// camera and screen rendering helpers
+		void blit_screen_tilemap(SDL_Renderer* p_rnd, const fe::Chunk& p_chunk,
+			const fe::Screen& p_screen, int src_x, int src_y, int src_w, int src_h,
+			int world_x, int world_y, bool p_overlay);
+		fe::Viewport get_viewport(float image_w, float image_h) const;
+		std::pair<int, int> world_mt_to_view_mt(int x, int y) const;
+		std::pair<float, float> view_px_to_world_px(float view_x, float view_y) const;
+		std::pair<float, float> world_px_to_view_px(float world_x_px,
+			float world_y_px) const;
 
 	public:
 

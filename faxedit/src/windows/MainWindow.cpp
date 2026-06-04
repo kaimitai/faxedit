@@ -19,7 +19,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
 	m_sel_sprite{ 0 }, m_sel_tile_x{ 0 }, m_sel_tile_y{ 0 },
 	m_sel_tile_x2{ 16 }, m_sel_tile_y2{ 0 },
-	m_gfx{ fe::gfx(p_rnd) },
+	m_gfx{ fe::gfx(p_rnd, TILEMAP_VIEW_PX_W, TILEMAP_VIEW_PX_H) },
 	m_atlas_palette_no{ 1 },
 	m_atlas_tileset_no{ 1 },
 	m_atlas_new_tileset_no{ 0 },
@@ -119,7 +119,6 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		bool l_alt{ ImGui::IsKeyDown(ImGuiMod_Alt) };
 
 		try {
-
 			if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
 				save_xml();
 			else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
@@ -164,52 +163,70 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 
+		m_gfx.clear_screen_texture(p_rnd);
+
 		const auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
 		const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
-		const auto& l_tilemap{ l_screen.m_tilemap };
-		std::size_t l_tileset{ m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen) };
-		byte mattock_mt_id{ l_chunk.m_mattock_animation.at(0) };
 
-		for (int y{ 0 }; y < 13; ++y)
-			for (int x{ 0 }; x < 16; ++x) {
+		blit_screen_tilemap(p_rnd, l_chunk, l_screen, 0, 0, 16, 13, 0, 0, true);
 
-				byte mt_no = l_tilemap.at(y).at(x);
-				byte blockprop{ l_chunk.m_metatiles[mt_no].m_block_property };
-
-				const auto& l_metatile{ m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(mt_no) };
-				const auto& l_mt_tilemap{ l_metatile.m_tilemap };
-				byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
-
-				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(0), l_pal_no, 2 * x, 2 * y);
-				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * x + 1, 2 * y);
-				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * x, 2 * y + 1);
-				m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * x + 1, 2 * y + 1);
-
-				// draw overlay
-				if (blockprop < m_settings.m_overlays.size() && m_settings.m_overlays[blockprop])
-					m_gfx.draw_icon_overlay(p_rnd, x, y, blockprop);
-				if (mt_no == mattock_mt_id && m_settings.m_mattock_overlay)
-					m_gfx.draw_icon_overlay(p_rnd, x, y, 16);
+		if (m_settings.m_show_adjacent_screens) {
+			if (l_screen.m_scroll_left) {
+				blit_screen_tilemap(p_rnd, l_chunk,
+					l_chunk.m_screens.at(*l_screen.m_scroll_left),
+					TILEMAP_SCREEN_MT_W - TILEMAP_BORDER_MT_W, 0,
+					TILEMAP_BORDER_MT_W, TILEMAP_SCREEN_MT_H,
+					-TILEMAP_BORDER_MT_W, 0, false);
 			}
+			if (l_screen.m_scroll_right) {
+				blit_screen_tilemap(p_rnd, l_chunk,
+					l_chunk.m_screens.at(*l_screen.m_scroll_right),
+					0, 0,
+					TILEMAP_BORDER_MT_W, TILEMAP_SCREEN_MT_H,
+					TILEMAP_SCREEN_MT_W, 0, false);
+			}
+			if (l_screen.m_scroll_up) {
+				blit_screen_tilemap(p_rnd, l_chunk,
+					l_chunk.m_screens.at(*l_screen.m_scroll_up),
+					0, TILEMAP_SCREEN_MT_H - TILEMAP_BORDER_MT_H,
+					TILEMAP_SCREEN_MT_W, TILEMAP_BORDER_MT_H,
+					0, -TILEMAP_BORDER_MT_H, false);
+			}
+			if (l_screen.m_scroll_down) {
+				blit_screen_tilemap(p_rnd, l_chunk,
+					l_chunk.m_screens.at(*l_screen.m_scroll_down),
+					0, 0,
+					TILEMAP_SCREEN_MT_W, TILEMAP_BORDER_MT_H,
+					0, TILEMAP_SCREEN_MT_H, false);
+			}
+		}
 
 		// draw grid if enabled
 		if (m_settings.m_show_grid)
-			m_gfx.draw_gridlines_on_screen(p_rnd);
+			m_gfx.draw_gridlines_on_screen(
+				p_rnd,
+				TILEMAP_BORDER_MT_W,
+				TILEMAP_BORDER_MT_H,
+				TILEMAP_SCREEN_MT_W,
+				TILEMAP_SCREEN_MT_H);
 
 		// draw selected rectangle
-
 		if (m_emode == fe::EditMode::TilemapEditMode) {
 			if (m_sel_tile_x2 < 16) {
 				const auto l_rect{ get_selection_dims() };
+				const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(l_rect.x),
+					static_cast<int>(l_rect.y))};
 
 				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 120, 0, 255),
-					static_cast<int>(l_rect.x), static_cast<int>(l_rect.y),
+					vx, vy,
 					static_cast<int>(l_rect.w), static_cast<int>(l_rect.h));
 			}
 			else {
+				const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(m_sel_tile_x),
+					static_cast<int>(m_sel_tile_y))};
+
 				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 255, 0, 255),
-					static_cast<int>(m_sel_tile_x),
-					static_cast<int>(m_sel_tile_y), 1, 1);
+					vx, vy, 1, 1);
 			}
 		}
 		else if (m_emode == fe::EditMode::Sprites) {
@@ -226,11 +243,13 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d) {
 				const auto& l_door{ l_screen.m_doors[d] };
 
+				const auto [vx, vy] { world_mt_to_view_mt(
+					static_cast<int>(l_door.m_coords.first),
+					static_cast<int>(l_door.m_coords.second))};
+
 				m_gfx.draw_rect_on_screen(p_rnd,
 					d == m_sel_door ? m_pulse_color : SDL_Color(70, 100, 160, 255),
-					l_door.m_coords.first, l_door.m_coords.second,
-					1, 1
-				);
+					vx, vy, 1, 1);
 
 				// draw requirement
 				if (m_settings.m_door_req_overlay) {
@@ -251,8 +270,11 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 						}
 					}
 
-					m_gfx.draw_door_req(p_rnd, l_door.m_coords.first,
-						l_door.m_coords.second, l_dreq);
+					const auto [vx, vy] {
+						world_mt_to_view_mt(l_door.m_coords.first,
+							l_door.m_coords.second)};
+
+					m_gfx.draw_door_req(p_rnd, vx, vy, l_dreq);
 				}
 
 			}
@@ -1001,12 +1023,15 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 		};
 		std::size_t l_spriteid{ static_cast<std::size_t>(p_sprites[i].m_id) };
 
+		const auto [vx, vy] { world_mt_to_view_mt(p_sprites[i].m_x,
+			p_sprites[i].m_y)};
+
 		m_gfx.draw_sprite_on_screen(p_rnd,
 			l_spriteid,
 			l_anim_frame,
-			16 * static_cast<int>(p_sprites[i].m_x) +
+			16 * vx +
 			m_cache.m_sprite_dims[l_spriteid].offsets[l_anim_frame].first,
-			16 * static_cast<int>(p_sprites[i].m_y) +
+			16 * vy +
 			m_cache.m_sprite_dims[l_spriteid].offsets[l_anim_frame].second
 		);
 	}
@@ -1015,12 +1040,120 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 	if (p_sel_sprite_no < p_sprites.size()) {
 		const auto& l_sprite{ p_sprites[p_sel_sprite_no] };
 
+		const auto [vx, vy] { world_mt_to_view_mt(l_sprite.m_x,
+			l_sprite.m_y)};
+
 		m_gfx.draw_pixel_rect_on_screen(p_rnd, m_pulse_color,
-			16 * static_cast<int>(l_sprite.m_x),
-			16 * static_cast<int>(l_sprite.m_y),
+			16 * vx, 16 * vy,
 			m_cache.m_sprite_dims[l_sprite.m_id].w,
 			m_cache.m_sprite_dims[l_sprite.m_id].h
 		);
 	}
+}
 
+// screen rendering helpers
+void fe::MainWindow::blit_screen_tilemap(SDL_Renderer* p_rnd, const fe::Chunk& p_chunk,
+	const fe::Screen& p_screen, int src_x, int src_y, int src_w, int src_h,
+	int world_x, int world_y, bool p_overlay) {
+
+	const auto& l_tilemap{ p_screen.m_tilemap };
+	byte mattock_mt_id{ p_chunk.m_mattock_animation.at(0) };
+
+	for (int y{ src_y }; y < src_y + src_h; ++y)
+		for (int x{ src_x }; x < src_x + src_w; ++x) {
+			const int wx = world_x + (x - src_x);
+			const int wy = world_y + (y - src_y);
+
+			const auto [vx, vy] { world_mt_to_view_mt(wx, wy)};
+
+			byte mt_no = l_tilemap.at(y).at(x);
+			byte blockprop{ p_chunk.m_metatiles[mt_no].m_block_property };
+
+			const auto& l_metatile{ p_chunk.m_metatiles.at(mt_no) };
+			const auto& l_mt_tilemap{ l_metatile.m_tilemap };
+			byte l_pal_no{ l_metatile.get_palette_attribute(x, y) };
+
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(0), l_pal_no, 2 * vx, 2 * vy);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(0).at(1), l_pal_no, 2 * vx + 1, 2 * vy);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(0), l_pal_no, 2 * vx, 2 * vy + 1);
+			m_gfx.blit_to_screen(p_rnd, l_mt_tilemap.at(1).at(1), l_pal_no, 2 * vx + 1, 2 * vy + 1);
+
+			// draw overlay
+			if (p_overlay) {
+				if (blockprop < m_settings.m_overlays.size() && m_settings.m_overlays[blockprop])
+					m_gfx.draw_icon_overlay(p_rnd, vx, vy, blockprop);
+				if (mt_no == mattock_mt_id && m_settings.m_mattock_overlay)
+					m_gfx.draw_icon_overlay(p_rnd, vx, vy, 16);
+			}
+		}
+}
+
+fe::Viewport fe::MainWindow::get_viewport(
+	float /*image_w*/,
+	float /*image_h*/) const {
+
+	Viewport vp{};
+
+	const float zoom{
+		std::max(camera.zoom, 1.0f)
+	};
+
+	vp.visible_w_px =
+		static_cast<float>(TILEMAP_VIEW_PX_W) / zoom;
+
+	vp.visible_h_px =
+		static_cast<float>(TILEMAP_VIEW_PX_H) / zoom;
+
+	const float half_w{
+		vp.visible_w_px * 0.5f
+	};
+
+	const float half_h{
+		vp.visible_h_px * 0.5f
+	};
+
+	const float cx{
+		std::clamp(
+			camera.center_x_px,
+			half_w,
+			static_cast<float>(TILEMAP_VIEW_PX_W) - half_w)
+	};
+
+	const float cy{
+		std::clamp(
+			camera.center_y_px,
+			half_h,
+			static_cast<float>(TILEMAP_VIEW_PX_H) - half_h)
+	};
+
+	vp.src_x0_px = cx - half_w;
+	vp.src_y0_px = cy - half_h;
+
+	vp.src_x1_px = cx + half_w;
+	vp.src_y1_px = cy + half_h;
+
+	return vp;
+}
+
+std::pair<int, int> fe::MainWindow::world_mt_to_view_mt(int x, int y) const {
+	return {
+		x + TILEMAP_BORDER_MT_W,
+		y + TILEMAP_BORDER_MT_H
+	};
+}
+
+std::pair<float, float> fe::MainWindow::view_px_to_world_px(float view_x_px,
+	float view_y_px) const {
+	return {
+		view_x_px - TILEMAP_BORDER_MT_W * 16.0f,
+		view_y_px - TILEMAP_BORDER_MT_H * 16.0f
+	};
+}
+
+std::pair<float, float> fe::MainWindow::world_px_to_view_px(float world_x_px,
+	float world_y_px) const {
+	return {
+		world_x_px + TILEMAP_BORDER_MT_W * 16.0f,
+		world_y_px + TILEMAP_BORDER_MT_H * 16.0f
+	};
 }

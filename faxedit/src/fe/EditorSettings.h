@@ -11,7 +11,7 @@ namespace fe {
 		bool m_patch_sprite_gfx, patch_cinematic, throw_on_cinematic_overflow;
 		// gui settings
 		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,
-			m_mattock_overlay, m_door_req_overlay;
+			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay;
 		std::vector<char> m_overlays;
 		// sprite gfx settings
 		bool m_redraw_sprite_gfx, m_redraw_cinema_gfx;
