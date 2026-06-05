@@ -461,6 +461,7 @@ void fe::gfx::draw_screen_border_overlay(SDL_Renderer* p_rnd,
 	};
 	SDL_RenderFillRect(p_rnd, &r);
 
+	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_NONE);
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
@@ -479,12 +480,12 @@ void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, 
 
 void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd,
 	int origin_mt_x, int origin_mt_y,
-	int width_mt, int height_mt) const {
+	int width_mt, int height_mt, byte alpha) const {
 	// Set render target to your texture
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 
-	// Choose grid line color (semi-transparent gray)
-	SDL_SetRenderDrawColor(p_rnd, 200, 200, 200, 128);
+	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(p_rnd, 200, 200, 200, alpha);
 
 	const int left_px{ origin_mt_x * 16 };
 	const int top_px{ origin_mt_y * 16 };
@@ -520,6 +521,7 @@ void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd,
 	SDL_RenderRect(p_rnd, &border_rect);
 
 	// Reset render target back to default (the window)
+	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_NONE);
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 

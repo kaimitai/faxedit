@@ -53,8 +53,27 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 
 	// --- Left Panel: Tilemap ---
 	if (ImGui::BeginChild("Tilemap", ImVec2(leftPanelWidth, panelHeight))) {
+		ImVec2 childAvail{ ImGui::GetContentRegionAvail() };
+
+		const float viewAspect{ vp.visible_w_px / vp.visible_h_px };
+
+		ImVec2 imageSize{ childAvail.x, childAvail.y };
+
+		if (imageSize.x / imageSize.y > viewAspect)
+			imageSize.x = imageSize.y * viewAspect;
+		else
+			imageSize.y = imageSize.x / viewAspect;
+
+		// center image in remaining space
+		const ImVec2 offset{
+			(childAvail.x - imageSize.x) * 0.5f,
+			(childAvail.y - imageSize.y) * 0.5f
+		};
+
+		ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset.x);
+		ImGui::SetCursorPosY(ImGui::GetCursorPosY() + offset.y);
+
 		ImVec2 imagePos = ImGui::GetCursorScreenPos();
-		ImVec2 imageSize{ viewportWidth, viewportHeight };
 
 		ImVec2 uv0{
 			vp.src_x0_px / c::TILEMAP_VIEW_PX_W,

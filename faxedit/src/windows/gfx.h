@@ -148,7 +148,7 @@ namespace fe {
 		void blit_to_screen(SDL_Renderer* p_rnd, int tile_no, int sub_palette_no, int x, int y) const;
 		void draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const;
 		void draw_gridlines_on_screen(SDL_Renderer* p_rnd, int origin_mt_x, int origin_mt_y,
-			int width_mt, int height_m) const;
+			int width_mt, int height_m, byte p_alpha) const;
 		void draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int x, int y, int w, int h) const;
 		void draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no, std::size_t p_frame_no, int x, int y) const;
 		void draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const;
