@@ -5,6 +5,7 @@
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "./../common/imguifiledialog/ImGuiFileDialog.h"
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <map>
 #include "./../common/klib/Bitreader.h"
@@ -19,7 +20,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sel_chunk{ 0 }, m_sel_screen{ 0 }, m_sel_door{ 0 },
 	m_sel_sprite{ 0 }, m_sel_tile_x{ 0 }, m_sel_tile_y{ 0 },
 	m_sel_tile_x2{ 16 }, m_sel_tile_y2{ 0 },
-	m_gfx{ fe::gfx(p_rnd, TILEMAP_VIEW_PX_W, TILEMAP_VIEW_PX_H) },
+	m_gfx{ fe::gfx(p_rnd, c::TILEMAP_VIEW_PX_W, c::TILEMAP_VIEW_PX_H) },
 	m_atlas_palette_no{ 1 },
 	m_atlas_tileset_no{ 1 },
 	m_atlas_new_tileset_no{ 0 },
@@ -60,6 +61,8 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
+	add_message("ESC: Return to default view and close optional windows", 4);
+	add_message("Camera: Ctrl+Wheel/Plus/Minus = Zoom, Space+Drag or Middle Drag = Pan", 4);
 	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", 4);
 	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
 	add_message(std::format("Build date: {} {} CET",
@@ -69,6 +72,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	fe::xml::load_settings_xml(get_settings_xml_path(), m_settings);
+	camera.set_zoom_factor(m_settings.m_cam_zoom_factor);
 
 	if (!p_filepath.empty())
 		load_rom(p_rnd, p_filepath, p_region);
@@ -125,6 +129,22 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				patch_nes_rom(l_shift, l_alt);
 			else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
 				load_xml(p_rnd);
+			else if (ImGui::IsKeyReleased(ImGuiKey_Escape)) {
+				camera.reset();
+				m_iscript_window = false;
+				m_cinematic_window = false;
+				m_gfx_window = false;
+				m_sprite_gfx_window = false;
+				m_visualization_window = false;
+			}
+			else if (l_ctrl && (ImGui::IsKeyPressed(ImGuiKey_Equal) ||
+				ImGui::IsKeyPressed(ImGuiKey_KeypadAdd))) {
+				camera.zoom_in(get_viewport());
+			}
+			else if (l_ctrl && (ImGui::IsKeyPressed(ImGuiKey_Minus) ||
+				ImGui::IsKeyPressed(ImGuiKey_KeypadSubtract))) {
+				camera.zoom_out(get_viewport());
+			}
 
 			// input handling, move to separate function later
 			if (m_emode == fe::EditMode::TilemapEditMode) {
@@ -171,44 +191,52 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		blit_screen_tilemap(p_rnd, l_chunk, l_screen, 0, 0, 16, 13, 0, 0, true);
 
 		if (m_settings.m_show_adjacent_screens) {
+			constexpr bool OVERLAYS_ON_ADJACENT_SCREENS{ true };
+
 			if (l_screen.m_scroll_left) {
 				blit_screen_tilemap(p_rnd, l_chunk,
 					l_chunk.m_screens.at(*l_screen.m_scroll_left),
-					TILEMAP_SCREEN_MT_W - TILEMAP_BORDER_MT_W, 0,
-					TILEMAP_BORDER_MT_W, TILEMAP_SCREEN_MT_H,
-					-TILEMAP_BORDER_MT_W, 0, false);
+					c::TILEMAP_SCREEN_MT_W - c::TILEMAP_BORDER_MT_W, 0,
+					c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
+					-c::TILEMAP_BORDER_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
 			}
 			if (l_screen.m_scroll_right) {
 				blit_screen_tilemap(p_rnd, l_chunk,
 					l_chunk.m_screens.at(*l_screen.m_scroll_right),
 					0, 0,
-					TILEMAP_BORDER_MT_W, TILEMAP_SCREEN_MT_H,
-					TILEMAP_SCREEN_MT_W, 0, false);
+					c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
+					c::TILEMAP_SCREEN_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
 			}
 			if (l_screen.m_scroll_up) {
 				blit_screen_tilemap(p_rnd, l_chunk,
 					l_chunk.m_screens.at(*l_screen.m_scroll_up),
-					0, TILEMAP_SCREEN_MT_H - TILEMAP_BORDER_MT_H,
-					TILEMAP_SCREEN_MT_W, TILEMAP_BORDER_MT_H,
-					0, -TILEMAP_BORDER_MT_H, false);
+					0, c::TILEMAP_SCREEN_MT_H - c::TILEMAP_BORDER_MT_H,
+					c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
+					0, -c::TILEMAP_BORDER_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
 			}
 			if (l_screen.m_scroll_down) {
 				blit_screen_tilemap(p_rnd, l_chunk,
 					l_chunk.m_screens.at(*l_screen.m_scroll_down),
 					0, 0,
-					TILEMAP_SCREEN_MT_W, TILEMAP_BORDER_MT_H,
-					0, TILEMAP_SCREEN_MT_H, false);
+					c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
+					0, c::TILEMAP_SCREEN_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
 			}
+
+			m_gfx.draw_screen_border_overlay(p_rnd,
+				c::TILEMAP_VIEW_PX_W, c::TILEMAP_VIEW_PX_H,
+				c::TILEMAP_BORDER_MT_W * 16, c::TILEMAP_BORDER_MT_W * 16,
+				c::TILEMAP_BORDER_MT_H * 16, c::TILEMAP_BORDER_MT_H * 16,
+				m_settings.m_border_alpha);
 		}
 
 		// draw grid if enabled
 		if (m_settings.m_show_grid)
 			m_gfx.draw_gridlines_on_screen(
 				p_rnd,
-				TILEMAP_BORDER_MT_W,
-				TILEMAP_BORDER_MT_H,
-				TILEMAP_SCREEN_MT_W,
-				TILEMAP_SCREEN_MT_H);
+				c::TILEMAP_BORDER_MT_W,
+				c::TILEMAP_BORDER_MT_H,
+				c::TILEMAP_SCREEN_MT_W,
+				c::TILEMAP_SCREEN_MT_H);
 
 		// draw selected rectangle
 		if (m_emode == fe::EditMode::TilemapEditMode) {
@@ -1088,42 +1116,43 @@ void fe::MainWindow::blit_screen_tilemap(SDL_Renderer* p_rnd, const fe::Chunk& p
 		}
 }
 
-fe::Viewport fe::MainWindow::get_viewport(
-	float /*image_w*/,
-	float /*image_h*/) const {
+fe::Viewport fe::MainWindow::get_viewport(void) const {
 
 	Viewport vp{};
 
-	const float zoom{
-		std::max(camera.zoom, 1.0f)
-	};
+	const float zoom{ std::max(camera.zoom, 1.0f) };
 
-	vp.visible_w_px =
-		static_cast<float>(TILEMAP_VIEW_PX_W) / zoom;
+	if (m_settings.m_show_adjacent_screens) {
+		vp.cam_x0 = 0.0f;
+		vp.cam_y0 = 0.0f;
+		vp.cam_w = static_cast<float>(c::TILEMAP_VIEW_PX_W);
+		vp.cam_h = static_cast<float>(c::TILEMAP_VIEW_PX_H);
+	}
+	else {
+		vp.cam_x0 = c::TILEMAP_BORDER_MT_W * 16.0f;
+		vp.cam_y0 = c::TILEMAP_BORDER_MT_H * 16.0f;
+		vp.cam_w = c::TILEMAP_SCREEN_MT_W * 16.0f;
+		vp.cam_h = c::TILEMAP_SCREEN_MT_H * 16.0f;
+	}
 
-	vp.visible_h_px =
-		static_cast<float>(TILEMAP_VIEW_PX_H) / zoom;
+	vp.visible_w_px = vp.cam_w / zoom;
+	vp.visible_h_px = vp.cam_h / zoom;
 
-	const float half_w{
-		vp.visible_w_px * 0.5f
-	};
-
-	const float half_h{
-		vp.visible_h_px * 0.5f
-	};
+	const float half_w{ vp.visible_w_px * 0.5f };
+	const float half_h{ vp.visible_h_px * 0.5f };
 
 	const float cx{
 		std::clamp(
 			camera.center_x_px,
-			half_w,
-			static_cast<float>(TILEMAP_VIEW_PX_W) - half_w)
+			vp.cam_x0 + half_w,
+			vp.cam_x0 + vp.cam_w - half_w)
 	};
 
 	const float cy{
 		std::clamp(
 			camera.center_y_px,
-			half_h,
-			static_cast<float>(TILEMAP_VIEW_PX_H) - half_h)
+			vp.cam_y0 + half_h,
+			vp.cam_y0 + vp.cam_h - half_h)
 	};
 
 	vp.src_x0_px = cx - half_w;
@@ -1135,25 +1164,101 @@ fe::Viewport fe::MainWindow::get_viewport(
 	return vp;
 }
 
+fe::Camera::Camera(void) {
+	set_zoom_factor(1.2f);
+	reset();
+}
+
+void fe::Camera::set_zoom_factor(float p_factor) {
+	if (!std::isfinite(p_factor))
+		p_factor = 1.2f;
+
+	m_zoom_factor = std::clamp(p_factor, 1.1f, 4.0f);
+}
+
+void fe::Camera::reset(void) {
+	center_x_px = c::TILEMAP_VIEW_PX_W / 2.0f;
+	center_y_px = c::TILEMAP_VIEW_PX_H / 2.0f;
+	zoom = 1.0f;
+}
+
+void fe::Camera::clamp_to(const fe::Viewport& p_vp) {
+	const float half_w{ p_vp.visible_w_px * 0.5f };
+	const float half_h{ p_vp.visible_h_px * 0.5f };
+
+	center_x_px = std::clamp(
+		center_x_px,
+		p_vp.cam_x0 + half_w,
+		p_vp.cam_x0 + p_vp.cam_w - half_w);
+
+	center_y_px = std::clamp(
+		center_y_px,
+		p_vp.cam_y0 + half_h,
+		p_vp.cam_y0 + p_vp.cam_h - half_h);
+}
+
 std::pair<int, int> fe::MainWindow::world_mt_to_view_mt(int x, int y) const {
 	return {
-		x + TILEMAP_BORDER_MT_W,
-		y + TILEMAP_BORDER_MT_H
+		x + c::TILEMAP_BORDER_MT_W,
+		y + c::TILEMAP_BORDER_MT_H
 	};
+}
+
+void fe::Camera::pan(float p_dx_px, float p_dy_px, const fe::Viewport& p_vp) {
+	center_x_px += p_dx_px;
+	center_y_px += p_dy_px;
+
+	clamp_to(p_vp);
+}
+
+void fe::Camera::zoom_at(float p_wheel_delta, float p_anchor_x, float p_anchor_y,
+	float p_u, float p_v, const fe::Viewport& p_vp) {
+	zoom *= std::pow(m_zoom_factor, p_wheel_delta);
+	zoom = std::clamp(zoom, 1.0f, 16.0f);
+
+	const float new_visible_w{ p_vp.cam_w / zoom };
+	const float new_visible_h{ p_vp.cam_h / zoom };
+
+	center_x_px = p_anchor_x - (p_u - 0.5f) * new_visible_w;
+	center_y_px = p_anchor_y - (p_v - 0.5f) * new_visible_h;
+
+	Viewport zoomed_vp{ p_vp };
+	zoomed_vp.visible_w_px = new_visible_w;
+	zoomed_vp.visible_h_px = new_visible_h;
+
+	clamp_to(zoomed_vp);
+}
+
+void fe::Camera::zoom_about_center(float p_delta, const fe::Viewport& p_vp) {
+	zoom_at(
+		p_delta,
+		center_x_px,
+		center_y_px,
+		0.5f,
+		0.5f,
+		p_vp);
+}
+
+void fe::Camera::zoom_in(const Viewport& p_vp) {
+	zoom_about_center(1.0f, p_vp);
+}
+
+void fe::Camera::zoom_out(const Viewport& p_vp) {
+	zoom_about_center(-1.0f, p_vp);
 }
 
 std::pair<float, float> fe::MainWindow::view_px_to_world_px(float view_x_px,
 	float view_y_px) const {
 	return {
-		view_x_px - TILEMAP_BORDER_MT_W * 16.0f,
-		view_y_px - TILEMAP_BORDER_MT_H * 16.0f
+		view_x_px - c::TILEMAP_BORDER_MT_W * 16.0f,
+		view_y_px - c::TILEMAP_BORDER_MT_H * 16.0f
 	};
 }
 
 std::pair<float, float> fe::MainWindow::world_px_to_view_px(float world_x_px,
 	float world_y_px) const {
 	return {
-		world_x_px + TILEMAP_BORDER_MT_W * 16.0f,
-		world_y_px + TILEMAP_BORDER_MT_H * 16.0f
+		world_x_px + c::TILEMAP_BORDER_MT_W * 16.0f,
+		world_y_px + c::TILEMAP_BORDER_MT_H * 16.0f
 	};
 }

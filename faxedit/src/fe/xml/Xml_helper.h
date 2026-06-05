@@ -42,6 +42,8 @@ namespace fe {
 			float& p_value);
 		void read_setting_int(pugi::xml_node p_root_node, const std::string& p_param_name,
 			int& p_value);
+		void read_setting_byte(pugi::xml_node p_root_node, const std::string& p_param_name,
+			byte& p_value);
 		void read_setting_uint(pugi::xml_node p_root_node, const std::string& p_param_name,
 			std::size_t& p_value);
 		void read_setting_bool(pugi::xml_node p_root_node, const std::string& p_param_name,

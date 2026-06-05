@@ -1384,6 +1384,7 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 	add_setting(n_settings, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
+	add_setting(n_settings, c::SETTINGS_PARAM_ADJACENT_SCREENS, p_settings.m_show_adjacent_screens);
 
 	for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
 		bool io_enabled{ static_cast<bool>(p_settings.m_overlays[i]) };
@@ -1398,6 +1399,9 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 	add_setting(n_settings, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
+
+	add_setting(n_settings, c::SETTINGS_PARAM_BORDER_ALPHA, static_cast<int>(p_settings.m_border_alpha));
+	add_setting(n_settings, c::SETTINGS_PARAM_CAM_ZOOM_FACTOR, p_settings.m_cam_zoom_factor);
 
 	// save document to disk
 	if (!doc.save_file(p_filepath.c_str()))
@@ -1423,6 +1427,7 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_ADJACENT_SCREENS, p_settings.m_show_adjacent_screens);
 
 		for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
 			bool io_enabled{ false };
@@ -1438,6 +1443,9 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
+
+		read_setting_byte(n_root, c::SETTINGS_PARAM_BORDER_ALPHA, p_settings.m_border_alpha);
+		read_setting_float(n_root, c::SETTINGS_PARAM_CAM_ZOOM_FACTOR, p_settings.m_cam_zoom_factor);
 	}
 	catch (const std::exception&) {
 		// ignore - not critical
@@ -1470,6 +1478,13 @@ void fe::xml::read_setting_int(pugi::xml_node p_root_node, const std::string& p_
 	auto n_attr{ find_settings_param_attr(p_root_node, p_param_name) };
 	if (n_attr)
 		p_value = n_attr.as_int();
+}
+
+void fe::xml::read_setting_byte(pugi::xml_node p_root_node, const std::string& p_param_name,
+	byte& p_value) {
+	int tmp{ static_cast<int>(p_value) };
+	read_setting_int(p_root_node, p_param_name, tmp);
+	p_value = static_cast<byte>(tmp);
 }
 
 void fe::xml::read_setting_uint(pugi::xml_node p_root_node, const std::string& p_param_name,

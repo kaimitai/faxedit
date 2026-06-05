@@ -4,7 +4,7 @@
 fe::EditorSettings::EditorSettings(void) :
 	m_show_sprite_sets_in_buildings{ false },
 	m_show_grid{ false },
-	m_show_adjacent_screens{ true },
+	m_show_adjacent_screens{ false },
 	m_animate{ true },
 	m_mattock_overlay{ false },
 	m_door_req_overlay{ true },
@@ -14,7 +14,9 @@ fe::EditorSettings::EditorSettings(void) :
 	m_door_pad_byte{ false },
 	m_enable_config_dump{ false },
 	patch_cinematic{ true },
-	throw_on_cinematic_overflow{ true }
+	throw_on_cinematic_overflow{ true },
+	m_cam_zoom_factor{ 1.2f },
+	m_border_alpha{ 96 }
 {
 	set_sprite_gfx_defaults();
 	sanitize();

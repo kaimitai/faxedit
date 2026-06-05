@@ -413,6 +413,57 @@ void fe::gfx::clear_screen_texture(SDL_Renderer* p_rnd) {
 	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
+void fe::gfx::draw_screen_border_overlay(SDL_Renderer* p_rnd,
+	int p_view_w_px, int p_view_h_px,
+	int p_border_left_px, int p_border_right_px,
+	int p_border_top_px, int p_border_bottom_px,
+	byte p_alpha) {
+	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+
+	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_BLEND);
+	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, p_alpha);
+
+	SDL_FRect r;
+
+	// Top
+	r = {
+		0.0f,
+		0.0f,
+		static_cast<float>(p_view_w_px),
+		static_cast<float>(p_border_top_px)
+	};
+	SDL_RenderFillRect(p_rnd, &r);
+
+	// Bottom
+	r = {
+		0.0f,
+		static_cast<float>(p_view_h_px - p_border_bottom_px),
+		static_cast<float>(p_view_w_px),
+		static_cast<float>(p_border_bottom_px)
+	};
+	SDL_RenderFillRect(p_rnd, &r);
+
+	// Left
+	r = {
+		0.0f,
+		static_cast<float>(p_border_top_px),
+		static_cast<float>(p_border_left_px),
+		static_cast<float>(p_view_h_px - p_border_top_px - p_border_bottom_px)
+	};
+	SDL_RenderFillRect(p_rnd, &r);
+
+	// Right
+	r = {
+		static_cast<float>(p_view_w_px - p_border_right_px),
+		static_cast<float>(p_border_top_px),
+		static_cast<float>(p_border_right_px),
+		static_cast<float>(p_view_h_px - p_border_top_px - p_border_bottom_px)
+	};
+	SDL_RenderFillRect(p_rnd, &r);
+
+	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
 void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
 	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);

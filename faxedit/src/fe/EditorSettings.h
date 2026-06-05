@@ -3,6 +3,8 @@
 
 #include <vector>
 
+using byte = unsigned char;
+
 namespace fe {
 
 	struct EditorSettings {
@@ -20,6 +22,9 @@ namespace fe {
 		int transp_tolerance;
 		// advanced settings
 		bool m_door_pad_byte, m_enable_config_dump;
+		// camera and screen rendering settings
+		float m_cam_zoom_factor;
+		byte m_border_alpha;
 
 		void sanitize(void);
 		void sanitize_float(float& p_val, float p_default);

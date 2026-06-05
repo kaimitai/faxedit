@@ -233,6 +233,18 @@ namespace fe {
 			"Next Stage"
 		};
 
+		// sceen rendering camera constants
+		constexpr int TILEMAP_SCREEN_MT_W{ 16 };
+		constexpr int TILEMAP_SCREEN_MT_H{ 13 };
+		constexpr int TILEMAP_BORDER_MT_W{ 4 };
+		constexpr int TILEMAP_BORDER_MT_H{ 4 };
+		constexpr int TILEMAP_VIEW_MT_W{ TILEMAP_SCREEN_MT_W + 2 * TILEMAP_BORDER_MT_W };
+		constexpr int TILEMAP_VIEW_MT_H{ TILEMAP_SCREEN_MT_H + 2 * TILEMAP_BORDER_MT_H };
+		constexpr int TILEMAP_VIEW_PX_W{ TILEMAP_VIEW_MT_W * 16 };
+		constexpr int TILEMAP_VIEW_PX_H{ TILEMAP_VIEW_MT_H * 16 };
+		constexpr float VIEW_CENTER_X{ TILEMAP_VIEW_MT_W / 2.0f };
+		constexpr float VIEW_CENTER_Y{ TILEMAP_VIEW_MT_H / 2.0f };
+
 	}
 
 }

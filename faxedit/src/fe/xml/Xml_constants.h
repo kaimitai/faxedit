@@ -15,7 +15,6 @@ namespace fe {
 			constexpr char COMMENTS_SETTINGS_ROOT[]{ "Echoes of Eolis settings file (https://github.com/kaimitai/faxedit) " };
 			constexpr char TAG_PARAM[]{ "param" };
 
-
 			constexpr char SETTINGS_PARAM_FRAME_SCALING[]{ "frame_scaling" };
 			constexpr char SETTINGS_PARAM_BANK_SCALING[]{ "bank_scaling" };
 			constexpr char SETTINGS_PARAM_TRANSP_TOLERANCE[]{ "transparency_tolerance" };
@@ -26,11 +25,14 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
 			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };
+			constexpr char SETTINGS_PARAM_ADJACENT_SCREENS[]{ "adjacent_screens" };
 			constexpr char SETTINGS_PARAM_IO_BLOCK_PROPERTY[]{ "icon_overlay_block_property" };
 			constexpr char SETTINGS_PARAM_IO_MATTOCK[]{ "icon_overlay_mattock" };
 			constexpr char SETTINGS_PARAM_IO_DOOR_REQS[]{ "icon_overlay_door_reqs" };
 			constexpr char SETTINGS_PARAM_SHOW_DOOR_PADDING[]{ "show_door_padding_byte" };
 			constexpr char SETTINGS_PARAM_ENABLE_CONFIG_DUMP[]{ "enable_config_dump" };
+			constexpr char SETTINGS_PARAM_CAM_ZOOM_FACTOR[]{ "camera_zoom_factor" };
+			constexpr char SETTINGS_PARAM_BORDER_ALPHA[]{ "screen_border_alpha" };
 
 			constexpr char TAG_STAGES[]{ "stages" };
 			constexpr char TAG_STAGE[]{ "stage" };

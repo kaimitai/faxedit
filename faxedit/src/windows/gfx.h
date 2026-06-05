@@ -154,6 +154,11 @@ namespace fe {
 		void draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const;
 		void draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const;
 		void clear_screen_texture(SDL_Renderer* p_rnd);
+		void draw_screen_border_overlay(SDL_Renderer* p_rnd,
+			int p_view_w_px, int p_view_h_px,
+			int p_border_left_px, int p_border_right_px,
+			int p_border_top_px, int p_border_bottom_px,
+			byte p_alpha);
 
 		SDL_Texture* get_atlas(void) const;
 		SDL_Texture* get_screen_texture(void) const;

@@ -10,7 +10,7 @@ namespace fe {
 
 		constexpr int WIN_TILEMAP_X{ 0 };
 		constexpr int WIN_TILEMAP_Y{ 0 };
-		constexpr int WIN_TILEMAP_W{ APP_WINDOW_W - 500 };
+		constexpr int WIN_TILEMAP_W{ APP_WINDOW_W - 380 };
 		constexpr int WIN_TILEMAP_H{ APP_WINDOW_H - 200 };
 
 		constexpr int WIN_METADATA_X{ WIN_TILEMAP_W };
