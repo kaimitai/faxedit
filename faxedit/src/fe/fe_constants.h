@@ -233,6 +233,12 @@ namespace fe {
 			"Next Stage"
 		};
 
+		// block properties
+		constexpr byte BLOCK_PROPERTY_SW_FOREGROUND{ 0x09 };
+		constexpr byte BLOCK_PROPERTY_SW_LADDER{ 0x0a };
+		constexpr byte BLOCK_PROPERTY_OW_FOREGROUND{ 0x0c };
+		constexpr byte BLOCK_PROPERTY_OW_RETURN{ 0x0d };
+
 		// sceen rendering camera constants
 		constexpr int TILEMAP_SCREEN_MT_W{ 16 };
 		constexpr int TILEMAP_SCREEN_MT_H{ 13 };

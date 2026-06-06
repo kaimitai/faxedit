@@ -115,12 +115,14 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 				if (scr.m_intrachunk_scroll.has_value()) {
 					bool l_ow_block{ false };
 					for (const auto& row : scr.m_tilemap)
-						for (byte b : row)
-							if (m_game->m_chunks[c].m_metatiles.at(b).m_block_property == 0x0c ||
-								m_game->m_chunks[c].m_metatiles.at(b).m_block_property == 0x0d) {
+						for (byte b : row) {
+							byte l_block_prop{ m_game->m_chunks[c].m_metatiles.at(b).m_block_property };
+							if (l_block_prop == c::BLOCK_PROPERTY_OW_FOREGROUND ||
+								l_block_prop == c::BLOCK_PROPERTY_OW_RETURN) {
 								l_ow_block = true;
 								break;
 							}
+						}
 
 					if (!l_ow_block)
 						add_message(std::format("World {}, Screen {}: Other-world transition is defined, but no metatile with property ow-transition is used",
@@ -131,14 +133,17 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 				if (scr.m_interchunk_scroll.has_value()) {
 					bool l_sw_block{ false };
 					for (const auto& row : scr.m_tilemap)
-						for (byte b : row)
-							if (m_game->m_chunks[c].m_metatiles.at(b).m_block_property == 0x0a) {
+						for (byte b : row) {
+							byte l_block_prop{ m_game->m_chunks[c].m_metatiles.at(b).m_block_property };
+							if (l_block_prop == c::BLOCK_PROPERTY_SW_LADDER ||
+								l_block_prop == c::BLOCK_PROPERTY_SW_FOREGROUND) {
 								l_sw_block = true;
 								break;
 							}
+						}
 
 					if (!l_sw_block)
-						add_message(std::format("World {}, Screen {}: Same-world transition is defined, but no metatiles with transition ladder is used",
+						add_message(std::format("World {}, Screen {}: Same-world transition is defined, but no metatile with property sw-transition is used",
 							c, s), 1);
 				}
 

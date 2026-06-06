@@ -643,8 +643,11 @@ fe::WorldVisualizer::PlacementGraph::make_grid(void) const {
 }
 
 // logical helpers
-std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Chunk& p_world,
-	std::size_t p_screen_id, std::size_t p_tolerance) const {
+std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(
+	const fe::Chunk& p_world,
+	std::size_t p_screen_id,
+	std::size_t p_tolerance) const {
+
 	if (p_screen_id >= p_world.m_screens.size())
 		return std::nullopt;
 
@@ -652,24 +655,91 @@ std::optional<IntPosition> fe::WorldVisualizer::get_sw_trans_offset(const fe::Ch
 
 	if (!screen.m_interchunk_scroll)
 		return std::nullopt;
-	else {
-		for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
-			for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x) {
-				const auto& metatile{ p_world.m_metatiles.at(screen.m_tilemap[y][x]) };
 
-				if (metatile.m_block_property == 0x09 || metatile.m_block_property == 0x0a) {
-					if (x <= p_tolerance)
-						return IntPosition(-1, 0);
-					else if (x >= 15 - p_tolerance)
-						return IntPosition(1, 0);
-					else if (y <= p_tolerance)
-						return IntPosition(0, -1);
-					else if (y >= 12 - p_tolerance)
-						return IntPosition(0, 1);
-				}
-			}
+	const int screen_w{ static_cast<int>(screen.m_tilemap.front().size()) };
+	const int screen_h{ static_cast<int>(screen.m_tilemap.size()) };
+
+	int left_votes{};
+	int right_votes{};
+	int up_votes{};
+	int down_votes{};
+
+	for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y) {
+		for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x) {
+			const auto& metatile{ p_world.m_metatiles.at(screen.m_tilemap[y][x]) };
+
+			if (metatile.m_block_property != c::BLOCK_PROPERTY_SW_FOREGROUND &&
+				metatile.m_block_property != c::BLOCK_PROPERTY_SW_LADDER)
+				continue;
+
+			if (x <= p_tolerance)
+				++left_votes;
+
+			if (x >= static_cast<std::size_t>(screen_w - 1 - static_cast<int>(p_tolerance)))
+				++right_votes;
+
+			if (y <= p_tolerance)
+				++up_votes;
+
+			if (y >= static_cast<std::size_t>(screen_h - 1 - static_cast<int>(p_tolerance)))
+				++down_votes;
+		}
 	}
 
+	struct Candidate {
+		int votes;
+		IntPosition offset;
+	};
+
+	std::vector<Candidate> candidates;
+
+	candidates.push_back({ left_votes,  IntPosition(-1,  0) });
+	candidates.push_back({ right_votes, IntPosition(1,  0) });
+	candidates.push_back({ up_votes,    IntPosition(0, -1) });
+	candidates.push_back({ down_votes,  IntPosition(0,  1) });
+
+	std::sort(candidates.begin(), candidates.end(),
+		[](const auto& a, const auto& b) {
+			return a.votes > b.votes;
+		});
+
+	if (candidates[0].votes == 0)
+		return std::nullopt;
+
+	// clear winner from sw geometry alone
+	if (candidates[0].votes > candidates[1].votes)
+		return candidates[0].offset;
+
+	// tie: use destination position as tiebreaker.
+	const int dest_x{ static_cast<int>(screen.m_interchunk_scroll->m_dest_x) };
+	const int dest_y{ static_cast<int>(screen.m_interchunk_scroll->m_dest_y) };
+
+	auto tie_break_score = [&](const IntPosition& dir) {
+		if (dir == IntPosition(-1, 0)) // left
+			return (screen_w - 1) - dest_x;
+
+		if (dir == IntPosition(1, 0)) // right
+			return dest_x;
+
+		if (dir == IntPosition(0, -1)) // up
+			return (screen_h - 1) - dest_y;
+
+		if (dir == IntPosition(0, 1)) // down
+			return dest_y;
+
+		return 9999;
+		};
+
+	const auto score0{ tie_break_score(candidates[0].offset) };
+	const auto score1{ tie_break_score(candidates[1].offset) };
+
+	if (score0 < score1)
+		return candidates[0].offset;
+
+	if (score1 < score0)
+		return candidates[1].offset;
+
+	// still ambiguous
 	return std::nullopt;
 }
 
