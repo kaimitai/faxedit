@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-7.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-7.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -65,6 +65,8 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Cinematic Editor Window](#the-cinematic-editor-window)
 - [World Visualizer](#world-visualizer)
 - [Configuration Files](#configuration-files)
+- [Randomizer](#randomizer)
+- [Changelog](#changelog)
 
 <hr>
 
@@ -390,7 +392,9 @@ This tab also has some checkboxes for adding icon overlays to:
 * Mattock-breakable blocks
 * Door requirements
 
-In addition there is a checkbox to turn on or off sprite animations, and a checkbox to turn on or off gridlines.
+Below these checkboxes is a slider labeled "Render Palette", which lets you render the screen with an other palette without changing any data. The slider is reset when changing worlds. This is for showing the inside of towers and such, where part of a world is using a different palette than the world's default.
+
+In addition there is a checkbox to turn on or off sprite animations, and a checkbox to turn on or off gridlines. The third checkbox, "Adjacent", is for toggling whether to show a subsection of scroll-adjacent screens.
 
 If two screens on a world are using the exact same tilemap, you do not need more than two bytes of data to store it in ROM as the pointer will be deduplicated. The tilemaps are stored separately from all other screen data, so these screens could still have different sprites, doors and so on. This could be a way to cheaply increase the world size, and maybe use different palettes for the two screens.
 
@@ -424,6 +428,19 @@ The controls for making a screen tilemap image is as follows:
 The undo and redo have a history of 250 steps. Destructive structural changes - deleting a screen or a metatile definition - will clear all the undo history for the related world.
 
 The clipboards are per-world since the metatile definitions are world-specific.
+
+Camera controls:
+* Ctrl + Plus: Zoom in (centered)
+* Ctrl + Minus: Zoom out (centered)
+* Ctrl + Mousewheel up: Zoom in (on cursor)
+* Ctrl + Mousewheel down: Zoom out (on cursor)
+* Middle-Mouse Drag: Pan - Hold down the middle mouse button and drag the cursor to pan
+* Space + Left-Mouse Drag: Pan - Same as above, for environments where a middle mouse button is not present. Space needs to be held to avoid left-click selections.
+
+Other:
+* Arrow buttons: Follow screen scrolling connections - this is the same as clicking the scroll-buttons
+* Escape: Reset camera to default state, and close all optional windows
+* B: Toggle showing adjacent screens
 
 ## Screen Sprites
 
@@ -638,6 +655,8 @@ When editing the HUD attributes for each quadrant, you are editing for all palet
 This is for advanced modding only, but if you change palette you might want to use this functionality. Note also that only the bottom left and bottom right palette attribute is of consequence, as the top two rows of the HUD are blank.
 
 The original game only uses 4 different HUD attributte indexes, although there are 24 slots available.
+
+Note that the top left and top right attributes also matter, as the HUD attributes are applied to textboxes which may contain both text and item graphics. (when items are received or shop interfaces are open in the game)
 
 ## chr banks
 
@@ -1113,7 +1132,9 @@ If Skip Unreferenced Screens is enabled, screens that have no incoming reference
 
 If two screens have a scroll connection defined it will be taken, even if the connection physically is impossible to trigger. This can cause trouble if a same-world door can be scrolled to, and entered from the wrong side.
 
-In the original game, world 5 (Branches) has a scroll-up connection from screen 13 to screen 15 which causes this to happen. To render this world correctly you can delete this scroll-connection.
+In the original game, world 5 (Branches) has a scroll-up connection from screen 13 to screen 15 which causes this to happen. To render this world correctly you can delete this scroll-connection - or you can use 13 as the start screen.
+
+Holding Shift when clicking the "Export png"-button will export all worlds as distinct png-images. (in which case screen 0 will be used as the start-screen for each world)
 
 ### Handling Inconsistent Connections
 
@@ -1143,7 +1164,8 @@ If two screens are adjacent in the final output image, there is a genuine connec
 * Door Requirements: Render the requirement to enter a door above that door. Also applies to stage-doors.
 
 The door destinations are drawn a little lower (16 pixels lower) than their true positions, since many doors are two-way. We want to avoid drawing the entries and destinations on top of each other.
-The randomizer uses a certain hack to make the game engine treat certain sameworld doors as stage doors, which will cause wrong labels in the visualizer for the time being - because some stage-doors will be treated as sameworld doors.
+
+Transitions and doors to other worlds will have two labels with light blue text, where the upper is destination world, and the lower is destination screen id on that world.
 
 #### Script Options
 
@@ -1151,11 +1173,12 @@ The randomizer uses a certain hack to make the game engine treat certain samewor
 * Shops: Render the items a shop contains as a strip of items low on the screen (usually building screens)
 
 #### Other Options
-* Skip Unreferenced Screens: Disable rendering for screens with no incoming references.
-  
-Should not be used for randomizer ROMs, since the door-hack makes the editor might incorrectly treat screens and unreferenced when they are in fact referenced via randomizer stage-doors.
 
-* SW-Transition tolerance: Controls the maximum distance from a screen edge at which a same-world transition metatile may be interpreted as a scroll connection. Since same-world transitions are directionless in the underlying game data, the visualizer infers a direction based on the nearest screen edge. Increasing this value causes more edge-adjacent transitions to be rendered as scroll connections.
+  * Screen Numbers: Add a label with the screen id in the top left corner of each individual screen
+  * Other-World Transitions: Add labels for destination world and screen for ow-transitions
+  * Stage Door Destinations: Add labels for destination world and screen for next- and previous-stage doors, if deduction is possible.
+  * Skip Unreferenced Screens: Disable rendering for screens with no incoming references.
+  * SW-Transition tolerance: Controls the maximum distance from a screen edge at which a same-world transition metatile may be interpreted as a scroll connection. Since same-world transitions are directionless in the underlying game data, the visualizer infers a direction based on the nearest screen edge. Increasing this value causes more edge-adjacent transitions to be rendered as scroll connections.
 
 <hr>
 
@@ -1195,3 +1218,205 @@ If the override only applies to one custom region, the entry could me changed to
 ```
 
 but then ```my-custom-region``` must also be defined in the regions-section of the override xml.
+
+<hr>
+
+### Randomizer
+
+Echoes of Eolis is compatible with ROMs created by the Faxanadu [Randumizer](https://github.com/Notlobb/Randumizer) with some limitations.
+
+Some randomized ROMs (when the "shuffle towers" option is enabled) will implement a door hack - where sameworld doors are turned into other-stage doors, a concept not available in the original game. Echoes of Eolis will detect if this hack is present, and present an alternative interface for editing sameworld doors.
+
+Since this is just one specific hack, we opted not to let it take up space in more modules than absolutely necessary in the codebase - so the editor is not fully aware of this concept in all contexts. Reference listing will not detect these doors, and deleting screens will not re-index the door destinations for doors like this. If you want to edit a randomizer rom with this hack present, you need to re-index the door destinations yourself if screens are deleted.
+
+Since reference listing can't be relied upon, png export for ROMs like these will not allow users to skip unreferenced screens.
+
+The editor will let you know if you loaded a rom with a "sameworld doors are stage-doors" hack when the rom is loaded.
+
+Note that compatibility does not go in the other direction; The randomzier will not be compatible with roms saved with this editor, since the randomizer assumes certain datasets with a certain rom layout. Apply randomization to a clean US rom before editing it.
+
+<hr>
+
+### Changelog
+
+* 2026-06-07: version beta-7.2 - "Canvas"
+
+  * Main Editor
+	* Added zooming and panning support to the main editor window
+	* Added optional border rendering of scroll-adjacent screens
+	* Rendering now uses exact pixel colors without interpolation, improving sprite and tile inspection
+	* Added support for inverting mouse-wheel zoom direction in ```eoe_settings.xml``` for systems that report wheel input differently
+
+  * Camera Controls
+	* Ctrl + Mouse Wheel: Zoom on cursor position
+	* Ctrl + Plus / Minus: Zoom in or out centered on the current view
+	* Middle Mouse Drag: Pan the view
+	* Space + Left Mouse Drag: Alternative panning mode for systems without a middle mouse button
+	* Escape: Reset camera and close all optional windows
+	* B: Toggle display of adjacent screens
+	* Arrow Buttons: Follow screen scrolling connections
+
+  * World Visualization
+	* PNG export can now display screen ID labels
+	* PNG export can now display other-world destinations (other-world transitions and stage doors)
+	* Holding Shift while exporting generates PNG exports for all worlds
+	* Improved same-world transition deduction by selecting the most appropriate scroll connection instead of the first valid match
+
+  * Configuration System
+	* Configuration constants can now be conditionally enabled based on ROM data values, allowing fine-grained control within ROM regions (currently only used to separate randomizier ROMs with and without hacked sameworld doors)
+
+* 2025-05-31: version beta-7.1 - "Atlas"
+
+  * Added parameterized world visualization as PNG-image exports
+  * Updated item graphics configuration to match the most common in-game palette
+  * Added automatic selection of newly created sprites
+
+* 2025-05-25: version beta-7 - "Absolute Cinema"
+
+  * Cinematic Editor
+	* Added a cinematic editor for the intro and outro sequences
+	* Player traversal paths, positions, velocities, and depth thresholds can now be edited
+	* Added editing support for decorative outro objects such as waterfall placement and ripple movement
+	* Added BMP import/export support for all cinematic animation frames
+	* Sprite palettes for cinematic sequences can now be edited directly in the frontend
+	* The original engine’s outro cinematic logic appears sensitive to modifications of the first outro X-velocity entry. Certain altered trajectories may prevent the sequence from terminating correctly. This behavior reproduces on an unmodified original ROM and is considered an original engine quirk rather than an editor issue.
+  * Same-World Doors in Towns
+	* Added support for same-world doors in the Towns world
+	* The editor now patches the original engine’s destination allocation logic, allowing same-world and building doors to coexist in Towns as long as the total number of unique destinations remains below 64
+  * Configuration
+	* Added support for sparse region configuration inheritance, reducing duplication between compatible ROM regions
+	* Added configuration for [New Game+](https://github.com/UnsavoryMaggot/Faxanadu-Retranslation)
+
+* 2025-05-02: version beta-6.3 - "First-Class Housing"
+
+  * Full Buildings World Support
+	* The buildings world now behaves like all other worlds; you can freely add and remove screens.
+	* Note: Each added building screen consumes 4 bytes in bank 15.
+  * Screen Reference Listing
+	* Added functionality to list all incoming references to a selected screen.
+  * Metatile Reference Listing
+	* Added functionality to list all references to a selected metatile.
+	* This is especially useful for identifying metatiles that are used across screens with different tilesets. During BMP import, metatiles associated with other tilesets will be left unchanged, which may lead to unwanted results. The data integrity analysis will warn when such cross-tileset usage is detected.
+
+* 2025-04-09: version beta-6.2 - "The Guru's Revelation"
+
+  * Dynamic palette to music mapping! You’re no longer limited to the original fixed table. Every palette used when passing through a same‑world door can now have its own music track. This opens the door to region‑specific ambience, thematic transitions, and custom world moods.
+  * Spawn points are no longer capped at the original 0–7 range. You can now create additional spawn‑setting scripts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) and assign them to new building NPCs. Echoes of Eolis automatically updates mantra encoding/decoding logic to support any number of spawn points you define.
+  * Added undo/redo for manual metatile definitions
+
+* 2025-04-02: version beta-6.1 - "A Better Frame of Reference"
+
+  * Move tilemap and palette clipboards to OS-level (text-based, supports copy/paste across editor instances, and even text editors)
+  * Add partial ROM reload (re-read loaded ROM from disk and set it as the new base ROM, and refresh iScript contents and music count) This makes it possible to keep a ROM open in the editor while applying changes to it from the outside.
+  * Make NPC sprite gfx config handler-centric rather than being based on Sprite IDs; move GUI sprite rendering overrides into config and improve load robustness. This ensures no configuration changes are needed even if new npcs are re-defined with different handlers.
+  * Deduplicate door destination data; replace door-count limits with the true constraints, which is the number of unique destinations
+  * Replace fixed range transition allocation with free-range allocator in bank 15 (cross-range packing + deduplication) "Free space"-blocks can be arbitrarily defined in config, so no bytes are left unused. This also leaves more space for custom ROM hacks at the end of bank 15.
+  * Add persistent editor settings (eoe_settings.xml)
+  * Improve data integrity analysis:
+    * Validate (0,0) door destinations
+    * Add tilemap size tracking with 95% / 100% warnings
+  * Preserve sprite-0 hit CHR tile during BMP import for the common sprite chr-bank (no longer hardcoded)
+  * Bug fixes:
+	* Fix decoding bug for next/previous-stage doors in the Towns world (no such doors exist in the original game)
+	* Ensure that Other-World transitions are taken into account when determining if a screen has references
+
+* 2025-03-22: version beta-6 - "Frames of Reference"
+
+  * New sprite graphics pipeline (BMP import/export for frames: NPCs, items, UI, player, portraits)
+  * Verified lossless round-trip on original data (all regions)
+  * ~1800+ bytes saved on original data via improved deduplication and packing
+  * Full rebuild of sprite data (banks 6, 7, 8)
+  * CHR import/export support
+  * Basic animation frame editor (manual editing)
+  * Snapshot stack (undo for frames and CHR banks)
+  * Updated sprite names and improved GUI rendering
+  * The data integrity analysis will warn you if the total number of dynamic chr-tiles loaded into the ppu for any screen exceeds the limit of what the game can handle. (when having too many big sprites on the same screen, for example)
+  * Can no longer add more than 8 sprites to a screen, which is the maximum allowed by the game engine
+  * World Metadata: New metatiles are created as copies of the selected metatile
+
+* 2025-03-05: version beta-5.31
+
+  * Emergency bugfix: Adding more than 256 metatile definitions to any world would cause an unhandled error to occur in the renderer pipeline.
+
+* 2025-02-22: version beta-5.3 - "Literally Miscellaneous"
+
+  * Add tileset and image chr-bank views to the gfx editor - giving a visual overview of the various chr banks - showing which chr-tiles are editable, read-only, unusable and unrelocatable
+	* Add support for exporting editable portions of chr-banks to chr-files that can be edited in external tools
+	* Add support for importing chr-files to replace chr-banks
+	* Add highly advanced option to canonicalize chr-banks for deterministic chr-ordering
+  * EoE will now detect interaction script count and muisc track count from ROM data, instead of relying on configuration constants. The application will allow assigning music and scripts freely depending on these counts
+  * Add cross-tileset metatile usage check for Building screens in the data integrity analysis (this should be avoided as it causes problems for chr bank re-ordering)
+  * Generate door requirement overlay graphics from the Item Gfx tilemap, rather than relying on hard-coded chr-indexes - icons could be garbled after chr-banks were reordered by bmp imports
+  * Add support for configuration file override (eoe_config_override.xml) so user overrides do not need to be merged for each new release
+  * Bundled with version 0.7 of the [script assembler](https://github.com/kaimitai/FaxIScripts), which has the following important new features:
+	* Miscellaneous data interface for modifying static data (strings, sprite parameters, weapon and magic parameters etc)
+	* Supports dynamic sizing of the iScript entrypoint table - meaning more scripts can be added
+
+* 2025-02-04: version beta-5.2
+
+  * Added new keyboard shortcuts:
+	* Ctrl+S: Save xml
+	* Ctrl+Shift+L: Load xml
+	* Ctrl+P: Patch ROM (generate out-file)
+	* Ctrl+Shift+P: Patch ROM in place (patch loaded ROM directly)
+  * Bundle release with version 0.6 of the [script assembler](https://github.com/kaimitai/FaxIScripts):
+	* The assembler supports extracting and assembling behavior scripts
+	* The [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) was updated with instructive exampels graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
+  * Holding Alt when patching ROM enables semi-static patching mode, which generates ROMs compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer). Will not patch sprites, metadata or screen connections and transitions.
+  * Fixed an oversight where only the left ctrl and shift buttons were considered in some contexts
+  * Fixed a bug where the window position stored in ```eoe_os_window.cfg``` would not recover after a monitor setup change
+
+* 2025-01-28: version beta-5.1 - "Tying Up Loose Ends"
+
+  * Added undo/redo for screen tilemap edits (250-step history)
+  * Added undo/redo for palette edits (250-step history)
+  * Added a palette clipboard for copying and pasting entire palettes
+  * World tileset chr-data is now stored in the data xml
+  * Game gfx images are now stored in the data xml (tilemap, attribute table, chr-tiles and palettes)
+  * Added full support for ROM region US revision A in the configuration xml (differs from EU version only in the music data)
+  * The application now asks for confirmation before closing when a ROM is loaded
+
+* 2025-12-21: version beta-5 - "Extreme Makeover"
+
+  * Added BMP import/export for world graphics, title, intro, and outro screens, with automatic CHR and attribute-table reconstruction.
+  * Added full palette editor for all world palettes and title/intro/outro palettes.
+  * Expanded scene metadata: default music, tileset selection, and entry positions.
+  * Added editor for palette-to-music mapping used for same‑world door transitions.
+  * Added fog metadata editor for world/palette combinations.
+  * Added HUD attribute-table editor with preview.
+  * World tileset definitions are now loaded from ROM instead of being hard‑coded.
+  * Metatiles can now reference any CHR tile index.
+  * Window position and state are now saved at OS level.
+  * Added palette override for rendering screens without modifying game data.
+  * The metatile picker draws metatiles using their actual sub-palette
+
+* 2025-11-29: version beta-4 - "Shifting Worlds"
+
+  * Optimized tilemap placement: The editor now dynamically distributes the eight world tilemaps across available ROM banks, eliminating the rigid fixed layout of the original game. This includes support for placing tilemap data in previously unused banks, unlocking new storage capacity. We are now breaking an invariant that has existed for almost forty years.
+  * Building Sprite Set editor: World 4 (Buildings) now supports direct visual editing of sprite sets. We also enabled the "Enter Door"-button for doors to buildings, in which case the door's screen and sprite set both will be selected.
+  * Gridline toggle in tilemap window: Developers can enable or disable gridlines for clearer visual alignment when editing maps.
+  * Default palette: The palette used to render screens will not go back to the world's default palette whenever you change screens via the slider. If you navigate to another world, however, it will revert to the default again.
+  * Configurable NES palette: The palette definition has been moved into the configuration XML, allowing custom overrides and experimentation with color schemes.
+  * Cursor tile coordinate tooltip: When not in tilemap editing mode, the mouse cursor tile coordinates on the tilemap will show as a tooltip to make it a little easier to set door destinations and such.
+
+* 2025-11-22: version beta-3 - "Expanding Beyond"
+
+  * We show iScript code directly in the editor, with syntax highlighting. To actually edit and assemble the code, however, you need to use a separate tool like [FaxIScripts](https://github.com/kaimitai/FaxIScripts/).
+  * We introduce a configuration xml file with region definitions, and constants needed by the editor per region. We now support all major regions, and two ROM hacks, by default.
+  * Block Property icon overlays - We can toggle icon overlay rendering for each block property. Currently I am using my own placeholder graphics, but if anyone wants to contribute graphics let me know
+  * Door Requirement icon overlays - We can toggle overlays for door requirements too (keys and rings)
+  * Sprite animations - Sprites can be rendered using all of their animation frames
+  * Made some internal adjustments to sprites which have different positional offsets in the game data versus how they are actually rendered
+  * Improved sprite descriptions and categories by verifying the animations in the editor versus actual in-game rendering and behavior
+  * Screen tilemap rendering - Some screens in the Buildings world and Mist were rendering slightly incorrectly due to a NES tile mismatch between the editor and the actual game. This has been fixed.
+  * We allow patching ROM files in-place by holding shift when using the patch ROM-button
+  * Will not show message "clipboard data pasted" when only showing the selection rectangle
+
+* 2025-11-14: version beta-2 - "Coming to Life"
+
+  * The editor will extract sprite graphics and metadata when loading a ROM-file, and present them in the UI during sprite-editing
+  * Added support for defining the game-wide "Jump-On" tile animation. This is a feature supported by the original game, but it was left unused.
+
+* 2025-11-01: version beta-1
+
+  * Initial release

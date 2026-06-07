@@ -13,6 +13,22 @@
 #include <unordered_map>
 #include <unordered_set>
 
+void fe::MainWindow::export_world_png(const fe::WorldVisualizer& p_visualizer,
+	std::size_t p_world, std::size_t p_screen,
+	const fe::SpriteGUILoader& p_sprites,
+	const fe::WorldVisualizationOptions& p_options) {
+	const auto res{ p_visualizer.visualize_world(m_config, *m_game, p_world, p_screen,
+	p_sprites, p_options) };
+
+	std::string png_path{ std::format("{}/{}-png", m_path.string(), m_filename) };
+	std::string png_filename{ std::format("world-{:02}", p_world) };
+
+	m_gfx.save_world_visualizer_png(res, png_path, png_filename);
+
+	add_message(std::format("Saved world {} as {}/{}.png", p_world,
+		png_path, png_filename), 2);
+}
+
 void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 	static fe::WorldVisualizationOptions options{
 		.skip_unreferenced_screens = !m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false),
@@ -32,24 +48,20 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 
 		ImGui::Separator();
 
-		if (ui::imgui_button("Export png", 2, "Save visualized world as png image")) {
+		if (ui::imgui_button("Export png", 2, "Save the selected world as a PNG image. Hold Shift to export all worlds (starting from screen 0 in each world)")) {
+			bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+
 			fe::SpriteGUILoader visual_sprites;
 			visual_sprites.load_sprites_for_gui(m_config,
 				m_game->m_sprite_gfx_manager, m_game->m_rom_data);
-
 			auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets,
 				extract_script_semantics()) };
 
-			const auto res{ visualizer.visualize_world(m_config, *m_game, l_world, l_screen,
-				visual_sprites, options) };
-
-			std::string png_path{ std::format("{}/{}-png", m_path.string(), m_filename) };
-			std::string png_filename{ std::format("world-{:02}", l_world) };
-
-			m_gfx.save_world_visualizer_png(res, png_path, png_filename);
-
-			add_message(std::format("Saved world {} as {}/{}.png", l_world,
-				png_path, png_filename), 2);
+			if (l_shift)
+				for (std::size_t i{ 0 }; i < m_game->m_chunks.size(); ++i)
+					export_world_png(visualizer, i, 0, visual_sprites, options);
+			else
+				export_world_png(visualizer, l_world, l_screen, visual_sprites, options);
 		}
 
 		ImGui::SeparatorText("Sprite Options");

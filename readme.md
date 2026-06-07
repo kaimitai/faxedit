@@ -6,9 +6,11 @@ A MacOS-build is also available. See instructions on [how to run an unsigned DMG
 
 Make sure to read the [documentation](./docs/doc.md) for a detailed overview of all the inter-connected data in this game.
 
-This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not suitable for a GUI editor.
+This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not necessarily suitable for a GUI editor.
 
 The application is compatible out of the box with the following ROM regions: US, US Revision A, EU, JP and a well-known [English Translation Hack](https://www.romhacking.net/translations/4281/).
+
+See the [Changelog](./docs/doc.md#changelog) for version history.
 
 <hr>
 
@@ -52,6 +54,10 @@ The following data is editable:
 ### Visualizer
 * World maps can be exported as parametrized png-images
 
+<hr>
+
+The main editor screen supports zooming, panning and showing subsections of scroll-adjacent screens.
+
 ![The editor in action](./docs/img/eoe_presentation.png)
 ###### The editor will show screen, world and game metadata information
 The editor can save your project as a patched NES ROM file or as an IPS patch. We also support our own XML format, which allows users to more easily compare file versions, use version control systems to track file history, and collaborate on projects.
@@ -87,168 +93,6 @@ If you use a configuration file override (eoe_config_override.xml) this should u
 
 <hr>
 
-### Version History
-
-* 2025-05-31: version beta-7.1
-
-  * Added parameterized world visualization as PNG-image exports
-  * Updated item graphics configuration to match the most common in-game palette
-  * Added automatic selection of newly created sprites
-
-* 2025-05-25: version beta-7
-
-  * Cinematic Editor
-	* Added a cinematic editor for the intro and outro sequences
-	* Player traversal paths, positions, velocities, and depth thresholds can now be edited
-	* Added editing support for decorative outro objects such as waterfall placement and ripple movement
-	* Added BMP import/export support for all cinematic animation frames
-	* Sprite palettes for cinematic sequences can now be edited directly in the frontend
-	* The original engine’s outro cinematic logic appears sensitive to modifications of the first outro X-velocity entry. Certain altered trajectories may prevent the sequence from terminating correctly. This behavior reproduces on an unmodified original ROM and is considered an original engine quirk rather than an editor issue.
-  * Same-World Doors in Towns
-	* Added support for same-world doors in the Towns world
-	* The editor now patches the original engine’s destination allocation logic, allowing same-world and building doors to coexist in Towns as long as the total number of unique destinations remains below 64
-  * Configuration
-	* Added support for sparse region configuration inheritance, reducing duplication between compatible ROM regions
-	* Added configuration for [New Game+](https://github.com/UnsavoryMaggot/Faxanadu-Retranslation)
-
-* 2025-05-02: version beta-6.3
-
-  * Full Buildings World Support
-	* The buildings world now behaves like all other worlds; you can freely add and remove screens.
-	* Note: Each added building screen consumes 4 bytes in bank 15.
-  * Screen Reference Listing
-	* Added functionality to list all incoming references to a selected screen.
-  * Metatile Reference Listing
-	* Added functionality to list all references to a selected metatile.
-	* This is especially useful for identifying metatiles that are used across screens with different tilesets. During BMP import, metatiles associated with other tilesets will be left unchanged, which may lead to unwanted results. The data integrity analysis will warn when such cross-tileset usage is detected.
-
-* 2025-04-09: version beta-6.2
-
-  * Dynamic palette to music mapping! You’re no longer limited to the original fixed table. Every palette used when passing through a same‑world door can now have its own music track. This opens the door to region‑specific ambience, thematic transitions, and custom world moods.
-  * Spawn points are no longer capped at the original 0–7 range. You can now create additional spawn‑setting scripts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) and assign them to new building NPCs. Echoes of Eolis automatically updates mantra encoding/decoding logic to support any number of spawn points you define.
-  * Added undo/redo for manual metatile definitions
-
-* 2025-04-02: version beta-6.1
-
-  * Move tilemap and palette clipboards to OS-level (text-based, supports copy/paste across editor instances, and even text editors)
-  * Add partial ROM reload (re-read loaded ROM from disk and set it as the new base ROM, and refresh iScript contents and music count) This makes it possible to keep a ROM open in the editor while applying changes to it from the outside.
-  * Make NPC sprite gfx config handler-centric rather than being based on Sprite IDs; move GUI sprite rendering overrides into config and improve load robustness. This ensures no configuration changes are needed even if new npcs are re-defined with different handlers.
-  * Deduplicate door destination data; replace door-count limits with the true constraints, which is the number of unique destinations
-  * Replace fixed range transition allocation with free-range allocator in bank 15 (cross-range packing + deduplication) "Free space"-blocks can be arbitrarily defined in config, so no bytes are left unused. This also leaves more space for custom ROM hacks at the end of bank 15.
-  * Add persistent editor settings (eoe_settings.xml)
-  * Improve data integrity analysis:
-    * Validate (0,0) door destinations
-    * Add tilemap size tracking with 95% / 100% warnings
-  * Preserve sprite-0 hit CHR tile during BMP import for the common sprite chr-bank (no longer hardcoded)
-  * Bug fixes:
-	* Fix decoding bug for next/previous-stage doors in the Towns world (no such doors exist in the original game)
-	* Ensure that Other-World transitions are taken into account when determining if a screen has references
-
-* 2025-03-22: version beta-6
-
-  * New sprite graphics pipeline (BMP import/export for frames: NPCs, items, UI, player, portraits)
-  * Verified lossless round-trip on original data (all regions)
-  * ~1800+ bytes saved on original data via improved deduplication and packing
-  * Full rebuild of sprite data (banks 6, 7, 8)
-  * CHR import/export support
-  * Basic animation frame editor (manual editing)
-  * Snapshot stack (undo for frames and CHR banks)
-  * Updated sprite names and improved GUI rendering
-  * The data integrity analysis will warn you if the total number of dynamic chr-tiles loaded into the ppu for any screen exceeds the limit of what the game can handle. (when having too many big sprites on the same screen, for example)
-  * Can no longer add more than 8 sprites to a screen, which is the maximum allowed by the game engine
-  * World Metadata: New metatiles are created as copies of the selected metatile
-
-* 2025-03-05: version beta-5.31
-
-  * Emergency bugfix: Adding more than 256 metatile definitions to any world would cause an unhandled error to occur in the renderer pipeline.
-
-* 2025-02-22: version beta-5.3
-
-  * Add tileset and image chr-bank views to the gfx editor - giving a visual overview of the various chr banks - showing which chr-tiles are editable, read-only, unusable and unrelocatable
-	* Add support for exporting editable portions of chr-banks to chr-files that can be edited in external tools
-	* Add support for importing chr-files to replace chr-banks
-	* Add highly advanced option to canonicalize chr-banks for deterministic chr-ordering
-  * EoE will now detect interaction script count and muisc track count from ROM data, instead of relying on configuration constants. The application will allow assigning music and scripts freely depending on these counts
-  * Add cross-tileset metatile usage check for Building screens in the data integrity analysis (this should be avoided as it causes problems for chr bank re-ordering)
-  * Generate door requirement overlay graphics from the Item Gfx tilemap, rather than relying on hard-coded chr-indexes - icons could be garbled after chr-banks were reordered by bmp imports
-  * Add support for configuration file override (eoe_config_override.xml) so user overrides do not need to be merged for each new release
-  * Bundled with version 0.7 of the [script assembler](https://github.com/kaimitai/FaxIScripts), which has the following important new features:
-	* Miscellaneous data interface for modifying static data (strings, sprite parameters, weapon and magic parameters etc)
-	* Supports dynamic sizing of the iScript entrypoint table - meaning more scripts can be added
-
-* 2025-02-04: version beta-5.2
-
-  * Added new keyboard shortcuts:
-	* Ctrl+S: Save xml
-	* Ctrl+Shift+L: Load xml
-	* Ctrl+P: Patch ROM (generate out-file)
-	* Ctrl+Shift+P: Patch ROM in place (patch loaded ROM directly)
-  * Bundle release with version 0.6 of the [script assembler](https://github.com/kaimitai/FaxIScripts):
-	* The assembler supports extracting and assembling behavior scripts
-	* The [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) was updated with instructive exampels graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
-  * Holding Alt when patching ROM enables semi-static patching mode, which generates ROMs compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer). Will not patch sprites, metadata or screen connections and transitions.
-  * Fixed an oversight where only the left ctrl and shift buttons were considered in some contexts
-  * Fixed a bug where the window position stored in ```eoe_os_window.cfg``` would not recover after a monitor setup change
-
-* 2025-01-28: version beta-5.1
-
-  * Added undo/redo for screen tilemap edits (250-step history)
-  * Added undo/redo for palette edits (250-step history)
-  * Added a palette clipboard for copying and pasting entire palettes
-  * World tileset chr-data is now stored in the data xml
-  * Game gfx images are now stored in the data xml (tilemap, attribute table, chr-tiles and palettes)
-  * Added full support for ROM region US revision A in the configuration xml (differs from EU version only in the music data)
-  * The application now asks for confirmation before closing when a ROM is loaded
-
-* 2025-12-21: version beta-5
-
-  * Added BMP import/export for world graphics, title, intro, and outro screens, with automatic CHR and attribute-table reconstruction.
-  * Added full palette editor for all world palettes and title/intro/outro palettes.
-  * Expanded scene metadata: default music, tileset selection, and entry positions.
-  * Added editor for palette-to-music mapping used for same‑world door transitions.
-  * Added fog metadata editor for world/palette combinations.
-  * Added HUD attribute-table editor with preview.
-  * World tileset definitions are now loaded from ROM instead of being hard‑coded.
-  * Metatiles can now reference any CHR tile index.
-  * Window position and state are now saved at OS level.
-  * Added palette override for rendering screens without modifying game data.
-  * The metatile picker draws metatiles using their actual sub-palette
-
-
-* 2025-11-29: version beta-4
-
-  * Optimized tilemap placement: The editor now dynamically distributes the eight world tilemaps across available ROM banks, eliminating the rigid fixed layout of the original game. This includes support for placing tilemap data in previously unused banks, unlocking new storage capacity. We are now breaking an invariant that has existed for almost forty years.
-  * Building Sprite Set editor: World 4 (Buildings) now supports direct visual editing of sprite sets. We also enabled the "Enter Door"-button for doors to buildings, in which case the door's screen and sprite set both will be selected.
-  * Gridline toggle in tilemap window: Developers can enable or disable gridlines for clearer visual alignment when editing maps.
-  * Default palette: The palette used to render screens will not go back to the world's default palette whenever you change screens via the slider. If you navigate to another world, however, it will revert to the default again.
-  * Configurable NES palette: The palette definition has been moved into the configuration XML, allowing custom overrides and experimentation with color schemes.
-  * Cursor tile coordinate tooltip: When not in tilemap editing mode, the mouse cursor tile coordinates on the tilemap will show as a tooltip to make it a little easier to set door destinations and such.
-
-  Compatibility note: ROMs created with earlier versions of the editor remain fully compatible with this new release. However, ROMs created with beta-4 or later may not be compatible with earlier versions of the editor.
-
-  This is because earlier releases relied on a hard-coded world-to-bank and pointer index mapping, while the new editor reads and writes these mappings dynamically from the ROM itself. The ROM format is still faithful to the game’s design — the difference lies only in how the editor interprets and patches the tilemap metadata.
-
-* 2025-11-22: version beta-3
-  * We show iScript code directly in the editor, with syntax highlighting. To actually edit and assemble the code, however, you need to use a separate tool like [FaxIScripts](https://github.com/kaimitai/FaxIScripts/).
-  * We introduce a configuration xml file with region definitions, and constants needed by the editor per region. We now support all major regions, and two ROM hacks, by default.
-  * Block Property icon overlays - We can toggle icon overlay rendering for each block property. Currently I am using my own placeholder graphics, but if anyone wants to contribute graphics let me know
-  * Door Requirement icon overlays - We can toggle overlays for door requirements too (keys and rings)
-  * Sprite animations - Sprites can be rendered using all of their animation frames
-  * Made some internal adjustments to sprites which have different positional offsets in the game data versus how they are actually rendered
-  * Improved sprite descriptions and categories by verifying the animations in the editor versus actual in-game rendering and behavior
-  * Screen tilemap rendering - Some screens in the Buildings world and Mist were rendering slightly incorrectly due to a NES tile mismatch between the editor and the actual game. This has been fixed.
-  * We allow patching ROM files in-place by holding shift when using the patch ROM-button
-  * Will not show message "clipboard data pasted" when only showing the selection rectangle
-
-* 2025-11-14: version beta-2
-  * The editor will extract sprite graphics and metadata when loading a ROM-file, and present them in the UI during sprite-editing
-  * Added support for defining the game-wide "Jump-On" tile animation. This is a feature supported by the original game, but it was left unused.
-
-* 2025-11-01: version beta-1
-  * Initial release
-
-<hr>
-
 ### Credits
 
 Special thanks to the following contributors and fellow digital archaeologists:
@@ -261,7 +105,9 @@ Special thanks to the following contributors and fellow digital archaeologists:
 
 [Jessica](https://www.romhacking.net/community/9037/) - for testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
 
-[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries, and for helping out with testing, bug-reports and new suggestions.
+[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries, and for helping out with testing, bug-reports and suggestions for new features.
+
+[Ok Impala!](https://www.okimpala.net) for feedback and suggestions.
 
 <hr>
 

@@ -255,7 +255,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				c::TILEMAP_BORDER_MT_H,
 				c::TILEMAP_SCREEN_MT_W,
 				c::TILEMAP_SCREEN_MT_H,
-				m_settings.m_border_alpha);
+				128);
 
 		// draw selected rectangle
 		if (m_emode == fe::EditMode::TilemapEditMode) {

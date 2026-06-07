@@ -305,6 +305,10 @@ namespace fe {
 
 		// world visualization helpers
 		std::unordered_map<byte, fe::ScriptSemanticInfo> extract_script_semantics(void);
+		void export_world_png(const fe::WorldVisualizer& p_visualizer,
+			std::size_t p_world, std::size_t p_screen,
+			const fe::SpriteGUILoader& p_sprites,
+			const fe::WorldVisualizationOptions& p_options);
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);
