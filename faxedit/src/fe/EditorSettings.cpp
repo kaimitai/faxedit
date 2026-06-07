@@ -16,7 +16,8 @@ fe::EditorSettings::EditorSettings(void) :
 	patch_cinematic{ true },
 	throw_on_cinematic_overflow{ true },
 	m_cam_zoom_factor{ 1.2f },
-	m_border_alpha{ 96 }
+	m_border_alpha{ 96 },
+	m_invert_zoom{ false }
 {
 	set_sprite_gfx_defaults();
 	sanitize();

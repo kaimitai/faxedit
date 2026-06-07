@@ -156,9 +156,11 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				zoom_or_pan = true;
 			}
 			else if (l_ctrl) {
-				const float wheel{ ImGui::GetIO().MouseWheel };
+				float wheel{ ImGui::GetIO().MouseWheel };
 
 				if (wheel != 0.0f) {
+					if (m_settings.m_invert_zoom)
+						wheel = -wheel;
 
 					// Mouse position within displayed image [0..1]
 					const float u{ (mousePos.x - imagePos.x) / imageSize.x };

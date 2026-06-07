@@ -45,9 +45,9 @@ namespace fe {
 		// graph overlays
 		bool show_door_labels{ true };
 		bool show_door_requirements{ true };
-		bool show_screen_numbers{ true };
-		bool show_ow_transitions{ true };
-		bool show_stage_door_dests{ true };
+		bool show_screen_numbers{ false };
+		bool show_ow_transitions{ false };
+		bool show_stage_door_dests{ false };
 
 		// integral parameters
 		std::size_t sameworld_trans_tolerance{ 0 };

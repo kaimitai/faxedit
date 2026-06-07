@@ -84,7 +84,8 @@ namespace fe {
 			ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
 
 			// Slider
-			if (ImGui::SliderInt("##slider", &l_temp, static_cast<int>(p_min), static_cast<int>(p_max)))
+			if (ImGui::SliderInt("##slider", &l_temp, static_cast<int>(p_min), static_cast<int>(p_max), "%d",
+				ImGuiSliderFlags_NoInput))
 				l_result = true;
 
 			ImGui::PopItemWidth();

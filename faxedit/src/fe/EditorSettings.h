@@ -25,6 +25,7 @@ namespace fe {
 		// camera and screen rendering settings
 		float m_cam_zoom_factor;
 		byte m_border_alpha;
+		bool m_invert_zoom;
 
 		void sanitize(void);
 		void sanitize_float(float& p_val, float p_default);

@@ -57,8 +57,10 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1, "", false, true);
 
 			ImGui::SeparatorText("Rendering Scales");
-			ImGui::SliderFloat("animation frames", &m_settings.scale_frame, 1.0f, 5.0f);
-			ImGui::SliderFloat("chr-banks", &m_settings.scale_bank, 1.0f, 5.0f);
+			ImGui::SliderFloat("animation frames", &m_settings.scale_frame, 1.0f, 5.0f,
+				"%.3f", ImGuiSliderFlags_NoInput);
+			ImGui::SliderFloat("chr-banks", &m_settings.scale_bank, 1.0f, 5.0f,
+				"%.3f", ImGuiSliderFlags_NoInput);
 
 			ImGui::SeparatorText("bmp-import");
 			ui::imgui_slider_with_arrows("###tratol", "Transparency Tolerance",

@@ -145,6 +145,24 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				ImGui::IsKeyPressed(ImGuiKey_KeypadSubtract))) {
 				camera.zoom_out(get_viewport());
 			}
+			else if (ImGui::IsKeyReleased(ImGuiKey_B)) {
+				m_settings.m_show_adjacent_screens = !m_settings.m_show_adjacent_screens;
+			}
+			else {
+				const auto& l_trav_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
+				if (ImGui::IsKeyReleased(ImGuiKey_LeftArrow) &&
+					l_trav_screen.m_scroll_left)
+					m_sel_screen = l_trav_screen.m_scroll_left.value();
+				else if (ImGui::IsKeyReleased(ImGuiKey_RightArrow) &&
+					l_trav_screen.m_scroll_right)
+					m_sel_screen = l_trav_screen.m_scroll_right.value();
+				else if (ImGui::IsKeyReleased(ImGuiKey_UpArrow) &&
+					l_trav_screen.m_scroll_up)
+					m_sel_screen = l_trav_screen.m_scroll_up.value();
+				else if (ImGui::IsKeyReleased(ImGuiKey_DownArrow) &&
+					l_trav_screen.m_scroll_down)
+					m_sel_screen = l_trav_screen.m_scroll_down.value();
+			}
 
 			// input handling, move to separate function later
 			if (m_emode == fe::EditMode::TilemapEditMode) {

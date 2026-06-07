@@ -88,7 +88,10 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 		ui::imgui_checkbox("Screen Numbers", options.show_screen_numbers);
 		ui::imgui_checkbox("Other-World Transitions", options.show_ow_transitions);
 		ui::imgui_checkbox("Stage Door Destinations", options.show_stage_door_dests);
-		ui::imgui_checkbox("Skip Unreferences Screens", options.skip_unreferenced_screens);
+
+		// TODO: Integrate the randomizer door hack concept in a better way?
+		if (!m_cache.m_randomizer_doors)
+			ui::imgui_checkbox("Skip Unreferences Screens", options.skip_unreferenced_screens);
 
 		ui::imgui_slider_with_arrows("###swtol", "SW-Transition tolerance",
 			options.sameworld_trans_tolerance, 0, 4,

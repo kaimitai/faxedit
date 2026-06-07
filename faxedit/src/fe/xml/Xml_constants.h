@@ -33,6 +33,7 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_ENABLE_CONFIG_DUMP[]{ "enable_config_dump" };
 			constexpr char SETTINGS_PARAM_CAM_ZOOM_FACTOR[]{ "camera_zoom_factor" };
 			constexpr char SETTINGS_PARAM_BORDER_ALPHA[]{ "screen_border_alpha" };
+			constexpr char SETTINGS_PARAM_INVERT_ZOOM[]{ "invert_zoom" };
 
 			constexpr char TAG_STAGES[]{ "stages" };
 			constexpr char TAG_STAGE[]{ "stage" };
