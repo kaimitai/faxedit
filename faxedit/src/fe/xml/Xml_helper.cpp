@@ -373,8 +373,8 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 					parse_numeric_byte(n_scr_ow_trans.attribute(c::ATTR_DEST_PALETTE).as_string()));
 
 			auto n_scr_tilemap{ n_screen.child(c::TAG_TILEMAP) };
-			for (auto n_scr_tl_col{ n_scr_tilemap.child(c::TAG_COL) }; n_scr_tl_col; n_scr_tl_col = n_scr_tl_col.next_sibling(c::TAG_COL))
-				l_screen.m_tilemap.push_back(parse_byte_list(n_scr_tl_col.attribute(c::ATTR_BYTES).as_string()));
+			for (auto n_scr_tl_row{ n_scr_tilemap.first_child() }; n_scr_tl_row; n_scr_tl_row = n_scr_tl_row.next_sibling())
+				l_screen.m_tilemap.push_back(parse_byte_list(n_scr_tl_row.attribute(c::ATTR_BYTES).as_string()));
 
 			// screen sprites
 			auto n_sprites{ n_screen.child(c::TAG_SPRITES) };
@@ -993,7 +993,7 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 			auto n_screen_tilemap{ n_screen.append_child(c::TAG_TILEMAP) };
 
 			for (std::size_t stc{ 0 }; stc < lc_screen.m_tilemap.size(); ++stc) {
-				auto n_str{ n_screen_tilemap.append_child(c::TAG_COL) };
+				auto n_str{ n_screen_tilemap.append_child(c::TAG_TILEMAP_ROW) };
 
 				n_str.append_attribute(c::ATTR_NO);
 				n_str.attribute(c::ATTR_NO).set_value(stc);
@@ -1941,7 +1941,7 @@ std::vector<std::string> fe::xml::split_csv(const std::string& p_values) {
 
 std::string fe::xml::byte_to_hex(byte p_byte) {
 	constexpr char hex_chars[] = "0123456789abcdef";
-	std::string out = "0x";
+	std::string out{ c::HEX_PREFIX };
 	out += hex_chars[(p_byte >> 4) & 0xF];
 	out += hex_chars[p_byte & 0xF];
 	return out;

@@ -7,6 +7,17 @@ namespace fe {
 
 		namespace c {
 
+			// TODO: Enable the non-beta xml format
+			// Changes:
+			//  - tilemap entries are written as "row" instead of legacy "col"
+			//  - hex values are written as $nn instead of 0xnn
+			//
+			// The xml reader remains backward compatible with both formats
+			// Enabling this will cause large xml diffs but no data changes
+			constexpr bool USE_XML_NON_BETA_VERSION{ false };
+
+			constexpr const char* HEX_PREFIX{ USE_XML_NON_BETA_VERSION ? "$" : "0x" };
+
 			constexpr char TAG_ROOT[]{ "echoes_of_eolis" };
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
@@ -116,6 +127,8 @@ namespace fe {
 			constexpr char TAG_TILEMAP[]{ "tilemap" };
 			constexpr char TAG_ROW[]{ "row" };
 			constexpr char TAG_COL[]{ "col" };
+			constexpr const char* TAG_TILEMAP_ROW{ USE_XML_NON_BETA_VERSION ?
+				TAG_ROW : TAG_COL };
 
 			constexpr char TAG_SCREENS[]{ "screens" };
 			constexpr char TAG_SCREEN[]{ "screen" };
