@@ -29,3 +29,19 @@ std::string fe::ScreenRef::to_string(bool p_incl_destination) const {
 
 	return out;
 }
+
+bool fe::ScreenRef::operator<(const ScreenRef& rhs) const {
+	if (dst_world != rhs.dst_world)
+		return dst_world < rhs.dst_world;
+
+	if (dst_screen != rhs.dst_screen)
+		return dst_screen < rhs.dst_screen;
+
+	if (type != rhs.type)
+		return type < rhs.type;
+
+	if (src_world != rhs.src_world)
+		return src_world < rhs.src_world;
+
+	return src_screen < rhs.src_screen;
+}

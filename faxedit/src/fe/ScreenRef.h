@@ -28,6 +28,7 @@ namespace fe {
             Hardcoded
         } type;
 
+        bool operator<(const ScreenRef& rhs) const;
         std::string to_string(bool p_incl_destination = false) const;
     };
 

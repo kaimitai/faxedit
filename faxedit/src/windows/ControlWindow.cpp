@@ -251,13 +251,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 		ImGui::SameLine();
 
-		if (ui::imgui_button("Dump configuration", 4)) try {
-			std::filesystem::path outputPath{ m_path / (m_filename + "-config_dump.txt") };
-
-			std::string config_dump_out_file{ outputPath.string() };
-
-			klib::file::write_string_to_file(m_config.to_string(), config_dump_out_file);
-			add_message(std::format("Resolved configuration dumped to file {}", config_dump_out_file), 2);
+		if (ui::imgui_button("Dump configuration", 4, "Hold Shift to dump all debug data")) try {
+			dump_debug_data(l_shift);
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), 1);
@@ -720,6 +715,35 @@ void fe::MainWindow::validate_spawn_points(fe::Game& p_game) {
 			);
 			spawn.m_screen = 0;
 		}
+	}
+}
+
+// dump debug data to disk
+// if p_complete is set - dump all, otherwise dump config constants only
+void fe::MainWindow::dump_debug_data(bool p_complete) {
+
+	// resolved config constants
+	{
+		std::filesystem::path outputPath{ m_path / (m_filename + "-config_dump.txt") };
+		std::string config_dump_out_file{ outputPath.string() };
+
+		klib::file::write_string_to_file(m_config.to_string(), config_dump_out_file);
+		add_message(std::format("Resolved configuration dumped to file {}", config_dump_out_file), 2);
+	}
+
+	if (p_complete) {
+		// dump screen references
+		std::string out_contents;
+		auto screenrefs{ m_game->collect_screen_refs() };
+		std::sort(begin(screenrefs), end(screenrefs));
+		for (const auto& screenref : screenrefs)
+			out_contents += screenref.to_string(true) + "\n";
+
+		std::filesystem::path screenref_outputPath{ m_path / (m_filename + "-screen_refs.txt") };
+		std::string screenref_dump_out_file{ screenref_outputPath.string() };
+
+		klib::file::write_string_to_file(out_contents, screenref_dump_out_file);
+		add_message(std::format("Screen References dumped to file {}", screenref_dump_out_file), 2);
 	}
 }
 

@@ -234,7 +234,7 @@ std::string fe::Config::to_string(void) const {
 
 	result += "\n--- pointers ---\n";
 	for (const auto& kv : m_pointers)
-		result += std::format("{}: offset=${:x}, zero={:x}\n", kv.first,
+		result += std::format("{}: offset=${:x}, zero=${:x}\n", kv.first,
 			kv.second.first, kv.second.second);
 
 	result += "\n--- byte to string maps ---\n";
