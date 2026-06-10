@@ -4,6 +4,7 @@
 #include "./../common/lodepng.h"
 #include "./../common/klib/Kfile.h"
 #include <array>
+#include <cassert>
 #include <filesystem>
 #include <format>
 #include <limits>
@@ -115,8 +116,6 @@ void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::ve
 			SDL_RenderTexture(p_rnd, m_atlas, &src, &dst);
 		}
 	}
-
-	SDL_SetRenderTarget(p_rnd, nullptr);
 
 	// Store the texture
 	delete_texture(m_metatile_gfx[p_idx]);
@@ -330,7 +329,10 @@ void fe::gfx::blit(SDL_Renderer* p_rnd, SDL_Texture* p_texture, int p_x, int p_y
 }
 
 void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palette_no, int x, int y) const {
-	if (!m_atlas || !m_screen_texture) return;
+	assert(SDL_GetRenderTarget(renderer) == m_screen_texture);
+
+	if (!m_atlas || !m_screen_texture)
+		return;
 
 	SDL_FRect src_rect = {
 		static_cast<float>(tile_no * 8),
@@ -346,14 +348,14 @@ void fe::gfx::blit_to_screen(SDL_Renderer* renderer, int tile_no, int sub_palett
 		TILEMAP_SCALE * 8.0f
 	};
 
-	SDL_SetRenderTarget(renderer, m_screen_texture);
 	SDL_RenderTexture(renderer, m_atlas, &src_rect, &dst_rect);
-	SDL_SetRenderTarget(renderer, nullptr);
 }
 
 void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no,
 	std::size_t p_frame_no,
 	int x, int y) const {
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
+
 	auto iter{ m_sprite_gfx.find(p_sprite_no) };
 	if (iter == end(m_sprite_gfx))
 		return;
@@ -363,13 +365,12 @@ void fe::gfx::draw_sprite_on_screen(SDL_Renderer* p_rnd, std::size_t p_sprite_no
 		SDL_FRect dst_rect = { static_cast<float>(x), static_cast<float>(y),
 			w, h };
 
-		SDL_SetRenderTarget(p_rnd, m_screen_texture);
 		SDL_RenderTexture(p_rnd, iter->second[p_frame_no], nullptr, &dst_rect);
-		SDL_SetRenderTarget(p_rnd, nullptr);
 	}
 }
 
 void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_property) const {
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
 	if (static_cast<std::size_t>(block_property) >= m_icon_overlays.size())
 		return;
 
@@ -379,14 +380,14 @@ void fe::gfx::draw_icon_overlay(SDL_Renderer* p_rnd, int x, int y, byte block_pr
 		16.0f * static_cast<float>(y),
 	w, h };
 
-	SDL_SetRenderTarget(p_rnd, m_screen_texture);
 	SDL_RenderTexture(p_rnd, m_icon_overlays[block_property],
 		nullptr,
 		&dst_rect);
-	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 void fe::gfx::draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const {
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
+
 	auto iter{ m_door_req_gfx.find(p_req) };
 
 	if (iter != end(m_door_req_gfx)) {
@@ -396,21 +397,20 @@ void fe::gfx::draw_door_req(SDL_Renderer* p_rnd, int x, int y, byte p_req) const
 			16.0f * static_cast<float>(y),
 		w, h };
 
-		SDL_SetRenderTarget(p_rnd, m_screen_texture);
 		SDL_RenderTexture(p_rnd, iter->second,
 			nullptr,
 			&dst_rect);
-		SDL_SetRenderTarget(p_rnd, nullptr);
 	}
 }
 
 void fe::gfx::clear_screen_texture(SDL_Renderer* p_rnd) {
-	if (!m_screen_texture) return;
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
 
-	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	if (!m_screen_texture)
+		return;
+
 	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, 255);
 	SDL_RenderClear(p_rnd);
-	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 void fe::gfx::draw_screen_border_overlay(SDL_Renderer* p_rnd,
@@ -418,7 +418,7 @@ void fe::gfx::draw_screen_border_overlay(SDL_Renderer* p_rnd,
 	int p_border_left_px, int p_border_right_px,
 	int p_border_top_px, int p_border_bottom_px,
 	byte p_alpha) {
-	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
 
 	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(p_rnd, 0, 0, 0, p_alpha);
@@ -462,11 +462,11 @@ void fe::gfx::draw_screen_border_overlay(SDL_Renderer* p_rnd,
 	SDL_RenderFillRect(p_rnd, &r);
 
 	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_NONE);
-	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, int pixel_x, int pixel_y, int pixel_w, int pixel_h) const {
-	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
+
 	SDL_SetRenderDrawColor(p_rnd, p_color.r, p_color.g, p_color.b, p_color.a);
 
 	SDL_FRect l_rect(static_cast<float>(TILEMAP_SCALE * pixel_x),
@@ -475,14 +475,12 @@ void fe::gfx::draw_pixel_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color, 
 		static_cast<float>(pixel_h * TILEMAP_SCALE));
 
 	SDL_RenderRect(p_rnd, &l_rect);
-	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd,
 	int origin_mt_x, int origin_mt_y,
 	int width_mt, int height_mt, byte alpha) const {
-	// Set render target to your texture
-	SDL_SetRenderTarget(p_rnd, m_screen_texture);
+	assert(SDL_GetRenderTarget(p_rnd) == m_screen_texture);
 
 	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(p_rnd, 200, 200, 200, alpha);
@@ -520,9 +518,8 @@ void fe::gfx::draw_gridlines_on_screen(SDL_Renderer* p_rnd,
 	};
 	SDL_RenderRect(p_rnd, &border_rect);
 
-	// Reset render target back to default (the window)
+	// reset render blend mode
 	SDL_SetRenderDrawBlendMode(p_rnd, SDL_BLENDMODE_NONE);
-	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 void fe::gfx::draw_rect_on_screen(SDL_Renderer* p_rnd, SDL_Color p_color,

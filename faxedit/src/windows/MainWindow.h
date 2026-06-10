@@ -333,6 +333,7 @@ namespace fe {
 		std::optional<std::vector<byte>> patch_rom(bool p_exclude_dynamic = false);
 
 		// camera and screen rendering helpers
+		void render_screen_texture(SDL_Renderer* p_rnd);
 		void blit_screen_tilemap(SDL_Renderer* p_rnd, const fe::Chunk& p_chunk,
 			const fe::Screen& p_screen, int src_x, int src_y, int src_w, int src_h,
 			int world_x, int world_y, bool p_overlay);

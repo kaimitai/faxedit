@@ -201,131 +201,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 		ImGui_ImplSDL3_NewFrame();
 		ImGui::NewFrame();
 
-		m_gfx.clear_screen_texture(p_rnd);
-
-		const auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
-		const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
-
-		blit_screen_tilemap(p_rnd, l_chunk, l_screen, 0, 0, 16, 13, 0, 0, true);
-
-		if (m_settings.m_show_adjacent_screens) {
-			constexpr bool OVERLAYS_ON_ADJACENT_SCREENS{ true };
-
-			if (l_screen.m_scroll_left) {
-				blit_screen_tilemap(p_rnd, l_chunk,
-					l_chunk.m_screens.at(*l_screen.m_scroll_left),
-					c::TILEMAP_SCREEN_MT_W - c::TILEMAP_BORDER_MT_W, 0,
-					c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
-					-c::TILEMAP_BORDER_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
-			}
-			if (l_screen.m_scroll_right) {
-				blit_screen_tilemap(p_rnd, l_chunk,
-					l_chunk.m_screens.at(*l_screen.m_scroll_right),
-					0, 0,
-					c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
-					c::TILEMAP_SCREEN_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
-			}
-			if (l_screen.m_scroll_up) {
-				blit_screen_tilemap(p_rnd, l_chunk,
-					l_chunk.m_screens.at(*l_screen.m_scroll_up),
-					0, c::TILEMAP_SCREEN_MT_H - c::TILEMAP_BORDER_MT_H,
-					c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
-					0, -c::TILEMAP_BORDER_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
-			}
-			if (l_screen.m_scroll_down) {
-				blit_screen_tilemap(p_rnd, l_chunk,
-					l_chunk.m_screens.at(*l_screen.m_scroll_down),
-					0, 0,
-					c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
-					0, c::TILEMAP_SCREEN_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
-			}
-
-			m_gfx.draw_screen_border_overlay(p_rnd,
-				c::TILEMAP_VIEW_PX_W, c::TILEMAP_VIEW_PX_H,
-				c::TILEMAP_BORDER_MT_W * 16, c::TILEMAP_BORDER_MT_W * 16,
-				c::TILEMAP_BORDER_MT_H * 16, c::TILEMAP_BORDER_MT_H * 16,
-				m_settings.m_border_alpha);
-		}
-
-		// draw grid if enabled
-		if (m_settings.m_show_grid)
-			m_gfx.draw_gridlines_on_screen(
-				p_rnd,
-				c::TILEMAP_BORDER_MT_W,
-				c::TILEMAP_BORDER_MT_H,
-				c::TILEMAP_SCREEN_MT_W,
-				c::TILEMAP_SCREEN_MT_H,
-				128);
-
-		// draw selected rectangle
-		if (m_emode == fe::EditMode::TilemapEditMode) {
-			if (m_sel_tile_x2 < 16) {
-				const auto l_rect{ get_selection_dims() };
-				const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(l_rect.x),
-					static_cast<int>(l_rect.y))};
-
-				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 120, 0, 255),
-					vx, vy,
-					static_cast<int>(l_rect.w), static_cast<int>(l_rect.h));
-			}
-			else {
-				const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(m_sel_tile_x),
-					static_cast<int>(m_sel_tile_y))};
-
-				m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 255, 0, 255),
-					vx, vy, 1, 1);
-			}
-		}
-		else if (m_emode == fe::EditMode::Sprites) {
-			bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
-			bool l_showsprites{ !l_building || m_settings.m_show_sprite_sets_in_buildings };
-
-			if (l_showsprites)
-				draw_sprites(p_rnd,
-					l_building ? m_game->m_npc_bundles.at(m_sel_npc_bundle).m_sprites : l_screen.m_sprite_set.m_sprites,
-					l_building ? m_sel_npc_bundle_sprite : m_sel_sprite);
-		}
-		else if (m_emode == fe::EditMode::Doors) {
-			// draw placeholder rectangles for doors
-			for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d) {
-				const auto& l_door{ l_screen.m_doors[d] };
-
-				const auto [vx, vy] { world_mt_to_view_mt(
-					static_cast<int>(l_door.m_coords.first),
-					static_cast<int>(l_door.m_coords.second))};
-
-				m_gfx.draw_rect_on_screen(p_rnd,
-					d == m_sel_door ? m_pulse_color : SDL_Color(70, 100, 160, 255),
-					vx, vy, 1, 1);
-
-				// draw requirement
-				if (m_settings.m_door_req_overlay) {
-					byte l_dreq{ 0 };
-					if (l_door.m_door_type == fe::DoorType::Building ||
-						l_door.m_door_type == fe::DoorType::SameWorld) {
-						l_dreq = l_door.m_requirement;
-						if (m_cache.m_randomizer_doors && l_door.m_door_type == fe::DoorType::SameWorld)
-							l_dreq %= 16;
-					}
-					else {
-						auto l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };
-						if (l_stage.has_value()) {
-							if (l_door.m_door_type == fe::DoorType::NextWorld)
-								l_dreq = l_stage.value()->m_next_requirement;
-							else
-								l_dreq = l_stage.value()->m_prev_requirement;
-						}
-					}
-
-					const auto [vx, vy] {
-						world_mt_to_view_mt(l_door.m_coords.first,
-							l_door.m_coords.second)};
-
-					m_gfx.draw_door_req(p_rnd, vx, vy, l_dreq);
-				}
-
-			}
-		}
+		render_screen_texture(p_rnd);
 
 		draw_screen_tilemap_window(p_rnd);
 		draw_control_window(p_rnd);
@@ -440,6 +316,9 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd,
 		m_gfx.generate_mt_texture(p_rnd,
 			m_game->m_chunks.at(m_sel_chunk).m_metatiles.at(p_mt_no).m_tilemap,
 			p_mt_no, mts[p_mt_no].m_attr_tl);
+
+	// set the rendertarget back to default
+	SDL_SetRenderTarget(p_rnd, nullptr);
 }
 
 std::string fe::MainWindow::get_description(byte p_index,
@@ -1099,6 +978,138 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 }
 
 // screen rendering helpers
+void fe::MainWindow::render_screen_texture(SDL_Renderer* p_rnd) {
+	SDL_SetRenderTarget(p_rnd, m_gfx.get_screen_texture());
+
+	m_gfx.clear_screen_texture(p_rnd);
+
+	const auto& l_chunk{ m_game->m_chunks.at(m_sel_chunk) };
+	const auto& l_screen{ m_game->m_chunks.at(m_sel_chunk).m_screens.at(m_sel_screen) };
+
+	blit_screen_tilemap(p_rnd, l_chunk, l_screen, 0, 0, 16, 13, 0, 0, true);
+
+	if (m_settings.m_show_adjacent_screens) {
+		constexpr bool OVERLAYS_ON_ADJACENT_SCREENS{ true };
+
+		if (l_screen.m_scroll_left) {
+			blit_screen_tilemap(p_rnd, l_chunk,
+				l_chunk.m_screens.at(*l_screen.m_scroll_left),
+				c::TILEMAP_SCREEN_MT_W - c::TILEMAP_BORDER_MT_W, 0,
+				c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
+				-c::TILEMAP_BORDER_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
+		}
+		if (l_screen.m_scroll_right) {
+			blit_screen_tilemap(p_rnd, l_chunk,
+				l_chunk.m_screens.at(*l_screen.m_scroll_right),
+				0, 0,
+				c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
+				c::TILEMAP_SCREEN_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
+		}
+		if (l_screen.m_scroll_up) {
+			blit_screen_tilemap(p_rnd, l_chunk,
+				l_chunk.m_screens.at(*l_screen.m_scroll_up),
+				0, c::TILEMAP_SCREEN_MT_H - c::TILEMAP_BORDER_MT_H,
+				c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
+				0, -c::TILEMAP_BORDER_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
+		}
+		if (l_screen.m_scroll_down) {
+			blit_screen_tilemap(p_rnd, l_chunk,
+				l_chunk.m_screens.at(*l_screen.m_scroll_down),
+				0, 0,
+				c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
+				0, c::TILEMAP_SCREEN_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
+		}
+
+		m_gfx.draw_screen_border_overlay(p_rnd,
+			c::TILEMAP_VIEW_PX_W, c::TILEMAP_VIEW_PX_H,
+			c::TILEMAP_BORDER_MT_W * 16, c::TILEMAP_BORDER_MT_W * 16,
+			c::TILEMAP_BORDER_MT_H * 16, c::TILEMAP_BORDER_MT_H * 16,
+			m_settings.m_border_alpha);
+	}
+
+	// draw grid if enabled
+	if (m_settings.m_show_grid)
+		m_gfx.draw_gridlines_on_screen(
+			p_rnd,
+			c::TILEMAP_BORDER_MT_W,
+			c::TILEMAP_BORDER_MT_H,
+			c::TILEMAP_SCREEN_MT_W,
+			c::TILEMAP_SCREEN_MT_H,
+			128);
+
+	// draw selected rectangle
+	if (m_emode == fe::EditMode::TilemapEditMode) {
+		if (m_sel_tile_x2 < 16) {
+			const auto l_rect{ get_selection_dims() };
+			const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(l_rect.x),
+				static_cast<int>(l_rect.y))};
+
+			m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 120, 0, 255),
+				vx, vy,
+				static_cast<int>(l_rect.w), static_cast<int>(l_rect.h));
+		}
+		else {
+			const auto [vx, vy] { world_mt_to_view_mt(static_cast<int>(m_sel_tile_x),
+				static_cast<int>(m_sel_tile_y))};
+
+			m_gfx.draw_rect_on_screen(p_rnd, SDL_Color(255, 255, 0, 255),
+				vx, vy, 1, 1);
+		}
+	}
+	else if (m_emode == fe::EditMode::Sprites) {
+		bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
+		bool l_showsprites{ !l_building || m_settings.m_show_sprite_sets_in_buildings };
+
+		if (l_showsprites)
+			draw_sprites(p_rnd,
+				l_building ? m_game->m_npc_bundles.at(m_sel_npc_bundle).m_sprites : l_screen.m_sprite_set.m_sprites,
+				l_building ? m_sel_npc_bundle_sprite : m_sel_sprite);
+	}
+	else if (m_emode == fe::EditMode::Doors) {
+		// draw placeholder rectangles for doors
+		for (std::size_t d{ 0 }; d < l_screen.m_doors.size(); ++d) {
+			const auto& l_door{ l_screen.m_doors[d] };
+
+			const auto [vx, vy] { world_mt_to_view_mt(
+				static_cast<int>(l_door.m_coords.first),
+				static_cast<int>(l_door.m_coords.second))};
+
+			m_gfx.draw_rect_on_screen(p_rnd,
+				d == m_sel_door ? m_pulse_color : SDL_Color(70, 100, 160, 255),
+				vx, vy, 1, 1);
+
+			// draw requirement
+			if (m_settings.m_door_req_overlay) {
+				byte l_dreq{ 0 };
+				if (l_door.m_door_type == fe::DoorType::Building ||
+					l_door.m_door_type == fe::DoorType::SameWorld) {
+					l_dreq = l_door.m_requirement;
+					if (m_cache.m_randomizer_doors && l_door.m_door_type == fe::DoorType::SameWorld)
+						l_dreq %= 16;
+				}
+				else {
+					auto l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };
+					if (l_stage.has_value()) {
+						if (l_door.m_door_type == fe::DoorType::NextWorld)
+							l_dreq = l_stage.value()->m_next_requirement;
+						else
+							l_dreq = l_stage.value()->m_prev_requirement;
+					}
+				}
+
+				const auto [vx, vy] {
+					world_mt_to_view_mt(l_door.m_coords.first,
+						l_door.m_coords.second)};
+
+				m_gfx.draw_door_req(p_rnd, vx, vy, l_dreq);
+			}
+
+		}
+	}
+
+	SDL_SetRenderTarget(p_rnd, nullptr);
+}
+
 void fe::MainWindow::blit_screen_tilemap(SDL_Renderer* p_rnd, const fe::Chunk& p_chunk,
 	const fe::Screen& p_screen, int src_x, int src_y, int src_w, int src_h,
 	int world_x, int world_y, bool p_overlay) {
