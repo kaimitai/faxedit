@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-7.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-7.21), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -1238,6 +1238,17 @@ Note that compatibility does not go in the other direction; The randomzier will 
 <hr>
 
 ### Changelog
+
+* 2026-06-11: version beta-7.21 - "Varnish"
+
+  * Rendering
+	* Fixed excessive SDL render-target switching during screen composition
+	* Reduced memory usage and improved renderer stability on some systems
+	* Impact may vary depending on graphics hardware and driver behavior
+  * Internal
+	* Replaced stb_image with lodepng for embedded icon-overlay png decoding
+	* Reduced executable size and simplified dependency management
+	* Prepared infrastructure for future data xml format migration
 
 * 2026-06-07: version beta-7.2 - "Canvas"
 
