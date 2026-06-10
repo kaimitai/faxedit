@@ -226,7 +226,6 @@
     <ClInclude Include="src\common\lodepng.h" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
-    <ClInclude Include="src\common\stb_image.h" />
     <ClInclude Include="src\fe\ChrStructures.h" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Cinematic.h" />

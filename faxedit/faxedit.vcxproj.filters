@@ -368,9 +368,6 @@
     <ClInclude Include="src\fe\fe_app_constants.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
-    <ClInclude Include="src\common\stb_image.h">
-      <Filter>Header Files\common</Filter>
-    </ClInclude>
     <ClInclude Include="src\fi\FaxString.h">
       <Filter>Header Files\fi</Filter>
     </ClInclude>

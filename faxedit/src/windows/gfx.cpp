@@ -1,6 +1,4 @@
 #include "gfx.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "./../common/stb_image.h"
 #include "./../common/lodepng.h"
 #include "./../common/klib/Kfile.h"
 #include <array>
@@ -123,47 +121,56 @@ void fe::gfx::generate_mt_texture(SDL_Renderer* p_rnd, const std::vector<std::ve
 }
 
 void fe::gfx::generate_icon_overlays(SDL_Renderer* p_rnd) {
-	int width, height, channels;
-	unsigned char* rgbaPixels = stbi_load_from_memory(OVERLAY_ICONS_PNG,
-		sizeof(OVERLAY_ICONS_PNG),
-		&width, &height, &channels, 4); // stbi_load("./assets/icon_overlays.png", &width, &height, &channels, 4);
-	if (!rgbaPixels) {
-		throw std::runtime_error("Could not make icon overlays");
-	}
+	std::vector<unsigned char> rgbaPixels;
+	unsigned width, height;
 
-	for (int i = 0; i < width * height; ++i) {
-		int idx = i * 4;
-		unsigned char r = rgbaPixels[idx + 0];
-		unsigned char g = rgbaPixels[idx + 1];
-		unsigned char b = rgbaPixels[idx + 2];
+	const auto error{ lodepng::decode(
+		rgbaPixels,
+		width,
+		height,
+		OVERLAY_ICONS_PNG,
+		sizeof(OVERLAY_ICONS_PNG)) };
 
-		if (r == m_hot_pink.r && g == m_hot_pink.g && b == m_hot_pink.b) {
-			rgbaPixels[idx + 3] = 0; // make transparent
+	if (error)
+		throw std::runtime_error(std::format("Could not decode icon overlays: {}",
+			lodepng_error_text(error)));
+
+	for (std::size_t i{ 0 }; i < rgbaPixels.size() / 4; ++i) {
+		const std::size_t idx{ i * 4 };
+
+		const unsigned char r{ rgbaPixels[idx + 0] };
+		const unsigned char g{ rgbaPixels[idx + 1] };
+		const unsigned char b{ rgbaPixels[idx + 2] };
+
+		if (r == m_hot_pink.r &&
+			g == m_hot_pink.g &&
+			b == m_hot_pink.b) {
+			rgbaPixels[idx + 3] = 0;
 		}
 	}
 
 	SDL_Surface* fullSurface = SDL_CreateSurfaceFrom(
-		width, height,
-		SDL_PIXELFORMAT_RGBA32, // correct first argument
-		rgbaPixels,              // pixel data
-		width * 4                  // pitch (bytes per row)
-	);
+		static_cast<int>(width),
+		static_cast<int>(height),
+		SDL_PIXELFORMAT_RGBA32,
+		rgbaPixels.data(),
+		static_cast<int>(width * 4));
+
 	if (!fullSurface)
 		throw std::runtime_error("Could not generate icon overlays");
 
-	for (int i = 0; i < width / 16; ++i) {
-		SDL_Rect srcRect = { i * 16, 0, 16, 16 };
-		SDL_Surface* iconSurface = SDL_CreateSurface(16, 16, SDL_PIXELFORMAT_RGBA32);
+	for (unsigned i{ 0 }; i < width / 16; ++i) {
+		SDL_Rect srcRect{ static_cast<int>(i * 16), 0, 16, 16 };
+		SDL_Surface* iconSurface{
+			SDL_CreateSurface(16, 16, SDL_PIXELFORMAT_RGBA32) };
 		SDL_BlitSurface(fullSurface, &srcRect, iconSurface, nullptr);
-
-		SDL_Texture* iconTex = SDL_CreateTextureFromSurface(p_rnd, iconSurface);
+		SDL_Texture* iconTex{
+			SDL_CreateTextureFromSurface(p_rnd, iconSurface) };
 		SDL_SetTextureBlendMode(iconTex, SDL_BLENDMODE_BLEND);
 		m_icon_overlays.push_back(iconTex);
-
 		SDL_DestroySurface(iconSurface);
 	}
 
-	stbi_image_free(rgbaPixels);
 	SDL_DestroySurface(fullSurface);
 }
 
