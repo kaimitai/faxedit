@@ -55,7 +55,7 @@ bool fe::ui::collapsing_header(const std::string& p_label, const std::string& p_
 
 	if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
 		ImGui::BeginTooltip();
-		ImGui::Text(p_tooltip_text.c_str());
+		ImGui::TextUnformatted(p_tooltip_text.c_str());
 		ImGui::EndTooltip();
 	}
 
@@ -85,7 +85,7 @@ bool fe::ui::imgui_button(const std::string& p_label, std::size_t p_style,
 
 	if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
 		ImGui::BeginTooltip();
-		ImGui::Text(p_tooltip_text.c_str());
+		ImGui::TextUnformatted(p_tooltip_text.c_str());
 		ImGui::EndTooltip();
 	}
 
@@ -100,7 +100,7 @@ bool fe::ui::imgui_checkbox(const std::string& p_label, bool& p_val,
 	bool result{ ImGui::Checkbox(p_label.c_str(), &p_val) };
 
 	if (!p_tooltip.empty() && ImGui::IsItemHovered()) {
-		ImGui::SetTooltip(p_tooltip.c_str());
+		ImGui::SetTooltip("%s", p_tooltip.c_str());
 	}
 
 	return result;

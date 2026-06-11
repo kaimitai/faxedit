@@ -42,11 +42,11 @@ namespace fe {
 
 			// draw label and optional tooltip text
 			if (!p_label.empty()) {
-				ImGui::Text(p_label.c_str());
+				ImGui::TextUnformatted(p_label.c_str());
 
 				if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
 					ImGui::BeginTooltip();
-					ImGui::Text(p_tooltip_text.c_str());
+					ImGui::TextUnformatted(p_tooltip_text.c_str());
 					ImGui::EndTooltip();
 				}
 			}

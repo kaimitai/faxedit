@@ -6,7 +6,7 @@
 #include "./../fe/xml/Xml_helper.h"
 #include "./../common/klib/Kfile.h"
 #include "./../common/klib/IPS_Patch.h"
-#include "./../fe/ROM_manager.h"
+#include "./../fe/ROM_Manager.h"
 #include "./../fe/fe_app_constants.h"
 #include "./../fe/sprite/fe_sprite_constants.h"
 #include "./../fe/WorldVisualizer.h"

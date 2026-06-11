@@ -599,7 +599,7 @@ void fe::MainWindow::show_screen_scroll_data(void) {
 			ImGui::TableNextRow();
 
 			ImGui::TableSetColumnIndex(0);
-			ImGui::Text(lc_dirs[kv.first].c_str());
+			ImGui::TextUnformatted(lc_dirs[kv.first].c_str());
 
 			ImGui::TableSetColumnIndex(1);
 			if (kv.second.has_value()) {

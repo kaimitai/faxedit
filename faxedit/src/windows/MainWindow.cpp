@@ -227,7 +227,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 }
 
 void fe::MainWindow::imgui_text(const std::string& p_str) const {
-	ImGui::Text(p_str.c_str());
+	ImGui::TextUnformatted(p_str.c_str());
 }
 
 void fe::MainWindow::show_output_messages(void) const {

@@ -186,7 +186,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					ImGuiWindowFlags_NoSavedSettings |
 					ImGuiWindowFlags_NoMove |
 					ImGuiWindowFlags_Tooltip);
-				ImGui::Text("(%d, %d)", tileX, tileY);
+				ImGui::Text("(%d, %d)", static_cast<int>(tileX), static_cast<int>(tileY));
 				ImGui::End();
 			}
 
@@ -923,13 +923,13 @@ void fe::MainWindow::show_stage_door_data(fe::Door& p_door) {
 		std::size_t l_dest_screen{ l_next ? l_stg->m_next_screen : l_stg->m_prev_screen };
 		byte l_dest_req{ l_next ? l_stg->m_next_requirement : l_stg->m_prev_requirement };
 
-		ImGui::Text(std::format("Requirement: {}",
+		ImGui::TextUnformatted(std::format("Requirement: {}",
 			get_description(l_dest_req, m_cache.m_labels_door_reqs)).c_str());
-		ImGui::Text(std::format("Destination stage: {} ({})",
+		ImGui::TextUnformatted(std::format("Destination stage: {} ({})",
 			l_dest_stage, m_cache.m_labels_worlds[l_dest_world]).c_str());
-		ImGui::Text(std::format("Destination screen: {}",
+		ImGui::TextUnformatted(std::format("Destination screen: {}",
 			l_dest_screen).c_str());
-		ImGui::Text(std::format("Destination palette: {}",
+		ImGui::TextUnformatted(std::format("Destination palette: {}",
 			get_description(static_cast<byte>(m_game->get_default_palette_no(l_dest_world, 0)),
 				m_cache.m_labels_palettes)).c_str());
 	}
