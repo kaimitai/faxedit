@@ -1,6 +1,7 @@
 #ifndef FI_OPCODE_H
 #define FI_OPCODE_H
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>

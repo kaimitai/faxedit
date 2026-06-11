@@ -11,6 +11,7 @@
 #include <format>
 #include <SDL3/SDL.h>
 #include "./../fe/sprite/SpriteGUILoader.h"
+#include <cmath>
 
 using byte = unsigned char;
 
@@ -417,7 +418,7 @@ std::optional<std::pair<int, int>> fe::MainWindow::imgui_select_tile_image(SDL_T
 
 	// time
 	float t = static_cast<float>(ImGui::GetTime());
-	float pulse = (sinf(t * 2.0f) + 1.0f) * 0.5f;
+	float pulse = (std::sin(t * 2.0f) + 1.0f) * 0.5f;
 
 	// base colors
 	ImVec4 c1 = ImVec4(0.1f, 0.2f, 0.8f, 1.0f);

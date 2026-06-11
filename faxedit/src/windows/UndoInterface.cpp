@@ -1,4 +1,5 @@
 #include "UndoInterface.h"
+#include <cstdint>
 
 fe::UndoInterface::UndoInterface(fe::Game& p_game) :
 	game{ p_game }

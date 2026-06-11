@@ -1,6 +1,7 @@
 #ifndef FI_SHOP_H
 #define FI_SHOP_H
 
+#include <cstdint>
 #include <vector>
 
 using byte = unsigned char;
