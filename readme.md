@@ -1,136 +1,152 @@
-﻿# Echoes of Eolis - An editor for Faxanadu (NES)
+﻿# Echoes of Eolis - An Editor for Faxanadu (NES)
 
-Welcome to the Echoes of Eolis code repository and release page. The code is standard C++20, and the project files were created using Microsoft Visual Studio Community 2022. You can compile the application from source, or get the latest precompiled Windows x64 build under the [repository releases](https://github.com/kaimitai/faxedit/releases/).
+Welcome to the Echoes of Eolis code repository and release page.
 
-A MacOS-build is also available. See instructions on [how to run an unsigned DMG-file](https://discord.com/channels/859610833323556884/1434979888049426532/1476410785851772928), or you can build from source.
+Echoes of Eolis is a general-purpose editor for Faxanadu that supports editing maps, graphics, game data, cinematics, and many other aspects of the game.
 
-Make sure to read the [documentation](./docs/doc.md) for a detailed overview of all the inter-connected data in this game.
+Precompiled Windows x64 builds are available on the [repository releases](https://github.com/kaimitai/faxedit/releases) page. A macOS build is also available (see instructions on [how to run an unsigned DMG-file](https://support.apple.com/en-ca/guide/mac-help/mh40616/mac)). Alternatively, the project can be built from source on Windows, Linux, and macOS using CMake.
 
-This application will always be shipped with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts), which is a command-line application that can disassemble and assemble various script types, music and miscellaneous data - in other words data that is not necessarily suitable for a GUI editor.
+The editor supports all major Faxanadu ROM regions, including US, US Revision A, EU, JP, and the [English Translation Hack](https://www.romhacking.net/translations/4281/).
 
-The application is compatible out of the box with the following ROM regions: US, US Revision A, EU, JP and a well-known [English Translation Hack](https://www.romhacking.net/translations/4281/).
+Echoes of Eolis is distributed together with [FaxIScripts](https://github.com/kaimitai/FaxIScripts), a command-line assembler and disassembler for scripts, music, and other data that does not naturally lend itself to GUI editing.
 
-See the [Changelog](./docs/doc.md#changelog) for version history.
+See the [documentation](./docs/doc.md) for a detailed overview of the editor and the [changelog](./docs/doc.md#changelog) for version history.
+
+<hr>
+
+## Quick Links
+
+- [Documentation](./docs/doc.md)
+- [Changelog](./docs/doc.md#changelog)
+- [Building from Source](#building-from-source)
+- [Editor Capabilities](#editor-capabilities)
+- [Recommended Workflow](#recommended-workflow)
+- [Credits](#credits)
+- [Community & Related Projects](#community--related-projects)
+- [Curiosa](#curiosa)
+
+<hr>
+
+## Building from Source
+
+### Linux
+
+Install the required packages:
+
+```bash
+sudo apt update
+sudo apt install build-essential cmake ninja-build libsdl3-dev
+```
+
+From the repository root:
+
+```bash
+mkdir build
+cd build
+
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja
+```
+
+### macOS
+
+Install the required dependencies:
+
+```bash
+brew install cmake ninja sdl3
+```
+
+From the repository root:
+
+```bash
+mkdir build
+cd build
+
+cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja
+```
+
+Alternatively, community-provided helper scripts are available in the `scripts` directory:
+
+```bash
+./scripts/mac-build.sh
+```
+
+**Note:** `eoe_config.xml` must be located in the same directory as the executable when loading ROM files.
+
 
 <hr>
 
 ## Editor Capabilities
 
-The following data is editable:
+Echoes of Eolis can edit:
 
-### Screen Data
+* **Screen Data:** Tilemaps, scrolling connections, transitions, doors, and sprites
+* **World Data:** Metatiles, scenes (palettes, music, tilesets), and mattock animations
+* **Game Data:** Stages, spawn points, building parameters, push-blocks, jump-on blocks, palette/music mappings, and fog
+* **Graphics:** Metatile tilesets, images, sprite graphics, and animation frames
+* **Cinematics:** Intro/outro metadata and graphics
+* **Visualizer:** Parameterized world map export to PNG
 
-* Screen tilemaps
-* Screen scrolling connections
-* Screen transition connections
-* Screen doors
-* Screen sprites
+The main editor supports zooming, panning, and previewing adjacent screens.
 
-### World Data
+Graphics can be exported to BMP files, edited in external image editors, and imported back into the project, making large graphics modifications significantly easier than editing individual tiles by hand.
 
-* Metatile definitions
-* Scenes: World palette, music and tilesets
-* Mattock animations
+Screen, world, and game metadata are displayed alongside the edited data.
 
-### Game Data
-* Stage definitions
-* Spawn points
-* Building parameter sprite-sets
-* Push-Block metadata
-* Jump-On Block metadata
-* Palette to music mapping
-* Fog parameters
-
-### Graphics
-* Tilesets for metatiles
-* Images used in the game
-* Sprite Graphics and animation frames
-
-### Cinematics
-* Intro animaton metadata
-* Outro animation metadata
-* All cinematic animation graphics
-
-### Visualizer
-* World maps can be exported as parametrized png-images
-
-<hr>
-
-The main editor screen supports zooming, panning and showing subsections of scroll-adjacent screens.
+Projects can be saved as patched ROMs, IPS patches, or XML files suitable for version control and collaboration. XML files generated by the editor are designed to be human-readable and diff-friendly.
 
 ![The editor in action](./docs/img/eoe_presentation.png)
-###### The editor will show screen, world and game metadata information
-The editor can save your project as a patched NES ROM file or as an IPS patch. We also support our own XML format, which allows users to more easily compare file versions, use version control systems to track file history, and collaborate on projects.
 
 <hr>
 
-### Recommended Workflow
+## Recommended Workflow
 
-The editor allows you to work directly on ROM files, and for small or experimental changes this is perfectly fine. A ROM contains all necessary data, and you can patch and save it repeatedly without needing any external files other than ```eoe_config.xml```.
+For small or experimental changes, working directly on ROM files is perfectly fine.
 
-For larger or long‑term projects, however, it is strongly recommended to export your project data to XML and treat that XML file as your **primary source of truth**. The XML format stores all world tilesets, game graphics, palettes, tilemaps, and related metadata in a clean, editable, and version‑friendly way.
+For larger projects, it is recommended to export your data to XML and treat the XML file as the project's primary source of truth. If you also modify scripts or music, keep the corresponding FaxIScripts source files alongside the XML data.
 
-If your project also involves editing **music** or **scripts** for use with [FaxIScripts](https://github.com/kaimitai/FaxIScripts), you should keep these text files as part of your project’s source as well. These text‑based assets integrate naturally with the project as a whole and will give you full control over every part of the game the editor and assembler support.
+Using git or another version control system is highly recommended. XML, script, and music source files are easy to diff, merge, revert, and track over time.
 
-Using a version control system such as **git** is highly encouraged. Text files (XML, scripts, music sources) are:
+Most project data is region-agnostic. When patching a ROM, the editor uses `eoe_config.xml` to resolve region-specific offsets and layouts automatically.
 
-- easy to diff  
-- easy to merge  
-- easy to revert  
-- acts as a backup system with file history
-
-These files are also **region‑agnostic** for the most part. (The only exception are strings in iScripts for the jp-region) When patching a ROM, the editor reads all region‑specific offsets and layout information from `eoe_config.xml`, ensuring that your exported data is always routed to the correct locations regardless of whether you’re working with EU, US, or US Rev A ROMs - or any custom compatible ROM hack - as long as it is defined in the configuration xml.
-
-In short:
-
-- **Small edits:** you can work directly on the ROM
-- **Serious projects:** keep XML + script/music sources under version control  
-- **ROM region differences:** handled automatically through configuration  
-
-This approach gives you a clean, reliable workflow and protects your work over time.
-
-If you use a configuration file override (eoe_config_override.xml) this should usually also be considered part of the project masterdata.
+If you override default configuration via `eoe_config_override.xml`, that file should normally be considered part of the project source data as well.
 
 <hr>
 
-### Credits
+## Credits
 
 Special thanks to the following contributors and fellow digital archaeologists:
 
-[ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project
-
-["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats
-
-[Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data
-
-[Jessica](https://www.romhacking.net/community/9037/) - for testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
-
-[Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) for providing MacOS build scripts and binaries, and for helping out with testing, bug-reports and suggestions for new features.
-
-[Ok Impala!](https://www.okimpala.net) for feedback and suggestions.
+  * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
+  * ["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats.
+  * [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data.
+  * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
+  * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, and for helping out with testing, bug reports and suggestions for new features.
+  * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions.
 
 <hr>
 
-### Curiosa
-
-In order to animate sprites in the editor, I had to investigate and map out the animation frame format. I rendered all the animation frames with the tilesets most likely to be associated with each frame, and to my surprise the third and fourth frames of the Maskman enemy (sprite with id 32) showed a walking female NPC never seen before.
-
-The character data for this NPC is stored in the middle of the character data for Maskman, and the animation frames are similarly entangled. The fact that no ID is associated with this sprite is probably the reason it remained undiscovered for so long.
-
-Here is the animation:
-
-![Unused female NPC](./docs/img/unused_female_npc.png)
-
-<hr>
-
-**ROM Hack Project Links**
+## Community & Related Projects
 
 * You can find me on the **Faxanadu Randomizer & Romhacking** Discord server, the main hub for all things Faxanadu.
 
-  [![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/AyJErR8kyV)
+[![Discord](https://img.shields.io/badge/Faxanadu%20Randomizer%20%26%20Romhacking-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/AyJErR8kyV)
+
+Notable community projects include:
+
+* [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala.
+* [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/) - A full music replacement hack for Faxanadu.
+* [Faxanadu 40th Anniversary edition](https://fax40.net/) - Songbirder's enhancement project, currently in beta.
 
 <hr>
 
-* Dont't miss [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala!
-* Check out [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/), a full music replacement hack for Faxanadu!
-* Songbirder's [Faxanadu 40th Anniversary edition](https://fax40.net/) ROM hack (currently in beta) is available!
+## Curiosa
+
+While mapping the sprite animation format for the editor, I rendered every animation frame in the game using the tilesets most likely to be associated with each frame.
+
+To my surprise, the third and fourth animation frames of the Maskman enemy (sprite ID 32) revealed a walking female NPC that appears nowhere in the game.
+
+The graphics and animation data for this character are embedded directly within Maskman's data, and no sprite ID appears to reference it. This may explain why the character remained undiscovered for so long.
+
+![Unused female NPC](./docs/img/unused_female_npc.png)
