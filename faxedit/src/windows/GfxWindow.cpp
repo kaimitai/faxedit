@@ -418,7 +418,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	else if (m_gfx_emode == fe::GfxEditMode::HUDAttributes) {
 		const std::size_t HUD_GFX_KEY{ 1000 };
 
-		const auto regen_hud = [this](SDL_Renderer* p_rnd,
+		const auto regen_hud = [this](SDL_Renderer* pl_rnd,
 			std::size_t p_palette_no) -> void {
 				m_hud_tilemap.set_flat_palette(m_game->m_palettes.at(p_palette_no));
 				const auto& attrs{
@@ -427,7 +427,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 					)
 				};
 				m_hud_tilemap.populate_attribute(attrs.m_tl, attrs.m_tr, attrs.m_bl, attrs.m_br);
-				m_gfx.gen_tilemap_texture(p_rnd, m_hud_tilemap, HUD_GFX_KEY);
+				m_gfx.gen_tilemap_texture(pl_rnd, m_hud_tilemap, HUD_GFX_KEY);
 			};
 
 		static std::size_t ls_sel_wpal{ 0 };

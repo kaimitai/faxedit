@@ -401,8 +401,6 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 		imgui_text("No sprites defined");
 	}
 	else {
-		std::size_t l_sprite_cnt{ l_sprites.size() };
-
 		if (p_sel_sprite >= l_sprite_cnt)
 			p_sel_sprite = l_sprite_cnt - 1;
 
@@ -1097,11 +1095,11 @@ void fe::MainWindow::render_screen_texture(SDL_Renderer* p_rnd) {
 					}
 				}
 
-				const auto [vx, vy] {
+				const auto [dvx, dvy] {
 					world_mt_to_view_mt(l_door.m_coords.first,
 						l_door.m_coords.second)};
 
-				m_gfx.draw_door_req(p_rnd, vx, vy, l_dreq);
+				m_gfx.draw_door_req(p_rnd, dvx, dvy, l_dreq);
 			}
 
 		}

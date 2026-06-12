@@ -553,13 +553,13 @@ void fe::gfx::set_app_icon(SDL_Window* p_window, const unsigned char* p_pixels) 
 	uint32_t* pixels = static_cast<uint32_t*>(l_icon->pixels);
 
 	for (int i = 0; i < 64; ++i) {
-		unsigned char byte = p_pixels[i];
+		unsigned char byte_value = p_pixels[i];
 		for (int j = 0; j < 4; ++j) {
 			int pixel_index = i * 4 + j;
 			int x = pixel_index % 16;
 			int y = pixel_index / 16;
 
-			uint8_t index = (byte >> ((3 - j) * 2)) & 0x03;
+			uint8_t index = (byte_value >> ((3 - j) * 2)) & 0x03;
 			pixels[y * 16 + x] = lc_palette[index];
 		}
 	}

@@ -75,8 +75,8 @@ std::optional<fe::AllocationResult> fe::GodAllocator::init_and_allocate(const st
 		// ptr are currently (bucket idx, byte offset in bucket)
 		for (std::size_t j{ 0 }; j < ptrtable.size(); ++j) {
 			// get ROM offset of ptr location
-			std::size_t ptr_rom_offset{ p_free_ranges.at(ptrtable[j].first).first + ptrtable[j].second };
-			std::size_t ptr_cpu_offset{ ptr_rom_offset - p_pointers.at(i).second };
+			std::size_t data_rom_offset{ p_free_ranges.at(ptrtable[j].first).first + ptrtable[j].second };
+			std::size_t ptr_cpu_offset{ data_rom_offset - p_pointers.at(i).second };
 
 			ptr_cpu_values.push_back(static_cast<byte>(ptr_cpu_offset % 256));
 			ptr_cpu_values.push_back(static_cast<byte>(ptr_cpu_offset / 256));

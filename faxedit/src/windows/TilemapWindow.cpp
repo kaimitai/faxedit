@@ -163,10 +163,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (m_settings.m_invert_zoom)
 						wheel = -wheel;
 
-					// Mouse position within displayed image [0..1]
-					const float u{ (mousePos.x - imagePos.x) / imageSize.x };
-					const float v{ (mousePos.y - imagePos.y) / imageSize.y };
-
 					// Texture pixel currently under cursor
 					const float anchor_x{ vp.src_x0_px + u * vp.visible_w_px };
 					const float anchor_y{ vp.src_y0_px + v * vp.visible_h_px };
@@ -221,7 +217,6 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				}
 				else {
 					bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
-					bool l_ctrl{ ImGui::IsKeyDown(ImGuiMod_Ctrl) };
 
 					bool l_building{ m_sel_chunk == c::CHUNK_IDX_BUILDINGS };
 					bool l_allow_sprite_edit{ !l_building || m_settings.m_show_sprite_sets_in_buildings };

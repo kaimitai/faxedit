@@ -609,21 +609,21 @@ std::vector<std::size_t> fe::SpriteGfxManager::sprite_id_to_update_handler_id(co
 	std::size_t HANDLER_OFFSET{ p_config.constant(c::ID_SPRITE_UPDATE_HANDLERS_OFFSET) };
 	const auto HANDLER_MAP{ p_config.bmap_numeric_reverse(c::ID_SPRITE_UPDATE_HANDLER_CPU_ADDR) };
 
-	std::vector<std::size_t> sprite_id_to_handler_id;
+	std::vector<std::size_t> l_sprite_id_to_handler_id;
 
 	for (std::size_t i{ 0 }; i < p_sprite_count; ++i) {
 		auto spr_handler_addr{ p_rom_mgr.read_uint16_le(p_rom, HANDLER_OFFSET + 2 * i) };
 		auto iter{ HANDLER_MAP.find(spr_handler_addr) };
 
 		if (iter != end(HANDLER_MAP))
-			sprite_id_to_handler_id.push_back(iter->second);
+			l_sprite_id_to_handler_id.push_back(iter->second);
 		else
 			throw std::runtime_error(
 				std::format("Sprite {} uses update handler with cpu addr 0e:{:04x}, but this does not match any config",
 					i, spr_handler_addr));
 	}
 
-	return sprite_id_to_handler_id;
+	return l_sprite_id_to_handler_id;
 }
 
 fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_config, std::vector<byte>& p_rom,
