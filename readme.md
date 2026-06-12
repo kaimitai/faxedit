@@ -121,7 +121,7 @@ Special thanks to the following contributors and fellow digital archaeologists:
   * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
   * ["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats.
   * [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data.
-  * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](./docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
+  * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
   * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, and for helping out with testing, bug reports and suggestions for new features.
   * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions.
 
