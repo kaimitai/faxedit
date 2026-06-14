@@ -43,6 +43,8 @@ namespace fe {
 			const std::vector<std::vector<byte>>& p_data) const;
 
 		void duplicate_static_bank(std::vector<byte>& p_rom) const;
+		void clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const;
+		bool is_bank_clear(const std::vector<byte>& p_rom, byte p_bank_no) const;
 
 	public:
 		ROM_Manager(void) = default;

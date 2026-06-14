@@ -358,6 +358,7 @@
 	<!-- value sets -->
 	<sets>
 		<!-- banks which can be used for tilemap data -->
+		<set name="tilemap_banks" values="0,1,2,9,17,18,19,20,21,22,23,24,25,26,27,28,29,30" region="en-transl" />
 		<set name="tilemap_banks" values="0,1,2,9" />
 		<!-- reserved string indexes - will not be re-indexed or discarded by the assembler -->
 		<!-- strings called directly from the action handler; like "You can't carry any more." -->

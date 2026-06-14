@@ -12,6 +12,7 @@
 // tilemap banks, and update the tilemap metadata
 fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config& p_config,
 	std::vector<byte>& p_rom, const fe::Game& p_game) const {
+	constexpr bool CLEAR_UNUSED_TILEMAP_BANKS{ false };
 
 	auto l_tilemap_banks{ p_config.vset_as_set(c::ID_TILEMAP_BANKS) };
 
@@ -63,6 +64,13 @@ fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config&
 				l_file_bank_offset, kv.first, kv.second) };
 
 			patch_bytes(l_bank_tm_data, p_rom, l_file_bank_offset);
+		}
+
+		// clear out unused tilemap banks if enabled
+		if constexpr (CLEAR_UNUSED_TILEMAP_BANKS) {
+			for (byte b : l_tilemap_banks)
+				if (!l_assign_map.contains(b))
+					clear_bank_data(p_rom, b);
 		}
 
 		// and patch the world to bank/ptr metadata in ROM as well
@@ -869,4 +877,21 @@ void fe::ROM_Manager::duplicate_static_bank(std::vector<byte>& p_rom) const {
 
 	for (std::size_t i{ 0 }; i < 0x4000; ++i)
 		p_rom.at(bank31_start + i) = p_rom.at(bank15_start + i);
+}
+
+void fe::ROM_Manager::clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const {
+	auto bank_start{ bank_no_to_file_offset(p_bank_no) };
+
+	for (std::size_t i{ 0 }; i < 0x4000; ++i)
+		p_rom.at(bank_start + i) = 0xff;
+}
+
+bool fe::ROM_Manager::is_bank_clear(const std::vector<byte>& p_rom, byte p_bank_no) const {
+	auto bank_start{ bank_no_to_file_offset(p_bank_no) };
+
+	for (std::size_t i{ 0 }; i < 0x4000; ++i)
+		if (p_rom.at(bank_start + i) != 0xff)
+			return false;
+
+	return true;
 }
