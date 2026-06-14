@@ -173,7 +173,6 @@ namespace fe {
 		constexpr char ID_MUSIC_LABELS[]{ "music_labels" };
 		constexpr char ID_SPECIAL_SPRITE_SET_LABELS[]{ "special_sprite_set_labels" };
 		constexpr char ID_CMD_BYTE_LABELS[]{ "command_byte_labels" };
-		constexpr char ID_TILEMAP_BANK_OFFSETS[]{ "tilemap_bank_offsets" };
 		constexpr char ID_TILEMAP_TO_PREDEFINED_BANK[]{ "world_tilemap_to_predefined_bank" };
 		constexpr char ID_BG_CHR_ROM_OFFSETS[]{ "bg_chr_rom_offsets" };
 		constexpr char ID_NES_PALETTE[]{ "nes_palette" };
@@ -196,10 +195,12 @@ namespace fe {
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
+		constexpr char ID_TILEMAP_BANKS[]{ "tilemap_banks" };
 
 		// bools
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
 		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
+		constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary

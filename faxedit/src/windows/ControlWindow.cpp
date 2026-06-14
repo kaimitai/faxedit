@@ -445,6 +445,11 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynami
 		}
 	}
 
+	if (m_config.boolean_or(c::ID_DUPLICATE_STATIC_BANK, false)) {
+		m_rom_manager.duplicate_static_bank(x_rom);
+		add_message("Duplicated bank 15 into bank 31", 2);
+	}
+
 	if (l_good) {
 		add_message(std::format("ROM data patched ({} dynamic bytes)",
 			l_dyndata_bytes), 2);

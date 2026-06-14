@@ -3,6 +3,7 @@
 #include "fe_constants.h"
 #include "./../common/klib/Kutil.h"
 #include "Config.h"
+#include "ROM_Manager.h"
 #include <algorithm>
 #include <utility>
 
@@ -21,14 +22,12 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
 	// start of 8-byte map from world to ptr in that bank
 	std::size_t l_world_to_bank_ptr_idx{ l_world_to_bank + 8 };
-	// map of bank number to ROM offset
-	auto l_ptr_tilebamp_bank_rom_offsets{ p_config.bmap_numeric(c::ID_TILEMAP_BANK_OFFSETS) };
 
 	// extract all tilemaps for each world
 	for (std::size_t world{ 0 }; world < 8; ++world) {
 		m_chunks.push_back(fe::Chunk());
 		std::size_t l_master_ptr{
-			l_ptr_tilebamp_bank_rom_offsets.at(p_rom_data.at(l_world_to_bank + world)) +
+			fe::ROM_Manager::bank_no_to_file_offset(p_rom_data.at(l_world_to_bank + world)) +
 			static_cast<std::size_t>(p_rom_data.at(l_world_to_bank_ptr_idx + world) * 2) };
 
 		auto l_screen_ptrs{ get_screen_pointers(l_master_ptr) };

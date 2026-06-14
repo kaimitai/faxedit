@@ -357,6 +357,8 @@
 	</consts>
 	<!-- value sets -->
 	<sets>
+		<!-- banks which can be used for tilemap data -->
+		<set name="tilemap_banks" values="0,1,2,9" />
 		<!-- reserved string indexes - will not be re-indexed or discarded by the assembler -->
 		<!-- strings called directly from the action handler; like "You can't carry any more." -->
 		<set name="reserved_script_string_indexes" values="3,6,16,18,19,20" />
@@ -373,6 +375,8 @@
 		<bool name="disable_pal2mus" value="true" region="randum" />
 		<!-- detect the randomizer sameworld door to stage door hack -->
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
+		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
+		<bool name="duplicate_static_bank" value="true" region="en-transl" />
 	</bools>
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
 	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
@@ -726,13 +730,6 @@
 			<entry byte="$02" str="0x3ddbd:0x3dded" />
 			<entry byte="$03" str="0x3ea57:0x3ea60" />
 			<entry byte="$04" str="0x3eabc:0x3eb3f" />
-		</byte_to_string_map>
-		<!-- world tilemaps bank ROM offsets -->
-		<byte_to_string_map name="tilemap_bank_offsets">
-			<entry byte="$00" str="0x0010" />
-			<entry byte="$01" str="0x4010" />
-			<entry byte="$02" str="0x8010" />
-			<entry byte="$09" str="0x24010" />
 		</byte_to_string_map>
 		<!-- world tilemaps to predefined bank -->
 		<byte_to_string_map name="world_tilemap_to_predefined_bank">

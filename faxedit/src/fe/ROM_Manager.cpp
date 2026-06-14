@@ -13,7 +13,8 @@
 fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config& p_config,
 	std::vector<byte>& p_rom, const fe::Game& p_game) const {
 
-	auto l_ptr_tilebamp_bank_rom_offsets{ p_config.bmap_numeric(c::ID_TILEMAP_BANK_OFFSETS) };
+	auto l_tilemap_banks{ p_config.vset_as_set(c::ID_TILEMAP_BANKS) };
+
 	auto l_predef{ p_config.bmap_numeric(c::ID_TILEMAP_TO_PREDEFINED_BANK) };
 	std::size_t l_max_bank_size{ p_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
 
@@ -25,8 +26,8 @@ fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config&
 	std::map<byte, std::size_t> l_used_sizes;
 
 	// initialize the used sizes map with the banks we will use
-	for (const auto& kv : l_ptr_tilebamp_bank_rom_offsets)
-		l_used_sizes[kv.first] = 0;
+	for (const auto b : l_tilemap_banks)
+		l_used_sizes[b] = 0;
 
 	// let us add the predefined assignments
 	for (const auto& kv : l_predef) {
@@ -56,13 +57,12 @@ fe::TileMapPackingResult fe::ROM_Manager::encode_game_tilemaps(const fe::Config&
 			l_assign_map[static_cast<std::size_t>(l_assignments[w])].push_back(w);
 
 		for (const auto& kv : l_assign_map) {
+			auto l_file_bank_offset{ bank_no_to_file_offset(static_cast<byte>(kv.first)) };
 
 			auto l_bank_tm_data{ encode_bank_tilemap_data(p_game,
-				l_ptr_tilebamp_bank_rom_offsets.at(static_cast<byte>(kv.first)),
-				kv.first, kv.second) };
+				l_file_bank_offset, kv.first, kv.second) };
 
-			patch_bytes(l_bank_tm_data, p_rom,
-				l_ptr_tilebamp_bank_rom_offsets.at(static_cast<byte>(kv.first)));
+			patch_bytes(l_bank_tm_data, p_rom, l_file_bank_offset);
 		}
 
 		// and patch the world to bank/ptr metadata in ROM as well
@@ -857,4 +857,16 @@ std::size_t fe::ROM_Manager::get_music_count(const fe::Config& p_config, const s
 	}
 
 	return result / 4;
+}
+
+std::size_t fe::ROM_Manager::bank_no_to_file_offset(byte p_bank_no) {
+	return 0x4000 * static_cast<std::size_t>(p_bank_no) + 0x10;
+}
+
+void fe::ROM_Manager::duplicate_static_bank(std::vector<byte>& p_rom) const {
+	auto bank15_start{ bank_no_to_file_offset(15) };
+	auto bank31_start{ bank_no_to_file_offset(31) };
+
+	for (std::size_t i{ 0 }; i < 0x4000; ++i)
+		p_rom.at(bank31_start + i) = p_rom.at(bank15_start + i);
 }
