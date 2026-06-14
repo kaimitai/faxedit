@@ -307,6 +307,10 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		m_undo->clear_history();
 		m_sprite_snap_manager.reset();
 
+		// set sw-door type from already loaded config
+		if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
+			m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
+
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();
 		m_gfx.clear_tileset_textures();

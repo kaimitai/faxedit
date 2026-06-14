@@ -30,10 +30,7 @@ void fe::MainWindow::export_world_png(const fe::WorldVisualizer& p_visualizer,
 }
 
 void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
-	static fe::WorldVisualizationOptions options{
-		.skip_unreferenced_screens = !m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false),
-		.rnd_stage_doors = m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false)
-	};
+	static fe::WorldVisualizationOptions options;
 	static std::size_t l_world{ 0 }, l_screen{ 0 };
 
 	ui::imgui_screen("World Visualizer",
@@ -100,10 +97,7 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 		ui::imgui_checkbox("Screen Numbers", options.show_screen_numbers);
 		ui::imgui_checkbox("Other-World Transitions", options.show_ow_transitions);
 		ui::imgui_checkbox("Stage Door Destinations", options.show_stage_door_dests);
-
-		// TODO: Integrate the randomizer door hack concept in a better way?
-		if (!m_cache.m_randomizer_doors)
-			ui::imgui_checkbox("Skip Unreferences Screens", options.skip_unreferenced_screens);
+		ui::imgui_checkbox("Skip Unreferences Screens", options.skip_unreferenced_screens);
 
 		ui::imgui_slider_with_arrows("###swtol", "SW-Transition tolerance",
 			options.sameworld_trans_tolerance, 0, 4,

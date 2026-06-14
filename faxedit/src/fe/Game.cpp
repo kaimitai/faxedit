@@ -8,12 +8,14 @@
 
 fe::Game::Game(void) :
 	m_jump_on_animation{ 0x34, 0x2c, 0x5c, 0x13 },
-	m_push_block(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	m_push_block(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+	m_sw_door_type{ SameWorldDoorType::Normal }
 {
 }
 
 fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) :
-	m_rom_data{ p_rom_data }
+	m_rom_data{ p_rom_data },
+	m_sw_door_type{ SameWorldDoorType::Normal }
 {
 	// start of 8-byte map from world to bank no
 	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
@@ -622,13 +624,27 @@ void fe::Game::delete_screens(std::size_t p_chunk_no, const std::unordered_set<b
 
 			// doors
 			for (std::size_t d{ 0 }; d < l_scr[s].m_doors.size(); ++d) {
-				// re-index same-world door destinations
-				if (c == p_chunk_no && l_scr[s].m_doors[d].m_door_type == fe::DoorType::SameWorld)
-					remap_screen(l_scr[s].m_doors[d].m_dest_screen_id);
+				auto& l_door{ l_scr[s].m_doors[d] };
+
+				if (l_door.m_door_type == fe::DoorType::SameWorld) {
+					bool reindex_sameworld{ false };
+
+					if (m_sw_door_type == SameWorldDoorType::Normal)
+						reindex_sameworld = (c == p_chunk_no);
+					else if (m_sw_door_type == SameWorldDoorType::Randumizer_0_30) {
+						auto stage = l_door.m_requirement / 16;
+						if (stage < m_stages.m_stages.size())
+							reindex_sameworld = m_stages.m_stages[stage].m_world_id == p_chunk_no;
+					}
+
+					// re-index same-world door destinations
+					if (reindex_sameworld)
+						remap_screen(l_door.m_dest_screen_id);
+				}
 				// re-index doors to buildings
 				if (p_chunk_no == c::CHUNK_IDX_BUILDINGS &&
-					l_scr[s].m_doors[d].m_door_type == fe::DoorType::Building)
-					remap_screen(l_scr[s].m_doors[d].m_dest_screen_id);
+					l_door.m_door_type == fe::DoorType::Building)
+					remap_screen(l_door.m_dest_screen_id);
 			}
 
 			// re-index other-world transitions
@@ -854,10 +870,22 @@ std::vector<fe::ScreenRef> fe::Game::collect_screen_refs(void) const {
 			for (const auto& door : scr.m_doors) {
 
 				if (door.m_door_type == fe::DoorType::SameWorld) {
-					add_ref(chunk, s,
-						chunk,
-						door.m_dest_screen_id,
-						ScreenRef::Type::DoorSameWorld);
+					if (m_sw_door_type == fe::SameWorldDoorType::Normal)
+						add_ref(chunk, s,
+							chunk,
+							door.m_dest_screen_id,
+							ScreenRef::Type::DoorSameWorld);
+					else if (m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
+						const auto stage{ door.m_requirement / 16 };
+
+						if (stage < m_stages.m_stages.size())
+							add_ref(chunk, s,
+								m_stages.m_stages[stage].m_world_id,
+								door.m_dest_screen_id,
+								ScreenRef::Type::DoorHack);
+					}
+					else
+						throw std::runtime_error("Unknown same-world door type");
 				}
 
 				if (door.m_door_type == fe::DoorType::Building) {

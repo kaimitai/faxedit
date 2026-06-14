@@ -430,7 +430,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						show_stage_door_data(l_door);
 					}
 					else if (l_door.m_door_type == fe::DoorType::SameWorld &&
-						m_cache.m_randomizer_doors) {
+						m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
 						show_randomizer_sameworld_door_data(l_door);
 					}
 					else {
@@ -958,7 +958,7 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 		const auto& l_door{ p_screen.m_doors[m_sel_door] };
 
 		if (l_door.m_door_type == fe::SameWorld) {
-			if (m_cache.m_randomizer_doors) {
+			if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
 				enter_randomizer_stage_door(l_door);
 			}
 			else {

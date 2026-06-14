@@ -49,8 +49,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 		.m_iscript_count = 0,
 		.m_music_count = 0,
 		.m_command_byte_count = 0,
-		.m_disable_pal2_mus = false,
-		.m_randomizer_doors = false
+		.m_disable_pal2_mus = false
 	},
 	// exit handler variables
 	m_exit_app_requested{ false },
@@ -772,7 +771,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		load_external_rom_data(bytes, true);
 
-		if (m_cache.m_randomizer_doors)
+		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
 			add_message("Randomizer door hack detected; Sameworld doors are stage doors!", 4);
 
 		if (m_game->m_chunks.size() > 0)
@@ -900,7 +899,8 @@ void fe::MainWindow::cache_config_variables(void) {
 
 	// bools
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
-	m_cache.m_randomizer_doors = m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false);
+	if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
+		m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {
@@ -1082,7 +1082,8 @@ void fe::MainWindow::render_screen_texture(SDL_Renderer* p_rnd) {
 				if (l_door.m_door_type == fe::DoorType::Building ||
 					l_door.m_door_type == fe::DoorType::SameWorld) {
 					l_dreq = l_door.m_requirement;
-					if (m_cache.m_randomizer_doors && l_door.m_door_type == fe::DoorType::SameWorld)
+					if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 &&
+						l_door.m_door_type == fe::DoorType::SameWorld)
 						l_dreq %= 16;
 				}
 				else {

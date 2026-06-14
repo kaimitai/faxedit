@@ -161,8 +161,7 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 				}
 				// randomizer sameworld door which in actuality goes to another stage
 				else if (door.m_door_type == fe::DoorType::SameWorld &&
-					p_options.rnd_stage_doors &&
-					randomizer_door_world(game, door) != world_no) {
+					resolve_sameworld_door_world(game, door, world_no) != world_no) {
 
 					if (p_options.show_door_requirements)
 						maybe_add_door_requirement_item_draw(p_config, screenDraw, screen,
@@ -172,13 +171,13 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 					if (p_options.show_stage_door_dests)
 						emit_otherworld_connection(screenDraw, screen,
 							16 * door.m_coords.first, 16 * door.m_coords.second,
-							static_cast<byte>(randomizer_door_world(game, door)),
+							static_cast<byte>(resolve_sameworld_door_world(game, door, world_no)),
 							door.m_dest_screen_id);
 				}
 				else if (door.m_door_type == fe::DoorType::SameWorld) {
 					auto l_req{ door.m_requirement };
 
-					if (p_options.rnd_stage_doors)
+					if (game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
 						l_req %= 16;
 
 					// make a draw command for this door at position
@@ -965,12 +964,17 @@ void fe::WorldVisualizer::emit_otherworld_connection(
 		});
 }
 
-std::size_t fe::WorldVisualizer::randomizer_door_world(const fe::Game& p_game, const fe::Door& p_door) const {
-	const auto& stages{ p_game.m_stages.m_stages };
-	std::size_t stage_no{ static_cast<std::size_t>(p_door.m_requirement / 16) };
+std::size_t fe::WorldVisualizer::resolve_sameworld_door_world(const fe::Game& p_game,
+	const fe::Door& p_door, std::size_t source_world) const {
+	if (p_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
+		const auto& stages{ p_game.m_stages.m_stages };
+		std::size_t stage_no{ static_cast<std::size_t>(p_door.m_requirement / 16) };
 
-	if (stage_no < stages.size())
-		return stages[stage_no].m_world_id;
+		if (stage_no < stages.size())
+			return stages[stage_no].m_world_id;
+		else
+			throw std::runtime_error(std::format("Invalid stage no: {}", stage_no));
+	}
 	else
-		throw std::runtime_error(std::format("Invalid stage no: {}", stage_no));
+		return source_world;
 }

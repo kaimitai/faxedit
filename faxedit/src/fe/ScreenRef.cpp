@@ -15,6 +15,7 @@ std::string fe::ScreenRef::to_string(bool p_incl_destination) const {
 	case Type::TransitionOtherWorld: out += "Otherworld Transition"; break;
 	case Type::DoorSameWorld: out += "Sameworld Door"; break;
 	case Type::DoorBuilding: out += "Building Door"; break;
+	case Type::DoorHack: out += "Hack Door"; break;
 	case Type::PushBlock: out += "Push-Block"; break;
 	case Type::Spawn: out += "Spawn"; break;
 	case Type::StageNext: out += "Next Stage"; break;

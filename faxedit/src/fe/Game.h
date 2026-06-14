@@ -62,6 +62,8 @@ namespace fe {
 		std::size_t end_index(void) const;
 	};
 
+	enum class SameWorldDoorType { Normal, Randumizer_0_30 };
+
 	class Config;
 
 	struct Game {
@@ -71,6 +73,7 @@ namespace fe {
 		fe::StageManager m_stages;
 		std::vector<fe::Scene> m_building_scenes;
 		fe::PaletteMusicMap m_pal_to_music;
+		SameWorldDoorType m_sw_door_type;
 
 		// stored as building chunk sprite data, but is globally referred to
 		std::vector<fe::Sprite_set> m_npc_bundles;
@@ -97,7 +100,6 @@ namespace fe {
 
 		std::set<byte> get_referenced_metatiles(std::size_t p_world_no) const;
 		std::set<byte> get_referenced_screens(std::size_t p_chunk_no) const;
-		
 		std::vector<ScreenRef> collect_screen_refs(void) const;
 		std::vector<ScreenRef> get_refs_to_screen(std::size_t p_world, std::size_t p_screen) const;
 

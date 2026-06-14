@@ -20,6 +20,7 @@ namespace fe {
             TransitionOtherWorld,
             DoorSameWorld,
             DoorBuilding,
+            DoorHack,
             PushBlock,
             Spawn,
             StageNext,

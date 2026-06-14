@@ -51,9 +51,6 @@ namespace fe {
 
 		// integral parameters
 		std::size_t sameworld_trans_tolerance{ 0 };
-
-		// implicit parameters
-		bool rnd_stage_doors{ false };
 	};
 
 	class WorldVisualizer {
@@ -189,8 +186,9 @@ namespace fe {
 			ScreenId p_screen, int x, int y,
 			byte p_target_world, byte p_target_screen) const;
 
-		// randomizer door helpers
-		std::size_t randomizer_door_world(const fe::Game& p_game, const fe::Door& p_door) const;
+		// door helpers (hack aware)
+		std::size_t resolve_sameworld_door_world(const fe::Game& p_game, const fe::Door& p_door,
+			std::size_t source_world) const;
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,

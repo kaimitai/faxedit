@@ -1239,6 +1239,11 @@ Note that compatibility does not go in the other direction; The randomzier will 
 
 ### Changelog
 
+* Upcoming: version beta-7.3
+
+  * Native same-world door hack support
+    * Randomizer stage doors now have the same level of support as vanilla doors. They are taken into account when calculating the game's reference graph, unreferenced screens can safely be omitted when running the world visualizer, and the door destinations will be re-indexed correctly when deleting screens.
+
 * 2026-06-11: version beta-7.21 - "Varnish"
 
   * Rendering
@@ -1428,6 +1433,6 @@ Note that compatibility does not go in the other direction; The randomzier will 
   * The editor will extract sprite graphics and metadata when loading a ROM-file, and present them in the UI during sprite-editing
   * Added support for defining the game-wide "Jump-On" tile animation. This is a feature supported by the original game, but it was left unused.
 
-* 2025-11-01: version beta-1
+* 2025-11-01: version beta-1 - "Opening the Gates"
 
   * Initial release
