@@ -48,6 +48,7 @@ namespace fe {
 		bool show_screen_numbers{ false };
 		bool show_ow_transitions{ false };
 		bool show_stage_door_dests{ false };
+		bool show_scroll_connections{ false };
 
 		// integral parameters
 		std::size_t sameworld_trans_tolerance{ 0 };
@@ -56,6 +57,7 @@ namespace fe {
 	class WorldVisualizer {
 
 		enum class DrawCommandType { Number, IdNumber, Item };
+		enum class ScrollLabelPos { Up, Down, Left, Right };
 
 		struct DrawCommand {
 			int x;
@@ -162,7 +164,8 @@ namespace fe {
 			{ 0x0f, 0x30, 0x30, 0x30 }, // door labels
 			{ 0x06, 0x20, 0x20, 0x20 }, // door destination labels
 			{ 0x0f, 0x28, 0x28, 0x28 }, // (door to building) labels
-			{ 0x01, 0x31, 0x31, 0x31 }  // otherworld connections
+			{ 0x01, 0x31, 0x31, 0x31 }, // otherworld connections
+			{ 0x01, 0x2a, 0x2a, 0x2a }  // scroll connections
 		};
 
 		void maybe_add_door_requirement_item_draw(
@@ -185,6 +188,9 @@ namespace fe {
 		void emit_otherworld_connection(std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
 			ScreenId p_screen, int x, int y,
 			byte p_target_world, byte p_target_screen) const;
+
+		void emit_scroll_connection(std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+			ScreenId p_screen, ScrollLabelPos p_pos, std::optional<byte> p_val) const;
 
 		// door helpers (hack aware)
 		std::size_t resolve_sameworld_door_world(const fe::Game& p_game, const fe::Door& p_door,

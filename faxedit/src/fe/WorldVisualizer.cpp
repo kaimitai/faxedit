@@ -78,6 +78,17 @@ fe::WorldVisualization fe::WorldVisualizer::visualize_world(const fe::Config& p_
 						graph);
 				};
 
+			if (p_options.show_scroll_connections) {
+				emit_scroll_connection(screenDraw, screen,
+					ScrollLabelPos::Up, scr.m_scroll_up);
+				emit_scroll_connection(screenDraw, screen,
+					ScrollLabelPos::Down, scr.m_scroll_down);
+				emit_scroll_connection(screenDraw, screen,
+					ScrollLabelPos::Left, scr.m_scroll_left);
+				emit_scroll_connection(screenDraw, screen,
+					ScrollLabelPos::Right, scr.m_scroll_right);
+			}
+
 			// scrolling
 			try_scroll(scr.m_scroll_left, { -1,  0 }, std::nullopt);
 			try_scroll(scr.m_scroll_right, { 1,  0 }, std::nullopt);
@@ -961,6 +972,60 @@ void fe::WorldVisualizer::emit_otherworld_connection(
 		.type = DrawCommandType::IdNumber,
 		.param = p_target_screen,
 		.param_palette = 3
+		});
+}
+
+void fe::WorldVisualizer::emit_scroll_connection(
+	std::unordered_map<ScreenId, std::vector<DrawCommand>>& p_draw_map,
+	ScreenId p_screen,
+	ScrollLabelPos p_pos,
+	std::optional<byte> p_val) const {
+
+	if (!p_val)
+		return;
+
+	const int label_w{
+		(*p_val >= 100) ? 26 :
+		(*p_val >= 10) ? 18 :
+						  10
+	};
+
+	constexpr int SCREEN_W{ 16 * 16 };
+	constexpr int SCREEN_H{ 13 * 16 };
+	constexpr int EDGE_PAD{ 4 };
+	constexpr int LABEL_H{ 10 };
+
+	int x{ 0 };
+	int y{ 0 };
+
+	switch (p_pos) {
+	case ScrollLabelPos::Up:
+		x = SCREEN_W / 2 - label_w / 2;
+		y = EDGE_PAD;
+		break;
+
+	case ScrollLabelPos::Down:
+		x = SCREEN_W / 2 - label_w / 2;
+		y = SCREEN_H - EDGE_PAD - LABEL_H;
+		break;
+
+	case ScrollLabelPos::Left:
+		x = EDGE_PAD;
+		y = SCREEN_H / 2 - LABEL_H / 2;
+		break;
+
+	case ScrollLabelPos::Right:
+		x = SCREEN_W - EDGE_PAD - label_w;
+		y = SCREEN_H / 2 - LABEL_H / 2;
+		break;
+	}
+
+	p_draw_map[p_screen].push_back(DrawCommand{
+		.x = x,
+		.y = y,
+		.type = DrawCommandType::IdNumber,
+		.param = *p_val,
+		.param_palette = 4
 		});
 }
 
