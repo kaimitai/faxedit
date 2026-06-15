@@ -196,6 +196,7 @@ namespace fe {
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
 		constexpr char ID_TILEMAP_BANKS[]{ "tilemap_banks" };
+		constexpr char ID_ISCRIPT_OPCODES[]{ "iscript_opcodes" };
 
 		// bools
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };

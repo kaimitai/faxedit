@@ -737,6 +737,33 @@
 			<!-- due to a bug in the game code, world 0 tilemaps must be in bank 0 -->
 			<entry byte="$00" str="$00" />
 		</byte_to_string_map>
+		<!-- iScript opcodes  -->
+		<byte_to_string_map name="iscript_opcodes">
+			<entry byte="$00" str="Mnemonic=End,Flow=End,Terminal=true" />
+			<entry byte="$01" str="Mnemonic=MsgNoskip,ArgType=Byte,ArgDomain=TextString" />
+			<entry byte="$02" str="Mnemonic=MsgPrompt,ArgType=Byte,ArgDomain=TextString" />
+			<entry byte="$03" str="Mnemonic=Msg,ArgType=Byte,ArgDomain=TextString" />
+			<entry byte="$04" str="Mnemonic=IfTitleChange,Flow=Jump" />
+			<entry byte="$05" str="Mnemonic=LoseGold,ArgType=Short" />
+			<entry byte="$06" str="Mnemonic=SetSpawn,ArgType=Byte" />
+			<entry byte="$07" str="Mnemonic=GetItem,ArgType=Byte,ArgDomain=Item" />
+			<entry byte="$08" str="Mnemonic=OpenShopBuy,Flow=Read" />
+			<entry byte="$09" str="Mnemonic=GetGold,ArgType=Short" />
+			<entry byte="$0a" str="Mnemonic=GetMana,ArgType=Byte" />
+			<entry byte="$0b" str="Mnemonic=IfQuest,ArgType=Byte,Flow=Jump,ArgDomain=Quest" />
+			<entry byte="$0c" str="Mnemonic=IfRank,ArgType=Byte,Flow=Jump,ArgDomain=Rank" />
+			<entry byte="$0d" str="Mnemonic=IfGold,Flow=Jump" />
+			<entry byte="$0e" str="Mnemonic=SetQuest,ArgType=Byte,ArgDomain=Quest" />
+			<entry byte="$0f" str="Mnemonic=IfBuy,Flow=Jump" />
+			<entry byte="$10" str="Mnemonic=LoseItem,ArgType=Byte,ArgDomain=Item" />
+			<entry byte="$11" str="Mnemonic=OpenShopSell,Flow=Read" />
+			<entry byte="$12" str="Mnemonic=IfItem,ArgType=Byte,Flow=Jump,ArgDomain=Item" />
+			<entry byte="$13" str="Mnemonic=GetHealth,ArgType=Byte" />
+			<entry byte="$14" str="Mnemonic=ShowMantra" />
+			<entry byte="$15" str="Mnemonic=EndGame,Flow=End,Terminal=true" />
+			<entry byte="$16" str="Mnemonic=IfMsgPrompt,ArgType=Byte,Flow=Jump,ArgDomain=TextString" />
+			<entry byte="$17" str="Mnemonic=Jump,Flow=Jump,Terminal=true" />
+		</byte_to_string_map>
 		<!-- string mapping used by the iScript assembler and disassembler -->
 		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum,us-rev-a">
 			<!-- printable characters -->

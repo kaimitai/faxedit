@@ -37,6 +37,8 @@ namespace fi {
 		fi::ArgDomain domain;
 		bool ends_stream;
 
+		bool operator==(const Opcode&) const = default;
+
 		std::size_t size(void) const {
 			std::size_t result{ 1 }; // the opcode itself
 			if (flow == fi::Flow::Jump || flow == fi::Flow::Read)
@@ -49,7 +51,7 @@ namespace fi {
 		}
 	};
 
-	extern const std::map<byte, fi::Opcode> opcodes;
+	extern std::map<byte, fi::Opcode> opcodes;
 
 	enum Instruction_type { OpCode, Directive };
 
@@ -64,6 +66,7 @@ namespace fi {
 		std::vector<byte> get_bytes(void) const;
 	};
 
+	void load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs);
 }
 
 #endif

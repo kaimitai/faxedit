@@ -449,5 +449,8 @@
     <ClInclude Include="src\common\lodepng.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\magic_enum.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

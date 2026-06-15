@@ -1,6 +1,7 @@
 #include "Opcode.h"
+#include "./../common/klib/Kstring.h"
 
-const std::map<byte, fi::Opcode> fi::opcodes{
+std::map<byte, fi::Opcode> fi::opcodes{
 	{0x00, fi::Opcode("End", fi::ArgType::None, fi::Flow::End, fi::ArgDomain::None, true)},
 	{0x01, fi::Opcode("MsgNoskip", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
 	{0x02, fi::Opcode("MsgPrompt", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
@@ -26,6 +27,59 @@ const std::map<byte, fi::Opcode> fi::opcodes{
 	{0x16, fi::Opcode("IfMsgPrompt", fi::ArgType::Byte, fi::Flow::Jump, fi::ArgDomain::TextString, false)},
 	{0x17, fi::Opcode("Jump", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, true)}
 };
+
+static fi::Opcode parse_opcode_def(const std::string& p_definition) {
+	auto kv{ klib::str::extract_keyval_str(p_definition, ',', '=') };
+
+	fi::Opcode result{
+		"",
+		fi::ArgType::None,
+		fi::Flow::Continue,
+		fi::ArgDomain::None,
+		false
+	};
+
+	for (const auto& [key, value] : kv) {
+		const auto k{ klib::str::to_lower(klib::str::trim(key)) };
+
+		if (k == "mnemonic")
+			result.name = klib::str::trim(value);
+		else if (k == "argtype")
+			result.arg_type = klib::str::parse_enum_ci<fi::ArgType>(value);
+		else if (k == "flow")
+			result.flow = klib::str::parse_enum_ci<fi::Flow>(value);
+		else if (k == "argdomain")
+			result.domain = klib::str::parse_enum_ci<fi::ArgDomain>(value);
+		else if (k == "terminal")
+			result.ends_stream = klib::str::parse_bool_ci(value);
+		else
+			throw std::runtime_error(std::format("Unknown opcode property: {}", key));
+	}
+
+	if (result.name.empty())
+		throw std::runtime_error("Opcode definition missing Mnemonic");
+
+	return result;
+}
+
+void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs) {
+	constexpr bool THROW_ON_OPCODE_DIFFS{ false };
+
+	if (p_opcode_defs.empty())
+		return;
+
+	std::map<byte, fi::Opcode> l_opcodes;
+
+	for (const auto& kv : p_opcode_defs)
+		l_opcodes.insert(std::make_pair(kv.first, parse_opcode_def(kv.second)));
+
+	if constexpr (THROW_ON_OPCODE_DIFFS) {
+		if (l_opcodes != fi::opcodes)
+			throw std::runtime_error("Vanilla iScript opcodes do not match config");
+	}
+
+	fi::opcodes = l_opcodes;
+}
 
 std::vector<byte> fi::Instruction::get_bytes(void) const {
 	std::vector<byte> result{ opcode_byte };

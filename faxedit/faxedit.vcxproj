@@ -224,6 +224,7 @@
     <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />
     <ClInclude Include="src\common\lodepng.h" />
+    <ClInclude Include="src\common\magic_enum.hpp" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\fe\ChrStructures.h" />

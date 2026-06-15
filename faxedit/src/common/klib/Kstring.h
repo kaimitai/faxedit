@@ -1,9 +1,12 @@
 #ifndef KLIB_KSTRING_H
 #define KLIB_KSTRING_H
 
+#include <format>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
+#include "./../magic_enum.hpp"
 
 using byte = unsigned char;
 
@@ -38,6 +41,22 @@ namespace klib {
 				result.insert(std::make_pair(kv.second, kv.first));
 
 			return result;
+		}
+
+		bool parse_bool_ci(const std::string& p_str);
+
+		template<typename T>
+		T parse_enum_ci(const std::string& p_str) {
+			const std::string needle{ to_lower(trim(p_str)) };
+
+			for (const auto value : magic_enum::enum_values<T>()) {
+				if (to_lower(std::string(magic_enum::enum_name(value))) == needle)
+					return value;
+			}
+
+			throw std::runtime_error(
+				std::format("Invalid enum value: {}", p_str)
+			);
 		}
 	}
 

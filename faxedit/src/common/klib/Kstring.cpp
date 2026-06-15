@@ -1,5 +1,6 @@
 #include "Kstring.h"
 #include <cctype>
+#include <format>
 #include <stdexcept>
 
 using byte = unsigned char;
@@ -185,7 +186,7 @@ std::map<std::string, std::string> klib::str::extract_keyval_str(const std::stri
 
 		if (kv.empty())
 			throw std::runtime_error("Empty key-value pair");
-		else if (kv.size() > 2)
+		else if (kv.size() != 2)
 			throw std::runtime_error("Invalid key-value pair for arg " + kv[0]);
 		else {
 			std::string arg{ trim(kv[0]) };
@@ -242,4 +243,15 @@ std::string klib::str::to_binary(byte b) {
 	}
 
 	return s;
+}
+
+bool klib::str::parse_bool_ci(const std::string& p_str) {
+	const std::string str{ to_lower(trim(p_str)) };
+
+	if (str == "true")
+		return true;
+	else if (str == "false")
+		return false;
+	else
+		throw std::runtime_error(std::format("Invalid boolean value: {}", p_str));
 }
