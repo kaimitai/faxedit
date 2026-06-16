@@ -753,6 +753,15 @@ void fe::MainWindow::dump_debug_data(bool p_complete) {
 
 		klib::file::write_string_to_file(out_contents, screenref_dump_out_file);
 		add_message(std::format("Screen References dumped to file {}", screenref_dump_out_file), 2);
+
+		// validate bank 15==bank 31 for SUROM files
+		if (m_config.boolean_or(c::ID_DUPLICATE_STATIC_BANK, false)) {
+			int l_diffs{ m_rom_manager.get_bank_byte_diffs(m_game->m_rom_data, 15, 31) };
+			if (l_diffs != 0)
+				add_message(
+					std::format("Banks 0f and 1f are expected to be identical, but have {} different bytes", l_diffs),
+					1);
+		}
 	}
 }
 

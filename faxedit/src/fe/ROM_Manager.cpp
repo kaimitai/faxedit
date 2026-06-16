@@ -871,6 +871,20 @@ std::size_t fe::ROM_Manager::bank_no_to_file_offset(byte p_bank_no) {
 	return 0x4000 * static_cast<std::size_t>(p_bank_no) + 0x10;
 }
 
+int fe::ROM_Manager::get_bank_byte_diffs(const std::vector<byte>& p_rom,
+	byte p_bank_a, byte p_bank_b) {
+	const std::size_t BANK_A_START{ bank_no_to_file_offset(p_bank_a) };
+	const std::size_t BANK_B_START{ bank_no_to_file_offset(p_bank_b) };
+
+	int diffs{ 0 };
+
+	for (std::size_t i{ 0 }; i < 0x4000; ++i)
+		if (p_rom.at(BANK_A_START + i) != p_rom.at(BANK_B_START + i))
+			++diffs;
+
+	return diffs;
+}
+
 void fe::ROM_Manager::duplicate_static_bank(std::vector<byte>& p_rom) const {
 	auto bank15_start{ bank_no_to_file_offset(15) };
 	auto bank31_start{ bank_no_to_file_offset(31) };

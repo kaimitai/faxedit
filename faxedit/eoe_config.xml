@@ -269,8 +269,7 @@
 		<const name="rank_string_length" region="us,eu,us-rev-a,randum" value="16" />
 		<const name="rank_string_length" region="jp,en-transl" value="8" />
 		<const name="rank_string_offset" region="us,eu,us-rev-a,randum" value="0x3f659" />
-		<const name="rank_string_offset" region="jp" value="0x3f7a1" />
-		<const name="rank_string_offset" region="en-transl" value="0x7f7a1" />
+		<const name="rank_string_offset" region="jp,en-transl" value="0x3f7a1" />
 		<const name="rank_data_offset" region="us,eu,us-rev-a,randum" value="0x3f759" />
 		<const name="rank_data_offset" region="jp,en-transl" value="0x3f821" />
 		<!-- sprite data -->
