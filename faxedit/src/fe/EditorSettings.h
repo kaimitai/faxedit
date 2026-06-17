@@ -13,7 +13,11 @@ namespace fe {
 		bool m_patch_world_chr_data, m_patch_tilemaps,
 			m_patch_metadata, m_patch_sprite_data, m_patch_bank15_data,
 			m_patch_sprite_gfx, m_patch_cinematics,
-			throw_on_cinematic_overflow;
+			throw_on_cinematic_overflow,
+			m_patch_palettes, m_patch_stages, m_patch_mattock_animations,
+			m_patch_push_blocks, m_patch_jump_on_tiles, m_patch_bg_gfx,
+			m_patch_scenes, m_patch_fog;
+
 		// gui settings
 		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,
 			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay;

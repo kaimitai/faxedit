@@ -35,6 +35,14 @@ void fe::EditorSettings::set_patching_defaults(void) {
 	m_patch_sprite_gfx = true;
 	m_patch_cinematics = true;
 	throw_on_cinematic_overflow = true;
+	m_patch_palettes = true;
+	m_patch_stages = true;
+	m_patch_mattock_animations = true;
+	m_patch_push_blocks = true;
+	m_patch_jump_on_tiles = true;
+	m_patch_scenes = true;
+	m_patch_fog = true;
+	m_patch_bg_gfx = true;
 }
 
 void fe::EditorSettings::set_sprite_gfx_defaults(void) {

@@ -11,7 +11,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
 	ui::imgui_screen("Editor Settings",
 		c::WIN_TILEMAP_X + 70, c::WIN_TILEMAP_Y + 70,
-		c::WIN_TILEMAP_W - 100, c::WIN_TILEMAP_H + 50);
+		c::WIN_TILEMAP_W - 400, c::WIN_TILEMAP_H + 50);
 
 	if (ImGui::BeginTabBar("settings-tabs")) {
 
@@ -26,11 +26,21 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			ui::imgui_checkbox("Sprites", m_settings.m_patch_sprite_data, "Sprite placements on screens");
 			ui::imgui_checkbox("Metadata", m_settings.m_patch_metadata, "Doors, metatile definitions and screen scroll connections");
 			ui::imgui_checkbox("Bank 15 Data (transitions and more)", m_settings.m_patch_bank15_data, "Building Scenes, Spawn Points, Pal2Mus, OW- and SW-transitions");
+			ui::imgui_checkbox("Stage Definitions", m_settings.m_patch_stages);
+			ui::imgui_checkbox("World Scenes", m_settings.m_patch_scenes, "Worlds' default tilesets, music tracks and palettes");
 
 			ImGui::SeparatorText("Graphics");
 			ui::imgui_checkbox("World Tileset CHR", m_settings.m_patch_world_chr_data);
-			ui::imgui_checkbox("Sprite Gfx", m_settings.m_patch_sprite_gfx);
+			ui::imgui_checkbox("World Palettes", m_settings.m_patch_palettes);
+			ui::imgui_checkbox("Background Gfx", m_settings.m_patch_bg_gfx, "Title Screen, Intro/Outro, Item gfx and related palettes");
+			ui::imgui_checkbox("Sprite Gfx", m_settings.m_patch_sprite_gfx, "Sprite Animation Frames and related metadata");
 			ui::imgui_checkbox("Cinematics", m_settings.m_patch_cinematics);
+
+			ImGui::SeparatorText("Static Data");
+			ui::imgui_checkbox("Mattock Animations", m_settings.m_patch_mattock_animations);
+			ui::imgui_checkbox("Push-Block", m_settings.m_patch_push_blocks);
+			ui::imgui_checkbox("Jump-On", m_settings.m_patch_jump_on_tiles);
+			ui::imgui_checkbox("Fog", m_settings.m_patch_fog);
 
 			ImGui::SeparatorText("Other");
 

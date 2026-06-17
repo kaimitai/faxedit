@@ -372,10 +372,52 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 		add_message("Patched world tileset chr data", 2);
 	}
 
-	// static data - several categories
-	if (true) {
-		m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
-		add_message("Patched static data", 2);
+	// world palettes
+	if (m_settings.m_patch_palettes) {
+		m_rom_manager.encode_palette_data(m_config, *m_game, x_rom);
+		add_message("Patched world palettes", 2);
+	}
+
+	// stage definitions
+	if (m_settings.m_patch_stages) {
+		m_rom_manager.encode_stage_data(m_config, *m_game, x_rom);
+		add_message("Patched stage definitions", 2);
+	}
+
+	// mattock animations
+	if (m_settings.m_patch_mattock_animations) {
+		m_rom_manager.encode_mattock_animations(m_config, *m_game, x_rom);
+		add_message("Patched mattock animations", 2);
+	}
+
+	// push-block definition
+	if (m_settings.m_patch_push_blocks) {
+		m_rom_manager.encode_push_block(m_config, *m_game, x_rom);
+		add_message("Patched push-block definition", 2);
+	}
+
+	// jump-on tiles
+	if (m_settings.m_patch_jump_on_tiles) {
+		m_rom_manager.encode_jump_on_tiles(m_config, *m_game, x_rom);
+		add_message("Patched jump-on tiles", 2);
+	}
+
+	// world scene data
+	if (m_settings.m_patch_scenes) {
+		m_rom_manager.encode_scene_data(m_config, *m_game, x_rom);
+		add_message("Patched world scenes", 2);
+	}
+
+	// fog definition
+	if (m_settings.m_patch_fog) {
+		m_rom_manager.encode_fog_data(m_config, *m_game, x_rom);
+		add_message("Patched fog definition", 2);
+	}
+
+	// background graphics
+	if (m_settings.m_patch_bg_gfx) {
+		m_game->m_gfx_manager.patch_rom(x_rom);
+		add_message("Patched background gfx", 2);
 	}
 
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
