@@ -25,8 +25,8 @@ void fe::MainWindow::save_xml(void) {
 	}
 }
 
-void fe::MainWindow::patch_nes_rom(bool p_in_place, bool p_exclude_dynamic) {
-	auto l_patched_rom{ patch_rom(p_exclude_dynamic) };
+void fe::MainWindow::patch_nes_rom(bool p_in_place) {
+	auto l_patched_rom{ patch_rom() };
 
 	if (l_patched_rom.has_value()) {
 		std::string l_out_file{ p_in_place ? m_loaded_rom_path : get_nes_path() };
@@ -55,17 +55,16 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 	ImGui::SameLine();
 
 	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
-	bool l_alt{ ImGui::IsKeyDown(ImGuiMod_Alt) };
 
 	if (ui::imgui_button("Patch nes ROM",
 		l_shift ? 4 : 2,
 		"Patch loaded ROM file"))
-		patch_nes_rom(l_shift, l_alt);
+		patch_nes_rom(l_shift);
 
 	ImGui::SameLine();
 
 	if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
-		auto l_patched_rom{ patch_rom(l_alt) };
+		auto l_patched_rom{ patch_rom() };
 
 		if (l_patched_rom.has_value()) {
 			try {
@@ -360,112 +359,127 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	}
 }
 
-std::optional<std::vector<byte>> fe::MainWindow::patch_rom(bool p_exclude_dynamic) try {
-	if (p_exclude_dynamic)
-		add_message("*** using semi-static patching mode ***", 4);
-
+std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	bool l_good{ true };
 	std::size_t l_dyndata_bytes{ 0 };
 
 	m_game->sync_palettes(m_cache.m_shared_palettes);
 	auto x_rom{ m_game->m_rom_data };
 
-	m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom);
-	add_message("Patched chr data", 2);
+	// world tileset chr
+	if (m_settings.m_patch_world_chr_data) {
+		m_rom_manager.encode_chr_data(m_config, m_game.value(), x_rom);
+		add_message("Patched world tileset chr data", 2);
+	}
 
-	m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
-	add_message("Patched static data", 2);
+	// static data - several categories
+	if (true) {
+		m_rom_manager.encode_static_data(m_config, m_game.value(), x_rom);
+		add_message("Patched static data", 2);
+	}
 
 	std::pair<std::size_t, std::size_t> l_bret(0, 0);
 
-	if (!p_exclude_dynamic) {
+	// cinematics
+	if (m_settings.m_patch_cinematics) {
+		auto cinema_res{ m_game->cinematic.patch_rom(m_config, x_rom) };
+		std::size_t used_space{ cinema_res.data_section_end - cinema_res.data_section_start };
+		std::size_t free_space_end{ m_settings.throw_on_cinematic_overflow ?
+			m_config.constant(c::ID_ISCRIPT_DATA_RG2_START) :
+		m_config.constant(c::ID_ISCRIPT_DATA_RG2_END) };
 
-		if (m_settings.patch_cinematic) {
-			auto cinema_res{ m_game->cinematic.patch_rom(m_config, x_rom) };
-			std::size_t used_space{ cinema_res.data_section_end - cinema_res.data_section_start };
-			std::size_t free_space_end{ m_settings.throw_on_cinematic_overflow ?
-				m_config.constant(c::ID_ISCRIPT_DATA_RG2_START) :
-			m_config.constant(c::ID_ISCRIPT_DATA_RG2_END) };
+		bool cinematic_patched_ok{ check_patched_size("Cinematic Data", used_space,
+			free_space_end - cinema_res.data_section_start) };
 
-			bool cinematic_patched_ok{ check_patched_size("Cinematic Data", used_space,
-				free_space_end - cinema_res.data_section_start) };
+		l_good &= cinematic_patched_ok;
 
-			l_good &= cinematic_patched_ok;
+		if (!cinematic_patched_ok && m_settings.throw_on_cinematic_overflow)
+			add_message(
+				std::format(
+					"Cinematic data overflow: constant '{}' must be set to at least 0x{:05x} (see the documentation)",
+					c::ID_ISCRIPT_DATA_RG2_START,
+					cinema_res.data_section_end),
+				4);
+	}
 
-			if (!cinematic_patched_ok && m_settings.throw_on_cinematic_overflow)
-				add_message(
-					std::format(
-						"Cinematic data overflow: constant '{}' must be set to at least 0x{:05x} (see the documentation)",
-						c::ID_ISCRIPT_DATA_RG2_START,
-						cinema_res.data_section_end),
-					4);
-		}
+	// sprite gfx
+	if (m_settings.m_patch_sprite_gfx) {
+		auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
+		l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
+		l_good &= spritegfxres.success;
+		report_sprite_gfx_patch(spritegfxres);
+		if (spritegfxres.success)
+			add_message("Sprite Gfx data patched!", 2);
+		else
+			add_message("Could not patch Sprite Gfx data", 1);
+	}
 
-		if (m_settings.m_patch_sprite_gfx) {
-			auto spritegfxres{ m_game->m_sprite_gfx_manager.patch_rom(m_config, x_rom, m_rom_manager) };
-			l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
-			l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
-			l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
-			l_good &= spritegfxres.success;
-			report_sprite_gfx_patch(spritegfxres);
-			if (spritegfxres.success)
-				add_message("Sprite Gfx data patched!", 2);
-			else
-				add_message("Could not patch Sprite Gfx data", 1);
-		}
-
+	// bank 15 - coupled dynamic data
+	if (m_settings.m_patch_bank15_data) {
 		l_bret = m_rom_manager.encode_bank_15_data(m_config, m_game.value(), x_rom,
 			!m_cache.m_disable_pal2_mus);
 		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns, building scenes)", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
+	}
 
+	// sprite metadata
+	if (m_settings.m_patch_sprite_data) {
 		l_bret = m_rom_manager.encode_sprite_data(m_config, m_game.value(), x_rom);
 		l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
+	}
 
+	// world metadata
+	if (m_settings.m_patch_metadata) {
 		l_bret = m_rom_manager.encode_metadata(m_config, m_game.value(), x_rom);
 		l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second);
 		l_dyndata_bytes += l_bret.first;
 	}
 
-	auto l_tm_result{ m_rom_manager.encode_game_tilemaps(m_config, x_rom,
-		m_game.value()) };
-	l_good &= l_tm_result.m_result;
+	// screen tilemaps
+	if (m_settings.m_patch_tilemaps) {
+		auto l_tm_result{ m_rom_manager.encode_game_tilemaps(m_config, x_rom,
+			m_game.value()) };
+		l_good &= l_tm_result.m_result;
 
-	std::size_t l_max_tm_byte_size{ m_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
+		std::size_t l_max_tm_byte_size{ m_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
 
-	if (l_tm_result.m_result) {
+		if (l_tm_result.m_result) {
 
-		for (const auto& kv : l_tm_result.m_assignments) {
-			std::size_t l_bank_byte_size{ 0 };
-			std::string l_bank_output;
+			for (const auto& kv : l_tm_result.m_assignments) {
+				std::size_t l_bank_byte_size{ 0 };
+				std::string l_bank_output;
 
-			for (std::size_t w : kv.second) {
-				std::size_t l_byte_size{ l_tm_result.m_sizes[w] };
-				l_bank_byte_size += l_byte_size;
-				l_dyndata_bytes += l_byte_size;
-				l_bank_output += std::format("({} {} bytes) ",
-					m_cache.m_labels_worlds[w], l_byte_size);
+				for (std::size_t w : kv.second) {
+					std::size_t l_byte_size{ l_tm_result.m_sizes[w] };
+					l_bank_byte_size += l_byte_size;
+					l_dyndata_bytes += l_byte_size;
+					l_bank_output += std::format("({} {} bytes) ",
+						m_cache.m_labels_worlds[w], l_byte_size);
+				}
+
+				add_message(std::format("Bank {}: {}- total bytes: {}/{} ({:.2f}%)",
+					kv.first, l_bank_output, l_bank_byte_size, l_max_tm_byte_size,
+					100.0f * static_cast<float>(l_bank_byte_size) / static_cast<float>(l_max_tm_byte_size)),
+					6);
 			}
 
-			add_message(std::format("Bank {}: {}- total bytes: {}/{} ({:.2f}%)",
-				kv.first, l_bank_output, l_bank_byte_size, l_max_tm_byte_size,
-				100.0f * static_cast<float>(l_bank_byte_size) / static_cast<float>(l_max_tm_byte_size)),
-				6);
+			add_message("Tilemaps patched!", 2);
 		}
-
-		add_message("Tilemaps patched!", 2);
-	}
-	else {
-		add_message(std::format("Could not pack all world tilemaps across the banks, each of byte size {}",
-			l_max_tm_byte_size), 1);
-		for (std::size_t i{ 0 }; i < 8; ++i) {
-			add_message(std::format("Byte size for {}: {}",
-				m_cache.m_labels_worlds[i],
-				l_tm_result.m_sizes[i]), 6);
+		else {
+			add_message(std::format("Could not pack all world tilemaps across the banks, each of byte size {}",
+				l_max_tm_byte_size), 1);
+			for (std::size_t i{ 0 }; i < 8; ++i) {
+				add_message(std::format("Byte size for {}: {}",
+					m_cache.m_labels_worlds[i],
+					l_tm_result.m_sizes[i]), 6);
+			}
 		}
 	}
 
+	// bank duplication - region-specific config and not a setting
 	if (m_config.boolean_or(c::ID_DUPLICATE_STATIC_BANK, false)) {
 		m_rom_manager.duplicate_static_bank(x_rom);
 		add_message("Duplicated bank 15 into bank 31", 2);

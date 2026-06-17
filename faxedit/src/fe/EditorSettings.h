@@ -10,7 +10,10 @@ namespace fe {
 	struct EditorSettings {
 
 		// patch settings
-		bool m_patch_sprite_gfx, patch_cinematic, throw_on_cinematic_overflow;
+		bool m_patch_world_chr_data, m_patch_tilemaps,
+			m_patch_metadata, m_patch_sprite_data, m_patch_bank15_data,
+			m_patch_sprite_gfx, m_patch_cinematics,
+			throw_on_cinematic_overflow;
 		// gui settings
 		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,
 			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay;

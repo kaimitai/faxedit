@@ -30,9 +30,16 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_BANK_SCALING[]{ "bank_scaling" };
 			constexpr char SETTINGS_PARAM_TRANSP_TOLERANCE[]{ "transparency_tolerance" };
 			constexpr char SETTINGS_PARAM_SPRITE_PALETTE[]{ "sprite_palette" };
+
+			constexpr char SETTINGS_PARAM_PATCH_TILEMAPS[]("patch_tilemaps");
+			constexpr char SETTINGS_PARAM_PATCH_SPRITE_DATA[]("patch_sprite_data");
+			constexpr char SETTINGS_PARAM_PATCH_METADATA[]("patch_metadata");
+			constexpr char SETTINGS_PARAM_PATCH_BANK15_DATA[]("patch_bank15_data");
+			constexpr char SETTINGS_PARAM_PATCH_WORLD_CHR_DATA[]("patch_world_chr_data");
 			constexpr char SETTINGS_PARAM_PATCH_SPRITE_GFX[]{ "patch_sprite_gfx" };
 			constexpr char SETTINGS_PARAM_PATCH_CINEMATICS[]{ "patch_cinematics" };
 			constexpr char SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW[]{ "throw_on_cinematic_overflow" };
+
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
 			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };

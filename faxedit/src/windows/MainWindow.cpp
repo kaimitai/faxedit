@@ -126,7 +126,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_S))
 				save_xml();
 			else if (l_ctrl && ImGui::IsKeyReleased(ImGuiKey_P))
-				patch_nes_rom(l_shift, l_alt);
+				patch_nes_rom(l_shift);
 			else if (l_ctrl && l_shift && ImGui::IsKeyReleased(ImGuiKey_L))
 				load_xml(p_rnd);
 			else if (ImGui::IsKeyReleased(ImGuiKey_Escape)) {

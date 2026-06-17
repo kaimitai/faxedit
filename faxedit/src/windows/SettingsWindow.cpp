@@ -21,10 +21,16 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
 		if (ImGui::BeginTabItem("Patching")) {
 
-			ImGui::SeparatorText("Patch Control");
+			ImGui::SeparatorText("World Definitions");
+			ui::imgui_checkbox("Screen Tilemaps", m_settings.m_patch_tilemaps);
+			ui::imgui_checkbox("Sprites", m_settings.m_patch_sprite_data, "Sprite placements on screens");
+			ui::imgui_checkbox("Metadata", m_settings.m_patch_metadata, "Doors, metatile definitions and screen scroll connections");
+			ui::imgui_checkbox("Bank 15 Data (transitions and more)", m_settings.m_patch_bank15_data, "Building Scenes, Spawn Points, Pal2Mus, OW- and SW-transitions");
 
+			ImGui::SeparatorText("Graphics");
+			ui::imgui_checkbox("World Tileset CHR", m_settings.m_patch_world_chr_data);
 			ui::imgui_checkbox("Sprite Gfx", m_settings.m_patch_sprite_gfx);
-			ui::imgui_checkbox("Cinematics", m_settings.patch_cinematic);
+			ui::imgui_checkbox("Cinematics", m_settings.m_patch_cinematics);
 
 			ImGui::SeparatorText("Other");
 

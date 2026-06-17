@@ -1394,9 +1394,17 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 
 	add_setting(n_settings, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
 	add_setting(n_settings, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
+
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_TILEMAPS, p_settings.m_patch_tilemaps);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SPRITE_DATA, p_settings.m_patch_sprite_data);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_METADATA, p_settings.m_patch_metadata);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_BANK15_DATA, p_settings.m_patch_bank15_data);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_WORLD_CHR_DATA, p_settings.m_patch_world_chr_data);
+
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
-	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.patch_cinematic);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.m_patch_cinematics);
 	add_setting(n_settings, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
+
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 	add_setting(n_settings, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
 
@@ -1442,9 +1450,16 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 
 		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_MATTOCK, p_settings.m_mattock_overlay);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_IO_DOOR_REQS, p_settings.m_door_req_overlay);
+
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_TILEMAPS, p_settings.m_patch_tilemaps);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SPRITE_DATA, p_settings.m_patch_sprite_data);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_METADATA, p_settings.m_patch_metadata);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_BANK15_DATA, p_settings.m_patch_bank15_data);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_WORLD_CHR_DATA, p_settings.m_patch_world_chr_data);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SPRITE_GFX, p_settings.m_patch_sprite_gfx);
-		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.patch_cinematic);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_CINEMATICS, p_settings.m_patch_cinematics);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_THROW_ON_CINEMATIC_OVERFLOW, p_settings.throw_on_cinematic_overflow);
+
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
 

@@ -330,8 +330,8 @@ namespace fe {
 
 		// save functions
 		void save_xml(void);
-		void patch_nes_rom(bool p_in_place, bool p_exclude_dynamic = false);
-		std::optional<std::vector<byte>> patch_rom(bool p_exclude_dynamic = false);
+		void patch_nes_rom(bool p_in_place);
+		std::optional<std::vector<byte>> patch_rom(void);
 
 		// camera and screen rendering helpers
 		void render_screen_texture(SDL_Renderer* p_rnd);

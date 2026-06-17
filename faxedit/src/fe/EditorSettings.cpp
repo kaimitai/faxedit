@@ -27,8 +27,13 @@ void fe::EditorSettings::set_sprite_palettes_defaults(void) {
 }
 
 void fe::EditorSettings::set_patching_defaults(void) {
+	m_patch_world_chr_data = true;
+	m_patch_tilemaps = true;
+	m_patch_metadata = true;
+	m_patch_sprite_data = true;
+	m_patch_bank15_data = true;
 	m_patch_sprite_gfx = true;
-	patch_cinematic = true;
+	m_patch_cinematics = true;
 	throw_on_cinematic_overflow = true;
 }
 
