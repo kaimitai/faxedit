@@ -1404,6 +1404,9 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_CAM_ZOOM_FACTOR, p_settings.m_cam_zoom_factor);
 	add_setting(n_settings, c::SETTINGS_PARAM_INVERT_ZOOM, p_settings.m_invert_zoom);
 
+	add_setting(n_settings, c::SETTINGS_PARAM_WARN_TILEMAP_95, p_settings.m_warn_tilemap_95_pct);
+	add_setting(n_settings, c::SETTINGS_PARAM_WARN_DOOR_DEST_00, p_settings.m_warn_00_doors);
+
 	// save document to disk
 	if (!doc.save_file(p_filepath.c_str()))
 		throw std::runtime_error("Could not save " + p_filepath);
@@ -1448,6 +1451,9 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_byte(n_root, c::SETTINGS_PARAM_BORDER_ALPHA, p_settings.m_border_alpha);
 		read_setting_float(n_root, c::SETTINGS_PARAM_CAM_ZOOM_FACTOR, p_settings.m_cam_zoom_factor);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_INVERT_ZOOM, p_settings.m_invert_zoom);
+
+		read_setting_bool(n_root, c::SETTINGS_PARAM_WARN_TILEMAP_95, p_settings.m_warn_tilemap_95_pct);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_WARN_DOOR_DEST_00, p_settings.m_warn_00_doors);
 	}
 	catch (const std::exception&) {
 		// ignore - not critical

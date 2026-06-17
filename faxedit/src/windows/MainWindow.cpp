@@ -42,6 +42,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_sprite_gfx_window{ false },
 	m_cinematic_window{ false },
 	m_visualization_window{ false },
+	m_settings_window{ false },
 	m_iscript_win_set_focus{ false },
 	// cached values
 	m_cache{
@@ -135,6 +136,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				m_gfx_window = false;
 				m_sprite_gfx_window = false;
 				m_visualization_window = false;
+				m_settings_window = false;
 			}
 			else if (l_ctrl && (ImGui::IsKeyPressed(ImGuiKey_Equal) ||
 				ImGui::IsKeyPressed(ImGuiKey_KeypadAdd))) {
@@ -216,6 +218,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			draw_cinematic_window(p_rnd);
 		if (m_visualization_window)
 			draw_visualization_window(p_rnd);
+		if (m_settings_window)
+			draw_settings_window(p_rnd);
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);

@@ -45,6 +45,8 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_CAM_ZOOM_FACTOR[]{ "camera_zoom_factor" };
 			constexpr char SETTINGS_PARAM_BORDER_ALPHA[]{ "screen_border_alpha" };
 			constexpr char SETTINGS_PARAM_INVERT_ZOOM[]{ "invert_zoom" };
+			constexpr char SETTINGS_PARAM_WARN_TILEMAP_95[]{ "warn_tilemap_95_pct" };
+			constexpr char SETTINGS_PARAM_WARN_DOOR_DEST_00[]{ "warn_door_dest_00" };
 
 			constexpr char TAG_STAGES[]{ "stages" };
 			constexpr char TAG_STAGE[]{ "stage" };

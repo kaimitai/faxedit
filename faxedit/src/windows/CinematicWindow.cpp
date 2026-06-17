@@ -45,10 +45,6 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 		if (ImGui::RadioButton("Animations",
 			editmode == fe::CinematicEditMode::AnimationFrames))
 			editmode = fe::CinematicEditMode::AnimationFrames;
-		ImGui::SameLine();
-		if (ImGui::RadioButton("Settings",
-			editmode == fe::CinematicEditMode::Settings))
-			editmode = fe::CinematicEditMode::Settings;
 
 		if (editmode == fe::CinematicEditMode::Palette) {
 			show_cinematic_edit_mode(ls_intro);
@@ -87,13 +83,6 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 				ls_threshold_idx, 0, thresh_data.size() - 1, "", false, true);
 
 			show_cinematic_threshold(thresh_data.at(ls_threshold_idx));
-		}
-		else if (editmode == fe::CinematicEditMode::Settings) {
-			ImGui::SeparatorText("Patching");
-			ui::imgui_checkbox("Patch Cinematic Data", m_settings.patch_cinematic,
-				"Whether cinematic data should be written to rom during patching");
-			ui::imgui_checkbox("Disallow overflow", m_settings.throw_on_cinematic_overflow,
-				"Whether to fail patching if cinematic data could potentially overwrite script data (see documentation)");
 		}
 		else if (editmode == fe::CinematicEditMode::AnimationFrames) {
 			show_cinematic_frames(p_rnd);

@@ -26,6 +26,8 @@ namespace fe {
 		float m_cam_zoom_factor;
 		byte m_border_alpha;
 		bool m_invert_zoom;
+		// warnings
+		bool m_warn_tilemap_95_pct, m_warn_00_doors;
 
 		void sanitize(void);
 		void sanitize_float(float& p_val, float p_default);
@@ -40,7 +42,11 @@ namespace fe {
 
 	public:
 		EditorSettings(void);
+		void set_sprite_palettes_defaults(void);
+		void set_patching_defaults(void);
+		void set_rendering_defaults(void);
 		void set_sprite_gfx_defaults(void);
+		void set_advanced_defaults(void);
 	};
 
 }

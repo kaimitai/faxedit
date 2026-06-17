@@ -113,3 +113,30 @@ bool fe::ui::imgui_checkbox(const std::string& p_label, char& p_val,
 	p_val = static_cast<char>(l_val);
 	return result;
 }
+
+bool fe::ui::imgui_float_slider(const char* p_id, const std::string& p_label, float& value,
+	float p_min, float p_max, const std::string& p_tooltip_text) {
+	ImGui::PushID(p_id);
+
+	// draw label and optional tooltip text
+	if (!p_label.empty()) {
+		ImGui::TextUnformatted(p_label.c_str());
+
+		if (!p_tooltip_text.empty() && ImGui::IsItemHovered()) {
+			ImGui::BeginTooltip();
+			ImGui::TextUnformatted(p_tooltip_text.c_str());
+			ImGui::EndTooltip();
+		}
+	}
+
+	ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
+
+	bool l_result{ ImGui::SliderFloat(p_id, &value, p_min, p_max,
+		"%.3f", ImGuiSliderFlags_NoInput) };
+
+	ImGui::PopItemWidth();
+
+	ImGui::PopID();
+
+	return l_result;
+}

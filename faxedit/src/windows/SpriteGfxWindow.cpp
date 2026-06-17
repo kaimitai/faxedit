@@ -43,9 +43,6 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			editmode = fe::SpriteGfxEditMode::Settings;
 
 		if (editmode == fe::SpriteGfxEditMode::Settings) {
-			ImGui::SeparatorText("Patching");
-			ui::imgui_checkbox("Patch sprite gfx data", m_settings.m_patch_sprite_gfx,
-				"Whether sprite gfx data should be written when patching ROM");
 			ImGui::SeparatorText("Palettes (for GUI rendering and bmp-import/export)");
 			ui::imgui_slider_with_arrows("###npcpal", std::format("NPCs: {}",
 				get_description(static_cast<byte>(m_settings.coll_palettes[0]), m_cache.m_labels_palettes)),
@@ -57,21 +54,10 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 				get_description(static_cast<byte>(m_settings.coll_palettes[2]), m_cache.m_labels_palettes)),
 				m_settings.coll_palettes[2], 0, m_game->m_palettes.size() - 1, "", false, true);
 
-			ImGui::SeparatorText("Rendering Scales");
-			ImGui::SliderFloat("animation frames", &m_settings.scale_frame, 1.0f, 5.0f,
-				"%.3f", ImGuiSliderFlags_NoInput);
-			ImGui::SliderFloat("chr-banks", &m_settings.scale_bank, 1.0f, 5.0f,
-				"%.3f", ImGuiSliderFlags_NoInput);
+			ImGui::SeparatorText("Default Sprite Palettes");
 
-			ImGui::SeparatorText("bmp-import");
-			ui::imgui_slider_with_arrows("###tratol", "Transparency Tolerance",
-				m_settings.transp_tolerance, 0, 10,
-				"How far a pixel color can deviate from hot pink and still be considered transparent",
-				false, true);
-
-			ImGui::Separator();
-			if (ui::imgui_button("Reset settings", 4, "Reset to default settings")) {
-				m_settings.set_sprite_gfx_defaults();
+			if (ui::imgui_button("Reset palette settings", 4, "Reset palettes to defaults")) {
+				m_settings.set_sprite_palettes_defaults();
 			}
 			ImGui::SeparatorText("GUI");
 			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI")) {

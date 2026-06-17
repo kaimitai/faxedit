@@ -28,7 +28,7 @@ namespace fe {
 	enum ChrPickerMode { Default, HUD, All };
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
 	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player };
-	enum class CinematicEditMode { Player, Ripples, Waterfall, Palette, AnimationFrames, Settings };
+	enum class CinematicEditMode { Player, Ripples, Waterfall, Palette, AnimationFrames };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -135,7 +135,7 @@ namespace fe {
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
 			m_gfx_window, m_sprite_gfx_window, m_cinematic_window,
-			m_visualization_window;
+			m_visualization_window, m_settings_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -194,6 +194,7 @@ namespace fe {
 		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
 		void draw_cinematic_window(SDL_Renderer* p_rnd);
 		void draw_visualization_window(SDL_Renderer* p_rnd);
+		void draw_settings_window(SDL_Renderer* p_rnd);
 
 		void show_output_messages(void) const;
 

@@ -93,13 +93,27 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		add_message("Starting integrity analysis", 4);
 
 		// check tilemap sizes
+		constexpr std::size_t BANK_SIZE{ 0x4000 };
 		const auto tilemap_sizes{ m_rom_manager.get_world_tilemap_sizes(m_game.value()) };
+
 		for (std::size_t w{ 0 }; w < tilemap_sizes.size(); ++w) {
-			float pct{ 100.0f * static_cast<float>(tilemap_sizes[w]) / static_cast<float>(0x4000) };
-			if (pct >= 95.0f)
-				add_message(std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
-					w, tilemap_sizes[w], 0x4000, pct),
-					pct >= 100.0f ? 1 : 4);
+			const auto l_wtm_size{ tilemap_sizes[w] };
+
+			if (l_wtm_size > BANK_SIZE) {
+				add_message(
+					std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
+						w, l_wtm_size, BANK_SIZE,
+						100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
+					1);
+			}
+			else if (m_settings.m_warn_tilemap_95_pct &&
+				l_wtm_size * 100 >= BANK_SIZE * 95) {
+				add_message(
+					std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
+						w, l_wtm_size, BANK_SIZE,
+						100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
+					4);
+			}
 		}
 
 		for (std::size_t c{ 0 }; c < m_game->m_chunks.size(); ++c) {
@@ -163,7 +177,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 					}
 
 					// no need to check dest coords for doors to building - they come from the scene data
-					if (door.m_door_type != fe::DoorType::Building &&
+					if (m_settings.m_warn_00_doors &&
+						door.m_door_type != fe::DoorType::Building &&
 						door.m_dest_coords.first == 0 &&
 						door.m_dest_coords.second == 0)
 						add_message(std::format("World {}, Screen {}, Door ({},{}): Destination coords are (0, 0) - was this intentional?",
@@ -251,7 +266,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 		ImGui::SameLine();
 
-		if (ui::imgui_button("Dump configuration", 4, "Hold Shift to dump all debug data")) try {
+		if (ui::imgui_button("DEBUG", 4, "Hold Shift to dump all debug data")) try {
 			dump_debug_data(l_shift);
 		}
 		catch (const std::exception& ex) {
@@ -272,6 +287,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 	catch (const std::exception& ex) {
 		add_message(ex.what(), 1);
 	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Settings",
+		m_settings_window ? 4 : 2))
+		m_settings_window = !m_settings_window;
 
 	show_output_messages();
 

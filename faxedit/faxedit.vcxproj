@@ -199,6 +199,7 @@
     <ClCompile Include="src\windows\gfx.cpp" />
     <ClCompile Include="src\windows\imgui_helper.cpp" />
     <ClCompile Include="src\windows\MainWindow.cpp" />
+    <ClCompile Include="src\windows\SettingsWindow.cpp" />
     <ClCompile Include="src\windows\SpriteGfxWindow.cpp" />
     <ClCompile Include="src\windows\TilemapWindow.cpp" />
     <ClCompile Include="src\windows\UndoInterface.cpp" />
