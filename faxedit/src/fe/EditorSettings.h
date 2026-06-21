@@ -28,7 +28,8 @@ namespace fe {
 		float scale_frame, scale_bank;
 		int transp_tolerance;
 		// advanced settings
-		bool m_door_pad_byte, m_enable_config_dump;
+		bool m_door_pad_byte, m_enable_config_dump,
+			m_enable_ips_button;
 		// camera and screen rendering settings
 		float m_cam_zoom_factor;
 		byte m_border_alpha;
@@ -54,6 +55,8 @@ namespace fe {
 		void set_rendering_defaults(void);
 		void set_sprite_gfx_defaults(void);
 		void set_advanced_defaults(void);
+
+		void set_randomizer_patch_preset(void);
 	};
 
 }

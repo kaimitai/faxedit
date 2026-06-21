@@ -45,6 +45,27 @@ void fe::EditorSettings::set_patching_defaults(void) {
 	m_patch_bg_gfx = true;
 }
 
+// TODO: decide if this should be enabled front-end to
+// replace the old "semi-static patching mode" for randumizer-compatible patching
+void fe::EditorSettings::set_randomizer_patch_preset(void) {
+	m_patch_world_chr_data = true;
+	m_patch_tilemaps = true;
+	m_patch_metadata = false;
+	m_patch_sprite_data = false;
+	m_patch_bank15_data = false;
+	m_patch_sprite_gfx = false;
+	m_patch_cinematics = true;
+	throw_on_cinematic_overflow = true;
+	m_patch_palettes = true;
+	m_patch_stages = false;
+	m_patch_mattock_animations = true;
+	m_patch_push_blocks = true;
+	m_patch_jump_on_tiles = true;
+	m_patch_scenes = true;
+	m_patch_fog = true;
+	m_patch_bg_gfx = true;
+}
+
 void fe::EditorSettings::set_sprite_gfx_defaults(void) {
 	scale_frame = 3.0f;
 	scale_bank = 2.0f;
@@ -60,6 +81,7 @@ void fe::EditorSettings::set_rendering_defaults(void) {
 void fe::EditorSettings::set_advanced_defaults(void) {
 	m_door_pad_byte = false;
 	m_enable_config_dump = false;
+	m_enable_ips_button = true;
 	m_warn_tilemap_95_pct = true;
 	m_warn_00_doors = true;
 }

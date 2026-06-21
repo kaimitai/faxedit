@@ -57,6 +57,7 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_IO_DOOR_REQS[]{ "icon_overlay_door_reqs" };
 			constexpr char SETTINGS_PARAM_SHOW_DOOR_PADDING[]{ "show_door_padding_byte" };
 			constexpr char SETTINGS_PARAM_ENABLE_CONFIG_DUMP[]{ "enable_config_dump" };
+			constexpr char SETTINGS_PARAM_ENABLE_IPS_BUTTON[]{ "enable_ips_button" };
 			constexpr char SETTINGS_PARAM_CAM_ZOOM_FACTOR[]{ "camera_zoom_factor" };
 			constexpr char SETTINGS_PARAM_BORDER_ALPHA[]{ "screen_border_alpha" };
 			constexpr char SETTINGS_PARAM_INVERT_ZOOM[]{ "invert_zoom" };

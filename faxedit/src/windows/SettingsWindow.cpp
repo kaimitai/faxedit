@@ -99,13 +99,14 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 		if (ImGui::BeginTabItem("Advanced")) {
 
 			ImGui::SeparatorText("Debug");
-			ui::imgui_checkbox("Enable Debug Button", m_settings.m_enable_config_dump);
+			ui::imgui_checkbox("Enable Debug Features", m_settings.m_enable_config_dump);
 
 			ImGui::SeparatorText("Data Integrity");
 			ui::imgui_checkbox("Warn on (0, 0)-door destinations", m_settings.m_warn_00_doors);
 			ui::imgui_checkbox("Warn on world tilemap >= 95% bank size", m_settings.m_warn_tilemap_95_pct);
 
 			ImGui::SeparatorText("Miscellaneous");
+			ui::imgui_checkbox("Enable IPS patching", m_settings.m_enable_ips_button);
 			ui::imgui_checkbox("Show Door Padding Byte", m_settings.m_door_pad_byte,
 				"Expose the unused padding byte in the sameworld and building door data");
 

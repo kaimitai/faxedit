@@ -61,29 +61,33 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		"Patch loaded ROM file"))
 		patch_nes_rom(l_shift);
 
-	ImGui::SameLine();
+	if (m_settings.m_enable_ips_button) {
 
-	if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
-		auto l_patched_rom{ patch_rom() };
+		ImGui::SameLine();
 
-		if (l_patched_rom.has_value()) {
-			try {
-				auto l_ips{ klib::ips::generate_patch(m_game->m_rom_data,
-					l_patched_rom.value()) };
+		if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
+			auto l_patched_rom{ patch_rom() };
 
-				klib::file::write_bytes_to_file(l_ips, get_ips_path());
+			if (l_patched_rom.has_value()) {
+				try {
+					auto l_ips{ klib::ips::generate_patch(m_game->m_rom_data,
+						l_patched_rom.value()) };
 
-				add_message(std::format(
-					"ips patch written to {} ({} bytes)",
-					get_ips_path(), l_ips.size()), 2);
-			}
-			catch (const std::runtime_error& ex) {
-				add_message(ex.what(), 1);
-			}
-			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+					klib::file::write_bytes_to_file(l_ips, get_ips_path());
+
+					add_message(std::format(
+						"ips patch written to {} ({} bytes)",
+						get_ips_path(), l_ips.size()), 2);
+				}
+				catch (const std::runtime_error& ex) {
+					add_message(ex.what(), 1);
+				}
+				catch (const std::exception& ex) {
+					add_message(ex.what(), 1);
+				}
 			}
 		}
+
 	}
 
 	ImGui::SameLine();
