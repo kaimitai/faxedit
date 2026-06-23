@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <algorithm>
+#include <format>
 #include <iostream>
 #include <stdexcept>
 #include "./common/imgui/imgui.h"
@@ -32,7 +33,8 @@ int main(int argc, char** argv) try {
 		if (!l_wconf.isVisibleOnAnyDisplay())
 			l_wconf.set_defaults();
 
-		l_window = SDL_CreateWindow("Echoes of Eolis", l_wconf.w, l_wconf.h, SDL_WINDOW_RESIZABLE);
+		l_window = SDL_CreateWindow(std::format("{} ({})", fe::c::APP_NAME, fe::c::APP_VERSION).c_str(),
+			l_wconf.w, l_wconf.h, SDL_WINDOW_RESIZABLE);
 		if (l_window == nullptr)
 			throw std::runtime_error(SDL_GetError());
 		else {

@@ -692,44 +692,44 @@
 		</byte_to_string_map>
 		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
 		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
-			<entry byte="$00" str="0x3e60f:0x3e637" />
-			<entry byte="$01" str="0x3e579:0x3e587" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" />
-			<entry byte="$05" str="0x3fcdd:0x3fff0" />
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3fcdd:0x3fff0" original="bank end unused space" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="ng+1.08">
-			<entry byte="$00" str="0x3e60f:0x3e637" />
-			<entry byte="$01" str="0x3e579:0x3e587" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" />
-			<entry byte="$05" str="0x3ffde:0x3fff0" />
-			<entry byte="$06" str="0x3dfa9:0x3dfd5" />
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3ffde:0x3fff0" original="bank end unused space" />
+			<entry byte="$06" str="0x3dfa9:0x3dfd5" original="unused debug code" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="jp">
-			<entry byte="$00" str="0x3e60f:0x3e637" />
-			<entry byte="$01" str="0x3e579:0x3e587" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" />
-			<entry byte="$05" str="0x3fdc2:0x3fff0" />
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3fdc2:0x3fff0" original="bank end unused space" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="en-transl">
-			<entry byte="$00" str="0x3e60f:0x3e637" />
-			<entry byte="$01" str="0x3e579:0x3e587" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" />
-			<entry byte="$05" str="0x3fe0a:0x3fff0" />
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3fe0a:0x3fff0" original="bank end unused space" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="randum">
-			<entry byte="$00" str="0x3e60f:0x3e637" />
-			<entry byte="$01" str="0x3dfa9:0x3dfd5" />
-			<entry byte="$02" str="0x3ddbd:0x3dded" />
-			<entry byte="$03" str="0x3ea57:0x3ea60" />
-			<entry byte="$04" str="0x3eabc:0x3eb3f" />
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3dfa9:0x3dfd5" original="unused debug code" />
+			<entry byte="$02" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$03" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$04" str="0x3eabc:0x3eb3f" original="ow-transitions" />
 		</byte_to_string_map>
 		<!-- world tilemaps to predefined bank -->
 		<byte_to_string_map name="world_tilemap_to_predefined_bank">
