@@ -261,6 +261,9 @@
     <ClCompile Include="src\windows\SettingsWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\common\klib\Asm6502.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Bitreader.h">
@@ -454,6 +457,9 @@
     </ClInclude>
     <ClInclude Include="src\common\magic_enum.hpp">
       <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Asm6502.h">
+      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -344,8 +344,9 @@ namespace fe {
 		std::pair<float, float> world_px_to_view_px(float world_x_px,
 			float world_y_px) const;
 
-		// debug functions
+		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
+		void patch_randumizer_doors(void);
 
 	public:
 

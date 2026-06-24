@@ -149,6 +149,7 @@
     <ClCompile Include="src\common\imgui\imgui_impl_sdlrenderer3.cpp" />
     <ClCompile Include="src\common\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\common\klib\Asm6502.cpp" />
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
     <ClCompile Include="src\common\klib\Bitwriter.cpp" />
     <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="src\common\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\common\imgui\imstb_textedit.h" />
     <ClInclude Include="src\common\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\common\klib\Asm6502.h" />
     <ClInclude Include="src\common\klib\Bitreader.h" />
     <ClInclude Include="src\common\klib\Bitwriter.h" />
     <ClInclude Include="src\common\klib\IPS_Patch.h" />

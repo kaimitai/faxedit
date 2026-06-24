@@ -375,6 +375,7 @@
 		<bool name="disable_pal2mus" value="true" region="randum" />
 		<!-- detect the randomizer sameworld door to stage door hack -->
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
+		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl" />
 	</bools>
