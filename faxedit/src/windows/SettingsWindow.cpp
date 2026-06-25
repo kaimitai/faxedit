@@ -128,7 +128,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 				!ImGui::IsKeyDown(ImGuiMod_Shift) ||
 				m_game->m_sw_door_type != fe::SameWorldDoorType::Normal)) try {
 				patch_randumizer_doors();
-				add_message("Randumizer door hack applied!", 2);
+				add_message("Sameworld-door to Stage-door hack applied!", 2);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), 1);
@@ -147,6 +147,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::patch_randumizer_doors(void) {
 	// check if the patch can actually be applied
+
 	// copy the world -> stages lookup map so we can use [] to populate missing entries
 	auto world2stages{ m_game->m_stages.m_world_to_stage };
 
@@ -181,7 +182,7 @@ void fe::MainWindow::patch_randumizer_doors(void) {
 	const word RAM_PendingStage{ 0x1ffe };
 
 	// new routine addresses
-	
+
 	// randumizer addresses for reference
 	// const word Hack_ClearPendingStageAndLoadWorld{ 0xfda0 };
 	// const word Hack_SetPendingStage{ 0xfe00 };
@@ -218,10 +219,11 @@ void fe::MainWindow::patch_randumizer_doors(void) {
 	code.jsr(Screen_LoadSpritePalette);
 	code.lda_abs(RAM_StageChangePending);
 	code.cmp_imm(0x01);
-	code.beq(0x03);
+	code.beq("@stage_pending");
 	// hack stage change not pending, use vanilla palette logic
 	code.jmp(Game_LoadCurrentArea_LDX_Stage);
 	// hack stage change pending - clear the flag and load screen
+	code.label("@stage_pending");
 	code.lda_imm(0x00);
 	code.sta_abs(RAM_StageChangePending);
 	code.jmp(Screen_Load);

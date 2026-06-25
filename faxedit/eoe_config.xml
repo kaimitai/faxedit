@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-7.3">
+<eoe_config app_version="beta-8">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -707,7 +707,6 @@
 			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
 			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
 			<entry byte="$05" str="0x3ffde:0x3fff0" original="bank end unused space" />
-			<entry byte="$06" str="0x3dfa9:0x3dfd5" original="unused debug code" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="jp">
 			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />

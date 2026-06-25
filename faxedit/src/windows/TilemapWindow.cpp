@@ -1074,7 +1074,7 @@ void fe::MainWindow::show_randomizer_sameworld_door_data(fe::Door& p_door) {
 
 	ImGui::Separator();
 
-	ImGui::Text("Note: This is a randomizer stage-door");
+	ImGui::Text("Note: Stage-door hack is active. This door can lead to any stage.");
 
 	p_door.m_requirement = static_cast<byte>(l_deststage * 16) + static_cast<byte>(l_subreq);
 }

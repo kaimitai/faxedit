@@ -1,6 +1,8 @@
 #include "Asm6502.h"
 #include <algorithm>
 #include <cassert>
+#include <format>
+#include <stdexcept>
 
 const std::vector<byte>& klib::Asm6502::bytes(void) const {
 	return m_bytes;
@@ -10,8 +12,17 @@ std::size_t klib::Asm6502::size(void) const {
 	return m_bytes.size();
 }
 
+void klib::Asm6502::label(const std::string& p_name) {
+	if (m_labels.contains(p_name))
+		throw std::runtime_error(std::format("Duplicate label: {}", p_name));
+
+	m_labels[p_name] = m_bytes.size();
+}
+
 void klib::Asm6502::clear(void) {
 	m_bytes.clear();
+	m_labels.clear();
+	m_branch_refs.clear();
 }
 
 void klib::Asm6502::emit(byte p_byte) {
@@ -27,7 +38,37 @@ void klib::Asm6502::emit_word(word p_word) {
 	emit(static_cast<byte>((p_word >> 8) & 0xff));
 }
 
+void klib::Asm6502::resolve_labels() {
+	for (const auto& branch : m_branch_refs) {
+
+		auto it{ m_labels.find(branch.label) };
+		if (it == m_labels.end())
+			throw std::runtime_error(std::format("Undefined label: {}", branch.label));
+
+		const auto target = static_cast<std::ptrdiff_t>(it->second);
+		const auto next = static_cast<std::ptrdiff_t>(branch.offset + 1);
+		const auto delta = target - next;
+
+		if (delta < -128 || delta > 127)
+			throw std::runtime_error(std::format("Branch out of range: {}", branch.label));
+
+		m_bytes[branch.offset] = static_cast<byte>(static_cast<sbyte>(delta));
+	}
+}
+
+void klib::Asm6502::branch(byte p_opcode, const std::string& p_label) {
+	emit(p_opcode);
+
+	m_branch_refs.push_back({
+		m_bytes.size(),
+		p_label
+		});
+
+	emit(byte{ 0 }); // patched later
+}
+
 // opcode constants
+constexpr byte OP_ASL_A{ 0x0a };
 constexpr byte OP_JSR{ 0x20 };
 constexpr byte OP_AND_IMM{ 0x29 };
 constexpr byte OP_LSR_A{ 0x4a };
@@ -104,6 +145,14 @@ void klib::Asm6502::bne(sbyte p_offset) {
 	emit(p_offset);
 }
 
+void klib::Asm6502::beq(const std::string& p_label) {
+	branch(OP_BEQ, p_label);
+}
+
+void klib::Asm6502::bne(const std::string& p_label) {
+	branch(OP_BNE, p_label);
+}
+
 // logical
 void klib::Asm6502::and_imm(byte p_value) {
 	emit(OP_AND_IMM);
@@ -124,9 +173,23 @@ void klib::Asm6502::lsr_a(void) {
 	emit(OP_LSR_A);
 }
 
+
+void klib::Asm6502::asl_a(void) {
+	emit(OP_ASL_A);
+}
+
+
 // misc
 void klib::Asm6502::nop(void) {
 	emit(OP_NOP);
+}
+
+void klib::Asm6502::add_byte(byte p_value) {
+	emit(p_value);
+}
+
+void klib::Asm6502::add_word(word p_word) {
+	emit_word(p_word);
 }
 
 void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
@@ -147,6 +210,7 @@ void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
 
 void klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
 	word p_cpu_addr, word p_cpu_min_addr) {
+	resolve_labels();
 	apply_hack(p_rom, p_bank_no, p_cpu_addr, p_cpu_min_addr);
 	clear();
 }
