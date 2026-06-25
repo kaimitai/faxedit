@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-7.21), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-8), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -64,6 +64,8 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Outro](#outro)
   - [Cinematic Editor Window](#the-cinematic-editor-window)
 - [World Visualizer](#world-visualizer)
+- [Stage Door Hack](#stage-door-hack)
+- [Settings Window](#settings)
 - [Configuration Files](#configuration-files)
 - [Randomizer](#randomizer)
 - [Changelog](#changelog)
@@ -87,6 +89,7 @@ This is the screen used for file operations and data analysis.
 * Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
 * Apply External ROM Changes: Re-reads the loaded rom from disk, and regenerates iScripts and music track counts. Should be used if the ROM undergoes external changes.
 * Output Messages: The messages from the editor
+* Settings: Opens the [settings window](#settings)
 
 The tilemaps are stored in four different banks in ROM, but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
 
@@ -529,6 +532,8 @@ The editor will deduplicate identical destination parameter sets, if any exist f
 
 Note: The "Towns" world does not support same-world doors in the original game, but the editor will update a normalization constant in the door logic to accomodate it. The towns world allows more than 32 door to building destinations, but the sum of same world and building destinations must still be no more than 64.
 
+Note: Sameworld-doors can be turned into other-stage doors through a [hack](#stage-door-hack) that can be applied in the Settings screen.
+
 ## Screen Scrolling
 
 The screens in a world are connected to each other via regular scrolling. When you exit the screen horizontally you keep your vertical position, and you keep your horizontal position when you exit vertically. This makes it look like the screens are physically connected.
@@ -944,27 +949,11 @@ Since all portrait frames use the same chr-bank, all frames will have to be rege
 
 This window contains some settings regarding sprite gfx editing.
 
-A checkbox will let you decide whether to patch sprite gfx at all when patching ROM.
-
 The palettes can be set for NPCs, Player and Portrait frames. These palettes will be used for rendering, and for bmp export and import. The palettes themselves can be viewed and edited in the "World Palettes" in the BG Gfx Editor.
 
-The rendering scales will decide the scales of the rendered animation frames and chr-banks.
-
-Transparency tolerance is how far off the hot-pink color a color can be and still be considered transparent.
-
-Ideally you want to match the hot-pink transparency color exactly, as seen in exported bmps.
-
-The color is
-
-```(r, g, b) = (255, 105, 180)```
-
-If the transparency is set to 3, which is the default, any color in the range
-
-```(r, g, b) = (252-255, 102-108, 177-183)```
-
-will be considered transparent.
-
 The "Regenerate UI Sprites" button will syncronize how the NPCs and items look in the GUI with how the sprite graphics are defined.
+
+If the debug features are turned on, there will be buttons here for importing and exporting all frames at once for each type.
 
 <hr>
 
@@ -1092,23 +1081,6 @@ The chr-bank for cinematic frames can accomodate 144 chr-tiles, and the original
 
 <hr>
 
-#### Cinematic Settings
-
-The last mode, settings, lets you set two toggles:
-
-- Whether or not to patch cinematic data at all. Enabled by default.
-- Whether or not to fail patching on potential data overflow. Enabled by default.
-
-If the animation frame graphics are expanded, they will spill into the free space in bank 12. This space is also potentially used by iScript bytecode. Configuration constant **iscript_data_rg2_start** defines where the free space region for overflowing iScript bytecode code can be stored, and if cinematic data patching needs to use this space, it will fail by default. The error message will tell you a minimum value for **iscript_data_rg2_start** which would allow cinematic data patching, so that you can make a configuration override.
-
-There is quite a lot of free space at the end of bank 12, so letting iScript bytecode start later should normally be unproblematic. If you encounter this problem;
-
-- Make a configuration override with an increased value for **iscript_data_rg2_start**
-- Re-assemble your scripts with this new constant active. The script code will now be relocated to start later in the bank.
-- Patch your cinematic data once again now that you are sure it will not overwrite any scripts.
-
-<hr>
-
 ## World Visualizer
 
 The World Visualizer generates a graphical representation of a world by traversing the game's connection data and laying out screens according to their relationships.
@@ -1177,8 +1149,98 @@ Transitions and doors to other worlds will have two labels with light blue text,
   * Screen Numbers: Add a label with the screen id in the top left corner of each individual screen
   * Other-World Transitions: Add labels for destination world and screen for ow-transitions
   * Stage Door Destinations: Add labels for destination world and screen for next- and previous-stage doors, if deduction is possible.
+  * Scroll Connections: Add labels for scrolling when enabled in all four directions. Adding too many labels will make the png cluttered, but it can be used if you need to inspect mazes for example, where scrolling is not consistent back and forth for a set of screens.
   * Skip Unreferenced Screens: Disable rendering for screens with no incoming references.
   * SW-Transition tolerance: Controls the maximum distance from a screen edge at which a same-world transition metatile may be interpreted as a scroll connection. Since same-world transitions are directionless in the underlying game data, the visualizer infers a direction based on the nearest screen edge. Increasing this value causes more edge-adjacent transitions to be rendered as scroll connections.
+
+<hr>
+
+## Stage Door Hack
+
+Echoes of Eolis includes native support for the same-world stage door hack introduced by the [Randumizer project](https://github.com/Notlobb/Randumizer/). This can be enabled in the settings screen, under "Advanced" settings.
+
+When applied, same-world doors are upgraded to support an explicit destination stage while preserving their existing destination screens and door requirements. Existing same-world doors are migrated automatically, allowing the hack to be applied to vanilla ROMs without requiring manual edits.
+
+Features:
+
+- Apply the stage door hack directly from the editor.
+- Automatically migrate existing same-world doors.
+- Open, edit and save ROMs that already use the hack.
+- Stage doors are treated as first-class references throughout the editor and world visualizer.
+
+### Migration Requirements
+
+When the stage-door hack is applied, existing same-world doors are converted automatically. This requires every world containing a same-world door to be referenced by **exactly one** stage.
+
+If a world is referenced by zero or multiple stages, the editor cannot determine which stage the door should target after migration, and the conversion is aborted. In this case, the editor reports an error indicating the affected world and the number of stages referencing it.
+
+### Notes
+
+Unlike normal stage doors, hack stage doors retain the palette specified by the door itself. They do not automatically switch to the destination world's default palette.
+
+Similarly, music is only updated if the selected palette has an entry in the palette-to-music mapping (`pal2mus`). This mapping can be viewed and edited in the editor.
+
+**Note:** Applying the stage door hack is an irreversible transformation. Once a ROM has been converted, it cannot be restored to vanilla same-world door behavior without reverting to an earlier copy of the ROM.
+
+<hr>
+
+## Settings
+
+The settings window has tabs for ROM patching, Rendering, Sprite Gfx and Advanced Settings.
+
+### Patching
+
+This screen allows fine-grained control of what gets patched when writing ROM files. The idea is that users can omit patching data they control in an other way, if they have a custom hack for example. By default all patching is turned on.
+
+The first 15 checkboxed just control what gets patched.
+
+The last checkbox, "Disallow cinematic data overflow", determines whether or not to fail patching on potential data overflow. (enabled by default)
+
+If the cinematic animation frame graphics are expanded, they will spill into the free space in bank 12. This space is also potentially used by iScript bytecode. Configuration constant **iscript_data_rg2_start** defines where the free space region for overflowing iScript bytecode code can be stored, and if cinematic data patching needs to use this space, it will fail by default. The error message will tell you a minimum value for **iscript_data_rg2_start** which would allow cinematic data patching, so that you can make a configuration override.
+
+There is quite a lot of free space at the end of bank 12, so letting iScript bytecode start later should normally be unproblematic. If you encounter this problem;
+
+- Make a configuration override with an increased value for **iscript_data_rg2_start**
+- Re-assemble your scripts with this new constant active. The script code will now be relocated to start later in the bank.
+- Patch your cinematic data once again now that you are sure it will not overwrite any scripts.
+
+### Rendering
+
+These are settings for interacting with the tilemap editor.
+
+- Invert Zoom: Changes zoom direction when using the mouse wheel or equivalent to scroll in and out.
+- Camera Zoom Speed: How fast you zoom in and out
+- Adjacent Screen Alpha: How much to darken adjacent screens when enabled. A value of 0 means no darkening.
+
+### Sprite Gfx
+
+These settings apply to the Sprite Gfx and the Cinematic editors.
+
+The rendering scales will decide the scales of the rendered animation frames and chr-banks.
+
+Transparency tolerance is how far off the hot-pink color a color can be and still be considered transparent.
+
+Ideally you want to match the hot-pink transparency color exactly, as seen in exported bmps.
+
+The color is
+
+```(r, g, b) = (255, 105, 180)```
+
+If the transparency is set to 3, which is the default, any color in the range
+
+```(r, g, b) = (252-255, 102-108, 177-183)```
+
+will be considered transparent.
+
+### Advanced
+
+- Enable Debug Features: Turns on a debug button in Project Control which allows users to dump resolved configuration constants and world graph to text files. Also enables "import/export all" buttons in the Sprite Gfx editor. Intended for developers.
+- Warn on (0, 0)-door destinations: Will add a warning in the data integrity analysis if a door has destination coordinates of (0, 0).
+- Warn on world tilemap >= 95% bank size: Adds a warning in the data integrity analysis if any world's tilemap data is approaching the maximum space of one bank. (16kb)
+- Enable IPS patching: Turns on the "Save ips"-button next to "Patch nes ROM" in the Project Control window.
+- Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
+
+The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
 
 <hr>
 
@@ -1227,22 +1289,29 @@ Echoes of Eolis is compatible with ROMs created by the Faxanadu [Randumizer](htt
 
 Some randomized ROMs (when the "shuffle towers" option is enabled) will implement a door hack - where sameworld doors are turned into other-stage doors, a concept not available in the original game. Echoes of Eolis will detect if this hack is present, and present an alternative interface for editing sameworld doors.
 
-Since this is just one specific hack, we opted not to let it take up space in more modules than absolutely necessary in the codebase - so the editor is not fully aware of this concept in all contexts. Reference listing will not detect these doors, and deleting screens will not re-index the door destinations for doors like this. If you want to edit a randomizer rom with this hack present, you need to re-index the door destinations yourself if screens are deleted.
-
-Since reference listing can't be relied upon, png export for ROMs like these will not allow users to skip unreferenced screens.
-
-The editor will let you know if you loaded a rom with a "sameworld doors are stage-doors" hack when the rom is loaded.
-
-Note that compatibility does not go in the other direction; The randomzier will not be compatible with roms saved with this editor, since the randomizer assumes certain datasets with a certain rom layout. Apply randomization to a clean US rom before editing it.
+This door hack can also be applied via the GUI for non-randomizer ROMs, giving much more flexibility to doors.
 
 <hr>
 
 ### Changelog
 
-* Upcoming: version beta-7.3
+* 2026-06-26: version beta-8 - "Anywhere Door"
 
-  * Native same-world door hack support
-    * Randomizer stage doors now have the same level of support as vanilla doors. They are taken into account when calculating the game's reference graph, unreferenced screens can safely be omitted when running the world visualizer, and the door destinations will be re-indexed correctly when deleting screens.
+  * Stage Door Hack
+    * Added native support for the same-world to other-stage door hack, vastly increasing door flexibility
+    * Existing same-world doors are migrated automatically when the hack is applied
+    * ROMs using this hack are detected automatically when loaded
+    * Other-stage doors are treated as first-class references throughout the editor, world visualizer and game reference graph
+  * Settings
+    * Added a centralized settings window for editor configuration
+    * Added fine-grained control over ROM patching categories
+    * Added rendering and editor options previously only available through the settings xml
+  * Improved Expanded MMC1 ROM Support
+    * Added support for placing tilemap data in all usable PRG banks of ROMs using submappers like SUROM and SXROM
+    * Automatically duplicates bank 15 static data into bank 31 when required, ensuring expanded ROMs remain consistent after patching
+  * Linux Support
+    * Added CMake build support and Linux and macOS build instructions
+    * Verified builds with both GCC and Clang
 
 * 2026-06-11: version beta-7.21 - "Varnish"
 
