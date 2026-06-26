@@ -20,7 +20,8 @@ namespace fe {
 
 		// gui settings
 		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,
-			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay;
+			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay,
+			m_show_diagonal_adjacent, m_show_ambiguous_diagonals;
 		std::vector<char> m_overlays;
 		// sprite gfx settings
 		bool m_redraw_sprite_gfx, m_redraw_cinema_gfx;

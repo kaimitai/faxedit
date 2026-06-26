@@ -980,6 +980,194 @@ void fe::MainWindow::draw_sprites(SDL_Renderer* p_rnd,
 	}
 }
 
+namespace {
+
+	enum class ScreenDirection {
+		Left, Right, Up, Down,
+		UpLeft, UpRight, DownLeft, DownRight
+	};
+
+	struct AdjacentScreen {
+		ScreenDirection direction;
+		int src_x, src_y, src_w, src_h;
+		int dst_x, dst_y;
+	};
+
+	constexpr AdjacentScreen ADJACENT_SCREENS[8]{
+		{
+			ScreenDirection::Left,
+			fe::c::TILEMAP_SCREEN_MT_W - fe::c::TILEMAP_BORDER_MT_W,
+			0,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_SCREEN_MT_H,
+			-fe::c::TILEMAP_BORDER_MT_W,
+			0
+		},
+		{
+			ScreenDirection::Right,
+			0,
+			0,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_SCREEN_MT_H,
+			fe::c::TILEMAP_SCREEN_MT_W,
+			0
+		},
+		{
+			ScreenDirection::Up,
+			0,
+			fe::c::TILEMAP_SCREEN_MT_H - fe::c::TILEMAP_BORDER_MT_H,
+			fe::c::TILEMAP_SCREEN_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			0,
+			-fe::c::TILEMAP_BORDER_MT_H
+		},
+		{
+			ScreenDirection::Down,
+			0,
+			0,
+			fe::c::TILEMAP_SCREEN_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			0,
+			fe::c::TILEMAP_SCREEN_MT_H
+		},
+		{
+			ScreenDirection::UpLeft,
+			fe::c::TILEMAP_SCREEN_MT_W - fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_SCREEN_MT_H - fe::c::TILEMAP_BORDER_MT_H,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			-fe::c::TILEMAP_BORDER_MT_W,
+			-fe::c::TILEMAP_BORDER_MT_H
+		},
+		{
+			ScreenDirection::UpRight,
+			0,
+			fe::c::TILEMAP_SCREEN_MT_H - fe::c::TILEMAP_BORDER_MT_H,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			fe::c::TILEMAP_SCREEN_MT_W,
+			-fe::c::TILEMAP_BORDER_MT_H
+		},
+		{
+			ScreenDirection::DownLeft,
+			fe::c::TILEMAP_SCREEN_MT_W - fe::c::TILEMAP_BORDER_MT_W,
+			0,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			-fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_SCREEN_MT_H
+		},
+		{
+			ScreenDirection::DownRight,
+			0,
+			0,
+			fe::c::TILEMAP_BORDER_MT_W,
+			fe::c::TILEMAP_BORDER_MT_H,
+			fe::c::TILEMAP_SCREEN_MT_W,
+			fe::c::TILEMAP_SCREEN_MT_H
+		}
+	};
+
+	bool is_diagonal(ScreenDirection p_direction) {
+		switch (p_direction) {
+		case ScreenDirection::UpLeft:
+		case ScreenDirection::UpRight:
+		case ScreenDirection::DownLeft:
+		case ScreenDirection::DownRight:
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	std::optional<byte> get_cardinal_screen(const fe::Screen& p_screen,
+		ScreenDirection p_direction) {
+		switch (p_direction) {
+		case ScreenDirection::Left:
+			return p_screen.m_scroll_left;
+
+		case ScreenDirection::Right:
+			return p_screen.m_scroll_right;
+
+		case ScreenDirection::Up:
+			return p_screen.m_scroll_up;
+
+		case ScreenDirection::Down:
+			return p_screen.m_scroll_down;
+
+		}
+		return std::nullopt;
+	}
+
+	std::optional<byte> follow(const fe::Chunk& p_chunk,
+		std::optional<byte> p_screen_id, ScreenDirection p_direction) {
+		if (!p_screen_id || *p_screen_id >= p_chunk.m_screens.size())
+			return std::nullopt;
+		const auto& screen{ p_chunk.m_screens.at(*p_screen_id) };
+		return get_cardinal_screen(screen, p_direction);
+	}
+
+	std::optional<byte> resolve_diagonal(std::optional<byte> p_path1,
+		std::optional<byte> p_path2, bool p_allow_ambiguous) {
+		if (!p_path1)
+			return p_path2;
+		else if (!p_path2)
+			return p_path1;
+		else if (*p_path1 == *p_path2)
+			return p_path1;
+		else if (p_allow_ambiguous)
+			return p_path1;
+		else return std::nullopt;
+	}
+
+	std::optional<byte> get_diagonal_screen(const fe::Chunk& p_chunk,
+		const fe::Screen& p_screen, ScreenDirection first,
+		ScreenDirection second, bool p_allow_ambiguous) {
+		auto path1{ follow(p_chunk, get_cardinal_screen(p_screen, first),
+			second) };
+		auto path2{ follow(p_chunk, get_cardinal_screen(p_screen, second),
+			first) };
+
+		return resolve_diagonal(path1, path2, p_allow_ambiguous);
+	}
+
+	std::optional<byte> get_adjacent_screen(const fe::Chunk& p_chunk,
+		const fe::Screen& p_screen,
+		ScreenDirection p_direction, bool p_allow_ambiguous) {
+		switch (p_direction) {
+		case ScreenDirection::Left:
+		case ScreenDirection::Right:
+		case ScreenDirection::Up:
+		case ScreenDirection::Down:
+			return get_cardinal_screen(p_screen, p_direction);
+
+		case ScreenDirection::UpLeft:
+			return get_diagonal_screen(p_chunk, p_screen,
+				ScreenDirection::Left, ScreenDirection::Up,
+				p_allow_ambiguous);
+
+		case ScreenDirection::UpRight:
+			return get_diagonal_screen(p_chunk, p_screen,
+				ScreenDirection::Right, ScreenDirection::Up,
+				p_allow_ambiguous);
+
+		case ScreenDirection::DownLeft:
+			return get_diagonal_screen(p_chunk, p_screen,
+				ScreenDirection::Left, ScreenDirection::Down,
+				p_allow_ambiguous);
+
+		case ScreenDirection::DownRight:
+			return get_diagonal_screen(p_chunk, p_screen,
+				ScreenDirection::Right, ScreenDirection::Down,
+				p_allow_ambiguous);
+
+		}
+		return std::nullopt;
+	}
+
+}
+
 // screen rendering helpers
 void fe::MainWindow::render_screen_texture(SDL_Renderer* p_rnd) {
 	SDL_SetRenderTarget(p_rnd, m_gfx.get_screen_texture());
@@ -994,33 +1182,22 @@ void fe::MainWindow::render_screen_texture(SDL_Renderer* p_rnd) {
 	if (m_settings.m_show_adjacent_screens) {
 		constexpr bool OVERLAYS_ON_ADJACENT_SCREENS{ true };
 
-		if (l_screen.m_scroll_left) {
-			blit_screen_tilemap(p_rnd, l_chunk,
-				l_chunk.m_screens.at(*l_screen.m_scroll_left),
-				c::TILEMAP_SCREEN_MT_W - c::TILEMAP_BORDER_MT_W, 0,
-				c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
-				-c::TILEMAP_BORDER_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
-		}
-		if (l_screen.m_scroll_right) {
-			blit_screen_tilemap(p_rnd, l_chunk,
-				l_chunk.m_screens.at(*l_screen.m_scroll_right),
-				0, 0,
-				c::TILEMAP_BORDER_MT_W, c::TILEMAP_SCREEN_MT_H,
-				c::TILEMAP_SCREEN_MT_W, 0, OVERLAYS_ON_ADJACENT_SCREENS);
-		}
-		if (l_screen.m_scroll_up) {
-			blit_screen_tilemap(p_rnd, l_chunk,
-				l_chunk.m_screens.at(*l_screen.m_scroll_up),
-				0, c::TILEMAP_SCREEN_MT_H - c::TILEMAP_BORDER_MT_H,
-				c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
-				0, -c::TILEMAP_BORDER_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
-		}
-		if (l_screen.m_scroll_down) {
-			blit_screen_tilemap(p_rnd, l_chunk,
-				l_chunk.m_screens.at(*l_screen.m_scroll_down),
-				0, 0,
-				c::TILEMAP_SCREEN_MT_W, c::TILEMAP_BORDER_MT_H,
-				0, c::TILEMAP_SCREEN_MT_H, OVERLAYS_ON_ADJACENT_SCREENS);
+		for (const auto& adj : ADJACENT_SCREENS) {
+
+			if (is_diagonal(adj.direction) &&
+				!m_settings.m_show_diagonal_adjacent)
+				continue;
+
+			const auto neighbor{ get_adjacent_screen(l_chunk, l_screen,
+				adj.direction, m_settings.m_show_ambiguous_diagonals) };
+
+			if (!neighbor)
+				continue;
+
+			blit_screen_tilemap(p_rnd,
+				l_chunk, l_chunk.m_screens.at(*neighbor),
+				adj.src_x, adj.src_y, adj.src_w, adj.src_h,
+				adj.dst_x, adj.dst_y, OVERLAYS_ON_ADJACENT_SCREENS);
 		}
 
 		m_gfx.draw_screen_border_overlay(p_rnd,

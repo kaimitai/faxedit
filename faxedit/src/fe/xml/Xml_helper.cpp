@@ -1391,6 +1391,8 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 	add_setting(n_settings, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
 	add_setting(n_settings, c::SETTINGS_PARAM_ADJACENT_SCREENS, p_settings.m_show_adjacent_screens);
+	add_setting(n_settings, c::SETTINGS_PARAM_DIAGONAL_SCREENS, p_settings.m_show_diagonal_adjacent);
+	add_setting(n_settings, c::SETTINGS_PARAM_AMBIGUOUS_DIAGONAL_SCREENS, p_settings.m_show_ambiguous_diagonals);
 
 	for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
 		bool io_enabled{ static_cast<bool>(p_settings.m_overlays[i]) };
@@ -1456,6 +1458,8 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ADJACENT_SCREENS, p_settings.m_show_adjacent_screens);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_DIAGONAL_SCREENS, p_settings.m_show_diagonal_adjacent);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_AMBIGUOUS_DIAGONAL_SCREENS, p_settings.m_show_ambiguous_diagonals);
 
 		for (std::size_t i{ 0 }; i < p_settings.m_overlays.size(); ++i) {
 			bool io_enabled{ false };

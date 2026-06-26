@@ -76,6 +76,8 @@ void fe::EditorSettings::set_rendering_defaults(void) {
 	m_cam_zoom_factor = 1.2f;
 	m_border_alpha = 96;
 	m_invert_zoom = false;
+	m_show_diagonal_adjacent = false;
+	m_show_ambiguous_diagonals = false;
 }
 
 void fe::EditorSettings::set_advanced_defaults(void) {

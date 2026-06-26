@@ -53,6 +53,8 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
 			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };
 			constexpr char SETTINGS_PARAM_ADJACENT_SCREENS[]{ "adjacent_screens" };
+			constexpr char SETTINGS_PARAM_DIAGONAL_SCREENS[]{ "diagonal_screens" };
+			constexpr char SETTINGS_PARAM_AMBIGUOUS_DIAGONAL_SCREENS[]{ "ambiguous_diagonal_screens" };
 			constexpr char SETTINGS_PARAM_IO_BLOCK_PROPERTY[]{ "icon_overlay_block_property" };
 			constexpr char SETTINGS_PARAM_IO_MATTOCK[]{ "icon_overlay_mattock" };
 			constexpr char SETTINGS_PARAM_IO_DOOR_REQS[]{ "icon_overlay_door_reqs" };

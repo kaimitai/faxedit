@@ -65,6 +65,11 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
 			ImGui::SeparatorText("Adjacent Screen Rendering");
 
+			ui::imgui_checkbox("Show 2-step diagonal adjacent screens",
+				m_settings.m_show_diagonal_adjacent);
+			ui::imgui_checkbox("Show ambiguous diagonal adjacent screens",
+				m_settings.m_show_ambiguous_diagonals);
+
 			ui::imgui_slider_with_arrows("###balpha", "Adjacent Screen Alpha",
 				m_settings.m_border_alpha, 0, 255, "How much to darken adjacent screens");
 
