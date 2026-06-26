@@ -326,14 +326,22 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
 		new_game.cinematic.parse_rom(m_config, new_game.m_rom_data);
 
+		// reconcile door type between loaded rom and loaded xml
+		if (old_game.m_sw_door_type == fe::SameWorldDoorType::Normal &&
+			new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
+			// the xml has hack-door data, while loaded rom does not
+			patch_randumizer_doors(new_game, false);
+			add_message("Loaded ROM was updated with the stage-door hack required by the incoming xml", 2);
+		}
+		else if (old_game.m_sw_door_type != new_game.m_sw_door_type) {
+			add_message("Warning: Stage-door format mismatch between loaded ROM and xml. Verify same-world door data", 6);
+			new_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
+		}
+
 		// everything succeeded, so commit at this point
 		*m_game = std::move(new_game);
 		m_undo->clear_history();
 		m_sprite_snap_manager.reset();
-
-		// set sw-door type from already loaded config
-		if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
-			m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 
 		// clear staging area for gfx, as well as loaded tilemap/tileset textures
 		m_gfx.clear_all_tilemap_import_results();

@@ -2,6 +2,7 @@
 #include "Xml_constants.h"
 #include "./../fe_app_constants.h"
 #include "./../Config.h"
+#include "./../../common/klib/Kstring.h"
 #include <format>
 #include <stdexcept>
 
@@ -19,6 +20,9 @@ fe::Game fe::xml::load_xml(const std::string p_filepath) {
 	// Read version and be backward-compatible when the format changes
 
 	// extract game-level metadata
+	if (n_root.attribute(c::ATTR_ROOT_SW_DOOR_TYPE)) {
+		l_game.m_sw_door_type = klib::str::parse_enum_ci<fe::SameWorldDoorType>(n_root.attribute(c::ATTR_ROOT_SW_DOOR_TYPE).as_string());
+	}
 
 	// stage definitions
 	auto n_stages{ n_root.child(c::TAG_STAGES) };
@@ -551,6 +555,8 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	auto n_metadata = doc.append_child(c::TAG_ROOT);
 	n_metadata.append_attribute(c::ATTR_ROOT_VERSION);
 	n_metadata.attribute(c::ATTR_ROOT_VERSION).set_value(fe::c::APP_VERSION);
+	n_metadata.append_attribute(c::ATTR_ROOT_SW_DOOR_TYPE);
+	n_metadata.attribute(c::ATTR_ROOT_SW_DOOR_TYPE).set_value(klib::str::enum_to_string(p_game.m_sw_door_type));
 
 	// game metadata
 

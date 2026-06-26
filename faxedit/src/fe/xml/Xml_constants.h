@@ -20,6 +20,7 @@ namespace fe {
 
 			constexpr char TAG_ROOT[]{ "echoes_of_eolis" };
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
+			constexpr char ATTR_ROOT_SW_DOOR_TYPE[]{ "sameworld_door_type" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
 			constexpr char TAG_SETTINGS_ROOT[]{ "eoe_settings" };

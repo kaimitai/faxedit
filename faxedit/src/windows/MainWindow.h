@@ -346,7 +346,7 @@ namespace fe {
 
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
-		void patch_randumizer_doors(void);
+		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_date);
 
 	public:
 
