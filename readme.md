@@ -87,6 +87,7 @@ Echoes of Eolis can edit:
 * **Graphics:** Metatile tilesets, images, sprite graphics, and animation frames
 * **Cinematics:** Intro/outro metadata and graphics
 * **Visualizer:** Parameterized world map export to PNG
+* **Optional ROM hacks:** Deploy supported ROM hacks directly from the editor to unlock additional editing capabilities and flexibility
 
 The main editor supports zooming, panning, and previewing adjacent screens.
 
@@ -124,6 +125,7 @@ Special thanks to the following contributors and fellow digital archaeologists:
   * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
   * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, and for helping out with testing, bug reports and suggestions for new features.
   * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions.
+  * [Notlob](https://github.com/Notlobb/Randumizer) - For making the Faxanadu Randumizer from which we got a very useful rom hack to increase door flexibility
 
 <hr>
 

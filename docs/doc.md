@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-8), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-8.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -1211,6 +1211,8 @@ These are settings for interacting with the tilemap editor.
 - Invert Zoom: Changes zoom direction when using the mouse wheel or equivalent to scroll in and out.
 - Camera Zoom Speed: How fast you zoom in and out
 - Adjacent Screen Alpha: How much to darken adjacent screens when enabled. A value of 0 means no darkening.
+- Show 2-step diagonal adjacent screens: Render neighboring screens connected diagonally in the tilemaps screen, which can be reached by scrolling in two steps
+- Show ambiguous diagonal adjacent screens: Choose one diagonal screen automatically instead of hiding ambiguous cases (when up then left is different from left then up, for example)
 
 ### Sprite Gfx
 
@@ -1239,6 +1241,7 @@ will be considered transparent.
 - Warn on world tilemap >= 95% bank size: Adds a warning in the data integrity analysis if any world's tilemap data is approaching the maximum space of one bank. (16kb)
 - Enable IPS patching: Turns on the "Save ips"-button next to "Patch nes ROM" in the Project Control window.
 - Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
+- Enable pal2mus for sw-transitions: Toggles an optional rom hack that enables palette-to-music mapping for same-world transitions, matching the behavior of same-world doors. The hack is applied when the rom is patched.
 
 The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
 
@@ -1294,6 +1297,21 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 <hr>
 
 ### Changelog
+
+* 2026-06-27: version beta-8.1 - "4D Pocket"
+
+  * Same-World Transition Palette-to-Music (Advanced Settings)
+    * Added an optional ROM hack enabling palette-to-music mapping for same-world transitions
+    * Fully compatible with the native stage-door hack
+  * Tilemap Rendering
+    * Added optional rendering of two-step diagonal adjacent screens
+    * Added optional handling of ambiguous diagonal screen connections
+  * Stage Door Compatibility
+    * Preserve same-world door format across xml load/save
+    * Automatically apply the stage-door rom hack on xml load if the rom does not already have the patch applied
+    * Warn when loading legacy projects with ambiguous door formats
+  * ROM Hacking
+    * The ROM hack injection points are now configurable through the configuration xml
 
 * 2026-06-26: version beta-8 - "Anywhere Door"
 
