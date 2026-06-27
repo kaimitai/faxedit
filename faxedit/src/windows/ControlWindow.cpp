@@ -533,10 +533,16 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 		}
 	}
 
+	if (m_settings.m_apply_sw_pal2mus_hack) {
+		patch_sw_transition_pal2mus(x_rom);
+		add_message("Enabled palette to music functionality for sameworld-transitions", 6);
+	}
+
 	// bank duplication - region-specific config and not a setting
+	// must be done after all other patching has completed
 	if (m_config.boolean_or(c::ID_DUPLICATE_STATIC_BANK, false)) {
 		m_rom_manager.duplicate_static_bank(x_rom);
-		add_message("Duplicated bank 15 into bank 31", 2);
+		add_message("Duplicated bank 15 into bank 31", 6);
 	}
 
 	if (l_good) {

@@ -86,6 +86,7 @@ void fe::EditorSettings::set_advanced_defaults(void) {
 	m_enable_ips_button = true;
 	m_warn_tilemap_95_pct = true;
 	m_warn_00_doors = true;
+	m_apply_sw_pal2mus_hack = false;
 }
 
 void fe::EditorSettings::sanitize_float(float& p_val, float p_default) {

@@ -1421,6 +1421,7 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SCENES, p_settings.m_patch_scenes);
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_FOG, p_settings.m_patch_fog);
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_BG_GFX, p_settings.m_patch_bg_gfx);
+	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_SWTRANS_PAL2MUS, p_settings.m_apply_sw_pal2mus_hack);
 
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 	add_setting(n_settings, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
@@ -1488,6 +1489,7 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SCENES, p_settings.m_patch_scenes);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_FOG, p_settings.m_patch_fog);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_BG_GFX, p_settings.m_patch_bg_gfx);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SWTRANS_PAL2MUS, p_settings.m_apply_sw_pal2mus_hack);
 
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);

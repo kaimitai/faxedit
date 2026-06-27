@@ -16,7 +16,7 @@ namespace fe {
 			throw_on_cinematic_overflow,
 			m_patch_palettes, m_patch_stages, m_patch_mattock_animations,
 			m_patch_push_blocks, m_patch_jump_on_tiles, m_patch_bg_gfx,
-			m_patch_scenes, m_patch_fog;
+			m_patch_scenes, m_patch_fog, m_apply_sw_pal2mus_hack;
 
 		// gui settings
 		bool m_show_sprite_sets_in_buildings, m_show_grid, m_animate,

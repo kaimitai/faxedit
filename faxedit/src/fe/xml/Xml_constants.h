@@ -48,6 +48,7 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_PATCH_SCENES[]{ "patch_scenes" };
 			constexpr char SETTINGS_PARAM_PATCH_FOG[]{ "patch_fog" };
 			constexpr char SETTINGS_PARAM_PATCH_BG_GFX[]{ "patch_bg_gfx" };
+			constexpr char SETTINGS_PARAM_PATCH_SWTRANS_PAL2MUS[]{ "patch_sw_trans_pal2mus" };
 
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };

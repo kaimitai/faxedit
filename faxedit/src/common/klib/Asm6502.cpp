@@ -69,17 +69,25 @@ void klib::Asm6502::branch(byte p_opcode, const std::string& p_label) {
 
 // opcode constants
 constexpr byte OP_ASL_A{ 0x0a };
+constexpr byte OP_BPL{ 0x10 };
 constexpr byte OP_JSR{ 0x20 };
 constexpr byte OP_AND_IMM{ 0x29 };
+constexpr byte OP_BMI{ 0x30 };
 constexpr byte OP_LSR_A{ 0x4a };
 constexpr byte OP_JMP{ 0x4c };
 constexpr byte OP_RTS{ 0x60 };
 constexpr byte OP_JMP_IND{ 0x6c };
+constexpr byte OP_STA_ZP{ 0x85 };
 constexpr byte OP_STA_ABS{ 0x8d };
 constexpr byte OP_TYA{ 0x98 };
+constexpr byte OP_LDX_IMM{ 0xa2 };
+constexpr byte OP_LDA_ZP{ 0xa5 };
 constexpr byte OP_TAY{ 0xa8 };
 constexpr byte OP_LDA_IMM{ 0xa9 };
 constexpr byte OP_LDA_ABS{ 0xad };
+constexpr byte OP_LDA_ABS_X{ 0xbd };
+constexpr byte OP_DEX{ 0xca };
+constexpr byte OP_CMP_ABS{ 0xcd };
 constexpr byte OP_CMP_IMM{ 0xc9 };
 constexpr byte OP_BNE{ 0xd0 };
 constexpr byte OP_CMP_ABS_X{ 0xdd };
@@ -107,6 +115,11 @@ void klib::Asm6502::rts(void) {
 }
 
 // loads
+void klib::Asm6502::lda_zp(byte p_addr) {
+	emit(OP_LDA_ZP);
+	emit(p_addr);
+}
+
 void klib::Asm6502::lda_imm(byte p_value) {
 	emit(OP_LDA_IMM);
 	emit(p_value);
@@ -117,7 +130,22 @@ void klib::Asm6502::lda_abs(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::lda_abs_x(word p_addr) {
+	emit(OP_LDA_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::ldx_imm(byte p_value) {
+	emit(OP_LDX_IMM);
+	emit(p_value);
+}
+
 // stores
+void  klib::Asm6502::sta_zp(byte p_addr) {
+	emit(OP_STA_ZP);
+	emit(p_addr);
+}
+
 void klib::Asm6502::sta_abs(word p_addr) {
 	emit(OP_STA_ABS);
 	emit_word(p_addr);
@@ -127,6 +155,11 @@ void klib::Asm6502::sta_abs(word p_addr) {
 void klib::Asm6502::cmp_imm(byte p_value) {
 	emit(OP_CMP_IMM);
 	emit(p_value);
+}
+
+void klib::Asm6502::cmp_abs(word p_addr) {
+	emit(OP_CMP_ABS);
+	emit_word(p_addr);
 }
 
 void klib::Asm6502::cmp_abs_x(word p_addr) {
@@ -145,12 +178,30 @@ void klib::Asm6502::bne(sbyte p_offset) {
 	emit(p_offset);
 }
 
+void klib::Asm6502::bpl(sbyte p_offset) {
+	emit(OP_BPL);
+	emit(p_offset);
+}
+
+void klib::Asm6502::bmi(sbyte p_offset) {
+	emit(OP_BMI);
+	emit(p_offset);
+}
+
 void klib::Asm6502::beq(const std::string& p_label) {
 	branch(OP_BEQ, p_label);
 }
 
 void klib::Asm6502::bne(const std::string& p_label) {
 	branch(OP_BNE, p_label);
+}
+
+void klib::Asm6502::bpl(const std::string& p_label) {
+	branch(OP_BPL, p_label);
+}
+
+void klib::Asm6502::bmi(const std::string& p_label) {
+	branch(OP_BMI, p_label);
 }
 
 // logical
@@ -178,6 +229,10 @@ void klib::Asm6502::asl_a(void) {
 	emit(OP_ASL_A);
 }
 
+// math
+void klib::Asm6502::dex(void) {
+	emit(OP_DEX);
+}
 
 // misc
 void klib::Asm6502::nop(void) {

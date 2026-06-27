@@ -50,21 +50,30 @@ namespace klib {
 		void rts(void);
 
 		// loads
+		void lda_zp(byte p_addr);
 		void lda_imm(byte p_value);
 		void lda_abs(word p_addr);
+		void lda_abs_x(word p_addr);
+		void ldx_imm(byte p_value);
 
 		// stores
+		void sta_zp(byte p_addr);
 		void sta_abs(word p_addr);
 
 		// compares
 		void cmp_imm(byte p_value);
+		void cmp_abs(word p_addr);
 		void cmp_abs_x(word p_addr);
 
 		// branches
 		void beq(sbyte p_offset);
 		void bne(sbyte p_offset);
+		void bpl(sbyte p_offset);
+		void bmi(sbyte p_offset);
 		void beq(const std::string& p_label);
 		void bne(const std::string& p_label);
+		void bpl(const std::string& p_label);
+		void bmi(const std::string& p_label);
 
 		// logic
 		void and_imm(byte p_value);
@@ -76,6 +85,9 @@ namespace klib {
 		//shifts
 		void lsr_a(void);
 		void asl_a(void);
+
+		// math
+		void dex(void);
 
 		// misc
 		void nop(void);

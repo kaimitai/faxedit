@@ -121,6 +121,12 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Reset to Defaults###advanced", 4))
 				m_settings.set_advanced_defaults();
 
+			ImGui::SeparatorText("pal2mus for Sameworld-Transitions");
+
+			ui::imgui_checkbox("Enable pal2mus for sw-transitions",
+				m_settings.m_apply_sw_pal2mus_hack,
+				"Applies palette-to-music mapping to same-world transitions, matching the behavior of same-world doors (hack is applied when patching rom)");
+
 			ImGui::SeparatorText("Apply Stage Door Hack");
 
 			imgui_text("Turns same-world doors into flexible stage doors.");
@@ -286,4 +292,55 @@ void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_
 	p_game.m_rom_data = newrom;
 	// set door type
 	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
+}
+
+void fe::MainWindow::patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const {
+	// vanilla locations
+	const word SwTransJmpSetupEnterScreen{ 0xea2c };
+	const word Game_SetupEnterScreen{ 0xdaa0 };
+	// RAM
+	const byte RAM_ZP_Screen_DestPaletteOrIndex{ 0x65 };
+	const byte RAM_ZP_Music_Current{ 0xfa };
+	const word RAM_World_DefaultMusic{ 0x03d1 };
+	// new routine addr
+	const word HackSwTransPal2Mus{ 0xc033 };
+
+	// constants from the rom
+	const auto pal_ptr{ m_config.pointer(c::ID_PAL2MUS_PALETTE_PTR) };
+	const auto mus_ptr{ m_config.pointer(c::ID_PAL2MUS_MUSIC_PTR) };
+
+	byte pal2mus_slot_count{ p_rom.at(m_config.constant(c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
+	word pal2mus_pal_table_addr{ static_cast<word>(
+		m_rom_manager.read_uint16_le(p_rom, pal_ptr.first)) };
+	word pal2mus_mus_table_addr{ static_cast<word>(
+		m_rom_manager.read_uint16_le(p_rom, mus_ptr.first)) };
+
+	klib::Asm6502 code;
+
+	// add new routine which copies the vanilla logic for sw-door pal2mus
+	code.ldx_imm(pal2mus_slot_count);
+	code.label("@paletteCheckLoop");
+	code.lda_zp(RAM_ZP_Screen_DestPaletteOrIndex);
+	code.cmp_abs_x(pal2mus_pal_table_addr);
+	code.beq("@setupArea");
+	code.dex();
+	code.bpl("@paletteCheckLoop");
+	code.bmi("@enterScreen");
+
+	code.label("@setupArea");
+	code.lda_abs_x(pal2mus_mus_table_addr);
+	code.cmp_abs(RAM_World_DefaultMusic);
+	code.beq("@enterScreen");
+	code.sta_zp(RAM_ZP_Music_Current);
+	code.sta_abs(RAM_World_DefaultMusic);
+
+	code.label("@enterScreen");
+	code.jmp(Game_SetupEnterScreen);
+
+	// insert the new routine in rom
+	code.apply_hack_and_clear(p_rom, 15, HackSwTransPal2Mus);
+
+	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
+	code.jmp(HackSwTransPal2Mus);
+	code.apply_hack_and_clear(p_rom, 15, SwTransJmpSetupEnterScreen);
 }
