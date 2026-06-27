@@ -353,6 +353,14 @@
 		<const name="cinematic_outro_vel_y_offset" region="jp,en-transl" value="0x32c60" />
 		<const name="cinematic_outro_threshold_offset" region="jp,en-transl" value="0x32c72" />
 		<const name="cinematic_outro_terminal_threshold_offset" region="jp,en-transl" value="0x32d6c" />
+		<!-- rom hack injection points (bank 15 cpu addresses) -->
+		<!-- sameworld door to stage door hack -->
+		<const name="hack_set_pending_stage_addr" value="$df99" />
+		<const name="hack_decode_req_addr" value="$dfa8" />
+		<const name="hack_load_world_addr" value="$dfb7" />
+		<const name="hack_handle_palette_addr" value="$f389" />
+		<!-- sameworld transition pal2mus hack -->
+		<const name="hack_sw_trans_pal2mus_addr" value="$c033" />
 	</consts>
 	<!-- value sets -->
 	<sets>

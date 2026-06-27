@@ -203,6 +203,14 @@ namespace fe {
 		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
 		constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 
+		// stage door hack constants
+		constexpr char ID_HACK_HANDLE_PALETTE_ADDR[]{ "hack_handle_palette_addr" };
+		constexpr char ID_HACK_SET_PENDING_STAGE_ADDR[]{ "hack_set_pending_stage_addr" };
+		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
+		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
+		// sw-transition pal2mus hack constants
+		constexpr char ID_HACK_SW_TRANS_PAL2MUS_ADDR[]{ "hack_sw_trans_pal2mus_addr" };
+
 		// constants not stored in the config xml
 		// move them to xml if it becomes necessary
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };

@@ -205,12 +205,23 @@ void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_
 	// randomizer as we already handle the map dynamically in the frontend)
 
 	// new routine addresses to avoid claiming free space
-	// use the sound effect priority table from index 1
-	const word Hack_HandlePalette{ 0xf389 };
-	// and use the normally unreachable debug code
-	const word Hack_SetPendingStage{ 0xdf99 };
-	const word Hack_ExtractStageAndRequirement{ 0xdfa8 };
-	const word Hack_ClearPendingStageAndLoadWorld{ 0xdfb7 };
+	// default: use the sound effect priority table from index 1
+	const word Hack_HandlePalette{ static_cast<word>(
+		m_config.constant_or(c::ID_HACK_HANDLE_PALETTE_ADDR, 0xf389)
+		) };
+	// default: use the normally unreachable debug code, lay the functions out contiguously there
+	const word Hack_SetPendingStage{
+		static_cast<word>(
+		m_config.constant_or(c::ID_HACK_SET_PENDING_STAGE_ADDR, 0xdf99)
+	) };
+	const word Hack_ExtractStageAndRequirement{
+		static_cast<word>(
+		m_config.constant_or(c::ID_HACK_DECODE_REQ_ADDR, 0xdfa8)
+	) };
+	const word Hack_ClearPendingStageAndLoadWorld{
+		static_cast<word>(
+		m_config.constant_or(c::ID_HACK_LOAD_WORLD_ADDR, 0xdfb7)
+	) };
 
 	klib::Asm6502 code{};
 
@@ -303,7 +314,9 @@ void fe::MainWindow::patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const
 	const byte RAM_ZP_Music_Current{ 0xfa };
 	const word RAM_World_DefaultMusic{ 0x03d1 };
 	// new routine addr
-	const word HackSwTransPal2Mus{ 0xc033 };
+	const word HackSwTransPal2Mus{ static_cast<word>(
+		m_config.constant_or(c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)
+		) };
 
 	// constants from the rom
 	const auto pal_ptr{ m_config.pointer(c::ID_PAL2MUS_PALETTE_PTR) };

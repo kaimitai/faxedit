@@ -346,7 +346,7 @@ namespace fe {
 
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
-		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_date);
+		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data);
 		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
 
 	public:
