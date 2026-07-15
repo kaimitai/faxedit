@@ -1,6 +1,6 @@
 <!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-8.1">
+<eoe_config app_version="beta-8.2">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -1380,7 +1380,7 @@
 			<entry byte="$fb" str="Mnemonic=NextLoopIf,Arg=byte" />
 			<entry byte="$fc" str="Mnemonic=EndLoop" />
 			<entry byte="$fd" str="Mnemonic=BeginLoop,Arg=byte" />
-			<entry byte="$fe" str="Mnemonic=PopAddr" />
+			<entry byte="$fe" str="Mnemonic=PopAddr,Flow=End" />
 			<entry byte="$ff" str="Mnemonic=End,Flow=End" />
 		</byte_to_string_map>
 		<!-- mscript defines: envelopes  -->

@@ -68,28 +68,38 @@ void klib::Asm6502::branch(byte p_opcode, const std::string& p_label) {
 }
 
 // opcode constants
+constexpr byte OP_ORA_IMM{ 0x09 };
 constexpr byte OP_ASL_A{ 0x0a };
 constexpr byte OP_BPL{ 0x10 };
 constexpr byte OP_JSR{ 0x20 };
 constexpr byte OP_AND_IMM{ 0x29 };
 constexpr byte OP_BMI{ 0x30 };
+constexpr byte OP_PHA{ 0x48 };
 constexpr byte OP_LSR_A{ 0x4a };
 constexpr byte OP_JMP{ 0x4c };
 constexpr byte OP_RTS{ 0x60 };
 constexpr byte OP_JMP_IND{ 0x6c };
+constexpr byte OP_STY_ZP{ 0x84 };
 constexpr byte OP_STA_ZP{ 0x85 };
 constexpr byte OP_STA_ABS{ 0x8d };
+constexpr byte OP_TXA{ 0x8a };
 constexpr byte OP_TYA{ 0x98 };
+constexpr byte OP_LDY_IMM{ 0xa0 };
 constexpr byte OP_LDX_IMM{ 0xa2 };
+constexpr byte OP_LDY_ZP{ 0xa4 };
 constexpr byte OP_LDA_ZP{ 0xa5 };
 constexpr byte OP_TAY{ 0xa8 };
 constexpr byte OP_LDA_IMM{ 0xa9 };
 constexpr byte OP_LDA_ABS{ 0xad };
+constexpr byte OP_LDA_ABS_Y{ 0xb9 };
 constexpr byte OP_LDA_ABS_X{ 0xbd };
 constexpr byte OP_DEX{ 0xca };
+constexpr byte OP_CPY_ABS{ 0xcc };
 constexpr byte OP_CMP_ABS{ 0xcd };
+constexpr byte OP_INY{ 0xc8 };
 constexpr byte OP_CMP_IMM{ 0xc9 };
 constexpr byte OP_BNE{ 0xd0 };
+constexpr byte OP_CMP_ABS_Y{ 0xd9 };
 constexpr byte OP_CMP_ABS_X{ 0xdd };
 constexpr byte OP_NOP{ 0xea };
 constexpr byte OP_BEQ{ 0xf0 };
@@ -135,9 +145,24 @@ void klib::Asm6502::lda_abs_x(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::lda_abs_y(word p_addr) {
+	emit(OP_LDA_ABS_Y);
+	emit_word(p_addr);
+}
+
 void klib::Asm6502::ldx_imm(byte p_value) {
 	emit(OP_LDX_IMM);
 	emit(p_value);
+}
+
+void klib::Asm6502::ldy_imm(byte p_value) {
+	emit(OP_LDY_IMM);
+	emit(p_value);
+}
+
+void klib::Asm6502::ldy_zp(byte p_addr) {
+	emit(OP_LDY_ZP);
+	emit(p_addr);
 }
 
 // stores
@@ -149,6 +174,11 @@ void  klib::Asm6502::sta_zp(byte p_addr) {
 void klib::Asm6502::sta_abs(word p_addr) {
 	emit(OP_STA_ABS);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::sty_zp(byte p_addr) {
+	emit(OP_STY_ZP);
+	emit(p_addr);
 }
 
 // compares
@@ -164,6 +194,16 @@ void klib::Asm6502::cmp_abs(word p_addr) {
 
 void klib::Asm6502::cmp_abs_x(word p_addr) {
 	emit(OP_CMP_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::cmp_abs_y(word p_addr) {
+	emit(OP_CMP_ABS_Y);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::cpy_abs(word p_addr) {
+	emit(OP_CPY_ABS);
 	emit_word(p_addr);
 }
 
@@ -210,6 +250,16 @@ void klib::Asm6502::and_imm(byte p_value) {
 	emit(p_value);
 }
 
+void klib::Asm6502::ora_imm(byte p_value) {
+	emit(OP_ORA_IMM);
+	emit(p_value);
+}
+
+// stack
+void klib::Asm6502::pha(void) {
+	emit(OP_PHA);
+}
+
 // registers
 void klib::Asm6502::tay(void) {
 	emit(OP_TAY);
@@ -217,6 +267,10 @@ void klib::Asm6502::tay(void) {
 
 void klib::Asm6502::tya(void) {
 	emit(OP_TYA);
+}
+
+void klib::Asm6502::txa(void) {
+	emit(OP_TXA);
 }
 
 // shifts
@@ -234,9 +288,14 @@ void klib::Asm6502::dex(void) {
 	emit(OP_DEX);
 }
 
+void klib::Asm6502::iny(void) {
+	emit(OP_INY);
+}
+
 // misc
-void klib::Asm6502::nop(void) {
-	emit(OP_NOP);
+void klib::Asm6502::nop(std::size_t count) {
+	for (int i{ 0 }; i < count; ++i)
+		emit(OP_NOP);
 }
 
 void klib::Asm6502::add_byte(byte p_value) {
@@ -263,9 +322,16 @@ void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
 	std::copy(m_bytes.begin(), m_bytes.end(), p_rom.begin() + file_offset);
 }
 
-void klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
+std::size_t klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
 	word p_cpu_addr, word p_cpu_min_addr) {
 	resolve_labels();
+	std::size_t result{ size() };
 	apply_hack(p_rom, p_bank_no, p_cpu_addr, p_cpu_min_addr);
 	clear();
+	return result;
+}
+
+std::size_t klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
+	word p_cpu_addr) {
+	return apply_hack_and_clear(p_rom, p_bank_no, p_cpu_addr, p_bank_no == 15 ? 0xc000 : 0x8000);
 }

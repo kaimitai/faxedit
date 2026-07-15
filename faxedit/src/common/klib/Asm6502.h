@@ -40,8 +40,10 @@ namespace klib {
 		void label(const std::string& p_name);
 
 		void clear(void);
-		void apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
-			word p_cpu_addr, word p_cpu_min_addr = 0xc000);
+		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
+			word p_cpu_addr, word p_cpu_min_addr);
+		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
+			word p_cpu_addr);
 
 		// jumps and calls
 		void jmp(word p_addr);
@@ -54,16 +56,22 @@ namespace klib {
 		void lda_imm(byte p_value);
 		void lda_abs(word p_addr);
 		void lda_abs_x(word p_addr);
+		void lda_abs_y(word p_addr);
 		void ldx_imm(byte p_value);
+		void ldy_imm(byte p_value);
+		void ldy_zp(byte p_value);
 
 		// stores
 		void sta_zp(byte p_addr);
 		void sta_abs(word p_addr);
+		void sty_zp(byte p_addr);
 
 		// compares
 		void cmp_imm(byte p_value);
 		void cmp_abs(word p_addr);
 		void cmp_abs_x(word p_addr);
+		void cmp_abs_y(word p_addr);
+		void cpy_abs(word p_addr);
 
 		// branches
 		void beq(sbyte p_offset);
@@ -77,10 +85,15 @@ namespace klib {
 
 		// logic
 		void and_imm(byte p_value);
+		void ora_imm(byte p_value);
+
+		// stack
+		void pha(void);
 
 		// registers
 		void tay(void);
 		void tya(void);
+		void txa(void);
 
 		//shifts
 		void lsr_a(void);
@@ -88,9 +101,10 @@ namespace klib {
 
 		// math
 		void dex(void);
+		void iny(void);
 
 		// misc
-		void nop(void);
+		void nop(std::size_t count = 1);
 		void add_byte(byte p_value);
 		void add_word(word p_word);
 	};
