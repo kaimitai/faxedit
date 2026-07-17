@@ -376,6 +376,14 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	std::size_t l_dyndata_bytes{ 0 };
 
 	m_game->sync_palettes(m_cache.m_shared_palettes);
+
+	// ensure the door hack is applied if it is supposed to be
+	// skip it for randomizer roms as they keep the hack in different locations
+	if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 &&
+		!m_cache.m_disable_pal2_mus) {
+		this->patch_randumizer_doors(*m_game, false);
+	}
+
 	auto x_rom{ m_game->m_rom_data };
 
 	// world tileset chr
