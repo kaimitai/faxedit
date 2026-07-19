@@ -103,8 +103,12 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 		m_palettes.push_back(l_tmp_palette);
 	}
 
-	// get the 8 spawn locations
-	extract_spawn_points(p_config, p_config.constant_or(c::ID_SPAWN_COUNT, 8));
+	// get the spawn locations
+	// if detection fails, fall back to the configured or vanilla default
+	std::size_t spawn_count{ detect_spawn_count(p_config) };
+	if (spawn_count == 0)
+		spawn_count = p_config.constant_or(c::ID_DEFAULT_SPAWN_COUNT, 8);
+	extract_spawn_points(p_config, spawn_count);
 
 	// extract mattock animations
 	std::size_t l_mattock_anim_offset{ p_config.constant(c::ID_MATTOCK_ANIM_OFFSET) };
@@ -1031,6 +1035,66 @@ std::size_t fe::Game::get_default_palette_no(std::size_t p_chunk_no, std::size_t
 
 std::size_t fe::Game::get_building_screen_count(void) const {
 	return m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size();
+}
+
+// tries to detect the number of spawn points defined in rom
+// ensure world, screen, stage and building sprite set metadata is populated beforehand
+std::size_t fe::Game::detect_spawn_count(const fe::Config& p_config) const {
+	const auto ptr_worlds{ p_config.pointer(c::ID_SPAWN_WORLD_PTR) };
+	const auto ptr_screens{ p_config.pointer(c::ID_SPAWN_SCREEN_PTR) };
+	const auto ptr_stage{ p_config.pointer(c::ID_SPAWN_STAGE_PTR) };
+	const auto ptr_xpos{ p_config.pointer(c::ID_SPAWN_XPOS_PTR) };
+	const auto ptr_ypos{ p_config.pointer(c::ID_SPAWN_YPOS_PTR) };
+	const auto ptr_sprite_set{ p_config.pointer(c::ID_SPAWN_SPRITE_SET_PTR) };
+
+	const auto off_worlds{ get_pointer_address(ptr_worlds) };
+	const auto off_screens{ get_pointer_address(ptr_screens) };
+	const auto off_stage{ get_pointer_address(ptr_stage) };
+	const auto off_xpos{ get_pointer_address(ptr_xpos) };
+	const auto off_ypos{ get_pointer_address(ptr_ypos) };
+	const auto off_sprite{ get_pointer_address(ptr_sprite_set) };
+
+	std::size_t count{ 0 };
+
+	const std::size_t max_entries = std::min({
+	m_rom_data.size() - off_worlds,
+	m_rom_data.size() - off_screens,
+	m_rom_data.size() - off_stage,
+	m_rom_data.size() - off_xpos,
+	m_rom_data.size() - off_ypos,
+	m_rom_data.size() - off_sprite,
+	static_cast<std::size_t>(255)
+		});
+
+	while (count < max_entries) {
+		byte world = m_rom_data[off_worlds + count];
+		if (world >= m_chunks.size())
+			break;
+
+		byte screen = m_rom_data[off_screens + count];
+		if (screen >= m_chunks[world].m_screens.size())
+			break;
+
+		byte stage = m_rom_data[off_stage + count];
+		if (stage >= m_stages.m_stages.size())
+			break;
+
+		byte x = static_cast<byte>(m_rom_data[off_xpos + count] >> 4);
+		if (x > 15)
+			break;
+
+		byte y = static_cast<byte>(m_rom_data[off_ypos + count] >> 4);
+		if (y > 12)
+			break;
+
+		byte sprite_set = m_rom_data[off_sprite + count];
+		if (sprite_set >= m_npc_bundles.size())
+			break;
+
+		++count;
+	}
+
+	return count;
 }
 
 void fe::Game::extract_spawn_points(const fe::Config& p_config, std::size_t p_spawn_count) {

@@ -183,7 +183,7 @@ namespace fe {
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
-		constexpr char ID_SPAWN_COUNT[]{ "spawn_count" };
+		constexpr char ID_DEFAULT_SPAWN_COUNT[]{ "default_spawn_count" };
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };

@@ -122,8 +122,8 @@
 		<const name="jump_on_animation_offset" value="0x3d6ff" />
 		<const name="pal2mus_entry_count_offset" value="0x3e55b" />
 		<const name="command_byte_count_offset" value="0x3ef66" />
-		<!-- default spawn point count, can be overridden front-end (can not be deduced from rom with certainty) -->
-		<const name="spawn_count" value="8" />
+		<!-- default spawn point count (can not always be deduced from rom with certainty) -->
+		<const name="default_spawn_count" value="8" />
 		<!-- offsets to the constants saying how many bits the spawn point uses when stored in a mantra -->
 		<const name="spawn_bit_count_decode_offset" region="us,us-rev-a,eu,randum" value="0x31607" />
 		<const name="spawn_bit_count_decode_offset" region="jp" value="0x31a03" />

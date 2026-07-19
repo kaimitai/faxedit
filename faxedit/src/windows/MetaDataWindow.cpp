@@ -141,7 +141,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				if (ImGui::BeginTabItem("Spawns")) {
 					static std::size_t ls_sel_spawn_location{ 0 };
-					static std::size_t ls_sel_spawn_count{ m_config.constant(c::ID_SPAWN_COUNT) };
+					static std::size_t ls_sel_spawn_count{ m_game->m_spawn_locations.size() };
 
 					ImGui::SeparatorText("Spawn locations after dying or restoring from mantra");
 
@@ -227,14 +227,14 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						--ls_sel_spawn_location;
 					}
 
-					ImGui::SeparatorText("Advanced option to load non-standard spawn counts directly from ROM");
+					ImGui::SeparatorText("Advanced: Reload spawn points from ROM");
 
 					ui::imgui_slider_with_arrows("###spwnreload",
 						std::format("ROM Spawns: {}", ls_sel_spawn_count),
 						ls_sel_spawn_count, 1, 256, "", false, true);
 
 					if (ui::imgui_button("Load Spawn Points from ROM", 4,
-						"Load the selected amount of spawn points directly from ROM (not necessary if you loaded from xml, or if the rom has a standard spawn count)",
+						"Reload the selected number of spawn points directly from the ROM (normally the editor detects the correct count automatically)",
 						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						m_game->extract_spawn_points(m_config, ls_sel_spawn_count);
 						validate_spawn_points(m_game.value());
