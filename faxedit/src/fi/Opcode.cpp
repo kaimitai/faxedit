@@ -34,52 +34,44 @@ std::map<byte, fi::Opcode> fi::opcodes{
 	{0x17, fi::Opcode("Jump", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, true)}
 };
 
-// keep synchronized with the CLI's predefined opcode implementations
-static const std::map<fh::HackLib, fi::Opcode> hacklib_opcodes{
-	{
-		fh::HackLib::SetFlag,
-		fi::Opcode("",
-			fi::ArgType::Byte,
-			fi::Flow::Continue,
-			fi::ArgDomain::None,
-			false)
-	},
-	{
-		fh::HackLib::ClearFlag,
-		fi::Opcode("",
-			fi::ArgType::Byte,
-			fi::Flow::Continue,
-			fi::ArgDomain::None,
-			false)
-	},
-	{
-		fh::HackLib::IfFlag,
-		fi::Opcode("",
-			fi::ArgType::Byte,
-			fi::Flow::Jump,
-			fi::ArgDomain::None,
-			false)
-	},
-	{
-		fh::HackLib::RunScreenHandler,
-		fi::Opcode("",
-			fi::ArgType::None,
-			fi::Flow::Continue,
-			fi::ArgDomain::None,
-			false)
-	}
-};
+namespace {
+	const fi::Opcode BYTE_CONTINUE{
+		"",
+		fi::ArgType::Byte,
+		fi::Flow::Continue,
+		fi::ArgDomain::None,
+		false
+	};
 
-static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_allowed) {
-	auto kv{ klib::str::extract_keyval_str(p_definition, ',', '=') };
+	const fi::Opcode BYTE_JUMP{
+		"",
+		fi::ArgType::Byte,
+		fi::Flow::Jump,
+		fi::ArgDomain::None,
+		false
+	};
 
-	fi::Opcode result{
+	const fi::Opcode NONE_CONTINUE{
 		"",
 		fi::ArgType::None,
 		fi::Flow::Continue,
 		fi::ArgDomain::None,
 		false
 	};
+
+	// maps each HackLib implementation to its required opcode signature
+	const std::map<fh::HackLib, fi::Opcode> hacklib_opcodes{
+		{ fh::HackLib::SetFlag,          BYTE_CONTINUE },
+		{ fh::HackLib::ClearFlag,        BYTE_CONTINUE },
+		{ fh::HackLib::IfFlag,           BYTE_JUMP },
+		{ fh::HackLib::RunScreenHandler, NONE_CONTINUE }
+	};
+}
+
+static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_allowed, bool& saw_impl) {
+	auto kv{ klib::str::extract_keyval_str(p_definition, ',', '=') };
+
+	fi::Opcode result{ NONE_CONTINUE };
 
 	std::optional<fh::HackLib> impl;
 
@@ -100,6 +92,7 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_al
 			if (!impl_allowed)
 				throw std::runtime_error("Vanilla opcodes may not specify Impl");
 			impl = klib::str::parse_enum_ci<fh::HackLib>(value);
+			saw_impl = true;
 		}
 		catch (const std::runtime_error& ex) {
 			throw std::runtime_error(
@@ -109,14 +102,20 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_al
 			throw std::runtime_error(std::format("Unknown opcode property: {}", key));
 	}
 
-	if (result.name.empty())
-		throw std::runtime_error("Opcode definition missing Mnemonic");
-
 	if (impl) {
 		std::string opcodename{ result.name };
+		if (opcodename.empty())
+			opcodename = klib::str::enum_to_string(*impl);
 		result = hacklib_opcodes.at(*impl);
 		result.name = opcodename;
 	}
+	else if (saw_impl) {
+		// once an Impl-opcode has been seen, we cannot easily allow non-Impl opcodes
+		throw std::runtime_error(std::format("Opcode '{}' did not specify Impl, but a previous one did", result.name));
+	}
+
+	if (result.name.empty())
+		throw std::runtime_error("Opcode definition missing Mnemonic");
 
 	return result;
 }
@@ -130,6 +129,7 @@ void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_o
 	std::map<byte, fi::Opcode> l_opcodes;
 
 	byte expected{ 0 };
+	bool saw_impl{ false };
 
 	for (const auto& kv : p_opcode_defs) {
 
@@ -139,7 +139,7 @@ void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_o
 
 		++expected;
 
-		auto parsed{ parse_opcode_def(kv.second, kv.first >= 0x18) };
+		auto parsed{ parse_opcode_def(kv.second, kv.first >= 0x18, saw_impl) };
 		l_opcodes.insert(std::make_pair(kv.first, parsed));
 	}
 
