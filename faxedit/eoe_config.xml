@@ -121,6 +121,7 @@
 		<const name="mattock_animations_offset" value="0x3c69f" />
 		<const name="jump_on_animation_offset" value="0x3d6ff" />
 		<const name="pal2mus_entry_count_offset" value="0x3e55b" />
+		<const name="command_byte_count_offset" value="0x3ef66" />
 		<!-- default spawn point count, can be overridden front-end (can not be deduced from rom with certainty) -->
 		<const name="spawn_count" value="8" />
 		<!-- offsets to the constants saying how many bits the spawn point uses when stored in a mantra -->
@@ -143,7 +144,6 @@
 		<const name="door_dest_sub_value_offset" value="0x3e84c" />
 		<!-- counts -->
 		<const name="sprite_count" value="101" />
-		<const name="command_byte_count" value="3" />
 		<!-- minimum number of iScripts we require when assembling; hard-coded ref to index #151 in game code -->
 		<const name="iscript_min_count" value="152" />
 		<const name="string_data_start" region="eu,us,randum,us-rev-a" value="0x34310" />

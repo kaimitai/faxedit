@@ -66,6 +66,7 @@ namespace fe {
 		constexpr char ID_MATTOCK_ANIM_OFFSET[]{ "mattock_animations_offset" };
 		constexpr char ID_JUMP_ON_ANIM_OFFSET[]{ "jump_on_animation_offset" };
 		constexpr char ID_PAL2MUS_ENTRY_COUNT_OFFSET[]{ "pal2mus_entry_count_offset" };
+		constexpr char ID_COMMAND_BYTE_COUNT_OFFSET[]{ "command_byte_count_offset" };
 
 		// spawn point bit size offsets (mantra)
 		constexpr char ID_SPAWN_BIT_COUNT_DECODE_OFFSET[]{ "spawn_bit_count_decode_offset" };
@@ -182,7 +183,6 @@ namespace fe {
 
 		// counts
 		constexpr char ID_SPRITE_COUNT[]{ "sprite_count" };
-		constexpr char ID_COMMAND_BYTE_COUNT[]{ "command_byte_count" };
 		constexpr char ID_SPAWN_COUNT[]{ "spawn_count" };
 
 		// chr constants

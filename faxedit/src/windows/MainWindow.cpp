@@ -49,7 +49,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 		.m_sprite_count = 0,
 		.m_iscript_count = 0,
 		.m_music_count = 0,
-		.m_command_byte_count = 0,
+		.m_command_byte_count = 3,
 		.m_disable_pal2_mus = false
 	},
 	// exit handler variables
@@ -905,6 +905,10 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 		m_cache.m_music_count = 16;
 	}
 
+	// extract screen handler event count
+	if (m_config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET))
+		m_cache.m_command_byte_count = p_bytes.at(m_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+
 	if (!p_initial)
 		m_game->m_rom_data = p_bytes;
 
@@ -925,7 +929,6 @@ void fe::MainWindow::cache_config_variables(void) {
 
 	// constants
 	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
-	m_cache.m_command_byte_count = m_config.constant_or(c::ID_COMMAND_BYTE_COUNT, 3);
 
 	// maps we convert to vectors
 	m_cache.m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
