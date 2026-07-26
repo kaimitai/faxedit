@@ -52,6 +52,7 @@ namespace fi {
 	};
 
 	extern std::map<byte, fi::Opcode> opcodes;
+	extern std::map<std::string, fi::Opcode> implementation_opcodes;
 
 	enum Instruction_type { OpCode, Directive };
 
@@ -66,7 +67,10 @@ namespace fi {
 		std::vector<byte> get_bytes(void) const;
 	};
 
-	void load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs);
+	std::vector<std::string> load_iscript_opcodes_from_config(
+		const std::map<byte, std::string>& p_opcode_defs,
+		const std::map<byte, std::string>& p_impl_defs);
+
 }
 
 #endif

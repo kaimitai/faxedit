@@ -361,6 +361,30 @@
 		<const name="hack_handle_palette_addr" value="$f389" />
 		<!-- sameworld transition pal2mus hack -->
 		<const name="hack_sw_trans_pal2mus_addr" value="$c033" />
+		<!-- script routine addresses needed for opcode library extension -->
+		<const name="rom_iscripts_loadbyte" region="us,randum,eu,us-rev-a" value="$87a4" />
+		<const name="rom_iscripts_loadbyte" region="jp,en-transl" value="$877c" />
+		<const name="rom_iscripts_skipaddrandinvoke" region="us,randum,eu,us-rev-a" value="$8616" />
+		<const name="rom_iscripts_skipaddrandinvoke" region="jp,en-transl" value="$8613" />
+		<const name="rom_iscripts_jumptonextaddr" region="us,randum,eu,us-rev-a" value="$8603" />
+		<const name="rom_iscripts_jumptonextaddr" region="jp,en-transl" value="$8600" />
+		<const name="rom_iscripts_invokenextaction" value="$826e" />
+		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
+		<const name="rom_mmc1_updaterombank" value="$cc1a" />
+		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
+		<const name="rom_player_updateexperience" value="$f957" />
+		<!-- tilemap change hack injection points -->
+		<const name="hack_tm_change_bank" region="en-transl" value="30" />
+		<const name="hack_tm_change_bank" value="9" />
+		<const name="hack_tm_change_cpu_addr" region="en-transl" value="$8000" />
+		<const name="hack_tm_change_cpu_addr" value="$a000" />
+		<const name="hack_tm_handler_cpu_addr" value="$ffc1" />
+		<!-- various hack injection points -->
+		<const name="hack_clear_persistent_flags" value="$d005" />
+		<!-- various hack RAM variables -->
+		<!-- RAM addresses used by the iScript JSR/Return opcodes to store the return address -->
+		<const name="hack_script_jsr_ram_addr_lo" value="$0182" />
+		<const name="hack_script_jsr_ram_addr_hi" value="$0183" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -386,6 +410,8 @@
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl" />
+		<!-- link flag RAM to SRAM for translation hack and derivatives -->
+		<bool name="flags_wram_to_sram" value="true" region="en-transl" />
 	</bools>
 	<!-- map from string byte value to symbols - will be used when translating to and from strings used by script engine -->
 	<!-- symbols in strings not defined here will cause the assembly to fail, unless it is a generic byte constant &lt;numeric value&gt; -->
@@ -770,6 +796,23 @@
 			<entry byte="$15" str="Mnemonic=EndGame,Flow=End,Terminal=true" />
 			<entry byte="$16" str="Mnemonic=IfMsgPrompt,ArgType=Byte,Flow=Jump,ArgDomain=TextString" />
 			<entry byte="$17" str="Mnemonic=Jump,Flow=Jump,Terminal=true" />
+		</byte_to_string_map>
+		<!-- built-in extended script opcode signatures - do not modify! -->
+		<byte_to_string_map name="iscript_opcode_impls">
+			<entry byte="$00" str="Impl=SetFlag,ArgType=Byte" />
+			<entry byte="$01" str="Impl=ClearFlag,ArgType=Byte" />
+			<entry byte="$02" str="Impl=IfFlag,ArgType=Byte,Flow=Jump" />
+			<entry byte="$03" str="Impl=SetQuestFlag,ArgType=Byte" />
+			<entry byte="$04" str="Impl=ClearQuestFlag,ArgType=Byte" />
+			<entry byte="$05" str="Impl=IfQuestFlag,ArgType=Byte,Flow=Jump" />
+			<entry byte="$06" str="Impl=RunScreenHandler" />
+			<entry byte="$07" str="Impl=GetXP,ArgType=Short" />
+			<entry byte="$08" str="Impl=IfWorld,ArgType=Byte,Flow=Jump" />
+			<entry byte="$09" str="Impl=IfScreen,ArgType=Byte,Flow=Jump" />
+			<entry byte="$0a" str="Impl=IfStage,ArgType=Byte,Flow=Jump" />
+			<entry byte="$0b" str="Impl=Die" />
+			<entry byte="$0c" str="Impl=JSR,Flow=Jump" />
+			<entry byte="$0d" str="Impl=Return,Flow=End,Terminal=true" />
 		</byte_to_string_map>
 		<!-- string mapping used by the iScript assembler and disassembler -->
 		<byte_to_string_map name="iscript_string_characters" region="us,eu,randum,us-rev-a">

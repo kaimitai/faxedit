@@ -197,6 +197,7 @@ namespace fe {
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };
 		constexpr char ID_TILEMAP_BANKS[]{ "tilemap_banks" };
 		constexpr char ID_ISCRIPT_OPCODES[]{ "iscript_opcodes" };
+		constexpr char ID_ISCRIPT_OPCODE_IMPLS[]{ "iscript_opcode_impls" };
 
 		// bools
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };

@@ -1,12 +1,6 @@
 #include "Opcode.h"
 #include "./../common/klib/Kstring.h"
 
-// keep synchronized with the CLI's HackLib enum
-// used only for interpreting configurable iScript opcode definitions
-namespace fh {
-	enum class HackLib { SetFlag, ClearFlag, IfFlag, RunScreenHandler };
-}
-
 std::map<byte, fi::Opcode> fi::opcodes{
 	{0x00, fi::Opcode("End", fi::ArgType::None, fi::Flow::End, fi::ArgDomain::None, true)},
 	{0x01, fi::Opcode("MsgNoskip", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
@@ -34,22 +28,9 @@ std::map<byte, fi::Opcode> fi::opcodes{
 	{0x17, fi::Opcode("Jump", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, true)}
 };
 
-namespace {
-	const fi::Opcode BYTE_CONTINUE{
-		"",
-		fi::ArgType::Byte,
-		fi::Flow::Continue,
-		fi::ArgDomain::None,
-		false
-	};
+std::map<std::string, fi::Opcode> fi::implementation_opcodes;
 
-	const fi::Opcode BYTE_JUMP{
-		"",
-		fi::ArgType::Byte,
-		fi::Flow::Jump,
-		fi::ArgDomain::None,
-		false
-	};
+namespace {
 
 	const fi::Opcode NONE_CONTINUE{
 		"",
@@ -59,21 +40,19 @@ namespace {
 		false
 	};
 
-	// maps each HackLib implementation to its required opcode signature
-	const std::map<fh::HackLib, fi::Opcode> hacklib_opcodes{
-		{ fh::HackLib::SetFlag,          BYTE_CONTINUE },
-		{ fh::HackLib::ClearFlag,        BYTE_CONTINUE },
-		{ fh::HackLib::IfFlag,           BYTE_JUMP },
-		{ fh::HackLib::RunScreenHandler, NONE_CONTINUE }
+	struct ParsedOpcodeDef {
+		fi::Opcode opcode;
+		std::optional<std::string> impl;
 	};
 }
 
-static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_allowed, bool& saw_impl) {
+static ParsedOpcodeDef parse_opcode_properties(const std::string& p_definition) {
 	auto kv{ klib::str::extract_keyval_str(p_definition, ',', '=') };
 
+	// default
 	fi::Opcode result{ NONE_CONTINUE };
 
-	std::optional<fh::HackLib> impl;
+	std::optional<std::string> impl;
 
 	for (const auto& [key, value] : kv) {
 		const auto k{ klib::str::to_lower(klib::str::trim(key)) };
@@ -88,48 +67,83 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, bool impl_al
 			result.domain = klib::str::parse_enum_ci<fi::ArgDomain>(value);
 		else if (k == "terminal")
 			result.ends_stream = klib::str::parse_bool_ci(value);
-		else if (k == "impl") try {
-			if (!impl_allowed)
-				throw std::runtime_error("Vanilla opcodes may not specify Impl");
-			impl = klib::str::parse_enum_ci<fh::HackLib>(value);
-			saw_impl = true;
+		else if (k == "impl") {
+			impl = klib::str::trim(value);
 		}
-		catch (const std::runtime_error& ex) {
-			throw std::runtime_error(
-				std::format("Could not load script opcode implementation '{}' ({})", value, ex.what()));
-		}
+
 		else
 			throw std::runtime_error(std::format("Unknown opcode property: {}", key));
 	}
 
-	if (impl) {
-		std::string opcodename{ result.name };
-		if (opcodename.empty())
-			opcodename = klib::str::enum_to_string(*impl);
-		result = hacklib_opcodes.at(*impl);
-		result.name = opcodename;
-	}
-	else if (saw_impl) {
-		// once an Impl-opcode has been seen, we cannot easily allow non-Impl opcodes
-		throw std::runtime_error(std::format("Opcode '{}' did not specify Impl, but a previous one did", result.name));
-	}
-
-	if (result.name.empty())
-		throw std::runtime_error("Opcode definition missing Mnemonic");
-
-	return result;
+	return { result, impl };
 }
 
-void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs) {
+static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<std::string>& p_required_impls,
+	bool p_impl_allowed) {
+	auto parsed{ parse_opcode_properties(p_definition) };
+
+	if (parsed.impl) {
+		if (!p_impl_allowed)
+			throw std::runtime_error("Vanilla opcodes may not specify Impl");
+
+		p_required_impls.push_back(*parsed.impl);
+	}
+	else {
+		// once an Impl-opcode has been seen, we cannot easily allow non-Impl opcodes
+		if (!p_required_impls.empty())
+			throw std::runtime_error(std::format(
+				"Opcode '{}' did not specify Impl, but a previous one did",
+				parsed.opcode.name));
+	}
+
+	if (parsed.impl) {
+		auto opcode_name{ parsed.opcode.name };
+		const auto key{ klib::str::to_lower(*parsed.impl) };
+
+		const auto it{ fi::implementation_opcodes.find(key) };
+		if (it == fi::implementation_opcodes.end())
+			throw std::runtime_error(std::format(
+				"Unknown script opcode implementation '{}'", *parsed.impl));
+
+		parsed.opcode = it->second;
+
+		if (!opcode_name.empty())
+			parsed.opcode.name = opcode_name;
+	}
+
+	return parsed.opcode;
+}
+
+static void load_opcode_implementations(const std::map<byte, std::string>& p_impl_defs) {
+	fi::implementation_opcodes.clear();
+
+	for (const auto& [_, definition] : p_impl_defs) {
+		auto parsed{ parse_opcode_properties(definition) };
+
+		if (!parsed.impl)
+			throw std::runtime_error("Opcode implementation definition missing Impl");
+
+		parsed.opcode.name = *parsed.impl;
+
+		const auto key{ klib::str::to_lower(*parsed.impl) };
+		fi::implementation_opcodes.emplace(key, parsed.opcode);
+	}
+}
+
+std::vector<std::string> fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs,
+	const std::map<byte, std::string>& p_impl_defs) {
 	constexpr bool THROW_ON_OPCODE_DIFFS{ false };
 
+	std::vector<std::string> required_impls;
+
 	if (p_opcode_defs.empty())
-		return;
+		return required_impls;
+
+	load_opcode_implementations(p_impl_defs);
 
 	std::map<byte, fi::Opcode> l_opcodes;
 
 	byte expected{ 0 };
-	bool saw_impl{ false };
 
 	for (const auto& kv : p_opcode_defs) {
 
@@ -139,7 +153,7 @@ void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_o
 
 		++expected;
 
-		auto parsed{ parse_opcode_def(kv.second, kv.first >= 0x18, saw_impl) };
+		auto parsed{ parse_opcode_def(kv.second, required_impls, kv.first >= 0x18) };
 		l_opcodes.insert(std::make_pair(kv.first, parsed));
 	}
 
@@ -149,6 +163,8 @@ void fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_o
 	}
 
 	fi::opcodes = l_opcodes;
+
+	return required_impls;
 }
 
 std::vector<byte> fi::Instruction::get_bytes(void) const {
