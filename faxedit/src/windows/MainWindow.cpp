@@ -471,18 +471,18 @@ void fe::MainWindow::show_sprite_screen(fe::Sprite_set& p_sprites, std::size_t& 
 			l_sprites.erase(begin(l_sprites) + p_sel_sprite--);
 	}
 
-	ImGui::SeparatorText("Command Byte");
+	ImGui::SeparatorText("Event Handler");
 	auto& l_cb{ p_sprites.m_command_byte };
 
 	if (l_cb.has_value()) {
 		ui::imgui_slider_with_arrows("###sscb",
 			std::format("Value: {}", get_description(l_cb.value(), m_cache.m_labels_cmd_byte)),
 			p_sprites.m_command_byte.value(), 0, m_cache.m_command_byte_count - 1, "Special events for the screen");
-		if (ui::imgui_button("Delete command byte", 1))
+		if (ui::imgui_button("Delete event handler", 1))
 			p_sprites.m_command_byte.reset();
 	}
 	else {
-		if (ui::imgui_button("Add command byte", 2, ""))
+		if (ui::imgui_button("Add event handler", 2, ""))
 			p_sprites.m_command_byte = 0x01;
 	}
 }

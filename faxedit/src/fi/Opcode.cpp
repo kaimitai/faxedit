@@ -78,16 +78,11 @@ static ParsedOpcodeDef parse_opcode_properties(const std::string& p_definition) 
 	return { result, impl };
 }
 
-static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<std::string>& p_required_impls,
-	bool p_impl_allowed) {
+static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<std::string>& p_required_impls) {
 	auto parsed{ parse_opcode_properties(p_definition) };
 
-	if (parsed.impl) {
-		if (!p_impl_allowed)
-			throw std::runtime_error("Vanilla opcodes may not specify Impl");
-
+	if (parsed.impl)
 		p_required_impls.push_back(*parsed.impl);
-	}
 	else {
 		// once an Impl-opcode has been seen, we cannot easily allow non-Impl opcodes
 		if (!p_required_impls.empty())
@@ -130,14 +125,14 @@ static void load_opcode_implementations(const std::map<byte, std::string>& p_imp
 	}
 }
 
-std::vector<std::string> fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs,
+fi::ScriptOpcodeInfo fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs,
 	const std::map<byte, std::string>& p_impl_defs) {
 	constexpr bool THROW_ON_OPCODE_DIFFS{ false };
 
-	std::vector<std::string> required_impls;
+	fi::ScriptOpcodeInfo result;
 
 	if (p_opcode_defs.empty())
-		return required_impls;
+		return result;
 
 	load_opcode_implementations(p_impl_defs);
 
@@ -153,9 +148,11 @@ std::vector<std::string> fi::load_iscript_opcodes_from_config(const std::map<byt
 
 		++expected;
 
-		auto parsed{ parse_opcode_def(kv.second, required_impls, kv.first >= 0x18) };
+		auto parsed{ parse_opcode_def(kv.second, result.required_impls) };
 		l_opcodes.insert(std::make_pair(kv.first, parsed));
 	}
+
+	result.base_opcode_count = p_opcode_defs.size() - result.required_impls.size();
 
 	if constexpr (THROW_ON_OPCODE_DIFFS) {
 		if (l_opcodes != fi::opcodes)
@@ -164,7 +161,7 @@ std::vector<std::string> fi::load_iscript_opcodes_from_config(const std::map<byt
 
 	fi::opcodes = l_opcodes;
 
-	return required_impls;
+	return result;
 }
 
 std::vector<byte> fi::Instruction::get_bytes(void) const {

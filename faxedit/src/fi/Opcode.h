@@ -67,7 +67,12 @@ namespace fi {
 		std::vector<byte> get_bytes(void) const;
 	};
 
-	std::vector<std::string> load_iscript_opcodes_from_config(
+	struct ScriptOpcodeInfo {
+		std::vector<std::string> required_impls;
+		std::size_t base_opcode_count{ 0 };
+	};
+
+	ScriptOpcodeInfo load_iscript_opcodes_from_config(
 		const std::map<byte, std::string>& p_opcode_defs,
 		const std::map<byte, std::string>& p_impl_defs);
 
