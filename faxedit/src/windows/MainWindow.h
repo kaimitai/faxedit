@@ -350,6 +350,7 @@ namespace fe {
 		void dump_debug_data(bool p_complete = false);
 		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data);
 		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
+		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
 
 	public:
 
