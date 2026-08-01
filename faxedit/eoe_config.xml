@@ -380,6 +380,8 @@
 		<const name="hack_tm_change_cpu_addr" value="$a000" />
 		<const name="hack_tm_handler_cpu_addr" value="$e894" />
 		<const name="hack_tm_handler_table_cpu_addr" value="$cb0c" />
+		<!-- the handler index for our the dynamic tilemap change handler -->
+		<const name="hack_tm_change_handler_index" value="3" />
 		<!-- how many interrupts to wait before drawing the next tile, max 34 -->
 		<const name="hack_tm_change_wait_frames" value="4" />
 		<!-- which sound effect to play when placing a tile - $ff for none -->

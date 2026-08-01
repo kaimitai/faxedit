@@ -225,7 +225,7 @@ namespace fe {
 		void clipboard_copy(void);
 		void clipboard_paste(bool l_update_data = true);
 		// helper for the tilemap change
-		void clipboard_copy_tilemap_changes(void);
+		void clipboard_copy_tilemap_changes(bool p_incl_header);
 
 		void scroll_button(std::string p_button_text, std::optional<byte> p_scroll_dest);
 		void scroll_left_button(const fe::Screen& p_screen);
