@@ -99,6 +99,8 @@ Projects can be saved as patched ROMs, IPS patches, or XML files suitable for ve
 
 ![The editor in action](./docs/img/eoe_presentation.png)
 
+Echoes of Eolis includes integration with FaxIScripts' optional advanced modding features, including persistent door generation, tilemap change export, and support for custom script opcode definitions. See the [Advanced Modding documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) for details.
+
 <hr>
 
 ## Recommended Workflow

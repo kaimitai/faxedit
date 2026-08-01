@@ -1,6 +1,6 @@
 # Echoes of Eolis - User Documentation
 
-This is the user documentation for Echoes of Eolis (version beta-8.1), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis (version beta-8.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
 
@@ -166,8 +166,6 @@ A message will indicate for how many spawn points deduction fully succeeded. Usu
 
 If a world maps to multiple stages, for example, some spawn points must be set manually. Then deduction can not fully take place.
 
-**Important**: If you reload from XML, script information is not preserved, so deduction cannot run. Use Apply External ROM Changes in the Project Control window to refresh scripts before deducing.
-
 **Add Spawn**: Creates a new spawn point.
 
 To make the game actually use it, you must add a script (via [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) for example) that sets this spawn index when talking to an NPC.
@@ -178,7 +176,7 @@ To make the game actually use it, you must add a script (via [FaxIScripts](https
 
 These options allow extraction of a non‑standard number of spawn points from the ROM.
 
-By default, the editor loads 8 spawn points because the ROM does not explicitly store how many exist. If you know your ROM contains more (e.g., 12), you can:
+By default, the editor tries its best to deduce the spawn count because the ROM does not explicitly store how many exist. This should work in 99% of all cases, but if the count is wrong, you can:
 
 Set the slider to the desired number.
 
@@ -216,7 +214,7 @@ This data is on the exact same format as screen sprite sets, but we have to trea
 * (x, y): Position of the sprite in the room
 * Script: A script-index used by an NPC. Optional. Can be added or deleted.
 * Add or Remove sprite: Adds or Removes the selected sprite from the sprite set
-* Command-byte: A value which determines the following based on its value:
+* Event Handler: A screen event handler which does the following (in vanilla)
   * 0 - Automatically initiate the push-block animation when entering
   * 1 - Play boss music if a boss sprite is on screen, until the boss is dead
   * 2 - Play boss music if a boss sprite is on screen, until the boss is dead. Also starts the end-game sequence once all sprites are gone.
@@ -228,7 +226,7 @@ When you have opened all three springs in the game, and obtained the Ring of Rub
 
 If all requirements are fulfilled, and you push against blocks with block property 6 (push-block) the animation is triggered based on these parameters.
 
-If a room has command byte 0 set, the animation will also play automatically when you enter that room if the corresponding quest flag is set.
+If a screen has Event Handler set to 0, the animation will also play automatically when you enter that room if the corresponding quest flag is set.
 
 For the quest flag to be set, however, you need to be on a certain stage (not world!) and screen when you push these blocks.
 
@@ -427,6 +425,8 @@ The controls for making a screen tilemap image is as follows:
 * Shit+V: Show clipboard rectangle at position if it fits, without pasting anything. To see where your clipboard data would be pasted.
 * Ctrl+Z: Undo the last action
 * Ctrl+Y: Redo the last undone action
+* Ctrl+Shift+C: Copy rectangular area to clipboard for use with the [dynamic tilemap change](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) feature
+* Ctrl+Alt+C: Copy rectangular are to clipboard for use with the [dynamic tilemap change](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) feature, but omitting the header
 
 The undo and redo have a history of 250 steps. Destructive structural changes - deleting a screen or a metatile definition - will clear all the undo history for the related world.
 
@@ -457,7 +457,7 @@ The top slider selects current sprite, then you define the sprite ID and positio
 
 The add and remove sprite buttons are always active. You can delete sprites without worrying about references.
 
-The command-byte is screen specific, and the values are the same as for building sprite-sets: 0 is block-push animation, 1 is boss-room and 2 is endgame-room.
+The Event Handler is screen specific, and the values are the same as for building sprite-sets: 0 is block-push animation, 1 is boss-room and 2 is endgame-room.
 
 The selected sprite will be enclosed by a bounded rectangle according to its size, and you can move it on the tilemap by holding shift and clicking at the desired position.
 
@@ -1242,6 +1242,7 @@ will be considered transparent.
 - Enable IPS patching: Turns on the "Save ips"-button next to "Patch nes ROM" in the Project Control window.
 - Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
 - Enable pal2mus for sw-transitions: Toggles an optional rom hack that enables palette-to-music mapping for same-world transitions, matching the behavior of same-world doors. The hack is applied when the rom is patched.
+- Generate asm: For use with the advanced scripting features in FaxIScripts. See [separate documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md).
 
 The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
 
@@ -1297,6 +1298,19 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 <hr>
 
 ### Changelog
+
+* 2026-08-01: version beta-8.2 - "Game Changer"
+
+  * Ensure the stage-world door hack is applied at ROM patching time when necessary
+  * Renamed ```Command Byte``` to ```Event Handler```
+  * Automatically detect spawn point count from ROM
+  * Automatically detect screen event handler count from ROM
+  * Various fixes and internal improvements
+
+* To support the new [advanced FaxIScripts features](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md):
+  * Generate persistent door assembly directly from the editor (Settings > Advanced)
+  * Copy tilemap changes directly from the editor for use in FaxIScripts (```Ctrl+Shift+C``` and ```Ctrl+Alt+C```)
+  * Added support for parsing custom opcode implementation (```Impl```) definitions
 
 * 2026-06-27: version beta-8.1 - "4D Pocket"
 
