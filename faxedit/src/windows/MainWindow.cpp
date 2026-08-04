@@ -877,7 +877,6 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 
 	// extract scripts and music
 	m_cache.m_iscripts.clear();
-	m_cache.m_spawn_to_script_no.clear();
 
 	try {
 		fi::IScriptLoader loader(m_config, p_bytes);
@@ -892,8 +891,6 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 				add_message(std::format("Unable to parse iScript #{}", i));
 			}
 		}
-
-		m_cache.m_spawn_to_script_no = loader.m_spawn_scripts;
 	}
 	catch (...) {
 		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);

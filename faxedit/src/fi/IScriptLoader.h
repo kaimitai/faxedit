@@ -53,17 +53,13 @@ namespace fi {
 	public:
 		IScriptLoader(const fe::Config& p_config,
 			const std::vector<byte>& p_rom);
-		std::vector<fi::AsmToken> get_asm_code(std::size_t p_script_no);
+		std::vector<fi::AsmToken> get_asm_code(std::size_t p_script_no) const;
 		std::vector<fi::AsmToken> parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no);
 		const std::map<size_t, fi::Instruction>& parse_script_raw(const std::vector<byte>& p_rom,
 			std::size_t p_script_no);
 		const std::vector<fi::Shop> get_shops(void) const;
 
 		std::size_t get_script_count(void) const;
-
-		// map from spawn point to script no where the spawn is set
-		// we need this later for spawn point deduction
-		std::map<byte, byte> m_spawn_scripts;
 	};
 
 }

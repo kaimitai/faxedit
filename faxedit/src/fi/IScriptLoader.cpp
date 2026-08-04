@@ -184,7 +184,7 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 }
 
 // return the script as vector of asm token to be parsed by the renderer
-std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_no) {
+std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_no) const {
 	std::vector<fi::AsmToken> result;
 	std::map<std::size_t, std::string> labels;
 	int last_label{ 0 };
@@ -237,11 +237,6 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_n
 					result.push_back(fi::AsmToken(get_define(op.domain, static_cast<byte>(opval)), 5, false));
 				else
 					result.push_back(fi::AsmToken(std::format("{}", opval), 5, false));
-
-				// extract possible setspawns here to use for
-				// spawn point deduction later
-				if (instr.opcode_byte == c::OPCODE_SET_SPAWN)
-					m_spawn_scripts[static_cast<byte>(opval)] = static_cast<byte>(p_script_no);
 			}
 
 			if (op.flow == fi::Flow::Jump) {

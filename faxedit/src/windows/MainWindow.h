@@ -53,7 +53,6 @@ namespace fe {
 		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 		// iscripts
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
-		std::map<byte, byte> m_spawn_to_script_no;
 	};
 
 	struct Message {
@@ -307,11 +306,14 @@ namespace fe {
 		void import_cinematic_frame_bmps(void);
 
 		// world visualization helpers
-		std::unordered_map<byte, fe::ScriptSemanticInfo> extract_script_semantics(void);
 		void export_world_png(const fe::WorldVisualizer& p_visualizer,
 			std::size_t p_world, std::size_t p_screen,
 			const fe::SpriteGUILoader& p_sprites,
 			const fe::WorldVisualizationOptions& p_options);
+
+		// on-demand script info extraction helpers
+		std::unordered_map<byte, fe::ScriptSemanticInfo> extract_script_semantics(void);
+		std::map<byte, byte> extract_set_spawn_scripts(void);
 
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);

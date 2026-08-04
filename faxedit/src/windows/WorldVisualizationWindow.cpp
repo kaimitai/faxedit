@@ -151,3 +151,29 @@ catch (const std::exception& ex) {
 	add_message(std::format("Script extraction failed: {}", ex.what()), 1);
 	return {};
 }
+
+std::map<byte, byte> fe::MainWindow::extract_set_spawn_scripts(void) try {
+	std::map<byte, byte> result;
+	const auto& rom_bytes{ m_game->m_rom_data };
+
+	fi::IScriptLoader loader(m_config, rom_bytes);
+
+	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
+		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };
+
+		for (const auto& kv : instrs) {
+			const auto& instr{ kv.second };
+
+			if (instr.opcode_byte != fi::c::OPCODE_SET_SPAWN || !instr.operand.has_value())
+				continue;
+
+			result[static_cast<byte>(*instr.operand)] = static_cast<byte>(i);
+		}
+	}
+
+	return result;
+}
+catch (const std::exception& ex) {
+	add_message(std::format("Spawn script extraction failed: {}", ex.what()), 1);
+	return {};
+}

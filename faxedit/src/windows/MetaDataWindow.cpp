@@ -188,12 +188,13 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						ImGui::SeparatorText("Automatic Deduction");
 
 						if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
+							const auto spawn_to_script_no{ extract_set_spawn_scripts() };
 
-							if (m_cache.m_spawn_to_script_no.empty())
-								add_message("No iScript information loaded - can not deduce spawns", 1);
+							if (spawn_to_script_no.empty())
+								add_message("No SetSpawn script information loaded - can not deduce spawns", 1);
 							else
 								add_message(std::format("Fully deduced {} of {} spawn points",
-									m_game->calculate_spawn_locations_by_guru(m_cache.m_spawn_to_script_no),
+									m_game->calculate_spawn_locations_by_guru(spawn_to_script_no),
 									m_game->m_spawn_locations.size()),
 									4);
 						}
