@@ -1132,8 +1132,9 @@ namespace {
 		case ScreenDirection::Down:
 			return p_screen.m_scroll_down;
 
+		default:
+			return std::nullopt;
 		}
-		return std::nullopt;
 	}
 
 	std::optional<byte> follow(const fe::Chunk& p_chunk,

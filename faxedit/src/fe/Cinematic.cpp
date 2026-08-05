@@ -185,27 +185,27 @@ void fe::Cinematic::parse_player_outro(const fe::Config& p_config,
 	const std::size_t yvel_offset{ xvel_offset + 4 };
 
 	player.depth_stages.push_back(DepthState{
-	.y_threshold { p_rom.at(cutoff_offset)},
+	.y_threshold = p_rom.at(cutoff_offset),
 	.velocity {
-		.vel_x { static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_VEL_X_OFFSET)))},
-		.vel_y { static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_VEL_Y_OFFSET)))}
+		.vel_x = static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_VEL_X_OFFSET))),
+		.vel_y = static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_VEL_Y_OFFSET)))
 		}
 		});
 
 	for (std::size_t i{ 0 }; i < 3; ++i)
 		player.depth_stages.push_back(DepthState{
-			.y_threshold { p_rom.at(cutoff_offset + i + 1)},
+			.y_threshold = p_rom.at(cutoff_offset + i + 1),
 			.velocity {
-				.vel_x { static_cast<char>(p_rom.at(xvel_offset + i))},
-				.vel_y { static_cast<char>(p_rom.at(yvel_offset + i))}
+				.vel_x = static_cast<char>(p_rom.at(xvel_offset + i)),
+				.vel_y = static_cast<char>(p_rom.at(yvel_offset + i))
 				}
 			});
 
 	player.depth_stages.push_back(DepthState{
-		.y_threshold { p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_TERMINAL_THRESHOLD_OFFSET))},
+		.y_threshold = p_rom.at(p_config.constant(c::ID_CINEMATIC_OUTRO_TERMINAL_THRESHOLD_OFFSET)),
 		.velocity {
-			.vel_x { static_cast<char>(p_rom.at(xvel_offset + 3))},
-			.vel_y { static_cast<char>(p_rom.at(yvel_offset + 3))}
+			.vel_x = static_cast<char>(p_rom.at(xvel_offset + 3)),
+			.vel_y = static_cast<char>(p_rom.at(yvel_offset + 3))
 			}
 		});
 
@@ -226,19 +226,19 @@ void fe::Cinematic::parse_player_intro(const fe::Config& p_config,
 	const std::size_t yvel_offset{ xvel_offset + 4 };
 
 	player.depth_stages.push_back(DepthState{
-		.y_threshold { p_rom.at(cutoff_offset)},
+		.y_threshold = p_rom.at(cutoff_offset),
 		.velocity {
-			.vel_x { static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_INTRO_VEL_X_OFFSET)))},
-			.vel_y { static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_INTRO_VEL_Y_OFFSET)))}
+			.vel_x = static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_INTRO_VEL_X_OFFSET))),
+			.vel_y = static_cast<char>(p_rom.at(p_config.constant(c::ID_CINEMATIC_INTRO_VEL_Y_OFFSET)))
 			}
 		});
 
 	for (std::size_t i{ 0 }; i < 4; ++i)
 		player.depth_stages.push_back(DepthState{
-			.y_threshold { p_rom.at(cutoff_offset + i + 1)},
+			.y_threshold = p_rom.at(cutoff_offset + i + 1),
 			.velocity {
-				.vel_x { static_cast<char>(p_rom.at(xvel_offset + i))},
-				.vel_y { static_cast<char>(p_rom.at(yvel_offset + i))}
+				.vel_x = static_cast<char>(p_rom.at(xvel_offset + i)),
+				.vel_y = static_cast<char>(p_rom.at(yvel_offset + i))
 				}
 			});
 
