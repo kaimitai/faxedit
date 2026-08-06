@@ -4,7 +4,7 @@
 #include <map>
 #include <utility>
 #include <vector>
-#include "./../fe/Game.h"
+#include "fe/Game.h"
 
 // tilemap edits
 using Coord = std::pair<std::size_t, std::size_t>; // metatile x, y

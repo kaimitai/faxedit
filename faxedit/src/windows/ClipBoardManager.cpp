@@ -1,5 +1,5 @@
 #include "ClipBoardManager.h"
-#include "./../fe/xml/Xml_helper.h"
+#include "fe/xml/Xml_helper.h"
 #include <format>
 #include <SDL3/SDL.h>
 

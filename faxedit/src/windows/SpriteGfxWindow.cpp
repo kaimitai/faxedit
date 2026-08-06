@@ -4,13 +4,13 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "./../fe/fe_constants.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_constants.h"
+#include "fe/fe_app_constants.h"
 #include "common/klib/Kfile.h"
-#include "./../fe/sprite/fe_sprite_constants.h"
+#include "fe/sprite/fe_sprite_constants.h"
 #include <format>
 #include <SDL3/SDL.h>
-#include "./../fe/sprite/SpriteGUILoader.h"
+#include "fe/sprite/SpriteGUILoader.h"
 #include <cmath>
 
 using byte = unsigned char;

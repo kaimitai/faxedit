@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "Imgui_helper.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_app_constants.h"
 
 void fe::MainWindow::draw_iscript_window(SDL_Renderer* p_rnd) {
 	ui::imgui_screen("iScripts", c::WIN_ISCRIPT_X, c::WIN_ISCRIPT_Y,

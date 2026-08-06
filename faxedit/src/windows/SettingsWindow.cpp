@@ -3,8 +3,8 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "./../fe/fe_constants.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_constants.h"
+#include "fe/fe_app_constants.h"
 #include <format>
 #include <unordered_map>
 #include <SDL3/SDL.h>

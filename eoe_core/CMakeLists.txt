@@ -6,6 +6,37 @@ add_library(eoe_core STATIC
     src/common/klib/Kfile.cpp
     src/common/klib/Kstring.cpp
     src/common/klib/NES_tile.cpp
+
+	src/common/pugixml/pugixml.cpp
+
+    src/fe/ChrStructures.cpp
+    src/fe/Chunk.cpp
+    src/fe/Config.cpp
+    src/fe/Door.cpp
+    src/fe/Game.cpp
+    src/fe/GfxTilemapManager.cpp
+    src/fe/GodAllocator.cpp
+    src/fe/InterChunkScroll.cpp
+    src/fe/IntraChunkScroll.cpp
+    src/fe/Metatile.cpp
+    src/fe/ROM_Manager.cpp
+    src/fe/Screen.cpp
+    src/fe/Sprite.cpp
+    src/fe/Sprite_set.cpp
+    src/fe/StageManager.cpp
+    src/fe/PaletteMusicMap.cpp
+    src/fe/EditorSettings.cpp
+    src/fe/ScreenRef.cpp
+    src/fe/MetatileRef.cpp
+    src/fe/Cinematic.cpp
+    src/fe/WorldVisualizer.cpp
+    src/fe/xml/Xml_helper.cpp
+
+    src/fe/sprite/SpriteAnimationFrame.cpp
+    src/fe/sprite/SpriteFrameCollection.cpp
+    src/fe/sprite/SpriteGfxManager.cpp
+    src/fe/sprite/SpriteGfxSnapshotManager.cpp
+    src/fe/sprite/SpriteGUILoader.cpp
 )
 
 target_include_directories(eoe_core

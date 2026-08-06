@@ -1,8 +1,8 @@
 #include "MainWindow.h"
 #include "Imgui_helper.h"
 #include "common/klib/Bitreader.h"
-#include "./../fe/fe_constants.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_constants.h"
+#include "fe/fe_app_constants.h"
 #include <algorithm>
 #include <unordered_map>
 

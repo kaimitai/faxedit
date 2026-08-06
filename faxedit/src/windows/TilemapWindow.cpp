@@ -3,7 +3,7 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_app_constants.h"
 #include <cmath>
 
 void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {

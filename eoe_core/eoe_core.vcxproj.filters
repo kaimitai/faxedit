@@ -25,6 +25,30 @@
     <Filter Include="Source Files\common\klib">
       <UniqueIdentifier>{a3b96a62-8a0e-4aa7-b4df-958068adb8f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common\pugixml">
+      <UniqueIdentifier>{cf5c1dc0-c30b-4810-bb20-7372ab7fc2f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\pugixml">
+      <UniqueIdentifier>{fab5234e-ebc7-4eff-bbb7-f5f9dcb64c62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fe">
+      <UniqueIdentifier>{ca448cc1-2604-4eae-ab74-05625630477c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fe\xml">
+      <UniqueIdentifier>{078570b8-41f0-40d7-8acc-58931a45bb00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe">
+      <UniqueIdentifier>{c54c6497-c737-45b8-a199-f7c99daf545a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\xml">
+      <UniqueIdentifier>{9363c343-ae45-4506-a007-19718fd53e03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fe\sprite">
+      <UniqueIdentifier>{459d4043-8444-4e18-bbd9-243b1a4f6fb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\sprite">
+      <UniqueIdentifier>{40f36966-d71c-45e4-be7e-7c8e8da39cc2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -54,6 +78,108 @@
     <ClInclude Include="src\common\magic_enum.hpp">
       <Filter>Header Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\pugixml\pugiconfig.hpp">
+      <Filter>Header Files\common\pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\pugixml\pugixml.hpp">
+      <Filter>Header Files\common\pugixml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Config.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_constants.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_helper.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\ChrStructures.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Chunk.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Cinematic.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Door.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\EditorSettings.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\fe_app_constants.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\fe_constants.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Game.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\GfxTilemapManager.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\GodAllocator.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\InterChunkScroll.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\IntraChunkScroll.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Metatile.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\MetatileRef.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\PaletteMusicMap.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\ROM_Manager.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Scene.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Screen.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\ScreenRef.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Sprite.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\Sprite_set.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\StageManager.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\WorldVisualizer.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\fe_sprite_constants.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteGfxManager.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteGfxSnapshotManager.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\sprite\SpriteGUILoader.h">
+      <Filter>Header Files\fe\sprite</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -76,6 +202,90 @@
     </ClCompile>
     <ClCompile Include="src\common\klib\NES_tile.cpp">
       <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\pugixml\pugixml.cpp">
+      <Filter>Source Files\common\pugixml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Config.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\xml\Xml_helper.cpp">
+      <Filter>Source Files\fe\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\ChrStructures.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Chunk.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Cinematic.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Door.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\EditorSettings.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Game.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\GfxTilemapManager.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\GodAllocator.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\InterChunkScroll.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\IntraChunkScroll.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Metatile.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\MetatileRef.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\PaletteMusicMap.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\ROM_Manager.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Screen.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\ScreenRef.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Sprite.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\Sprite_set.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\StageManager.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\WorldVisualizer.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteGfxSnapshotManager.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp">
+      <Filter>Source Files\fe\sprite</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

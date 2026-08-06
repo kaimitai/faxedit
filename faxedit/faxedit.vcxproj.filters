@@ -22,14 +22,8 @@
     <Filter Include="Header Files\common\klib">
       <UniqueIdentifier>{2a21fde4-7622-4594-af7e-1ad9fc841102}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\fe">
-      <UniqueIdentifier>{2dd465c5-e365-4491-910b-4f5751dd6592}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\common\klib">
       <UniqueIdentifier>{91e22549-0556-4608-a3f1-ce2736c5d769}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fe">
-      <UniqueIdentifier>{1b4bba44-d9ec-4e46-9c9d-28dfbc017fea}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\common\imgui">
       <UniqueIdentifier>{a89a0e2e-d7bf-477d-8cd0-d7741a7157dd}</UniqueIdentifier>
@@ -43,18 +37,6 @@
     <Filter Include="Source Files\windows">
       <UniqueIdentifier>{11543951-df9b-4765-b09f-f711f12d574a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\common\pugixml">
-      <UniqueIdentifier>{3ea14066-12e3-4c50-9480-a18bdc07941d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\common\pugixml">
-      <UniqueIdentifier>{932f5f0c-6360-4d6c-97be-7d6fe5ffdfd0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\fe\xml">
-      <UniqueIdentifier>{e7f857a6-ab2f-4217-8ed0-c004be9dffeb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fe\xml">
-      <UniqueIdentifier>{1f70b568-2e08-4b3d-882e-193f744c61a6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\common\imguifiledialog">
       <UniqueIdentifier>{35c76d64-38c9-4e1d-a346-fe81e255cb87}</UniqueIdentifier>
     </Filter>
@@ -67,28 +49,10 @@
     <Filter Include="Source Files\fi">
       <UniqueIdentifier>{8f6fdbd5-b442-4233-a226-0f9f6981f425}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\fe\sprite">
-      <UniqueIdentifier>{de9cca38-9245-475b-a4d1-e261d0526cc5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\fe\sprite">
-      <UniqueIdentifier>{17f0805c-ddc1-4c70-a691-13c486aa4f9d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Chunk.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Screen.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Door.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Game.cpp">
-      <Filter>Source Files\fe</Filter>
     </ClCompile>
     <ClCompile Include="src\common\imgui\imgui.cpp">
       <Filter>Source Files\common\imgui</Filter>
@@ -114,44 +78,17 @@
     <ClCompile Include="src\windows\gfx.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\Metatile.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Sprite.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\InterChunkScroll.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\IntraChunkScroll.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\imgui_helper.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\MetaDataWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\pugixml\pugixml.cpp">
-      <Filter>Source Files\common\pugixml</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\xml\Xml_helper.cpp">
-      <Filter>Source Files\fe\xml</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\ROM_Manager.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\ControlWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\TilemapWindow.cpp">
       <Filter>Source Files\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Sprite_set.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\StageManager.cpp">
-      <Filter>Source Files\fe</Filter>
     </ClCompile>
     <ClCompile Include="src\common\imguifiledialog\ImGuiFileDialog.cpp">
       <Filter>Source Files\common\imguifiledialog</Filter>
@@ -171,68 +108,23 @@
     <ClCompile Include="src\windows\IScriptWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\Config.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\GfxWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp">
       <Filter>Source Files\common\klib</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\GfxTilemapManager.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\ChrStructures.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\UndoInterface.cpp">
       <Filter>Source Files\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\sprite\SpriteAnimationFrame.cpp">
-      <Filter>Source Files\fe\sprite</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\sprite\SpriteGfxManager.cpp">
-      <Filter>Source Files\fe\sprite</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\SpriteGfxWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\GodAllocator.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\sprite\SpriteFrameCollection.cpp">
-      <Filter>Source Files\fe\sprite</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp">
-      <Filter>Source Files\fe\sprite</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\sprite\SpriteGfxSnapshotManager.cpp">
-      <Filter>Source Files\fe\sprite</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\ClipBoardManager.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\fe\EditorSettings.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\PaletteMusicMap.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\ScreenRef.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\MetatileRef.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\Cinematic.cpp">
-      <Filter>Source Files\fe</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\CinematicWindow.cpp">
       <Filter>Source Files\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="src\fe\WorldVisualizer.cpp">
-      <Filter>Source Files\fe</Filter>
     </ClCompile>
     <ClCompile Include="src\common\lodepng.cpp">
       <Filter>Source Files\common</Filter>
@@ -245,18 +137,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\fe\Chunk.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Screen.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Door.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Game.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\imgui\imconfig.h">
       <Filter>Header Files\common\imgui</Filter>
     </ClInclude>
@@ -287,53 +167,14 @@
     <ClInclude Include="src\windows\gfx.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\Metatile.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Sprite.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\InterChunkScroll.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\fe_constants.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\IntraChunkScroll.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows\Imgui_helper.h">
       <Filter>Header Files\windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\pugixml\pugiconfig.hpp">
-      <Filter>Header Files\common\pugixml</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\pugixml\pugixml.hpp">
-      <Filter>Header Files\common\pugixml</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\xml\Xml_helper.h">
-      <Filter>Header Files\fe\xml</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\xml\Xml_constants.h">
-      <Filter>Header Files\fe\xml</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\ROM_Manager.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Sprite_set.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\StageManager.h">
-      <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialog.h">
       <Filter>Header Files\common\imguifiledialog</Filter>
     </ClInclude>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialogConfig.h">
       <Filter>Header Files\common\imguifiledialog</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\fe_app_constants.h">
-      <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\fi\FaxString.h">
       <Filter>Header Files\fi</Filter>
@@ -350,65 +191,14 @@
     <ClInclude Include="src\fi\Shop.h">
       <Filter>Header Files\fi</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\Config.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Scene.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\PaletteMusicMap.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h">
       <Filter>Header Files\common\klib</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\GfxTilemapManager.h">
-      <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\windows\UndoInterface.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\fe\sprite\fe_sprite_constants.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\sprite\SpriteGfxManager.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\GodAllocator.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\sprite\SpriteFrameCollection.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\sprite\SpriteGUILoader.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\sprite\SpriteGfxSnapshotManager.h">
-      <Filter>Header Files\fe\sprite</Filter>
-    </ClInclude>
     <ClInclude Include="src\windows\ClipBoardManager.h">
       <Filter>Header Files\windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\EditorSettings.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\ScreenRef.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\MetatileRef.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\Cinematic.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\WorldVisualizer.h">
-      <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\fe\ChrStructures.h">
-      <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\common\lodepng.h">
       <Filter>Header Files\common</Filter>

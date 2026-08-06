@@ -9,7 +9,7 @@
 #include "Opcode.h"
 #include "FaxString.h"
 #include "Shop.h"
-#include "./../fe/Config.h"
+#include "fe/Config.h"
 
 using byte = unsigned char;
 

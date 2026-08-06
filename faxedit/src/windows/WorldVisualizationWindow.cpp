@@ -3,12 +3,12 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "./../fe/fe_constants.h"
-#include "./../fe/fe_app_constants.h"
+#include "fe/fe_constants.h"
+#include "fe/fe_app_constants.h"
 #include "common/klib/Kfile.h"
 #include <format>
 #include <SDL3/SDL.h>
-#include "./../fe/WorldVisualizer.h"
+#include "fe/WorldVisualizer.h"
 #include "./../fi/fi_constants.h"
 #include <unordered_map>
 #include <unordered_set>

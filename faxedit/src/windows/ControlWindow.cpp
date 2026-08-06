@@ -3,13 +3,13 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "./../fe/xml/Xml_helper.h"
+#include "fe/xml/Xml_helper.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/IPS_Patch.h"
-#include "./../fe/ROM_Manager.h"
-#include "./../fe/fe_app_constants.h"
-#include "./../fe/sprite/fe_sprite_constants.h"
-#include "./../fe/WorldVisualizer.h"
+#include "fe/ROM_Manager.h"
+#include "fe/fe_app_constants.h"
+#include "fe/sprite/fe_sprite_constants.h"
+#include "fe/WorldVisualizer.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
