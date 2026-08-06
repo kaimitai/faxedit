@@ -8,12 +8,12 @@
 #include <cmath>
 #include <filesystem>
 #include <map>
-#include "./../common/klib/Bitreader.h"
+#include "common/klib/Bitreader.h"
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
 #include "./../fe/xml/Xml_helper.h"
-#include "./../common/klib/Kfile.h"
+#include "common/klib/Kfile.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) :

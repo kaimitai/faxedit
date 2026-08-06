@@ -113,7 +113,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)eoe_core\src;C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -131,7 +131,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)eoe_core\src;C:\vclib\SDL3-3.2.24\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -149,13 +149,6 @@
     <ClCompile Include="src\common\imgui\imgui_impl_sdlrenderer3.cpp" />
     <ClCompile Include="src\common\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\common\klib\Asm6502.cpp" />
-    <ClCompile Include="src\common\klib\Bitreader.cpp" />
-    <ClCompile Include="src\common\klib\Bitwriter.cpp" />
-    <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
-    <ClCompile Include="src\common\klib\Kfile.cpp" />
-    <ClCompile Include="src\common\klib\Kstring.cpp" />
-    <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
     <ClCompile Include="src\common\lodepng.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
@@ -217,17 +210,8 @@
     <ClInclude Include="src\common\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\common\imgui\imstb_textedit.h" />
     <ClInclude Include="src\common\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\common\klib\Asm6502.h" />
-    <ClInclude Include="src\common\klib\Bitreader.h" />
-    <ClInclude Include="src\common\klib\Bitwriter.h" />
-    <ClInclude Include="src\common\klib\IPS_Patch.h" />
-    <ClInclude Include="src\common\klib\Kfile.h" />
-    <ClInclude Include="src\common\klib\Kstring.h" />
-    <ClInclude Include="src\common\klib\Kutil.h" />
-    <ClInclude Include="src\common\klib\NES_tile.h" />
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />
     <ClInclude Include="src\common\lodepng.h" />
-    <ClInclude Include="src\common\magic_enum.hpp" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
     <ClInclude Include="src\fe\ChrStructures.h" />
@@ -272,6 +256,11 @@
     <ClInclude Include="src\windows\Imgui_helper.h" />
     <ClInclude Include="src\windows\MainWindow.h" />
     <ClInclude Include="src\windows\UndoInterface.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\eoe_core\eoe_core.vcxproj">
+      <Project>{c34b47c6-f9c5-4dd1-a4cb-2dbdf0fc759e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

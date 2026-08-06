@@ -4,7 +4,7 @@
 #include "GodAllocator.h"
 #include "Game.h"
 #include "fe_constants.h"
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include <map>
 #include <stdexcept>
 #include <utility>

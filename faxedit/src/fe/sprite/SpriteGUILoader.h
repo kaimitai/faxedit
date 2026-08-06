@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 #include "./../Config.h"
-#include "./../../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 
 using byte = unsigned char;
 using ChrBank = std::vector<klib::NES_tile>;

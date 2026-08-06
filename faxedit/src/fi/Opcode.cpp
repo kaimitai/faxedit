@@ -1,5 +1,5 @@
 #include "Opcode.h"
-#include "./../common/klib/Kstring.h"
+#include "common/klib/Kstring.h"
 
 std::map<byte, fi::Opcode> fi::opcodes{
 	{0x00, fi::Opcode("End", fi::ArgType::None, fi::Flow::End, fi::ArgDomain::None, true)},

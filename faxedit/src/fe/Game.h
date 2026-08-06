@@ -5,7 +5,7 @@
 #include <unordered_set>
 #include <set>
 #include <vector>
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "Chunk.h"
 #include "ScreenRef.h"
 #include "MetatileRef.h"

@@ -6,7 +6,7 @@
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
-#include "./../common/klib/Kfile.h"
+#include "common/klib/Kfile.h"
 #include "./../fe/sprite/fe_sprite_constants.h"
 #include <format>
 #include <SDL3/SDL.h>

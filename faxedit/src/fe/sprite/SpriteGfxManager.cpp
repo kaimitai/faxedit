@@ -8,7 +8,7 @@
 #include <format>
 #include <set>
 #include <string>
-#include "./../../common/klib/Kfile.h"
+#include "common/klib/Kfile.h"
 
 void fe::SpriteGfxManager::load_rom(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const fe::ROM_Manager& p_rom_mgr) {

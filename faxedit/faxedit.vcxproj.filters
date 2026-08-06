@@ -87,15 +87,6 @@
     <ClCompile Include="src\fe\Door.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\klib\Bitreader.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\common\klib\Kfile.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\common\klib\NES_tile.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
     <ClCompile Include="src\fe\Game.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
@@ -147,9 +138,6 @@
     <ClCompile Include="src\fe\xml\Xml_helper.cpp">
       <Filter>Source Files\fe\xml</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\klib\Bitwriter.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
     <ClCompile Include="src\fe\ROM_Manager.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
@@ -167,9 +155,6 @@
     </ClCompile>
     <ClCompile Include="src\common\imguifiledialog\ImGuiFileDialog.cpp">
       <Filter>Source Files\common\imguifiledialog</Filter>
-    </ClCompile>
-    <ClCompile Include="src\common\klib\IPS_Patch.cpp">
-      <Filter>Source Files\common\klib</Filter>
     </ClCompile>
     <ClCompile Include="src\fi\FaxString.cpp">
       <Filter>Source Files\fi</Filter>
@@ -228,9 +213,6 @@
     <ClCompile Include="src\windows\ClipBoardManager.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\klib\Kstring.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
     <ClCompile Include="src\fe\EditorSettings.cpp">
       <Filter>Source Files\fe</Filter>
     </ClCompile>
@@ -261,31 +243,16 @@
     <ClCompile Include="src\windows\SettingsWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\klib\Asm6502.cpp">
-      <Filter>Source Files\common\klib</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\common\klib\Bitreader.h">
-      <Filter>Header Files\common\klib</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\klib\Kfile.h">
-      <Filter>Header Files\common\klib</Filter>
-    </ClInclude>
     <ClInclude Include="src\fe\Chunk.h">
       <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\klib\Kutil.h">
-      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\Screen.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\Door.h">
       <Filter>Header Files\fe</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\klib\NES_tile.h">
-      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\Game.h">
       <Filter>Header Files\fe</Filter>
@@ -350,9 +317,6 @@
     <ClInclude Include="src\fe\xml\Xml_constants.h">
       <Filter>Header Files\fe\xml</Filter>
     </ClInclude>
-    <ClInclude Include="src\common\klib\Bitwriter.h">
-      <Filter>Header Files\common\klib</Filter>
-    </ClInclude>
     <ClInclude Include="src\fe\ROM_Manager.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
@@ -367,9 +331,6 @@
     </ClInclude>
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialogConfig.h">
       <Filter>Header Files\common\imguifiledialog</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\klib\IPS_Patch.h">
-      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
     <ClInclude Include="src\fe\fe_app_constants.h">
       <Filter>Header Files\fe</Filter>
@@ -431,9 +392,6 @@
     <ClInclude Include="src\windows\ClipBoardManager.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\common\klib\Kstring.h">
-      <Filter>Header Files\common\klib</Filter>
-    </ClInclude>
     <ClInclude Include="src\fe\EditorSettings.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
@@ -454,12 +412,6 @@
     </ClInclude>
     <ClInclude Include="src\common\lodepng.h">
       <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\magic_enum.hpp">
-      <Filter>Header Files\common</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\klib\Asm6502.h">
-      <Filter>Header Files\common\klib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

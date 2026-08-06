@@ -2,7 +2,7 @@
 #define FE_CINEMATIC_H
 
 #include "./sprite/SpriteAnimationFrame.h"
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include <vector>
 
 using byte = unsigned char;

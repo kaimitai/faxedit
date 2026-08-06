@@ -4,8 +4,8 @@
 
 #include <format>
 #include "Config.h"
-#include "./../common/klib/Kfile.h"
-#include "./../common/klib/Kstring.h"
+#include "common/klib/Kfile.h"
+#include "common/klib/Kstring.h"
 #include "fe_constants.h"
 
 // this function will extract all tilemaps and try to pack them across the 3

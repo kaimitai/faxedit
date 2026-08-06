@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{ce357f27-a08c-4743-b1a3-5b83d3bb8db9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\common\klib">
+      <UniqueIdentifier>{4d0b4af3-6ad9-4a3f-9738-af406e0503c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common">
+      <UniqueIdentifier>{448d3540-b02c-4175-a553-0cdde28e0ced}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\common\klib">
+      <UniqueIdentifier>{a3b96a62-8a0e-4aa7-b4df-958068adb8f7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\common\klib\Asm6502.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Bitreader.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Bitwriter.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\IPS_Patch.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Kfile.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Kstring.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\Kutil.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\klib\NES_tile.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\common\magic_enum.hpp">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\common\klib\Asm6502.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\Bitreader.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\Bitwriter.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\IPS_Patch.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\Kfile.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\Kstring.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\NES_tile.cpp">
+      <Filter>Source Files\common\klib</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

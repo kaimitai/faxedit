@@ -4,7 +4,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "./sprite/SpriteAnimationFrame.h"
 
 using byte = unsigned char;

@@ -1,7 +1,7 @@
 #include "Screen.h"
-#include "./../common/klib/Kutil.h"
-#include "./../common/klib/Bitreader.h"
-#include "./../common/klib/Bitwriter.h"
+#include "common/klib/Kutil.h"
+#include "common/klib/Bitreader.h"
+#include "common/klib/Bitwriter.h"
 
 using byte = unsigned char;
 

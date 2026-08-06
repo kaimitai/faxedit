@@ -8,7 +8,7 @@
 #include <format>
 #include <unordered_map>
 #include <SDL3/SDL.h>
-#include "./../common/klib/Asm6502.h"
+#include "common/klib/Asm6502.h"
 
 void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 

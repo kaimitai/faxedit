@@ -1,7 +1,7 @@
 #ifndef FE_SPRITEFRAMECOLLECTION_H
 #define FE_SPRITEFRAMECOLLECTION_H
 
-#include "./../../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "SpriteAnimationFrame.h"
 #include <vector>
 

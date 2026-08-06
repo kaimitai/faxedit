@@ -1,6 +1,6 @@
 #include "Chunk.h"
-#include "./../common/klib/Bitreader.h"
-#include "./../common/klib/Kutil.h"
+#include "common/klib/Bitreader.h"
+#include "common/klib/Kutil.h"
 
 #include <format>
 #include <map>

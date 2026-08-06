@@ -3,7 +3,7 @@
 
 #include "Game.h"
 #include "ChrStructures.h"
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "./sprite/SpriteAnimationFrame.h"
 #include "./sprite/SpriteGUILoader.h"
 #include <map>

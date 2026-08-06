@@ -9,7 +9,7 @@
 #include <set>
 #include <tuple>
 #include <vector>
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "./../fe/ChrStructures.h"
 #include "./../fe/sprite/SpriteGfxManager.h"
 #include "./../fe/sprite/SpriteGUILoader.h"

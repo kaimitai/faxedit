@@ -2,7 +2,7 @@
 #include "Xml_constants.h"
 #include "./../fe_app_constants.h"
 #include "./../Config.h"
-#include "./../../common/klib/Kstring.h"
+#include "common/klib/Kstring.h"
 #include <format>
 #include <stdexcept>
 

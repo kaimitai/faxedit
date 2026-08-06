@@ -1,7 +1,7 @@
 #include "Game.h"
 #include "Metatile.h"
 #include "fe_constants.h"
-#include "./../common/klib/Kutil.h"
+#include "common/klib/Kutil.h"
 #include "Config.h"
 #include "ROM_Manager.h"
 #include <algorithm>

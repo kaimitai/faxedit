@@ -1,6 +1,6 @@
 #include "SpriteGUILoader.h"
 #include "./../fe_constants.h"
-#include "./../../common/klib/Kstring.h"
+#include "common/klib/Kstring.h"
 
 fe::SpriteRenderOverrides fe::SpriteGUILoader::load_render_overrides(const fe::Config& p_config,
 	const fe::SpriteGfxManager& p_mgr) const {

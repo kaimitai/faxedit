@@ -6,7 +6,7 @@
 #include "Imgui_helper.h"
 #include "./../fe/fe_constants.h"
 #include "./../fe/fe_app_constants.h"
-#include "./../common/klib/Kfile.h"
+#include "common/klib/Kfile.h"
 
 using byte = unsigned char;
 

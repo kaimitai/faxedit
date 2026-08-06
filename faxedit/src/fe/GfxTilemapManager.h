@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "./../common/klib/NES_tile.h"
+#include "common/klib/NES_tile.h"
 #include "ChrStructures.h"
 
 using byte = unsigned char;
