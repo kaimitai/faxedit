@@ -9,7 +9,7 @@
 #include <format>
 #include <SDL3/SDL.h>
 #include "fe/WorldVisualizer.h"
-#include "./../fi/fi_constants.h"
+#include "fi/fi_constants.h"
 #include <unordered_map>
 #include <unordered_set>
 

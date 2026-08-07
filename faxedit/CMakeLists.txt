@@ -17,11 +17,6 @@ set(SOURCES
     # SDL-specific, so it remains in the FaxEdit target.
     src/common/klib/SDL_WindowConfig.cpp
 
-    src/fi/FaxString.cpp
-    src/fi/IScriptLoader.cpp
-    src/fi/Opcode.cpp
-    src/fi/Shop.cpp
-
     src/windows/ControlWindow.cpp
     src/windows/gfx.cpp
     src/windows/GfxWindow.cpp

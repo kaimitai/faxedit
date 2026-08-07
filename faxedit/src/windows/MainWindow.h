@@ -17,7 +17,7 @@
 #include "fe/Game.h"
 #include "fe/WorldVisualizer.h"
 #include "fe/ROM_Manager.h"
-#include "./../fi/IScriptLoader.h"
+#include "fi/IScriptLoader.h"
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"

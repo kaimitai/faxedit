@@ -49,6 +49,12 @@
     <Filter Include="Source Files\fe\sprite">
       <UniqueIdentifier>{40f36966-d71c-45e4-be7e-7c8e8da39cc2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fi">
+      <UniqueIdentifier>{ca139f40-cfbc-4ae4-b5e4-6b2e1a01ac72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fi">
+      <UniqueIdentifier>{185ba9bc-c1eb-40d8-beca-3239171463c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -180,6 +186,21 @@
     <ClInclude Include="src\fe\sprite\SpriteGUILoader.h">
       <Filter>Header Files\fe\sprite</Filter>
     </ClInclude>
+    <ClInclude Include="src\fi\FaxString.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\fi_constants.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\IScriptLoader.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\Opcode.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\Shop.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -286,6 +307,18 @@
     </ClCompile>
     <ClCompile Include="src\fe\sprite\SpriteGUILoader.cpp">
       <Filter>Source Files\fe\sprite</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\FaxString.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\IScriptLoader.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\Opcode.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\Shop.cpp">
+      <Filter>Source Files\fi</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

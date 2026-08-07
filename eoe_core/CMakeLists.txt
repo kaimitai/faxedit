@@ -7,7 +7,7 @@ add_library(eoe_core STATIC
     src/common/klib/Kstring.cpp
     src/common/klib/NES_tile.cpp
 
-	src/common/pugixml/pugixml.cpp
+    src/common/pugixml/pugixml.cpp
 
     src/fe/ChrStructures.cpp
     src/fe/Chunk.cpp
@@ -37,6 +37,11 @@ add_library(eoe_core STATIC
     src/fe/sprite/SpriteGfxManager.cpp
     src/fe/sprite/SpriteGfxSnapshotManager.cpp
     src/fe/sprite/SpriteGUILoader.cpp
+
+    src/fi/FaxString.cpp
+    src/fi/IScriptLoader.cpp
+    src/fi/Opcode.cpp
+    src/fi/Shop.cpp
 )
 
 target_include_directories(eoe_core

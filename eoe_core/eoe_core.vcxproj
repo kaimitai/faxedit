@@ -62,6 +62,11 @@
     <ClInclude Include="src\fe\WorldVisualizer.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
+    <ClInclude Include="src\fi\FaxString.h" />
+    <ClInclude Include="src\fi\fi_constants.h" />
+    <ClInclude Include="src\fi\IScriptLoader.h" />
+    <ClInclude Include="src\fi\Opcode.h" />
+    <ClInclude Include="src\fi\Shop.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp" />
@@ -99,6 +104,10 @@
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\WorldVisualizer.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
+    <ClCompile Include="src\fi\FaxString.cpp" />
+    <ClCompile Include="src\fi\IScriptLoader.cpp" />
+    <ClCompile Include="src\fi\Opcode.cpp" />
+    <ClCompile Include="src\fi\Shop.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
