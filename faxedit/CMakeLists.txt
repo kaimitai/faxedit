@@ -3,8 +3,6 @@ find_package(SDL3 REQUIRED)
 set(SOURCES
     src/main.cpp
 
-    src/common/lodepng.cpp
-
     src/common/imgui/imgui.cpp
     src/common/imgui/imgui_draw.cpp
     src/common/imgui/imgui_impl_sdl3.cpp

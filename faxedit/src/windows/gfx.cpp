@@ -1,5 +1,5 @@
 #include "gfx.h"
-#include "./../common/lodepng.h"
+#include "common/lodepng.h"
 #include "common/klib/Kfile.h"
 #include <array>
 #include <cassert>

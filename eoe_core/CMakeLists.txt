@@ -1,4 +1,7 @@
 add_library(eoe_core STATIC
+
+    src/common/lodepng.cpp
+
     src/common/klib/Asm6502.cpp
     src/common/klib/Bitreader.cpp
     src/common/klib/Bitwriter.cpp

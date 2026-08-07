@@ -27,6 +27,7 @@
     <ClInclude Include="src\common\klib\Kstring.h" />
     <ClInclude Include="src\common\klib\Kutil.h" />
     <ClInclude Include="src\common\klib\NES_tile.h" />
+    <ClInclude Include="src\common\lodepng.h" />
     <ClInclude Include="src\common\magic_enum.hpp" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
@@ -76,6 +77,7 @@
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\Kstring.cpp" />
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
+    <ClCompile Include="src\common\lodepng.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
     <ClCompile Include="src\fe\ChrStructures.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />

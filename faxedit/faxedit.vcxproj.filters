@@ -108,9 +108,6 @@
     <ClCompile Include="src\windows\CinematicWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\common\lodepng.cpp">
-      <Filter>Source Files\common</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\WorldVisualizationWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
@@ -166,9 +163,6 @@
     </ClInclude>
     <ClInclude Include="src\windows\ClipBoardManager.h">
       <Filter>Header Files\windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\common\lodepng.h">
-      <Filter>Header Files\common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

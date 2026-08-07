@@ -150,7 +150,6 @@
     <ClCompile Include="src\common\imgui\imgui_tables.cpp" />
     <ClCompile Include="src\common\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
-    <ClCompile Include="src\common\lodepng.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\windows\CinematicWindow.cpp" />
     <ClCompile Include="src\windows\ClipBoardManager.cpp" />
@@ -179,7 +178,6 @@
     <ClInclude Include="src\common\imgui\imstb_textedit.h" />
     <ClInclude Include="src\common\imgui\imstb_truetype.h" />
     <ClInclude Include="src\common\klib\SDL_WindowConfig.h" />
-    <ClInclude Include="src\common\lodepng.h" />
     <ClInclude Include="src\windows\ClipBoardManager.h" />
     <ClInclude Include="src\windows\gfx.h" />
     <ClInclude Include="src\windows\Imgui_helper.h" />

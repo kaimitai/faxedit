@@ -201,6 +201,9 @@
     <ClInclude Include="src\fi\Shop.h">
       <Filter>Header Files\fi</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\lodepng.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -319,6 +322,9 @@
     </ClCompile>
     <ClCompile Include="src\fi\Shop.cpp">
       <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\lodepng.cpp">
+      <Filter>Source Files\common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
