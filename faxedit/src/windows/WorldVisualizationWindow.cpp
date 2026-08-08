@@ -122,24 +122,28 @@ fe::MainWindow::extract_script_semantics(void) try {
 		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };
 
 		for (const auto& kv : instrs) {
-			if (!kv.second.operand)
-				continue;
+			const byte opcode{ kv.second.opcode_byte };
 
-			auto op_value{ *kv.second.operand };
+			if (opcode == fi::c::OPCODE_GET_ITEM) {
+				if (kv.second.operands.empty())
+					continue;
 
-			byte opcode{ kv.second.opcode_byte };
+				const auto op_value{ kv.second.operands[0] };
 
-			if (opcode == fi::c::OPCODE_GET_ITEM)
 				result[static_cast<byte>(i)].gifts.push_back(
 					static_cast<byte>(op_value)
 				);
+			}
 			else if (opcode == fi::c::OPCODE_SHOP_BUY ||
 				opcode == fi::c::OPCODE_SHOP_SELL) {
+				if (!kv.second.shop_index)
+					continue;
+
 				const auto& shops{ loader.get_shops() };
+				const auto shop_index{ *kv.second.shop_index };
 
-
-				if (op_value < shops.size())
-					for (const auto& entry : shops[op_value].m_entries)
+				if (shop_index < shops.size())
+					for (const auto& entry : shops[shop_index].m_entries)
 						result[static_cast<byte>(i)].shop_items.insert(entry.m_item);
 			}
 		}
@@ -164,10 +168,10 @@ std::map<byte, byte> fe::MainWindow::extract_set_spawn_scripts(void) try {
 		for (const auto& kv : instrs) {
 			const auto& instr{ kv.second };
 
-			if (instr.opcode_byte != fi::c::OPCODE_SET_SPAWN || !instr.operand.has_value())
+			if (instr.opcode_byte != fi::c::OPCODE_SET_SPAWN || instr.operands.empty())
 				continue;
 
-			result[static_cast<byte>(*instr.operand)] = static_cast<byte>(i);
+			result[static_cast<byte>(instr.operands[0])] = static_cast<byte>(i);
 		}
 	}
 

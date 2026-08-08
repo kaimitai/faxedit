@@ -32,13 +32,22 @@ std::size_t fi::IScriptLoader::get_script_count(void) const {
 	return m_ptr_table.size();
 }
 
-std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no) {
+// TODO: Move metadata parsing out to separate function as well
+// this function should never be called as it is
+void fi::IScriptLoader::reset(void) {
+	m_ptr_table.clear();
 	m_instructions.clear();
+	m_shops.clear();
 	m_jump_targets.clear();
+	m_shop_addresses.clear();
+	m_strings.clear();
+}
 
-	parse_blob_from_entrypoint(p_rom, m_ptr_table[p_script_no], true);
+void fi::IScriptLoader::parse_rom(const std::vector<byte>& p_rom) {
+	for (const auto offset : m_ptr_table)
+		parse_blob_from_entrypoint(p_rom, offset, true);
 
-	return get_asm_code(p_script_no);
+	normalize_shop_indexes();
 }
 
 const std::map<size_t, fi::Instruction>& fi::IScriptLoader::parse_script_raw(const std::vector<byte>& p_rom,
@@ -51,19 +60,19 @@ const std::map<size_t, fi::Instruction>& fi::IScriptLoader::parse_script_raw(con
 	return m_instructions;
 }
 
-const std::vector<fi::Shop> fi::IScriptLoader::get_shops(void) const {
+const std::vector<fi::Shop>& fi::IScriptLoader::get_shops(void) const {
 	return m_shops;
 }
 
 void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vector<byte>& p_rom) {
-	auto l_char_map{ p_config.bmap(c::ID_STRING_CHAR_MAP) };
-	std::size_t l_string_offset{ p_config.constant(c::ID_STRING_DATA_START) };
-	std::size_t l_string_end{ p_config.constant(c::ID_STRING_DATA_END) };
-
 	m_strings.clear();
 	std::string encodedstring;
 
-	for (std::size_t i{ l_string_offset }; i < l_string_end; ++i) {
+	const auto& lc_char_map{ p_config.bmap(c::ID_STRING_CHAR_MAP) };
+
+	for (std::size_t i{ p_config.constant(c::ID_STRING_DATA_START) };
+		i < p_config.constant(c::ID_STRING_DATA_END) && m_strings.size() < 255;
+		++i) {
 
 		if (p_rom.at(i) == 0xff) {
 			m_strings.push_back(encodedstring);
@@ -71,8 +80,8 @@ void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vec
 		}
 		else {
 			byte b{ p_rom.at(i) };
-			auto iter{ l_char_map.find(b) };
-			if (iter == end(l_char_map))
+			auto iter{ lc_char_map.find(b) };
+			if (iter == end(lc_char_map))
 				encodedstring += std::format("<${:02x}>", b);
 			else
 				encodedstring += iter->second;
@@ -81,19 +90,33 @@ void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vec
 	}
 }
 
-byte fi::IScriptLoader::read_byte(const std::vector<byte>& p_rom, size_t& offset) const {
-	if (offset >= p_rom.size()) throw std::out_of_range("ROM read out of bounds");
+byte fi::IScriptLoader::read_byte(const std::vector<byte>& p_rom, std::size_t& offset) const {
+	if (offset >= p_rom.size())
+		throw std::out_of_range("ROM read out of bounds");
 	return p_rom[offset++];
 }
 
-uint16_t fi::IScriptLoader::read_short(const std::vector<byte>& p_rom, size_t& offset) const {
+uint16_t fi::IScriptLoader::read_short(const std::vector<byte>& p_rom, std::size_t& offset) const {
 	uint8_t lo = read_byte(p_rom, offset);
 	uint8_t hi = read_byte(p_rom, offset);
 	return static_cast<uint16_t>(hi << 8 | lo);
 }
 
+std::string fi::IScriptLoader::to_hex(std::size_t val) const {
+	return std::format("${:x}", val);
+}
+
+std::vector<fi::AsmToken> fi::IScriptLoader::parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no) {
+	m_instructions.clear();
+	m_jump_targets.clear();
+
+	parse_blob_from_entrypoint(p_rom, m_ptr_table[p_script_no], true);
+
+	return get_asm_code();
+}
+
 void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_rom,
-	size_t offset, bool at_entrypoint) {
+	std::size_t offset, bool at_entrypoint) {
 	if (m_instructions.find(offset) != end(m_instructions))
 		return;
 
@@ -110,21 +133,22 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 
 		size_t instr_offset = cursor;
 		uint8_t opcode_byte = read_byte(p_rom, cursor);
+		std::optional<std::size_t> shop_index;
 
 		auto it = opcodes.find(opcode_byte);
 		if (it == opcodes.end()) {
-			throw std::runtime_error(std::format("Unknown opcode {:2x} at offset {:2x}",
-				opcode_byte, instr_offset));
+			throw std::runtime_error("Unknown opcode " + to_hex(opcode_byte) +
+				" at offset " + to_hex(instr_offset));
 		}
 
 		const Opcode& op = it->second;
-		std::optional<uint16_t> arg;
+		std::vector<uint16_t> operands;
 
-		if (op.arg_type == ArgType::Byte) {
-			arg = read_byte(p_rom, cursor);
-		}
-		else if (op.arg_type == ArgType::Short) {
-			arg = read_short(p_rom, cursor);
+		for (const auto& arg : op.args) {
+			if (arg.type == ArgType::Byte)
+				operands.push_back(read_byte(p_rom, cursor));
+			else if (arg.type == ArgType::Short)
+				operands.push_back(read_short(p_rom, cursor));
 		}
 
 		std::optional<std::size_t> target_addr;
@@ -150,22 +174,29 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 						shop_offset += 3;
 					}
 
-					arg = static_cast<uint16_t>(m_shops.size());
-					m_shop_addresses[target_addr.value()] = static_cast<std::size_t>(arg.value());
+					shop_index = m_shops.size();
+					m_shop_addresses[target_addr.value()] = shop_index.value();
 					m_shops.push_back(newshop);
 
 				}
 				else {
 					// already seen shop, use its index
-					arg = static_cast<uint16_t>(shop_iter->second);
+					shop_index = shop_iter->second;
 				}
 			}
 		}
 
 		m_instructions.insert(
 			std::make_pair(instr_offset,
-				fi::Instruction(fi::Instruction_type::OpCode, opcode_byte, it->second.size(),
-					arg, target_addr)));
+				fi::Instruction{
+					.type = fi::Instruction_type::OpCode,
+					.opcode_byte = opcode_byte,
+					.size = it->second.size(),
+					.jump_target = target_addr,
+					.byte_offset = instr_offset,
+					.operands = std::move(operands),
+					.shop_index = shop_index
+				}));
 
 		if (op.flow == Flow::Jump) {
 			// parse all branches recursively, but store and restore cursors
@@ -183,8 +214,51 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 	}
 }
 
-// return the script as vector of asm token to be parsed by the renderer
-std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_no) const {
+void fi::IScriptLoader::normalize_shop_indexes() {
+	if (m_shop_addresses.size() != m_shops.size())
+		throw std::runtime_error("Shop normalization failed: inconsistent shop count");
+	else if (m_shops.empty())
+		return;
+
+	// (shop ROM address, old shop index)
+	std::vector<std::pair<std::size_t, std::size_t>> shops_by_addr;
+	shops_by_addr.reserve(m_shop_addresses.size());
+
+	for (const auto& [addr, old_index] : m_shop_addresses)
+		shops_by_addr.emplace_back(addr, old_index);
+
+	std::sort(begin(shops_by_addr), end(shops_by_addr));
+
+	// old index -> new index
+	std::vector<std::size_t> old_to_new(m_shops.size());
+
+	std::vector<fi::Shop> reordered_shops;
+	reordered_shops.reserve(m_shops.size());
+
+	for (std::size_t new_index{ 0 }; new_index < shops_by_addr.size(); ++new_index) {
+		const auto [addr, old_index] = shops_by_addr[new_index];
+		old_to_new[old_index] = new_index;
+		reordered_shops.push_back(m_shops[old_index]);
+		m_shop_addresses[addr] = new_index;
+	}
+
+	m_shops = std::move(reordered_shops);
+
+	// remap instruction operands for shop-reading opcodes
+	for (auto& [offset, instr] : m_instructions) {
+		if (instr.type == fi::Instruction_type::OpCode) {
+			auto opcode_it = opcodes.find(instr.opcode_byte);
+			if (opcode_it != opcodes.end() &&
+				opcode_it->second.flow == Flow::Read &&
+				instr.shop_index.has_value()) {
+				instr.shop_index = old_to_new.at(*instr.shop_index);
+			}
+		}
+	}
+}
+
+// return the script as vector of asm tokens to be parsed by the renderer
+std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(void) const {
 	std::vector<fi::AsmToken> result;
 	std::map<std::size_t, std::string> labels;
 	int last_label{ 0 };
@@ -204,9 +278,11 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_n
 	for (const auto& instrs : m_instructions) {
 		std::size_t offset{ instrs.first };
 		const auto& instr{ instrs.second };
+
 		// add label
 		if (m_jump_targets.find(offset) != end(m_jump_targets))
 			result.push_back(fi::AsmToken(std::format("{}:", get_next_label(offset, last_label, labels)), 1, true));
+
 		// add .textbox if script starts here
 		if (instr.type == fi::Instruction_type::Directive) {
 			result.push_back(fi::AsmToken(".textbox", 3, false));
@@ -217,40 +293,45 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(std::size_t p_script_n
 			const auto& op{ fi::opcodes.find(instr.opcode_byte)->second };
 			result.push_back(fi::AsmToken(std::format("  {}", op.name), 4, false));
 
-			// text commands - show string or index
-			if (op.domain == fi::ArgDomain::TextString) {
-				std::size_t str_ind{ static_cast<std::size_t>(instr.operand.value()) };
-				const auto opval{ instr.operand.value() };
+			if (instr.operands.size() != op.args.size())
+				throw std::runtime_error(std::format("Operand count mismatch for opcode {}", op.name));
 
-				if (str_ind == 0 || str_ind > m_strings.size()) {
-					result.push_back(fi::AsmToken(get_define(op.domain, static_cast<byte>(opval)), 5, false));
-					result.push_back(fi::AsmToken("; undefined string index", 2, true));
+			for (std::size_t i{ 0 }; i < op.args.size(); ++i) {
+				const auto& arg{ op.args[i] };
+				const auto opval{ instr.operands[i] };
+
+				// text commands - show string or index
+				if (arg.domain == fi::ArgDomain::TextString) {
+					const std::size_t str_ind{ static_cast<std::size_t>(opval) };
+
+					if (str_ind == 0 || str_ind > m_strings.size()) {
+						result.push_back(fi::AsmToken(get_define(arg.domain, static_cast<byte>(opval)), 5, false));
+						result.push_back(fi::AsmToken("; undefined string index", 2, false));
+					}
+					else {
+						result.push_back(fi::AsmToken(std::format("\"{}\"", m_strings[str_ind - 1].get_string()), 3, false));
+					}
 				}
-				else
-					result.push_back(fi::AsmToken(
-						std::format("\"{}\"", m_strings[opval - 1].get_string())
-						, 3, true));
-			}
-			else if (op.arg_type != fi::ArgType::None) {
-				const auto opval{ instr.operand.value() };
-				if (op.arg_type == fi::ArgType::Byte)
-					result.push_back(fi::AsmToken(get_define(op.domain, static_cast<byte>(opval)), 5, false));
-				else
+				else if (arg.type == fi::ArgType::Byte) {
+					result.push_back(fi::AsmToken(get_define(arg.domain, static_cast<byte>(opval)), 5, false));
+				}
+				else if (arg.type == fi::ArgType::Short) {
 					result.push_back(fi::AsmToken(std::format("{}", opval), 5, false));
+				}
 			}
 
 			if (op.flow == fi::Flow::Jump) {
-				result.push_back(fi::AsmToken(get_next_label(instr.jump_target.value(), last_label, labels), 1, true));
+				result.push_back(fi::AsmToken(get_next_label(instr.jump_target.value(), last_label, labels), 1, false));
 			}
 			else if (op.flow == fi::Flow::Read) {
-				const auto opval{ instr.operand.value() };
+				const auto shop_index{ instr.shop_index.value() };
 
-				if (opval >= m_shops.size())
-					result.push_back(fi::AsmToken("; invalid shop index", 2, true));
+				if (shop_index >= m_shops.size())
+					result.push_back(fi::AsmToken("; invalid shop index", 2, false));
 				else {
-					result.push_back(fi::AsmToken(std::format("{}", opval), 5, false));
+					result.push_back(fi::AsmToken(std::format("{}", shop_index), 5, false));
 					result.push_back(fi::AsmToken(std::format("; {}",
-						serialize_shop_as_string(m_shops[opval])), 2, true));
+						serialize_shop_as_string(m_shops[shop_index])), 2, true));
 				}
 			}
 		}

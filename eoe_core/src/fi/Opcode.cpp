@@ -1,31 +1,31 @@
 #include "Opcode.h"
-#include "common/klib/Kstring.h"
+#include "./../common/klib/Kstring.h"
 
 std::map<byte, fi::Opcode> fi::opcodes{
-	{0x00, fi::Opcode("End", fi::ArgType::None, fi::Flow::End, fi::ArgDomain::None, true)},
-	{0x01, fi::Opcode("MsgNoskip", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
-	{0x02, fi::Opcode("MsgPrompt", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
-	{0x03, fi::Opcode("Msg", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::TextString, false)},
-	{0x04, fi::Opcode("IfTitleChange", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, false)},
-	{0x05, fi::Opcode("LoseGold", fi::ArgType::Short, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x06, fi::Opcode("SetSpawn", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x07, fi::Opcode("GetItem", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::Item, false)},
-	{0x08, fi::Opcode("OpenShopBuy", fi::ArgType::None, fi::Flow::Read, fi::ArgDomain::None, false)},
-	{0x09, fi::Opcode("GetGold", fi::ArgType::Short, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x0a, fi::Opcode("GetMana", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x0b, fi::Opcode("IfQuest", fi::ArgType::Byte, fi::Flow::Jump, fi::ArgDomain::Quest, false)},
-	{0x0c, fi::Opcode("IfRank", fi::ArgType::Byte, fi::Flow::Jump, fi::ArgDomain::Rank, false)},
-	{0x0d, fi::Opcode("IfGold", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, false)},
-	{0x0e, fi::Opcode("SetQuest", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::Quest, false)},
-	{0x0f, fi::Opcode("IfBuy", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, false)},
-	{0x10, fi::Opcode("LoseItem", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::Item, false)},
-	{0x11, fi::Opcode("OpenShopSell", fi::ArgType::None, fi::Flow::Read, fi::ArgDomain::None, false)},
-	{0x12, fi::Opcode("IfItem", fi::ArgType::Byte, fi::Flow::Jump, fi::ArgDomain::Item, false)},
-	{0x13, fi::Opcode("GetHealth", fi::ArgType::Byte, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x14, fi::Opcode("ShowMantra", fi::ArgType::None, fi::Flow::Continue, fi::ArgDomain::None, false)},
-	{0x15, fi::Opcode("EndGame", fi::ArgType::None, fi::Flow::End, fi::ArgDomain::None, true)},
-	{0x16, fi::Opcode("IfMsgPrompt", fi::ArgType::Byte, fi::Flow::Jump, fi::ArgDomain::TextString, false)},
-	{0x17, fi::Opcode("Jump", fi::ArgType::None, fi::Flow::Jump, fi::ArgDomain::None, true)}
+	{0x00, fi::Opcode("End", {}, fi::Flow::End, true)},
+	{0x01, fi::Opcode("MsgNoskip", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+	{0x02, fi::Opcode("MsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+	{0x03, fi::Opcode("Msg", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+	{0x04, fi::Opcode("IfTitleChange", {}, fi::Flow::Jump, false)},
+	{0x05, fi::Opcode("LoseGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+	{0x06, fi::Opcode("SetSpawn", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+	{0x07, fi::Opcode("GetItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
+	{0x08, fi::Opcode("OpenShopBuy", {}, fi::Flow::Read, false)},
+	{0x09, fi::Opcode("GetGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+	{0x0a, fi::Opcode("GetMana", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+	{0x0b, fi::Opcode("IfQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Jump, false)},
+	{0x0c, fi::Opcode("IfRank", {{fi::ArgType::Byte, fi::ArgDomain::Rank}}, fi::Flow::Jump, false)},
+	{0x0d, fi::Opcode("IfGold", {}, fi::Flow::Jump, false)},
+	{0x0e, fi::Opcode("SetQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Continue, false)},
+	{0x0f, fi::Opcode("IfBuy", {}, fi::Flow::Jump, false)},
+	{0x10, fi::Opcode("LoseItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
+	{0x11, fi::Opcode("OpenShopSell", {}, fi::Flow::Read, false)},
+	{0x12, fi::Opcode("IfItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Jump, false)},
+	{0x13, fi::Opcode("GetHealth", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+	{0x14, fi::Opcode("ShowMantra", {}, fi::Flow::Continue, false)},
+	{0x15, fi::Opcode("EndGame", {}, fi::Flow::End, true)},
+	{0x16, fi::Opcode("IfMsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Jump, false) },
+	{0x17, fi::Opcode("Jump", {}, fi::Flow::Jump, true)}
 };
 
 std::map<std::string, fi::Opcode> fi::implementation_opcodes;
@@ -34,9 +34,8 @@ namespace {
 
 	const fi::Opcode NONE_CONTINUE{
 		"",
-		fi::ArgType::None,
+		{},
 		fi::Flow::Continue,
-		fi::ArgDomain::None,
 		false
 	};
 
@@ -46,7 +45,43 @@ namespace {
 	};
 }
 
+static std::vector<fi::Argument> parse_arguments(const std::string& p_value) {
+	constexpr char TYPE_SERIALIZE{ '+' };
+	constexpr char TYPE_DOMAIN_DELIM{ ':' };
+
+	std::vector<fi::Argument> result;
+
+	for (const auto& raw_token : klib::str::split_string(p_value, TYPE_SERIALIZE)) {
+		const auto parts{
+			klib::str::split_string(klib::str::trim(raw_token), TYPE_DOMAIN_DELIM)
+		};
+
+		if (parts.empty() || parts.size() > 2)
+			throw std::runtime_error(std::format(
+				"Invalid opcode argument '{}'", raw_token));
+
+		fi::Argument arg{
+			.type = klib::str::parse_enum_ci<fi::ArgType>(
+				klib::str::trim(parts[0])),
+			.domain = fi::ArgDomain::None
+		};
+
+		if (parts.size() == 2)
+			arg.domain = klib::str::parse_enum_ci<fi::ArgDomain>(
+				klib::str::trim(parts[1]));
+
+		result.push_back(arg);
+	}
+
+	return result;
+}
+
 static ParsedOpcodeDef parse_opcode_properties(const std::string& p_definition) {
+	// stay backward compatible with definitions that assume one argument
+	std::optional<fi::ArgType> legacy_type;
+	std::optional<fi::ArgDomain> legacy_domain;
+	bool saw_new_arg{ false };
+
 	auto kv{ klib::str::extract_keyval_str(p_definition, ',', '=') };
 
 	// default
@@ -60,19 +95,38 @@ static ParsedOpcodeDef parse_opcode_properties(const std::string& p_definition) 
 		if (k == "mnemonic")
 			result.name = klib::str::trim(value);
 		else if (k == "argtype")
-			result.arg_type = klib::str::parse_enum_ci<fi::ArgType>(value);
+			legacy_type = klib::str::parse_enum_ci<fi::ArgType>(value);
 		else if (k == "flow")
 			result.flow = klib::str::parse_enum_ci<fi::Flow>(value);
 		else if (k == "argdomain")
-			result.domain = klib::str::parse_enum_ci<fi::ArgDomain>(value);
+			legacy_domain = klib::str::parse_enum_ci<fi::ArgDomain>(value);
 		else if (k == "terminal")
 			result.ends_stream = klib::str::parse_bool_ci(value);
 		else if (k == "impl") {
 			impl = klib::str::trim(value);
 		}
+		else if (k == "args") {
+			result.args = parse_arguments(value);
+			saw_new_arg = true;
+		}
 
 		else
 			throw std::runtime_error(std::format("Unknown opcode property: {}", key));
+	}
+
+	if (saw_new_arg && (legacy_type || legacy_domain))
+		throw std::runtime_error("Cannot specify both Args and legacy ArgType/ArgDomain");
+
+	if (legacy_type) {
+		if (*legacy_type != fi::ArgType::None)
+			result.args.push_back({
+				*legacy_type,
+				legacy_domain.value_or(fi::ArgDomain::None)
+				});
+	}
+	else if (legacy_domain) {
+		throw std::runtime_error(
+			"ArgDomain requires ArgType");
 	}
 
 	return { result, impl };
@@ -109,24 +163,25 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<
 	return parsed.opcode;
 }
 
-static void load_opcode_implementations(const std::map<byte, std::string>& p_impl_defs) {
+static void load_opcode_implementations(const std::map<std::string, std::string>& p_impl_defs) {
 	fi::implementation_opcodes.clear();
 
-	for (const auto& [_, definition] : p_impl_defs) {
+	for (const auto& [impl_name, definition] : p_impl_defs) {
 		auto parsed{ parse_opcode_properties(definition) };
 
-		if (!parsed.impl)
-			throw std::runtime_error("Opcode implementation definition missing Impl");
+		if (parsed.impl)
+			throw std::runtime_error(std::format(
+				"Opcode implementation '{}' must not specify Impl", impl_name));
 
-		parsed.opcode.name = *parsed.impl;
+		parsed.opcode.name = impl_name;
 
-		const auto key{ klib::str::to_lower(*parsed.impl) };
+		const auto key{ klib::str::to_lower(impl_name) };
 		fi::implementation_opcodes.emplace(key, parsed.opcode);
 	}
 }
 
 fi::ScriptOpcodeInfo fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs,
-	const std::map<byte, std::string>& p_impl_defs) {
+	const std::map<std::string, std::string>& p_impl_defs) {
 	constexpr bool THROW_ON_OPCODE_DIFFS{ false };
 
 	fi::ScriptOpcodeInfo result;
@@ -164,6 +219,39 @@ fi::ScriptOpcodeInfo fi::load_iscript_opcodes_from_config(const std::map<byte, s
 	return result;
 }
 
+// opcode members
+fi::Opcode::Opcode(const std::string& p_name, std::initializer_list<Argument> p_args,
+	Flow p_flow, bool p_ends_stream) :
+	name{ p_name },
+	args{ p_args },
+	flow{ p_flow },
+	ends_stream{ p_ends_stream }
+{
+}
+
+std::size_t fi::Opcode::token_count(void) const {
+	std::size_t result{ 1 + args.size() };
+
+	if (flow == Flow::Jump || flow == Flow::Read)
+		++result;
+
+	return result;
+}
+
+std::size_t fi::Opcode::size(void) const {
+	std::size_t result{ 1 }; // the opcode itself
+	if (flow == fi::Flow::Jump || flow == fi::Flow::Read)
+		result += 2;
+	for (const auto& arg : args) {
+		if (arg.type == fi::ArgType::Short)
+			result += 2;
+		else if (arg.type == fi::ArgType::Byte)
+			++result;
+	}
+	return result;
+}
+
+// instruction members
 std::vector<byte> fi::Instruction::get_bytes(void) const {
 	std::vector<byte> result{ opcode_byte };
 	if (type == Instruction_type::Directive)
@@ -171,12 +259,20 @@ std::vector<byte> fi::Instruction::get_bytes(void) const {
 
 	const auto& op{ fi::opcodes.at(opcode_byte) };
 
-	if (op.arg_type == fi::ArgType::Byte)
-		result.push_back(static_cast<byte>(operand.value()));
-	else if (op.arg_type == fi::ArgType::Short) {
-		uint16_t opval{ operand.value() };
-		result.push_back(static_cast<byte>(opval % 256));
-		result.push_back(static_cast<byte>(opval / 256));
+	if (operands.size() != op.args.size())
+		throw std::runtime_error(std::format("Opcode '{}' expects {} operand(s), got {}",
+			op.name, op.args.size(), operands.size()));
+
+	for (std::size_t i{ 0 }; i < op.args.size(); ++i) {
+		const auto& arg{ op.args[i] };
+		const auto opval{ operands[i] };
+
+		if (arg.type == fi::ArgType::Byte)
+			result.push_back(static_cast<byte>(opval));
+		else if (arg.type == fi::ArgType::Short) {
+			result.push_back(static_cast<byte>(opval % 256));
+			result.push_back(static_cast<byte>(opval / 256));
+		}
 	}
 
 	if (op.flow == fi::Flow::Jump || op.flow == fi::Flow::Read) {

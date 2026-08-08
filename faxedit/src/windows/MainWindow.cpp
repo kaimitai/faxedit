@@ -791,7 +791,15 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_game = std::move(l_game);
 		cache_config_variables();
 		m_cache.m_shared_palettes = m_game->get_shared_palettes(m_config);
-		fi::load_iscript_opcodes_from_config(m_config.bmap(c::ID_ISCRIPT_OPCODES), m_config.bmap(c::ID_ISCRIPT_OPCODE_IMPLS));
+
+		try {
+			fi::load_iscript_opcodes_from_config(m_config.bmap_dense(c::ID_ISCRIPT_OPCODES),
+				m_config.str_map(c::ID_ISCRIPT_OPCODE_IMPLS));
+		}
+		catch (const std::runtime_error& ex) {
+			add_message(std::format("Error when reading iScript opcode definitions: {}", ex.what()), 1);
+			add_message("Using original iScript opcode definitions", 6);
+		}
 
 		// the game object has world tilesets, let us make a cache of 256
 		// tile big tilesets for the UI to send to the renderer

@@ -43,21 +43,26 @@ namespace fi {
 		// we parse shops when we see them and assign an index if it is unique
 		std::map<std::size_t, std::size_t> m_shop_addresses;
 
+		void reset(void);
+		// void parse_rom(const fe::Config& p_config, const std::vector<byte>& p_rom);
 		void parse_strings(const fe::Config& p_config, const std::vector<byte>& p_rom);
 		void parse_blob_from_entrypoint(const std::vector<byte>& p_rom,
-			size_t offset, bool at_entrypoint);
+			std::size_t offset, bool at_entrypoint);
+		void normalize_shop_indexes(void);
 
 		byte read_byte(const std::vector<byte>& p_rom, std::size_t& offset) const;
 		uint16_t read_short(const std::vector<byte>& p_rom, std::size_t& offset) const;
+		std::string to_hex(std::size_t val) const;
 
 	public:
 		IScriptLoader(const fe::Config& p_config,
 			const std::vector<byte>& p_rom);
-		std::vector<fi::AsmToken> get_asm_code(std::size_t p_script_no) const;
+		void parse_rom(const std::vector<byte>& p_rom);
+		std::vector<fi::AsmToken> get_asm_code(void) const;
 		std::vector<fi::AsmToken> parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no);
 		const std::map<size_t, fi::Instruction>& parse_script_raw(const std::vector<byte>& p_rom,
 			std::size_t p_script_no);
-		const std::vector<fi::Shop> get_shops(void) const;
+		const std::vector<fi::Shop>& get_shops(void) const;
 
 		std::size_t get_script_count(void) const;
 	};

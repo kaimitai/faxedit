@@ -2,6 +2,7 @@
 #define FI_OPCODE_H
 
 #include <cstdint>
+#include <initializer_list>
 #include <map>
 #include <optional>
 #include <string>
@@ -30,25 +31,24 @@ namespace fi {
 		TextString
 	};
 
+	struct Argument {
+		ArgType type;
+		ArgDomain domain;
+
+		bool operator==(const Argument&) const = default;
+	};
+
 	struct Opcode {
 		std::string name;
-		fi::ArgType arg_type;
 		fi::Flow flow;
-		fi::ArgDomain domain;
 		bool ends_stream;
+		std::vector<Argument> args;
 
+		Opcode(const std::string& name, std::initializer_list<Argument> args,
+			Flow flow, bool ends_stream);
 		bool operator==(const Opcode&) const = default;
-
-		std::size_t size(void) const {
-			std::size_t result{ 1 }; // the opcode itself
-			if (flow == fi::Flow::Jump || flow == fi::Flow::Read)
-				result += 2;
-			if (arg_type == fi::ArgType::Short)
-				result += 2;
-			else if (arg_type == fi::ArgType::Byte)
-				++result;
-			return result;
-		}
+		std::size_t token_count(void) const;
+		std::size_t size(void) const;
 	};
 
 	extern std::map<byte, fi::Opcode> opcodes;
@@ -60,9 +60,10 @@ namespace fi {
 		Instruction_type type;
 		byte opcode_byte;
 		std::size_t size;
-		std::optional<uint16_t> operand;
 		std::optional<std::size_t> jump_target;
 		std::optional<std::size_t> byte_offset;
+		std::vector<uint16_t> operands;
+		std::optional<std::size_t> shop_index;
 
 		std::vector<byte> get_bytes(void) const;
 	};
@@ -74,7 +75,7 @@ namespace fi {
 
 	ScriptOpcodeInfo load_iscript_opcodes_from_config(
 		const std::map<byte, std::string>& p_opcode_defs,
-		const std::map<byte, std::string>& p_impl_defs);
+		const std::map<std::string, std::string>& p_impl_defs);
 
 }
 
