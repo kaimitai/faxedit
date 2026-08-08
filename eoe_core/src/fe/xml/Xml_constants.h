@@ -1,10 +1,8 @@
-#ifndef FE_XML_CONSTANTS
-#define FE_XML_CONSTANTS
+#ifndef FE_XML_CONSTANTS_H
+#define FE_XML_CONSTANTS_H
 
 namespace fe {
-
 	namespace xml {
-
 		namespace c {
 
 			// TODO: Enable the non-beta xml format
@@ -249,6 +247,8 @@ namespace fe {
 			constexpr char TAG_SET[]{ "set" };
 			constexpr char TAG_BYTE_TO_STR_MAPS[]{ "byte_to_string_maps" };
 			constexpr char TAG_BYTE_TO_STR_MAP[]{ "byte_to_string_map" };
+			constexpr char TAG_STRING_TO_STR_MAPS[]{ "string_to_string_maps" };
+			constexpr char TAG_STRING_TO_STR_MAP[]{ "string_to_string_map" };
 			constexpr char TAG_ENTRY[]{ "entry" };
 			constexpr char TAG_BOOLS[]{ "bools" };
 			constexpr char TAG_BOOL[]{ "bool" };
@@ -260,15 +260,14 @@ namespace fe {
 			constexpr char ATTR_FILE_SIZE[]{ "file_size" };
 			constexpr char ATTR_OFFSET[]{ "offset" };
 			constexpr char ATTR_VALUES[]{ "values" };
+			constexpr char ATTR_KEY[]{ "key" };
 			constexpr char ATTR_VALUE[]{ "value" };
 			constexpr char ATTR_CONDITION[]{ "condition" };
 			constexpr char ATTR_ZERO_ADDR[]{ "zero_addr" };
 			constexpr char ATTR_BYTE[]{ "byte" };
 			constexpr char ATTR_STRING[]{ "str" };
 		}
-
 	}
-
 }
 
 #endif

@@ -1563,6 +1563,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 	std::map<std::string, std::vector<byte>>& p_sets,
 	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
 	std::map<std::string, bool>& p_bools,
 	const std::vector<byte>& p_rom,
 	bool p_throw_on_file_not_exists) {
@@ -1697,13 +1698,48 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 
 					for (auto n_entry{ n_bmap.child(c::TAG_ENTRY) }; n_entry;
 						n_entry = n_entry.next_sibling(c::TAG_ENTRY)) {
+
+						const byte l_key{ parse_numeric_byte(n_entry.attribute(c::ATTR_BYTE).as_string()) };
+
+						if (l_tmp_bmap.find(l_key) != end(l_tmp_bmap))
+							throw std::runtime_error(std::format(
+								"Duplicate byte key {} in byte_to_string_map '{}'",
+								byte_to_hex(l_key), l_name));
+
 						l_tmp_bmap.insert(std::make_pair(
-							parse_numeric_byte(n_entry.attribute(c::ATTR_BYTE).as_string()),
+							l_key,
 							n_entry.attribute(c::ATTR_STRING).as_string()
 						));
 					}
 
 					p_byte_maps.insert(std::make_pair(l_name, l_tmp_bmap));
+				}
+			}
+		}
+	}
+
+	// maps string -> string
+	auto n_str_maps{ n_root.child(c::TAG_STRING_TO_STR_MAPS) };
+	if (n_str_maps) {
+		for (auto n_str_map{ n_str_maps.child(c::TAG_STRING_TO_STR_MAP) }; n_str_map;
+			n_str_map = n_str_map.next_sibling(c::TAG_STRING_TO_STR_MAP)) {
+
+			if (matches_config_region(n_str_map, p_region)) {
+
+				std::string l_name{ n_str_map.attribute(c::ATTR_NAME).as_string() };
+
+				if (p_string_maps.find(l_name) == end(p_string_maps)) {
+					std::map<std::string, std::string> l_tmp_str_map;
+
+					for (auto n_entry{ n_str_map.child(c::TAG_ENTRY) }; n_entry;
+						n_entry = n_entry.next_sibling(c::TAG_ENTRY)) {
+						l_tmp_str_map.insert(std::make_pair(
+							n_entry.attribute(c::ATTR_KEY).as_string(),
+							n_entry.attribute(c::ATTR_VALUE).as_string()
+						));
+					}
+
+					p_string_maps.insert(std::make_pair(l_name, l_tmp_str_map));
 				}
 			}
 		}
@@ -1896,11 +1932,10 @@ std::string fe::xml::join_bytes(const std::vector<byte>& p_bytes, bool p_hex) {
 			result += "," + (p_hex ? byte_to_hex(p_bytes[i]) : std::to_string(p_bytes[i]));
 
 		return result;
-
 	}
 }
 
-std::string  fe::xml::trim_whitespace(const std::string& p_value) {
+std::string fe::xml::trim_whitespace(const std::string& p_value) {
 	std::size_t start = 0;
 	while (start < p_value.size() && std::isspace(static_cast<unsigned char>(p_value[start]))) ++start;
 
