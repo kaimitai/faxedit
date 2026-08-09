@@ -51,6 +51,12 @@ add_library(eoe_core STATIC
     src/fi/Opcode.cpp
     src/fi/Shop.cpp
 
+    # fb
+    src/fb/BScriptLoader.cpp
+    src/fb/BScriptOpcode.cpp
+    src/fb/BScriptReader.cpp
+    src/fb/BScriptWriter.cpp
+
     # fh
     src/fh/HackManager.cpp
     src/fh/TilemapChanges.cpp

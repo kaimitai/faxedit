@@ -64,6 +64,12 @@
     <Filter Include="Header Files\fi\cli">
       <UniqueIdentifier>{9da44cb3-5cd2-4d20-96c7-88d900e6125b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fb">
+      <UniqueIdentifier>{2147c454-6c81-4713-9a7f-f990588f8725}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fb">
+      <UniqueIdentifier>{e0643625-0eee-4da8-8bfe-9dcbbe63e433}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -231,6 +237,21 @@
     <ClInclude Include="src\fi\cli\application_constants.h">
       <Filter>Header Files\fi\cli</Filter>
     </ClInclude>
+    <ClInclude Include="src\fb\BScriptLoader.h">
+      <Filter>Header Files\fb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fb\BScriptOpcode.h">
+      <Filter>Header Files\fb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fb\BScriptReader.h">
+      <Filter>Header Files\fb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fb\BScriptWriter.h">
+      <Filter>Header Files\fb</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fb\fb_constants.h">
+      <Filter>Header Files\fb</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -367,6 +388,18 @@
     </ClCompile>
     <ClCompile Include="src\fi\AsmWriter.cpp">
       <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fb\BScriptLoader.cpp">
+      <Filter>Source Files\fb</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fb\BScriptOpcode.cpp">
+      <Filter>Source Files\fb</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fb\BScriptReader.cpp">
+      <Filter>Source Files\fb</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fb\BScriptWriter.cpp">
+      <Filter>Source Files\fb</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

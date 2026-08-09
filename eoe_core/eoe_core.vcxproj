@@ -31,6 +31,11 @@
     <ClInclude Include="src\common\magic_enum.hpp" />
     <ClInclude Include="src\common\pugixml\pugiconfig.hpp" />
     <ClInclude Include="src\common\pugixml\pugixml.hpp" />
+    <ClInclude Include="src\fb\BScriptLoader.h" />
+    <ClInclude Include="src\fb\BScriptOpcode.h" />
+    <ClInclude Include="src\fb\BScriptReader.h" />
+    <ClInclude Include="src\fb\BScriptWriter.h" />
+    <ClInclude Include="src\fb\fb_constants.h" />
     <ClInclude Include="src\fe\ChrStructures.h" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Cinematic.h" />
@@ -85,6 +90,10 @@
     <ClCompile Include="src\common\klib\NES_tile.cpp" />
     <ClCompile Include="src\common\lodepng.cpp" />
     <ClCompile Include="src\common\pugixml\pugixml.cpp" />
+    <ClCompile Include="src\fb\BScriptLoader.cpp" />
+    <ClCompile Include="src\fb\BScriptOpcode.cpp" />
+    <ClCompile Include="src\fb\BScriptReader.cpp" />
+    <ClCompile Include="src\fb\BScriptWriter.cpp" />
     <ClCompile Include="src\fe\ChrStructures.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Cinematic.cpp" />
