@@ -56,6 +56,12 @@ namespace fe::script {
 		const MessageCallback& p_message);
 
 	// misc interface
+	std::vector<byte> build_misc(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::vector<std::string>& p_txt, const MessageCallback& p_message);
+	void build_misc_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_txt_filename, const std::string& p_out_filename,
+		const MessageCallback& p_message);
+
 	std::string extract_misc(const Config& p_config, const std::vector<byte>& p_rom, bool p_include_all_sprites);
 	void extract_misc_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_filename, bool p_include_all_sprites, bool p_overwrite,

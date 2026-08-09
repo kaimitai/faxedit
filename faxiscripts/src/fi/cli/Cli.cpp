@@ -11,15 +11,11 @@
 #include "fm/song/MMLSongCollection.h"
 #include "fm/song/Tokenizer.h"
 #include "fm/song/Parser.h"
-#include "fv/MiscWriter.h"
-#include "fh/HackManager.h"
 #include "fe/script/ScriptManager.h"
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
-constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 
 void fi::Cli::print_header(void) const {
 	std::cout << fi::appc::APP_NAME << " v" << fi::appc::APP_VERSION << " - Faxanadu Script Assembler and Disassembler\n";
@@ -200,29 +196,13 @@ void fi::Cli::masm_to_nes(const std::string& p_mml_filename,
 void fi::Cli::misc_to_nes(const std::string& p_txt_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
-	auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
-	fv::MiscWriter reader(rom, m_config);
 
-	std::cout << "Attempting to parse " << p_txt_filename << "\n";
-	reader.load_txt_file(p_txt_filename);
+	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
 
-	std::cout << "Attempting to ptach " << p_nes_filename << "\n";
-	int itemcnt{ reader.patch_rom(rom, m_config) };
-
-	// bank 15 was mutated - duplicate to bank 31 post-patch for expanded roms
-	if (m_config.boolean_or(ID_DUPLICATE_STATIC_BANK, false)) {
-		constexpr std::size_t BANK_BYTE_SIZE{ 0x4000 };
-		std::size_t source_idx{ 0x10 + BANK_BYTE_SIZE * 0x0f };
-		std::size_t target_idx{ 0x10 + BANK_BYTE_SIZE * 0x1f };
-
-		for (std::size_t i{ 0 }; i < BANK_BYTE_SIZE; ++i)
-			rom.at(target_idx + i) = rom[source_idx + i];
-
-		std::cout << "Bank 15 was duplicated to bank 31 post-patch\n";
-	}
-
-	klib::file::write_bytes_to_file(rom, p_nes_filename);
-	std::cout << std::format("Misc data ({} items) written to file ", itemcnt) << p_nes_filename << "!\n";
+	fe::script::build_misc_to_file(m_config, rom, p_txt_filename, p_nes_filename,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::nes_to_asm(const std::string& p_nes_filename,

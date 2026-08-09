@@ -1,5 +1,4 @@
 #include "MiscWriter.h"
-#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include "fi/cli/application_constants.h"
 #include "fv_constants.h"
@@ -293,7 +292,7 @@ void fv::MiscWriter::add_item(fv::MiscCategory p_category, fv::MiscField p_field
 	items[std::make_pair(p_category, p_field)].insert(std::make_pair(p_index, item));
 }
 
-void fv::MiscWriter::load_txt_file(const std::string& p_txt_file) {
+void fv::MiscWriter::load_txt(const std::vector<std::string>& p_txt) {
 
 	// reverse maps for lookup
 	string_field.clear();
@@ -304,7 +303,7 @@ void fv::MiscWriter::load_txt_file(const std::string& p_txt_file) {
 	for (const auto& kv : category_strings)
 		string_category.insert(std::make_pair(klib::str::to_lower(kv.second), kv.first));
 
-	auto txts{ klib::file::read_file_as_strings(p_txt_file) };
+	auto txts{ p_txt };
 
 	for (std::size_t i{ 0 }; i < txts.size(); ++i) {
 		std::string line{ klib::str::trim(klib::str::strip_comment(txts[i])) };

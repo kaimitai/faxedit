@@ -351,6 +351,36 @@ void fe::script::disasm_mscripts_to_file(const Config& p_config, const std::vect
 }
 
 // misc interface
+std::vector<byte> fe::script::build_misc(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::vector<std::string>& p_txt, const MessageCallback& p_message) {
+	auto rom{ p_rom };
+
+	fv::MiscWriter reader(rom, p_config);
+	reader.load_txt(p_txt);
+
+	const int item_count{ reader.patch_rom(rom, p_config) };
+
+	if (fe::ROM_Manager::duplicate_static_bank_if_needed(p_config, rom))
+		message(p_message, "Bank 15 was duplicated to bank 31 post-patch");
+
+	message(p_message, std::format("Patched {} miscellaneous data items", item_count));
+
+	return rom;
+}
+
+void fe::script::build_misc_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_txt_filename, const std::string& p_out_filename,
+	const MessageCallback& p_message) {
+	message(p_message, std::format("Attempting to parse {}", p_txt_filename));
+
+	const auto txt{ klib::file::read_file_as_strings(p_txt_filename) };
+	const auto patched_rom{ build_misc(p_config, p_rom, txt, p_message) };
+
+	message(p_message, std::format("Attempting to patch {}", p_out_filename));
+	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
+	message(p_message, std::format("Misc data written to file {}!", p_out_filename));
+}
+
 std::string fe::script::extract_misc(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	bool p_include_all_sprites) {
 	fv::MiscWriter writer(p_rom, p_config, p_include_all_sprites);
