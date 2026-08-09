@@ -310,7 +310,7 @@ void fi::Cli::mml_to_lilypond(const std::string& p_mml_filename,
 
 void fi::Cli::dump_config(const std::string& p_nes_filename,
 	const std::string& p_dump_filename) {
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	load_rom_and_determine_region(p_nes_filename);
 
 	klib::file::write_string_to_file(m_config.to_string(), p_dump_filename);
 	std::cout << "Wrote resolved configuration dump to " << p_dump_filename << "!\n";
@@ -404,7 +404,7 @@ void fi::Cli::set_mode(const std::string& p_mode) {
 	else if (check_mode(p_mode, appc::CMD_DUMP_CONFIG)) {
 		m_script_mode = fi::ScriptMode::DumpConfig;
 	}
-	else throw std::runtime_error("Unknown commad " + p_mode);
+	else throw std::runtime_error("Unknown command " + p_mode);
 }
 
 bool fi::Cli::check_mode(const std::string& p_mode,
