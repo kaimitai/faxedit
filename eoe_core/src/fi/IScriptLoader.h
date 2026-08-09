@@ -62,6 +62,10 @@ namespace fi {
 		std::vector<fi::AsmToken> parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no);
 		const std::map<size_t, fi::Instruction>& parse_script_raw(const std::vector<byte>& p_rom,
 			std::size_t p_script_no);
+		const std::map<std::size_t, fi::Instruction>& get_instructions(void) const;
+		const std::vector<std::size_t>& get_ptr_table(void) const;
+		const std::set<std::size_t>& get_jump_targets(void) const;
+		const std::vector<fi::FaxString>& get_strings(void) const;
 		const std::vector<fi::Shop>& get_shops(void) const;
 
 		std::size_t get_script_count(void) const;

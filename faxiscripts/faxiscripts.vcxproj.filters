@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\fi">
+      <UniqueIdentifier>{e59bc436-55a8-4fbd-b41e-339d0c5d0124}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mantra">
+      <UniqueIdentifier>{ce027aef-9c7b-4632-aa3f-4be20c5e9edf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\fi\cli">
+      <UniqueIdentifier>{1dd13d0f-a689-400e-8e2b-43ccb1c656ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fi">
+      <UniqueIdentifier>{1f2c62d3-31ae-499b-96f9-6cd0ce5d8a74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mantra">
+      <UniqueIdentifier>{0cb9ac8b-7423-43d3-8b02-3357b5b67099}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fi\cli">
+      <UniqueIdentifier>{469b0dcf-4a36-481c-9ef2-22f24b32bb01}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\cli\Cli.cpp">
+      <Filter>Source Files\fi\cli</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mantra\MantraCli.cpp">
+      <Filter>Source Files\mantra</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\fi\cli\Cli.h">
+      <Filter>Header Files\fi\cli</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mantra\MantraCli.h">
+      <Filter>Header Files\mantra</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mantra\MantraCli_constants.h">
+      <Filter>Header Files\mantra</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

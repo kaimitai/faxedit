@@ -60,6 +60,22 @@ const std::map<size_t, fi::Instruction>& fi::IScriptLoader::parse_script_raw(con
 	return m_instructions;
 }
 
+const std::map<std::size_t, fi::Instruction>& fi::IScriptLoader::get_instructions(void) const {
+	return m_instructions;
+}
+
+const std::vector<std::size_t>& fi::IScriptLoader::get_ptr_table(void) const {
+	return m_ptr_table;
+}
+
+const std::set<std::size_t>& fi::IScriptLoader::get_jump_targets(void) const {
+	return m_jump_targets;
+}
+
+const std::vector<fi::FaxString>& fi::IScriptLoader::get_strings(void) const {
+	return m_strings;
+}
+
 const std::vector<fi::Shop>& fi::IScriptLoader::get_shops(void) const {
 	return m_shops;
 }
