@@ -1,6 +1,5 @@
 #include "BScriptReader.h"
 #include "fb_constants.h"
-#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include <format>
 #include <stdexcept>
@@ -16,12 +15,12 @@ fb::BScriptReader::BScriptReader(const fe::Config& p_config) :
 {
 }
 
-void fb::BScriptReader::read_asm_file(const std::string& p_filename,
+void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 	const fe::Config& p_config) {
 
 	std::map<fb::SectionType, std::vector<std::string>> sections;
 
-	auto l_lines{ klib::file::read_file_as_strings(p_filename) };
+	auto l_lines{ p_asm };
 	fb::SectionType currentSection{ fb::SectionType::Defines };
 
 	for (auto& line : l_lines) {
@@ -45,7 +44,7 @@ void fb::BScriptReader::read_asm_file(const std::string& p_filename,
 		}
 
 	if (!sections.contains(fb::SectionType::BScript))
-		throw std::runtime_error(std::format("File {} is missing section {}", p_filename, c::SECTION_BSCRIPT));
+		throw std::runtime_error(std::format("File is missing section {}", c::SECTION_BSCRIPT));
 
 	// parse the asm code
 

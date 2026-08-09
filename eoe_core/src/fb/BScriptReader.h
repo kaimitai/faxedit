@@ -45,7 +45,7 @@ namespace fb {
 
 	public:
 		BScriptReader(const fe::Config& p_config);
-		void read_asm_file(const std::string& p_filename,
+		void read_asm(const std::vector<std::string>& p_asm,
 			const fe::Config& p_config);
 		std::pair<std::vector<byte>, std::vector<byte>> to_bytes(void) const;
 	};

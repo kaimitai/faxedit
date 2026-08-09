@@ -8,6 +8,7 @@
 #include "fi/AsmWriter.h"
 #include "fi/AsmReader.h"
 #include "fb/BScriptWriter.h"
+#include "fb/BScriptReader.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
@@ -191,6 +192,72 @@ void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::
 }
 
 // bScripts
+std::vector<byte> fe::script::asm_bscripts(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::vector<std::string>& p_asm, bool p_strict, const MessageCallback& p_message) {
+	auto rom{ p_rom };
+
+	if (p_strict)
+		message(p_message, "Using strict mode - Only original ROM data region will be used");
+
+	fb::BScriptReader reader(p_config);
+	reader.read_asm(p_asm, p_config);
+
+	const auto bytes{ reader.to_bytes() };
+
+	message(p_message, std::format("Total script byte size (including ptr table): {}",
+		bytes.first.size() + bytes.second.size()));
+
+	auto bscriptptr{ p_config.pointer(fb::c::ID_BSCRIPT_PTR) };
+
+	std::size_t l_bscript_rg1_end{ p_config.constant(fb::c::ID_BSCRIPT_RG1_END) };
+	std::size_t l_bscript_rg1_size{ l_bscript_rg1_end - bscriptptr.first };
+
+	std::size_t l_rg2_start{ p_config.constant(fb::c::ID_BSCRIPT_RG2_START) };
+	std::size_t l_rg2_end{ p_config.constant(fb::c::ID_BSCRIPT_RG2_END) };
+	std::size_t l_bscript_rg2_size{ l_rg2_end - l_rg2_start };
+
+	try_patch("bscript pointer table and data (region 1)", bytes.first.size(), l_bscript_rg1_size, p_message);
+	try_patch("bscript data (region 2)", bytes.second.size(), l_bscript_rg2_size, p_message);
+
+	if (p_strict && !bytes.second.empty())
+		throw std::runtime_error("Strict mode was enabled but the original ROM region could not fit all data");
+
+	// clearing out the first section (TODO: this can probably be removed)
+	fe::ROM_Manager::clear_rom_section(rom, bscriptptr.first, l_bscript_rg1_end);
+
+	for (std::size_t i{ 0 }; i < bytes.first.size(); ++i)
+		rom.at(bscriptptr.first + i) = bytes.first[i];
+	for (std::size_t i{ 0 }; i < bytes.second.size(); ++i)
+		rom.at(l_rg2_start + i) = bytes.second[i];
+
+	message(p_message, "Verifying generated ROM contents");
+	// parse generated ROM to verify the behavior script layer is valid
+	try {
+		fb::BScriptLoader staticanalysisread(p_config, rom);
+	}
+	catch (const std::runtime_error& ex) {
+		throw std::runtime_error(std::format("Invalid ROM generated. Ensure all code paths end\n{}",
+			ex.what()));
+	}
+
+	return rom;
+}
+
+void fe::script::asm_bscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_basm_filename, const std::string& p_out_filename, bool p_strict,
+	const MessageCallback& p_message) {
+
+	message(p_message,
+		std::format("Attempting to parse assembly file {}", p_basm_filename));
+
+	const auto asm_code{ klib::file::read_file_as_strings(p_basm_filename) };
+	const auto patched_rom{ asm_bscripts(p_config,p_rom,asm_code,p_strict,p_message) };
+
+	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
+	message(p_message, "File patched");
+}
+
 std::string fe::script::disasm_bscripts(const fe::Config& p_config, const std::vector<byte>& p_rom) {
 	fb::BScriptLoader loader(p_config, p_rom);
 	loader.parse_rom();

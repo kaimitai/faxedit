@@ -32,6 +32,12 @@ namespace fe::script {
 		const MessageCallback& p_message);
 
 	// bScripts
+	std::vector<byte> asm_bscripts(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::vector<std::string>& p_asm, bool p_strict, const MessageCallback& p_message);
+	void asm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_basm_filename, const std::string& p_out_filename, bool p_strict,
+		const MessageCallback& p_message);
+
 	std::string disasm_bscripts(const Config& p_config, const std::vector<byte>& p_rom);
 	void disasm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message);

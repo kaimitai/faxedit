@@ -902,6 +902,12 @@ bool fe::ROM_Manager::duplicate_static_bank_if_needed(const fe::Config& p_config
 	return l_duplicate;
 }
 
+void fe::ROM_Manager::clear_rom_section(std::vector<byte>& p_rom, std::size_t p_start,
+	std::size_t p_end, byte p_value) {
+	for (std::size_t i{ p_start }; i < p_end; ++i)
+		p_rom.at(i) = p_value;
+}
+
 void fe::ROM_Manager::clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const {
 	auto bank_start{ bank_no_to_file_offset(p_bank_no) };
 

@@ -5,11 +5,6 @@
 #include "fi/fi_constants.h"
 #include "fm/fm_constants.h"
 #include <stdexcept>
-#include "fi/IScriptLoader.h"
-#include "fb/BScriptLoader.h"
-#include "fb/BScriptReader.h"
-#include "fi/AsmReader.h"
-#include "fb/BScriptWriter.h"
 #include "fb/fb_constants.h"
 #include "fm/MScriptLoader.h"
 #include "fm/MMLReader.h"
@@ -187,67 +182,12 @@ void fi::Cli::basm_to_nes(const std::string& p_basm_filename,
 	const std::string& p_source_rom_filename,
 	bool p_strict) {
 
-	if (p_strict)
-		std::cout << "Using strict mode - Only original ROM data region will be used\n";
+	auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	fe::script::asm_bscripts_to_file(m_config, rom, p_basm_filename, p_nes_filename, p_strict,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 
-	std::cout << "Attempting to read ROM contents from " << p_source_rom_filename << "\n";
-	auto rom{ klib::file::read_file_as_bytes(p_source_rom_filename) };
-
-	if (m_region.empty()) {
-		m_config.determine_region(rom);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
-
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom);
-
-	fb::BScriptReader reader(m_config);
-	reader.read_asm_file(p_basm_filename, m_config);
-
-	const auto bytes{ reader.to_bytes() };
-	std::cout << "Total script byte size (including ptr table): " <<
-		(bytes.first.size() + bytes.second.size()) << "\n";
-
-	auto bscriptptr{ m_config.pointer(fb::c::ID_BSCRIPT_PTR) };
-	std::size_t l_bscript_rg1_end{ m_config.constant(fb::c::ID_BSCRIPT_RG1_END) };
-	std::size_t l_bscript_rg1_size{ l_bscript_rg1_end - bscriptptr.first };
-	std::size_t l_rg2_start{ m_config.constant(fb::c::ID_BSCRIPT_RG2_START) };
-	std::size_t l_rg2_end{ m_config.constant(fb::c::ID_BSCRIPT_RG2_END) };
-	std::size_t l_bscript_rg2_size{ l_rg2_end - l_rg2_start };
-
-	try_patch_msg("bscript pointer table and data (region 1)",
-		bytes.first.size(), l_bscript_rg1_size);
-	try_patch_msg("bscript data (region 2)",
-		bytes.second.size(), l_bscript_rg2_size);
-
-	if (p_strict && !bytes.second.empty())
-		throw std::runtime_error("Strict mode was enabled but the original ROM region could not fit all data");
-
-	clear_rom_section(rom, bscriptptr.first, l_bscript_rg1_end);
-	if (!p_strict)
-		clear_rom_section(rom, l_rg2_start, l_rg2_end);
-
-	for (std::size_t i{ 0 }; i < bytes.first.size(); ++i)
-		rom.at(bscriptptr.first + i) = bytes.first[i];
-
-	for (std::size_t i{ 0 }; i < bytes.second.size(); ++i)
-		rom.at(l_rg2_start + i) = bytes.second[i];
-
-	std::cout << "Verifying generated ROM contents\n";
-	try {
-		fb::BScriptLoader staticanalysisread(m_config, rom);
-	}
-	catch (const std::runtime_error& ex) {
-		std::cerr << "Invalid ROM generated. Ensure all code paths end\n" << ex.what();
-		return;
-	}
-
-	std::cout << "Attempting to patch file " << p_nes_filename << "\n";
-	klib::file::write_bytes_to_file(rom, p_nes_filename);
-	std::cout << "File patched\n";
 }
 
 void fi::Cli::masm_to_nes(const std::string& p_mml_filename,
@@ -344,9 +284,6 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
 	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
-
-	fb::BScriptLoader loader(m_config, rom_data);
-
 	fe::script::disasm_bscripts_to_file(m_config, rom_data, p_basm_filename, p_overwrite,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';

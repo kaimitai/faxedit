@@ -110,6 +110,8 @@ namespace fe {
 		static int get_bank_byte_diffs(const std::vector<byte>& p_rom,
 			byte p_bank_a, byte p_bank_b);
 		static bool duplicate_static_bank_if_needed(const fe::Config& p_config, std::vector<byte>& p_rom);
+		static void clear_rom_section(std::vector<byte>& p_rom, std::size_t p_start, std::size_t p_end,
+			byte p_value = 0xff);
 
 		// caching utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
