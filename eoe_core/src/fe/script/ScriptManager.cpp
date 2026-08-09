@@ -1,9 +1,10 @@
 #include <format>
 #include <stdexcept>
 #include "ScriptManager.h"
-#include "fe/fe_constants.h"
 #include "fe/ROM_Manager.h"
+#include "fe/fe_constants.h"
 #include "fi/fi_constants.h"
+#include "fm/fm_constants.h"
 #include "fi/IScriptLoader.h"
 #include "fi/AsmWriter.h"
 #include "fi/AsmReader.h"
@@ -11,6 +12,7 @@
 #include "fb/BScriptReader.h"
 #include "fm/MScriptLoader.h"
 #include "fm/MMLWriter.h"
+#include "fm/MMLReader.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
@@ -282,6 +284,36 @@ void fe::script::disasm_bscripts_to_file(const Config& p_config, const std::vect
 }
 
 // mScripts
+std::vector<byte> fe::script::asm_mscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::vector<std::string>& p_asm, const MessageCallback& p_message) {
+	auto rom{ p_rom };
+
+	fm::MMLReader reader(p_config);
+	reader.read_mscript_asm(p_asm, p_config);
+
+	const auto bytes{ reader.get_bytes() };
+	const auto& musicptr{ p_config.pointer(fm::c::ID_MUSIC_PTR) };
+
+	try_patch("Music", bytes.size(), p_config.constant(fm::c::ID_MUSIC_DATA_END) - musicptr.first, p_message);
+	for (std::size_t i{ 0 }; i < bytes.size(); ++i)
+		rom.at(musicptr.first + i) = bytes[i];
+
+	return rom;
+}
+
+void fe::script::asm_mscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_asm_filename, const std::string& p_out_filename,
+	const MessageCallback& p_message) {
+
+	message(p_message, std::format("Attempting to parse assembly file {}", p_asm_filename));
+	const auto asm_code{ klib::file::read_file_as_strings(p_asm_filename) };
+	const auto patched_rom{ asm_mscripts(p_config, p_rom, asm_code, p_message) };
+
+	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
+	message(p_message, "File patched");
+}
+
 std::string fe::script::disasm_mscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	bool p_emit_notes, const MessageCallback& p_message) {
 	fm::MScriptLoader loader(p_config, p_rom);

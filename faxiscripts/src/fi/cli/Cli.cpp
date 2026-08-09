@@ -5,8 +5,6 @@
 #include "fi/fi_constants.h"
 #include "fm/fm_constants.h"
 #include <stdexcept>
-#include "fb/fb_constants.h"
-#include "fm/MMLReader.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include "fm/song/MMLSong.h"
@@ -165,7 +163,7 @@ void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	const std::string& p_source_rom_filename,
 	bool p_strict) {
 
-	auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
 	auto opcode_defs{ fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
 			m_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS)) };
 
@@ -180,7 +178,7 @@ void fi::Cli::basm_to_nes(const std::string& p_basm_filename,
 	const std::string& p_source_rom_filename,
 	bool p_strict) {
 
-	auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
 	fe::script::asm_bscripts_to_file(m_config, rom, p_basm_filename, p_nes_filename, p_strict,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';
@@ -192,38 +190,11 @@ void fi::Cli::masm_to_nes(const std::string& p_mml_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
 
-	std::cout << "Attempting to read ROM contents from " << p_source_rom_filename << "\n";
-	auto rom{ klib::file::read_file_as_bytes(p_source_rom_filename) };
-
-	if (m_region.empty()) {
-		m_config.determine_region(rom);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
-
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom);
-
-	fm::MMLReader reader(m_config);
-
-	std::cout << "Attempting to parse assembly file " << p_mml_filename << "\n";
-	reader.read_mml_file(p_mml_filename, m_config);
-
-	auto bytes{ reader.get_bytes() };
-
-	const auto& musicptr{ m_config.pointer(fm::c::ID_MUSIC_PTR) };
-
-	try_patch_msg("Music", bytes.size(),
-		m_config.constant(fm::c::ID_MUSIC_DATA_END) - musicptr.first);
-
-	for (std::size_t i{ 0 }; i < bytes.size(); ++i)
-		rom.at(musicptr.first + i) = bytes[i];
-
-	std::cout << "Attempting to patch file " << p_nes_filename << "\n";
-	klib::file::write_bytes_to_file(rom, p_nes_filename);
-	std::cout << "File patched\n";
+	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	fe::script::asm_mscripts_to_file(m_config, rom, p_mml_filename, p_nes_filename,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::misc_to_nes(const std::string& p_txt_filename,

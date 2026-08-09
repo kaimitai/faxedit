@@ -1,6 +1,5 @@
 #include "MMLReader.h"
 #include "fm_constants.h"
-#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include "fm_util.h"
 #include <format>
@@ -12,7 +11,7 @@ fm::MMLReader::MMLReader(const fe::Config& p_config) {
 
 // we employ the same strategy as for iscript, but this is less complex
 // we still need to resolve jump targets and ptr table entries however
-void fm::MMLReader::read_mml_file(const std::string& p_filename,
+void fm::MMLReader::read_mscript_asm(const std::vector<std::string>& p_asm,
 	const fe::Config& p_config) {
 	auto music_ptr{ p_config.pointer(c::ID_MUSIC_PTR) };
 
@@ -23,7 +22,7 @@ void fm::MMLReader::read_mml_file(const std::string& p_filename,
 		bool l_defines{ false };
 		std::vector<std::string> mscript_lines;
 
-		auto l_lines{ klib::file::read_file_as_strings(p_filename) };
+		auto l_lines{ p_asm };
 
 		for (const auto& line : l_lines) {
 			auto stripline = klib::str::trim(klib::str::strip_comment(line));

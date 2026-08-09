@@ -27,8 +27,7 @@ namespace fm {
 
 	public:
 		MMLReader(const fe::Config& p_config);
-		void read_mml_file(const std::string& p_filename,
-			const fe::Config& p_config);
+		void read_mscript_asm(const std::vector<std::string>& p_asm, const fe::Config& p_config);
 		std::vector<byte> get_bytes(void) const;
 	};
 
