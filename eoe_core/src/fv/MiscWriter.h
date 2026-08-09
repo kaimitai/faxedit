@@ -107,7 +107,7 @@ namespace fv {
 		int patch_rom(std::vector<byte>& p_rom, const fe::Config& p_config);
 
 		void load_txt_file(const std::string& p_txt_file);
-		void write_txt_file(const std::string& p_filename) const;
+		std::string generate_txt(void) const;
 	};
 
 }

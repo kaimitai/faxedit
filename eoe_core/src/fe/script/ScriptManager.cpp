@@ -13,6 +13,7 @@
 #include "fm/MScriptLoader.h"
 #include "fm/MMLWriter.h"
 #include "fm/MMLReader.h"
+#include "fv/MiscWriter.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
@@ -347,4 +348,31 @@ void fe::script::disasm_mscripts_to_file(const Config& p_config, const std::vect
 	message(p_message, std::format("Generating output file {}", p_filename));
 	klib::file::write_string_to_file(mscript_asm, p_filename);
 	message(p_message, "Extraction complete!");
+}
+
+// misc interface
+std::string fe::script::extract_misc(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	bool p_include_all_sprites) {
+	fv::MiscWriter writer(p_rom, p_config, p_include_all_sprites);
+	writer.load_rom(p_rom, p_config);
+	return writer.generate_txt();
+}
+
+void fe::script::extract_misc_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_filename, bool p_include_all_sprites, bool p_overwrite,
+	const MessageCallback& p_message) {
+
+	if (!p_overwrite && klib::file::file_exists(p_filename))
+		throw std::runtime_error(std::format("Txt file {} exists, and overwrite-flag is not set", p_filename));
+
+	if (p_include_all_sprites)
+		message(p_message, "Will output misc data for all sprites (not only enemies and bosses)");
+
+	message(p_message, "Extracting miscellaneous ROM data");
+
+	const auto txt{ extract_misc(p_config, p_rom, p_include_all_sprites) };
+
+	message(p_message, std::format("Generating output file {}", p_filename));
+	klib::file::write_string_to_file(txt, p_filename);
+	message(p_message, std::format("Extraction to {} complete!", p_filename));
 }

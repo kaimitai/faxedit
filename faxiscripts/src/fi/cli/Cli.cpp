@@ -273,21 +273,12 @@ void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
 void fi::Cli::nes_to_misc(const std::string& p_nes_filename,
 	const std::string& p_txt_filename,
 	bool p_overwrite) {
-
-	if (m_strict)
-		std::cout << "Will output misc data for all sprites (not only enemies and bosses)\n";
-
-	// fail early if output file already exists and we do not overwrite
-	if (!p_overwrite && klib::file::file_exists(p_txt_filename))
-		throw std::runtime_error(std::format("txt file {} exists, and overwrite-flag is not set", p_txt_filename));
-
 	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
-	fv::MiscWriter writer(rom_data, m_config, m_strict);
-	writer.load_rom(rom_data, m_config);
-	writer.write_txt_file(p_txt_filename);
-
-	std::cout << std::format("Extraction to {} complete!\n", p_txt_filename);
+	fe::script::extract_misc_to_file(m_config, rom_data, p_txt_filename, m_strict, p_overwrite,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::nes_to_mml(const std::string& p_nes_filename,

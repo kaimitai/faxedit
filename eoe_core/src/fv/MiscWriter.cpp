@@ -458,7 +458,7 @@ std::string fv::MiscWriter::get_line_comment(fv::MiscCategory p_category, fv::Mi
 	return result;
 }
 
-void fv::MiscWriter::write_txt_file(const std::string& p_filename) const {
+std::string fv::MiscWriter::generate_txt(void) const {
 	std::string txt{
 		std::format(" ; Faxanadu miscellaneous data file extracted by {} v{}\n ; {}\n",
 			fi::appc::APP_NAME, fi::appc::APP_VERSION, fi::appc::APP_URL)
@@ -479,7 +479,7 @@ void fv::MiscWriter::write_txt_file(const std::string& p_filename) const {
 		}
 	}
 
-	klib::file::write_string_to_file(txt, p_filename);
+	return txt;
 }
 
 std::size_t fv::MiscWriter::get_data_size(fv::MiscType misctype, std::size_t p_count) const {
