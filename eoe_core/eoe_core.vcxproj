@@ -79,6 +79,11 @@
     <ClInclude Include="src\fi\IScriptLoader.h" />
     <ClInclude Include="src\fi\Opcode.h" />
     <ClInclude Include="src\fi\Shop.h" />
+    <ClInclude Include="src\fv\fv_constants.h" />
+    <ClInclude Include="src\fv\MiscWriter.h" />
+    <ClInclude Include="src\mantra\Mantra.h" />
+    <ClInclude Include="src\mantra\mantra_constants.h" />
+    <ClInclude Include="src\mantra\mantra_math.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp" />
@@ -130,6 +135,9 @@
     <ClCompile Include="src\fi\IScriptLoader.cpp" />
     <ClCompile Include="src\fi\Opcode.cpp" />
     <ClCompile Include="src\fi\Shop.cpp" />
+    <ClCompile Include="src\fv\MiscWriter.cpp" />
+    <ClCompile Include="src\mantra\Mantra.cpp" />
+    <ClCompile Include="src\mantra\mantra_math.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>

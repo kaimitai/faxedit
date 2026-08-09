@@ -70,6 +70,18 @@
     <Filter Include="Source Files\fb">
       <UniqueIdentifier>{e0643625-0eee-4da8-8bfe-9dcbbe63e433}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fv">
+      <UniqueIdentifier>{1ab2dc02-06c7-4973-9a86-750e60d37d34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fv">
+      <UniqueIdentifier>{4030e383-1a21-4374-b443-dec0f09dee18}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\mantra">
+      <UniqueIdentifier>{3d37a380-993a-4b61-9130-45d87be037d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mantra">
+      <UniqueIdentifier>{3201bb33-4a37-4adf-b000-4ca16925f0da}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -252,6 +264,21 @@
     <ClInclude Include="src\fb\fb_constants.h">
       <Filter>Header Files\fb</Filter>
     </ClInclude>
+    <ClInclude Include="src\mantra\Mantra.h">
+      <Filter>Header Files\mantra</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mantra\mantra_constants.h">
+      <Filter>Header Files\mantra</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mantra\mantra_math.h">
+      <Filter>Header Files\mantra</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fv\fv_constants.h">
+      <Filter>Header Files\fv</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fv\MiscWriter.h">
+      <Filter>Header Files\fv</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -400,6 +427,15 @@
     </ClCompile>
     <ClCompile Include="src\fb\BScriptWriter.cpp">
       <Filter>Source Files\fb</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mantra\Mantra.cpp">
+      <Filter>Source Files\mantra</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mantra\mantra_math.cpp">
+      <Filter>Source Files\mantra</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fv\MiscWriter.cpp">
+      <Filter>Source Files\fv</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

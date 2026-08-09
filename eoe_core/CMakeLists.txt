@@ -60,6 +60,13 @@ add_library(eoe_core STATIC
     # fh
     src/fh/HackManager.cpp
     src/fh/TilemapChanges.cpp
+
+    # fv
+    src/fv/MiscWriter.cpp
+
+    # mantra
+    src/mantra/Mantra.cpp
+    src/mantra/mantra_math.cpp
 )
 
 target_include_directories(eoe_core
