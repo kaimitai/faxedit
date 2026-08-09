@@ -49,6 +49,8 @@ add_library(eoe_core STATIC
     src/fe/sprite/SpriteGfxSnapshotManager.cpp
     src/fe/sprite/SpriteGUILoader.cpp
 
+    src/fe/script/ScriptManager.cpp
+
     #fi
     src/fi/AsmReader.cpp
     src/fi/AsmReaderStaticLinker.cpp

@@ -1,5 +1,4 @@
 #include "AsmWriter.h"
-#include "common/klib/Kfile.h"
 #include "Opcode.h"
 #include "fi_constants.h"
 #include "fi/cli/application_constants.h"
@@ -8,8 +7,7 @@
 #include <map>
 #include <string_view>
 
-void fi::AsmWriter::generate_asm_file(const fe::Config& p_config,
-	const std::string& p_filename,
+std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
 	const std::map<std::size_t, fi::Instruction>& p_instructions,
 	const std::vector<std::size_t>& p_entrypoints,
 	const std::set<std::size_t>& p_jump_targets,
@@ -171,7 +169,7 @@ void fi::AsmWriter::generate_asm_file(const fe::Config& p_config,
 		}
 	}
 
-	klib::file::write_string_to_file(af, p_filename);
+	return af;
 }
 
 void fi::AsmWriter::append_defines_section(std::string& p_asm) const {

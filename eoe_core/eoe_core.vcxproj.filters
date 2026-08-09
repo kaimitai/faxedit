@@ -100,6 +100,12 @@
     <Filter Include="Source Files\fm\song">
       <UniqueIdentifier>{a36e27d4-e985-4127-a6c6-98d8fcc1b836}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fe\script">
+      <UniqueIdentifier>{09254cf9-3186-4b8c-8159-ff4ee076bb68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\script">
+      <UniqueIdentifier>{9c732878-ffed-4739-ad14-fd85e90cfccb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -360,6 +366,9 @@
     <ClInclude Include="src\fm\song\Tokenizer.h">
       <Filter>Header Files\fm\song</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\script\ScriptManager.h">
+      <Filter>Header Files\fe\script</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -571,6 +580,9 @@
     </ClCompile>
     <ClCompile Include="src\fm\song\Tokenizer.cpp">
       <Filter>Source Files\fm\song</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\script\ScriptManager.cpp">
+      <Filter>Source Files\fe\script</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -9,7 +9,6 @@
 #include "fb/BScriptLoader.h"
 #include "fb/BScriptReader.h"
 #include "fi/AsmReader.h"
-#include "fi/AsmWriter.h"
 #include "fb/BScriptWriter.h"
 #include "fb/fb_constants.h"
 #include "fm/MScriptLoader.h"
@@ -23,6 +22,7 @@
 #include "fm/song/Parser.h"
 #include "fv/MiscWriter.h"
 #include "fh/HackManager.h"
+#include "fe/script/ScriptManager.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -221,7 +221,7 @@ void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	}
 
 	std::cout << "Attempting to parse assembly file " << p_asm_filename << "\n";
-	reader.read_asm_file(m_config, p_asm_filename, l_iscript_rg2_start);
+	reader.read_asm(m_config, klib::file::read_file_as_strings(p_asm_filename), l_iscript_rg2_start);
 
 	// we use different methods to get the ROM bytes if the smart linker is used
 	auto bytes{ reader.get_script_bytes(m_config) };
@@ -449,41 +449,20 @@ void fi::Cli::nes_to_asm(const std::string& p_nes_filename,
 	if (p_overwrite)
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
-	// fail early if asm file already exists and we do not overwrite
-	if (!p_overwrite && klib::file::file_exists(p_asm_filename))
-		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_asm_filename));
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
-	std::cout << "Attempting to read " << p_nes_filename << "\n";
-	const auto& rom_data{ klib::file::read_file_as_bytes(p_nes_filename) };
-
-	if (m_region.empty()) {
-		m_config.determine_region(rom_data);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
-
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom_data);
 	fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
 		m_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS));
 
-	fi::IScriptLoader loader(m_config, rom_data);
-
-	std::cout << "Attempting to parse ROM scripting layer\n";
-	loader.parse_rom(rom_data);
-
-	std::cout << "Detected " << loader.get_script_count() << " script entrypoints\n";
-
-	fi::AsmWriter asmw;
-
-	std::cout << "Generating output file " << p_asm_filename << "\n";
-	asmw.generate_asm_file(m_config, p_asm_filename,
-		loader.get_instructions(), loader.get_ptr_table(), loader.get_jump_targets(),
-		loader.get_strings(), loader.get_shops(), m_shop_comments);
-
-	std::cout << "Extraction complete!\n";
+	fe::script::disasm_iscripts_to_file(
+		m_config,
+		rom_data,
+		p_asm_filename,
+		p_shop_comments,
+		p_overwrite,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::nes_to_basm(const std::string& p_nes_filename,

@@ -61,8 +61,8 @@ namespace fi {
 
 	public:
 		AsmReader(void) = default;
-		void read_asm_file(const fe::Config& p_config,
-			const std::string& p_filename, std::size_t script_rg2_offset);
+		void read_asm(const fe::Config& p_config, const std::vector<std::string>& p_asm_code,
+			std::size_t script_rg2_offset);
 		std::size_t get_entrypoint_count(void) const;
 
 		// get ROM bytes

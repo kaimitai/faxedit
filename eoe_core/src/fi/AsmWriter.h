@@ -33,8 +33,7 @@ namespace fi {
 
 		AsmWriter(void) = default;
 
-		void generate_asm_file(const fe::Config& p_config,
-			const std::string& p_filename,
+		std::string generate_asm(const fe::Config& p_config,
 			const std::map<std::size_t, fi::Instruction>& p_instructions,
 			const std::vector<std::size_t>& p_entrypoints,
 			const std::set<std::size_t>& p_jump_targets,

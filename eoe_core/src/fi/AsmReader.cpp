@@ -1,7 +1,6 @@
 #include "AsmReader.h"
 #include "fi_constants.h"
 #include "Opcode.h"
-#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
 #include <format>
@@ -11,9 +10,9 @@
 #include <string>
 #include <utility>
 
-void fi::AsmReader::read_asm_file(const fe::Config& p_config,
-	const std::string& p_filename, std::size_t script_rg2_offset) {
-	auto l_lines{ klib::file::read_file_as_strings(p_filename) };
+void fi::AsmReader::read_asm(const fe::Config& p_config, const std::vector<std::string>& p_asm_code,
+	std::size_t script_rg2_offset) {
+	const auto& l_lines{ p_asm_code };
 	fi::SectionType currentSection{ fi::SectionType::Defines };
 
 	for (auto& line : l_lines) {
