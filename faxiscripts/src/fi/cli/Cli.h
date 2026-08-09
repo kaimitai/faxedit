@@ -103,7 +103,6 @@ namespace fi {
 		bool check_mode(const std::string& p_mode,
 			const std::pair<std::string, std::string>& p_cmds);
 		std::vector<int> get_global_transpose(const std::vector<byte>& p_rom) const;
-		void clear_rom_section(std::vector<byte>& rom, std::size_t p_start, std::size_t p_end) const;
 
 	public:
 		Cli(int argc, char** argv);

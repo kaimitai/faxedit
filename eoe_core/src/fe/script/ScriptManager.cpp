@@ -15,6 +15,8 @@
 #include "fm/MMLWriter.h"
 #include "fm/MMLReader.h"
 #include "fm/song/MMLSongCollection.h"
+#include "fm/song/Parser.h"
+#include "fm/song/Tokenizer.h"
 #include "fv/MiscWriter.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
@@ -442,4 +444,51 @@ void fe::script::decompile_mml_to_file(const fe::Config& p_config, const std::ve
 	klib::file::write_string_to_file(mml, p_filename);
 	message(p_message,
 		std::format("MML extracted to {}!", p_filename));
+}
+
+fm::MMLSongCollection fe::script::parse_mml(const std::vector<std::string>& p_mml) {
+	std::string mml_string;
+
+	for (const auto& line : p_mml)
+		mml_string += std::format("{}\n", klib::str::strip_comment(line));
+
+	fm::Tokenizer tokenizer(mml_string);
+	const auto tokens{ tokenizer.tokenize() };
+
+	fm::Parser parser(tokens);
+
+	auto collection{ parser.parse() };
+	collection.sort();
+
+	return collection;
+}
+
+std::vector<byte> fe::script::compile_mml(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::vector<std::string>& p_mml, const MessageCallback& p_message) {
+	auto rom{ p_rom };
+
+	auto collection{ parse_mml(p_mml) };
+
+	const auto bytes{ collection.to_bytecode(p_config) };
+
+	const auto& musicptr{ p_config.pointer(fm::c::ID_MUSIC_PTR) };
+
+	try_patch("Music", bytes.size(), p_config.constant(fm::c::ID_MUSIC_DATA_END) - musicptr.first, p_message);
+
+	for (std::size_t i{ 0 }; i < bytes.size(); ++i)
+		rom.at(musicptr.first + i) = bytes[i];
+
+	return rom;
+}
+
+void fe::script::compile_mml_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_mml_filename, const std::string& p_out_filename, const MessageCallback& p_message) {
+	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+
+	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
+	const auto patched_rom{ compile_mml(p_config, p_rom, mml, p_message) };
+
+	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
+	message(p_message, "File patched");
 }

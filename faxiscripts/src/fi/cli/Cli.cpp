@@ -277,22 +277,12 @@ void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
 
-	auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
-	auto coll{ load_mml_file(p_mml_filename) };
+	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
 
-	auto bytes{ coll.to_bytecode(m_config) };
-
-	const auto& musicptr{ m_config.pointer(fm::c::ID_MUSIC_PTR) };
-
-	try_patch_msg("Music", bytes.size(),
-		m_config.constant(fm::c::ID_MUSIC_DATA_END) - musicptr.first);
-
-	for (std::size_t i{ 0 }; i < bytes.size(); ++i)
-		rom.at(musicptr.first + i) = bytes[i];
-
-	std::cout << "Attempting to patch file " << p_nes_filename << "\n";
-	klib::file::write_bytes_to_file(rom, p_nes_filename);
-	std::cout << "File patched\n";
+	fe::script::compile_mml_to_file(m_config, rom, p_mml_filename, p_nes_filename,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::rom_to_midi(const std::string& p_nes_filename,
@@ -407,25 +397,10 @@ std::vector<byte> fi::Cli::load_rom_and_determine_region(
 }
 
 fm::MMLSongCollection fi::Cli::load_mml_file(const std::string& p_mml_file) const {
-	std::cout << "Attempting to parse mml file " << p_mml_file << "\n";
 
-	std::string mml_string;
-	{
-		const auto strs{ klib::file::read_file_as_strings(p_mml_file) };
+	std::cout << "Attempting to parse mml file " << p_mml_file << '\n';
 
-		for (const auto& str : strs)
-			mml_string += std::format("{}\n", klib::str::strip_comment(str));
-	}
-
-	fm::Tokenizer tokenizer(mml_string);
-	const auto tokens{ tokenizer.tokenize() };
-
-	fm::Parser parser(tokens);
-
-	auto coll{ parser.parse() };
-	coll.sort();
-
-	return coll;
+	return fe::script::parse_mml(klib::file::read_file_as_strings(p_mml_file));
 }
 
 void fi::Cli::set_mode(const std::string& p_mode) {
@@ -516,12 +491,6 @@ void fi::Cli::toggle_flag(std::size_t p_flag_idx) {
 		m_notes = !m_notes;
 	else if (p_flag_idx == 4)
 		m_lilypond_percussion = !m_lilypond_percussion;
-}
-
-void fi::Cli::clear_rom_section(std::vector<byte>& rom,
-	std::size_t p_start, std::size_t p_end) const {
-	for (std::size_t i{ p_start }; i < p_end; ++i)
-		rom.at(i) = 0xff;
 }
 
 // sad that this is needed in 2026

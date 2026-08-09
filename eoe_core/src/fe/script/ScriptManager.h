@@ -3,8 +3,10 @@
 
 #include <functional>
 #include <string>
+#include <vector>
 #include "fe/Config.h"
 #include "fi/Opcode.h"
+#include "fm/song/MMLSongCollection.h"
 
 using byte = unsigned char;
 
@@ -73,6 +75,12 @@ namespace fe::script {
 	std::string decompile_mml(const Config& p_config, const std::vector<byte>& p_rom);
 	void decompile_mml_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message);
+
+	fm::MMLSongCollection parse_mml(const std::vector<std::string>& p_mml);
+	std::vector<byte> compile_mml(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::vector<std::string>& p_mml, const MessageCallback& p_message);
+	void compile_mml_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_mml_filename, const std::string& p_out_filename, const MessageCallback& p_message);
 }
 
 #endif
