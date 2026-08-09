@@ -12,6 +12,7 @@ add_library(eoe_core STATIC
 
     src/common/pugixml/pugixml.cpp
 
+    #fe
     src/fe/ChrStructures.cpp
     src/fe/Chunk.cpp
     src/fe/Config.cpp
@@ -41,6 +42,10 @@ add_library(eoe_core STATIC
     src/fe/sprite/SpriteGfxSnapshotManager.cpp
     src/fe/sprite/SpriteGUILoader.cpp
 
+    #fi
+    src/fi/AsmReader.cpp
+    src/fi/AsmReaderStaticLinker.cpp
+    src/fi/AsmWriter.cpp
     src/fi/FaxString.cpp
     src/fi/IScriptLoader.cpp
     src/fi/Opcode.cpp

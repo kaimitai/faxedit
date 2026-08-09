@@ -61,6 +61,9 @@
     <Filter Include="Source Files\fh">
       <UniqueIdentifier>{4e1dba66-8619-41f2-80f0-721c17b428b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fi\cli">
+      <UniqueIdentifier>{9da44cb3-5cd2-4d20-96c7-88d900e6125b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -219,6 +222,15 @@
     <ClInclude Include="src\fh\TilemapChanges.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
+    <ClInclude Include="src\fi\AsmReader.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\AsmWriter.h">
+      <Filter>Header Files\fi</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\cli\application_constants.h">
+      <Filter>Header Files\fi\cli</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -346,6 +358,15 @@
     </ClCompile>
     <ClCompile Include="src\fh\TilemapChanges.cpp">
       <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\AsmReader.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\AsmReaderStaticLinker.cpp">
+      <Filter>Source Files\fi</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fi\AsmWriter.cpp">
+      <Filter>Source Files\fi</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

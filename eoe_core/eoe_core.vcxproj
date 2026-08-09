@@ -66,6 +66,9 @@
     <ClInclude Include="src\fh\fh_constants.h" />
     <ClInclude Include="src\fh\HackManager.h" />
     <ClInclude Include="src\fh\TilemapChanges.h" />
+    <ClInclude Include="src\fi\AsmReader.h" />
+    <ClInclude Include="src\fi\AsmWriter.h" />
+    <ClInclude Include="src\fi\cli\application_constants.h" />
     <ClInclude Include="src\fi\FaxString.h" />
     <ClInclude Include="src\fi\fi_constants.h" />
     <ClInclude Include="src\fi\IScriptLoader.h" />
@@ -111,6 +114,9 @@
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
     <ClCompile Include="src\fh\TilemapChanges.cpp" />
+    <ClCompile Include="src\fi\AsmReader.cpp" />
+    <ClCompile Include="src\fi\AsmReaderStaticLinker.cpp" />
+    <ClCompile Include="src\fi\AsmWriter.cpp" />
     <ClCompile Include="src\fi\FaxString.cpp" />
     <ClCompile Include="src\fi\IScriptLoader.cpp" />
     <ClCompile Include="src\fi\Opcode.cpp" />
