@@ -1,7 +1,5 @@
 add_library(eoe_core STATIC
 
-    src/common/lodepng.cpp
-
     src/common/klib/Asm6502.cpp
     src/common/klib/Bitreader.cpp
     src/common/klib/Bitwriter.cpp
@@ -10,7 +8,16 @@ add_library(eoe_core STATIC
     src/common/klib/Kstring.cpp
     src/common/klib/NES_tile.cpp
 
+    src/common/midifile/Binasc.cpp
+    src/common/midifile/MidiEvent.cpp
+    src/common/midifile/MidiEventList.cpp
+    src/common/midifile/MidiFile.cpp
+    src/common/midifile/MidiMessage.cpp
+    src/common/midifile/Options.cpp
+
     src/common/pugixml/pugixml.cpp
+
+    src/common/lodepng.cpp
 
     #fe
     src/fe/ChrStructures.cpp
@@ -56,6 +63,21 @@ add_library(eoe_core STATIC
     src/fb/BScriptOpcode.cpp
     src/fb/BScriptReader.cpp
     src/fb/BScriptWriter.cpp
+
+    # fm
+    src/fm/MMLReader.cpp
+    src/fm/MMLWriter.cpp
+    src/fm/MScriptLoader.cpp
+    src/fm/MusicOpcode.cpp
+    src/fm/fm_util.cpp
+
+    src/fm/song/Fraction.cpp
+    src/fm/song/LilyPond.cpp
+    src/fm/song/MMLChannel.cpp
+    src/fm/song/MMLSong.cpp
+    src/fm/song/MMLSongCollection.cpp
+    src/fm/song/Parser.cpp
+    src/fm/song/Tokenizer.cpp
 
     # fh
     src/fh/HackManager.cpp
