@@ -6,9 +6,7 @@
 #include "fm/fm_constants.h"
 #include <stdexcept>
 #include "fb/fb_constants.h"
-#include "fm/MScriptLoader.h"
 #include "fm/MMLReader.h"
-#include "fm/MMLWriter.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include "fm/song/MMLSong.h"
@@ -293,40 +291,12 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
 	const std::string& p_mml_filename, bool p_overwrite) {
 
-	std::cout << std::format("Note value emission {}\n",
-		m_notes ? "enabled" : "disabled");
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
-	// fail early if output file already exists and we do not overwrite
-	if (!p_overwrite && klib::file::file_exists(p_mml_filename))
-		throw std::runtime_error(std::format("music asm file {} exists, and overwrite-flag is not set", p_mml_filename));
-
-	std::cout << "Attempting to read " << p_nes_filename << "\n";
-	const auto& rom_data{ klib::file::read_file_as_bytes(p_nes_filename) };
-
-	if (m_region.empty()) {
-		m_config.determine_region(rom_data);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
-
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom_data);
-
-	fm::MScriptLoader loader(m_config, rom_data);
-	loader.parse_rom();
-
-	std::cout << "Detected " << loader.get_song_count() << " music tracks\n";
-
-	fm::MMLWriter l_writer(m_config);
-	l_writer.generate_mml_file(m_out_file, loader.m_instrs, loader.m_opcodes,
-		loader.m_ptr_table,
-		loader.m_jump_targets,
-		loader.m_chan_pitch_offsets,
-		m_notes);
-
-	std::cout << "Extraction complete!\n";
+	fe::script::disasm_mscripts_to_file(m_config, rom_data, p_mml_filename, m_notes, p_overwrite,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::nes_to_misc(const std::string& p_nes_filename,

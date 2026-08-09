@@ -9,6 +9,8 @@
 #include "fi/AsmReader.h"
 #include "fb/BScriptWriter.h"
 #include "fb/BScriptReader.h"
+#include "fm/MScriptLoader.h"
+#include "fm/MMLWriter.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
@@ -276,5 +278,41 @@ void fe::script::disasm_bscripts_to_file(const Config& p_config, const std::vect
 	const auto asm_code{ disasm_bscripts(p_config, p_rom) };
 	message(p_message, std::format("Generating output file {}", p_filename));
 	klib::file::write_string_to_file(asm_code, p_filename);
+	message(p_message, "Extraction complete!");
+}
+
+// mScripts
+std::string fe::script::disasm_mscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	bool p_emit_notes, const MessageCallback& p_message) {
+	fm::MScriptLoader loader(p_config, p_rom);
+	loader.parse_rom();
+
+	message(p_message, std::format("Detected {} music tracks", loader.get_song_count()));
+
+	fm::MMLWriter writer(p_config);
+	return writer.generate_mml(
+		loader.m_instrs,
+		loader.m_opcodes,
+		loader.m_ptr_table,
+		loader.m_jump_targets,
+		loader.m_chan_pitch_offsets,
+		p_emit_notes);
+}
+
+void fe::script::disasm_mscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_filename, bool p_emit_notes, bool p_overwrite,
+	const MessageCallback& p_message) {
+
+	if (!p_overwrite && klib::file::file_exists(p_filename))
+		throw std::runtime_error(std::format(
+			"Music asm file {} exists, and overwrite-flag is not set",
+			p_filename));
+
+	message(p_message, std::format("Note value emission {}", p_emit_notes ? "enabled" : "disabled"));
+
+	message(p_message, "Attempting to parse ROM music layer");
+	const auto mscript_asm{ disasm_mscripts(p_config, p_rom, p_emit_notes, p_message) };
+	message(p_message, std::format("Generating output file {}", p_filename));
+	klib::file::write_string_to_file(mscript_asm, p_filename);
 	message(p_message, "Extraction complete!");
 }

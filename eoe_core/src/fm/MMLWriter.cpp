@@ -1,7 +1,6 @@
 #include "MMLWriter.h"
 #include <format>
 #include <utility>
-#include "common/klib/Kfile.h"
 #include "fm_constants.h"
 #include "fi/cli/application_constants.h"
 #include "fm_util.h"
@@ -16,8 +15,8 @@ fm::MMLWriter::MMLWriter(const fe::Config& p_config) {
 		p_config.bmap(c::ID_DEFINES_ENVELOPE)));
 }
 
-void fm::MMLWriter::generate_mml_file(const std::string& p_filename,
-	const std::map<std::size_t, fm::MusicInstruction>& p_instructions,
+std::string fm::MMLWriter::generate_mml(const std::map<std::size_t,
+	fm::MusicInstruction>& p_instructions,
 	const std::map<byte, fm::MusicOpcode>& p_opcodes,
 	const std::vector<std::size_t>& p_entrypoints,
 	const std::set<std::size_t>& p_jump_targets,
@@ -156,7 +155,7 @@ void fm::MMLWriter::generate_mml_file(const std::string& p_filename,
 		}
 	}
 
-	klib::file::write_string_to_file(af, p_filename);
+	return af;
 }
 
 

@@ -23,8 +23,8 @@ namespace fm {
 
 	public:
 		MMLWriter(const fe::Config& p_config);
-		void generate_mml_file(const std::string& p_filename,
-			const std::map<std::size_t, fm::MusicInstruction>& p_instructions,
+		std::string generate_mml(const std::map<std::size_t,
+			fm::MusicInstruction>& p_instructions,
 			const std::map<byte, fm::MusicOpcode>& p_opcodes,
 			const std::vector<std::size_t>& p_entrypoints,
 			const std::set<std::size_t>& p_jump_targets,

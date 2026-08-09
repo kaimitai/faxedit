@@ -42,6 +42,13 @@ namespace fe::script {
 	void disasm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message);
 
+	// mScripts
+	std::string disasm_mscripts(const Config& p_config, const std::vector<byte>& p_rom, bool p_emit_notes,
+		const MessageCallback& p_message);
+	void disasm_mscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_filename, bool p_emit_notes, bool p_overwrite,
+		const MessageCallback& p_message);
+
 }
 
 #endif
