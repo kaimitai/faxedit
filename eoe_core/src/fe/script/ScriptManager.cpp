@@ -51,7 +51,7 @@ std::vector<int> fe::script::get_global_transpose(const fe::Config& p_config, co
 }
 
 // iScripts
-std::vector<byte> fe::script::asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
+std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
 	bool p_strict, const MessageCallback& p_message) {
 	auto rom{ p_rom };
@@ -162,7 +162,7 @@ std::vector<byte> fe::script::asm_iscripts(const Config& p_config, const std::ve
 	return rom;
 }
 
-void fe::script::asm_iscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+void fe::script::asm_iscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_asm_filename, const std::string& p_out_filename,
 	const fi::ScriptOpcodeInfo& p_opcode_info, bool p_strict,
 	const MessageCallback& p_message) {
@@ -212,7 +212,7 @@ void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::
 }
 
 // bScripts
-std::vector<byte> fe::script::asm_bscripts(const Config& p_config, const std::vector<byte>& p_rom,
+std::vector<byte> fe::script::asm_bscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, bool p_strict, const MessageCallback& p_message) {
 	auto rom{ p_rom };
 
@@ -286,7 +286,7 @@ std::string fe::script::disasm_bscripts(const fe::Config& p_config, const std::v
 	return asmw.generate_asm(loader);
 }
 
-void fe::script::disasm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+void fe::script::disasm_bscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message) {
 
 	if (!p_overwrite && klib::file::file_exists(p_filename))
@@ -347,7 +347,7 @@ std::string fe::script::disasm_mscripts(const fe::Config& p_config, const std::v
 		p_emit_notes);
 }
 
-void fe::script::disasm_mscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+void fe::script::disasm_mscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_filename, bool p_emit_notes, bool p_overwrite,
 	const MessageCallback& p_message) {
 
@@ -403,7 +403,7 @@ std::string fe::script::extract_misc(const fe::Config& p_config, const std::vect
 	return writer.generate_txt();
 }
 
-void fe::script::extract_misc_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+void fe::script::extract_misc_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_filename, bool p_include_all_sprites, bool p_overwrite,
 	const MessageCallback& p_message) {
 
@@ -423,7 +423,7 @@ void fe::script::extract_misc_to_file(const Config& p_config, const std::vector<
 }
 
 // MML interface
-std::string fe::script::decompile_mml(const Config& p_config, const std::vector<byte>& p_rom) {
+std::string fe::script::decompile_mml(const fe::Config& p_config, const std::vector<byte>& p_rom) {
 
 	fm::MScriptLoader loader(p_config, p_rom);
 	fm::MMLSongCollection collection(get_global_transpose(p_config, p_rom));
@@ -499,7 +499,7 @@ std::vector<smf::MidiFile> fe::script::mml_to_midi(const std::vector<std::string
 	return collection.to_midi();
 }
 
-std::vector<smf::MidiFile> fe::script::rom_to_midi(const Config& p_config, const std::vector<byte>& p_rom) {
+std::vector<smf::MidiFile> fe::script::rom_to_midi(const fe::Config& p_config, const std::vector<byte>& p_rom) {
 	fm::MScriptLoader loader(p_config, p_rom);
 
 	fm::MMLSongCollection collection(
@@ -531,8 +531,51 @@ void fe::script::mml_to_midi_files(const std::string& p_mml_filename, const std:
 	write_midi_files(midis, p_out_file_prefix, p_message);
 }
 
-void fe::script::rom_to_midi_files(const Config& p_config, const std::vector<byte>& p_rom,
+void fe::script::rom_to_midi_files(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_out_file_prefix, const MessageCallback& p_message) {
 	auto midis{ rom_to_midi(p_config, p_rom) };
 	write_midi_files(midis, p_out_file_prefix, p_message);
+}
+
+// lilypond
+std::vector<std::string> fe::script::mml_to_lilypond(const std::vector<std::string>& p_mml, bool p_percussion) {
+	auto collection{ parse_mml(p_mml) };
+	return collection.to_lilypond(p_percussion);
+}
+
+std::vector<std::string> fe::script::rom_to_lilypond(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	bool p_percussion) {
+	fm::MScriptLoader loader(p_config, p_rom);
+	fm::MMLSongCollection collection(get_global_transpose(p_config, p_rom));
+	collection.extract_bytecode_collection(loader);
+	return collection.to_lilypond(p_percussion);
+}
+
+void fe::script::write_lilypond_files(const std::vector<std::string>& p_lilypond,
+	const std::string& p_out_file_prefix, const MessageCallback& p_message) {
+
+	message(p_message, "Attempting to write LilyPond files...");
+
+	for (std::size_t i{ 0 }; i < p_lilypond.size(); ++i) {
+		const std::string filename{ std::format("{}-{:02}.ly", p_out_file_prefix, i + 1) };
+		klib::file::write_string_to_file(p_lilypond[i], filename);
+		message(p_message, std::format("Wrote {}!", filename));
+	}
+}
+
+void fe::script::mml_to_lilypond_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
+	bool p_percussion, const MessageCallback& p_message) {
+	message(p_message, std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled"));
+	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+
+	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
+	const auto lilypond{ mml_to_lilypond(mml, p_percussion) };
+	write_lilypond_files(lilypond, p_out_file_prefix, p_message);
+}
+
+void fe::script::rom_to_lilypond_files(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_out_file_prefix, bool p_percussion, const MessageCallback& p_message) {
+	message(p_message, std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled"));
+	const auto lilypond{ rom_to_lilypond(p_config, p_rom, p_percussion) };
+	write_lilypond_files(lilypond, p_out_file_prefix, p_message);
 }

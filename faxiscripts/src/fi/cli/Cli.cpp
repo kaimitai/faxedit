@@ -1,16 +1,10 @@
 #include "Cli.h"
 #include <format>
 #include <iostream>
+#include <stdexcept>
 #include "fi/cli/application_constants.h"
 #include "fi/fi_constants.h"
-#include "fm/fm_constants.h"
-#include <stdexcept>
 #include "common/klib/Kfile.h"
-#include "common/klib/Kstring.h"
-#include "fm/song/MMLSong.h"
-#include "fm/song/MMLSongCollection.h"
-#include "fm/song/Tokenizer.h"
-#include "fm/song/Parser.h"
 #include "fe/script/ScriptManager.h"
 
 #ifdef _WIN32
@@ -298,34 +292,20 @@ void fi::Cli::mml_to_midi(const std::string& p_mml_filename,
 
 void fi::Cli::rom_to_lilypond(const std::string& p_nes_filename,
 	const std::string& p_out_file_prefix) {
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
-	auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
-	fm::MScriptLoader loader(m_config, rom_data);
-	fm::MMLSongCollection coll(get_global_transpose(rom_data));
-	coll.extract_bytecode_collection(loader);
-	save_lilypond_files(coll, p_out_file_prefix);
+	fe::script::rom_to_lilypond_files(m_config, rom_data, p_out_file_prefix, m_lilypond_percussion,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::mml_to_lilypond(const std::string& p_mml_filename,
 	const std::string& p_out_file_prefix) {
-	auto coll{ load_mml_file(p_mml_filename) };
-	save_lilypond_files(coll, p_out_file_prefix);
-}
-
-void fi::Cli::save_lilypond_files(fm::MMLSongCollection& coll,
-	const std::string& p_out_file_prefix) const {
-	std::cout << std::format("LilyPond percussion staff {}\n\n",
-		m_lilypond_percussion ? "enabled" : "disabled");
-
-	std::cout << "Attempting to write LilyPond files...\n";
-
-	auto lps{ coll.to_lilypond(m_lilypond_percussion) };
-
-	for (std::size_t i{ 0 }; i < lps.size(); ++i) {
-		std::string l_filename{ std::format("{}-{:02}.ly", p_out_file_prefix, i + 1) };
-		klib::file::write_string_to_file(lps[i], l_filename);
-		std::cout << "Wrote " << l_filename << "!\n";
-	}
+	fe::script::mml_to_lilypond_files(p_mml_filename, p_out_file_prefix, m_lilypond_percussion,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::dump_config(const std::string& p_nes_filename,
@@ -376,13 +356,6 @@ std::vector<byte> fi::Cli::load_rom_and_determine_region(
 	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom_data);
 
 	return rom_data;
-}
-
-fm::MMLSongCollection fi::Cli::load_mml_file(const std::string& p_mml_file) const {
-
-	std::cout << "Attempting to parse mml file " << p_mml_file << '\n';
-
-	return fe::script::parse_mml(klib::file::read_file_as_strings(p_mml_file));
 }
 
 void fi::Cli::set_mode(const std::string& p_mode) {
@@ -437,17 +410,6 @@ void fi::Cli::set_mode(const std::string& p_mode) {
 bool fi::Cli::check_mode(const std::string& p_mode,
 	const std::pair<std::string, std::string>& p_cmds) {
 	return (p_mode == p_cmds.first || p_mode == p_cmds.second);
-}
-
-std::vector<int> fi::Cli::get_global_transpose(const std::vector<byte>& p_rom) const {
-	std::vector<int> result;
-
-	auto transp{ m_config.constant(fm::c::ID_CHAN_PITCH_OFFSET) };
-
-	for (std::size_t i{ 0 }; i < 4; ++i)
-		result.push_back(static_cast<int>(static_cast<char>(p_rom.at(i + transp))));
-
-	return result;
 }
 
 // TODO: Streamline flag lookup with const map

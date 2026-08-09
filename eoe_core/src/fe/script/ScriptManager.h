@@ -93,6 +93,18 @@ namespace fe::script {
 		const MessageCallback& p_message);
 	void rom_to_midi_files(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_out_file_prefix, const MessageCallback& p_message);
+
+	// lilypond
+	std::vector<std::string> mml_to_lilypond(const std::vector<std::string>& p_mml, bool p_percussion);
+	std::vector<std::string> rom_to_lilypond(const Config& p_config, const std::vector<byte>& p_rom,
+		bool p_percussion);
+
+	void write_lilypond_files(const std::vector<std::string>& p_lilypond, const std::string& p_out_file_prefix,
+		const MessageCallback& p_message);
+	void mml_to_lilypond_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
+		bool p_percussion, const MessageCallback& p_message);
+	void rom_to_lilypond_files(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_out_file_prefix, bool p_percussion, const MessageCallback& p_message);
 }
 
 #endif
