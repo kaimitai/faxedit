@@ -1,0 +1,64 @@
+<NotepadPlus>
+    <UserLang name="FaxIScript" ext="asm" udlVersion="2.1">
+        <Settings>
+            <Global caseIgnored="no" allowFoldOfComments="no" foldCompact="no" forcePureLC="0" decimalSeparator="0" />
+            <Prefix Keywords1="no" Keywords2="no" Keywords3="no" Keywords4="no" Keywords5="no" Keywords6="no" Keywords7="no" Keywords8="no" />
+        </Settings>
+        <KeywordLists>
+            <Keywords name="Comments">00; 01 02 03 04</Keywords>
+            <Keywords name="Numbers, prefix1"></Keywords>
+            <Keywords name="Numbers, prefix2">$</Keywords>
+            <Keywords name="Numbers, extras1">0 1 2 3 4 5 6 7 8 9 a b c d e f</Keywords>
+            <Keywords name="Numbers, extras2"></Keywords>
+            <Keywords name="Numbers, suffix1"></Keywords>
+            <Keywords name="Numbers, suffix2"></Keywords>
+            <Keywords name="Numbers, range"></Keywords>
+            <Keywords name="Operators1"></Keywords>
+            <Keywords name="Operators2"></Keywords>
+            <Keywords name="Folders in code1, open"></Keywords>
+            <Keywords name="Folders in code1, middle"></Keywords>
+            <Keywords name="Folders in code1, close"></Keywords>
+            <Keywords name="Folders in code2, open"></Keywords>
+            <Keywords name="Folders in code2, middle"></Keywords>
+            <Keywords name="Folders in code2, close"></Keywords>
+            <Keywords name="Folders in comment, open"></Keywords>
+            <Keywords name="Folders in comment, middle"></Keywords>
+            <Keywords name="Folders in comment, close"></Keywords>
+            <Keywords name="Keywords1">define</Keywords>
+            <Keywords name="Keywords2">WEAPON_HAND_DAGGER&#x000D;&#x000A;WEAPON_LONG_SWORD&#x000D;&#x000A;WEAPON_GIANT_BLADE&#x000D;&#x000A;WEAPON_DRAGON_SLAYER&#x000D;&#x000A;ARMOR_LEATHER&#x000D;&#x000A;ARMOR_STUDDED_MAIL&#x000D;&#x000A;ARMOR_FULL_PLATE&#x000D;&#x000A;ARMOR_BATTLE_SUIT&#x000D;&#x000A;SHIELD_SMALL&#x000D;&#x000A;SHIELD_LARGE&#x000D;&#x000A;SHIELD_MAGIC&#x000D;&#x000A;SHIELD_BATTLE_HELMET&#x000D;&#x000A;MAGIC_DELUGE&#x000D;&#x000A;MAGIC_THUNDER&#x000D;&#x000A;MAGIC_FIRE&#x000D;&#x000A;MAGIC_DEATH&#x000D;&#x000A;MAGIC_TILTE&#x000D;&#x000A;SPECIAL_RING_OF_ELF&#x000D;&#x000A;SPECIAL_RING_OF_RUBY&#x000D;&#x000A;SPECIAL_RING_OF_DWORF&#x000D;&#x000A;SPECIAL_DEMONS_RING&#x000D;&#x000A;KEY_A&#x000D;&#x000A;KEY_K&#x000D;&#x000A;KEY_Q&#x000D;&#x000A;KEY_J&#x000D;&#x000A;KEY_JO&#x000D;&#x000A;MATTOCK&#x000D;&#x000A;SPECIAL_MAGICAL_ROD&#x000D;&#x000A;UNUSED_CRYSTAL&#x000D;&#x000A;UNUSED_LAMP&#x000D;&#x000A;ITEM_HOUR_GLASS&#x000D;&#x000A;UNUSED_BOOK&#x000D;&#x000A;ITEM_WING_BOOTS&#x000D;&#x000A;ITEM_RED_POTION&#x000D;&#x000A;ITEM_POISON&#x000D;&#x000A;SPECIAL_ELIXIR&#x000D;&#x000A;SPECIAL_PENDANT&#x000D;&#x000A;SPECIAL_BLACK_ONYX&#x000D;&#x000A;SPECIAL_FIRE_CRYSTAL</Keywords>
+            <Keywords name="Keywords3">RANK_NOVICE&#x000D;&#x000A;RANK_ASPIRANT&#x000D;&#x000A;RANK_BATTLER&#x000D;&#x000A;RANK_FIGHTER&#x000D;&#x000A;RANK_ADEPT&#x000D;&#x000A;RANK_CHEVALIER&#x000D;&#x000A;RANK_VETERAN&#x000D;&#x000A;RANK_WARRIOR&#x000D;&#x000A;RANK_SWORDMAN&#x000D;&#x000A;RANK_HERO&#x000D;&#x000A;RANK_SOLDIER&#x000D;&#x000A;RANK_MYRMIDON&#x000D;&#x000A;RANK_CHAMPION&#x000D;&#x000A;RANK_SUPERHERO&#x000D;&#x000A;RANK_PALADIN&#x000D;&#x000A;RANK_LORD</Keywords>
+            <Keywords name="Keywords4">QUEST_TOWER_SPRING&#x000D;&#x000A;QUEST_SKY_SPRING&#x000D;&#x000A;QUEST_DUNGEON_SPRING&#x000D;&#x000A;QUEST_PATH_TO_MASCON&#x000D;&#x000A;QUEST_EXTRA&#x000D;&#x000A;QUEST_WYVERN_MATTOCK</Keywords>
+            <Keywords name="Keywords5">GENERIC&#x000D;&#x000A;KING&#x000D;&#x000A;GURU&#x000D;&#x000A;MARTIAL_ARTIST&#x000D;&#x000A;MAGICIAN&#x000D;&#x000A;DOCTOR&#x000D;&#x000A;NURSE&#x000D;&#x000A;PINK_SHIRT&#x000D;&#x000A;SMOKER&#x000D;&#x000A;MEAT_SALESMAN&#x000D;&#x000A;TOOLS_SALESMAN&#x000D;&#x000A;KEY_SALESMAN&#x000D;&#x000A;.textbox&#x000D;&#x000A;.entrypoint</Keywords>
+            <Keywords name="Keywords6">IfTitleChange&#x000D;&#x000A;IfQuest&#x000D;&#x000A;IfRank&#x000D;&#x000A;IfGold&#x000D;&#x000A;IfBuy&#x000D;&#x000A;IfItem&#x000D;&#x000A;IfMsgPrompt&#x000D;&#x000A;IFTITLECHANGE&#x000D;&#x000A;IFQUEST&#x000D;&#x000A;IFRANK&#x000D;&#x000A;IFGOLD&#x000D;&#x000A;IFBUY&#x000D;&#x000A;IFITEM&#x000D;&#x000A;IFMSGPROMPT&#x000D;&#x000A;iftitlechange&#x000D;&#x000A;ifquest&#x000D;&#x000A;ifrank&#x000D;&#x000A;ifgold&#x000D;&#x000A;ifbuy&#x000D;&#x000A;ifitem&#x000D;&#x000A;ifmsgprompt</Keywords>
+            <Keywords name="Keywords7">LoseGold&#x000D;&#x000A;SetSpawn&#x000D;&#x000A;GetItem&#x000D;&#x000A;OpenShopBuy&#x000D;&#x000A;OpenShopSell&#x000D;&#x000A;GetGold&#x000D;&#x000A;GetMana&#x000D;&#x000A;SetQuest&#x000D;&#x000A;LoseItem&#x000D;&#x000A;GetHealth&#x000D;&#x000A;ShowMantra&#x000D;&#x000A;LOSEGOLD&#x000D;&#x000A;SETSPAWN&#x000D;&#x000A;GETITEM&#x000D;&#x000A;OPENSHOPBUY&#x000D;&#x000A;OPENSHOPSELL&#x000D;&#x000A;GETGOLD&#x000D;&#x000A;GETMANA&#x000D;&#x000A;SETQUEST&#x000D;&#x000A;LOSEITEM&#x000D;&#x000A;GETHEALTH&#x000D;&#x000A;SHOWMANTRA&#x000D;&#x000A;losegold&#x000D;&#x000A;setspawn&#x000D;&#x000A;getitem&#x000D;&#x000A;openshopbuy&#x000D;&#x000A;openshopsell&#x000D;&#x000A;getgold&#x000D;&#x000A;getmana&#x000D;&#x000A;setquest&#x000D;&#x000A;loseitem&#x000D;&#x000A;gethealth&#x000D;&#x000A;showmantra</Keywords>
+            <Keywords name="Keywords8">End&#x000D;&#x000A;EndGame&#x000D;&#x000A;Jump&#x000D;&#x000A;END&#x000D;&#x000A;ENDGAME&#x000D;&#x000A;JUMP&#x000D;&#x000A;end&#x000D;&#x000A;endgame&#x000D;&#x000A;jump&#x000D;&#x000A;Msg&#x000D;&#x000A;MsgNoskip&#x000D;&#x000A;MsgPrompt&#x000D;&#x000A;MSG&#x000D;&#x000A;MSGNOSKIP&#x000D;&#x000A;MSGPROMPT&#x000D;&#x000A;msg&#x000D;&#x000A;msgnoskip&#x000D;&#x000A;msgprompt</Keywords>
+            <Keywords name="Delimiters">00[ 01 02] 03 04 05 06&quot; 07 08&quot; 09 10 11 12( 13 14) 15 16 17 18@ 19 20((EOL)) 21 22 23</Keywords>
+        </KeywordLists>
+        <Styles>
+            <WordsStyle name="DEFAULT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="COMMENTS" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="LINE COMMENTS" fgColor="808080" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="NUMBERS" fgColor="0000FF" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS1" fgColor="0000FF" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS2" fgColor="C78741" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS3" fgColor="B451D9" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS4" fgColor="008040" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="KEYWORDS5" fgColor="000080" bgColor="FFFFFF" fontStyle="3" nesting="0" />
+            <WordsStyle name="KEYWORDS6" fgColor="FF8040" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="KEYWORDS7" fgColor="AA066C" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="KEYWORDS8" fgColor="213596" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="OPERATORS" fgColor="FF0000" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE1" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE2" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN COMMENT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS1" fgColor="000080" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="DELIMITERS2" fgColor="DDCE17" bgColor="FFFFFF" fontStyle="2" nesting="0" />
+            <WordsStyle name="DELIMITERS3" fgColor="6B6563" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS4" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS5" fgColor="FF8040" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="DELIMITERS6" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS7" fgColor="CCCC00" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="DELIMITERS8" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+        </Styles>
+    </UserLang>
+</NotepadPlus>

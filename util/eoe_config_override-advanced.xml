@@ -1,0 +1,114 @@
+<!--
+    Echoes of Eolis / FaxIScripts
+    Advanced configuration examples
+
+    Rename this file to:
+
+        eoe_config_override.xml
+
+    and edit the settings you need.
+
+    Any entries omitted from this file will fall back to the defaults in eoe_config.xml.
+-->
+<eoe_config>
+
+	<!-- region definition overrides -->
+	<regions>
+	</regions>
+
+	<!-- pointer overrides -->
+	<pointers>
+	</pointers>
+
+	<!-- constant overrides -->
+	<consts>
+		<!-- how many interrupts to wait before drawing the next tile during tilemap changes (max 34) -->
+		<const name="hack_tm_change_wait_frames" value="4" />
+		<!-- which sound effect to play when placing a tile - $ff for none -->
+		<const name="hack_tm_change_sound_effect" value="$17" />
+
+		<!-- bank for tilemap change subsystem -->
+		<const name="hack_tm_change_bank" region="en-transl" value="30" />
+		<const name="hack_tm_change_bank" value="9" />
+
+		<!-- cpu address in that bank for the tilemap change subsystem -->
+		<const name="hack_tm_change_cpu_addr" region="en-transl" value="$8000" />
+		<const name="hack_tm_change_cpu_addr" value="$a000" />
+	</consts>
+
+	<!-- value set overrides -->
+	<sets>
+	</sets>
+
+	<!-- boolean overrides -->
+	<bools>
+	</bools>
+
+	<!-- byte map overrides -->
+	<byte_to_string_maps>
+
+		<byte_to_string_map name="command_byte_labels">
+			<entry byte="$00" str="Final Spring Opening" />
+			<entry byte="$01" str="Boss Room" />
+			<entry byte="$02" str="End-Game Room" />
+			<entry byte="$03" str="Tilemap Changes" />
+		</byte_to_string_map>
+
+		<byte_to_string_map name="iscript_opcodes">
+			<!-- regular implementations - do not modify unless a corresponding hack has been sideloaded -->
+			<entry byte="0" str="Mnemonic=End,Flow=End,Terminal=true" />
+			<entry byte="1" str="Mnemonic=MsgNoskip,Args=Byte:TextString" />
+			<entry byte="2" str="Mnemonic=MsgPrompt,Args=Byte:TextString" />
+			<entry byte="3" str="Mnemonic=Msg,Args=Byte:TextString" />
+			<entry byte="4" str="Mnemonic=IfTitleChange,Flow=Jump" />
+			<entry byte="5" str="Mnemonic=LoseGold,Args=Short" />
+			<entry byte="6" str="Mnemonic=SetSpawn,Args=Byte" />
+			<entry byte="7" str="Mnemonic=GetItem,Args=Byte:Item" />
+			<entry byte="8" str="Mnemonic=OpenShopBuy,Flow=Read" />
+			<entry byte="9" str="Mnemonic=GetGold,Args=Short" />
+			<entry byte="10" str="Mnemonic=GetMana,Args=Byte" />
+			<entry byte="11" str="Mnemonic=IfQuest,Args=Byte:Quest,Flow=Jump" />
+			<entry byte="12" str="Mnemonic=IfRank,Args=Byte:Rank,Flow=Jump" />
+			<entry byte="13" str="Mnemonic=IfGold,Flow=Jump" />
+			<entry byte="14" str="Mnemonic=SetQuest,Args=Byte:Quest" />
+			<entry byte="15" str="Mnemonic=IfBuy,Flow=Jump" />
+			<entry byte="16" str="Mnemonic=LoseItem,Args=Byte:Item" />
+			<entry byte="17" str="Mnemonic=OpenShopSell,Flow=Read" />
+			<entry byte="18" str="Mnemonic=IfItem,Args=Byte:Item,Flow=Jump" />
+			<entry byte="19" str="Mnemonic=GetHealth,Args=Byte" />
+			<entry byte="20" str="Mnemonic=ShowMantra" />
+			<entry byte="21" str="Mnemonic=EndGame,Flow=End,Terminal=true" />
+			<entry byte="22" str="Mnemonic=IfMsgPrompt,Args=Byte:TextString,Flow=Jump" />
+			<entry byte="23" str="Mnemonic=Jump,Flow=Jump,Terminal=true" />
+
+			<!--
+					Built-in runtime library.
+
+					Remove opcodes you do not need, or add additional Impl entries.
+					Impl entries must appear after all non-Impl entries. If the opcode
+					numbers have gaps, the map becomes dense when loaded.
+					
+					The entries below are examples rather than a recommended or required set.
+			-->
+
+			<entry byte="24" str="Impl=IfSelectedFlag" />
+			<entry byte="25" str="Impl=SetSelectedFlag" />
+			<entry byte="26" str="Impl=IfWorld" />
+			<entry byte="27" str="Impl=IfScreen" />
+			<entry byte="28" str="Impl=IfDoorYX" />
+			<entry byte="29" str="Impl=JSR" />
+			<entry byte="30" str="Impl=Return" />
+			<entry byte="31" str="Impl=ForceDoor" />
+			<entry byte="32" str="Impl=SelectFlag" />
+			<entry byte="33" str="Impl=SetFlag" />
+			<entry byte="34" str="Impl=SetQuestFlag" />
+			<entry byte="35" str="Impl=GetXP" />
+			<entry byte="36" str="Impl=IfYX" />
+			<entry byte="37" str="Impl=IfFlag" />
+			<entry byte="38" str="Impl=RunScreenHandler" />
+			<entry byte="39" str="Impl=Die" />
+		</byte_to_string_map>
+
+	</byte_to_string_maps>
+
+</eoe_config>
