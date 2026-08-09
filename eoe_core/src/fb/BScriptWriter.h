@@ -29,8 +29,7 @@ namespace fb {
 
 	public:
 		BScriptWriter(const fe::Config& p_config);
-		void write_asm(const std::string& p_filename,
-			const fb::BScriptLoader& loader) const;
+		std::string generate_asm(const fb::BScriptLoader& p_loader) const;
 
 	};
 

@@ -343,35 +343,14 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 	if (p_overwrite)
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
-	// fail early if asm file already exists and we do not overwrite
-	if (!p_overwrite && klib::file::file_exists(p_basm_filename))
-		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_basm_filename));
-
-	std::cout << "Attempting to read " << p_nes_filename << "\n";
-	const auto rom_data{ klib::file::read_file_as_bytes(p_nes_filename) };
-
-	if (m_region.empty()) {
-		m_config.determine_region(rom_data);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
-
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom_data);
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
 	fb::BScriptLoader loader(m_config, rom_data);
 
-	std::cout << "Attempting to parse ROM behavior script layer\n";
-	loader.parse_rom();
-
-	fb::BScriptWriter asmw(m_config);
-
-	std::cout << "Generating output file " << p_basm_filename << "\n";
-	asmw.write_asm(p_basm_filename, loader);
-
-	std::cout << "Extraction complete!\n";
+	fe::script::disasm_bscripts_to_file(m_config, rom_data, p_basm_filename, p_overwrite,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::nes_to_masm(const std::string& p_nes_filename,

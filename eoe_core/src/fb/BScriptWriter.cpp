@@ -1,5 +1,4 @@
 #include "BScriptWriter.h"
-#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include "fi/cli/application_constants.h"
 #include "fb_constants.h"
@@ -46,8 +45,7 @@ std::string fb::BScriptWriter::get_label_name(std::size_t p_ptr_table_idx, std::
 
 }
 
-void fb::BScriptWriter::write_asm(const std::string& p_filename,
-	const fb::BScriptLoader& loader) const {
+std::string fb::BScriptWriter::generate_asm(const fb::BScriptLoader& loader) const {
 	bool rg2_marked{ false };
 
 	std::string af{
@@ -104,7 +102,7 @@ void fb::BScriptWriter::write_asm(const std::string& p_filename,
 		}
 	}
 
-	klib::file::write_string_to_file(af, p_filename);
+	return af;
 }
 
 void fb::BScriptWriter::emit_operand(std::string& p_asm, std::size_t p_value,

@@ -31,6 +31,11 @@ namespace fe::script {
 		const std::string& p_filename, bool p_shop_comments, bool p_overwrite,
 		const MessageCallback& p_message);
 
+	// bScripts
+	std::string disasm_bscripts(const Config& p_config, const std::vector<byte>& p_rom);
+	void disasm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message);
+
 }
 
 #endif

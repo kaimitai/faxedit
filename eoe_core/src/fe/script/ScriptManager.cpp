@@ -7,10 +7,12 @@
 #include "fi/IScriptLoader.h"
 #include "fi/AsmWriter.h"
 #include "fi/AsmReader.h"
+#include "fb/BScriptWriter.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 
+// helpers
 void fe::script::message(const MessageCallback& p_callback, const std::string& p_message) {
 	if (p_callback)
 		p_callback(p_message);
@@ -27,6 +29,7 @@ void fe::script::try_patch(const std::string& p_data_type, std::size_t p_data_si
 		throw std::runtime_error(std::format("Size limits exceeded for {}", p_data_type));
 }
 
+// iScripts
 std::vector<byte> fe::script::asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
 	bool p_strict, const MessageCallback& p_message) {
@@ -182,6 +185,28 @@ void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::
 	message(p_message, "Attempting to parse ROM scripting layer");
 	const auto asm_code{ disasm_iscripts(p_config, p_rom, p_shop_comments, script_count) };
 	message(p_message, std::format("Detected {} script entrypoints", script_count));
+	message(p_message, std::format("Generating output file {}", p_filename));
+	klib::file::write_string_to_file(asm_code, p_filename);
+	message(p_message, "Extraction complete!");
+}
+
+// bScripts
+std::string fe::script::disasm_bscripts(const fe::Config& p_config, const std::vector<byte>& p_rom) {
+	fb::BScriptLoader loader(p_config, p_rom);
+	loader.parse_rom();
+
+	fb::BScriptWriter asmw(p_config);
+	return asmw.generate_asm(loader);
+}
+
+void fe::script::disasm_bscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message) {
+
+	if (!p_overwrite && klib::file::file_exists(p_filename))
+		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_filename));
+
+	message(p_message, "Attempting to parse ROM behavior script layer");
+	const auto asm_code{ disasm_bscripts(p_config, p_rom) };
 	message(p_message, std::format("Generating output file {}", p_filename));
 	klib::file::write_string_to_file(asm_code, p_filename);
 	message(p_message, "Extraction complete!");
