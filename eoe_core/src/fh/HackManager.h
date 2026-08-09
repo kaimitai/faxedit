@@ -1,0 +1,160 @@
+#ifndef FH_HACKMANAGER_H
+#define FH_HACKMANAGER_H
+
+#include "fe/Config.h"
+#include "TilemapChanges.h"
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
+using byte = unsigned char;
+using word = uint16_t;
+
+namespace fh {
+
+	enum class HackLib {
+		SetFlag, ClearFlag, IfFlag, SelectFlag, SetSelectedFlag, IfSelectedFlag, ClearSelectedFlag,
+		SetQuestFlag, ClearQuestFlag, IfQuestFlag,
+		RunScreenHandler, GetXP, IfWorld, IfScreen, IfStage, Die,
+		JSR, Return, ForceDoor, IfYX, IfDoorYX,
+		IfAddrEquals, IfAddrBetween, SetAddr,
+		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
+		AtlasDevSetMusic, AtlasDevPlaySFX, AtlasDevIfMusic,
+		AtlasDevShowSequentialMessages, AtlasDevShowNumberInMessage, AtlasDevShowChoiceToVar, AtlasDevClearPortrait, AtlasDevEntitySayMessage, AtlasDevShowMessageFromVar, AtlasDevHideTextbox, AtlasDevSetPortrait,
+		AtlasDevOpenTextbox, AtlasDevCloseDialogue,
+		AtlasDevIfEntityCountAtLeast, AtlasDevCountActiveEntities, AtlasDevFindEntity,
+		AtlasDevFreezeEntities, AtlasDevResumeEntities, AtlasDevIfBossPresent,
+		AtlasDevIfEntityTypePresent, AtlasDevIfEntitySlotActive, AtlasDevIfEntityHidden,
+		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevSetEntityInvincible,
+		AtlasDevSetEntityBehavior, AtlasDevSetEntitySpeed, AtlasDevSetEntityFacing,
+		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber
+	};
+
+	class HackManager {
+
+		// script action library
+		word apply_SetFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_ClearFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_IfFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_SelectFlag(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_SetSelectedFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word bitmask_table_addr) const;
+		word apply_ClearSelectedFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word bitmask_table_addr) const;
+		word apply_IfSelectedFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word bitmask_table_addr) const;
+		word apply_SetQuestFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word quest_flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_ClearQuestFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word quest_flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_IfQuestFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word quest_flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_RunScreenHandler(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr) const;
+		word apply_GetXP(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_IfWorld(std::vector<byte>& p_rom, word cpu_addr, word helper_if_a_equals_addr) const;
+		word apply_IfScreen(std::vector<byte>& p_rom, word cpu_addr, word helper_if_a_equals_addr) const;
+		word apply_IfStage(std::vector<byte>& p_rom, word cpu_addr, word helper_if_a_equals_addr) const;
+		word apply_Die(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_JSR(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_Return(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_ForceDoor(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_IfYX(std::vector<byte>& p_rom, word cpu_addr,
+			word helper_get_player_block_pos_addr, word helper_if_a_equals_addr) const;
+		word apply_IfDoorYX(std::vector<byte>& p_rom, word cpu_addr,
+			word helper_if_a_equals_addr) const;
+		word apply_IfAddrEquals(std::vector<byte>& p_rom, word cpu_addr,
+			word helper_load_word_addr, word helper_if_a_equals_addr) const;
+		word apply_IfAddrBetween(std::vector<byte>& p_rom, word cpu_addr,
+			word helper_load_word_addr, word helper_if_a_between_addr) const;
+		word apply_SetAddr(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word helper_load_word_addr) const;
+
+		word apply_AtlasDevShakeScreen(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFadeOut(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFadeIn(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMusic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevPlaySFX(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfMusic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+
+		word apply_AtlasDevShowSequentialMessages(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowNumberInMessage(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowChoiceToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearPortrait(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevEntitySayMessage(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowMessageFromVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevHideTextbox(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetPortrait(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevOpenTextbox(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCloseDialogue(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEntityCountAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCountActiveEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFindEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFreezeEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevResumeEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfBossPresent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEntityTypePresent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEntitySlotActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityHealth(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityInvincible(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityBehavior(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntitySpeed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevEntityFieldToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDrawVarNumber(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+
+		// shared helpers for the script action library
+		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr) const;
+		word apply_helper_DecodeQuestFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr) const;
+		word apply_helper_IfAEquals(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_helper_IfABetween(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_helper_GetPlayerBlockPos(std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_helper_LoadWord(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+
+		bool requires_any(const std::vector<HackLib>& p_lib, const std::set<HackLib>& p_required) const;
+
+		// other hacks
+		word install_hack_clear_flag_memory(const fe::Config& p_config, std::vector<byte>& p_rom) const;
+		void install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const;
+
+		// tilemap change hacks
+		word install_hack_tm_flag_helper(std::vector<byte>& p_rom, byte p_bank, word p_cpu_addr,
+			word p_table_addr) const;
+		word install_hack_tm_tilemap_changer(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word p_cpu_addr) const;
+		word install_hack_tm_descriptor_handler(std::vector<byte>& p_rom, byte p_bank, word p_cpu_addr,
+			word flag_helper_cpu_addr, word tm_changer_cpu_addr) const;
+		word install_hack_tm_lookup(std::vector<byte>& p_rom, byte p_bank, word p_cpu_addr,
+			word descriptor_handler_cpu_addr, word data_table_start_cpu_addr) const;
+
+		word install_hack_tm_event_handler(const fe::Config& p_config, std::vector<byte>& p_rom,
+			byte tm_lookup_bank, word tm_lookup_cpu_addr) const;
+
+		// util
+		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;
+		word cfg_word(const fe::Config& p_config, const std::string& p_id) const;
+		byte cfg_byte(const fe::Config& p_config, const std::string& p_id) const;
+		std::vector<word> read_script_opcode_addrs(const std::vector<byte>& p_rom, std::size_t p_opcode_count) const;
+		std::size_t write_script_opcode_table(std::vector<byte>& p_rom, word cpu_addr,
+			const std::vector<word>& p_jump_table) const;
+		std::vector<word> read_screen_event_handler_addrs(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
+		std::size_t detect_screen_event_handler_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
+
+	public:
+		HackManager(void) = default;
+
+		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
+			const fh::TilemapChanges& tm_changes) const;
+		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
+			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
+	};
+
+}
+
+#endif

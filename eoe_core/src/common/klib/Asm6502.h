@@ -13,6 +13,11 @@ using word = std::uint16_t;
 
 namespace klib {
 
+	struct RomAddress {
+		byte Bank;
+		word CpuAddr;
+	};
+
 	class Asm6502 {
 
 		struct BranchRef {
@@ -20,25 +25,35 @@ namespace klib {
 			std::string label;
 		};
 
+		// A JMP whose target is a label rather than a literal address; the
+		// operand is patched once every label position is known.
+		struct JumpRef {
+			std::size_t offset;
+			std::string label;
+		};
+
 		std::vector<byte> m_bytes;
 		std::unordered_map<std::string, std::size_t> m_labels;
 		std::vector<BranchRef> m_branch_refs;
+		std::vector<JumpRef> m_jump_refs;
 
 		void emit(byte p_byte);
 		void emit(sbyte p_byte);
 		void emit_word(word p_word);
-		void resolve_labels(void);
+		void resolve_labels(word p_base_cpu_addr);
 		void branch(byte p_opcode, const std::string& p_label);
 
 		void apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
-			word p_cpu_addr, word p_cpu_min_addr = 0xc000) const;
+			word p_cpu_addr, word p_cpu_min_addr) const;
 
 	public:
 		Asm6502(void) = default;
 		const std::vector<byte>& bytes(void) const;
 		std::size_t size(void) const;
-		std::size_t get_file_offset(byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr) const;
-		std::size_t get_file_offset(byte p_bank_no, word p_cpu_addr) const;
+		static std::size_t get_file_offset(byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
+		static std::size_t get_file_offset(byte p_bank_no, word p_cpu_addr);
+		static RomAddress get_rom_address(std::size_t p_file_offset);
+		static word get_cpu_min_addr(byte p_bank_no);
 		void label(const std::string& p_name);
 
 		void clear(void);
@@ -46,9 +61,31 @@ namespace klib {
 			word p_cpu_addr, word p_cpu_min_addr);
 		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
 			word p_cpu_addr);
+		static void apply_byte(std::vector<byte>& p_rom, byte p_byte,
+			byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
+		static void apply_byte(std::vector<byte>& p_rom, byte p_byte,
+			byte p_bank_no, word p_cpu_addr);
+		static std::size_t apply_bytes(std::vector<byte>& p_rom, const std::vector<byte>& p_bytes,
+			byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
+		static std::size_t apply_bytes(std::vector<byte>& p_rom, const std::vector<byte>& p_bytes,
+			byte p_bank_no, word p_cpu_addr);
+
+		static void apply_word(std::vector<byte>& p_rom, word p_word,
+			byte p_bank_no, word p_cpu_addr);
+		static std::size_t apply_words(std::vector<byte>& p_rom, const std::vector<word>& p_words,
+			byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
+		static std::size_t apply_words(std::vector<byte>& p_rom, const std::vector<word>& p_words,
+			byte p_bank_no, word p_cpu_addr);
+		static std::size_t apply_words_as_split_table(std::vector<byte>& p_rom, const std::vector<word>& p_words,
+			byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
+		static std::size_t apply_words_as_split_table(std::vector<byte>& p_rom, const std::vector<word>& p_words,
+			byte p_bank_no, word p_cpu_addr);
+
+		static word read_word(const std::vector<byte>& p_rom, byte p_bank_no, word p_cpu_addr);
 
 		// jumps and calls
 		void jmp(word p_addr);
+		void jmp(const std::string& p_label);
 		void jmp_ind(word p_addr);
 		void jsr(word p_addr);
 		void rts(void);
@@ -64,12 +101,17 @@ namespace klib {
 		void ldx_abs_y(word p_addr);
 		void ldy_imm(byte p_value);
 		void ldy_zp(byte p_value);
+		// virtual helper
+		void lda_mem(word p_addr);
 
 		// stores
 		void sta_zp(byte p_addr);
 		void sta_abs(word p_addr);
 		void sta_abs_x(word p_addr);
+		void sta_ind_y(byte p_addr);
 		void sty_zp(byte p_addr);
+		// virtual helper
+		void sta_mem(word p_addr);
 
 		// compares
 		void cmp_zp(byte p_addr);
@@ -85,11 +127,13 @@ namespace klib {
 		void beq(sbyte p_offset);
 		void bne(sbyte p_offset);
 		void bcc(sbyte p_offset);
+		void bcs(sbyte p_offset);
 		void bpl(sbyte p_offset);
 		void bmi(sbyte p_offset);
 		void beq(const std::string& p_label);
 		void bne(const std::string& p_label);
 		void bcc(const std::string& p_label);
+		void bcs(const std::string& p_label);
 		void bpl(const std::string& p_label);
 		void bmi(const std::string& p_label);
 
@@ -110,6 +154,7 @@ namespace klib {
 		void tay(void);
 		void tya(void);
 		void txa(void);
+		void tsx(void);
 
 		//shifts
 		void lsr_a(std::size_t count = 1);
@@ -118,6 +163,12 @@ namespace klib {
 		// math
 		void inx(void);
 		void dec_zp(byte p_addr);
+		void dec_abs_x(word p_addr);
+		void adc_imm(byte p_value);
+		void adc_zp(byte p_addr);
+		void adc_abs_x(word p_addr);
+		void sbc_imm(byte p_value);
+		void sbc_abs_x(word p_addr);
 		void dex(void);
 		void iny(void);
 		void sec(void);

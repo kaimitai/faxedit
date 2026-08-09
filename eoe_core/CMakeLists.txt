@@ -45,6 +45,10 @@ add_library(eoe_core STATIC
     src/fi/IScriptLoader.cpp
     src/fi/Opcode.cpp
     src/fi/Shop.cpp
+
+    # fh
+    src/fh/HackManager.cpp
+    src/fh/TilemapChanges.cpp
 )
 
 target_include_directories(eoe_core

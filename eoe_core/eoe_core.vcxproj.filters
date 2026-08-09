@@ -55,6 +55,12 @@
     <Filter Include="Source Files\fi">
       <UniqueIdentifier>{185ba9bc-c1eb-40d8-beca-3239171463c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fh">
+      <UniqueIdentifier>{57c582f4-32e0-4fe5-852d-2ab7b6409cf7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fh">
+      <UniqueIdentifier>{4e1dba66-8619-41f2-80f0-721c17b428b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -204,6 +210,15 @@
     <ClInclude Include="src\common\lodepng.h">
       <Filter>Header Files\common</Filter>
     </ClInclude>
+    <ClInclude Include="src\fh\fh_constants.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fh\HackManager.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fh\TilemapChanges.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -325,6 +340,12 @@
     </ClCompile>
     <ClCompile Include="src\common\lodepng.cpp">
       <Filter>Source Files\common</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\HackManager.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\TilemapChanges.cpp">
+      <Filter>Source Files\fh</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
