@@ -12,9 +12,11 @@ namespace fe::script {
 
 	using MessageCallback = std::function<void(const std::string&)>;
 
+	// helpers
 	void message(const MessageCallback& p_callback, const std::string& p_message);
 	void try_patch(const std::string& p_data_type, std::size_t p_data_size,
 		std::size_t p_data_max_size, const MessageCallback& p_message);
+	std::vector<int> get_global_transpose(const Config& p_config, const std::vector<byte>& p_rom);
 
 	// iScripts
 	std::vector<byte> asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
@@ -66,6 +68,11 @@ namespace fe::script {
 	void extract_misc_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_filename, bool p_include_all_sprites, bool p_overwrite,
 		const MessageCallback& p_message);
+
+	// MML interface
+	std::string decompile_mml(const Config& p_config, const std::vector<byte>& p_rom);
+	void decompile_mml_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message);
 }
 
 #endif

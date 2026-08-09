@@ -265,19 +265,12 @@ void fi::Cli::nes_to_mml(const std::string& p_nes_filename,
 	const std::string& p_mml_filename,
 	bool p_overwrite) {
 
-	// fail early if output file already exists and we do not overwrite
-	if (!p_overwrite && klib::file::file_exists(p_mml_filename))
-		throw std::runtime_error(std::format("mml file {} exists, and overwrite-flag is not set", p_mml_filename));
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
 
-	auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
-	fm::MScriptLoader loader(m_config, rom_data);
-
-	fm::MMLSongCollection coll(get_global_transpose(rom_data));
-	coll.extract_bytecode_collection(loader);
-
-	klib::file::write_string_to_file(coll.to_string(), p_mml_filename);
-
-	std::cout << "MML extracted to " << p_mml_filename << "!\n";
+	fe::script::decompile_mml_to_file(m_config, rom_data, p_mml_filename, p_overwrite,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::mml_to_nes(const std::string& p_mml_filename,

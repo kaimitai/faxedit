@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <format>
 #include <stdexcept>
 #include "ScriptManager.h"
@@ -13,6 +14,7 @@
 #include "fm/MScriptLoader.h"
 #include "fm/MMLWriter.h"
 #include "fm/MMLReader.h"
+#include "fm/song/MMLSongCollection.h"
 #include "fv/MiscWriter.h"
 #include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
@@ -33,6 +35,17 @@ void fe::script::try_patch(const std::string& p_data_type, std::size_t p_data_si
 
 	if (p_data_size > p_data_max_size)
 		throw std::runtime_error(std::format("Size limits exceeded for {}", p_data_type));
+}
+
+std::vector<int> fe::script::get_global_transpose(const fe::Config& p_config, const std::vector<byte>& p_rom) {
+	std::vector<int> result;
+
+	const auto transp{ p_config.constant(fm::c::ID_CHAN_PITCH_OFFSET) };
+
+	for (std::size_t i{ 0 }; i < 4; ++i)
+		result.push_back(static_cast<int>(static_cast<int8_t>(p_rom.at(i + transp))));
+
+	return result;
 }
 
 // iScripts
@@ -405,4 +418,28 @@ void fe::script::extract_misc_to_file(const Config& p_config, const std::vector<
 	message(p_message, std::format("Generating output file {}", p_filename));
 	klib::file::write_string_to_file(txt, p_filename);
 	message(p_message, std::format("Extraction to {} complete!", p_filename));
+}
+
+// MML interface
+std::string fe::script::decompile_mml(const Config& p_config, const std::vector<byte>& p_rom) {
+
+	fm::MScriptLoader loader(p_config, p_rom);
+	fm::MMLSongCollection collection(get_global_transpose(p_config, p_rom));
+	collection.extract_bytecode_collection(loader);
+
+	return collection.to_string();
+}
+
+void fe::script::decompile_mml_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_filename, bool p_overwrite, const MessageCallback& p_message) {
+
+	if (!p_overwrite && klib::file::file_exists(p_filename))
+		throw std::runtime_error(std::format("MML file {} exists, and overwrite-flag is not set", p_filename));
+
+	message(p_message, "Decompiling music to MML");
+
+	const auto mml{ decompile_mml(p_config, p_rom) };
+	klib::file::write_string_to_file(mml, p_filename);
+	message(p_message,
+		std::format("MML extracted to {}!", p_filename));
 }
