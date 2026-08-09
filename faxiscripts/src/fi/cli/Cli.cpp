@@ -144,16 +144,6 @@ fi::Cli::Cli(int argc, char** argv) :
 		throw(std::runtime_error("Invalid script mode"));
 }
 
-static void try_patch_msg(const std::string& p_data_type,
-	std::size_t p_data_size, std::size_t p_data_max_size) {
-	std::cout << std::format("Trying to patch {}: Using {} of {} available bytes ({:.2f}%)\n",
-		p_data_type, p_data_size, p_data_max_size,
-		100.0f * static_cast<float>(p_data_size) / static_cast<float>(p_data_max_size));
-	if (p_data_size > p_data_max_size)
-		throw std::runtime_error(std::format("Size limits exceeded for {}",
-			p_data_type));
-}
-
 void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	const std::string& p_out_filename,
 	const std::string& p_source_rom_filename,
@@ -288,17 +278,22 @@ void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
 void fi::Cli::rom_to_midi(const std::string& p_nes_filename,
 	const std::string& p_out_file_prefix) {
 
-	auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
-	fm::MScriptLoader loader(m_config, rom_data);
-	fm::MMLSongCollection coll(get_global_transpose(rom_data));
-	coll.extract_bytecode_collection(loader);
-	save_midi_files(coll, p_out_file_prefix);
+	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+
+	fe::script::rom_to_midi_files(m_config, rom_data, p_out_file_prefix,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::mml_to_midi(const std::string& p_mml_filename,
 	const std::string& p_out_file_prefix) {
-	auto coll{ load_mml_file(p_mml_filename) };
-	save_midi_files(coll, p_out_file_prefix);
+	fe::script::mml_to_midi_files(
+		p_mml_filename,
+		p_out_file_prefix,
+		[](const std::string& p_message) {
+			std::cout << p_message << '\n';
+		});
 }
 
 void fi::Cli::rom_to_lilypond(const std::string& p_nes_filename,
@@ -315,19 +310,6 @@ void fi::Cli::mml_to_lilypond(const std::string& p_mml_filename,
 	const std::string& p_out_file_prefix) {
 	auto coll{ load_mml_file(p_mml_filename) };
 	save_lilypond_files(coll, p_out_file_prefix);
-}
-
-void fi::Cli::save_midi_files(fm::MMLSongCollection& coll,
-	const std::string& p_out_file_prefix) const {
-	std::cout << "Attempting to write midi files...\n";
-
-	auto midis{ coll.to_midi() };
-
-	for (std::size_t i{ 0 }; i < midis.size(); ++i) {
-		std::string l_filename{ std::format("{}-{:02}.mid", p_out_file_prefix, i + 1) };
-		midis[i].write(l_filename);
-		std::cout << "Wrote " << l_filename << "!\n";
-	}
 }
 
 void fi::Cli::save_lilypond_files(fm::MMLSongCollection& coll,

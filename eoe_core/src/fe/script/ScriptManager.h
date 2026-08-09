@@ -7,6 +7,7 @@
 #include "fe/Config.h"
 #include "fi/Opcode.h"
 #include "fm/song/MMLSongCollection.h"
+#include "common/midifile/MidiFile.h"
 
 using byte = unsigned char;
 
@@ -81,6 +82,17 @@ namespace fe::script {
 		const std::vector<std::string>& p_mml, const MessageCallback& p_message);
 	void compile_mml_to_file(const Config& p_config, const std::vector<byte>& p_rom,
 		const std::string& p_mml_filename, const std::string& p_out_filename, const MessageCallback& p_message);
+
+	// midi
+	std::vector<smf::MidiFile> mml_to_midi(const std::vector<std::string>& p_mml);
+	std::vector<smf::MidiFile> rom_to_midi(const Config& p_config, const std::vector<byte>& p_rom);
+
+	void write_midi_files(std::vector<smf::MidiFile>& p_midis, const std::string& p_out_file_prefix,
+		const MessageCallback& p_message);
+	void mml_to_midi_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
+		const MessageCallback& p_message);
+	void rom_to_midi_files(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_out_file_prefix, const MessageCallback& p_message);
 }
 
 #endif

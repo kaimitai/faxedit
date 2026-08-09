@@ -96,8 +96,6 @@ namespace fi {
 		// common
 		std::vector<byte> load_rom_and_determine_region(const std::string& p_nes_filename);
 		fm::MMLSongCollection load_mml_file(const std::string& p_mml_file) const;
-		void save_midi_files(fm::MMLSongCollection& coll,
-			const std::string& p_out_file_prefix) const;
 		void save_lilypond_files(fm::MMLSongCollection& coll,
 			const std::string& p_out_file_prefix) const;
 		bool check_mode(const std::string& p_mode,

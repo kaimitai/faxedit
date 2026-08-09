@@ -492,3 +492,47 @@ void fe::script::compile_mml_to_file(const fe::Config& p_config, const std::vect
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
 	message(p_message, "File patched");
 }
+
+// midi
+std::vector<smf::MidiFile> fe::script::mml_to_midi(const std::vector<std::string>& p_mml) {
+	auto collection{ parse_mml(p_mml) };
+	return collection.to_midi();
+}
+
+std::vector<smf::MidiFile> fe::script::rom_to_midi(const Config& p_config, const std::vector<byte>& p_rom) {
+	fm::MScriptLoader loader(p_config, p_rom);
+
+	fm::MMLSongCollection collection(
+		get_global_transpose(p_config, p_rom));
+	collection.extract_bytecode_collection(loader);
+
+	return collection.to_midi();
+}
+
+void fe::script::write_midi_files(std::vector<smf::MidiFile>& p_midis, const std::string& p_out_file_prefix,
+	const MessageCallback& p_message) {
+
+	message(p_message, "Attempting to write MIDI files...");
+
+	for (std::size_t i{ 0 }; i < p_midis.size(); ++i) {
+		const std::string filename{ std::format("{}-{:02}.mid", p_out_file_prefix, i + 1) };
+		p_midis[i].write(filename);
+		message(p_message,
+			std::format("Wrote {}!", filename));
+	}
+}
+
+void fe::script::mml_to_midi_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
+	const MessageCallback& p_message) {
+	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+
+	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
+	auto midis{ mml_to_midi(mml) };
+	write_midi_files(midis, p_out_file_prefix, p_message);
+}
+
+void fe::script::rom_to_midi_files(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_out_file_prefix, const MessageCallback& p_message) {
+	auto midis{ rom_to_midi(p_config, p_rom) };
+	write_midi_files(midis, p_out_file_prefix, p_message);
+}
