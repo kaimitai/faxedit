@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include "fe/Config.h"
+#include "fi/Opcode.h"
 
 using byte = unsigned char;
 
@@ -12,6 +13,17 @@ namespace fe::script {
 	using MessageCallback = std::function<void(const std::string&)>;
 
 	void message(const MessageCallback& p_callback, const std::string& p_message);
+	void try_patch(const std::string& p_data_type, std::size_t p_data_size,
+		std::size_t p_data_max_size, const MessageCallback& p_message);
+
+	// iScripts
+	std::vector<byte> asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
+		bool p_strict, const MessageCallback& p_message);
+	void asm_iscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+		const std::string& p_asm_filename, const std::string& p_out_filename,
+		const fi::ScriptOpcodeInfo& p_opcode_info, bool p_strict,
+		const MessageCallback& p_message);
 
 	std::string disasm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
 		bool p_shop_comments, std::size_t& p_entrypoint_count);

@@ -42,7 +42,7 @@ namespace fe {
 			std::size_t p_rom_loc_data,
 			const std::vector<std::vector<byte>>& p_data) const;
 
-		void duplicate_static_bank(std::vector<byte>& p_rom) const;
+		static void duplicate_static_bank(std::vector<byte>& p_rom);
 		void clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const;
 		bool is_bank_clear(const std::vector<byte>& p_rom, byte p_bank_no) const;
 
@@ -109,6 +109,7 @@ namespace fe {
 		static std::size_t bank_no_to_file_offset(byte p_bank_no);
 		static int get_bank_byte_diffs(const std::vector<byte>& p_rom,
 			byte p_bank_a, byte p_bank_b);
+		static bool duplicate_static_bank_if_needed(const fe::Config& p_config, std::vector<byte>& p_rom);
 
 		// caching utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;

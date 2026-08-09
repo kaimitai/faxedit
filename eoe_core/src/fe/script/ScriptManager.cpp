@@ -1,12 +1,155 @@
 #include <format>
+#include <stdexcept>
 #include "ScriptManager.h"
+#include "fe/fe_constants.h"
+#include "fe/ROM_Manager.h"
+#include "fi/fi_constants.h"
 #include "fi/IScriptLoader.h"
 #include "fi/AsmWriter.h"
+#include "fi/AsmReader.h"
+#include "fh/HackManager.h"
 #include "common/klib/Kfile.h"
+#include "common/klib/Kstring.h"
 
 void fe::script::message(const MessageCallback& p_callback, const std::string& p_message) {
 	if (p_callback)
 		p_callback(p_message);
+}
+
+void fe::script::try_patch(const std::string& p_data_type, std::size_t p_data_size,
+	std::size_t p_data_max_size, const MessageCallback& p_message) {
+	message(p_message, std::format(
+		"Trying to patch {}: Using {} of {} available bytes ({:.2f}%)",
+		p_data_type, p_data_size, p_data_max_size,
+		100.0f * static_cast<float>(p_data_size) / static_cast<float>(p_data_max_size)));
+
+	if (p_data_size > p_data_max_size)
+		throw std::runtime_error(std::format("Size limits exceeded for {}", p_data_type));
+}
+
+std::vector<byte> fe::script::asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
+	bool p_strict, const MessageCallback& p_message) {
+	auto rom{ p_rom };
+
+	if (p_strict)
+		message(p_message, "Using strict mode - Only original ROM data region will be used");
+
+	fi::AsmReader reader;
+
+	std::size_t l_iscript_rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
+
+	if (!p_opcode_info.required_impls.empty()) {
+		if (p_strict)
+			throw std::runtime_error("Strict mode cannot be used with extended script library routines");
+
+		fh::HackManager hack_mgr;
+		std::vector<fh::HackLib> required_libs;
+		for (const auto& impl : p_opcode_info.required_impls) {
+			try {
+				required_libs.push_back(klib::str::parse_enum_ci<fh::HackLib>(impl));
+			}
+			catch (const std::exception&) {
+				throw std::runtime_error(std::format("Unknown script implementation '{}'", impl));
+			}
+		}
+
+		const auto old_rg2_start{ l_iscript_rg2_start };
+
+		l_iscript_rg2_start = hack_mgr.apply_script_library(p_config, rom, l_iscript_rg2_start,
+			required_libs, p_opcode_info.base_opcode_count);
+
+		message(p_message, std::format("Installed new script library routines ({} bytes)",
+			l_iscript_rg2_start - old_rg2_start));
+	}
+
+	reader.read_asm(p_config, p_asm, l_iscript_rg2_start);
+
+	auto bytes{ reader.get_script_bytes(p_config) };
+	auto strbytes{ reader.get_string_bytes(p_config) };
+
+	message(p_message, std::format("Using {} unique strings out of a maximum of 255", reader.get_string_count()));
+
+	std::size_t l_iscript_string_start{ p_config.constant(fi::c::ID_STRING_DATA_START) };
+	std::size_t l_iscript_string_end{ p_config.constant(fi::c::ID_STRING_DATA_END) };
+
+	std::size_t l_size_strings{ l_iscript_string_end - l_iscript_string_start };
+	std::size_t l_iscript_rg2_size{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) - l_iscript_rg2_start };
+
+	auto l_iscript_ptr{ p_config.pointer(fi::c::ID_ISCRIPT_PTR_LO) };
+
+	std::size_t l_iscript_rg1_size{ p_config.constant(fi::c::ID_ISCRIPT_RG1_END) - l_iscript_ptr.first };
+
+	try_patch("strings", strbytes.size(), l_size_strings, p_message);
+	try_patch(std::format("pointer table ({} entries) and script data (region 1)",
+		reader.get_entrypoint_count()), bytes.first.size(), l_iscript_rg1_size, p_message);
+	try_patch("script data (region 2)", bytes.second.size(), l_iscript_rg2_size, p_message);
+
+	if (p_strict && !bytes.second.empty())
+		throw std::runtime_error("Strict mode was enabled but the original ROM region could not fit all data");
+
+	// patch region 1 (ptr table + bytecode)
+	for (std::size_t i{ 0 }; i < bytes.first.size(); ++i)
+		rom.at(i + l_iscript_ptr.first) = bytes.first[i];
+	// patch region 2 (bytecode)
+	for (std::size_t i{ 0 }; i < bytes.second.size(); ++i) {
+		rom.at(i + (!p_strict ? l_iscript_rg2_start : l_iscript_ptr.first + bytes.first.size())) = bytes.second[i];
+	}
+	// patch string data
+	for (std::size_t i{ 0 }; i < strbytes.size(); ++i)
+		rom.at(i + l_iscript_string_start) = strbytes[i];
+	// zero out the remainder of string space to make sure no garbage string data is extracted from here later
+	for (std::size_t i{ strbytes.size() }; i < l_size_strings; ++i)
+		rom.at(i + l_iscript_string_start) = 0x00;
+
+	std::size_t l_hi_byte_addr_bank_rel{ l_iscript_ptr.first + reader.get_entrypoint_count() -
+	l_iscript_ptr.second };
+	std::size_t l_rom_offset_hi_byte_ref{ p_config.constant(fi::c::ID_ISCRIPT_HI_REF_OFFSET) };
+
+	// update the reference to iScript ptr table hi bytes start
+	rom.at(l_rom_offset_hi_byte_ref) = static_cast<byte>(l_hi_byte_addr_bank_rel % 256);
+	rom.at(l_rom_offset_hi_byte_ref + 1) = static_cast<byte>(l_hi_byte_addr_bank_rel / 256);
+
+	const auto& tmchanges{ reader.get_tilemap_changes() };
+
+	// add tilemap change subsystem if a [tilemap_changes] section was present in the asm
+	if (!tmchanges.empty()) {
+		fh::HackManager hack_mgr;
+		std::size_t tmsub_size{ hack_mgr.apply_tilemap_change_subsystem(p_config, rom, tmchanges) };
+		message(p_message, std::format("Installed tilemap change subsystem ({} bytes)", tmsub_size));
+	}
+
+	// duplicate bank 15 if needed
+	if (fe::ROM_Manager::duplicate_static_bank_if_needed(p_config, rom))
+		message(p_message, "Bank 15 was duplicated to bank 31 post-patch");
+
+	message(p_message, "Verifying generated ROM contents");
+
+	// parse it to see if disassembly succeeds without throwing
+	try {
+		fi::IScriptLoader staticanalysisread(p_config, rom);
+	}
+	catch (const std::runtime_error& ex) {
+		throw std::runtime_error(std::format(
+			"Invalid ROM generated. Ensure all code paths end, and that each "
+			"entrypoint has a textbox context\n{}", ex.what()));
+	}
+
+	return rom;
+}
+
+void fe::script::asm_iscripts_to_file(const Config& p_config, const std::vector<byte>& p_rom,
+	const std::string& p_asm_filename, const std::string& p_out_filename,
+	const fi::ScriptOpcodeInfo& p_opcode_info, bool p_strict,
+	const MessageCallback& p_message) {
+
+	message(p_message, std::format("Attempting to parse assembly file {}", p_asm_filename));
+	const auto asm_code{ klib::file::read_file_as_strings(p_asm_filename) };
+	const auto patched_rom{ asm_iscripts(p_config, p_rom, asm_code,	p_opcode_info,p_strict,	p_message) };
+
+	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
+	message(p_message, "File patched");
 }
 
 std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,

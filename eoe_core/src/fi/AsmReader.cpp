@@ -12,7 +12,7 @@
 
 void fi::AsmReader::read_asm(const fe::Config& p_config, const std::vector<std::string>& p_asm_code,
 	std::size_t script_rg2_offset) {
-	const auto& l_lines{ p_asm_code };
+	auto l_lines{ p_asm_code };
 	fi::SectionType currentSection{ fi::SectionType::Defines };
 
 	for (auto& line : l_lines) {

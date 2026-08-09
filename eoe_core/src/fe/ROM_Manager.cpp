@@ -885,12 +885,21 @@ int fe::ROM_Manager::get_bank_byte_diffs(const std::vector<byte>& p_rom,
 	return diffs;
 }
 
-void fe::ROM_Manager::duplicate_static_bank(std::vector<byte>& p_rom) const {
+void fe::ROM_Manager::duplicate_static_bank(std::vector<byte>& p_rom) {
 	auto bank15_start{ bank_no_to_file_offset(15) };
 	auto bank31_start{ bank_no_to_file_offset(31) };
 
 	for (std::size_t i{ 0 }; i < 0x4000; ++i)
 		p_rom.at(bank31_start + i) = p_rom.at(bank15_start + i);
+}
+
+bool fe::ROM_Manager::duplicate_static_bank_if_needed(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	bool l_duplicate{ p_config.boolean_or(fe::c::ID_DUPLICATE_STATIC_BANK, false) };
+
+	if (l_duplicate)
+		duplicate_static_bank(p_rom);
+
+	return l_duplicate;
 }
 
 void fe::ROM_Manager::clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const {
