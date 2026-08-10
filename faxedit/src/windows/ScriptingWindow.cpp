@@ -11,6 +11,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_shop_data_as_comments{ true };
 	static bool ls_emit_mscript_notes{ true };
 	static bool ls_include_all_sprites{ false };
+	static bool ls_lilypond_percussion{ false };
 
 	const auto message_callback = [this](const std::string& p_message) -> void {
 		add_message(p_message, 6);
@@ -33,8 +34,11 @@ void fe::MainWindow::draw_scripting_window(void) {
 			return (get_script_dir() / std::format("{}.{}", p_name, p_extension)).string();
 		};
 
+	const auto get_script_file_prefix = [&get_script_dir](const std::string& p_name) -> std::string {
+		return (get_script_dir() / p_name).string();
+		};
 
-	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+	const bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 	ui::imgui_screen("Scripting",
 		c::WIN_TILEMAP_X + 70, c::WIN_TILEMAP_Y + 70,
@@ -212,6 +216,92 @@ void fe::MainWindow::draw_scripting_window(void) {
 		}
 
 		if (ImGui::BeginTabItem("MML (music)")) {
+
+			ImGui::SeparatorText("MML Compilation");
+
+			if (ui::imgui_button("Compile", 2, "Compile music from MML-file and patch ROM")) try {
+
+				auto xrom{
+					fe::script::compile_mml(m_config,
+						m_game->m_rom_data,
+						klib::file::read_file_as_strings(get_script_path(m_filename, "mml")),
+						message_callback)
+				};
+
+				m_game->m_rom_data = std::move(xrom);
+
+				// this should truly be impossible
+				if (!refresh_mscript_cache(m_game->m_rom_data))
+					throw std::runtime_error("MML compilation succeeded, but GUI cache refresh failed");
+
+				add_message("MML compilation succeeded", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("MML Decompilation");
+
+			if (ui::imgui_button("Decompile", 2, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
+				fe::script::decompile_mml_to_file(m_config, m_game->m_rom_data,
+					get_script_path(m_filename, "mml"), l_shift, message_callback);
+				mark_last_message_success();
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("MIDI");
+
+			if (ui::imgui_button("ROM to MIDI", 2, "Generate MIDI files directly from ROM")) try {
+				fe::script::rom_to_midi_files(m_config, m_game->m_rom_data,
+					get_script_file_prefix(m_filename),
+					message_callback);
+				add_message("MIDI files generated from ROM", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SameLine();
+
+			if (ui::imgui_button("MML to MIDI", 2, "Generate MIDI files from MML")) try {
+				fe::script::mml_to_midi_files(get_script_path(m_filename, "mml"),
+					get_script_file_prefix(m_filename),
+					message_callback);
+				add_message("MIDI files generated from MML", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("LilyPond");
+
+			if (ui::imgui_button("ROM to LilyPond", 2, "Generate LilyPond files directly from ROM")) try {
+				fe::script::rom_to_lilypond_files(m_config, m_game->m_rom_data,
+					get_script_file_prefix(m_filename),
+					ls_lilypond_percussion,
+					message_callback);
+				add_message("LilyPond files generated from ROM", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SameLine();
+
+			if (ui::imgui_button("MML to LilyPond", 2, "Generate LilyPond files from MML")) try {
+				fe::script::mml_to_lilypond_files(get_script_path(m_filename, "mml"),
+					get_script_file_prefix(m_filename),
+					ls_lilypond_percussion,
+					message_callback);
+				add_message("LilyPond files generated from MML", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ui::imgui_checkbox("Add LilyPond percussion track", ls_lilypond_percussion);
 
 			ImGui::EndTabItem();
 		}
