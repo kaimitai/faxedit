@@ -114,6 +114,9 @@
     <ClCompile Include="src\windows\SettingsWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\windows\ScriptingWindow.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\imgui\imconfig.h">

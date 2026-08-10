@@ -43,6 +43,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_cinematic_window{ false },
 	m_visualization_window{ false },
 	m_settings_window{ false },
+	m_scripting_window{ false },
 	m_iscript_win_set_focus{ false },
 	// cached values
 	m_cache{
@@ -137,6 +138,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				m_sprite_gfx_window = false;
 				m_visualization_window = false;
 				m_settings_window = false;
+				m_scripting_window = false;
 			}
 			else if (l_ctrl && (ImGui::IsKeyPressed(ImGuiKey_Equal) ||
 				ImGui::IsKeyPressed(ImGuiKey_KeypadAdd))) {
@@ -225,6 +227,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			draw_visualization_window(p_rnd);
 		if (m_settings_window)
 			draw_settings_window(p_rnd);
+		if (m_scripting_window)
+			draw_scripting_window();
 
 		ImGui::Render();
 		ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), p_rnd);
@@ -884,26 +888,7 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 	}
 
 	// extract scripts and music
-	m_cache.m_iscripts.clear();
-
-	try {
-		fi::IScriptLoader loader(m_config, p_bytes);
-		m_cache.m_iscript_count = loader.get_script_count();
-		add_message(std::format("Detected {} interaction scripts", m_cache.m_iscript_count), 4);
-
-		for (std::size_t i{ 0 }; i < m_cache.m_iscript_count; ++i) {
-			try {
-				m_cache.m_iscripts[i] = loader.parse_script(p_bytes, i);
-			}
-			catch (...) {
-				add_message(std::format("Unable to parse iScript #{}", i));
-			}
-		}
-	}
-	catch (...) {
-		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
-		m_cache.m_iscript_count = 152;
-	}
+	refresh_iscript_cache(p_bytes);
 
 	// extract music count
 	try {
@@ -1517,4 +1502,35 @@ std::pair<float, float> fe::MainWindow::world_px_to_view_px(float world_x_px,
 		world_x_px + c::TILEMAP_BORDER_MT_W * 16.0f,
 		world_y_px + c::TILEMAP_BORDER_MT_H * 16.0f
 	};
+}
+
+bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report_count) {
+	m_cache.m_iscripts.clear();
+	bool result{ true };
+
+	try {
+		fi::IScriptLoader loader(m_config, p_bytes);
+		m_cache.m_iscript_count = loader.get_script_count();
+
+		if (p_report_count)
+			add_message(std::format("Detected {} iScripts", m_cache.m_iscript_count), 4);
+
+		for (std::size_t i{ 0 }; i < m_cache.m_iscript_count; ++i) {
+			try {
+				m_cache.m_iscripts[i] = loader.parse_script(p_bytes, i);
+			}
+			catch (const std::exception& ex) {
+				add_message(
+					std::format("Unable to parse iScript #{}: {}", i, ex.what()), 1);
+				result = false;
+			}
+		}
+	}
+	catch (...) {
+		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
+		m_cache.m_iscript_count = 152;
+		return false;
+	}
+
+	return result;
 }

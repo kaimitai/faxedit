@@ -29,6 +29,7 @@ set(SOURCES
     src/windows/CinematicWindow.cpp
     src/windows/WorldVisualizationWindow.cpp
     src/windows/SettingsWindow.cpp
+    src/windows/ScriptingWindow.cpp
 )
 
 add_executable(faxedit ${SOURCES})

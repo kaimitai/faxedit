@@ -265,6 +265,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_visualization_window ? 4 : 2))
 		m_visualization_window = !m_visualization_window;
 
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Scripting",
+		m_scripting_window ? 4 : 2))
+		m_scripting_window = !m_scripting_window;
+
 	if (m_settings.m_enable_config_dump) {
 
 		ImGui::SameLine();

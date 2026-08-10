@@ -62,9 +62,12 @@ void klib::file::write_string_to_file(const std::string& p_data, const std::stri
 }
 
 void klib::file::create_directories(const std::string& p_dir) {
+	klib::file::create_directories(std::filesystem::path{ p_dir });
+}
+
+void klib::file::create_directories(const std::filesystem::path& p_dir) {
 	try {
-		if (!std::filesystem::exists(p_dir))
-			std::filesystem::create_directories(p_dir);
+		std::filesystem::create_directories(p_dir);
 	}
 	catch (const std::filesystem::filesystem_error& e) {
 		throw std::runtime_error(e.what());

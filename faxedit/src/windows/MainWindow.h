@@ -134,7 +134,8 @@ namespace fe {
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
 			m_gfx_window, m_sprite_gfx_window, m_cinematic_window,
-			m_visualization_window, m_settings_window;
+			m_visualization_window, m_settings_window,
+			m_scripting_window;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -194,6 +195,7 @@ namespace fe {
 		void draw_cinematic_window(SDL_Renderer* p_rnd);
 		void draw_visualization_window(SDL_Renderer* p_rnd);
 		void draw_settings_window(SDL_Renderer* p_rnd);
+		void draw_scripting_window(void);
 
 		void show_output_messages(void) const;
 
@@ -353,6 +355,9 @@ namespace fe {
 		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data);
 		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
 		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
+
+		// scripting helpers
+		bool refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report = true);
 
 	public:
 
