@@ -10,6 +10,7 @@
 void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_shop_data_as_comments{ true };
 	static bool ls_emit_mscript_notes{ true };
+	static bool ls_include_all_sprites{ false };
 
 	const auto message_callback = [this](const std::string& p_message) -> void {
 		add_message(p_message, 6);
@@ -64,6 +65,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 				m_game->m_rom_data = std::move(xrom);
 
+				refresh_screen_event_handler_cache(m_game->m_rom_data);
+
 				// TODO: Parse each entrypoint independently during static analysis; whole-layer validation may not
 				// exercise every control-flow path from every entrypoint
 				if (!refresh_iscript_cache(m_game->m_rom_data))
@@ -77,7 +80,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("iScript Disassembly");
 
-			if (ui::imgui_button("Disassemble", 2, "Disassemble iScripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Disassemble", 2, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
 					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
 				mark_last_message_success();
@@ -86,7 +89,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				add_message(ex.what(), 1);
 			}
 
-			ui::imgui_checkbox("Shop Contents as Comments", ls_shop_data_as_comments,
+			ui::imgui_checkbox("Shop contents as comments", ls_shop_data_as_comments,
 				"Append shop contents as comments to shop-related code in the output asm-file");
 
 			ImGui::EndTabItem();
@@ -94,15 +97,116 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 		if (ImGui::BeginTabItem("bScripts")) {
 
+			ImGui::SeparatorText("bScript Assembly");
+
+			if (ui::imgui_button("Assemble", 2, "Assemble bScripts from asm-file and patch ROM")) try {
+
+				auto xrom{
+					fe::script::asm_bscripts(m_config,
+						m_game->m_rom_data,
+						klib::file::read_file_as_strings(get_script_path("bscript", "asm")),
+						false,
+						message_callback)
+				};
+
+				m_game->m_rom_data = std::move(xrom);
+
+				add_message("bScript assembly succeeded", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("bScript Disassembly");
+
+			if (ui::imgui_button("Disassemble", 2, "Disassemble sprite behavior scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+				fe::script::disasm_bscripts_to_file(m_config, m_game->m_rom_data,
+					get_script_path("bscript", "asm"), l_shift, message_callback);
+				mark_last_message_success();
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
 			ImGui::EndTabItem();
 		}
 
 		if (ImGui::BeginTabItem("mScripts")) {
 
+			ImGui::SeparatorText("mScript Assembly");
+
+			if (ui::imgui_button("Assemble", 2, "Assemble mScripts from asm-file and patch ROM")) try {
+
+				auto xrom{
+					fe::script::asm_mscripts(m_config,
+						m_game->m_rom_data,
+						klib::file::read_file_as_strings(get_script_path("mscript", "asm")),
+						message_callback)
+				};
+
+				m_game->m_rom_data = std::move(xrom);
+
+				// this should truly be impossible
+				if (!refresh_mscript_cache(m_game->m_rom_data))
+					throw std::runtime_error("mScript assembly succeeded, but GUI cache refresh failed");
+
+				add_message("mScript assembly succeeded", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("mScript Disassembly");
+
+			if (ui::imgui_button("Disassemble", 2, "Disassemble music scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+				fe::script::disasm_mscripts_to_file(m_config, m_game->m_rom_data,
+					get_script_path("mscript", "asm"), ls_emit_mscript_notes, l_shift, message_callback);
+				mark_last_message_success();
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ui::imgui_checkbox("Emit note names", ls_emit_mscript_notes,
+				"Use note names instead of raw hex values in the output asm-file");
+
 			ImGui::EndTabItem();
 		}
 
 		if (ImGui::BeginTabItem("Miscellaneous")) {
+
+			ImGui::SeparatorText("Miscellaneous Build");
+
+			if (ui::imgui_button("Build", 2, "Build misc data from txt-file and patch ROM")) try {
+
+				auto xrom{
+					fe::script::build_misc(m_config,
+						m_game->m_rom_data,
+						klib::file::read_file_as_strings(get_script_path("misc", "txt")),
+						message_callback)
+				};
+
+				m_game->m_rom_data = std::move(xrom);
+
+				add_message("Miscellaneous data build succeeded", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("Miscellaneous Extraction");
+
+			if (ui::imgui_button("Extract", 2, "Extract misc data from ROM and write to file (hold shift to overwrite existing file)")) try {
+				fe::script::extract_misc_to_file(m_config, m_game->m_rom_data,
+					get_script_path("misc", "txt"), ls_include_all_sprites, l_shift, message_callback);
+				mark_last_message_success();
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ui::imgui_checkbox("Include all sprites", ls_include_all_sprites,
+				"Extract attributes for all sprites (otherwise only enemies and bosses)");
 
 			ImGui::EndTabItem();
 		}

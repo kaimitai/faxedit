@@ -358,6 +358,8 @@ namespace fe {
 
 		// scripting helpers
 		bool refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report = true);
+		bool refresh_mscript_cache(const std::vector<byte>& p_bytes, bool p_report = true);
+		void refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes);
 
 	public:
 

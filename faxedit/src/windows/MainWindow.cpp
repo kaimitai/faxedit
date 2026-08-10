@@ -887,22 +887,10 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 				tmp_config.get_region(), m_config.get_region()));
 	}
 
-	// extract scripts and music
+	// extract scripts, music count and screen event handler count
 	refresh_iscript_cache(p_bytes);
-
-	// extract music count
-	try {
-		m_cache.m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
-		add_message(std::format("Detected {} music tracks", m_cache.m_music_count), 4);
-	}
-	catch (...) {
-		add_message("Music count could not be deduced - using default (16)", 1);
-		m_cache.m_music_count = 16;
-	}
-
-	// extract screen handler event count
-	if (m_config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET))
-		m_cache.m_command_byte_count = p_bytes.at(m_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+	refresh_mscript_cache(p_bytes);
+	refresh_screen_event_handler_cache(p_bytes);
 
 	if (!p_initial)
 		m_game->m_rom_data = p_bytes;
@@ -1533,4 +1521,24 @@ bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, boo
 	}
 
 	return result;
+}
+
+bool fe::MainWindow::refresh_mscript_cache(const std::vector<byte>& p_bytes, bool p_report) {
+	try {
+		m_cache.m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
+		if (p_report)
+			add_message(std::format("Detected {} music tracks", m_cache.m_music_count), 4);
+		return true;
+	}
+	catch (...) {
+		add_message("Music count could not be deduced - using default (16)", 1);
+		m_cache.m_music_count = 16;
+		return false;
+	}
+}
+
+void fe::MainWindow::refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes) {
+	// extract screen handler event count
+	if (m_config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET))
+		m_cache.m_command_byte_count = p_bytes.at(m_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
 }
