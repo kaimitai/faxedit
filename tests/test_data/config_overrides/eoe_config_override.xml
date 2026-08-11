@@ -1,0 +1,33 @@
+<!-- Configuration file used by Echoes of Eolis (https://github.com/kaimitai/faxedit) -->
+<!-- User overrides -->
+<eoe_config>
+
+	<!-- region definition overrides -->
+	<regions>
+	</regions>
+
+	<!-- pointer overrides -->
+	<pointers>
+	</pointers>
+
+	<!-- constant overrides -->
+	<consts>
+	</consts>
+
+	<!-- value set overrides -->
+	<sets>
+	</sets>
+
+	<!-- boolean overrides -->
+	<bools>
+	</bools>
+
+	<!-- byte map overrides -->
+	<byte_to_string_maps>
+	</byte_to_string_maps>
+
+	<!-- string map overrides -->
+	<string_to_string_maps>
+	</string_to_string_maps>
+
+</eoe_config>
