@@ -46,7 +46,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 	ui::imgui_screen("Scripting",
 		c::WIN_TILEMAP_X + 70, c::WIN_TILEMAP_Y + 70,
-		c::WIN_TILEMAP_W - 400, c::WIN_TILEMAP_H + 50);
+		c::WIN_TILEMAP_W - 400, c::WIN_TILEMAP_H / 2);
 
 	if (ImGui::BeginTabBar("scripting-tabs")) {
 
