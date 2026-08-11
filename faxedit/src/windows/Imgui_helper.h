@@ -30,6 +30,10 @@ namespace fe {
 		bool imgui_checkbox(const std::string& p_label, bool& p_val, const std::string& p_tooltip = std::string());
 		bool imgui_float_slider(const char* p_id, const std::string& p_label, float& value,
 			float p_min, float p_max, const std::string& p_tooltip_text = std::string());
+		void imgui_tooltip(const char* p_txt);
+		void imgui_tooltip(const std::string& p_txt);
+		bool imgui_tab(const char* p_label, const char* p_tooltip);
+		bool imgui_tab(const std::string& p_label, const std::string& p_tooltip);
 
 		template<class T1, class T2, class T3>
 		bool imgui_slider_with_arrows(const char* p_id, const std::string& p_label, T1& value,

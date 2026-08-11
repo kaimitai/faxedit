@@ -24,14 +24,18 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 	const auto get_script_dir = [this](void) -> std::filesystem::path {
 		const std::filesystem::path dir{ m_path / std::format("scripts-{}", m_filename) };
-
 		klib::file::create_directories(dir);
 		return dir;
 		};
 
-	const auto get_script_path = [&get_script_dir](const std::string& p_name,
+	const auto get_script_path = [this, &get_script_dir](const std::string& p_name,
 		const std::string& p_extension) -> std::string {
-			return (get_script_dir() / std::format("{}.{}", p_name, p_extension)).string();
+			return (get_script_dir() /
+				(this->m_filename + "-" + p_name + "." + p_extension)).string();
+		};
+
+	const auto get_mml_path = [this, &get_script_dir]() -> std::string {
+		return (get_script_dir() / (this->m_filename + ".mml")).string();
 		};
 
 	const auto get_script_file_prefix = [&get_script_dir](const std::string& p_name) -> std::string {
@@ -50,7 +54,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 		ImGui::PushStyleColor(ImGuiCol_TabActive, ui::g_uiStyles[2].active);
 		ImGui::PushStyleColor(ImGuiCol_TabHovered, ui::g_uiStyles[2].hovered);
 
-		if (ImGui::BeginTabItem("iScripts")) {
+		if (ui::imgui_tab("iScripts",
+			"Interaction scripts for dialogue, shops, quest logic, and other story-related events")) {
 
 			ImGui::SeparatorText("iScript Assembly");
 
@@ -99,7 +104,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("bScripts")) {
+		if (ui::imgui_tab("bScripts",
+			"Sprite behavior scripts that define how enemies, NPCs, items, and other sprites move and behave")) {
 
 			ImGui::SeparatorText("bScript Assembly");
 
@@ -135,7 +141,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("mScripts")) {
+		if (ui::imgui_tab("mScripts",
+			"Low-level representation of the game's music, useful for inspection and precise editing")) {
 
 			ImGui::SeparatorText("mScript Assembly");
 
@@ -177,7 +184,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("Miscellaneous")) {
+		if (ui::imgui_tab("Miscellaneous",
+			"Assorted game data and parameters in a simple text format, including enemy attributes, item settings, gameplay values, and various text")) {
 
 			ImGui::SeparatorText("Miscellaneous Build");
 
@@ -215,7 +223,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("MML (music)")) {
+		if (ui::imgui_tab("MML (music)",
+			"Music Macro Language (MML), the high-level format recommended for composing and editing the game's music")) {
 
 			ImGui::SeparatorText("MML Compilation");
 
@@ -224,7 +233,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				auto xrom{
 					fe::script::compile_mml(m_config,
 						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_script_path(m_filename, "mml")),
+						klib::file::read_file_as_strings(get_mml_path()),
 						message_callback)
 				};
 
@@ -244,7 +253,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Decompile", 2, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::decompile_mml_to_file(m_config, m_game->m_rom_data,
-					get_script_path(m_filename, "mml"), l_shift, message_callback);
+					get_mml_path(), l_shift, message_callback);
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
@@ -266,7 +275,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SameLine();
 
 			if (ui::imgui_button("MML to MIDI", 2, "Generate MIDI files from MML")) try {
-				fe::script::mml_to_midi_files(get_script_path(m_filename, "mml"),
+				fe::script::mml_to_midi_files(get_mml_path(),
 					get_script_file_prefix(m_filename),
 					message_callback);
 				add_message("MIDI files generated from MML", 2);
@@ -291,7 +300,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SameLine();
 
 			if (ui::imgui_button("MML to LilyPond", 2, "Generate LilyPond files from MML")) try {
-				fe::script::mml_to_lilypond_files(get_script_path(m_filename, "mml"),
+				fe::script::mml_to_lilypond_files(get_mml_path(),
 					get_script_file_prefix(m_filename),
 					ls_lilypond_percussion,
 					message_callback);

@@ -140,3 +140,22 @@ bool fe::ui::imgui_float_slider(const char* p_id, const std::string& p_label, fl
 
 	return l_result;
 }
+
+void fe::ui::imgui_tooltip(const char* p_txt) {
+	if (ImGui::IsItemHovered() && p_txt && *p_txt)
+		ImGui::SetTooltip("%s", p_txt);
+}
+
+void fe::ui::imgui_tooltip(const std::string& p_txt) {
+	imgui_tooltip(p_txt.c_str());
+}
+
+bool fe::ui::imgui_tab(const char* p_label, const char* p_tooltip) {
+	const bool active{ ImGui::BeginTabItem(p_label) };
+	imgui_tooltip(p_tooltip);
+	return active;
+}
+
+bool fe::ui::imgui_tab(const std::string& p_label, const std::string& p_tooltip) {
+	return imgui_tab(p_label.c_str(), p_tooltip.c_str());
+}
