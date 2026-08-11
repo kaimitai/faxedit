@@ -23,7 +23,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 		};
 
 	const auto get_script_dir = [this](void) -> std::filesystem::path {
-		const std::filesystem::path dir{ m_path / std::format("scripts-{}", m_filename) };
+		const std::filesystem::path dir{ m_path / std::format("{}-scripts", m_filename) };
 		klib::file::create_directories(dir);
 		return dir;
 		};
