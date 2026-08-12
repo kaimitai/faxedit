@@ -51,9 +51,6 @@ namespace fi {
 		std::size_t size(void) const;
 	};
 
-	extern std::map<byte, fi::Opcode> opcodes;
-	extern std::map<std::string, fi::Opcode> implementation_opcodes;
-
 	enum Instruction_type { OpCode, Directive };
 
 	struct Instruction {
@@ -65,10 +62,11 @@ namespace fi {
 		std::vector<uint16_t> operands;
 		std::optional<std::size_t> shop_index;
 
-		std::vector<byte> get_bytes(void) const;
+		std::vector<byte> get_bytes(const std::map<byte, fi::Opcode>& p_opcodes) const;
 	};
 
 	struct ScriptOpcodeInfo {
+		std::map<byte, fi::Opcode> opcodes;
 		std::vector<std::string> required_impls;
 		std::size_t base_opcode_count{ 0 };
 	};
@@ -76,6 +74,8 @@ namespace fi {
 	ScriptOpcodeInfo load_iscript_opcodes_from_config(
 		const std::map<byte, std::string>& p_opcode_defs,
 		const std::map<std::string, std::string>& p_impl_defs);
+
+	ScriptOpcodeInfo load_vanilla_opcodes(void);
 
 }
 

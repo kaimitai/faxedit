@@ -11,12 +11,15 @@
 #include "fe/Config.h"
 #include "fh/TilemapChanges.h"
 
+using byte = unsigned char;
+
 namespace fi {
 
 	enum class SectionType { Defines, Strings, Shops, IScript, TilemapChanges };
 
 	class AsmReader {
 
+		std::map<byte, fi::Opcode> m_opcodes;
 		// set of reserved string indexes first,
 		// then becomes full set of strings during parsing
 		std::map<int, fi::FaxString> m_strings;
@@ -60,7 +63,7 @@ namespace fi {
 		std::string to_lower(const std::string& str);
 
 	public:
-		AsmReader(void) = default;
+		AsmReader(const std::map<byte, fi::Opcode>& p_opcodes);
 		void read_asm(const fe::Config& p_config, const std::vector<std::string>& p_asm_code,
 			std::size_t script_rg2_offset);
 		std::size_t get_entrypoint_count(void) const;

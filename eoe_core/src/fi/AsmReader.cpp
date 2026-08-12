@@ -10,6 +10,11 @@
 #include <string>
 #include <utility>
 
+fi::AsmReader::AsmReader(const std::map<byte, fi::Opcode>& p_opcodes) :
+	m_opcodes{ p_opcodes }
+{
+}
+
 void fi::AsmReader::read_asm(const fe::Config& p_config, const std::vector<std::string>& p_asm_code,
 	std::size_t script_rg2_offset) {
 	auto l_lines{ p_asm_code };

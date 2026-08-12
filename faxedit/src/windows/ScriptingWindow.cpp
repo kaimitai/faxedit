@@ -60,14 +60,11 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("iScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble iScripts from asm-file and patch ROM")) try {
-				const auto opcode_info{ fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fe::c::ID_ISCRIPT_OPCODES),
-					m_config.str_map(fe::c::ID_ISCRIPT_OPCODE_IMPLS)) };
-
 				auto xrom{
 					fe::script::asm_iscripts(m_config,
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_script_path("iscript", "asm")),
-						opcode_info,
+						m_cache.iscript_opcode_info,
 						false,
 						message_callback)
 				};
@@ -91,6 +88,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Disassemble", 2, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
+					m_cache.iscript_opcode_info.opcodes,
 					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
 				mark_last_message_success();
 			}

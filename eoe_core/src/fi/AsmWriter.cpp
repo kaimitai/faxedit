@@ -8,6 +8,7 @@
 #include <string_view>
 
 std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
+	const std::map<byte, fi::Opcode>& p_opcodes,
 	const std::map<std::size_t, fi::Instruction>& p_instructions,
 	const std::vector<std::size_t>& p_entrypoints,
 	const std::set<std::size_t>& p_jump_targets,
@@ -91,7 +92,7 @@ std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
 			af += std::format(".textbox {}\n", get_define(fi::ArgDomain::TextBox, instr.opcode_byte));
 		}
 		else {
-			const auto& op{ fi::opcodes.find(instr.opcode_byte)->second };
+			const auto& op{ p_opcodes.find(instr.opcode_byte)->second };
 
 			std::string line{ std::format("    {}", op.name) };
 			std::string comment;

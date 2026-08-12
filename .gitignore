@@ -6,12 +6,10 @@ x64
 *.bak
 eoe_os_window.cfg
 v18
-faxedit.vcxproj.user
+*.vcxproj.user
 /EchoesOfEolis.app
 /*.dmg
 /build
 icon.icns
 .DS_Store
 CopilotIndices
-eoe_core.vcxproj.user
-faxiscripts.vcxproj.user

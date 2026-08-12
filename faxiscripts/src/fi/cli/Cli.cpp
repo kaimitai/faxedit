@@ -144,8 +144,7 @@ void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	bool p_strict) {
 
 	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
-	auto opcode_defs{ fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
-			m_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS)) };
+	const auto opcode_defs{ fe::script::get_iscript_opcode_info(m_config) };
 
 	fe::script::asm_iscripts_to_file(m_config, rom, p_asm_filename, p_out_filename, opcode_defs, p_strict,
 		[](const std::string& p_message) {
@@ -199,11 +198,10 @@ void fi::Cli::nes_to_asm(const std::string& p_nes_filename,
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
 	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto opcode_info{ fe::script::get_iscript_opcode_info(m_config) };
 
-	fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
-		m_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS));
-
-	fe::script::disasm_iscripts_to_file(m_config, rom_data, p_asm_filename, p_shop_comments, p_overwrite,
+	fe::script::disasm_iscripts_to_file(m_config, rom_data, opcode_info.opcodes,
+		p_asm_filename, p_shop_comments, p_overwrite,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';
 		});

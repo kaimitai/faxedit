@@ -20,6 +20,7 @@ namespace fe::script {
 	void try_patch(const std::string& p_data_type, std::size_t p_data_size,
 		std::size_t p_data_max_size, const MessageCallback& p_message);
 	std::vector<int> get_global_transpose(const Config& p_config, const std::vector<byte>& p_rom);
+	fi::ScriptOpcodeInfo get_iscript_opcode_info(const Config& p_config);
 
 	// iScripts
 	std::vector<byte> asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
@@ -31,9 +32,10 @@ namespace fe::script {
 		const MessageCallback& p_message);
 
 	std::string disasm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,
-		bool p_shop_comments, std::size_t& p_entrypoint_count);
+		const std::map<byte, fi::Opcode>& p_opcodes, bool p_shop_comments, std::size_t& p_entrypoint_count);
 	void disasm_iscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
-		const std::string& p_filename, bool p_shop_comments, bool p_overwrite,
+		const std::map<byte, fi::Opcode>& p_opcodes, const std::string& p_filename,
+		bool p_shop_comments, bool p_overwrite,
 		const MessageCallback& p_message);
 
 	// bScripts
