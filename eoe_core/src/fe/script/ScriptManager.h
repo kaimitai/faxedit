@@ -21,6 +21,8 @@ namespace fe::script {
 		std::size_t p_data_max_size, const MessageCallback& p_message);
 	std::vector<int> get_global_transpose(const Config& p_config, const std::vector<byte>& p_rom);
 	fi::ScriptOpcodeInfo get_iscript_opcode_info(const Config& p_config);
+	void validate_iscript_layer(const fe::Config& p_config, const std::vector<byte>& p_rom,
+		const std::map<byte, fi::Opcode>& p_opcodes);
 
 	// iScripts
 	std::vector<byte> asm_iscripts(const Config& p_config, const std::vector<byte>& p_rom,

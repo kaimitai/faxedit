@@ -55,6 +55,21 @@ fi::ScriptOpcodeInfo fe::script::get_iscript_opcode_info(const Config& p_config)
 		p_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS));
 }
 
+void fe::script::validate_iscript_layer(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::map<byte, fi::Opcode>& p_opcodes) {
+	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
+
+	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
+		try {
+			loader.parse_script_raw(p_rom, i);
+		}
+		catch (const std::exception& ex) {
+			throw std::runtime_error(std::format(
+				"iScript #{} failed validation: {}", i, ex.what()));
+		}
+	}
+}
+
 // iScripts
 std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
@@ -155,14 +170,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	message(p_message, "Verifying generated ROM contents");
 
 	// parse it to see if disassembly succeeds without throwing
-	try {
-		fi::IScriptLoader staticanalysisread(p_config, rom, p_opcode_info.opcodes);
-	}
-	catch (const std::runtime_error& ex) {
-		throw std::runtime_error(std::format(
-			"Invalid ROM generated. Ensure all code paths end, and that each "
-			"entrypoint has a textbox context\n{}", ex.what()));
-	}
+	validate_iscript_layer(p_config, rom, p_opcode_info.opcodes);
 
 	return rom;
 }

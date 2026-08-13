@@ -79,8 +79,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 				refresh_screen_event_handler_cache(m_game->m_rom_data);
 
-				// TODO: Parse each entrypoint independently during static analysis; whole-layer validation may not
-				// exercise every control-flow path from every entrypoint
+				// cannot reasonably fail as assembly already verified the script layer from all entrypoints
 				if (!refresh_iscript_cache(m_game->m_rom_data))
 					throw std::runtime_error("iScript assembly succeeded, but GUI cache refresh failed");
 
