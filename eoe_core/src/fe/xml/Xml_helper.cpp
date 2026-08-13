@@ -1557,30 +1557,22 @@ void fe::xml::read_setting_bool(pugi::xml_node p_root_node, const std::string& p
 }
 
 // eoe config helpers
-void fe::xml::load_configuration(const std::string& p_config_xml,
-	const fe::ConfigRegion& p_region,
-	std::map<std::string, std::size_t>& p_constants,
-	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
-	std::map<std::string, std::vector<byte>>& p_sets,
-	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
-	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
-	std::map<std::string, bool>& p_bools,
-	const std::vector<byte>& p_rom,
+pugi::xml_document fe::xml::load_config_xml(const std::string& p_config_xml_file,
 	bool p_throw_on_file_not_exists) {
-	pugi::xml_document l_doc;
 
-	auto loadresult{ l_doc.load_file(p_config_xml.c_str()) };
+	pugi::xml_document l_doc;
+	auto loadresult{ l_doc.load_file(p_config_xml_file.c_str()) };
 	if (!loadresult) {
 		if (loadresult.status == pugi::status_file_not_found) {
 			if (p_throw_on_file_not_exists)
-				throw std::runtime_error("File not found: " + p_config_xml);
+				throw std::runtime_error("File not found: " + p_config_xml_file);
 			else
-				return;
+				return l_doc;
 		}
 		else {
 			throw std::runtime_error(std::format(
 				"Could not parse XML file '{}': {} (offset {})",
-				p_config_xml,
+				p_config_xml_file,
 				loadresult.description(),
 				loadresult.offset
 			));
@@ -1588,11 +1580,27 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 	}
 
 	auto n_root{ l_doc.child(c::TAG_CONFIG_ROOT) };
+
 	if (!n_root)
 		throw std::runtime_error(std::format(
 			"Invalid XML file '{}': missing <{}> root element",
-			p_config_xml, c::TAG_CONFIG_ROOT
+			p_config_xml_file, c::TAG_CONFIG_ROOT
 		));
+
+	return l_doc;
+}
+
+void fe::xml::load_configuration(const pugi::xml_document& p_doc,
+	const fe::ConfigRegion& p_region,
+	std::map<std::string, std::size_t>& p_constants,
+	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
+	std::map<std::string, std::vector<byte>>& p_sets,
+	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
+	std::map<std::string, bool>& p_bools,
+	const std::vector<byte>& p_rom) {
+
+	auto n_root{ p_doc.child(c::TAG_CONFIG_ROOT) };
 
 	// constants
 	auto n_consts{ n_root.child(c::TAG_CONSTANTS) };
@@ -1744,40 +1752,36 @@ void fe::xml::load_configuration(const std::string& p_config_xml,
 			}
 		}
 	}
+}
 
+void fe::xml::load_configuration(const std::string& p_config_xml_file,
+	const fe::ConfigRegion& p_region,
+	std::map<std::string, std::size_t>& p_constants,
+	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
+	std::map<std::string, std::vector<byte>>& p_sets,
+	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
+	std::map<std::string, bool>& p_bools,
+	const std::vector<byte>& p_rom,
+	bool p_throw_on_file_not_exists) {
+	auto doc{ load_config_xml(p_config_xml_file, p_throw_on_file_not_exists) };
+	if (doc)
+		return load_configuration(doc, p_region, p_constants, p_pointers,
+			p_sets, p_byte_maps, p_string_maps, p_bools, p_rom);
 }
 
 std::vector<fe::RegionDefinition> fe::xml::load_region_defs(const std::string& p_config_xml_file,
 	bool p_throw_on_file_not_exists) {
+	auto doc{ load_config_xml(p_config_xml_file, p_throw_on_file_not_exists) };
+	if (!doc)
+		return {};
+	return load_region_defs(doc);
+}
+
+std::vector<fe::RegionDefinition> fe::xml::load_region_defs(const pugi::xml_document& p_doc) {
 	std::vector<fe::RegionDefinition> result;
 
-	pugi::xml_document l_doc;
-	auto loadresult{ l_doc.load_file(p_config_xml_file.c_str()) };
-	if (!loadresult) {
-		if (loadresult.status == pugi::status_file_not_found) {
-			if (p_throw_on_file_not_exists)
-				throw std::runtime_error("File not found: " + p_config_xml_file);
-			else
-				return result;
-		}
-		else {
-			throw std::runtime_error(std::format(
-				"Could not parse XML file '{}': {} (offset {})",
-				p_config_xml_file,
-				loadresult.description(),
-				loadresult.offset
-			));
-		}
-	}
-
-	auto n_root{ l_doc.child(c::TAG_CONFIG_ROOT) };
-
-	if (!n_root)
-		throw std::runtime_error(std::format(
-			"Invalid XML file '{}': missing <{}> root element",
-			p_config_xml_file, c::TAG_CONFIG_ROOT
-		));
-
+	auto n_root{ p_doc.child(c::TAG_CONFIG_ROOT) };
 	auto n_regions{ n_root.child(c::TAG_REGIONS) };
 
 	if (n_regions) {

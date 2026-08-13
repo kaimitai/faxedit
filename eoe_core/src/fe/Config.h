@@ -32,6 +32,11 @@ namespace fe {
 
 	public:
 		Config(void) = default;
+		Config(const std::string& p_config_xml,
+			const std::string& p_config_override_xml,
+			const std::vector<byte>& p_rom,
+			const std::string& p_region_override = std::string());
+
 		std::string to_string(void) const;
 
 		std::string get_region(void) const;

@@ -60,6 +60,9 @@ namespace fe {
 		}
 
 		// eoe config
+		pugi::xml_document load_config_xml(const std::string& p_xml_file,
+			bool p_throw_on_file_not_exists = true);
+		std::vector<RegionDefinition> load_region_defs(const pugi::xml_document& p_xml_doc);
 		std::vector<RegionDefinition> load_region_defs(const std::string& p_xml_file,
 			bool p_throw_on_file_not_exists = true);
 		void load_configuration(const std::string& p_config_xml,
@@ -72,6 +75,15 @@ namespace fe {
 			std::map<std::string, bool>& p_bools,
 			const std::vector<byte>& p_rom,
 			bool p_throw_on_file_not_exists = true);
+		void load_configuration(const pugi::xml_document& p_xml_doc,
+			const fe::ConfigRegion& p_region,
+			std::map<std::string, std::size_t>& p_constants,
+			std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
+			std::map<std::string, std::vector<byte>>& p_sets,
+			std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+			std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
+			std::map<std::string, bool>& p_bools,
+			const std::vector<byte>& p_rom);
 
 		// utility
 		bool region_match(const fe::ConfigRegion& current_region, const std::string& region_list,
