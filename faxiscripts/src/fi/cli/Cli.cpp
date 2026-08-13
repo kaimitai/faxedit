@@ -86,8 +86,6 @@ fi::Cli::Cli(int argc, char** argv) :
 		parse_arguments(4, argc, argv);
 	}
 
-	m_config.load_definitions(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME);
-
 	// we have the info we need to execute
 	// IScript dispatch
 	if (m_script_mode == fi::ScriptMode::IScriptBuild) {
@@ -143,7 +141,7 @@ void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	const std::string& p_source_rom_filename,
 	bool p_strict) {
 
-	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 	const auto opcode_defs{ fe::script::get_iscript_opcode_info(m_config) };
 
 	fe::script::asm_iscripts_to_file(m_config, rom, p_asm_filename, p_out_filename, opcode_defs, p_strict,
@@ -157,7 +155,7 @@ void fi::Cli::basm_to_nes(const std::string& p_basm_filename,
 	const std::string& p_source_rom_filename,
 	bool p_strict) {
 
-	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 	fe::script::asm_bscripts_to_file(m_config, rom, p_basm_filename, p_nes_filename, p_strict,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';
@@ -169,7 +167,7 @@ void fi::Cli::masm_to_nes(const std::string& p_mml_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
 
-	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 	fe::script::asm_mscripts_to_file(m_config, rom, p_mml_filename, p_nes_filename,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';
@@ -180,7 +178,7 @@ void fi::Cli::misc_to_nes(const std::string& p_txt_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
 
-	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 
 	fe::script::build_misc_to_file(m_config, rom, p_txt_filename, p_nes_filename,
 		[](const std::string& p_message) {
@@ -197,7 +195,7 @@ void fi::Cli::nes_to_asm(const std::string& p_nes_filename,
 	if (p_overwrite)
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 	const auto opcode_info{ fe::script::get_iscript_opcode_info(m_config) };
 
 	fe::script::disasm_iscripts_to_file(m_config, rom_data, opcode_info.opcodes,
@@ -214,7 +212,7 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 	if (p_overwrite)
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 	fe::script::disasm_bscripts_to_file(m_config, rom_data, p_basm_filename, p_overwrite,
 		[](const std::string& p_message) {
 			std::cout << p_message << '\n';
@@ -224,7 +222,7 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
 	const std::string& p_mml_filename, bool p_overwrite) {
 
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::disasm_mscripts_to_file(m_config, rom_data, p_mml_filename, m_notes, p_overwrite,
 		[](const std::string& p_message) {
@@ -235,7 +233,7 @@ void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
 void fi::Cli::nes_to_misc(const std::string& p_nes_filename,
 	const std::string& p_txt_filename,
 	bool p_overwrite) {
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::extract_misc_to_file(m_config, rom_data, p_txt_filename, m_strict, p_overwrite,
 		[](const std::string& p_message) {
@@ -247,7 +245,7 @@ void fi::Cli::nes_to_mml(const std::string& p_nes_filename,
 	const std::string& p_mml_filename,
 	bool p_overwrite) {
 
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::decompile_mml_to_file(m_config, rom_data, p_mml_filename, p_overwrite,
 		[](const std::string& p_message) {
@@ -259,7 +257,7 @@ void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
 	const std::string& p_nes_filename,
 	const std::string& p_source_rom_filename) {
 
-	const auto rom{ load_rom_and_determine_region(p_source_rom_filename) };
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 
 	fe::script::compile_mml_to_file(m_config, rom, p_mml_filename, p_nes_filename,
 		[](const std::string& p_message) {
@@ -270,7 +268,7 @@ void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
 void fi::Cli::rom_to_midi(const std::string& p_nes_filename,
 	const std::string& p_out_file_prefix) {
 
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::rom_to_midi_files(m_config, rom_data, p_out_file_prefix,
 		[](const std::string& p_message) {
@@ -290,7 +288,7 @@ void fi::Cli::mml_to_midi(const std::string& p_mml_filename,
 
 void fi::Cli::rom_to_lilypond(const std::string& p_nes_filename,
 	const std::string& p_out_file_prefix) {
-	const auto rom_data{ load_rom_and_determine_region(p_nes_filename) };
+	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::rom_to_lilypond_files(m_config, rom_data, p_out_file_prefix, m_lilypond_percussion,
 		[](const std::string& p_message) {
@@ -308,7 +306,7 @@ void fi::Cli::mml_to_lilypond(const std::string& p_mml_filename,
 
 void fi::Cli::dump_config(const std::string& p_nes_filename,
 	const std::string& p_dump_filename) {
-	load_rom_and_determine_region(p_nes_filename);
+	load_rom_and_config(p_nes_filename);
 
 	klib::file::write_string_to_file(m_config.to_string(), p_dump_filename);
 	std::cout << "Wrote resolved configuration dump to " << p_dump_filename << "!\n";
@@ -336,22 +334,23 @@ void fi::Cli::parse_arguments(int arg_start, int argc, char** argv) {
 	}
 }
 
-std::vector<byte> fi::Cli::load_rom_and_determine_region(
+std::vector<byte> fi::Cli::load_rom_and_config(
 	const std::string& p_nes_filename) {
 
 	std::cout << "Attempting to read " << p_nes_filename << "\n";
 	const auto rom_data{ klib::file::read_file_as_bytes(p_nes_filename) };
 
-	if (m_region.empty()) {
-		m_config.determine_region(rom_data);
-		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
-	}
-	else {
-		m_config.set_region(m_region);
-		std::cout << "ROM region specified as '" << m_region << "'\n";
-	}
+	m_config = fe::Config(
+		appc::CONFIG_XML,
+		appc::CONFIG_OVERRIDE_FILE_NAME,
+		rom_data,
+		m_region
+	);
 
-	m_config.load_config_data(appc::CONFIG_XML, appc::CONFIG_OVERRIDE_FILE_NAME, rom_data);
+	if (m_region.empty())
+		std::cout << "ROM region resolved to '" << m_config.get_region() << "'\n";
+	else
+		std::cout << "ROM region specified as '" << m_region << "'\n";
 
 	return rom_data;
 }
