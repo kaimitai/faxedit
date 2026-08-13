@@ -70,7 +70,7 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 
 	// make an opcode mnemonic reverse lookup
 	std::map<std::string, byte> mnemonics;
-	for (const auto& opc : fi::opcodes) {
+	for (const auto& opc : m_opcodes) {
 		mnemonics.insert(std::make_pair(
 			to_lower(opc.second.name), opc.first
 		));
@@ -156,7 +156,7 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 			std::vector<uint16_t> operands;
 			std::optional<uint16_t> target_address;
 
-			const fi::Opcode& op = fi::opcodes.at(opcode_byte);
+			const fi::Opcode& op = m_opcodes.at(opcode_byte);
 
 			// let's validate the params first
 			const auto expected_tokens{ op.token_count() };
@@ -301,7 +301,7 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 			if (m_instructions[i].byte_offset.value() + m_instructions[i].size
 				<= l_iscript_rg1_size
 				&& m_instructions[i].type != fi::Instruction_type::Directive
-				&& fi::opcodes.at(m_instructions[i].opcode_byte).ends_stream) {
+				&& m_opcodes.at(m_instructions[i].opcode_byte).ends_stream) {
 				idx_after_last_safe_stream_end = i + 1;
 				break;
 			}
@@ -391,7 +391,7 @@ fi::AsmReader::get_script_bytes(const fe::Config& p_config) const {
 	}
 
 	for (const auto& instr : m_instructions) {
-		auto instrbytes{ instr.get_bytes() };
+		auto instrbytes{ instr.get_bytes(m_opcodes) };
 
 		if (instr.byte_offset < SCRIPT_DATA_START + l_iscript_rg1_size)
 			region_1.insert(end(region_1), begin(instrbytes), end(instrbytes));

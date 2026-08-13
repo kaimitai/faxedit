@@ -116,7 +116,7 @@ fe::MainWindow::extract_script_semantics(void) try {
 	std::unordered_map<byte, fe::ScriptSemanticInfo> result;
 	const auto& rom_bytes{ m_game->m_rom_data };
 
-	fi::IScriptLoader loader(m_config, rom_bytes);
+	fi::IScriptLoader loader(m_config, rom_bytes, m_cache.iscript_opcode_info.opcodes);
 
 	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
 		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };
@@ -160,7 +160,7 @@ std::map<byte, byte> fe::MainWindow::extract_set_spawn_scripts(void) try {
 	std::map<byte, byte> result;
 	const auto& rom_bytes{ m_game->m_rom_data };
 
-	fi::IScriptLoader loader(m_config, rom_bytes);
+	fi::IScriptLoader loader(m_config, rom_bytes, m_cache.iscript_opcode_info.opcodes);
 
 	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
 		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };

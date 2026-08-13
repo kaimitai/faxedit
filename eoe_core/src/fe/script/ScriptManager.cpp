@@ -50,6 +50,26 @@ std::vector<int> fe::script::get_global_transpose(const fe::Config& p_config, co
 	return result;
 }
 
+fi::ScriptOpcodeInfo fe::script::get_iscript_opcode_info(const Config& p_config) {
+	return fi::load_iscript_opcodes_from_config(p_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
+		p_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS));
+}
+
+void fe::script::validate_iscript_layer(const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::map<byte, fi::Opcode>& p_opcodes) {
+	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
+
+	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
+		try {
+			loader.parse_script_raw(p_rom, i);
+		}
+		catch (const std::exception& ex) {
+			throw std::runtime_error(std::format(
+				"iScript #{} failed validation: {}", i, ex.what()));
+		}
+	}
+}
+
 // iScripts
 std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
@@ -59,7 +79,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	if (p_strict)
 		message(p_message, "Using strict mode - Only original ROM data region will be used");
 
-	fi::AsmReader reader;
+	fi::AsmReader reader(p_opcode_info.opcodes);
 
 	std::size_t l_iscript_rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
 
@@ -150,14 +170,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	message(p_message, "Verifying generated ROM contents");
 
 	// parse it to see if disassembly succeeds without throwing
-	try {
-		fi::IScriptLoader staticanalysisread(p_config, rom);
-	}
-	catch (const std::runtime_error& ex) {
-		throw std::runtime_error(std::format(
-			"Invalid ROM generated. Ensure all code paths end, and that each "
-			"entrypoint has a textbox context\n{}", ex.what()));
-	}
+	validate_iscript_layer(p_config, rom, p_opcode_info.opcodes);
 
 	return rom;
 }
@@ -177,9 +190,9 @@ void fe::script::asm_iscripts_to_file(const fe::Config& p_config, const std::vec
 }
 
 std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
-	bool p_shop_comments, std::size_t& p_entrypoint_count) {
+	const std::map<byte, fi::Opcode>& p_opcodes, bool p_shop_comments, std::size_t& p_entrypoint_count) {
 
-	fi::IScriptLoader loader(p_config, p_rom);
+	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
 	loader.parse_rom(p_rom);
 
 	p_entrypoint_count = loader.get_script_count();
@@ -187,6 +200,7 @@ std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::v
 	fi::AsmWriter asmw;
 	return asmw.generate_asm(
 		p_config,
+		loader.get_opcodes(),
 		loader.get_instructions(),
 		loader.get_ptr_table(),
 		loader.get_jump_targets(),
@@ -196,7 +210,8 @@ std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::v
 }
 
 void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
-	const std::string& p_filename, bool p_shop_comments, bool p_overwrite,
+	const std::map<byte, fi::Opcode>& p_opcodes, const std::string& p_filename,
+	bool p_shop_comments, bool p_overwrite,
 	const MessageCallback& p_message) {
 	std::size_t script_count{ 0 };
 
@@ -204,7 +219,7 @@ void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::
 		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_filename));
 
 	message(p_message, "Attempting to parse ROM scripting layer");
-	const auto asm_code{ disasm_iscripts(p_config, p_rom, p_shop_comments, script_count) };
+	const auto asm_code{ disasm_iscripts(p_config, p_rom, p_opcodes, p_shop_comments, script_count) };
 	message(p_message, std::format("Detected {} script entrypoints", script_count));
 	message(p_message, std::format("Generating output file {}", p_filename));
 	klib::file::write_string_to_file(asm_code, p_filename);

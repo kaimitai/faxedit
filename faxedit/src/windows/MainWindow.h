@@ -52,6 +52,7 @@ namespace fe {
 		// sprite dimensions; holding sprite size and cartesian offsets per animation frame
 		std::vector<fe::SpriteAnimationGUIData> m_sprite_dims;
 		// iscripts
+		fi::ScriptOpcodeInfo iscript_opcode_info;
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
 	};
 

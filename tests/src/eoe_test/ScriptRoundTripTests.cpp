@@ -15,7 +15,7 @@ eoe_test::TestResult eoe_test::RoundTripTest(void) {
 		const auto rom_data{ klib::file::read_file_as_bytes(rom_file.string()) };
 
 		auto config{ get_config(rom_data,
-			"./test_data/eoe_config_override.xml") };
+			"./test_data/config_overrides/eoe_config_override.xml") };
 
 		if (TestiScriptRoundTrip(config, rom_data))
 			++success;
@@ -30,19 +30,19 @@ eoe_test::TestResult eoe_test::RoundTripTest(void) {
 }
 
 bool eoe_test::TestiScriptRoundTrip(const fe::Config& p_config, const std::vector<byte>& p_rom) {
-	const auto impls{ fi::load_iscript_opcodes_from_config(p_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
+	const auto opcode_info{ fi::load_iscript_opcodes_from_config(p_config.bmap_dense(fi::c::ID_ISCRIPT_OPCODES),
 		p_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS)) };
 
 	std::size_t ep_count{ 0 }, ep_count_2{ 0 }, ep_count_3{ 0 };
-	const auto asm_text{ fe::script::disasm_iscripts(p_config, p_rom, false, ep_count) };
+	const auto asm_text{ fe::script::disasm_iscripts(p_config, p_rom, opcode_info.opcodes, false, ep_count) };
 	const auto asm_lines{ klib::str::split_string(asm_text, '\n') };
-	const auto new_rom{ fe::script::asm_iscripts(p_config, p_rom, asm_lines, impls, false, nullptr) };
+	const auto new_rom{ fe::script::asm_iscripts(p_config, p_rom, asm_lines, opcode_info, false, nullptr) };
 
-	const auto asm_text_2{ fe::script::disasm_iscripts(p_config, new_rom, false, ep_count_2) };
+	const auto asm_text_2{ fe::script::disasm_iscripts(p_config, new_rom, opcode_info.opcodes, false, ep_count_2) };
 	const auto asm_lines_2{ klib::str::split_string(asm_text_2, '\n') };
-	const auto new_rom_2{ fe::script::asm_iscripts(p_config, p_rom, asm_lines_2, impls, false, nullptr) };
+	const auto new_rom_2{ fe::script::asm_iscripts(p_config, p_rom, asm_lines_2, opcode_info, false, nullptr) };
 
-	const auto asm_text_3{ fe::script::disasm_iscripts(p_config, new_rom_2, false, ep_count_3) };
+	const auto asm_text_3{ fe::script::disasm_iscripts(p_config, new_rom_2, opcode_info.opcodes, false, ep_count_3) };
 
 	return new_rom == new_rom_2 &&
 		asm_text_2 == asm_text_3 &&
@@ -51,11 +51,7 @@ bool eoe_test::TestiScriptRoundTrip(const fe::Config& p_config, const std::vecto
 }
 
 fe::Config eoe_test::get_config(const std::vector<byte>& p_rom, const std::string& p_override_xml_filename) {
-	fe::Config config;
-	config.load_definitions("eoe_config.xml", p_override_xml_filename);
-	config.determine_region(p_rom);
-	config.load_config_data("eoe_config.xml", p_override_xml_filename, p_rom);
-	return config;
+	return fe::Config("eoe_config.xml", p_override_xml_filename, p_rom, "");
 }
 
 std::set<std::filesystem::path> eoe_test::get_test_roms(void) {

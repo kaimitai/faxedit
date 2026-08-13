@@ -1,36 +1,34 @@
 #include "Opcode.h"
 #include "./../common/klib/Kstring.h"
 
-std::map<byte, fi::Opcode> fi::opcodes{
-	{0x00, fi::Opcode("End", {}, fi::Flow::End, true)},
-	{0x01, fi::Opcode("MsgNoskip", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
-	{0x02, fi::Opcode("MsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
-	{0x03, fi::Opcode("Msg", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
-	{0x04, fi::Opcode("IfTitleChange", {}, fi::Flow::Jump, false)},
-	{0x05, fi::Opcode("LoseGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
-	{0x06, fi::Opcode("SetSpawn", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
-	{0x07, fi::Opcode("GetItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
-	{0x08, fi::Opcode("OpenShopBuy", {}, fi::Flow::Read, false)},
-	{0x09, fi::Opcode("GetGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
-	{0x0a, fi::Opcode("GetMana", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
-	{0x0b, fi::Opcode("IfQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Jump, false)},
-	{0x0c, fi::Opcode("IfRank", {{fi::ArgType::Byte, fi::ArgDomain::Rank}}, fi::Flow::Jump, false)},
-	{0x0d, fi::Opcode("IfGold", {}, fi::Flow::Jump, false)},
-	{0x0e, fi::Opcode("SetQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Continue, false)},
-	{0x0f, fi::Opcode("IfBuy", {}, fi::Flow::Jump, false)},
-	{0x10, fi::Opcode("LoseItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
-	{0x11, fi::Opcode("OpenShopSell", {}, fi::Flow::Read, false)},
-	{0x12, fi::Opcode("IfItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Jump, false)},
-	{0x13, fi::Opcode("GetHealth", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
-	{0x14, fi::Opcode("ShowMantra", {}, fi::Flow::Continue, false)},
-	{0x15, fi::Opcode("EndGame", {}, fi::Flow::End, true)},
-	{0x16, fi::Opcode("IfMsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Jump, false) },
-	{0x17, fi::Opcode("Jump", {}, fi::Flow::Jump, true)}
-};
-
-std::map<std::string, fi::Opcode> fi::implementation_opcodes;
-
 namespace {
+
+	const std::map<byte, fi::Opcode> VANILLA_ISCRIPT_OPCODES{
+		{0x00, fi::Opcode("End", {}, fi::Flow::End, true)},
+		{0x01, fi::Opcode("MsgNoskip", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+		{0x02, fi::Opcode("MsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+		{0x03, fi::Opcode("Msg", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Continue, false)},
+		{0x04, fi::Opcode("IfTitleChange", {}, fi::Flow::Jump, false)},
+		{0x05, fi::Opcode("LoseGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+		{0x06, fi::Opcode("SetSpawn", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+		{0x07, fi::Opcode("GetItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
+		{0x08, fi::Opcode("OpenShopBuy", {}, fi::Flow::Read, false)},
+		{0x09, fi::Opcode("GetGold", {{fi::ArgType::Short, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+		{0x0a, fi::Opcode("GetMana", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+		{0x0b, fi::Opcode("IfQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Jump, false)},
+		{0x0c, fi::Opcode("IfRank", {{fi::ArgType::Byte, fi::ArgDomain::Rank}}, fi::Flow::Jump, false)},
+		{0x0d, fi::Opcode("IfGold", {}, fi::Flow::Jump, false)},
+		{0x0e, fi::Opcode("SetQuest", {{fi::ArgType::Byte, fi::ArgDomain::Quest}}, fi::Flow::Continue, false)},
+		{0x0f, fi::Opcode("IfBuy", {}, fi::Flow::Jump, false)},
+		{0x10, fi::Opcode("LoseItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Continue, false)},
+		{0x11, fi::Opcode("OpenShopSell", {}, fi::Flow::Read, false)},
+		{0x12, fi::Opcode("IfItem", {{fi::ArgType::Byte, fi::ArgDomain::Item}}, fi::Flow::Jump, false)},
+		{0x13, fi::Opcode("GetHealth", {{fi::ArgType::Byte, fi::ArgDomain::None}}, fi::Flow::Continue, false)},
+		{0x14, fi::Opcode("ShowMantra", {}, fi::Flow::Continue, false)},
+		{0x15, fi::Opcode("EndGame", {}, fi::Flow::End, true)},
+		{0x16, fi::Opcode("IfMsgPrompt", {{fi::ArgType::Byte, fi::ArgDomain::TextString}}, fi::Flow::Jump, false) },
+		{0x17, fi::Opcode("Jump", {}, fi::Flow::Jump, true)}
+	};
 
 	const fi::Opcode NONE_CONTINUE{
 		"",
@@ -132,7 +130,9 @@ static ParsedOpcodeDef parse_opcode_properties(const std::string& p_definition) 
 	return { result, impl };
 }
 
-static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<std::string>& p_required_impls) {
+static fi::Opcode parse_opcode_def(const std::string& p_definition,
+	std::vector<std::string>& p_required_impls,
+	const std::map<std::string, fi::Opcode>& p_available_impls) {
 	auto parsed{ parse_opcode_properties(p_definition) };
 
 	if (parsed.impl)
@@ -149,8 +149,8 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<
 		auto opcode_name{ parsed.opcode.name };
 		const auto key{ klib::str::to_lower(*parsed.impl) };
 
-		const auto it{ fi::implementation_opcodes.find(key) };
-		if (it == fi::implementation_opcodes.end())
+		const auto it{ p_available_impls.find(key) };
+		if (it == p_available_impls.end())
 			throw std::runtime_error(std::format(
 				"Unknown script opcode implementation '{}'", *parsed.impl));
 
@@ -163,8 +163,9 @@ static fi::Opcode parse_opcode_def(const std::string& p_definition, std::vector<
 	return parsed.opcode;
 }
 
-static void load_opcode_implementations(const std::map<std::string, std::string>& p_impl_defs) {
-	fi::implementation_opcodes.clear();
+static std::map<std::string, fi::Opcode> load_opcode_implementations(
+	const std::map<std::string, std::string>& p_impl_defs) {
+	std::map<std::string, fi::Opcode> result;
 
 	for (const auto& [impl_name, definition] : p_impl_defs) {
 		auto parsed{ parse_opcode_properties(definition) };
@@ -176,22 +177,22 @@ static void load_opcode_implementations(const std::map<std::string, std::string>
 		parsed.opcode.name = impl_name;
 
 		const auto key{ klib::str::to_lower(impl_name) };
-		fi::implementation_opcodes.emplace(key, parsed.opcode);
+		result.emplace(key, parsed.opcode);
 	}
+
+	return result;
 }
 
 fi::ScriptOpcodeInfo fi::load_iscript_opcodes_from_config(const std::map<byte, std::string>& p_opcode_defs,
 	const std::map<std::string, std::string>& p_impl_defs) {
 	constexpr bool THROW_ON_OPCODE_DIFFS{ false };
 
+	if (p_opcode_defs.empty())
+		throw std::runtime_error("iScript opcode map cannot be empty");
+
 	fi::ScriptOpcodeInfo result;
 
-	if (p_opcode_defs.empty())
-		return result;
-
-	load_opcode_implementations(p_impl_defs);
-
-	std::map<byte, fi::Opcode> l_opcodes;
+	const auto available_impls{ load_opcode_implementations(p_impl_defs) };
 
 	byte expected{ 0 };
 
@@ -203,20 +204,26 @@ fi::ScriptOpcodeInfo fi::load_iscript_opcodes_from_config(const std::map<byte, s
 
 		++expected;
 
-		auto parsed{ parse_opcode_def(kv.second, result.required_impls) };
-		l_opcodes.insert(std::make_pair(kv.first, parsed));
+		auto parsed{ parse_opcode_def(kv.second, result.required_impls, available_impls) };
+		result.opcodes.insert(std::make_pair(kv.first, parsed));
 	}
 
 	result.base_opcode_count = p_opcode_defs.size() - result.required_impls.size();
 
 	if constexpr (THROW_ON_OPCODE_DIFFS) {
-		if (l_opcodes != fi::opcodes)
+		if (result.opcodes != VANILLA_ISCRIPT_OPCODES)
 			throw std::runtime_error("Vanilla iScript opcodes do not match config");
 	}
 
-	fi::opcodes = l_opcodes;
-
 	return result;
+}
+
+fi::ScriptOpcodeInfo fi::load_vanilla_opcodes(void) {
+	return ScriptOpcodeInfo{
+		.opcodes = VANILLA_ISCRIPT_OPCODES,
+		.required_impls = {},
+		.base_opcode_count = VANILLA_ISCRIPT_OPCODES.size()
+	};
 }
 
 // opcode members
@@ -252,12 +259,12 @@ std::size_t fi::Opcode::size(void) const {
 }
 
 // instruction members
-std::vector<byte> fi::Instruction::get_bytes(void) const {
+std::vector<byte> fi::Instruction::get_bytes(const std::map<byte, fi::Opcode>& p_opcodes) const {
 	std::vector<byte> result{ opcode_byte };
 	if (type == Instruction_type::Directive)
 		return result;
 
-	const auto& op{ fi::opcodes.at(opcode_byte) };
+	const auto& op{ p_opcodes.at(opcode_byte) };
 
 	if (operands.size() != op.args.size())
 		throw std::runtime_error(std::format("Opcode '{}' expects {} operand(s), got {}",

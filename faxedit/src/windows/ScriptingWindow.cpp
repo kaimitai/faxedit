@@ -60,24 +60,26 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("iScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble iScripts from asm-file and patch ROM")) try {
-				const auto opcode_info{ fi::load_iscript_opcodes_from_config(m_config.bmap_dense(fe::c::ID_ISCRIPT_OPCODES),
-					m_config.str_map(fe::c::ID_ISCRIPT_OPCODE_IMPLS)) };
+				// hot-reload config and update cache pertaining to iScript opcode definitions
+				const auto config_files{ get_config_file_paths() };
+				const fe::Config tmp_config(config_files.first, config_files.second, m_game->m_rom_data, m_config.get_region());
+				const auto l_opcode_info{ fe::script::get_iscript_opcode_info(tmp_config) };
 
 				auto xrom{
-					fe::script::asm_iscripts(m_config,
+					fe::script::asm_iscripts(tmp_config,
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_script_path("iscript", "asm")),
-						opcode_info,
+						l_opcode_info,
 						false,
 						message_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
+				m_cache.iscript_opcode_info = l_opcode_info;
 
 				refresh_screen_event_handler_cache(m_game->m_rom_data);
 
-				// TODO: Parse each entrypoint independently during static analysis; whole-layer validation may not
-				// exercise every control-flow path from every entrypoint
+				// cannot reasonably fail as assembly already verified the script layer from all entrypoints
 				if (!refresh_iscript_cache(m_game->m_rom_data))
 					throw std::runtime_error("iScript assembly succeeded, but GUI cache refresh failed");
 
@@ -91,6 +93,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Disassemble", 2, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
+					m_cache.iscript_opcode_info.opcodes,
 					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
 				mark_last_message_success();
 			}

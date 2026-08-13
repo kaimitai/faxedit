@@ -6,7 +6,9 @@
 using byte = unsigned char;
 
 fi::IScriptLoader::IScriptLoader(const fe::Config& p_config,
-	const std::vector<byte>& p_rom) {
+	const std::vector<byte>& p_rom, const std::map<byte, fi::Opcode>& p_opcodes) :
+	m_opcodes{ p_opcodes }
+{
 	parse_strings(p_config, p_rom);
 
 	auto l_iscript_ptr{ p_config.pointer(c::ID_ISCRIPT_PTR_LO) };
@@ -58,6 +60,10 @@ const std::map<size_t, fi::Instruction>& fi::IScriptLoader::parse_script_raw(con
 	parse_blob_from_entrypoint(p_rom, m_ptr_table[p_script_no], true);
 
 	return m_instructions;
+}
+
+const std::map<byte, fi::Opcode>& fi::IScriptLoader::get_opcodes(void) const {
+	return m_opcodes;
 }
 
 const std::map<std::size_t, fi::Instruction>& fi::IScriptLoader::get_instructions(void) const {
@@ -151,8 +157,8 @@ void fi::IScriptLoader::parse_blob_from_entrypoint(const std::vector<byte>& p_ro
 		uint8_t opcode_byte = read_byte(p_rom, cursor);
 		std::optional<std::size_t> shop_index;
 
-		auto it = opcodes.find(opcode_byte);
-		if (it == opcodes.end()) {
+		auto it = m_opcodes.find(opcode_byte);
+		if (it == m_opcodes.end()) {
 			throw std::runtime_error("Unknown opcode " + to_hex(opcode_byte) +
 				" at offset " + to_hex(instr_offset));
 		}
@@ -263,8 +269,8 @@ void fi::IScriptLoader::normalize_shop_indexes() {
 	// remap instruction operands for shop-reading opcodes
 	for (auto& [offset, instr] : m_instructions) {
 		if (instr.type == fi::Instruction_type::OpCode) {
-			auto opcode_it = opcodes.find(instr.opcode_byte);
-			if (opcode_it != opcodes.end() &&
+			auto opcode_it = m_opcodes.find(instr.opcode_byte);
+			if (opcode_it != m_opcodes.end() &&
 				opcode_it->second.flow == Flow::Read &&
 				instr.shop_index.has_value()) {
 				instr.shop_index = old_to_new.at(*instr.shop_index);
@@ -306,7 +312,7 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(void) const {
 		}
 		// any other opcode
 		else {
-			const auto& op{ fi::opcodes.find(instr.opcode_byte)->second };
+			const auto& op{ m_opcodes.find(instr.opcode_byte)->second };
 			result.push_back(fi::AsmToken(std::format("  {}", op.name), 4, false));
 
 			if (instr.operands.size() != op.args.size())

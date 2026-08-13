@@ -4,6 +4,36 @@
 #include <format>
 #include <stdexcept>
 
+fe::Config::Config(const std::string& p_config_xml,
+	const std::string& p_config_override_xml,
+	const std::vector<byte>& p_rom,
+	const std::string& p_region_override) {
+
+	// load xml files
+	const auto config_doc{ xml::load_config_xml(p_config_xml) };
+	const auto override_doc{ xml::load_config_xml(p_config_override_xml, false) };
+
+	// load region definitions
+	if (override_doc)
+		m_region_defs = xml::load_region_defs(override_doc);
+	auto base_defs{ xml::load_region_defs(config_doc) };
+	m_region_defs.insert(end(m_region_defs), begin(base_defs), end(base_defs));
+
+	// use provided region, or determine it
+	if (p_region_override.empty())
+		determine_region(p_rom);
+	else
+		set_region(p_region_override);
+
+	// load actual configuration for this region
+	if (override_doc) {
+		xml::load_configuration(override_doc, m_region, m_constants,
+			m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom);
+	}
+	xml::load_configuration(config_doc, m_region, m_constants,
+		m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom);
+}
+
 void fe::Config::load_definitions(const std::string& p_config_xml,
 	const std::string& p_config_override_xml) {
 	m_region_defs = xml::load_region_defs(p_config_override_xml, false);

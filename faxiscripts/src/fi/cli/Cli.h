@@ -94,7 +94,7 @@ namespace fi {
 			const std::string& p_dump_filename);
 
 		// common
-		std::vector<byte> load_rom_and_determine_region(const std::string& p_nes_filename);
+		std::vector<byte> load_rom_and_config(const std::string& p_nes_filename);
 		bool check_mode(const std::string& p_mode,
 			const std::pair<std::string, std::string>& p_cmds);
 

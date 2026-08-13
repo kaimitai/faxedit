@@ -25,6 +25,7 @@ namespace fi {
 
 		std::vector<std::size_t> m_ptr_table;
 		std::size_t m_ptr_zero_addr;
+		std::map<byte, fi::Opcode> m_opcodes;
 
 		std::map<byte, std::string> m_defines_item,
 			m_defines_rank, m_defines_quest,
@@ -56,12 +57,14 @@ namespace fi {
 
 	public:
 		IScriptLoader(const fe::Config& p_config,
-			const std::vector<byte>& p_rom);
+			const std::vector<byte>& p_rom,
+			const std::map<byte, fi::Opcode>& p_opcodes);
 		void parse_rom(const std::vector<byte>& p_rom);
 		std::vector<fi::AsmToken> get_asm_code(void) const;
 		std::vector<fi::AsmToken> parse_script(const std::vector<byte>& p_rom, std::size_t p_script_no);
 		const std::map<size_t, fi::Instruction>& parse_script_raw(const std::vector<byte>& p_rom,
 			std::size_t p_script_no);
+		const std::map<byte, fi::Opcode>& get_opcodes(void) const;
 		const std::map<std::size_t, fi::Instruction>& get_instructions(void) const;
 		const std::vector<std::size_t>& get_ptr_table(void) const;
 		const std::set<std::size_t>& get_jump_targets(void) const;

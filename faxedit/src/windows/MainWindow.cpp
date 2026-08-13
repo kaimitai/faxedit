@@ -13,6 +13,7 @@
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
 #include "fe/xml/Xml_helper.h"
+#include "fe/script/ScriptManager.h"
 #include "common/klib/Kfile.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
@@ -769,22 +770,16 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 	try {
 		auto bytes = klib::file::read_file_as_bytes(p_filepath);
 
-		m_config.clear();
-		m_config.load_definitions(l_config_xml_path, l_config_override_xml_path);
+		m_config = fe::Config(l_config_xml_path, l_config_override_xml_path, bytes, p_region);
 
 		if (p_region.empty()) {
-			m_config.determine_region(bytes);
-			add_message(std::format("ROM region detected: '{}'",
-				m_config.get_region()), 4);
+			add_message(std::format("ROM region detected: '{}'", m_config.get_region()), 4);
 			m_region_override.clear();
 		}
 		else {
 			add_message(std::format("Region specified as '{}'", p_region), 4);
-			m_config.set_region(p_region);
 			m_region_override = p_region;
 		}
-
-		m_config.load_config_data(l_config_xml_path, l_config_override_xml_path, bytes);
 
 		fe::Game l_game{ fe::Game(m_config, bytes) };
 		l_game.m_sprite_gfx_manager.load_rom(m_config, l_game.m_rom_data, m_rom_manager);
@@ -797,12 +792,12 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_cache.m_shared_palettes = m_game->get_shared_palettes(m_config);
 
 		try {
-			fi::load_iscript_opcodes_from_config(m_config.bmap_dense(c::ID_ISCRIPT_OPCODES),
-				m_config.str_map(c::ID_ISCRIPT_OPCODE_IMPLS));
+			m_cache.iscript_opcode_info = fe::script::get_iscript_opcode_info(m_config);
 		}
-		catch (const std::runtime_error& ex) {
+		catch (const std::exception& ex) {
 			add_message(std::format("Error when reading iScript opcode definitions: {}", ex.what()), 1);
 			add_message("Using original iScript opcode definitions", 6);
+			m_cache.iscript_opcode_info = fi::load_vanilla_opcodes();
 		}
 
 		// the game object has world tilesets, let us make a cache of 256
@@ -1497,7 +1492,7 @@ bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, boo
 	bool result{ true };
 
 	try {
-		fi::IScriptLoader loader(m_config, p_bytes);
+		fi::IScriptLoader loader(m_config, p_bytes, m_cache.iscript_opcode_info.opcodes);
 		m_cache.m_iscript_count = loader.get_script_count();
 
 		if (p_report_count)
