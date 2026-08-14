@@ -2,22 +2,25 @@
 
 Welcome to the Echoes of Eolis code repository and release page.
 
-Echoes of Eolis is a general-purpose editor for Faxanadu that supports editing maps, graphics, game data, cinematics, and many other aspects of the game.
+Echoes of Eolis is a general-purpose editor for Faxanadu that supports editing maps, graphics, game data, scripts, music, cinematics, and many other aspects of the game.
 
 Precompiled Windows x64 builds are available on the [repository releases](https://github.com/kaimitai/faxedit/releases) page. A macOS build is also available (see instructions on [how to run an unsigned DMG-file](https://support.apple.com/en-ca/guide/mac-help/mh40616/mac)). Alternatively, the project can be built from source on Windows, Linux, and macOS using CMake.
 
 The editor supports all major Faxanadu ROM regions, including US, US Revision A, EU, JP, and the [English Translation Hack](https://www.romhacking.net/translations/4281/).
 
-Echoes of Eolis is distributed together with [FaxIScripts](https://github.com/kaimitai/FaxIScripts), a command-line assembler and disassembler for scripts, music, and other data that does not naturally lend itself to GUI editing.
+Echoes of Eolis also includes integrated tools for editing and assembling scripts, music, and other game data. These tools are available directly from the editor, as well as through the `eoe-cli` command-line application.
 
-See the [documentation](./docs/doc.md) for a detailed overview of the editor and the [changelog](./docs/doc.md#changelog) for version history.
+See the [documentation](./docs/user-guide.md) for a detailed overview of the editor and the [changelog](./docs/doc.md#changelog) for version history.
 
 <hr>
 
 ## Quick Links
 
-- [Documentation](./docs/doc.md)
-- [Changelog](./docs/doc.md#changelog)
+- [Main User Documentation](./docs/user-guide.md)
+- [Scripting Documentation](./docs/scripting-guide.md)
+- [MML (Music Macro Language) documentation](./docs/mml-guide.md)
+- [Advanced Modding documentation](./docs/advanced-modding.md)
+- [Changelog](./docs/user-guide.md#changelog)
 - [Building from Source](#building-from-source)
 - [Editor Capabilities](#editor-capabilities)
 - [Recommended Workflow](#recommended-workflow)
@@ -86,6 +89,7 @@ Echoes of Eolis can edit:
 * **Game Data:** Stages, spawn points, building parameters, push-blocks, jump-on blocks, palette/music mappings, and fog
 * **Graphics:** Metatile tilesets, images, sprite graphics, and animation frames
 * **Cinematics:** Intro/outro metadata and graphics
+* **Scripting:** Disassemble and assemble interaction scripts, behavior scripts, music scripts, MML, and miscellaneous game data
 * **Visualizer:** Parameterized world map export to PNG
 * **Optional ROM hacks:** Deploy supported ROM hacks directly from the editor to unlock additional editing capabilities and flexibility
 
@@ -99,7 +103,7 @@ Projects can be saved as patched ROMs, IPS patches, or XML files suitable for ve
 
 ![The editor in action](./docs/img/eoe_presentation.png)
 
-Echoes of Eolis includes integration with FaxIScripts' optional advanced modding features, including persistent door generation, tilemap change export, and support for custom script opcode definitions. See the [Advanced Modding documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) for details.
+Echoes of Eolis also supports advanced scripting and ROM-hacking features, including custom script opcodes, persistent screen changes, and dynamic tilemap changes. See the [Advanced Modding documentation](./docs/advanced-modding.md) for details.
 
 <hr>
 
@@ -107,7 +111,7 @@ Echoes of Eolis includes integration with FaxIScripts' optional advanced modding
 
 For small or experimental changes, working directly on ROM files is perfectly fine.
 
-For larger projects, it is recommended to export your data to XML and treat the XML file as the project's primary source of truth. If you also modify scripts or music, keep the corresponding FaxIScripts source files alongside the XML data.
+For larger projects, it is recommended to export your data to XML and treat the XML file as the project's primary source of truth. If you also modify scripts or music, keep the corresponding script and music source files alongside the XML data.
 
 Using git or another version control system is highly recommended. XML, script, and music source files are easy to diff, merge, revert, and track over time.
 
@@ -121,10 +125,11 @@ If you override default configuration via `eoe_config_override.xml`, that file s
 
 Special thanks to the following contributors and fellow digital archaeologists:
 
+  * [mal.exe](https://github.com/malexe3169/) - For contributing numerous custom script opcode implementations and creative additions to the scripting system.
   * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
   * ["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats.
   * [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data.
-  * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML functionality of [the assembler](https://github.com/kaimitai/faxiscripts) and improving the [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) - and for providing example music files which were also added to the docs.
+  * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML compiler and improving the [MML documentation]./docs/mml-guide.md) - and for providing example music files which were also added to the docs.
   * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, and for helping out with testing, bug reports and suggestions for new features.
   * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions.
   * [Notlob](https://github.com/Notlobb/Randumizer) - For making the Faxanadu Randumizer from which we got a very useful rom hack to increase door flexibility
