@@ -33,7 +33,11 @@ namespace fh {
 		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
 		AtlasDevWaitFrames, AtlasDevWaitForButtonPress,
 		AtlasDevIfButtonHeld, AtlasDevIfButtonPressed,
-		AtlasDevSetFacing, AtlasDevSetPlayerPosition
+		AtlasDevSetFacing, AtlasDevSetPlayerPosition,
+		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
+		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
+		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine
 	};
 
 	class HackManager {
@@ -127,6 +131,18 @@ namespace fh {
 		word apply_AtlasDevIfButtonPressed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetPlayerPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevOpenWindow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowIcon(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCloseWindow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayText(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevOpenWindowAtEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevRestoreRect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowItemName(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowIconEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearText(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayTextAt(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,

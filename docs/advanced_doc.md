@@ -256,6 +256,18 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevIfButtonPressed | Byte, Label | Jumps on the current rising edge of any requested button | AtlasDevIfButtonPressed $80 @pressed_a |
 | AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
 | AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
+| AtlasDevOpenWindow | Byte, Byte, Byte, Byte | Draws a bordered window at X, Y, width, height | AtlasDevOpenWindow 4 8 20 10 |
+| AtlasDevShowIcon | Byte, Byte, Byte | Draws one of the 20 resident item icons at a window-relative offset | AtlasDevShowIcon 3 2 2 |
+| AtlasDevCloseWindow | — | Restores the game background beneath the current window rectangle | AtlasDevCloseWindow |
+| AtlasDevLayText | — | Lays the vanilla 16x4 text grid inside the current window | AtlasDevLayText |
+| AtlasDevOpenWindowAtEntity | Byte, Byte, Byte, Byte, Byte | Opens an even-sized window relative to an entity slot, or the player for slots 8+ | AtlasDevOpenWindowAtEntity 0 4 248 20 8 |
+| AtlasDevRestoreRect | Byte, Byte, Byte, Byte | Restores an explicit even-aligned rectangle from the game background | AtlasDevRestoreRect 4 8 20 10 |
+| AtlasDevShowItemName | Item, Byte, Byte | Draws an item's canonical resident-font name at an absolute tile position | AtlasDevShowItemName WEAPON_HAND_DAGGER 4 12 |
+| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Draws a resident icon with independent shape and palette selection | AtlasDevShowIconEx 3 1 2 2 |
+| AtlasDevClearText | — | Blanks all four rows of the current text grid while keeping the window and portrait | AtlasDevClearText |
+| AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
+| AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
+| AtlasDevLayTextLine | Byte, Byte, Byte | Lays one 16-tile row at X, Y from a caller-selected tile base | AtlasDevLayTextLine 4 10 $40 |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
@@ -446,6 +458,46 @@ beneath is ordinary solid ground. A rejected target is a safe no-op. An
 accepted move preserves facing, Wing Boots, HP, equipment, inventory, and
 progress while clearing transient movement state so physics can resume
 normally.
+
+#### AtlasDev windows, icons, and text grids
+
+These twelve handlers expose the drawing primitives used underneath the
+vanilla dialogue system. They require no hooks, scheduler, or reserved
+project RAM. Selected by themselves, they occupy 548 bytes: 476 handler bytes
+and 72 bytes for the two 36-entry dispatch tables. Adding the packet to an
+already extended library costs 500 bytes.
+
+```AtlasDevOpenWindow``` writes the live window rectangle at
+```$0208-$020B``` and asks the vanilla renderer to draw it. X, Y, width, and
+height are clamped independently, so the opcode does not guarantee that
+X+width or Y+height remains on-screen. Width and height must be even; the
+vanilla two-tile fill loops can wrap and jam the PPU queue on odd dimensions.
+```AtlasDevOpenWindowAtEntity``` forces every geometry value even. Slots 0-7
+use that entity's live pixel position, while slots 8 and above use the player.
+Its signed DX/DY operands are ordinary two's-complement bytes.
+
+```AtlasDevCloseWindow``` restores the background beneath the most recently
+described rectangle. ```AtlasDevRestoreRect``` performs the same restoration
+after replacing that rectangle with explicit, even-aligned geometry. Window
+drawing and restoration enqueue PPU work; allow several frames before drawing
+or restoring another large overlapping rectangle. A 15-frame wait is a
+conservative transition between ordinary dialogue-sized boxes.
+
+```AtlasDevShowIcon``` selects both shape and the icon's ordinary palette from
+one clamped ID, 0-19. ```AtlasDevShowIconEx``` separates shape from palette;
+shape still clamps to 19 and palette is masked to five bits by the same
+contract used by the ROM. Both positions are relative to the current window.
+```AtlasDevShowItemName``` instead uses the resident static font and an
+absolute tile position. Packed IDs in categories without a vanilla name table
+are consumed safely without drawing.
+
+Faxanadu dialogue streams glyph graphics into one shared 16x4 CHR tile grid,
+```$40-$7F```. ```AtlasDevLayText``` places that grid at the current window's
+origin+2,+2; ```AtlasDevLayTextAt``` places all four rows explicitly; and
+```AtlasDevLayTextLine``` places one 16-tile row from any chosen tile base.
+```AtlasDevClearText``` and ```AtlasDevClearTextLine``` erase nametable
+references without closing the window or portrait. After clearing, call a lay
+opcode before expecting a later ```Msg``` to become visible in that area.
 
 #### AtlasDev visual effect presets
 
