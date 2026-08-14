@@ -242,6 +242,14 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
 | AtlasDevEntityFieldToVar | Byte, Byte, Byte | **Do not use yet.** Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group | AtlasDevEntityFieldToVar 0 6 2 |
 | AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | **Do not use yet.** Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7 | AtlasDevDrawVarNumber 0 4 24 3 |
+| AtlasDevIfPlayerFacing | Byte, Label | Jumps when the player faces the requested direction; even values mean left and odd values mean right | AtlasDevIfPlayerFacing 1 @facing_right |
+| AtlasDevIfPlayerClimbing | Label | Jumps while the engine's own climbing predicate is true | AtlasDevIfPlayerClimbing @on_ladder |
+| AtlasDevIfPlayerGrounded | Label | Jumps when the player is not jumping, falling, or actively climbing | AtlasDevIfPlayerGrounded @on_ground |
+| AtlasDevIfPlayerAttacking | Label | Jumps while a sword swing is in progress | AtlasDevIfPlayerAttacking @swinging |
+| AtlasDevIfPlayerInvincible | Label | Jumps while the player's hurt/invincibility timer is nonzero | AtlasDevIfPlayerInvincible @protected |
+| AtlasDevIfPlayerDead | Label | Jumps while Faxanadu's reserved death-dialogue script (root 31) is executing | AtlasDevIfPlayerDead @dead |
+| AtlasDevIfSelectedWeapon | Byte, Label | Jumps when the selected weapon's category-local id equals the operand | AtlasDevIfSelectedWeapon 2 @giant_blade |
+| AtlasDevIfSelectedMagic | Byte, Label | Jumps when the selected magic's category-local id equals the operand | AtlasDevIfSelectedMagic 2 @fire |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
@@ -349,6 +357,56 @@ the slot index is itself wanted.
 above without reading the table. Bit 7 set is the engine's own free marker, so
 no live entity can carry such an identity, and searching for one would
 otherwise match an empty slot and report it as a find.
+
+#### AtlasDev player-state conditionals
+
+These eight opcodes are read-only and use state the vanilla engine already
+maintains. They require no hooks, scheduler, or project RAM. Every true branch
+uses the ordinary iScript jump continuation, and every false branch consumes
+the label and continues normally.
+
+```AtlasDevIfPlayerFacing``` reads the engine's facing bit, not the current
+controller input, so it remains meaningful while controls are locked. Its
+direction operand follows the engine's binary convention: the low bit selects
+left (0) or right (1). ```AtlasDevIfPlayerAttacking``` is similarly a state
+test: it remains true for the duration of the sword-swing state machine, not
+only on the frame when the attack button was pressed.
+
+```AtlasDevIfPlayerGrounded``` means none of jumping, falling, or active
+climbing is set. ```AtlasDevIfPlayerClimbing``` is narrower and calls the
+same fixed-bank predicate vanilla uses before movement actions. The helper is
+byte-identical at CPU ```$ECF6``` in the US, US Rev A, EU and JP ROMs. The
+expanded English translation has no verified address yet, so installing this
+one opcode there fails by the missing ```rom_player_isclimbing``` constant
+unless the project supplies a verified override; the other seven predicates
+do not need that routine.
+
+```AtlasDevIfPlayerInvincible``` tests the countdown that blocks ordinary
+damage. It therefore covers both vanilla post-hit protection and any other
+feature that deliberately writes that timer.
+
+```AtlasDevIfPlayerDead``` tests the script context rather than HP. Faxanadu
+clears its one-shot death latch before running any dialogue, and a fatal
+fixed-point subtraction can leave fractional HP nonzero. Conversely, the
+player can still be alive below one whole HP, so neither the latch nor an HP
+test is truthful from inside an iScript. The vanilla death path instead calls
+```IScripts_Begin``` with ```$FF```, which maps to reserved root 31 (the
+"Remember your mantra" dialogue) and stores 31 as the active root before the
+textbox opens. The opcode branches while that root is executing. Modders can
+replace the contents of entrypoint 31 to create alternate death dialogue,
+penalties, resurrection choices, or quest-specific death events. Calling
+entrypoint 31 for an unrelated purpose is therefore unsupported: vanilla
+reserves it as the death context.
+
+There is deliberately no ```AtlasDevIfPlayerCasting```. Faxanadu has no
+persistent casting state: casting is a one-frame trigger, while the spawned
+spell is represented by the magic-object slot. Testing that slot would be
+an ```IfMagicActive``` predicate, and calling it "casting" would misdescribe
+what the ROM actually knows.
+
+The selected-equipment operands are category-local ids, not packed item ids.
+Weapons are 0 Hand Dagger, 1 Long Sword, 2 Giant Blade, and 3 Dragon Slayer.
+Magic is 0 Deluge, 1 Thunder, 2 Fire, 3 Death, and 4 Tilte.
 
 #### AtlasDev visual effect presets
 
