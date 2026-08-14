@@ -1,8 +1,6 @@
-# Echoes of Eolis - User Documentation
+# Echoes of Eolis - User Guide
 
-This is the user documentation for Echoes of Eolis (version beta-8.2), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
-
-This application is always bundled with the latest version of [FaxIScripts](https://github.com/kaimitai/FaxIScripts) - a Faxanadu script and music assembler - which has its own documentation.
+This is the user documentation for Echoes of Eolis (version beta-9), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
@@ -63,6 +61,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Intro](#intro)
   - [Outro](#outro)
   - [Cinematic Editor Window](#the-cinematic-editor-window)
+- [Scripting](#scripting)
 - [World Visualizer](#world-visualizer)
 - [Stage Door Hack](#stage-door-hack)
 - [Settings Window](#settings)
@@ -168,7 +167,7 @@ If a world maps to multiple stages, for example, some spawn points must be set m
 
 **Add Spawn**: Creates a new spawn point.
 
-To make the game actually use it, you must add a script (via [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) for example) that sets this spawn index when talking to an NPC.
+To make the game actually use it, you must add an iScript that uses the ```SetSpawn``` opcode to set this spawn index when talking to an NPC.
 
 **Delete Spawn**: Removes the last spawn point.
 
@@ -198,7 +197,7 @@ You cannot rely on mantras found online.
 
 Rest assured mantras will still be internally consistent within your modified ROM.
 
-You can generate mantras for non‑standard spawn counts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) for the US version of the ROM.
+You can generate mantras for non-standard spawn counts using the Echoes of Eolis command-line application (```eoe-cli```) for the US version of the ROM.
 
 ## Building Sprite Sets
 
@@ -425,8 +424,8 @@ The controls for making a screen tilemap image is as follows:
 * Shit+V: Show clipboard rectangle at position if it fits, without pasting anything. To see where your clipboard data would be pasted.
 * Ctrl+Z: Undo the last action
 * Ctrl+Y: Redo the last undone action
-* Ctrl+Shift+C: Copy rectangular area to clipboard for use with the [dynamic tilemap change](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) feature
-* Ctrl+Alt+C: Copy rectangular are to clipboard for use with the [dynamic tilemap change](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md) feature, but omitting the header
+* Ctrl+Shift+C: Copy rectangular area to clipboard for use with the [dynamic tilemap change](./advanced-modding.md) feature
+* Ctrl+Alt+C: Copy rectangular are to clipboard for use with the [dynamic tilemap change](./advanced-modding.md) feature, but omitting the header
 
 The undo and redo have a history of 250 steps. Destructive structural changes - deleting a screen or a metatile definition - will clear all the undo history for the related world.
 
@@ -1081,6 +1080,31 @@ The chr-bank for cinematic frames can accomodate 144 chr-tiles, and the original
 
 <hr>
 
+## Scripting
+
+Echoes of Eolis includes integrated interfaces for the game's scripting and
+music formats. These are available from the Scripting window and provide
+graphical access to the same scripting functionality exposed by `eoe-cli`.
+
+The scripting window contains the following tabs:
+
+* iScripts: Interaction scripts used by NPCs, shops and other game events.
+* bScripts: Sprite behavior scripts.
+* mScripts: Low-level music scripts.
+* Miscellaneous: Miscellaneous static game data handled by the scripting tools.
+* MML: Music Macro Language editing, compilation/decompilation and MIDI export.
+
+Scripts can be extracted from the currently loaded ROM and assembled back into
+it without using the command-line application.
+
+When disassembling scripts, existing script files will not be overwritten by default. Hold **Shift** while clicking the disassemble button to overwrite an existing file. This prevents accidentally overwriting script files containing user changes.
+
+For details about the script formats, language syntax and advanced ROM-hacking
+features, see the [Scripting Guide](./scripting-guide.md) and
+[Advanced Modding Guide](./advanced-modding.md).
+
+<hr>
+
 ## World Visualizer
 
 The World Visualizer generates a graphical representation of a world by traversing the game's connection data and laying out screens according to their relationships.
@@ -1242,7 +1266,7 @@ will be considered transparent.
 - Enable IPS patching: Turns on the "Save ips"-button next to "Patch nes ROM" in the Project Control window.
 - Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
 - Enable pal2mus for sw-transitions: Toggles an optional rom hack that enables palette-to-music mapping for same-world transitions, matching the behavior of same-world doors. The hack is applied when the rom is patched.
-- Generate asm: For use with the advanced scripting features in FaxIScripts. See [separate documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md).
+- Generate asm: For use with the advanced scripting features. See [separate documentation](./advanced-modding.md).
 
 The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
 
@@ -1307,9 +1331,9 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
   * Automatically detect screen event handler count from ROM
   * Various fixes and internal improvements
 
-* To support the new [advanced FaxIScripts features](https://github.com/kaimitai/FaxIScripts/blob/master/docs/advanced_doc.md):
+* To support the new [advanced scripting features](./advanced-modding.md):
   * Generate persistent door assembly directly from the editor (Settings > Advanced)
-  * Copy tilemap changes directly from the editor for use in FaxIScripts (```Ctrl+Shift+C``` and ```Ctrl+Alt+C```)
+  * Copy tilemap changes directly from the editor for use with the advanced modding toolset (```Ctrl+Shift+C``` and ```Ctrl+Alt+C```)
   * Added support for parsing custom opcode implementation (```Impl```) definitions
 
 * 2026-06-27: version beta-8.1 - "4D Pocket"
@@ -1418,7 +1442,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 * 2025-04-09: version beta-6.2 - "The Guru's Revelation"
 
   * Dynamic palette to music mapping! You’re no longer limited to the original fixed table. Every palette used when passing through a same‑world door can now have its own music track. This opens the door to region‑specific ambience, thematic transitions, and custom world moods.
-  * Spawn points are no longer capped at the original 0–7 range. You can now create additional spawn‑setting scripts using [FaxIScripts](https://github.com/kaimitai/FaxIScripts/) and assign them to new building NPCs. Echoes of Eolis automatically updates mantra encoding/decoding logic to support any number of spawn points you define.
+  * Spawn points are no longer capped at the original 0–7 range. You can now create additional spawn‑setting scripts using [eoe-cli](./scripting-guide.md) and assign them to new building NPCs. Echoes of Eolis automatically updates mantra encoding/decoding logic to support any number of spawn points you define.
   * Added undo/redo for manual metatile definitions
 
 * 2025-04-02: version beta-6.1 - "A Better Frame of Reference"
@@ -1465,7 +1489,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
   * Add cross-tileset metatile usage check for Building screens in the data integrity analysis (this should be avoided as it causes problems for chr bank re-ordering)
   * Generate door requirement overlay graphics from the Item Gfx tilemap, rather than relying on hard-coded chr-indexes - icons could be garbled after chr-banks were reordered by bmp imports
   * Add support for configuration file override (eoe_config_override.xml) so user overrides do not need to be merged for each new release
-  * Bundled with version 0.7 of the [script assembler](https://github.com/kaimitai/FaxIScripts), which has the following important new features:
+  * Bundled with version 0.7 of the [script assembler](./scripting-guide.md), which has the following important new features:
 	* Miscellaneous data interface for modifying static data (strings, sprite parameters, weapon and magic parameters etc)
 	* Supports dynamic sizing of the iScript entrypoint table - meaning more scripts can be added
 
@@ -1476,9 +1500,9 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 	* Ctrl+Shift+L: Load xml
 	* Ctrl+P: Patch ROM (generate out-file)
 	* Ctrl+Shift+P: Patch ROM in place (patch loaded ROM directly)
-  * Bundle release with version 0.6 of the [script assembler](https://github.com/kaimitai/FaxIScripts):
+  * Bundle release with version 0.6 of the [script assembler](./scripting-guide.md):
 	* The assembler supports extracting and assembling behavior scripts
-	* The [MML documentation](https://github.com/kaimitai/FaxIScripts/blob/master/docs/faxiscripts_mml.md) was updated with instructive exampels graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
+	* The [MML documentation](./mml-guide.md) was updated with instructive exampels graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
   * Holding Alt when patching ROM enables semi-static patching mode, which generates ROMs compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer). Will not patch sprites, metadata or screen connections and transitions.
   * Fixed an oversight where only the left ctrl and shift buttons were considered in some contexts
   * Fixed a bug where the window position stored in ```eoe_os_window.cfg``` would not recover after a monitor setup change
@@ -1518,7 +1542,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 * 2025-11-22: version beta-3 - "Expanding Beyond"
 
-  * We show iScript code directly in the editor, with syntax highlighting. To actually edit and assemble the code, however, you need to use a separate tool like [FaxIScripts](https://github.com/kaimitai/FaxIScripts/).
+  * We show iScript code directly in the editor, with syntax highlighting. To actually edit and assemble the code, however, you need to use a separate tool like [eoe-cli](./scripting-guide.md).
   * We introduce a configuration xml file with region definitions, and constants needed by the editor per region. We now support all major regions, and two ROM hacks, by default.
   * Block Property icon overlays - We can toggle icon overlay rendering for each block property. Currently I am using my own placeholder graphics, but if anyone wants to contribute graphics let me know
   * Door Requirement icon overlays - We can toggle overlays for door requirements too (keys and rings)
