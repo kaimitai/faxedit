@@ -8,6 +8,10 @@ set(SOURCES
 
 add_executable(faxiscripts ${SOURCES})
 
+set_target_properties(faxiscripts PROPERTIES
+    OUTPUT_NAME "eoe-cli"
+)
+
 target_include_directories(faxiscripts
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

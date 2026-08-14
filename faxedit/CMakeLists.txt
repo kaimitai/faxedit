@@ -34,6 +34,10 @@ set(SOURCES
 
 add_executable(faxedit ${SOURCES})
 
+set_target_properties(faxedit PROPERTIES
+    OUTPUT_NAME "eoe"
+)
+
 target_include_directories(faxedit
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src

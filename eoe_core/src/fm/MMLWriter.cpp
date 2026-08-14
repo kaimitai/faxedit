@@ -2,7 +2,7 @@
 #include <format>
 #include <utility>
 #include "fm_constants.h"
-#include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 #include "fm_util.h"
 #include "MusicOpcode.h"
 
@@ -45,8 +45,8 @@ std::string fm::MMLWriter::generate_mml(const std::map<std::size_t,
 			);
 
 	std::string af{
-	std::format(" ; MScript asm file extracted by by {} v{}\n ; {}\n\n",
-		fi::appc::APP_NAME, fi::appc::APP_VERSION, fi::appc::APP_URL)
+	std::format(" ; MScript asm file extracted by {} {}\n ; {}\n\n",
+		fe::c::APP_NAME, fe::c::APP_VERSION, fe::c::APP_URL)
 	};
 
 	// inform about channel pitch offsets
