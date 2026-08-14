@@ -250,6 +250,12 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevIfPlayerDead | Label | Jumps while Faxanadu's reserved death-dialogue script (root 31) is executing | AtlasDevIfPlayerDead @dead |
 | AtlasDevIfSelectedWeapon | Byte, Label | Jumps when the selected weapon's category-local id equals the operand | AtlasDevIfSelectedWeapon 2 @giant_blade |
 | AtlasDevIfSelectedMagic | Byte, Label | Jumps when the selected magic's category-local id equals the operand | AtlasDevIfSelectedMagic 2 @fire |
+| AtlasDevWaitFrames | Byte | Waits for 0-255 NMI frames; zero is a no-op | AtlasDevWaitFrames 30 |
+| AtlasDevWaitForButtonPress | Byte | Waits for every requested button to be released, then for any requested button's next press edge | AtlasDevWaitForButtonPress $80 |
+| AtlasDevIfButtonHeld | Byte, Label | Jumps when any requested button is held in the latest complete controller sample | AtlasDevIfButtonHeld $40 @holding_b |
+| AtlasDevIfButtonPressed | Byte, Label | Jumps on the current rising edge of any requested button | AtlasDevIfButtonPressed $80 @pressed_a |
+| AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
+| AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
@@ -407,6 +413,39 @@ what the ROM actually knows.
 The selected-equipment operands are category-local ids, not packed item ids.
 Weapons are 0 Hand Dagger, 1 Long Sword, 2 Giant Blade, and 3 Dragon Slayer.
 Magic is 0 Deluge, 1 Thunder, 2 Fire, 3 Death, and 4 Tilte.
+
+#### AtlasDev flow and player-control helpers
+
+These six implementations are independent, opt-in handlers. They require no
+resident scheduler, ROM hook, or newly reserved RAM. With only these six
+selected, the installed script library occupies 272 bytes: 212 bytes of
+handlers and 60 bytes for the two 30-entry dispatch tables.
+
+```AtlasDevWaitFrames``` calls the fixed-bank NMI wait once per requested
+frame. Zero is explicitly handled as a no-op. ```AtlasDevWaitForButtonPress```
+first requires a fully released sample, then waits for a new rising edge. This
+prevents the button used to open a conversation from immediately satisfying
+the wait. A button mask may combine buttons; the tests are ANY-of, and a zero
+mask is rejected by the assembler. The controller bits are Right ```$01```,
+Left ```$02```, Down ```$04```, Up ```$08```, Start ```$10```, Select
+```$20```, B ```$40```, and A ```$80```.
+
+The release-gated wait updates the portrait/interaction frame through the
+vanilla iScript helper at ```$87B0```. That address is verified for US, US Rev
+A, EU, and Randum. No JP or expanded-English address is guessed; selecting
+this implementation for either region requires a verified project override.
+The two button conditionals and ```AtlasDevWaitFrames``` do not have this
+region-specific dependency.
+
+```AtlasDevSetFacing``` changes only player-property bit 6 and then resumes
+the script. ```AtlasDevSetPlayerPosition``` accepts a packed top-left block
+coordinate, ```$YX```, where each nibble is a 16-pixel grid coordinate. The
+assembler rejects Y greater than 10. At runtime the move is accepted only
+while the screen is ready, both body cells are ordinary air, and the cell
+beneath is ordinary solid ground. A rejected target is a safe no-op. An
+accepted move preserves facing, Wing Boots, HP, equipment, inventory, and
+progress while clearing transient movement state so physics can resume
+normally.
 
 #### AtlasDev visual effect presets
 

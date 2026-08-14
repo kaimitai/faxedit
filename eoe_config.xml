@@ -369,6 +369,7 @@
 		<const name="rom_iscripts_jumptonextaddr" region="us,randum,eu,us-rev-a" value="$8603" />
 		<const name="rom_iscripts_jumptonextaddr" region="jp,en-transl" value="$8600" />
 		<const name="rom_iscripts_invokenextaction" value="$826e" />
+		<const name="rom_iscripts_updateportraitanimation" region="us,randum,eu,us-rev-a" value="$87b0" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
@@ -1840,6 +1841,12 @@
 			<entry key="AtlasDevIfPlayerDead" value="Flow=Jump" />
 			<entry key="AtlasDevIfSelectedWeapon" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfSelectedMagic" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevWaitFrames" value="Args=Byte" />
+			<entry key="AtlasDevWaitForButtonPress" value="Args=Byte:ButtonMask" />
+			<entry key="AtlasDevIfButtonHeld" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevIfButtonPressed" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevSetFacing" value="Args=Byte" />
+			<entry key="AtlasDevSetPlayerPosition" value="Args=Byte:PlayerPackedYX" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>
