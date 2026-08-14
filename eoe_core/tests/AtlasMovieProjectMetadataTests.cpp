@@ -5,6 +5,7 @@
 #include "fe/AtlasMovieLayout.h"
 #include "fe/AtlasMoviePreview.h"
 #include "fe/AtlasMovieRuntime.h"
+#include "common/klib/Kstring.h"
 #include "fi/Opcode.h"
 #include "common/klib/Kfile.h"
 #include "common/pugixml/pugixml.hpp"
@@ -701,6 +702,24 @@ int main(int argc, char** argv) try {
 		&& standalone_xml.find("AtlasDevPlayMovieShared") == std::string::npos
 		&& standalone_document.load_string(standalone_xml.c_str()),
 		"standalone config exports one generated opcode and its FMB data");
+	auto domain_opcodes{ vanilla_opcodes };
+	byte domain_opcode{ static_cast<byte>(domain_opcodes.opcodes.size()) };
+	for (const auto domain : magic_enum::enum_values<fi::ArgDomain>()) {
+		if (domain == fi::ArgDomain::None) continue;
+		const auto name{ klib::str::enum_to_string(domain) };
+		domain_opcodes.opcodes.emplace(domain_opcode++, fi::Opcode(
+			"Domain" + name, { { fi::ArgType::Byte, domain } },
+			fi::Flow::Continue, false));
+	}
+	domain_opcodes.base_opcode_count = domain_opcodes.opcodes.size();
+	const auto domain_xml{ fe::AtlasMovieRuntime::standalone_config_override(
+		domain_opcodes, runtime_before) };
+	for (const auto domain : magic_enum::enum_values<fi::ArgDomain>()) {
+		if (domain == fi::ArgDomain::None) continue;
+		require(domain_xml.find("Args=Byte:" + klib::str::enum_to_string(domain))
+			!= std::string::npos,
+			"standalone config preserves every explicit argument domain");
+	}
 
 	std::vector<byte> installed_rom(16 + 16 * 0x4000, 0xff);
 	write_rom(installed_rom, 15, 0xfc98, { 0x20, 0x59, 0xf8, 0x0c, 0x07, 0xa7 });

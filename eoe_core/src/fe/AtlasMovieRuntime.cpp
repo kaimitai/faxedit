@@ -39,37 +39,6 @@ namespace {
 		return klib::str::to_lower(p_opcode.name) == klib::str::to_lower(p_name);
 	}
 
-	const char* arg_type(fi::ArgType p_type) {
-		switch (p_type) {
-		case fi::ArgType::Byte: return "Byte";
-		case fi::ArgType::Short: return "Short";
-		case fi::ArgType::None: break;
-		}
-		return "None";
-	}
-
-	const char* arg_domain(fi::ArgDomain p_domain) {
-		switch (p_domain) {
-		case fi::ArgDomain::Item: return "Item";
-		case fi::ArgDomain::Quest: return "Quest";
-		case fi::ArgDomain::Rank: return "Rank";
-		case fi::ArgDomain::TextBox: return "TextBox";
-		case fi::ArgDomain::TextString: return "TextString";
-		case fi::ArgDomain::None: break;
-		}
-		return "None";
-	}
-
-	const char* flow(fi::Flow p_flow) {
-		switch (p_flow) {
-		case fi::Flow::Jump: return "Jump";
-		case fi::Flow::Read: return "Read";
-		case fi::Flow::End: return "End";
-		case fi::Flow::Continue: break;
-		}
-		return "Continue";
-	}
-
 	std::string xml_escape(const std::string& p_text) {
 		std::string result;
 		for (const char ch : p_text) {
@@ -91,13 +60,13 @@ namespace {
 			result += ",Args=";
 			for (std::size_t i{}; i < p_opcode.args.size(); ++i) {
 				if (i) result += '+';
-				result += arg_type(p_opcode.args[i].type);
+				result += klib::str::enum_to_string(p_opcode.args[i].type);
 				if (p_opcode.args[i].domain != fi::ArgDomain::None)
-					result += std::string(":") + arg_domain(p_opcode.args[i].domain);
+					result += ":" + klib::str::enum_to_string(p_opcode.args[i].domain);
 			}
 		}
 		if (p_opcode.flow != fi::Flow::Continue)
-			result += std::string(",Flow=") + flow(p_opcode.flow);
+			result += ",Flow=" + klib::str::enum_to_string(p_opcode.flow);
 		if (p_opcode.ends_stream)
 			result += ",Terminal=true";
 		return result;
