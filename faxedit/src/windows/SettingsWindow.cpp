@@ -9,8 +9,16 @@
 #include <unordered_map>
 #include <SDL3/SDL.h>
 #include "common/klib/Asm6502.h"
+#include "fe/AtlasMovieCompatibility.h"
+#include "fe/AtlasMovieEngine.h"
 
 void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
+	const bool atlas_movie_installed{ m_game.has_value()
+		&& fe::AtlasMovieEngine::is_installed(m_game->m_rom_data) };
+	const bool atlas_scheduler_detected{ m_game.has_value()
+		&& fe::atlas_movie::has_atlas_resident_scheduler(m_game->m_rom_data) };
+	if (atlas_movie_installed)
+		m_settings.m_patch_cinematics = false;
 
 	ui::imgui_screen("Editor Settings",
 		c::WIN_TILEMAP_X + 70, c::WIN_TILEMAP_Y + 70,
@@ -37,7 +45,12 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			ui::imgui_checkbox("World Palettes", m_settings.m_patch_palettes);
 			ui::imgui_checkbox("Background Gfx", m_settings.m_patch_bg_gfx, "Title Screen, Intro/Outro, Item gfx and related palettes");
 			ui::imgui_checkbox("Sprite Gfx", m_settings.m_patch_sprite_gfx, "Sprite Animation Frames and related metadata");
-			ui::imgui_checkbox("Cinematics", m_settings.m_patch_cinematics);
+			ImGui::BeginDisabled(atlas_movie_installed);
+			ui::imgui_checkbox("Cinematics", m_settings.m_patch_cinematics,
+				atlas_movie_installed
+				? "Disabled because Atlas Movie Engine replaces the original cinematic machinery"
+				: "Original Faxanadu intro/outro cinematic data");
+			ImGui::EndDisabled();
 
 			ImGui::SeparatorText("Static Data");
 			ui::imgui_checkbox("Mattock Animations", m_settings.m_patch_mattock_animations);
@@ -133,7 +146,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			imgui_text("Turns same-world doors into flexible stage doors.");
 			imgui_text("Allows doors to connect to any stage in the game.");
 			imgui_text("Hold Shift while clicking to apply.");
-			imgui_text("Warning: This permanently modifies the loaded ROM.");
+			imgui_text("This modifies the loaded ROM in memory. Use Patch nes ROM to write an output file.");
 			imgui_text("See the documentation for details.");
 
 			if (ui::imgui_button("Enable Stage Doors", 4, "",
@@ -141,6 +154,29 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 				m_game->m_sw_door_type != fe::SameWorldDoorType::Normal)) try {
 				patch_randumizer_doors(*m_game, true);
 				add_message("Sameworld-door to Stage-door hack applied!", 2);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), 1);
+			}
+
+			ImGui::SeparatorText("Atlas Movie Engine — Shared Mode (HIGHLY EXPERIMENTAL)");
+
+				imgui_text("Replaces Faxanadu's internal movie engine with the shared Atlas runtime.");
+				imgui_text("The original intro, ending, and AtlasDevPlayMovieShared all use its FMB movies.");
+				imgui_text("Create or load a project in Atlas Movie Creator first.");
+				imgui_text("Install this before adding other extended iScript opcodes.");
+			imgui_text("Standalone AtlasDevPlayMovie is a separate safer mode and cannot coexist with this patch.");
+			imgui_text("Original Cinematics patching is disabled after installation.");
+			if (atlas_scheduler_detected)
+				ImGui::TextColored(ImVec4(1.0f, 0.68f, 0.25f, 1.0f),
+					"Atlas Resident Scheduler detected: its active roles continue during movies.");
+			imgui_text("Resident palette and sprite effects may remain visible or cause graphical glitches.");
+			imgui_text("This modifies the loaded ROM in memory. Use Patch nes ROM to write an output file.");
+
+				if (ui::imgui_button("Enable Shared Movie Mode — HIGHLY EXPERIMENTAL", 4, "",
+					atlas_movie_installed || !m_game.has_value()
+						|| !m_atlas_movie_bundle.has_value())) try {
+				patch_atlas_movie_engine();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), 1);
@@ -170,6 +206,15 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 	}
 
 	ImGui::End();
+}
+
+void fe::MainWindow::patch_atlas_movie_engine(void) {
+	if (!m_game.has_value())
+		throw std::runtime_error("Load a ROM before installing Atlas Movie Engine");
+	if (!m_atlas_movie_bundle)
+		throw std::runtime_error("Create or load an Atlas movie project first");
+	m_atlas_movie_runtime_mode = fe::AtlasMovieRuntimeMode::Shared;
+	apply_atlas_movie_bundle();
 }
 
 void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data) {

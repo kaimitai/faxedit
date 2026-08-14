@@ -16,6 +16,8 @@ namespace klib {
 
 		bool file_exists(const std::string& p_filename);
 		void write_bytes_to_file(const std::vector<byte>& p_data, const std::string& p_filename);
+		void write_bytes_to_file_atomic(const std::vector<byte>& p_data,
+			const std::string& p_filename);
 		void write_string_to_file(const std::string& p_data, const std::string& p_filename);
 		void create_directories(const std::string& p_dir);
 		void create_directories(const std::filesystem::path& p_dir);

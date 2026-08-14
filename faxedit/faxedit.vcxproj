@@ -168,6 +168,14 @@
     <ClCompile Include="src\common\klib\SDL_WindowConfig.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\windows\CinematicWindow.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieActorsTab.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieActorInspector.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieAssetImport.cpp" />
+    <ClCompile Include="src\windows\AtlasMoviePreviewTab.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieProjectIo.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieRenderer.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieUi.cpp" />
+    <ClCompile Include="src\windows\AtlasMovieWindow.cpp" />
     <ClCompile Include="src\windows\ClipBoardManager.cpp" />
     <ClCompile Include="src\windows\GfxWindow.cpp" />
     <ClCompile Include="src\windows\IScriptWindow.cpp" />
@@ -184,6 +192,9 @@
     <ClCompile Include="src\windows\WorldVisualizationWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\windows\AtlasMovieEditorSession.h" />
+    <ClInclude Include="src\windows\AtlasMovieRenderer.h" />
+    <ClInclude Include="src\windows\AtlasMovieUi.h" />
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialog.h" />
     <ClInclude Include="src\common\imguifiledialog\ImGuiFileDialogConfig.h" />
     <ClInclude Include="src\common\imgui\imconfig.h" />

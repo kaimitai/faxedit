@@ -822,49 +822,6 @@ ImVec4 fe::MainWindow::SDL_Color_to_imgui(const SDL_Color& c) const {
 	return ImVec4(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
 }
 
-void fe::MainWindow::initialize_hud_tilemap(void) {
-	std::size_t l_hud_chr_offset{ m_config.constant(c::ID_CHR_HUD_TILE_OFFSET) };
-
-	m_hud_tilemap.m_tiles.clear();
-	for (std::size_t i{ 0 }; i < 256; ++i) {
-		m_hud_tilemap.m_tiles.push_back(
-			klib::NES_tile(m_game->m_rom_data, l_hud_chr_offset + 16 * i)
-		);
-	}
-
-	auto tileidx{ m_config.bmap_as_numeric_vectors(c::ID_HUD_TILEMAP) };
-	std::vector<std::vector<byte>> l_hudtiles;
-
-	for (std::size_t i{ 0 }; i < 4; ++i) {
-		auto iter{ tileidx.find(static_cast<byte>(i)) };
-		if (iter == end(tileidx))
-			l_hudtiles.push_back(std::vector<byte>(32, 0));
-		else {
-			l_hudtiles.push_back(iter->second);
-			while (l_hudtiles.back().size() < 32)
-				l_hudtiles.back().push_back(0);
-		}
-	}
-
-	m_hud_tilemap.m_tilemap.clear();
-
-	for (std::size_t j{ 0 }; j < 4; j += 2) {
-		std::vector<std::optional<fe::ChrMetaTile>> row;
-		for (std::size_t i{ 0 }; i < 32; i += 2) {
-			row.push_back(fe::ChrMetaTile());
-			row.back()->m_idxs = {
-				l_hudtiles[j][i],
-				l_hudtiles[j][i + 1],
-				l_hudtiles[j + 1][i],
-				l_hudtiles[j + 1][i + 1]
-			};
-		}
-		m_hud_tilemap.m_tilemap.push_back(row);
-	}
-
-	m_hud_tilemap.set_flat_palette(std::vector<byte>(16, 0));
-}
-
 // generate the door requirement graphics based on the items image
 void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 	// mapping from door requirement no (treat as 1-indexed) to item graphic no in the item gfx tilemap

@@ -42,6 +42,13 @@
     <ClInclude Include="src\fb\BScriptReader.h" />
     <ClInclude Include="src\fb\BScriptWriter.h" />
     <ClInclude Include="src\fb\fb_constants.h" />
+    <ClInclude Include="src\fe\AtlasMovieBundle.h" />
+    <ClInclude Include="src\fe\AtlasMovieAssets.h" />
+    <ClInclude Include="src\fe\AtlasMovieEditor.h" />
+    <ClInclude Include="src\fe\AtlasMovieEngine.h" />
+	<ClInclude Include="src\fe\AtlasMovieLayout.h" />
+	<ClInclude Include="src\fe\AtlasMoviePreview.h" />
+	<ClInclude Include="src\fe\AtlasMovieRuntime.h" />
     <ClInclude Include="src\fe\ChrStructures.h" />
     <ClInclude Include="src\fe\Chunk.h" />
     <ClInclude Include="src\fe\Cinematic.h" />
@@ -127,6 +134,13 @@
     <ClCompile Include="src\fb\BScriptOpcode.cpp" />
     <ClCompile Include="src\fb\BScriptReader.cpp" />
     <ClCompile Include="src\fb\BScriptWriter.cpp" />
+    <ClCompile Include="src\fe\AtlasMovieBundle.cpp" />
+    <ClCompile Include="src\fe\AtlasMovieAssets.cpp" />
+    <ClCompile Include="src\fe\AtlasMovieEditor.cpp" />
+    <ClCompile Include="src\fe\AtlasMovieEngine.cpp" />
+	<ClCompile Include="src\fe\AtlasMovieLayout.cpp" />
+	<ClCompile Include="src\fe\AtlasMoviePreview.cpp" />
+	<ClCompile Include="src\fe\AtlasMovieRuntime.cpp" />
     <ClCompile Include="src\fe\ChrStructures.cpp" />
     <ClCompile Include="src\fe\Chunk.cpp" />
     <ClCompile Include="src\fe\Cinematic.cpp" />
@@ -312,6 +326,12 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="src\fe\AtlasMovieRuntime.s" />
+    <None Include="src\fe\AtlasMovieStandaloneData.inc" />
+    <None Include="src\fe\AtlasMovieStandaloneRelocations.inc" />
+    <None Include="src\fe\AtlasMovieEngineData.inc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

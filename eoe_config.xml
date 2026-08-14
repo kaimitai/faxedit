@@ -1828,6 +1828,7 @@
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
 			<entry key="AtlasDevEntityFieldToVar" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDrawVarNumber" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevPlayMovie" value="Args=Byte,Flow=End,Terminal=true" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

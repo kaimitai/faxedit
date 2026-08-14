@@ -27,7 +27,8 @@ namespace fh {
 		AtlasDevIfEntityTypePresent, AtlasDevIfEntitySlotActive, AtlasDevIfEntityHidden,
 		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevSetEntityInvincible,
 		AtlasDevSetEntityBehavior, AtlasDevSetEntitySpeed, AtlasDevSetEntityFacing,
-		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber
+		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber,
+		AtlasDevPlayMovie
 	};
 
 	class HackManager {
@@ -107,6 +108,7 @@ namespace fh {
 		word apply_AtlasDevSetEntityFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevEntityFieldToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDrawVarNumber(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevPlayMovie(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -143,6 +145,9 @@ namespace fh {
 		std::vector<word> read_script_opcode_addrs(const std::vector<byte>& p_rom, std::size_t p_opcode_count) const;
 		std::size_t write_script_opcode_table(std::vector<byte>& p_rom, word cpu_addr,
 			const std::vector<word>& p_jump_table) const;
+		std::size_t apply_script_library_in_place(const fe::Config& p_config,
+			std::vector<byte>& p_rom, std::size_t p_file_offset,
+			const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::vector<word> read_screen_event_handler_addrs(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
 		std::size_t detect_screen_event_handler_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
 

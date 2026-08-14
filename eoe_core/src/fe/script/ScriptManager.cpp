@@ -1,8 +1,11 @@
+#include <algorithm>
 #include <cstdint>
 #include <format>
 #include <stdexcept>
 #include "ScriptManager.h"
 #include "fe/ROM_Manager.h"
+#include "fe/AtlasMovieEngine.h"
+#include "fe/AtlasMovieRuntime.h"
 #include "fe/fe_constants.h"
 #include "fi/fi_constants.h"
 #include "fm/fm_constants.h"
@@ -55,6 +58,11 @@ fi::ScriptOpcodeInfo fe::script::get_iscript_opcode_info(const Config& p_config)
 		p_config.str_map(fi::c::ID_ISCRIPT_OPCODE_IMPLS));
 }
 
+fi::ScriptOpcodeInfo fe::script::get_iscript_opcode_info(const Config& p_config,
+	const std::vector<byte>& p_rom) {
+	return AtlasMovieRuntime::resolve_opcode_info(get_iscript_opcode_info(p_config), p_rom);
+}
+
 void fe::script::validate_iscript_layer(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::map<byte, fi::Opcode>& p_opcodes) {
 	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
@@ -82,6 +90,9 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	fi::AsmReader reader(p_opcode_info.opcodes);
 
 	std::size_t l_iscript_rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
+	if (AtlasMovieEngine::is_installed(rom))
+		l_iscript_rg2_start = std::max(l_iscript_rg2_start,
+			AtlasMovieEngine::script_data_start(rom));
 
 	if (!p_opcode_info.required_impls.empty()) {
 		if (p_strict)
@@ -106,6 +117,10 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 		message(p_message, std::format("Installed new script library routines ({} bytes)",
 			l_iscript_rg2_start - old_rg2_start));
 	}
+	const auto l_iscript_rg2_end{ static_cast<std::size_t>(
+		p_config.constant(fi::c::ID_ISCRIPT_RG2_END)) };
+	if (l_iscript_rg2_start > l_iscript_rg2_end)
+		throw std::runtime_error("Installed script library escapes iScript region 2");
 
 	reader.read_asm(p_config, p_asm, l_iscript_rg2_start);
 
@@ -118,7 +133,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	std::size_t l_iscript_string_end{ p_config.constant(fi::c::ID_STRING_DATA_END) };
 
 	std::size_t l_size_strings{ l_iscript_string_end - l_iscript_string_start };
-	std::size_t l_iscript_rg2_size{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) - l_iscript_rg2_start };
+	std::size_t l_iscript_rg2_size{ l_iscript_rg2_end - l_iscript_rg2_start };
 
 	auto l_iscript_ptr{ p_config.pointer(fi::c::ID_ISCRIPT_PTR_LO) };
 

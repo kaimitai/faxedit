@@ -4,6 +4,13 @@ Welcome to the Echoes of Eolis code repository and release page.
 
 Echoes of Eolis is a general-purpose editor for Faxanadu that supports editing maps, graphics, game data, cinematics, and many other aspects of the game.
 
+Atlas Movie Creator edits and previews data-driven cinematics with real game
+graphics. Standalone mode adds `AtlasDevPlayMovie` without replacing the
+original movie engine. Shared mode is **highly experimental** and replaces that
+engine with Atlas Movie Engine and `AtlasDevPlayMovieShared`. See the
+[Atlas Movie Creator guide](./docs/atlas_movie_creator.md) for the editor,
+formats and ROM limits.
+
 Precompiled Windows x64 builds are available on the [repository releases](https://github.com/kaimitai/faxedit/releases) page. A macOS build is also available (see instructions on [how to run an unsigned DMG-file](https://support.apple.com/en-ca/guide/mac-help/mh40616/mac)). Alternatively, the project can be built from source on Windows, Linux, and macOS using CMake.
 
 The editor supports all major Faxanadu ROM regions, including US, US Revision A, EU, JP, and the [English Translation Hack](https://www.romhacking.net/translations/4281/).
@@ -17,6 +24,7 @@ See the [documentation](./docs/doc.md) for a detailed overview of the editor and
 ## Quick Links
 
 - [Documentation](./docs/doc.md)
+- [Atlas Movie Creator Guide](./docs/atlas_movie_creator.md)
 - [Changelog](./docs/doc.md#changelog)
 - [Building from Source](#building-from-source)
 - [Editor Capabilities](#editor-capabilities)

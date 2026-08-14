@@ -14,7 +14,126 @@
 #include "fe/fe_app_constants.h"
 #include "fe/xml/Xml_helper.h"
 #include "fe/script/ScriptManager.h"
+#include "fe/AtlasMovieEngine.h"
 #include "common/klib/Kfile.h"
+
+namespace {
+
+	fe::MainCache build_main_cache(const fe::Config& p_config,
+		const fe::Game& p_game) {
+		fe::MainCache result{};
+		result.m_labels_cmd_byte = p_config.bmap(fe::c::ID_CMD_BYTE_LABELS);
+		result.m_labels_door_reqs = p_config.bmap(fe::c::ID_DOOR_REQ_LABELS);
+		result.m_labels_block_props = p_config.bmap(fe::c::ID_BLOCK_PROP_LABELS);
+		result.m_labels_palettes = p_config.bmap(fe::c::ID_PALETTE_LABELS);
+		result.m_labels_spec_sprite_sets = p_config.bmap(fe::c::ID_SPECIAL_SPRITE_SET_LABELS);
+		result.m_labels_music = p_config.bmap(fe::c::ID_MUSIC_LABELS);
+		result.m_labels_buildings = p_config.bmap(fe::c::ID_BUILDING_LABELS);
+		result.m_sprite_count = p_config.constant(fe::c::ID_SPRITE_COUNT);
+		result.m_labels_worlds = p_config.bmap_as_vec(fe::c::ID_WORLD_LABELS, 8);
+		result.m_labels_sprites = p_config.bmap_as_vec(
+			fe::c::ID_SPRITE_LABELS, result.m_sprite_count);
+		result.m_labels_tilesets = p_config.bmap_as_vec(
+			fe::c::ID_TILESET_LABELS,
+			p_config.constant(fe::c::ID_WORLD_TILESET_COUNT));
+		result.m_disable_pal2_mus = p_config.boolean_or(
+			fe::c::ID_DISABLE_PAL2MUS, false);
+		result.m_command_byte_count = 3;
+		result.m_shared_palettes = p_game.get_shared_palettes(p_config);
+		return result;
+	}
+
+	std::vector<std::vector<klib::NES_tile>> build_world_tilesets(
+		const fe::Config& p_config, const fe::Game& p_game) {
+		std::vector<std::vector<klib::NES_tile>> result;
+		const auto hud_tiles{ p_game.get_hud_chr_tiles(p_config) };
+		for (const auto& tileset : p_game.m_tilesets) {
+			std::vector<klib::NES_tile> tiles{ hud_tiles };
+			while (tiles.size() < tileset.start_idx) tiles.emplace_back();
+			tiles.insert(tiles.end(), tileset.tiles.begin(), tileset.tiles.end());
+			while (tiles.size() < 256) tiles.emplace_back();
+			result.push_back(std::move(tiles));
+		}
+		return result;
+	}
+
+	fe::ChrTilemap build_hud_tilemap(const fe::Config& p_config,
+		const fe::Game& p_game) {
+		fe::ChrTilemap result;
+		const auto chr_offset{ p_config.constant(fe::c::ID_CHR_HUD_TILE_OFFSET) };
+		for (std::size_t i{}; i < 256; ++i)
+			result.m_tiles.emplace_back(p_game.m_rom_data, chr_offset + 16 * i);
+		const auto tile_indexes{ p_config.bmap_as_numeric_vectors(fe::c::ID_HUD_TILEMAP) };
+		std::vector<std::vector<byte>> rows;
+		for (std::size_t i{}; i < 4; ++i) {
+			const auto found{ tile_indexes.find(static_cast<byte>(i)) };
+			rows.push_back(found == tile_indexes.end()
+				? std::vector<byte>(32, 0) : found->second);
+			rows.back().resize(std::max<std::size_t>(32, rows.back().size()), 0);
+		}
+		for (std::size_t y{}; y < 4; y += 2) {
+			std::vector<std::optional<fe::ChrMetaTile>> row;
+			for (std::size_t x{}; x < 32; x += 2) {
+				row.emplace_back(fe::ChrMetaTile());
+				row.back()->m_idxs = { rows[y][x], rows[y][x + 1],
+					rows[y + 1][x], rows[y + 1][x + 1] };
+			}
+			result.m_tilemap.push_back(std::move(row));
+		}
+		result.set_flat_palette(std::vector<byte>(16, 0));
+		return result;
+	}
+
+	bool load_script_cache(fe::MainCache& p_cache, const fe::Config& p_config,
+		const std::vector<byte>& p_bytes, std::vector<fe::Message>& p_messages,
+		bool p_report_count = true) {
+		p_cache.m_iscripts.clear();
+		bool result{ true };
+		try {
+			fi::IScriptLoader loader(p_config, p_bytes,
+				p_cache.iscript_opcode_info.opcodes);
+			p_cache.m_iscript_count = loader.get_script_count();
+			if (p_report_count)
+				p_messages.push_back({ std::format("Detected {} iScripts",
+					p_cache.m_iscript_count), 4 });
+			for (std::size_t i{}; i < p_cache.m_iscript_count; ++i) {
+				try { p_cache.m_iscripts[i] = loader.parse_script(p_bytes, i); }
+				catch (const std::exception& ex) {
+					p_messages.push_back({ std::format(
+						"Unable to parse iScript #{}: {}", i, ex.what()), 1 });
+					result = false;
+				}
+			}
+		}
+		catch (...) {
+			p_cache.m_iscript_count = 152;
+			p_messages.push_back({
+				"Malformed script section - script count could not be deduced - using default (152)", 1 });
+			result = false;
+		}
+		return result;
+	}
+
+	bool load_music_count(fe::MainCache& p_cache,
+		const fe::ROM_Manager& p_rom_manager, const fe::Config& p_config,
+		const std::vector<byte>& p_bytes, std::vector<fe::Message>& p_messages,
+		bool p_report = true) {
+		try {
+			p_cache.m_music_count = p_rom_manager.get_music_count(p_config, p_bytes);
+			if (p_report)
+				p_messages.push_back({ std::format("Detected {} music tracks",
+					p_cache.m_music_count), 4 });
+			return true;
+		}
+		catch (...) {
+			p_cache.m_music_count = 16;
+			p_messages.push_back({
+				"Music count could not be deduced - using default (16)", 1 });
+			return false;
+		}
+	}
+
+}
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) :
@@ -42,10 +161,36 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_gfx_window{ false },
 	m_sprite_gfx_window{ false },
 	m_cinematic_window{ false },
+	m_atlas_movie_window{ false },
 	m_visualization_window{ false },
 	m_settings_window{ false },
 	m_scripting_window{ false },
 	m_iscript_win_set_focus{ false },
+	m_atlas_movie_pending_action{ fe::AtlasMoviePendingAction::None },
+	m_atlas_movie_runtime_mode{ fe::AtlasMovieRuntimeMode::Standalone },
+	m_atlas_movie_sel_movie{ 0 },
+	m_atlas_movie_sel_track{ 0 },
+	m_atlas_movie_sel_phase{ 0 },
+	m_atlas_movie_sel_sfx{ 0 },
+	m_atlas_movie_preview_frame{ 0 },
+	m_atlas_movie_browser_frame{ 0 },
+	m_atlas_movie_preview_tick{ 0 },
+	m_atlas_movie_preview_playing{ false },
+	m_atlas_movie_dirty{ false },
+	m_atlas_movie_autoload_attempted{ false },
+	m_atlas_movie_path_draw_mode{ false },
+	m_atlas_movie_path_painting{ false },
+	m_atlas_movie_actor_place_mode{ false },
+	m_atlas_movie_pending_save_as{ false },
+	m_atlas_movie_path_speed{ 48 },
+	m_atlas_movie_preview_texture{ nullptr },
+	m_atlas_game_room_texture{ nullptr },
+	m_atlas_game_room_signature{ std::numeric_limits<std::uint64_t>::max() },
+	m_atlas_asset_sprite{ 0 },
+	m_atlas_asset_frame{ 0 },
+	m_atlas_asset_world{ 0 },
+	m_atlas_asset_screen{ 0 },
+	m_atlas_asset_palette{ 0 },
 	// cached values
 	m_cache{
 		.m_sprite_count = 0,
@@ -80,6 +225,17 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 		load_rom(p_rnd, p_filepath, p_region);
 
 	m_gfx.generate_icon_overlays(p_rnd);
+}
+
+fe::MainWindow::~MainWindow(void) {
+	if (m_atlas_movie_preview_texture)
+		SDL_DestroyTexture(m_atlas_movie_preview_texture);
+	if (m_atlas_game_room_texture)
+		SDL_DestroyTexture(m_atlas_game_room_texture);
+	for (auto* texture : m_atlas_movie_frame_textures)
+		SDL_DestroyTexture(texture);
+	for (const auto& animation : m_atlas_game_sprite_textures)
+		for (auto* texture : animation) SDL_DestroyTexture(texture);
 }
 
 void fe::MainWindow::generate_textures(SDL_Renderer* p_rnd) {
@@ -135,6 +291,7 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 				camera.reset();
 				m_iscript_window = false;
 				m_cinematic_window = false;
+				m_atlas_movie_window = false;
 				m_gfx_window = false;
 				m_sprite_gfx_window = false;
 				m_visualization_window = false;
@@ -224,6 +381,8 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 			draw_sprite_gfx_window(p_rnd);
 		if (m_cinematic_window)
 			draw_cinematic_window(p_rnd);
+		if (m_atlas_movie_window)
+			draw_atlas_movie_window(p_rnd);
 		if (m_visualization_window)
 			draw_visualization_window(p_rnd);
 		if (m_settings_window)
@@ -270,32 +429,8 @@ void fe::MainWindow::draw_metatile_info(std::size_t p_sel_chunk, std::size_t p_s
 
 }
 
-// 1) extract hud tiles (ppu index 0-59)
-// 2) inject empty tiles until we hit the world-specific tileset index
-// 3) inject the world-specific tileset
-// 4( inject empty tiles until we have 256 chr-tiles in total
 void fe::MainWindow::generate_world_tilesets(void) {
-	std::vector<std::vector<klib::NES_tile>> new_tiles;
-	const auto& gtilesets{ m_game->m_tilesets };
-
-	auto hud_tiles{ m_game->get_hud_chr_tiles(m_config) };
-
-	for (const auto& wtileset : gtilesets) {
-		std::vector<klib::NES_tile> wpputileset{ hud_tiles };
-
-		while (wpputileset.size() < wtileset.start_idx)
-			wpputileset.push_back(klib::NES_tile());
-
-		for (const auto& wtile : wtileset.tiles)
-			wpputileset.push_back(wtile);
-
-		while (wpputileset.size() < 256)
-			wpputileset.push_back(klib::NES_tile());
-
-		new_tiles.push_back(wpputileset);
-	}
-
-	world_ppu_tilesets = new_tiles;
+	world_ppu_tilesets = build_world_tilesets(m_config, *m_game);
 }
 
 void fe::MainWindow::regenerate_atlas_if_needed(SDL_Renderer* p_rnd) {
@@ -686,21 +821,56 @@ void fe::MainWindow::draw_exit_app_window(SDL_Renderer* p_rnd) {
 
 	ui::imgui_screen("Close Application?", c::WIN_ROM_X, c::WIN_ROM_Y, c::WIN_ROM_W, c::WIN_ROM_H,
 		4);
+	auto grant_exit = [this] {
+		try { xml::save_settings_xml(get_settings_xml_path(), m_settings); }
+		catch (const std::exception&) {}
+		m_exit_app_granted = true;
+	};
 
 	if (ui::imgui_button("Return to editor", 2))
 		m_exit_app_requested = false;
 
-	ImGui::SameLine();
-
-	if (ui::imgui_button("Exit", 1)) {
-		try {
-			xml::save_settings_xml(get_settings_xml_path(), m_settings);
+	if (m_atlas_movie_dirty) {
+		ImGui::TextColored(ImVec4(1.0f, 0.68f, 0.25f, 1.0f),
+			"The Atlas movie project has unsaved changes.");
+		if (!m_atlas_movie_project_path.empty()) {
+			if (ui::imgui_button("Save and exit", 2)) {
+				try { save_atlas_movie_project(); grant_exit(); }
+				catch (const std::exception& ex) { add_message(ex.what(), 1); }
+			}
+			ImGui::SameLine();
 		}
-		catch (const std::exception&) {
-			// ignore for now - no harm done
+		if (ui::imgui_button("Save As and exit", 2)) {
+			IGFD::FileDialogConfig config;
+			const auto current{ m_atlas_movie_project_path.empty()
+				? m_path / "atlas-movie-project.amp" : m_atlas_movie_project_path };
+			config.path = current.parent_path().string();
+			config.fileName = current.filename().string();
+			config.flags = ImGuiFileDialogFlags_Default;
+			ImGuiFileDialog::Instance()->OpenDialog("SaveAtlasMovieProjectOnExit",
+				"Save Atlas movie project", ".amp", config);
 		}
-		m_exit_app_granted = true;
+		ImGui::SameLine();
+		if (ui::imgui_button("Discard and exit", 1)) grant_exit();
 	}
+	else {
+		ImGui::SameLine();
+		if (ui::imgui_button("Exit", 1)) grant_exit();
+	}
+
+	if (ImGuiFileDialog::Instance()->Display("SaveAtlasMovieProjectOnExit",
+		ImGuiWindowFlags_NoCollapse, ImVec2(640, 420), ImVec2(1200, 700))) {
+		if (ImGuiFileDialog::Instance()->IsOk()) {
+			try {
+				save_atlas_movie_project_as(
+					ImGuiFileDialog::Instance()->GetFilePathName());
+				grant_exit();
+			}
+			catch (const std::exception& ex) { add_message(ex.what(), 1); }
+		}
+		ImGuiFileDialog::Instance()->Close();
+	}
+	if (m_atlas_movie_dirty) show_output_messages();
 
 	ImGui::End();
 
@@ -761,80 +931,184 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) {
+	if (m_game.has_value() && m_atlas_movie_dirty) {
+		add_message("Save the dirty Atlas movie project before replacing the ROM", 1);
+		return;
+	}
+
+	const auto messages_before{ m_messages };
 	add_message("Attempting to load file " + p_filepath, 6);
 	const auto config_files{ get_config_file_paths() };
-	auto l_config_xml_path{ config_files.first };
-	auto l_config_override_xml_path{ config_files.second };
-
-	// Load file as bytes and create game
+	bool committed{ false };
 	try {
-		auto bytes = klib::file::read_file_as_bytes(p_filepath);
+		const auto bytes{ klib::file::read_file_as_bytes(p_filepath) };
+		fe::Config config(config_files.first, config_files.second, bytes, p_region);
+		fe::Game game(config, bytes);
+		game.m_sprite_gfx_manager.load_rom(config, game.m_rom_data, m_rom_manager);
+		game.generate_tilesets(config);
+		validate_game_data(game);
+		if (config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
+			game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 
-		m_config = fe::Config(l_config_xml_path, l_config_override_xml_path, bytes, p_region);
-
-		if (p_region.empty()) {
-			add_message(std::format("ROM region detected: '{}'", m_config.get_region()), 4);
-			m_region_override.clear();
-		}
-		else {
-			add_message(std::format("Region specified as '{}'", p_region), 4);
-			m_region_override = p_region;
-		}
-
-		fe::Game l_game{ fe::Game(m_config, bytes) };
-		l_game.m_sprite_gfx_manager.load_rom(m_config, l_game.m_rom_data, m_rom_manager);
-		l_game.generate_tilesets(m_config);
-		validate_game_data(l_game);
-
-		// the game object constructed correctly - commit and build caches
-		m_game = std::move(l_game);
-		cache_config_variables();
-		m_cache.m_shared_palettes = m_game->get_shared_palettes(m_config);
-
+		auto cache{ build_main_cache(config, game) };
+		std::vector<Message> load_messages;
 		try {
-			m_cache.iscript_opcode_info = fe::script::get_iscript_opcode_info(m_config);
+			cache.iscript_opcode_info = fe::script::get_iscript_opcode_info(config);
 		}
 		catch (const std::exception& ex) {
-			add_message(std::format("Error when reading iScript opcode definitions: {}", ex.what()), 1);
-			add_message("Using original iScript opcode definitions", 6);
-			m_cache.iscript_opcode_info = fi::load_vanilla_opcodes();
+			load_messages.push_back({ std::format(
+				"Error when reading iScript opcode definitions: {}", ex.what()), 1 });
+			load_messages.push_back({ "Using original iScript opcode definitions", 6 });
+			cache.iscript_opcode_info = fi::load_vanilla_opcodes();
+		}
+		cache.iscript_opcode_info = fe::AtlasMovieRuntime::resolve_opcode_info(
+			cache.iscript_opcode_info, game.m_rom_data);
+		load_script_cache(cache, config, bytes, load_messages);
+		load_music_count(cache, m_rom_manager, config, bytes, load_messages);
+		if (config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET))
+			cache.m_command_byte_count = bytes.at(
+				config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+
+		auto world_tilesets{ build_world_tilesets(config, game) };
+		auto hud_tilemap{ build_hud_tilemap(config, game) };
+		fe::SpriteGUILoader gui_sprites;
+		gui_sprites.load_sprites_for_gui(config,
+			game.m_sprite_gfx_manager, game.m_rom_data);
+		cache.m_sprite_dims = gui_sprites.get_animation_dimension_data();
+		const auto nes_palette{ config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64) };
+		const auto sprite_palette{ game.m_palettes.at(m_settings.coll_palettes[0]) };
+		const auto default_palette{ game.m_chunks.empty()
+			? std::size_t{} : game.get_default_palette_no(0, 0) };
+		const auto shared_installed{ fe::AtlasMovieEngine::is_installed(game.m_rom_data) };
+		const std::filesystem::path rom_path(p_filepath);
+
+		const auto old_config{ m_config };
+		const auto old_game{ m_game };
+		const auto old_cache{ m_cache };
+		const auto old_world_tilesets{ world_ppu_tilesets };
+		const auto old_hud_tilemap{ m_hud_tilemap };
+		const auto old_path{ m_path };
+		const auto old_filename{ m_filename };
+		const auto old_loaded_rom_path{ m_loaded_rom_path };
+		const auto old_region_override{ m_region_override };
+		const auto old_movie_bundle{ m_atlas_movie_bundle };
+		const auto old_actor_session{ m_atlas_movie_actor_session };
+		const auto old_project_path{ m_atlas_movie_project_path };
+		const auto old_pending_path{ m_atlas_movie_pending_path };
+		const auto old_pending_action{ m_atlas_movie_pending_action };
+		const auto old_runtime_mode{ m_atlas_movie_runtime_mode };
+		const auto old_dirty{ m_atlas_movie_dirty };
+		const auto old_autoload_attempted{ m_atlas_movie_autoload_attempted };
+		const auto old_preview_playing{ m_atlas_movie_preview_playing };
+		const auto old_pending_save_as{ m_atlas_movie_pending_save_as };
+		const auto old_new_palette{ m_atlas_new_palette_no };
+		const auto old_force_update{ m_atlas_force_update };
+		try {
+			m_config = std::move(config);
+			m_game = std::move(game);
+			m_cache = std::move(cache);
+			world_ppu_tilesets = std::move(world_tilesets);
+			m_hud_tilemap = std::move(hud_tilemap);
+			m_path = rom_path.parent_path();
+			m_filename = rom_path.stem().string();
+			m_loaded_rom_path = p_filepath;
+			m_region_override = p_region;
+			m_atlas_movie_bundle.reset();
+			m_atlas_movie_actor_session = {};
+			m_atlas_movie_project_path.clear();
+			m_atlas_movie_pending_path.clear();
+			m_atlas_movie_pending_action = fe::AtlasMoviePendingAction::None;
+			m_atlas_movie_pending_save_as = false;
+			m_atlas_movie_runtime_mode = shared_installed
+				? fe::AtlasMovieRuntimeMode::Shared : fe::AtlasMovieRuntimeMode::Standalone;
+			m_atlas_movie_dirty = false;
+			m_atlas_movie_autoload_attempted = false;
+			m_atlas_movie_preview_playing = false;
+			m_atlas_new_palette_no = default_palette;
+			m_atlas_force_update = true;
+			auto replacement_undo{
+				std::make_unique<fe::UndoInterface>(m_game.value()) };
+			m_undo = std::move(replacement_undo);
+			committed = true;
+		}
+		catch (...) {
+			m_config = old_config;
+			m_game = old_game;
+			m_cache = old_cache;
+			world_ppu_tilesets = old_world_tilesets;
+			m_hud_tilemap = old_hud_tilemap;
+			m_path = old_path;
+			m_filename = old_filename;
+			m_loaded_rom_path = old_loaded_rom_path;
+			m_region_override = old_region_override;
+			m_atlas_movie_bundle = old_movie_bundle;
+			m_atlas_movie_actor_session = old_actor_session;
+			m_atlas_movie_project_path = old_project_path;
+			m_atlas_movie_pending_path = old_pending_path;
+			m_atlas_movie_pending_action = old_pending_action;
+			m_atlas_movie_runtime_mode = old_runtime_mode;
+			m_atlas_movie_dirty = old_dirty;
+			m_atlas_movie_autoload_attempted = old_autoload_attempted;
+			m_atlas_movie_preview_playing = old_preview_playing;
+			m_atlas_movie_pending_save_as = old_pending_save_as;
+			m_atlas_new_palette_no = old_new_palette;
+			m_atlas_force_update = old_force_update;
+			throw;
 		}
 
-		// the game object has world tilesets, let us make a cache of 256
-		// tile big tilesets for the UI to send to the renderer
-		generate_world_tilesets();
-		initialize_hud_tilemap();
-
-		std::filesystem::path romPath(p_filepath);
-
-		m_path = romPath.parent_path();
-		m_filename = romPath.stem().string();
-		m_loaded_rom_path = p_filepath;
-
-		// gen NES palette
-		m_gfx.set_nes_palette(m_config.bmap_as_numeric_vec(c::ID_NES_PALETTE, 64));
-		// gen door requirement gfx
-		generate_door_req_gfx(p_rnd);
-		generate_editor_sprite_gfx(p_rnd);
-
-		load_external_rom_data(bytes, true);
+		try {
+			if (m_atlas_movie_preview_texture)
+				SDL_DestroyTexture(m_atlas_movie_preview_texture);
+			m_atlas_movie_preview_texture = nullptr;
+			if (m_atlas_game_room_texture)
+				SDL_DestroyTexture(m_atlas_game_room_texture);
+			m_atlas_game_room_texture = nullptr;
+			m_atlas_game_room_signature = std::numeric_limits<std::uint64_t>::max();
+			for (auto* texture : m_atlas_movie_frame_textures)
+				SDL_DestroyTexture(texture);
+			m_atlas_movie_frame_textures.clear();
+			m_atlas_game_sprites.reset();
+			for (const auto& animation : m_atlas_game_sprite_textures)
+				for (auto* texture : animation) SDL_DestroyTexture(texture);
+			m_atlas_game_sprite_textures.clear();
+			m_gfx.set_nes_palette(nes_palette);
+			generate_door_req_gfx(p_rnd);
+			m_gfx.gen_sprites(p_rnd, gui_sprites, sprite_palette);
+			m_settings.m_redraw_sprite_gfx = true;
+			m_settings.m_redraw_cinema_gfx = true;
+		}
+		catch (const std::exception& ex) {
+			add_message(std::format(
+				"ROM loaded; a rendering cache could not be generated: {}", ex.what()), 1);
+		}
+		catch (...) {
+			add_message("ROM loaded; a rendering cache could not be generated", 1);
+		}
 
 		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
 			add_message("Door hack detected; Sameworld doors are stage doors!", 4);
-
-		if (m_game->m_chunks.size() > 0)
-			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
-
-		m_undo.reset();
-		m_undo.emplace(m_game.value());
-
+		for (const auto& message : load_messages)
+			add_message(message.text, message.status, true);
+		add_message(p_region.empty()
+			? std::format("ROM region detected: '{}'", m_config.get_region())
+			: std::format("Region specified as '{}'", p_region), 4);
 		add_message("Loaded " + p_filepath, 2);
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		if (committed)
+			add_message(std::format("ROM loaded; nonfatal finalization error: {}", ex.what()), 1);
+		else {
+			m_messages = messages_before;
+			add_message(std::format("Could not load {}: {}", p_filepath, ex.what()), 1);
+		}
 	}
 	catch (...) {
-		add_message("Unknown error occurred", 1);
+		if (committed)
+			add_message("ROM loaded; nonfatal finalization error", 1);
+		else {
+			m_messages = messages_before;
+			add_message(std::format("Could not load {}: unknown error", p_filepath), 1);
+		}
 	}
 }
 
@@ -891,33 +1165,6 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 		m_game->m_rom_data = p_bytes;
 
 	return byte_diffs;
-}
-
-// copy some config vars to the GUI so we don't need to look them up
-// every draw frame
-void fe::MainWindow::cache_config_variables(void) {
-	// maps that can be sparse or even empty
-	m_cache.m_labels_cmd_byte = m_config.bmap(c::ID_CMD_BYTE_LABELS);
-	m_cache.m_labels_door_reqs = m_config.bmap(c::ID_DOOR_REQ_LABELS);
-	m_cache.m_labels_block_props = m_config.bmap(c::ID_BLOCK_PROP_LABELS);
-	m_cache.m_labels_palettes = m_config.bmap(c::ID_PALETTE_LABELS);
-	m_cache.m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
-	m_cache.m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
-	m_cache.m_labels_buildings = m_config.bmap(c::ID_BUILDING_LABELS);
-
-	// constants
-	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
-
-	// maps we convert to vectors
-	m_cache.m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
-	m_cache.m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_cache.m_sprite_count);
-	m_cache.m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
-		m_config.constant(c::ID_WORLD_TILESET_COUNT));
-
-	// bools
-	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
-	if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
-		m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {
@@ -1488,48 +1735,27 @@ std::pair<float, float> fe::MainWindow::world_px_to_view_px(float world_x_px,
 }
 
 bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report_count) {
-	m_cache.m_iscripts.clear();
-	bool result{ true };
-
-	try {
-		fi::IScriptLoader loader(m_config, p_bytes, m_cache.iscript_opcode_info.opcodes);
-		m_cache.m_iscript_count = loader.get_script_count();
-
-		if (p_report_count)
-			add_message(std::format("Detected {} iScripts", m_cache.m_iscript_count), 4);
-
-		for (std::size_t i{ 0 }; i < m_cache.m_iscript_count; ++i) {
-			try {
-				m_cache.m_iscripts[i] = loader.parse_script(p_bytes, i);
-			}
-			catch (const std::exception& ex) {
-				add_message(
-					std::format("Unable to parse iScript #{}: {}", i, ex.what()), 1);
-				result = false;
-			}
-		}
-	}
-	catch (...) {
-		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
-		m_cache.m_iscript_count = 152;
-		return false;
-	}
-
+	MainCache parsed{};
+	parsed.iscript_opcode_info = m_cache.iscript_opcode_info;
+	std::vector<Message> messages;
+	const bool result{ load_script_cache(parsed, m_config, p_bytes,
+		messages, p_report_count) };
+	m_cache.m_iscript_count = parsed.m_iscript_count;
+	m_cache.m_iscripts = std::move(parsed.m_iscripts);
+	for (const auto& message : messages)
+		add_message(message.text, message.status, true);
 	return result;
 }
 
 bool fe::MainWindow::refresh_mscript_cache(const std::vector<byte>& p_bytes, bool p_report) {
-	try {
-		m_cache.m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
-		if (p_report)
-			add_message(std::format("Detected {} music tracks", m_cache.m_music_count), 4);
-		return true;
-	}
-	catch (...) {
-		add_message("Music count could not be deduced - using default (16)", 1);
-		m_cache.m_music_count = 16;
-		return false;
-	}
+	MainCache parsed{};
+	std::vector<Message> messages;
+	const bool result{ load_music_count(parsed, m_rom_manager, m_config,
+		p_bytes, messages, p_report) };
+	m_cache.m_music_count = parsed.m_music_count;
+	for (const auto& message : messages)
+		add_message(message.text, message.status, true);
+	return result;
 }
 
 void fe::MainWindow::refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes) {
