@@ -419,6 +419,8 @@
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl" />
+		<!-- whether to clear unused rom data with $ff in the sprite gfx banks -->
+		<bool name="clear_unused_sprite_gfx_space" value="true" />
 		<!-- link flag RAM to SRAM for translation hack and derivatives -->
 		<bool name="flags_wram_to_sram" value="true" region="en-transl" />
 	</bools>

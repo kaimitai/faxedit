@@ -901,8 +901,8 @@ fe::SpriteGfxPatchResult fe::SpriteGfxManager::patch_rom(const fe::Config& p_con
 		final_result.bank8_used.value() <= 0x4000);
 
 	// Write 0xff to all space we claim is unused - Begin
-	// TODO: Decide if we want to keep this
-	if (final_result.success) {
+	if (final_result.success &&
+		p_config.boolean_or(c::ID_CLEAR_UNUSED_SPRITE_GFX_SPACE, true)) {
 		std::vector<std::size_t> used_sizes{
 			final_result.bank6_used.value(),
 			final_result.bank7_used.value(),
