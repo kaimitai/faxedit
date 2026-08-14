@@ -1086,22 +1086,41 @@ Echoes of Eolis includes integrated interfaces for the game's scripting and
 music formats. These are available from the Scripting window and provide
 graphical access to the same scripting functionality exposed by `eoe-cli`.
 
+![Scripting Window](./img/win_scripting.png)
+
 The scripting window contains the following tabs:
 
 * iScripts: Interaction scripts used by NPCs, shops and other game events.
 * bScripts: Sprite behavior scripts.
 * mScripts: Low-level music scripts.
 * Miscellaneous: Miscellaneous static game data handled by the scripting tools.
-* MML: Music Macro Language editing, compilation/decompilation and MIDI export.
+* MML: Music Macro Language editing, compilation/decompilation, MIDI and LilyPond export.
 
-Scripts can be extracted from the currently loaded ROM and assembled back into
-it without using the command-line application.
+Scripts can be extracted from the currently loaded ROM and assembled back into it without using the command-line application.
 
 When disassembling scripts, existing script files will not be overwritten by default. Hold **Shift** while clicking the disassemble button to overwrite an existing file. This prevents accidentally overwriting script files containing user changes.
 
 For details about the script formats, language syntax and advanced ROM-hacking
 features, see the [Scripting Guide](./scripting-guide.md) and
 [Advanced Modding Guide](./advanced-modding.md).
+
+### Script Files
+
+The scripting window uses fixed filenames and locations based on the currently loaded ROM. Files are stored in a `<romname>-scripts` directory next to the ROM, where `<romname>` is the ROM filename without the file extension.
+
+For example, if faxanadu.nes is loaded, the scripting window uses the directory:
+
+`faxanadu-scripts/`
+
+and the files it hits will be called
+
+- iScript: `faxanadu-scripts/faxanadu-iscript.asm`
+- bScript: `faxanadu-scripts/faxanadu-bscript.asm`
+- mScript: `faxanadu-scripts/faxanadu-mscript.asm`
+- Misc: `faxanadu-scripts/faxanadu-misc.txt`
+- MML: `faxanadu-scripts/faxanadu.mml`
+
+The GUI will tell you where output files are written, which is also where it expects input files.
 
 <hr>
 
@@ -1322,6 +1341,14 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 <hr>
 
 ### Changelog
+
+* 2026-08-15: version beta-9 - "Unity"
+
+  * **Unified FaxIScripts and Echoes of Eolis under the Echoes of Eolis name**, with the existing applications now distributed as `eoe` and `eoe-cli`
+  * Added a **Scripting window** for iScripts, bScripts, mScripts, MML, miscellaneous data, MIDI, and LilyPond workflows
+  * Greatly expanded configurable iScripts, with multi-argument opcodes, hot-reloaded definitions, improved validation, new generic RAM operations, and 33 opcode implementations for dialogue, entities, audio, and visual effects contributed by [mal.exe](https://github.com/malexe3169)
+  * bScript assembly no longer clears unused script space automatically, and clearing unused sprite graphics space (banks 6, 7 and 8) is now a configurable option
+  * Reworked and expanded all **documentation** after unifying the core
 
 * 2026-08-01: version beta-8.2 - "Game Changer"
 

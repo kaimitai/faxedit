@@ -91,7 +91,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("iScript Disassembly");
 
-			if (ui::imgui_button("Disassemble", 2, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Disassemble", 4, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
 					m_cache.iscript_opcode_info.opcodes,
 					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
@@ -132,7 +132,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("bScript Disassembly");
 
-			if (ui::imgui_button("Disassemble", 2, "Disassemble sprite behavior scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Disassemble", 4, "Disassemble sprite behavior scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_bscripts_to_file(m_config, m_game->m_rom_data,
 					get_script_path("bscript", "asm"), l_shift, message_callback);
 				mark_last_message_success();
@@ -172,7 +172,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("mScript Disassembly");
 
-			if (ui::imgui_button("Disassemble", 2, "Disassemble music scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Disassemble", 4, "Disassemble music scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_mscripts_to_file(m_config, m_game->m_rom_data,
 					get_script_path("mscript", "asm"), ls_emit_mscript_notes, l_shift, message_callback);
 				mark_last_message_success();
@@ -211,7 +211,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("Miscellaneous Extraction");
 
-			if (ui::imgui_button("Extract", 2, "Extract misc data from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Extract", 4, "Extract misc data from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::extract_misc_to_file(m_config, m_game->m_rom_data,
 					get_script_path("misc", "txt"), ls_include_all_sprites, l_shift, message_callback);
 				mark_last_message_success();
@@ -254,7 +254,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			ImGui::SeparatorText("MML Decompilation");
 
-			if (ui::imgui_button("Decompile", 2, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
+			if (ui::imgui_button("Decompile", 4, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::decompile_mml_to_file(m_config, m_game->m_rom_data,
 					get_mml_path(), l_shift, message_callback);
 				mark_last_message_success();

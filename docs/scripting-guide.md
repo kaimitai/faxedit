@@ -29,7 +29,7 @@ A sprite in Faxanadu - an NPC or an item - can call script code. For certain eve
 
 The script code is one contiguous blob of data, and just before the script data begins there is a so called pointer table - with 152 entries by default - which tells the game where in the script code the entrypoints for the scripts are.
 
-To see, or edit, which script is connected with a certain NPC in the game, you can use [Echoes of Eolis](https://github.com/kaimitai/faxedit/) - a graphical editor which will let you edit other data portions than the script layer.
+To see, or edit, which script is connected with a certain NPC in the game, you can inspect sprites in the [Echoes of Eolis](https://github.com/kaimitai/faxedit/) GUI.
 
 ##### Behavior Scripts (bScripts)
 The behavior script layer consists only of code. This layer has 101 entrypoints, one for each sprite in the game. The scripts define how enemies, NPCs and items behave in the game.
@@ -60,7 +60,7 @@ When the textual assembly files are parsed, numbers can be given in different ba
 - [Command-line interface](#command-line-interface)
 - [ **iScript Assembly file contents** ](#iscript-assembly-file-contents)
   - [Defines](#defines)
-  - [Strings](#reserved-strings)
+  - [Strings](#reserved_strings)
   - [Shops](#shops)
   - [IScript](#iscript)
     - [Comments](#comments)
@@ -282,7 +282,7 @@ Any other code can be encoded with &lt;N&gt; where N is a constant value from 0-
 
 Strings are stored in a certain section of ROM, and we can't extend this section without making game code modifications.
 
-After assembly, string indexes are given by 1 byte arguments to opcodes using strings, and they are 1-indexed, meaning you can't use more than 254 distinct strings.
+After assembly, string indexes are given by 1 byte arguments to opcodes using strings, and they are 1-indexed, meaning you can't use more than 255 distinct strings.
 
 Many strings in the game seem to be missing spaces between words, but in those cases they are taking advantage of the fact that line breaks will occur there, every 16 characters.
 
@@ -319,7 +319,7 @@ Comments can be inserted on a line, starting with a semicolon. Anything from the
 
 #### jumps
 
-When code is executing, it is doing so in a linear fashion, instruction by instruction, unless it meets and end-of-script opcode (defined below) or a jump. A jump is an instruction that tells the program to continue execution in a different location.
+When code is executing, it is doing so in a linear fashion, instruction by instruction, unless it meets an end-of-script opcode (defined below) or a jump. A jump is an instruction that tells the program to continue execution in a different location.
 
 #### labels
 
@@ -498,7 +498,7 @@ This is the script that is called when you start the game and hit the invisible 
 
 Then assemble your file back to ROM and confirm that you get the expected results. The example above makes the Pink Shirt Guy show up in a portrait and say "Hello" and you get 1000 golds, 50 health, and you get the dragon slayer.
 
-Use a text editor with support for assembly markup. I personally use [Notepad++](https://notepad-plus-plus.org/) which is open source and the default asm-markup helps. We have made a [user-defined syntax highlighter](./../util/FaxIScript.xml) you can import to Notepad++ to help with IScript coding.
+Use a text editor with support for assembly markup. I personally use [Notepad++](https://notepad-plus-plus.org/) which is open source and the default asm-markup helps. We have made a [user-defined syntax highlighter](./../util/NotepadPlusPlus-iScript-Syntax-Highlighting.xml) you can import to Notepad++ to help with IScript coding.
 
 Notepad++ supports autocomplete which is helpful too, so you can get your defines easily without going back to look them up.
 
@@ -1241,7 +1241,7 @@ The original standalone application was named FaxIScripts because it was initial
 
 * 2026-02-04: version 0.6
     * Added support for behavior script extraction and patching. The assembler now handles all three script types!
-    * Improved the [MML (music macro language) documentation](./docs/mml-guide.md) and added example MMLs graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
+    * Improved the [MML (music macro language) documentation](./mml-guide.md) and added example MMLs graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
 
 * 2026-01-18: version 0.51
     * Added support for exporting music from MML files, or music directly from ROM, to the [LilyPond](https://lilypond.org/) format. This can be used to engrave your music and provides an alternative way to convert music to midi. Some new directives were added to the MML format so that composers can set time signatures for their songs, or set clefs per channel, in the LilyPond output. There is also an option for adding a drum staff for the percussion channel.
@@ -1261,7 +1261,7 @@ The original standalone application was named FaxIScripts because it was initial
 * 2025-11-13: version 0.2
     * Use inline strings for both disassembly and assembly. The assembler will deduplicate all strings in the code, and allocate string indexes automatically during builds. Reserved strings will retain their indexes
     * A consequence of the assembler allocating strings is that unused strings (strings not referenced in code and reserved strings) will be discarded. In the original game data we save 460 bytes by deduplicating strings and discarding unreferenced ones
-    * Include [IScript syntax highlighting for Notepad++](./util/NotepadPlusPlus-iScript-Syntax-Highlighting.xml), in a new util-folder
+    * Include [IScript syntax highlighting for Notepad++](./../util/NotepadPlusPlus-iScript-Syntax-Highlighting.xml), in a new util-folder
     * Opcode EndGame will be treated as end-of-stream
     * Added better error messages in places
     * Removed "extended ROM mode" as it had no reasonable use case
