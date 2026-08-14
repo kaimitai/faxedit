@@ -2511,6 +2511,495 @@ word fh::HackManager::apply_AtlasDevLayTextLine(const fe::Config& p_config,
 	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevSetHealth Value: sets the player's health directly. The operand
+// is held across a clear of the fractional HP byte, then handed to the
+// fixed-bank tail Player_AddHP itself jumps to, which clamps $51..$ff to
+// the $50 maximum, writes integer HP and redraws the Power bar. Setting
+// zero empties the bar but does not itself start the death sequence; only
+// the damage path checks for death.
+word fh::HackManager::apply_AtlasDevSetHealth(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = health value
+	code.pha();                              // keep it across the fraction clear
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::PlayerHPFraction);     // fractional HP := 0
+	code.pla();
+	code.jsr(ROM::UI_DrawPlayerHPValue);     // clamp to $50, write HP, redraw bar
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetMana Amount: sets current MP through the fixed-bank setter,
+// the entry vanilla Player_AddMP itself tails into.  $00..$50 land
+// exactly; anything higher clamps to the fixed $50 maximum, so a script
+// cannot overfill the bar.  The setter stores MP $039a and redraws the
+// HUD magic bar in the same call, so bar and value can never disagree.
+word fh::HackManager::apply_AtlasDevSetMana(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = requested MP
+	code.jsr(ROM::Player_SetMP);                              // clamp, store, redraw bar
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFullHeal
+//
+// HP is unsigned 8.8 fixed point at $0431:$0432, and every bounded vanilla
+// path -- AddHP's clamp, the HUD setter itself, and the complete Elixir
+// refill loop -- embeds full as a fixed $50:$00. None of them reads rank,
+// armor, shield, or any other equipment; there is no variable maximum in
+// the game. The handler clears the fractional byte, then passes $50 through
+// the fixed-bank HUD setter, which stores both HP copies and redraws the
+// power bar, so the refill is visible the same frame with no mapper access.
+word fh::HackManager::apply_AtlasDevFullHeal(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::PlayerHPFraction);
+	code.lda_imm(0x50);
+	code.jsr(ROM::UI_DrawPlayerHPValue);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFullMana
+//
+// MP is one byte at $039a with a fixed $50 maximum: AddMP, the fixed-bank
+// setter, and the Elixir refill loop all embed the literal cap, and none of
+// them reads rank or equipment, so full is the same value for every player.
+// Passing $50 through Player_SetMP stores the byte and redraws the magic bar
+// in one call -- the same entrypoint vanilla AddMP tail-jumps into, so the
+// HUD can never disagree with the stored value.
+word fh::HackManager::apply_AtlasDevFullMana(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0x50);
+	code.jsr(ROM::Player_SetMP);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfHealthBelow Threshold Label: jumps when the player's health is
+// strictly below the threshold. HP is the fixed-point pair $0431:$0432 with
+// the whole points in $0431; only that byte is compared, so health equal to
+// the threshold does not jump even while the fraction is nonzero -- the
+// fraction can only place health further above the threshold, never below it.
+// Uses nothing beyond A and the flags; the operand loader's JSR is balanced.
+word fh::HackManager::apply_AtlasDevIfHealthBelow(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = threshold
+	code.cmp_abs(RAM::PlayerHP); // threshold - HP whole byte
+	code.bcc("@false"); // threshold < HP
+	code.beq("@false"); // threshold == HP
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfHealthAtLeast Threshold Label: jumps when the player's integer
+// HP is at least the threshold. HP is the engine's fixed-point pair --
+// integer byte at $0431, fraction at $0432 -- and only the integer byte the
+// HUD bar draws is compared, so fractional chip damage never changes the
+// answer by itself. The operand arrives in A, so carry-clear means the
+// threshold sits below the live HP and BEQ catches the boundary; both
+// routes take the jump. The engine clamps HP at $50, so thresholds above
+// 80 can never pass.
+word fh::HackManager::apply_AtlasDevIfHealthAtLeast(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_abs(RAM::PlayerHP);
+	code.bcc("@true");
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfManaAtLeast Threshold Label: jumps when the player's magic
+// points are greater than or equal to the operand. MP is the single
+// unsigned byte at $039a -- no fixed-point fraction like HP -- and the
+// game's own add and spend paths cap it at $50, so thresholds above
+// that simply never pass. The loader leaves the threshold in A and one
+// CMP answers the whole question: carry clear means the threshold is
+// below MP, zero means equal, and either takes the jump. Uses only A
+// and the flags; no scratch RAM.
+word fh::HackManager::apply_AtlasDevIfManaAtLeast(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = threshold
+	code.cmp_abs(RAM::PlayerMana);                            // threshold - MP
+	code.bcc("@true");                                        // threshold < MP
+	code.beq("@true");                                        // threshold == MP
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevAddExperience Amount: adds a 16-bit amount of experience through
+// the enemy-kill award path. The vanilla adder saturates, runs the
+// promotion check and redraws the HUD digits, and the promotion check has
+// exactly one caller in the ROM, so nothing caches experience behind our
+// back. Rank can advance at most once per call, same as for a kill.
+word fh::HackManager::apply_AtlasDevAddExperience(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = amount lo
+	code.sta_zp(RAM::ZP_Temp_Int24_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = amount hi
+	code.sta_zp(RAM::ZP_Temp_Int24_M);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_UPDATEEXPERIENCE));
+
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetGold Lo Mid Hi
+//
+// Writes an exact gold amount.  Gold is a 24-bit little-endian counter at
+// $0392..$0394; the three operands land there directly, low byte first, so
+// any value 0..16777215 is expressible.  After the stores the handler runs
+// $f9e7, the vanilla routine that converts the counter to decimal and
+// redraws the seven-digit HUD field -- the same tail every vanilla gold
+// change goes through -- so the display can never disagree with the stored
+// value.  The routine is resident in the fixed bank, callable from the
+// bank-12 handler without a bank switch, exactly like WaitForInterrupt and
+// Number_DrawAtPos.
+word fh::HackManager::apply_AtlasDevSetGold(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = gold lo
+	code.sta_abs(RAM::PlayerGold_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = gold mid
+	code.sta_abs(RAM::PlayerGold_M);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = gold hi
+	code.sta_abs(RAM::PlayerGold_U);
+
+	code.jsr(ROM::Hud_DrawGold);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfGoldAtLeast ThresholdLo ThresholdMid ThresholdHi Label
+//
+// Jumps when the player's gold is at least the given 24-bit threshold.
+// $0392..$0394 is the game's own little-endian gold counter -- vanilla's
+// add and subtract both propagate carry from low through middle to high --
+// and the three operands arrive in that same low-first order, so the low
+// and middle bytes are parked on the stack while the high byte is fetched.
+//
+// The comparison is lexicographic from the high byte down.  At each
+// significance the operand byte is compared against the counter byte:
+// operand below means the counter already exceeds the threshold there
+// (taken), operand above means it can never reach it (not taken), and a
+// tie defers one byte down.  A tie at every level is gold equal to the
+// threshold, which is taken -- that is what makes the test at-least
+// rather than strictly-greater.  Every exit has to drop whatever operand
+// bytes are still stacked; the digit in each label is exactly that count.
+word fh::HackManager::apply_AtlasDevIfGoldAtLeast(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // threshold low
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // threshold middle
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // threshold high, in A
+
+	code.cmp_abs(RAM::PlayerGold_U);
+	code.bcc("@true2");                 // counter's high byte is larger: taken
+	code.bne("@false2");                // smaller: not taken
+
+	code.pla();                         // high bytes tie; the middle decides
+	code.cmp_abs(RAM::PlayerGold_M);
+	code.bcc("@true1");
+	code.bne("@false1");
+
+	code.pla();                         // middle ties too; the low byte decides,
+	code.cmp_abs(RAM::PlayerGold_L);          // and equality all the way down means
+	code.bcc("@true0");                 // gold equals the threshold, which an
+	code.beq("@true0");                 // at-least test takes
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@true2");               // two operand bytes still stacked
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	code.label("@false2");
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@true1");               // one still stacked
+	code.pla();
+	code.label("@true0");               // stack already clean
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	code.label("@false1");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfXPAtLeast Value Label: jumps when the player's experience is at
+// least Value. Experience is the little-endian 16-bit counter at $0390/$0391,
+// the same pair the engine's own experience add carries through. The Short
+// operand arrives low byte first, so the low byte parks on the stack while
+// the high bytes decide: a threshold high byte below the player's answers
+// true and one above answers false, both without reading the low byte at
+// all; only a tie falls through to the low compare, where below-or-equal
+// means the threshold is reached. Every exit pops the parked byte, so the
+// stack balances on all paths. The label digit is the operand byte index
+// under comparison.
+word fh::HackManager::apply_AtlasDevIfXPAtLeast(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // threshold lo
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // threshold hi
+	code.cmp_abs(RAM::PlayerXP_U);
+	code.bcc("@true1");
+	code.bne("@false1");
+
+	code.pla();
+	code.cmp_abs(RAM::PlayerXP_L);
+	code.bcc("@true0");
+	code.beq("@true0");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@true1");
+	code.pla();
+	code.label("@true0");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	code.label("@false1");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfItemCount Item Count Label
+//
+// jumps when the player's exact ownership count for Item is at least Count.
+// "count" is the vanilla definition, read from the same data the fixed-bank
+// inventory routines Player_LacksItem ($8CF7) and Player_RemoveItem ($9A6A)
+// use: matching entries in the item's category carried array (five arrays
+// packed at $039D, 4+4+4+4+8 category-local slots, live length per category
+// at $03C2..$03C6), plus one when that category's selected/equipped register
+// ($03BD..$03C1) holds the same category-local id.  the eight special items
+// ($80/$81/$82/$83/$92/$8A/$93/$94) are single bits in $042C, so their count
+// is exactly zero or one.  an id outside the five defined classes ($00-$03
+// weapons, $20-$23 armor, $40-$43 shields, $60-$64 magic, $80-$95 items) is
+// always false, Count zero included, and is rejected before any table is
+// indexed.  only the live prefix of each array is scanned; stale bytes past
+// the count never contribute.
+//
+// the handler is deliberately scratch-free: every intermediate -- the operand
+// pair, the category-local id, the running count, the slots-remaining counter
+// and the slot cursor -- lives on the hardware stack, reached through
+// TSX + LDA/CMP/DEC/INC $01xx,X, so no zero-page byte is claimed and an NMI at
+// any instruction boundary (the vanilla handler preserves A/X/Y and everything
+// below its own frame) cannot corrupt the state.  both operands are consumed
+// up front; each of the two tails drops them before taking its continuation.
+word fh::HackManager::apply_AtlasDevIfItemCount(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // item
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // count
+	code.pha();
+
+	// classify the item id straight off the stack: nine compare/branch pairs
+	// carve the five defined classes out of the byte range, everything else
+	// falls to @invalid.  stack offsets: $0102,X = item, $0101,X = count.
+	code.tsx();
+	code.lda_abs_x(0x0102);
+	code.cmp_imm(0x04);
+	code.bcc("@ordinary");        // $00-$03 weapons
+	code.cmp_imm(0x20);
+	code.bcc("@invalid");
+	code.cmp_imm(0x24);
+	code.bcc("@ordinary");        // $20-$23 armor
+	code.cmp_imm(0x40);
+	code.bcc("@invalid");
+	code.cmp_imm(0x44);
+	code.bcc("@ordinary");        // $40-$43 shields
+	code.cmp_imm(0x60);
+	code.bcc("@invalid");
+	code.cmp_imm(0x65);
+	code.bcc("@ordinary");        // $60-$64 magic
+	code.cmp_imm(0x80);
+	code.bcc("@invalid");
+	code.cmp_imm(0x96);
+	code.bcc("@special_scan");    // $80-$95 items, the eight specials among them
+
+	code.label("@invalid");       // undefined id: unconditionally false
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	// the special ids are not contiguous, so probe the exact eight-entry
+	// table the vanilla remove path carries; X holds the row on a hit and
+	// selects the matching mask over in @special_hit.  a miss falls through
+	// into @ordinary, where the id counts as a plain carried item.
+	code.label("@special_scan");
+	code.ldx_imm(0x07);
+	code.label("@special_probe");
+	code.cmp_abs_x(ROM::SpecialItemIdTable);
+	code.beq("@special_hit");
+	code.dex();
+	code.bpl("@special_probe");
+
+	// ordinary item: category = id >> 5, local id = id & $1f.  seed the
+	// running count from the selected/equipped register (the same $03BD,Y
+	// test Player_LacksItem makes -- equipment does not sit in the carried
+	// array), then walk the live prefix.
+	code.label("@ordinary");
+	code.pha();
+	code.lsr_a(5);
+	code.tay();                   // Y = category
+	code.pla();
+	code.and_imm(0x1f);
+	code.pha();                   // stack: [item count local]
+	code.lda_abs_y(RAM::SelectedWeapon); // base of the five-register file
+	code.tsx();
+	code.cmp_abs_x(0x0101);       // selected register == local id?
+	code.bne("@not_selected");
+	code.lda_imm(0x01);
+	code.bne("@seeded");
+	code.label("@not_selected");
+	code.lda_imm(0x00);
+	code.label("@seeded");
+	code.pha();                   // running count, 0 or 1
+	code.lda_abs_y(RAM::InventoryCounts);
+	code.pha();                   // slots remaining in the live prefix
+	code.tya();
+	code.asl_a();
+	code.asl_a();
+	code.tax();                   // X = category * 4 = first slot index
+
+	// per-slot loop.  the register juggling is the price of scratch-freedom:
+	// X serves both as the slot cursor and as the stack index, so the cursor
+	// is parked on the stack around every stack-relative access.  relative to
+	// the parked cursor: $0102,X = remaining, $0104,X = local id; after the
+	// two match-path pushes, $0104,X lands on the running count instead.
+	code.label("@slot");
+	code.txa();
+	code.pha();                   // park the cursor
+	code.tsx();
+	code.lda_abs_x(0x0102);       // slots remaining
+	code.beq("@scanned");
+	code.dec_abs_x(0x0102);
+	code.pla();
+	code.tax();
+	code.txa();
+	code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0104);       // category-local id
+	code.tay();
+	code.pla();
+	code.tax();
+	code.tya();
+	code.cmp_abs_x(RAM::InventoryArrays); // carried slot == local id?
+	code.bne("@miss");
+	code.pha();
+	code.txa();
+	code.pha();
+	code.tsx();
+	code.db(0xfe); code.dw(0x0104); // INC $0104,X -- running count (no inc_abs_x mnemonic)
+	code.pla();
+	code.tax();
+	code.pla();
+	code.label("@miss");
+	code.inx();
+	code.bne("@slot");            // always taken; the cursor never wraps
+
+	// unwind: drop cursor and remaining, keep the count through X while the
+	// local id comes off, then compare against the Count operand still on
+	// the stack.  CMP leaves carry set exactly when count >= Count.
+	code.label("@scanned");
+	code.pla();
+	code.tax();
+	code.pla();
+	code.pla();
+	code.tax();                   // X = running count
+	code.pla();
+	code.txa();
+	code.tsx();
+	code.cmp_abs_x(0x0101);
+	code.bcs("@true");
+
+	code.label("@false");
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	// special item: one bit of the bitfield through the mask row matching the
+	// id row found above; the resulting 0-or-1 count meets the same >=
+	// comparison and shares the two tails.
+	code.label("@special_hit");
+	code.lda_abs(RAM::SpecialItemBitfield);
+	code.db(0x3d); code.dw(ROM::SpecialItemMaskTable); // AND $8D52,X (no and_abs_x mnemonic)
+	code.beq("@special_zero");
+	code.lda_imm(0x01);
+	code.bne("@special_compare");
+	code.label("@special_zero");
+	code.lda_imm(0x00);
+	code.label("@special_compare");
+	code.tsx();
+	code.cmp_abs_x(0x0101);
+	code.bcs("@true");
+	code.bcc("@false");
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -2927,6 +3416,42 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevLayTextLine:
 			cpu_addr = apply_AtlasDevLayTextLine(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetHealth:
+			cpu_addr = apply_AtlasDevSetHealth(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMana:
+			cpu_addr = apply_AtlasDevSetMana(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevFullHeal:
+			cpu_addr = apply_AtlasDevFullHeal(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevFullMana:
+			cpu_addr = apply_AtlasDevFullMana(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfHealthBelow:
+			cpu_addr = apply_AtlasDevIfHealthBelow(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfHealthAtLeast:
+			cpu_addr = apply_AtlasDevIfHealthAtLeast(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfManaAtLeast:
+			cpu_addr = apply_AtlasDevIfManaAtLeast(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevAddExperience:
+			cpu_addr = apply_AtlasDevAddExperience(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetGold:
+			cpu_addr = apply_AtlasDevSetGold(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfGoldAtLeast:
+			cpu_addr = apply_AtlasDevIfGoldAtLeast(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfXPAtLeast:
+			cpu_addr = apply_AtlasDevIfXPAtLeast(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfItemCount:
+			cpu_addr = apply_AtlasDevIfItemCount(p_config, p_rom, cpu_addr);
 			break;
 
 		default:

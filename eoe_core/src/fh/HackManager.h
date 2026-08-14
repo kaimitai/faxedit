@@ -37,7 +37,7 @@ namespace fh {
 		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
 		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
 		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
-		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount
 	};
 
 	class HackManager {
@@ -143,6 +143,18 @@ namespace fh {
 		word apply_AtlasDevLayTextAt(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevLayTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetHealth(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMana(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFullHeal(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFullMana(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfHealthBelow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfHealthAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfManaAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevAddExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetGold(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+word apply_AtlasDevIfItemCount(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
