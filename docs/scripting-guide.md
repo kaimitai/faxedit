@@ -1,19 +1,22 @@
-# FaxIScripts - User Documentation
+# Echoes of Eolis - Scripting Guide
 
-This is the user documentation for FaxIScripts (v0.9), an assembler for the internal scripting languages used by Faxanadu for the NES. The application code and binaries can be found on its [GitHub repository](https://github.com/kaimitai/faxiscripts/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This document describes the scripting and textual data interfaces provided by Echoes of Eolis for editing Faxanadu on the NES. It is assumed that users are somewhat acquainted with the game.
 
 There are three types of scripts in the game:
-  * Interaction Scripts (iScripts)
-  * Behavior Scripts (bScripts)
-  * Music Scripts (mScripts)
 
-We provide assembly interfaces for all three script types, but for the music data we also provide an [MML interface](./faxiscripts_mml.md) providing a higher level of abstraction more suitable for music composition.
+* Interaction Scripts (iScripts)
+* Behavior Scripts (bScripts)
+* Music Scripts (mScripts)
 
-In addition to the assemblers, we provide a textual interface for editing miscellaneous static data.
+Echoes of Eolis provides assembly interfaces for all three script types. Music can also be edited through the [MML interface](./mml-guide.md), which provides a higher-level abstraction more suitable for music composition.
 
-On top of this, we also provide a mantra encoder and decoder which takes spawn point count into account. (currently only supports the original US version of the game)
+In addition to the scripting interfaces, Echoes of Eolis provides a textual interface for editing miscellaneous static data.
 
-All three script types were reverse engineered and documented by [ChipX86/Christian Hammond](http://chipx86.com/) as part of his [Faxanadu disassembly project](https://chipx86.com/faxanadu/). This application would not have been possible without his resources.
+These features are available directly from the Echoes of Eolis graphical interface. They are also exposed through the `eoe-cli` command-line application for users who prefer command-line workflows or want to automate their build process.
+
+The command-line interface also provides a mantra encoder and decoder which takes spawn-point count into account. This currently supports only the original US version of the game.
+
+All three script types were reverse engineered and documented by [ChipX86/Christian Hammond](http://chipx86.com/) as part of his [Faxanadu disassembly project](https://chipx86.com/faxanadu/). This functionality would not have been possible without his resources.
 
 <hr>
 
@@ -24,9 +27,9 @@ The interaction script layer of Faxanadu consists of text-strings, shop data and
 
 A sprite in Faxanadu - an NPC or an item - can call script code. For certain events, like picking up items, dying, trying to open a door with a key and such - the index of the script it triggers is hard coded in the game's logic. For NPCs the sprite data defines which script will be called when you interact with it.
 
-The script code is one contiguos blob of data, and just before the script data begins there is a so called pointer table - with 152 entries by default - which tells the game where in the script code the entrypoint for the scripts are.
+The script code is one contiguous blob of data, and just before the script data begins there is a so called pointer table - with 152 entries by default - which tells the game where in the script code the entrypoints for the scripts are.
 
-Too see, or edit, which script is connected with a certain NPC in the game, you can use [Echoes of Eolis](https://github.com/kaimitai/faxedit/) - a graphical editor which will let you edit other data portions than the script layer.
+To see, or edit, which script is connected with a certain NPC in the game, you can use [Echoes of Eolis](https://github.com/kaimitai/faxedit/) - a graphical editor which will let you edit other data portions than the script layer.
 
 ##### Behavior Scripts (bScripts)
 The behavior script layer consists only of code. This layer has 101 entrypoints, one for each sprite in the game. The scripts define how enemies, NPCs and items behave in the game.
@@ -53,10 +56,11 @@ When the textual assembly files are parsed, numbers can be given in different ba
 
 ## Table of Contents
 
-[Running the assembler](#running-the-assembler)
+[Running the assembler](#editing-scripts)
+- [Command-line interface](#command-line-interface)
 - [ **iScript Assembly file contents** ](#iscript-assembly-file-contents)
   - [Defines](#defines)
-  - [Strings](#strings)
+  - [Strings](#reserved-strings)
   - [Shops](#shops)
   - [IScript](#iscript)
     - [Comments](#comments)
@@ -86,9 +90,15 @@ When the textual assembly files are parsed, numbers can be given in different ba
 
 <hr>
 
-## Running the assembler
+## Editing scripts
 
-The assembler is a command-line tool which can disassemble the scripting layers of a Faxanadu ROM into a human-readable and editable assembly files. It can also read an assembly file and patch the ROM with the information it contains.
+The scripting tools can be accessed directly from Echoes of Eolis through the scripting window. From there, iScripts, bScripts, mScripts, MML and miscellaneous data can be extracted from the currently loaded ROM and built back into it.
+
+The same functionality is available from the command line through `eoe-cli`. The CLI is useful for automated build processes and for users who prefer working directly from the command line.
+
+### Command-line interface
+
+```eoe-cli``` is a command-line tool which can disassemble the scripting layers of a Faxanadu ROM into human-readable and editable assembly files. It can also read an assembly file and patch the ROM with the information it contains.
 
 The idea is that users will extract the scripting layer to files, make modifications to these files, and then patch the ROM with their changes.
 
@@ -100,7 +110,7 @@ The assembler will report on how much space it used for each data section, and h
 
 To extract interaction scripts from a file, called "Faxanadu (U).nes" say, we run the following command from the command-line:
 
- ```faxiscripts extract "Faxanadu (U).nes" faxanadu.asm```
+ ```eoe-cli extract "Faxanadu (U).nes" faxanadu.asm```
 
  Quotes are only necessary if any of your arguments contain spaces. You can write "x" instead of "extract".
 
@@ -112,7 +122,7 @@ To extract interaction scripts from a file, called "Faxanadu (U).nes" say, we ru
 
 To build a file we go in the opposite direction, and assemble. To build a file faxanadu.asm and patch "Faxanadu (U).nes" with it, run the following command:
 
- ```faxiscripts build faxanadu.asm "Faxanadu (U).nes"```
+ ```eoe-cli build faxanadu.asm "Faxanadu (U).nes"```
 
  You can write "b" instead of "build".
 
@@ -126,7 +136,7 @@ To build a file we go in the opposite direction, and assemble. To build a file f
 
 To extract behavior scripts from a file, called "Faxanadu (U).nes" for example, we run the following command from the command-line:
 
- ```faxiscripts extract-bscript "Faxanadu (U).nes" faxanadu.basm```
+ ```eoe-cli extract-bscript "Faxanadu (U).nes" faxanadu.basm```
 
  Quotes are only necessary if any of your arguments contain spaces. You can write "xb" instead of "extract-bscript".
 
@@ -137,7 +147,7 @@ To extract behavior scripts from a file, called "Faxanadu (U).nes" for example, 
 
 To build a file we go in the opposite direction, and assemble. To build a file faxanadu.basm and patch "Faxanadu (U).nes" with it, run the following command:
 
- ```faxiscripts build-bscript faxanadu.basm "Faxanadu (U).nes"```
+ ```eoe-cli build-bscript faxanadu.basm "Faxanadu (U).nes"```
 
  You can write "bb" instead of "build-bscript".
 
@@ -153,18 +163,18 @@ To build a file we go in the opposite direction, and assemble. To build a file f
 
  To extract music from a file, called "Faxanadu (U).nes" for example, we run the following command from the command-line:
 
- ```faxiscripts extract-music "Faxanadu (U).nes" faxanadu.masm```
+ ```eoe-cli extract-music "Faxanadu (U).nes" faxanadu.masm```
 
   Quotes are only necessary if any of your arguments contain spaces. You can write "xm" instead of "extract-music".
 
  You can add options when extracting music. They are:
 
-* --no-notes (or -n for short): Ouput raw hex bytes in the note stream instead of note names. Note names are enabled by default.
+* --no-notes (or -n for short): Output raw hex bytes in the note stream instead of note names. Note names are enabled by default.
 * --force (-f for short): Overwrite existing music asm-file if it already exists. We don't allow it by default because users might inadvertently overwrite their assembly code if they aren't careful.
 
 To build a file we go in the opposite direction, and assemble. To build a file faxanadu.asm and patch "Faxanadu (U).nes" with it, run the following command:
 
- ```faxiscripts build-music faxanadu.asm "Faxanadu (U).nes"```
+ ```eoe-cli build-music faxanadu.asm "Faxanadu (U).nes"```
 
  You can write "bm" instead of "build-music".
 
@@ -179,17 +189,18 @@ For extracting and inserting miscellaneous data, the application is used in the 
 
  To extract misc data from a file, called "Faxanadu (U).nes" for example, we run the following command from the command-line:
 
- ```faxiscripts extract-misc "Faxanadu (U).nes" faxanadu.txt```
+ ```eoe-cli extract-misc "Faxanadu (U).nes" faxanadu.txt```
 
   Quotes are only necessary if any of your arguments contain spaces. You can write "xmisc" instead of "extract-misc".
 
  You can add options when extracting misc data. They are:
 
 * --force (-f for short): Overwrite existing misc txt-file if it already exists. We don't allow it by default because users might inadvertently overwrite their existing files if they aren't careful.
+* --original-size (-o for short): Extract miscellaneous data at its original full size. For sprite data, this includes all sprites rather than only enemies and bosses. Most users will not need this option.
 
 To build a file we go in the opposite direction, and inject. To build a file faxanadu.txt and patch "Faxanadu (U).nes" with it, run the following command:
 
- ```faxiscripts build-misc faxanadu.txt "Faxanadu (U).nes"```
+ ```eoe-cli build-misc faxanadu.txt "Faxanadu (U).nes"```
 
  You can write "bmisc" instead of "build-misc".
 
@@ -197,16 +208,15 @@ To build a file we go in the opposite direction, and inject. To build a file fax
 
  * --source-rom (-s for short): This option takes an argument, which is a filename for the ROM you will use as a source for patching. If this option is not specified we will patch the file given as output file. Use this if you don't want to patch a ROM file directly.
  * --region (-r for short): Override automatic ROM region deduction. The parameter specified must match a region defined in eoe_config.xml
- * --original-size (-o for short): This option has a special meaning for miscellaneous data, and means we extract misc. data for all sprites - even sprites that are not bosses or enemies. It is unclear whether this is of any use.
-
+ 
  <hr>
 
-##### ROM region configuraiton
+##### ROM region configuration
 
 The assembler allows you to dump all region constants to a serialized text file, with a command like
 
 ```
-faxiscripts dump-config faxanadu-jp.nes faxanadu-jp-config.txt
+eoe-cli dump-config faxanadu-jp.nes faxanadu-jp-config.txt
 ```
 
 You can write **dc** instead of **dump-config**.
@@ -217,7 +227,7 @@ This will load a nes rom, resolve its ROM region, and then write all constants t
 
 ## iScript Assembly file contents
 
-The generated assembly files produce four sections. Defines, required strings, shops and iscript - which is the actual code.
+The generated assembly files produce four sections. Defines, reserved strings, shops and iscript - which is the actual code.
 
 ### [defines]
 
@@ -235,7 +245,7 @@ This is the start of an extracted assembly file. Whenever you use the value WEAP
 
 The defines will only replace numeric constants, and only in the [shops] and [iscript] sections.
 
-### [strings]
+### [reserved_strings]
 
 The section [reserved_strings] contains a list of strings with reserved indexes. The assembler needs to know about these so they are not relocated or discarded during builds. These are strings which are used directly by game logic, and not necessarily any particular script.
 
@@ -263,18 +273,18 @@ Then come the special characters we have our own codes for:
 Then come some glyphs which I am not sure appear in the original game, at least not in dialogue, but we have codes for them:
 * &lt;block&gt;: A filled white block
 * &lt;long_bar&gt;: A long bar used for arrows
-* &lt;short_bar_right&gt;: Ahort bar used by right-pointing arrows
+* &lt;short_bar_right&gt;: Short bar used by right-pointing arrows
 * &lt;arrow_right&gt;: An arrowhead pointing right
-* &lt;short_bar_left&gt;: Ahort bar used by left-pointing arrows
+* &lt;short_bar_left&gt;: Short bar used by left-pointing arrows
 * &lt;arrow_left&gt;: An arrowhead pointing left
 
 Any other code can be encoded with &lt;N&gt; where N is a constant value from 0-254, but they are all garbage gfx or duplicates as far as I know. Codes like this will be translated to a byte value directly. 255 cannot be used as it denotes end of string. If you enter any character not in the list above into a string, assembly will fail.
 
 Strings are stored in a certain section of ROM, and we can't extend this section without making game code modifications.
 
-After assembly, strings indexes are given by 1 byte arguments to opcodes using strings, and they are 1-indexed, meaning you can't use more than 254 distinct strings.
+After assembly, string indexes are given by 1 byte arguments to opcodes using strings, and they are 1-indexed, meaning you can't use more than 254 distinct strings.
 
-Many strings in the game seem to be missing spaces between words, but in those cases they are taking advantage of the fact that line breaks will occurr there, every 16 characters.
+Many strings in the game seem to be missing spaces between words, but in those cases they are taking advantage of the fact that line breaks will occur there, every 16 characters.
 
 Note: You can still give a string index instead of a string to string-using opcodes. The only reasonable use case might be to use string index 0 which seems to be considered an empty string by the game - if you want to add an empty dialogue without consuming a string index.
 
@@ -329,11 +339,11 @@ Remember:
 
 #### .entrypoint &lt;value&gt;
 
-The entrypoint directive tells the assembler where each script will enter the code and start executing. After compilation the linker will resolve this address to an actual value. The important thing is that at least 152 pointer table entries are known at linking time, so ensure you have at least 152 entrypoints, from 0 to 151, in your code. Several entrypoints can be at the same location - that just means several script indexes will run the same script - and in the original game there are lots of such cases. We enforce a minimum entrypoint of 152 to be consistent with game code which references script with index 151 directly.
+The entrypoint directive tells the assembler where each script will enter the code and start executing. After compilation the linker will resolve this address to an actual value. The important thing is that at least 152 pointer table entries are known at linking time, so ensure you have at least 152 entrypoints, from 0 to 151, in your code. Several entrypoints can be at the same location - that just means several script indexes will run the same script - and in the original game there are lots of such cases. We enforce a minimum entrypoint count of 152 to be consistent with game code which references script with index 151 directly.
 
 #### .textbox &lt;value&gt;
 
-The .textbox directive must follow immediately after an entrypoint, and takes one argument. It determines which textbox will be used for the script. This emits one byte, so we can think of it as a pseudo-opcode - so if it is missing the code exectution will be unaligned with the instruction offsets and probably crash.
+The .textbox directive must follow immediately after an entrypoint, and takes one argument. It determines which textbox will be used for the script. This emits one byte, so we can think of it as a pseudo-opcode - so if it is missing the code execution will be unaligned with the instruction offsets and probably crash.
 
 We are providing the constants you can use as arguments. GENERIC is a textbox with no portrait, whereas the others - like GURU and NURSE - have portraits.
 
@@ -370,7 +380,7 @@ Once we are past the entrypoint and have set up the textbox context, we are read
 
 Byte integers take values from 0 to 255, and other integers take values from 0-32767. Other IDs are byte values too, but you can replace the values with define constants in your code.
 
-All opcodes starting with If will take a label as the last argument. The only exception is Jump, which redirects execution no matter what.
+All opcodes starting with ```If``` take a label as their last argument. ```Jump``` also takes a label, but redirects execution unconditionally.
 
 The assembler will fail if you give the wrong number of arguments to your opcodes.
 
@@ -378,7 +388,7 @@ Unlike labels and defines, opcodes are not case sensitive; you can write ENDGAME
 
 ## A concrete example
 
-It will be clearer once we look at a script and inspect it. Here is the script for the dialogue with the wise old man in Tower of Fortress who wants an elixir to open the fountain. We have taken a screenshot from the script in Notepad++ with syntax highliting.
+It will be clearer once we look at a script and inspect it. Here is the script for the dialogue with the wise old man in Tower of Fortress who wants an elixir to open the fountain. We have taken a screenshot from the script in Notepad++ with syntax highlighting.
 
 ![Tower Spring interaction script](./img/script038_tower_spring.png)
 
@@ -388,7 +398,7 @@ The first line in the code is
 
 ```IfQuest QUEST_TOWER_SPRING @iscript_038_00```
 
-This line says, if quest QUEST_TOWER_SPRING (the value of which is defined in the defines-seciton) is completed, execution jumps to label @iscript_038_00.
+This line says, if quest QUEST_TOWER_SPRING (the value of which is defined in the defines-section) is completed, execution jumps to label @iscript_038_00.
 
 If the quest is not complete it continues without jumping, and then the next instruction would be:
 
@@ -415,7 +425,7 @@ Here this block is executed:
 
 The wise man says the spring will flow again, then the player loses the elixir, and the quest flag for this spring is set. Then the script ends.
 
-If go back to the beginning and see what had happened at the initial check, when we jump to @iscript_038_00 if the quest is complete already.
+If we go back to the beginning and see what had happened at the initial check, when we jump to @iscript_038_00 if the quest is complete already.
 
 The block of code at label @iscript_038_00 is:
 
@@ -439,7 +449,7 @@ As a flowchart the logic looks like this:
      | Yes                     | No
      v                         v
 +------------------+     +-----------------------------+
-| Mag "As soon  |     | MsgPrompt                |
+| Msg "As soon     |     | MsgPrompt                   |
 | "as water flows" |     | "Will you give me medicine?"|
 | End              |     +-----------------------------+
 +------------------+      | Accept             Decline |
@@ -496,16 +506,16 @@ Use comments and descriptive labels when coding to remember what you were workin
 
 ## Well-formed code
 
-For an asm-file to be valid, you need to specify at least 152 entrypoints, and for each entrypoint the first instruction (or pseudo-instruction in this case) must be a textbox.
+For an asm-file to be valid, you need to specify at least 152 entrypoints, and each entrypoint must be immediately followed by a ```.textbox``` directive.
 
-After that you need to make sure that we never hit another textbox pseudor-opcode while the code is executing, and that all possible branches execution flow can take ultimately end with the End-opcode (or EndGame). After assembly, the application will try to re-parse your code by entering at each entry point and simulate execution for all possible branches. If this fails, your ROM will not be patched and you need to fix your asm-file.
+After that you need to make sure that we never hit another textbox pseudo-opcode while the code is executing, and that all possible branches that execution flow can take ultimately end with the End-opcode (or EndGame). After assembly, Echoes of Eolis validates the generated ROM by parsing the assembled script layer from every entrypoint and following all reachable control-flow paths. If any entrypoint produces malformed script code, the ROM will not be patched.
 
 Check:
 
 * At least 152 distinct entrypoints numbered 0-151
 * Each entrypoint is followed by a .textbox before any opcode
 * Code execution terminates in all branches it could possibly take, and it never hits another .textbox
-* All your code can actually be reached from an entrypoint. Unreachable code can not survive a round trip from asm to ROM and back to asm - the parser only looks for code the game could potentially reach.
+* All your code can actually be reached from an entrypoint. Unreachable code cannot survive a round trip from asm to ROM and back to asm - the parser only looks for code the game could potentially reach.
 
 <hr>
 
@@ -621,7 +631,7 @@ Rules for the ```zero``` operand:
 This scripting system is reverse‑engineered, and not all instructions are perfectly mapped out yet.
 
 - Some operand names may not reflect their true purpose in the VM.
-- Some operands might use the wrong sign. The assembler will still correctly use unsigned values (-128 to 127), but the disassembler will insist on showing them as unsigned (0-255) in such cases - if any.
+- Some operands might use the wrong sign. The assembler will still correctly use signed values (-128 to 127), but the disassembler will insist on showing them as unsigned (0-255) in such cases - if any.
 - Some opcodes might take additional meaningful values we haven’t discovered yet.
 - The naming may change in future versions if we discover more accurate meanings.
 
@@ -637,7 +647,7 @@ If you discover something new about an opcode or operand, please report it - it 
 
 ## bScript Assembly file contents
 
-The generated assembly files produce two sections; defines and bscript. The defines will be pre-populated with known constants so they can be used in script code. The bscript-section containts the actual script code.
+The generated assembly files produce two sections; defines and bscript. The defines will be pre-populated with known constants so they can be used in script code. The bscript-section contains the actual script code.
 
 Only one command, label definition or entrypoint definition can be on any one line. (comments can be added to the end of any line however)
 
@@ -649,16 +659,16 @@ This works the same way as for the interaction scripts. It is a list of constant
 
 This also works much in the same as the interaction scripts.
 
-bScripts have 101 entrypoint, numbered from 0 to 100 - one for each sprite in the game. The disassembler will add a comment to each entrypoint with the name of the sprite it belongs to. Some sprites share the same behavior, and therefore have the same entrypoint location.
+bScripts have 101 entrypoints, numbered from 0 to 100 - one for each sprite in the game. The disassembler will add a comment to each entrypoint with the name of the sprite it belongs to. Some sprites share the same behavior, and therefore have the same entrypoint location.
 
 - comments start with ```;``` - anything after a semicolon will be ignored
 - labels start with ```@``` and end with a colon in the definition, but not when referenced
 
-The branching in bScripts however, do not depend so much on user input. In fact there is very little branching at all. There is one opcode ```IfDistLessThan``` which checks how far the player is from a sprite in the x- or y-directions, and branches to different code sections depending on whether the comparison is true or false - but that is all.
+Branching in bScripts, however, does not depend much on user input. In fact there is very little branching at all. There is one opcode ```IfDistLessThan``` which checks how far the player is from a sprite in the x- or y-directions, and branches to different code sections depending on whether the comparison is true or false - but that is all.
 
-Many bScript loop linearly between the entrypoint and a Jump-instruction at the end of the script.
+Many bScripts loop linearly between the entrypoint and a Jump-instruction at the end of the script.
 
-Some bScripts define a sprite's behavior fully, some bScripts just call a behavior command which hard is hard coded in the engine, and some use a mix of both.
+Some bScripts define a sprite's behavior fully, some bScripts just call a behavior command which is hard coded in the engine, and some use a mix of both.
 
 For example, the bScript for Zorugeriru is simply:
 
@@ -708,7 +718,7 @@ The following opcodes take any number of these arguments.
 - **direction** — 0=x, 1=y, others undefined
 - **phase** — animation phase (0–255, defined values probably depend on the sprite)
 - **ram** — RAM address $0000–$07ff (resolved per sprite slot, 8 sprites can be on the screen so a value 0-7 will be added to the given ram address)
-- **value** — byte value to add to a given RAM address (-127 to 128)
+- **value** — byte value to add to a given RAM address (-128 to 127)
 - **addr** — jump label
 - **true** — jump label (condition true)
 - **false** — jump label (condition false)
@@ -718,14 +728,14 @@ The following opcodes take any number of these arguments.
 |--------|----------|-------|----------|
 | $01 | DisableJump | addr | Unclear |
 | $02 | Action | action | Perform a given action |
-| $03 | IfDistLessThan | direction,pixels,true,false | Checks if the player is within a given amount of pixels in a given directions, jumps to true if less-than |
+| $03 | IfDistLessThan | direction,pixels,true,false | Checks if the player is within a given amount of pixels in a given direction, jumps to true if less-than |
 | $04 | EndBehavior | | Ends the current behavior |
 | $05 | Jump | addr | Unconditional jump |
 | $06 | AddValue | ram, value | Adds the given value to the given RAM address. RAM address offset by sprite's slot in memory (0-7). In the original game this is used to adjust the positions of some sprites. |
 | $07 | SetPhase | phase | Unclear; might set the sprite's animation frame index to the given phase value |
 | $ff | End | | Ends the behavior script |
 
-The operand ```value``` used by opcode ```AddValue``` should resolve to a valid RAM address, which is in the range $0000-$07ff. What each address means is documented in [ChipX86's disassembly (RAM map)](https://chipx86.com/faxanadu/RAM.html).
+The operand ```ram``` used by opcode ```AddValue``` should resolve to a valid RAM address, which is in the range $0000-$07ff. What each address means is documented in [ChipX86's disassembly (RAM map)](https://chipx86.com/faxanadu/RAM.html).
 
 Behavior sub-opcodes
 
@@ -819,7 +829,7 @@ These are the values the Action command can take, and are defined as constants i
 
 As for the iScripts, ensure all your code is reachable and that your scripts either end or loop forever. Do not let your instructions fall through to non-script data or you might crash. The assembler will test your code paths before patching ROM, but it provides no other static analysis.
 
-"Loop forever" should come with the caveat that your loop actually has to do something that depends on game ticks, otherwise you might cause the game itself to actually loop forever and not ever yield control to other gamecode.
+"Loop forever" should come with the caveat that your loop actually has to do something that depends on game ticks, otherwise you might cause the game itself to actually loop forever and not ever yield control to other game code.
 
 Otherwise this scripting language is not fully known by me at least, so have fun and experiment!
 
@@ -827,11 +837,11 @@ Otherwise this scripting language is not fully known by me at least, so have fun
 
 ## Music
 
-An assembly interface is provided for music as well, although for actual composition it is highly recommended to use the [MML interface](./faxiscripts_mml.md) provided by the application. The assembly format is most suitable for inspecting the music bytecode, but not so much for editing. We provide this interface mostly for completeness' sake and because the MML compiler needs it.
+An assembly interface is provided for music as well, although for actual composition it is highly recommended to use the [MML interface](./mml-guide.md) provided by the application. The assembly format is most suitable for inspecting the music bytecode, but not so much for editing. We provide this interface mostly for completeness' sake and because the MML compiler needs it.
 
 Music in Faxanadu uses four channels per song, two square wave channels, one triangle wave channel and one noise channel.
 
-The note lengths can be given as a one-byte value ($80-$ed represent note lengths from 0 to 109) or via a note length-setting opcode which can set note lengths up to 255 ticks. The NES runs at roughly 60 ticks per minute in this context, so a note length of 60 means one second or so of sound.
+The note lengths can be given as a one-byte value ($80-$ed represent note lengths from 0 to 109) or via a note length-setting opcode which can set note lengths up to 255 ticks. The NES runs at roughly 60 ticks per second in this context, so a note length of 60 means one second or so of sound.
 
 When a note length has been set, all subsequent notes and rests last that long - until a new note length command is given.
 
@@ -907,7 +917,7 @@ Once we are past the channel entrypoints, we are ready to run regular opcodes an
 
 The miscellaneous data interface was added in order to allow easy editing of data that does not fit anywhere else. It is of static size and ROM offsets, and could be edited with a hex editor. We group them all in one place for easy region-agnostic editing, and provide some abstractions.
 
-The commands for extracting and injecting a misc. data txt- file are ```xmisc``` and ```bmisc```. The flag ```-o``` can be used to extract all sprites' data, but it is unclear whether this is of any use. By default only sprite data for enemies and bosses are extracted.
+The commands for extracting and injecting a misc. data txt- file are ```xmisc``` and ```bmisc```. The flag ```-o``` (```--original-size```) extracts the original full data set. For sprite data, this includes all sprites; by default, only data for enemies and bosses is extracted.
 
 The extracted txt file will have a comment header for each data section, which explains what the data represents.
 
@@ -947,7 +957,7 @@ The enemy HP values shown are the values from ROM, but enemies will still be ali
 
 #### Enemy Magic Defense
 
-Enemies can be resistent to magic spells, with a 50% or 100% reduction. The first spell, Deluge, can not be resisted. The other 4 can, however, and to understand how this works it is easiest to look at these values as binary constants - and the misc. extraction will automatically output binary values here.
+Enemies can be resistant to magic spells, with a 50% or 100% reduction. The first spell, Deluge, can not be resisted. The other 4 can, however, and to understand how this works it is easiest to look at these values as binary constants - and the misc. extraction will automatically output binary values here.
 
 The 4 spells that can be resisted are, in order; Thunder, Fire, Death and Tilte. Two bits are used for each spell when defining magic defense. The first (highest) two bits define Thunder defense, then comes Fire defense, then Death and finally Tilte.
 
@@ -987,7 +997,7 @@ To encode or decode a mantra, we use the command **m** followed by parameters.
 
 The flag -m, for example, decodes a mantra string. For example, to decode the mantra string **8qB?3??8TgCNQukz3kK8**, the following command can be run:
 
-```faxiscripts m -m 8qB?3??8TgCNQukz3kK8```
+```eoe-cli m -m 8qB?3??8TgCNQukz3kK8```
 
 which will output
 
@@ -1080,7 +1090,7 @@ u1 and u2 are unknown quest bits. They are not used in the original game.
 
 One example of a mantra generation, using short-hand for some constants:
 
-```faxiscripts m -ew giant -ea full -es mag -ei jo -sw hand -sm death,deluge,fire -si red,red,matt,ace,king,wing -s elix,black,elf -g sky,mascon,wing -l 4 -r myrmidon```
+```eoe-cli m -ew giant -ea full -es mag -ei jo -sw hand -sm death,deluge,fire -si red,red,matt,ace,king,wing -s elix,black,elf -g sky,mascon,wing -l 4 -r myrmidon```
 
 will generate the following mantra and output:
 
@@ -1148,7 +1158,7 @@ The problem I wrestled with was how to structure my data, and how to present it 
 * Be able to parse any valid script code from ROM and write functionally equivalent code back when patching
 * Not emitting more bytes than I read in
 
-It turns out it is almost impossible to fulfill all three. I suppose it can technically be done, but it would require us to identify all shared code and insert unconditional jumps wherever it could save us bytes - in other words code tail deduplication. When there is no limit to how the code can jump and loop, we decided to go forego modularization, and decided to just present the code as it is in the ROM - as assembly code.
+It turns out it is almost impossible to fulfill all three. I suppose it can technically be done, but it would require us to identify all shared code and insert unconditional jumps wherever it could save us bytes - in other words code tail deduplication. When there is no limit to how the code can jump and loop, we decided to forego modularization, and decided to just present the code as it is in the ROM - as assembly code.
 
 We move the shop data and treat it separately, as that is an abstraction we can get for free.
 
@@ -1169,11 +1179,13 @@ This was not trivial to get right before I made the decision to link pointer tab
 
 To squeeze out even more bytes here you can insert an unconditional jump to bridge the code stream at the very last moment you overflow (but only if the last safe instruction is not already stream-ending) but you need to ensure that the jump itself completely fits in the region - and now all reference indexes after the jump shift by one. It is perfectly doable, but I opted not to do it since it will change the assembly code of the user - but we might make this optional in a future release.
 
-The reason for the application name being FaxIScripts was that originally this was supposed to only handle iScripts. Only later on was it extended to also handle bScripts and mScripts.
+The original standalone application was named FaxIScripts because it was initially intended to handle only iScripts. It was later extended to support bScripts, mScripts and other data formats. In 2026, FaxIScripts was merged into Echoes of Eolis, making the scripting functionality available directly from the graphical editor as well as through the ```eoe-cli``` command-line interface.
 
 <hr>
 
 ### Changelog
+
+> **Note:** This changelog is retained for historical reference and covers releases of the former standalone FaxIScripts application. FaxIScripts has since been integrated into Echoes of Eolis. For current releases and changes, see the [Echoes of Eolis changelog](./user-guide.md#changelog).
 
 * 2026-08-01: version 0.9
   * Added an extensible script runtime library with configurable script opcodes
@@ -1182,7 +1194,7 @@ The reason for the application name being FaxIScripts was that originally this w
   * Added persistent tilemap changes driven by extended flags
   * Added script opcode for keeping doors unlocked via extended flags
   * Improved compatibility with ROM hacks through configurable runtime injection
-  * Added comprehensive [advanced modding documentation](./advanced_doc.md)
+  * Added comprehensive [advanced modding documentation](./advanced-modding.md)
 
 * 2026-06-25: version 0.84
    * iScript opcode definitions can now be customized through the configuration file, making it easier to support ROM hacks with modified or extended script engines
@@ -1223,13 +1235,13 @@ The reason for the application name being FaxIScripts was that originally this w
        - Weapon and Magic damage
        - Armor defense
        - Wing Boot timers
-    * Added support for dynamic resizing of the interaction script pointer table, allowing the script count itself to be changed (although we still enforce a minimum count of 152  - the game code has direct reference to index 151), and a maximum count of 255 (index 255 is an end-of-stream delimiter and can not be used in the game)
+    * Added support for dynamic resizing of the interaction script pointer table, allowing the script count itself to be changed (although we still enforce a minimum count of 152  - the game code has a direct reference to index 151), and a maximum count of 255 (index 255 is an end-of-stream delimiter and can not be used in the game)
     * ROM loaders will now determine interaction script count and music track count from ROM data, rather than relying on external configuration
-    * Added support for configuration file user overrides (eoe_config_override.xml) so that users who want overrides do not need to performa a config merge for each new release
+    * Added support for configuration file user overrides (eoe_config_override.xml) so that users who want overrides do not need to perform a config merge for each new release
 
 * 2026-02-04: version 0.6
     * Added support for behavior script extraction and patching. The assembler now handles all three script types!
-    * Improved the [MML (music macro language) documentation](./docs/faxiscripts_mml.md) and added example MMLs graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
+    * Improved the [MML (music macro language) documentation](./docs/mml-guide.md) and added example MMLs graciously provided by [Jessica](https://www.romhacking.net/community/9037/)
 
 * 2026-01-18: version 0.51
     * Added support for exporting music from MML files, or music directly from ROM, to the [LilyPond](https://lilypond.org/) format. This can be used to engrave your music and provides an alternative way to convert music to midi. Some new directives were added to the MML format so that composers can set time signatures for their songs, or set clefs per channel, in the LilyPond output. There is also an option for adding a drum staff for the percussion channel.
@@ -1249,7 +1261,7 @@ The reason for the application name being FaxIScripts was that originally this w
 * 2025-11-13: version 0.2
     * Use inline strings for both disassembly and assembly. The assembler will deduplicate all strings in the code, and allocate string indexes automatically during builds. Reserved strings will retain their indexes
     * A consequence of the assembler allocating strings is that unused strings (strings not referenced in code and reserved strings) will be discarded. In the original game data we save 460 bytes by deduplicating strings and discarding unreferenced ones
-    * Include [IScript syntax highlighting for Notepad++](./util/FaxIScript.xml), in a new util-folder
+    * Include [IScript syntax highlighting for Notepad++](./util/NotepadPlusPlus-iScript-Syntax-Highlighting.xml), in a new util-folder
     * Opcode EndGame will be treated as end-of-stream
     * Added better error messages in places
     * Removed "extended ROM mode" as it had no reasonable use case
