@@ -4,7 +4,7 @@
 
 <hr>
 
-[Echoes of Eolis](https://github.com/kaimitai/faxedit) and [FaxIScripts](https://github.com/kaimitai/FaxIScripts) include an optional set of advanced features for creating ROM hacks that go beyond the capabilities of the original Faxanadu engine.
+[Echoes of Eolis](https://github.com/kaimitai/faxedit) includes an optional set of advanced features for creating ROM hacks that go beyond the capabilities of the original Faxanadu engine.
 
 These features allow projects to:
 
@@ -15,9 +15,9 @@ These features allow projects to:
 - Create conditional tilemap changes that permanently alter the world
 - Inject runtime code automatically without manually relocating assembly
 
-The advanced systems are completely optional. Projects that do not enable them produce behavior identical to the original game. No knowledge of 6502 assembly is required to use the built-in runtime library. Most projects simply enable the desired opcodes and use them from ordinary FaxIScripts assembly.
+The advanced systems are completely optional. Projects that do not enable them produce behavior identical to the original game. No knowledge of 6502 assembly is required to use the built-in runtime library. Most projects simply enable the desired opcodes and use them from ordinary iScript assembly.
 
-This document assumes you are already familiar with the basic FaxIScripts assembly syntax described in the main documentation.
+This document assumes you are already familiar with the basic iScript assembly syntax described in the [scripting documentation](scripting-guide.md).
 
 <hr>
 
@@ -47,31 +47,31 @@ This document assumes you are already familiar with the basic FaxIScripts assemb
 
 ## Getting Started
 
-Echoes of Eolis and FaxIScripts load their default configuration from ```eoe_config.xml```. This file should never be modified. It is part of the application and may be replaced when upgrading to a newer version.
+Echoes of Eolis loads its default configuration from ```eoe_config.xml```. This file should never be modified. It is part of the application and may be replaced when upgrading to a newer version.
 
 Instead, project-specific configuration belongs in ```eoe_config_override.xml```. Any settings present in the override file replace the corresponding defaults in ```eoe_config.xml```, while all omitted settings continue to use the built-in values.
 
 Many projects never need an override file. However, the advanced scripting system uses it to define the project's custom script language, making an override file the recommended starting point for the features described in this document.
 
-A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to the directory containing the faxedit and faxiscripts executables, rename it to ```eoe_config_override.xml```, and modify it as needed.
+A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to the directory containing the Echoes of Eolis executables, rename it to ```eoe_config_override.xml```, and modify it as needed.
 
 The provided file is only a starting point. It enables a representative selection of the built-in runtime opcodes, but most projects should remove unused entries, reorder them if desired, and add or replace implementations as their scripting language evolves.
 
 Think of the runtime library as a toolbox. Each ```Impl``` entry selects one tool from that toolbox. The selected tools become new script opcodes in your project's scripting language.
 
-When the advanced scripting features are used, ```eoe_config_override.xml``` does more than configure the tools - it also defines the project's scripting language. The iscript_opcodes map specifies which opcodes exist, their mnemonics, argument types, and any runtime implementations they use. **The XML is no longer just configuration - it defines the project's scripting language.**
+When the advanced scripting features are used, ```eoe_config_override.xml``` does more than configure the tools - it also defines the project's scripting language. The iscript_opcodes map specifies which opcodes exist, their mnemonics, argument types, and any runtime implementations they use. **The XML is no longer just configuration - it defines the project's scripting language.** When assembling iScripts through the GUI, this configuration is reloaded automatically before assembly. This makes it possible to edit the scripting language in ```eoe_config_override.xml``` and immediately assemble scripts using the new definition without restarting Echoes of Eolis.
 
-Both FaxIScripts and Echoes of Eolis read this information. FaxIScripts uses it when assembling scripts and disassembling ROM files, while Echoes of Eolis uses the same definitions to disassemble and display scripts correctly in the editor.
+Both the graphical editor and command-line tool use the same scripting implementation and configuration. The opcode definitions are used by both applications when assembling and disassembling scripts.
 
-The custom scripting opcodes are defined in ```iscript_opcodes``` in the configuration xml. Opcodes 0-23 define the vanilla scripting language, and should typically be left as-is. Opcodes 24 and up will be configured based on a project's needs. The opcode numbers themselves are arbitrary. Any unused values from 24 upward may be used, as long as the list is dense. For example, if 24 and 26 are defined, then 25 must also be defined.
+The custom scripting opcodes are defined in ```iscript_opcodes``` in the configuration xml. Opcodes 0-23 define the vanilla scripting language, and should typically be left as-is. Opcodes 24 and up will be configured based on a project's needs. The opcode numbers themselves are arbitrary, but each opcode must have a unique number. The configured opcode map does not need to be dense: Echoes of Eolis automatically densifies it when loading the scripting language. However, all opcodes that specify an ```Impl``` must appear after all opcodes without an ```Impl```.
 
 Most advanced projects only need to:
 
-1. Enable the runtime opcode implementations they intend to use by editing or adding entries to ```iscript_opcodes``` that specify an ```Impl``` value. The ```Impl``` selects one of the built-in runtime implementations provided by FaxIScripts.
+1. Enable the runtime opcode implementations they intend to use by editing or adding entries to ```iscript_opcodes``` that specify an ```Impl``` value. The ```Impl``` selects one of the built-in runtime implementations.
 2. Use the new opcodes in your assembly source files
 3. Assemble their script file as usual
 
-FaxIScripts automatically determines which runtime helpers are required, assembles them into free space, rebuilds the script dispatch table when necessary, and reports the amount of ROM space consumed.
+The assembler automatically determines which runtime helpers are required, assembles them into free space, rebuilds the script dispatch table when necessary, and reports the amount of ROM space consumed.
 
 No manual relocation, address calculation, or runtime installation is required by the script author.
 
@@ -80,23 +80,23 @@ No manual relocation, address calculation, or runtime installation is required b
 1. Copy ```util/eoe_config_override-advanced.xml``` next to the executables and rename it to ```eoe_config_override.xml```.
 2. Open the ```iscript_opcodes``` map in this file.
 3. Leave opcode entries 0-23 unchanged. These define the vanilla scripting language.
-4. Review the example runtime opcodes starting at entry 24. Remove any you do not need, add others, or rearrange them as desired. Opcode numbers must remain unique and dense (no gaps in numbering). **You can change the opcode set at any time later; existing assembly will continue to build as long as every opcode it uses is still defined in the map**.
+4. Review the example runtime opcodes starting at entry 24. Remove any you do not need, add others, or rearrange them as desired. Opcode numbers must be unique, but gaps are allowed; Echoes of Eolis automatically densifies the opcode map when it is loaded. All opcodes with an Impl must appear after all opcodes without one. **You can change the opcode set at any time later; existing assembly will continue to build as long as every opcode it uses is still defined in the map.**
 5. Use the configured mnemonics in your assembly source and assemble as usual.
 
 
 ```text
-eoe_config_override.xml
-          │
-          ▼
-  opcode definitions
-          │
-          ├──────────────┐
-          ▼              ▼
-      FaxIScripts  Echoes of Eolis
-          │              │
-       assemble     disassemble for showing scripts in GUI
-          │              │
-          └─► same ROM ◄─┘
+ eoe_config_override.xml
+           │
+           ▼
+   opcode definitions
+           │
+           ▼
+    iScript system
+       │       │
+       ▼       ▼
+   assemble  disassemble
+       │       │
+       └── ROM ┘
 ```
 
 <hr>
@@ -120,9 +120,9 @@ Once you are comfortable with the workflow, the same techniques can be combined 
 
 ## Extended Script System
 
-FaxIScripts extends the original Faxanadu scripting engine with an optional runtime library that allows new script opcodes to be added without modifying the original game engine. The system is fully data-driven and is designed to preserve vanilla behavior unless extensions are explicitly enabled.
+The Echoes of Eolis iScript system extends the original Faxanadu scripting engine with an optional runtime library that allows new script opcodes to be added without modifying the original game engine. The system is fully data-driven and is designed to preserve vanilla behavior unless extensions are explicitly enabled.
 
-Unlike the original game, where the script opcode table is fixed, FaxIScripts generates a new opcode dispatch table during assembly. Vanilla opcode implementations are preserved, while any enabled runtime implementations are assembled into free space and appended to the dispatch table automatically.
+Unlike the original game, where the script opcode table is fixed, the assembler generates a new opcode dispatch table during assembly. Vanilla opcode implementations are preserved, while any enabled runtime implementations are assembled into free space and appended to the dispatch table automatically.
 
 The runtime library is assembled on demand. Helper routines and opcode implementations are only emitted if they are required by the opcodes configured for the current project. As a result, different projects may produce different runtime layouts while remaining fully compatible with the same scripting system.
 
@@ -132,20 +132,17 @@ The flow of the advanced features is roughly as follows.
       Assembly (.asm)
              │
              ▼
-       FaxIScripts
+      iScript assembler
              │
              ▼
        Modified ROM
              │
              ▼
-  Echoes of Eolis
-     │
-     ├── Edit maps
-     ├── Assign screen handlers
-     └── Save
+     Echoes of Eolis
              │
-             ▼
-            Test
+             ├── Edit maps
+             ├── Assign screen handlers
+             └── Test / continue editing
 ```
 
 
@@ -153,11 +150,11 @@ The flow of the advanced features is roughly as follows.
 
 Runtime opcode implementations are configured through ```eoe_config_override.xml```.
 
-Only opcodes that specify an Impl value are implemented by the runtime library. All remaining opcodes continue to use the game's original implementations.
+Only opcodes that specify an ```Impl``` value are implemented by the runtime library. All remaining opcodes continue to use the game's original implementations.
 
 ### Assembly Process
 
-When a script file is assembled, FaxIScripts performs the following steps:
+When a script file is assembled, the assembler performs the following steps:
 
 - Reads the configured opcode definitions.
 - Determines which runtime implementations and helper routines are required.
@@ -209,6 +206,9 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | |
 | GetXP | Short (0-65,535) | Gives player xp; note that "next rank" can only increase by 1 each time XP is given | GetXP 100 ; player gets 100xp |
 | Die | None | Kills the player when the script ends | |
+| IfAddrEquals | Short, Byte, Label | Jumps to label if value at cpu-address equals the byte | IfAddrEquals $03d1 5 @music_no_is_5 |
+| IfAddrBetween | Short, Byte, Byte, Label | Jumps to label if value at cpu-address lies between the byte operands | IfAddrBetween $03d1 2 5 @music_no_is_between_2_and_5 |
+| SetAddr | Short, Byte | Sets value at given cpu-address (must be RAM) to the byte value given | SetAddr $03d1 5 ; set music to 5 |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
 | AtlasDevFadeIn | Byte, Byte | Fades the background/UI palette back in over the given number of NMI frames, reversing the given stage depth (1-4) | AtlasDevFadeIn 60 4 ; fades back in over 60 frames |
@@ -457,7 +457,7 @@ We will need the following custom opcodes in ```iscript_opcodes``` in ```eoe_con
   <entry byte="32" str="Impl=SelectFlag" />
 ```
 
-We only specify the implementation (Impl) value, since FaxIScripts knows the function signatures. The order here does not matter, but each opcode needs a unique byte value - and all ```Impl``` entries must appear after all non-```Impl``` entries. If you want custom mnemonics that is possible too, for example:
+We only specify the implementation (Impl) value, since the assembler knows the function signatures. Each opcode needs a unique byte value, but the values do not need to be contiguous; Echoes of Eolis automatically densifies the opcode map when it is loaded. All ```Impl``` entries must appear after all non-```Impl``` entries. If you want custom mnemonics that is possible too, for example:
 
 ```xml
 <entry byte="30" str="Impl=Return,Mnemonic=Ret" />
@@ -740,7 +740,7 @@ Paste into section [tilemap_changes] in the asm-file
         Write script logic
                 │
                 ▼
-     Assemble with FaxIScripts
+        Assemble iScripts
                 │
                 ▼
    Reload ROM in Echoes of Eolis
@@ -840,9 +840,7 @@ By default the subsystem is installed in bank 9 CPU address $a000 for 16-bank RO
 
 **Important**: For 16 bank ROMs you need to make sure this subsystem does not overwrite tilemap data which can also live in bank 9.
 
-The final step is to add the screen event handler to the screen. If you had the ROM open in Echoes of Eolis while building this assembly file, you can use button "**Apply External ROM Changes**" to reload the modified scripts from ROM. Otherwise open the file in EoE. Navigate to Trunk screen 12. Go to Sprites and click "Add Event Handler". Assign event handler 3, which is the custom tilemap change handler installed by FaxIScripts. The handler will now execute every time this screen is entered.
-
-**Note**: Echoes of Eolis reads ```eoe_config.xml``` and ```eoe_config_override.xml``` only when the program starts. If you change the script language definition (for example by adding, removing, or modifying entries in ```iscript_opcodes``` in the override file), you must close and reopen Echoes of Eolis after assembling. Applying external ROM changes only reloads the ROM data; it does not reload the scripting language definition. If the output gives you a message like "Could not parse iScript #(number)" after loading ROM, or applying external changes, there is most likely a mismatch between the script language definition the ROM was assembled with, and the language definition Echoes of Eolis expects. **This does not indicate that the ROM is invalid. The only consequence is that Echoes of Eolis cannot disassemble and display the interaction scripts until it is restarted. Interaction scripts are read-only in Echoes of Eolis, so restarting the application is sufficient to resolve the problem.**
+The final step is to add the screen event handler to the screen. If you had the ROM open in Echoes of Eolis while building this assembly file, you can use button "**Apply External ROM Changes**" to reload the modified scripts from ROM. Otherwise open the file in EoE. Navigate to Trunk screen 12. Go to Sprites and click "Add Event Handler". Assign event handler 3, which is the custom tilemap change handler installed by the assembler. The handler will now execute every time this screen is entered.
 
 ![Tilemap Change Event Handler example](./img/event_handler_tilemap_change_example.png)
 
@@ -895,7 +893,7 @@ Currently the dynamic tilemap changes have these limitations:
 
 ## Bank 15 Hack Injection Points
 
-ROM hacks can be injected by both Echoes of Eolis and FaxIScripts. For bank 15 we use space where normally unreachable code lives to inject these. The config ID-column shows the name of the configuration constant in ```eoe_config.xml``` which corresponds to the injection points. Users can configure them with config overrides if needed.
+Echoes of Eolis can inject several optional ROM hacks. For bank 15, these use space where normally unreachable code lives. The Config ID column shows the corresponding configuration constant in ```eoe_config.xml```. These locations can be changed through configuration overrides if they conflict with other modifications.
 
 | Feature | CPU Address  | Size (bytes) | Comments | Config ID |
 |---|---|---|---|---|
@@ -904,11 +902,12 @@ ROM hacks can be injected by both Echoes of Eolis and FaxIScripts. For bank 15 w
 | Stage Door Hack - Extract Requirements | $dfa8  | 15/15  | Echoes of Eolis - Enabled under Settings > Advanced | hack_decode_req_addr |
 | Stage Door Hack - Load World | $dfb7  | 8/14  | Echoes of Eolis - Enabled under Settings > Advanced | hack_load_world_addr |
 | Stage Door Hack - Palette Handler | $f389 | 23/28 | Echoes of Eolis - Enabled under Settings > Advanced | hack_handle_palette_addr |
-| Clear Extended Flags on Init ($0101-$011f) | $d005 | 14/17 | FaxIScripts - if any of the opcodes SetFlag, IfFlag or ClearFlag are enabled | hack_clear_persistent_flags |
-| Event Handler Table | $cb0c | 8/11 | FaxIScripts - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_table_cpu_addr |
-| Event Handler Code | $e894 | 23/30 | FaxIScripts - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_cpu_addr |
+| Clear Extended Flags on Init ($0101-$011f) | $d005 | 14/17 | iScript assembler - if any of the opcodes SetFlag, IfFlag or ClearFlag are enabled | hack_clear_persistent_flags |
+| Event Handler Table | $cb0c | 8/11 | iScript assembler - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_table_cpu_addr |
+| Event Handler Code | $e894 | 23/30 | iScript assembler - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_cpu_addr |
 
 <hr>
+
 
 Runtime extensions also reserve some RAM locations.
 
@@ -922,6 +921,6 @@ Runtime extensions also reserve some RAM locations.
 | Custom script opcodes JSR and Return | $0182-$0183 | Used to store the return address | hack_script_jsr_ram_addr_lo, hack_script_jsr_ram_addr_hi |
 | Stage Door Hack | $07fe-$07ff | Stores the pending destination stage during cross-stage door transitions | - |
 
-The extended flags are cleared on game initialization (rest and power cycles), but will not be stored in mantras. They will only persist across sessions if stored in SRAM.
+The extended flags are cleared on game initialization (reset and power cycles), but will not be stored in mantras. They will only persist across sessions if stored in SRAM.
 
 <hr>
