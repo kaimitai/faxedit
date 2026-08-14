@@ -959,6 +959,41 @@ If the debug features are turned on, there will be buttons here for importing an
 
 ## Cinematics
 
+### Atlas Movie Creator (experimental)
+
+Open **Atlas Movie Creator** from Project Control. It edits actors, movement,
+poses, music/SFX, phases, fades, intro/ending roles and exit behavior. The
+preview uses the movie's real nametable, CHR, palette and metasprites.
+
+Basic mode contains Movie, Scene, Timeline, Add Assets, Poses and Preview.
+Advanced mode adds raw runtime fields, exact waypoints, multi-actor tools,
+imports, byte details and ROM export. Switching modes does not change project
+data.
+
+Projects are saved as AMP. Compiled movies use FMB. Disabled movies stay in
+the AMP but do not consume ROM space. Every project must have one official
+intro and one official ending.
+
+The Game Assets browser can import sprites, rooms and palettes into Atlas movie
+data. It does not modify the normal FaxEdit editors. Imported data is available
+only in Shared mode and consumes bank 12 space.
+
+There are two runtime modes:
+
+- **Standalone** exports `AtlasDevPlayMovie <MovieId>` through the normal
+  opcode configuration. Its 1,998-byte player does not replace Faxanadu's
+  original movie engine.
+- **Shared — HIGHLY EXPERIMENTAL** installs Atlas Movie Engine and
+  `AtlasDevPlayMovieShared <MovieId>`. It replaces the original movie engine
+  and supports imported graphics.
+
+The modes cannot be installed together. Resident hooks are not suspended
+during movies. FaxEdit warns when it detects the current Atlas Resident
+Scheduler because its palette or sprite effects may remain visible.
+
+See the [Atlas Movie Creator guide](./atlas_movie_creator.md) for the complete
+workflow, formats, controls and ROM limits.
+
 The intro and outro animations in Faxanadu are driven by a cinematic state engine. The player character moves "into the screen" during the intro, and "out of the screen" during the outro, giving a 3D-effect.
 
 The player character is drawn with different animation frames depending on 5 different depths stages. During the outro there are also three other animated objects on screen; a waterfall and two ripple effects on the water.

@@ -2,6 +2,7 @@
 #include "fh_constants.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
+#include "fe/AtlasMovieRuntime.h"
 #include <algorithm>
 #include <cassert>
 #include <set>
@@ -2079,10 +2080,19 @@ word fh::HackManager::apply_AtlasDevSetPortrait(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevPlayMovie(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	return fe::AtlasMovieRuntime::install_standalone(p_config, p_rom, cpu_addr);
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
-std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
+std::size_t fh::HackManager::apply_script_library_in_place(const fe::Config& p_config, std::vector<byte>& p_rom,
 	std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const {
+	const bool installs_movie{ std::find(p_lib.begin(), p_lib.end(),
+		HackLib::AtlasDevPlayMovie) != p_lib.end() };
+	const std::optional<std::vector<byte>> movie_source_rom{
+		installs_movie ? std::optional<std::vector<byte>>{ p_rom } : std::nullopt };
 
 	const std::set<HackLib> FLAG_REQUIRED{ HackLib::SetFlag, HackLib::ClearFlag, HackLib::IfFlag,
 	HackLib::SelectFlag, HackLib::SetSelectedFlag, HackLib::ClearSelectedFlag, HackLib::IfSelectedFlag };
@@ -2393,15 +2403,36 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			cpu_addr = apply_AtlasDevDrawVarNumber(p_config, p_rom, cpu_addr);
 			break;
 
+		case HackLib::AtlasDevPlayMovie:
+			cpu_addr = apply_AtlasDevPlayMovie(p_config, p_rom, cpu_addr);
+			break;
+
 		default:
 			throw std::runtime_error("Unsupported script library routine.");
 		}
 	}
 
-	// recreate the script jump table and update references
-	cpu_addr += static_cast<word>(write_script_opcode_table(p_rom, cpu_addr, script_impl_addresses));
+	// the table must stay in bank 12 with the generated handlers
+	const auto table_bytes{ script_impl_addresses.size() * 2 };
+	const auto library_end{ get_next_cpu_addr(cpu_addr, table_bytes) };
+	if (installs_movie)
+		fe::AtlasMovieRuntime::validate_standalone_sources(
+			p_config.vset("hack_movie_data"), *movie_source_rom,
+			rom_addr_start.CpuAddr, library_end);
+	write_script_opcode_table(p_rom, cpu_addr, script_impl_addresses);
+	cpu_addr = library_end;
 
 	return klib::Asm6502::get_file_offset(rom_addr_start.Bank, cpu_addr);
+}
+
+std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config,
+	std::vector<byte>& p_rom, std::size_t p_file_offset,
+	const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const {
+	auto candidate{ p_rom };
+	const auto result{ apply_script_library_in_place(
+		p_config, candidate, p_file_offset, p_lib, p_base_opcode_count) };
+	p_rom.swap(candidate);
+	return result;
 }
 
 // given the extended library, check if any helpers are required
@@ -2758,6 +2789,7 @@ std::vector<word> fh::HackManager::read_script_opcode_addrs(const std::vector<by
 
 std::size_t fh::HackManager::write_script_opcode_table(std::vector<byte>& p_rom, word table_cpu_addr,
 	const std::vector<word>& p_jump_table) const {
+	get_next_cpu_addr(table_cpu_addr, p_jump_table.size() * 2);
 
 	word ref_lo{ table_cpu_addr };
 	word ref_hi{ static_cast<word>(table_cpu_addr + p_jump_table.size()) };

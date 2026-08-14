@@ -108,6 +108,30 @@
     <ClCompile Include="src\windows\CinematicWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieWindow.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieActorsTab.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieActorInspector.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieAssetImport.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMoviePreviewTab.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieProjectIo.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieRenderer.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\AtlasMovieUi.cpp">
+      <Filter>Source Files\windows</Filter>
+    </ClCompile>
     <ClCompile Include="src\windows\WorldVisualizationWindow.cpp">
       <Filter>Source Files\windows</Filter>
     </ClCompile>
@@ -144,6 +168,15 @@
       <Filter>Header Files\common\imgui</Filter>
     </ClInclude>
     <ClInclude Include="src\windows\MainWindow.h">
+      <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\AtlasMovieEditorSession.h">
+      <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\AtlasMovieRenderer.h">
+      <Filter>Header Files\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\windows\AtlasMovieUi.h">
       <Filter>Header Files\windows</Filter>
     </ClInclude>
     <ClInclude Include="src\windows\gfx.h">

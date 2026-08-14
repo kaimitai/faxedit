@@ -27,6 +27,14 @@ set(SOURCES
     src/windows/UndoInterface.cpp
     src/windows/ClipBoardManager.cpp
     src/windows/CinematicWindow.cpp
+    src/windows/AtlasMovieActorsTab.cpp
+    src/windows/AtlasMovieActorInspector.cpp
+    src/windows/AtlasMovieAssetImport.cpp
+    src/windows/AtlasMoviePreviewTab.cpp
+    src/windows/AtlasMovieProjectIo.cpp
+    src/windows/AtlasMovieRenderer.cpp
+    src/windows/AtlasMovieUi.cpp
+    src/windows/AtlasMovieWindow.cpp
     src/windows/WorldVisualizationWindow.cpp
     src/windows/SettingsWindow.cpp
     src/windows/ScriptingWindow.cpp

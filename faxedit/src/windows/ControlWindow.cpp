@@ -10,6 +10,7 @@
 #include "fe/fe_app_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "fe/WorldVisualizer.h"
+#include "fe/AtlasMovieEngine.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
@@ -259,6 +260,10 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		m_cinematic_window ? 4 : 2))
 		m_cinematic_window = !m_cinematic_window;
 
+	if (ui::imgui_button("Atlas Movie Creator",
+		m_atlas_movie_window ? 4 : 2))
+		m_atlas_movie_window = !m_atlas_movie_window;
+
 	ImGui::SameLine();
 
 	if (ui::imgui_button("World Visualizer",
@@ -391,6 +396,10 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	}
 
 	auto x_rom{ m_game->m_rom_data };
+	if (fe::AtlasMovieEngine::is_installed(x_rom) && m_settings.m_patch_cinematics) {
+		m_settings.m_patch_cinematics = false;
+		add_message("Skipped original Cinematics patching: Atlas Movie Engine is installed", 4);
+	}
 
 	// world tileset chr
 	if (m_settings.m_patch_world_chr_data) {

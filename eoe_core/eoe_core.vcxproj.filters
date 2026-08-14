@@ -150,6 +150,27 @@
     <ClInclude Include="src\fe\xml\Xml_helper.h">
       <Filter>Header Files\fe\xml</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\AtlasMovieEngine.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+	<ClInclude Include="src\fe\AtlasMovieRuntime.h">
+	  <Filter>Header Files\fe</Filter>
+	</ClInclude>
+    <ClInclude Include="src\fe\AtlasMovieBundle.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\AtlasMovieAssets.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\AtlasMovieEditor.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\AtlasMovieLayout.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\AtlasMoviePreview.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
     <ClInclude Include="src\fe\ChrStructures.h">
       <Filter>Header Files\fe</Filter>
     </ClInclude>
@@ -400,6 +421,27 @@
     </ClCompile>
     <ClCompile Include="src\fe\xml\Xml_helper.cpp">
       <Filter>Source Files\fe\xml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\AtlasMovieEngine.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+	<ClCompile Include="src\fe\AtlasMovieLayout.cpp">
+	  <Filter>Source Files\fe</Filter>
+	</ClCompile>
+	<ClCompile Include="src\fe\AtlasMovieRuntime.cpp">
+	  <Filter>Source Files\fe</Filter>
+	</ClCompile>
+    <ClCompile Include="src\fe\AtlasMovieBundle.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\AtlasMovieAssets.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\AtlasMovieEditor.cpp">
+      <Filter>Source Files\fe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\AtlasMoviePreview.cpp">
+      <Filter>Source Files\fe</Filter>
     </ClCompile>
     <ClCompile Include="src\fe\ChrStructures.cpp">
       <Filter>Source Files\fe</Filter>

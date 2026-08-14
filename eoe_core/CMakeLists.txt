@@ -20,6 +20,14 @@ add_library(eoe_core STATIC
     src/common/lodepng.cpp
 
     #fe
+    src/fe/AtlasMovieAssets.cpp
+    src/fe/AtlasMovieBundle.cpp
+    src/fe/AtlasMovieCompatibility.cpp
+    src/fe/AtlasMovieEditor.cpp
+    src/fe/AtlasMovieEngine.cpp
+    src/fe/AtlasMovieLayout.cpp
+    src/fe/AtlasMoviePreview.cpp
+    src/fe/AtlasMovieRuntime.cpp
     src/fe/ChrStructures.cpp
     src/fe/Chunk.cpp
     src/fe/Config.cpp
@@ -99,3 +107,35 @@ target_include_directories(eoe_core
 )
 
 target_compile_features(eoe_core PUBLIC cxx_std_20)
+
+if(EOE_BUILD_TESTS)
+    add_executable(atlas_movie_tests
+        tests/AtlasMovieProjectMetadataTests.cpp
+    )
+    target_link_libraries(atlas_movie_tests PRIVATE eoe_core)
+    add_test(NAME atlas_movie_tests COMMAND atlas_movie_tests)
+
+	find_package(Python3 COMPONENTS Interpreter REQUIRED)
+	find_program(CA65_EXECUTABLE ca65 REQUIRED)
+	find_program(LD65_EXECUTABLE ld65 REQUIRED)
+	add_test(NAME atlas_movie_runtime_reproducible
+		COMMAND ${Python3_EXECUTABLE}
+			${CMAKE_SOURCE_DIR}/util/generate_atlas_movie_runtime.py)
+
+	if(EOE_TEST_USA_ROM)
+		if(NOT EXISTS "${EOE_TEST_USA_ROM}")
+			message(FATAL_ERROR "EOE_TEST_USA_ROM does not exist: ${EOE_TEST_USA_ROM}")
+		endif()
+		add_test(NAME atlas_movie_install_usa_rev0
+			COMMAND atlas_movie_tests --usa-rom "${EOE_TEST_USA_ROM}")
+		add_executable(atlas_movie_safety_tests
+			tests/AtlasMovieSafetyTests.cpp
+		)
+		target_link_libraries(atlas_movie_safety_tests PRIVATE eoe_core)
+		add_test(NAME atlas_movie_safety_usa_rev0
+			COMMAND atlas_movie_safety_tests
+				"${EOE_CONFIG_SOURCE}"
+				"${EOE_TEST_USA_ROM}"
+				"${CMAKE_CURRENT_BINARY_DIR}/atlas-movie-safety-override.xml")
+	endif()
+endif()

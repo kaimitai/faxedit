@@ -63,7 +63,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 				// hot-reload config and update cache pertaining to iScript opcode definitions
 				const auto config_files{ get_config_file_paths() };
 				const fe::Config tmp_config(config_files.first, config_files.second, m_game->m_rom_data, m_config.get_region());
-				const auto l_opcode_info{ fe::script::get_iscript_opcode_info(tmp_config) };
+				const auto l_opcode_info{ fe::script::get_iscript_opcode_info(
+					tmp_config, m_game->m_rom_data) };
 
 				auto xrom{
 					fe::script::asm_iscripts(tmp_config,

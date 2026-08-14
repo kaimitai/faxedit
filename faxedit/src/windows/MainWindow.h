@@ -2,9 +2,11 @@
 #define FE_MAINWINDOW_H
 
 #include <SDL3/SDL.h>
+#include <array>
 #include <deque>
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -14,9 +16,12 @@
 #include "fe/EditorSettings.h"
 #include "fe/sprite/SpriteGfxSnapshotManager.h"
 #include "fe/Config.h"
+#include "fe/AtlasMovieBundle.h"
+#include "fe/AtlasMovieRuntime.h"
 #include "fe/Game.h"
 #include "fe/WorldVisualizer.h"
 #include "fe/ROM_Manager.h"
+#include "AtlasMovieEditorSession.h"
 #include "fi/IScriptLoader.h"
 #include "./../common/imgui/imgui.h"
 #include "./../common/imgui/imgui_impl_sdl3.h"
@@ -29,6 +34,7 @@ namespace fe {
 	enum GfxEditMode { WorldChr, BgGraphics, WorldPalettes, GfxPalettes, HUDAttributes, WorldChrBank, GfxChrBank };
 	enum class SpriteGfxEditMode { Settings, Portraits, NPC, Player };
 	enum class CinematicEditMode { Player, Ripples, Waterfall, Palette, AnimationFrames };
+	enum class AtlasMoviePendingAction { None, NewProject, OpenProject, LoadAme, LoadInstalled };
 
 	struct Size4 {
 		std::size_t x, y, w, h;
@@ -98,7 +104,7 @@ namespace fe {
 		// config
 		fe::Config m_config;
 		// tilemap undo interface
-		std::optional<fe::UndoInterface> m_undo;
+		std::unique_ptr<fe::UndoInterface> m_undo;
 		fe::SpriteGfxSnapshotManager m_sprite_snap_manager;
 		// settings
 		fe::EditorSettings m_settings;
@@ -135,8 +141,33 @@ namespace fe {
 		// rendering options
 		bool m_iscript_window, m_iscript_win_set_focus,
 			m_gfx_window, m_sprite_gfx_window, m_cinematic_window,
-			m_visualization_window, m_settings_window,
+			m_atlas_movie_window, m_visualization_window, m_settings_window,
 			m_scripting_window;
+
+		std::optional<fe::AtlasMovieBundle> m_atlas_movie_bundle;
+		fe::AtlasMovieActorSession m_atlas_movie_actor_session;
+		std::filesystem::path m_atlas_movie_project_path,
+			m_atlas_movie_pending_path;
+		fe::AtlasMoviePendingAction m_atlas_movie_pending_action;
+		fe::AtlasMovieRuntimeMode m_atlas_movie_runtime_mode;
+		std::size_t m_atlas_movie_sel_movie, m_atlas_movie_sel_track,
+			m_atlas_movie_sel_phase, m_atlas_movie_sel_sfx;
+		std::size_t m_atlas_movie_preview_frame, m_atlas_movie_browser_frame;
+		std::uint64_t m_atlas_movie_preview_tick;
+		bool m_atlas_movie_preview_playing, m_atlas_movie_dirty,
+			m_atlas_movie_autoload_attempted, m_atlas_movie_path_draw_mode,
+			m_atlas_movie_path_painting, m_atlas_movie_actor_place_mode,
+			m_atlas_movie_pending_save_as;
+		int m_atlas_movie_path_speed;
+		std::vector<std::array<byte, 2>> m_atlas_movie_painted_path;
+		SDL_Texture* m_atlas_movie_preview_texture;
+		SDL_Texture* m_atlas_game_room_texture;
+		std::uint64_t m_atlas_game_room_signature;
+		std::vector<SDL_Texture*> m_atlas_movie_frame_textures;
+		std::optional<fe::SpriteGUILoader> m_atlas_game_sprites;
+		std::vector<std::vector<SDL_Texture*>> m_atlas_game_sprite_textures;
+		std::size_t m_atlas_asset_sprite, m_atlas_asset_frame,
+			m_atlas_asset_world, m_atlas_asset_screen, m_atlas_asset_palette;
 
 		fe::ChrTilemap m_hud_tilemap;
 
@@ -167,7 +198,6 @@ namespace fe {
 			const std::string& p_region = std::string());
 		std::pair<std::string, std::string> get_config_file_paths(void) const;
 		int load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial);
-		void cache_config_variables(void);
 
 		std::string get_ips_path(void) const;
 		std::string get_xml_path(void) const;
@@ -194,6 +224,7 @@ namespace fe {
 		void show_gfx_chr_bank_screen(SDL_Renderer* p_rnd);
 		void show_world_chr_bank_screen(SDL_Renderer* p_rnd);
 		void draw_cinematic_window(SDL_Renderer* p_rnd);
+		void draw_atlas_movie_window(SDL_Renderer* p_rnd);
 		void draw_visualization_window(SDL_Renderer* p_rnd);
 		void draw_settings_window(SDL_Renderer* p_rnd);
 		void draw_scripting_window(void);
@@ -269,7 +300,6 @@ namespace fe {
 		bool show_palette_window(std::size_t p_pal_key, std::vector<byte>& p_palette);
 		std::vector<byte> update_pal_bg_idx(std::vector<byte>& p_palette, byte p_nes_pal_idx);
 
-		void initialize_hud_tilemap(void);
 		void generate_door_req_gfx(SDL_Renderer* p_rnd);
 
 		// gfx functions for chr logic
@@ -354,6 +384,42 @@ namespace fe {
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
 		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data);
+		void patch_atlas_movie_engine(void);
+		void adopt_atlas_movie_project(fe::AtlasMovieBundle p_bundle,
+			const std::filesystem::path& p_path,
+			fe::AtlasMovieRuntimeMode p_mode, bool p_dirty);
+		void new_atlas_movie_project(void);
+		void load_atlas_movie_bundle_from_ame(const std::filesystem::path& p_path);
+		void load_atlas_movie_bundle_from_rom(void);
+		void load_atlas_movie_project(const std::filesystem::path& p_path);
+		void save_atlas_movie_project(void);
+		void save_atlas_movie_project_as(const std::filesystem::path& p_path);
+		void save_atlas_movie_bundle(void);
+		void save_atlas_movie_standalone_config(void);
+		void save_atlas_movie_ame(void);
+		void apply_atlas_movie_bundle(void);
+		void place_atlas_movie_pose(fe::AtlasMovieBundle& p_bundle,
+			fe::AtlasMovie& p_movie, byte p_frame, byte p_x, byte p_y,
+			std::size_t p_phase_index);
+		void import_atlas_game_sprite(fe::AtlasMovieBundle& p_bundle,
+			fe::AtlasMovie& p_movie,
+			const std::vector<fe::SpriteAnimationFrame>& p_decoded_frames,
+			std::size_t p_sprite_id, byte p_x, byte p_y);
+		void import_atlas_game_room(fe::AtlasMovieBundle& p_bundle,
+			fe::AtlasMovie& p_movie, std::size_t p_world,
+			std::size_t p_screen);
+		void draw_atlas_movie_actors_tab(SDL_Renderer* p_renderer,
+			fe::AtlasMovieBundle& p_bundle, fe::AtlasMovie& p_movie,
+			const std::vector<fe::SpriteAnimationFrame>& p_frames,
+			std::string& p_graphics_error, bool p_advanced_mode);
+		void draw_atlas_movie_actor_inspector(fe::AtlasMovieBundle& p_bundle,
+			fe::AtlasMovie& p_movie, fe::AtlasMovieTrack& p_track,
+			bool p_advanced_mode);
+		void draw_atlas_movie_preview_tab(SDL_Renderer* p_renderer,
+			fe::AtlasMovieBundle& p_bundle, fe::AtlasMovie& p_movie,
+			const std::vector<fe::SpriteAnimationFrame>& p_frames,
+			std::string& p_graphics_error, bool p_advanced_mode,
+			bool p_shared_mode);
 		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
 		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
 
@@ -367,6 +433,7 @@ namespace fe {
 		MainWindow(SDL_Renderer* p_rnd,
 			const std::string& p_filepath = std::string(),
 			const std::string& p_region = std::string());
+		~MainWindow(void);
 		void generate_textures(SDL_Renderer* p_rnd);
 		void generate_metatile_textures(SDL_Renderer* p_rnd,
 			std::size_t p_mt_no = 256);
