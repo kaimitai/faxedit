@@ -27,7 +27,17 @@ namespace fh {
 		AtlasDevIfEntityTypePresent, AtlasDevIfEntitySlotActive, AtlasDevIfEntityHidden,
 		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevSetEntityInvincible,
 		AtlasDevSetEntityBehavior, AtlasDevSetEntitySpeed, AtlasDevSetEntityFacing,
-		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber
+		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber,
+		AtlasDevIfPlayerFacing, AtlasDevIfPlayerClimbing, AtlasDevIfPlayerGrounded,
+		AtlasDevIfPlayerAttacking, AtlasDevIfPlayerInvincible, AtlasDevIfPlayerDead,
+		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
+		AtlasDevWaitFrames, AtlasDevWaitForButtonPress,
+		AtlasDevIfButtonHeld, AtlasDevIfButtonPressed,
+		AtlasDevSetFacing, AtlasDevSetPlayerPosition,
+		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
+		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
+		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount
 	};
 
 	class HackManager {
@@ -107,6 +117,44 @@ namespace fh {
 		word apply_AtlasDevSetEntityFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevEntityFieldToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDrawVarNumber(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerClimbing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerGrounded(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerAttacking(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerInvincible(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfPlayerDead(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfSelectedWeapon(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfSelectedMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWaitFrames(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWaitForButtonPress(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfButtonHeld(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfButtonPressed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetPlayerPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevOpenWindow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowIcon(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCloseWindow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayText(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevOpenWindowAtEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevRestoreRect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowItemName(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowIconEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearText(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayTextAt(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLayTextLine(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetHealth(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMana(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFullHeal(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFullMana(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfHealthBelow(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfHealthAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfManaAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevAddExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetGold(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+word apply_AtlasDevIfItemCount(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,

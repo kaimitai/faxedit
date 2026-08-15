@@ -242,6 +242,44 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
 | AtlasDevEntityFieldToVar | Byte, Byte, Byte | **Do not use yet.** Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group | AtlasDevEntityFieldToVar 0 6 2 |
 | AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | **Do not use yet.** Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7 | AtlasDevDrawVarNumber 0 4 24 3 |
+| AtlasDevIfPlayerFacing | Byte, Label | Jumps when the player faces the requested direction; even values mean left and odd values mean right | AtlasDevIfPlayerFacing 1 @facing_right |
+| AtlasDevIfPlayerClimbing | Label | Jumps while the engine's own climbing predicate is true | AtlasDevIfPlayerClimbing @on_ladder |
+| AtlasDevIfPlayerGrounded | Label | Jumps when the player is not jumping, falling, or actively climbing | AtlasDevIfPlayerGrounded @on_ground |
+| AtlasDevIfPlayerAttacking | Label | Jumps while a sword swing is in progress | AtlasDevIfPlayerAttacking @swinging |
+| AtlasDevIfPlayerInvincible | Label | Jumps while the player's hurt/invincibility timer is nonzero | AtlasDevIfPlayerInvincible @protected |
+| AtlasDevIfPlayerDead | Label | Jumps while Faxanadu's reserved death-dialogue script (root 31) is executing | AtlasDevIfPlayerDead @dead |
+| AtlasDevIfSelectedWeapon | Byte, Label | Jumps when the selected weapon's category-local id equals the operand | AtlasDevIfSelectedWeapon 2 @giant_blade |
+| AtlasDevIfSelectedMagic | Byte, Label | Jumps when the selected magic's category-local id equals the operand | AtlasDevIfSelectedMagic 2 @fire |
+| AtlasDevWaitFrames | Byte | Waits for 0-255 NMI frames; zero is a no-op | AtlasDevWaitFrames 30 |
+| AtlasDevWaitForButtonPress | Byte | Waits for every requested button to be released, then for any requested button's next press edge | AtlasDevWaitForButtonPress $80 |
+| AtlasDevIfButtonHeld | Byte, Label | Jumps when any requested button is held in the latest complete controller sample | AtlasDevIfButtonHeld $40 @holding_b |
+| AtlasDevIfButtonPressed | Byte, Label | Jumps on the current rising edge of any requested button | AtlasDevIfButtonPressed $80 @pressed_a |
+| AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
+| AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
+| AtlasDevOpenWindow | Byte, Byte, Byte, Byte | Draws a bordered window at X, Y, width, height | AtlasDevOpenWindow 4 8 20 10 |
+| AtlasDevShowIcon | Byte, Byte, Byte | Draws one of the 20 resident item icons at a window-relative offset | AtlasDevShowIcon 3 2 2 |
+| AtlasDevCloseWindow | — | Restores the game background beneath the current window rectangle | AtlasDevCloseWindow |
+| AtlasDevLayText | — | Lays the vanilla 16x4 text grid inside the current window | AtlasDevLayText |
+| AtlasDevOpenWindowAtEntity | Byte, Byte, Byte, Byte, Byte | Opens an even-sized window relative to an entity slot, or the player for slots 8+ | AtlasDevOpenWindowAtEntity 0 4 248 20 8 |
+| AtlasDevRestoreRect | Byte, Byte, Byte, Byte | Restores an explicit even-aligned rectangle from the game background | AtlasDevRestoreRect 4 8 20 10 |
+| AtlasDevShowItemName | Item, Byte, Byte | Draws an item's canonical resident-font name at an absolute tile position | AtlasDevShowItemName WEAPON_HAND_DAGGER 4 12 |
+| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Draws a resident icon with independent shape and palette selection | AtlasDevShowIconEx 3 1 2 2 |
+| AtlasDevClearText | — | Blanks all four rows of the current text grid while keeping the window and portrait | AtlasDevClearText |
+| AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
+| AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
+| AtlasDevLayTextLine | Byte, Byte, Byte | Lays one 16-tile row at X, Y from a caller-selected tile base | AtlasDevLayTextLine 4 10 $40 |
+| AtlasDevSetHealth | Byte | Sets health to 0-80 through the game's own HP setter; higher values clamp to 80, the fractional HP byte is cleared, and zero does not itself kill the player | AtlasDevSetHealth 40 ; half Power |
+| AtlasDevSetMana | Byte | Sets current MP through the game's own fixed-bank setter, which redraws the HUD magic bar in the same call; 80 ($50) is the fixed maximum and higher values clamp to it | AtlasDevSetMana 80 ; magic completely full |
+| AtlasDevFullHeal | — | Refills HP to the game's fixed maximum $50:$00 through the HUD's own setter, so the power bar redraws immediately | AtlasDevFullHeal |
+| AtlasDevFullMana | — | Restores MP to the fixed $50 maximum through the game's own setter, redrawing the magic bar in the same call | AtlasDevFullMana |
+| AtlasDevIfHealthBelow | Byte, Label | Jumps when the player's HP is strictly below the operand; only the whole-points byte is compared, so equal HP never jumps even with a nonzero fraction | AtlasDevIfHealthBelow 40 @hp_low |
+| AtlasDevIfHealthAtLeast | Byte, Label | Jumps when the player's integer HP, the value the HUD bar shows, is at least the operand; the fractional HP byte is ignored | AtlasDevIfHealthAtLeast 40 @healthy |
+| AtlasDevIfManaAtLeast | Byte, Label | Jumps when the player's magic points are greater than or equal to the operand; MP is one byte the game caps at 80 ($50) | AtlasDevIfManaAtLeast 40 @enough_mp |
+| AtlasDevAddExperience | Short (0-65,535) | Adds experience through the enemy-kill award path: saturating add, promotion check and HUD digit redraw; "next rank" can advance at most once per call | AtlasDevAddExperience 500 |
+| AtlasDevSetGold | Byte, Byte, Byte | Sets gold to an exact 24-bit value, given low byte first, and redraws the seven-digit gold HUD through the game's own conversion routine | AtlasDevSetGold 244 1 0 ; gold becomes 500 (244 + 1*256) |
+| AtlasDevIfGoldAtLeast | Byte, Byte, Byte, Label | Jumps when the 24-bit gold counter is at least the threshold; the three operands are the threshold's low, middle and high bytes, the counter's own little-endian order | AtlasDevIfGoldAtLeast 232 3 0 @rich ; jumps at 1000 gold or more |
+| AtlasDevIfXPAtLeast | Short (0-65,535), Label | Jumps when the player's experience is at least the given value | AtlasDevIfXPAtLeast 3000 @veteran |
+| AtlasDevIfItemCount | Item, Byte, Label | Jumps when the exact vanilla ownership count for the item — live carried copies plus a matching selected/equipped register, or the single special-item bit — is at least Count; undefined ids are always false | AtlasDevIfItemCount SPECIAL_RING_OF_ELF 1 @has_ring |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
@@ -349,6 +387,129 @@ the slot index is itself wanted.
 above without reading the table. Bit 7 set is the engine's own free marker, so
 no live entity can carry such an identity, and searching for one would
 otherwise match an empty slot and report it as a find.
+
+#### AtlasDev player-state conditionals
+
+These eight opcodes are read-only and use state the vanilla engine already
+maintains. They require no hooks, scheduler, or project RAM. Every true branch
+uses the ordinary iScript jump continuation, and every false branch consumes
+the label and continues normally.
+
+```AtlasDevIfPlayerFacing``` reads the engine's facing bit, not the current
+controller input, so it remains meaningful while controls are locked. Its
+direction operand follows the engine's binary convention: the low bit selects
+left (0) or right (1). ```AtlasDevIfPlayerAttacking``` is similarly a state
+test: it remains true for the duration of the sword-swing state machine, not
+only on the frame when the attack button was pressed.
+
+```AtlasDevIfPlayerGrounded``` means none of jumping, falling, or active
+climbing is set. ```AtlasDevIfPlayerClimbing``` is narrower and calls the
+same fixed-bank predicate vanilla uses before movement actions. The helper is
+byte-identical at CPU ```$ECF6``` in the US, US Rev A, EU and JP ROMs. The
+expanded English translation has no verified address yet, so installing this
+one opcode there fails by the missing ```rom_player_isclimbing``` constant
+unless the project supplies a verified override; the other seven predicates
+do not need that routine.
+
+```AtlasDevIfPlayerInvincible``` tests the countdown that blocks ordinary
+damage. It therefore covers both vanilla post-hit protection and any other
+feature that deliberately writes that timer.
+
+```AtlasDevIfPlayerDead``` tests the script context rather than HP. Faxanadu
+clears its one-shot death latch before running any dialogue, and a fatal
+fixed-point subtraction can leave fractional HP nonzero. Conversely, the
+player can still be alive below one whole HP, so neither the latch nor an HP
+test is truthful from inside an iScript. The vanilla death path instead calls
+```IScripts_Begin``` with ```$FF```, which maps to reserved root 31 (the
+"Remember your mantra" dialogue) and stores 31 as the active root before the
+textbox opens. The opcode branches while that root is executing. Modders can
+replace the contents of entrypoint 31 to create alternate death dialogue,
+penalties, resurrection choices, or quest-specific death events. Calling
+entrypoint 31 for an unrelated purpose is therefore unsupported: vanilla
+reserves it as the death context.
+
+There is deliberately no ```AtlasDevIfPlayerCasting```. Faxanadu has no
+persistent casting state: casting is a one-frame trigger, while the spawned
+spell is represented by the magic-object slot. Testing that slot would be
+an ```IfMagicActive``` predicate, and calling it "casting" would misdescribe
+what the ROM actually knows.
+
+The selected-equipment operands are category-local ids, not packed item ids.
+Weapons are 0 Hand Dagger, 1 Long Sword, 2 Giant Blade, and 3 Dragon Slayer.
+Magic is 0 Deluge, 1 Thunder, 2 Fire, 3 Death, and 4 Tilte.
+
+#### AtlasDev flow and player-control helpers
+
+These six implementations are independent, opt-in handlers. They require no
+resident scheduler, ROM hook, or newly reserved RAM. With only these six
+selected, the installed script library occupies 272 bytes: 212 bytes of
+handlers and 60 bytes for the two 30-entry dispatch tables.
+
+```AtlasDevWaitFrames``` calls the fixed-bank NMI wait once per requested
+frame. Zero is explicitly handled as a no-op. ```AtlasDevWaitForButtonPress```
+first requires a fully released sample, then waits for a new rising edge. This
+prevents the button used to open a conversation from immediately satisfying
+the wait. A button mask may combine buttons; the tests are ANY-of, and a zero
+mask is rejected by the assembler. The controller bits are Right ```$01```,
+Left ```$02```, Down ```$04```, Up ```$08```, Start ```$10```, Select
+```$20```, B ```$40```, and A ```$80```.
+
+The release-gated wait updates the portrait/interaction frame through the
+vanilla iScript helper at ```$87B0```. That address is verified for US, US Rev
+A, EU, and Randum. No JP or expanded-English address is guessed; selecting
+this implementation for either region requires a verified project override.
+The two button conditionals and ```AtlasDevWaitFrames``` do not have this
+region-specific dependency.
+
+```AtlasDevSetFacing``` changes only player-property bit 6 and then resumes
+the script. ```AtlasDevSetPlayerPosition``` accepts a packed top-left block
+coordinate, ```$YX```, where each nibble is a 16-pixel grid coordinate. The
+assembler rejects Y greater than 10. At runtime the move is accepted only
+while the screen is ready, both body cells are ordinary air, and the cell
+beneath is ordinary solid ground. A rejected target is a safe no-op. An
+accepted move preserves facing, Wing Boots, HP, equipment, inventory, and
+progress while clearing transient movement state so physics can resume
+normally.
+
+#### AtlasDev windows, icons, and text grids
+
+These twelve handlers expose the drawing primitives used underneath the
+vanilla dialogue system. They require no hooks, scheduler, or reserved
+project RAM. Selected by themselves, they occupy 548 bytes: 476 handler bytes
+and 72 bytes for the two 36-entry dispatch tables. Adding the packet to an
+already extended library costs 500 bytes.
+
+```AtlasDevOpenWindow``` writes the live window rectangle at
+```$0208-$020B``` and asks the vanilla renderer to draw it. X, Y, width, and
+height are clamped independently, so the opcode does not guarantee that
+X+width or Y+height remains on-screen. Width and height must be even; the
+vanilla two-tile fill loops can wrap and jam the PPU queue on odd dimensions.
+```AtlasDevOpenWindowAtEntity``` forces every geometry value even. Slots 0-7
+use that entity's live pixel position, while slots 8 and above use the player.
+Its signed DX/DY operands are ordinary two's-complement bytes.
+
+```AtlasDevCloseWindow``` restores the background beneath the most recently
+described rectangle. ```AtlasDevRestoreRect``` performs the same restoration
+after replacing that rectangle with explicit, even-aligned geometry. Window
+drawing and restoration enqueue PPU work; allow several frames before drawing
+or restoring another large overlapping rectangle. A 15-frame wait is a
+conservative transition between ordinary dialogue-sized boxes.
+
+```AtlasDevShowIcon``` selects both shape and the icon's ordinary palette from
+one clamped ID, 0-19. ```AtlasDevShowIconEx``` separates shape from palette;
+shape still clamps to 19 and palette is masked to five bits by the same
+contract used by the ROM. Both positions are relative to the current window.
+```AtlasDevShowItemName``` instead uses the resident static font and an
+absolute tile position. Packed IDs in categories without a vanilla name table
+are consumed safely without drawing.
+
+Faxanadu dialogue streams glyph graphics into one shared 16x4 CHR tile grid,
+```$40-$7F```. ```AtlasDevLayText``` places that grid at the current window's
+origin+2,+2; ```AtlasDevLayTextAt``` places all four rows explicitly; and
+```AtlasDevLayTextLine``` places one 16-tile row from any chosen tile base.
+```AtlasDevClearText``` and ```AtlasDevClearTextLine``` erase nametable
+references without closing the window or portrait. After clearing, call a lay
+opcode before expecting a later ```Msg``` to become visible in that area.
 
 #### AtlasDev visual effect presets
 

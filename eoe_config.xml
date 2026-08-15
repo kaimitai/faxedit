@@ -369,10 +369,15 @@
 		<const name="rom_iscripts_jumptonextaddr" region="us,randum,eu,us-rev-a" value="$8603" />
 		<const name="rom_iscripts_jumptonextaddr" region="jp,en-transl" value="$8600" />
 		<const name="rom_iscripts_invokenextaction" value="$826e" />
+		<const name="rom_iscripts_updateportraitanimation" region="us,randum,eu,us-rev-a" value="$87b0" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
+		<!-- Byte-identical in the four official ROMs. The expanded English
+		     translation is intentionally not guessed; projects based on it must
+		     provide a verified override before installing IfPlayerClimbing. -->
+		<const name="rom_player_isclimbing" region="us,us-rev-a,eu,jp,randum" value="$ecf6" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
@@ -1830,6 +1835,44 @@
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
 			<entry key="AtlasDevEntityFieldToVar" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDrawVarNumber" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevIfPlayerFacing" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfPlayerClimbing" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerGrounded" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerAttacking" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerInvincible" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerDead" value="Flow=Jump" />
+			<entry key="AtlasDevIfSelectedWeapon" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfSelectedMagic" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevWaitFrames" value="Args=Byte" />
+			<entry key="AtlasDevWaitForButtonPress" value="Args=Byte:ButtonMask" />
+			<entry key="AtlasDevIfButtonHeld" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevIfButtonPressed" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevSetFacing" value="Args=Byte" />
+			<entry key="AtlasDevSetPlayerPosition" value="Args=Byte:PlayerPackedYX" />
+			<entry key="AtlasDevOpenWindow" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowIcon" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevCloseWindow" />
+			<entry key="AtlasDevLayText" />
+			<entry key="AtlasDevOpenWindowAtEntity" value="Args=Byte+Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevRestoreRect" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowItemName" value="Args=Byte:Item+Byte+Byte" />
+			<entry key="AtlasDevShowIconEx" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevClearText" />
+			<entry key="AtlasDevLayTextAt" value="Args=Byte+Byte" />
+			<entry key="AtlasDevClearTextLine" value="Args=Byte" />
+			<entry key="AtlasDevLayTextLine" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevSetHealth" value="Args=Byte" />
+			<entry key="AtlasDevSetMana" value="Args=Byte" />
+			<entry key="AtlasDevFullHeal" />
+			<entry key="AtlasDevFullMana" />
+			<entry key="AtlasDevIfHealthBelow" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevAddExperience" value="Args=Short" />
+			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />
+			<entry key="AtlasDevIfItemCount" value="Args=Byte:Item+Byte,Flow=Jump" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

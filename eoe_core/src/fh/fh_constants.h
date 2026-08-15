@@ -19,7 +19,12 @@ namespace fh {
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
 		constexpr word Menu_WaitInput{ 0x84ed };
 		constexpr word Portrait_Pump{ 0x87b0 };
+		constexpr word ItemNameDraw{ 0x8c36 };
+		constexpr word IconDraw{ 0x8c58 };
+		constexpr word OpenWindowDraw{ 0x8ef1 };
+		constexpr word WindowClose{ 0x9002 };
 		constexpr word Text_ContinueGate{ 0x9956 };
+		constexpr word TextGridLay{ 0x9910 };
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
@@ -30,6 +35,7 @@ namespace fh {
 		constexpr word WaitForInterrupt{ 0xca2e };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
+		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
@@ -42,9 +48,18 @@ namespace fh {
 		constexpr word Portrait_Clear{ 0xf281 };
 		constexpr word Messages_Load{ 0xf3f5 };
 		constexpr word Text_ShowNextChar{ 0xf466 };
+		constexpr word TextGridRowQueue{ 0xf5d9 };
+		constexpr word PPUAddressFromPos{ 0xf804 };
+		constexpr word PPUAdvanceRow{ 0xf826 };
+		constexpr word PPUQueuePayload{ 0xf845 };
 		// One vanilla caller; inputs $ea/$eb tile position, $ec/$ed/$ee value,
 		// Y digit count 1..7.  Emits through the buffered PPU queue.
 		constexpr word Number_DrawAtPos{ 0xfa03 };
+		constexpr word UI_DrawPlayerHPValue{ 0xfa75 };
+		constexpr word Player_SetMP{ 0xfa85 };
+		constexpr word Hud_DrawGold{ 0xf9e7 };
+		constexpr word SpecialItemIdTable{ 0x9add };
+		constexpr word SpecialItemMaskTable{ 0x8d52 };
 	}
 
 	namespace RAM {
@@ -70,8 +85,13 @@ namespace fh {
 		constexpr byte ZP_Temp_Int24_M{ 0xed };
 		constexpr byte ZP_Temp_Int24_U{ 0xee };
 		constexpr byte ZP_MusicCurrent{ 0xfa };
+		constexpr byte ZP_PlayerState{ 0xa4 };
+		constexpr byte ZP_PlayerInvincibilityTimer{ 0xad };
 
 		constexpr word CurrentROMBank{ 0x0100 };
+		// IScripts_Begin stores the active root index here before opening the
+		// textbox. Vanilla root $1f is reserved for the death dialogue.
+		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
@@ -94,6 +114,8 @@ namespace fh {
 		constexpr byte ZP_PlayerX{ 0x9e };
 		constexpr byte ZP_PlayerY{ 0xa1 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
+		constexpr word SelectedWeapon{ 0x03bd };
+		constexpr word SelectedMagic{ 0x03c0 };
 
 		constexpr word Flags{ 0x0101 };
 		constexpr word DoorKeyRequirement{ 0x042b };
@@ -102,6 +124,17 @@ namespace fh {
 		constexpr word CurrentStage{ 0x0435 };
 		constexpr word PlayerIsDead{ 0x0438 };
 		constexpr word ScreenBuffer{ 0x0600 };
+		constexpr word PlayerHPFraction{ 0x0432 };
+		constexpr word PlayerHP{ 0x0431 };
+		constexpr word PlayerGold_L{ 0x0392 };
+		constexpr word PlayerGold_M{ 0x0393 };
+		constexpr word PlayerGold_U{ 0x0394 };
+		constexpr word InventoryArrays{ 0x039d };
+		constexpr word InventoryCounts{ 0x03c2 };
+		constexpr word SpecialItemBitfield{ 0x042c };
+		constexpr word PlayerMana{ 0x039a };
+		constexpr word PlayerXP_L{ 0x0390 };
+		constexpr word PlayerXP_U{ 0x0391 };
 	}
 
 	namespace c {
@@ -111,8 +144,10 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE[]{ "rom_iscripts_skipaddrandinvoke" };
 		constexpr char ID_ROM_ISCRIPTS_JUMPTONEXTADDR[]{ "rom_iscripts_jumptonextaddr" };
 		constexpr char ID_ROM_ISCRIPTS_INVOKENEXTACTION[]{ "rom_iscripts_invokenextaction" };
+		constexpr char ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION[]{ "rom_iscripts_updateportraitanimation" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
+		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
