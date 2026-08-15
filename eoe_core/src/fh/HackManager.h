@@ -30,7 +30,10 @@ namespace fh {
 		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber,
 		AtlasDevIfPlayerFacing, AtlasDevIfPlayerClimbing, AtlasDevIfPlayerGrounded,
 		AtlasDevIfPlayerAttacking, AtlasDevIfPlayerInvincible, AtlasDevIfPlayerDead,
-		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic
+		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
+		AtlasDevWaitFrames, AtlasDevWaitForButtonPress,
+		AtlasDevIfButtonHeld, AtlasDevIfButtonPressed,
+		AtlasDevSetFacing, AtlasDevSetPlayerPosition
 	};
 
 	class HackManager {
@@ -118,6 +121,12 @@ namespace fh {
 		word apply_AtlasDevIfPlayerDead(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfSelectedWeapon(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfSelectedMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWaitFrames(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWaitForButtonPress(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfButtonHeld(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfButtonPressed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetPlayerPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,

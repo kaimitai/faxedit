@@ -118,6 +118,7 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE[]{ "rom_iscripts_skipaddrandinvoke" };
 		constexpr char ID_ROM_ISCRIPTS_JUMPTONEXTADDR[]{ "rom_iscripts_jumptonextaddr" };
 		constexpr char ID_ROM_ISCRIPTS_INVOKENEXTACTION[]{ "rom_iscripts_invokenextaction" };
+		constexpr char ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION[]{ "rom_iscripts_updateportraitanimation" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };

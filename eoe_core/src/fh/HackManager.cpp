@@ -2227,6 +2227,104 @@ word fh::HackManager::apply_AtlasDevSetPortrait(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevWaitFrames(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.tax();
+	code.beq("@done");
+	code.label("@loop");
+	code.jsr(ROM::WaitForInterrupt);
+	code.dex();
+	code.bne("@loop");
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevWaitForButtonPress(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.label("@release");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+	code.pla(); code.pha(); code.and_zp(0x16); code.bne("@release");
+	code.label("@wait");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+	code.pla(); code.pha(); code.and_zp(0x19); code.beq("@wait");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfButtonHeld(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_zp(0x16); code.beq("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfButtonPressed(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_zp(0x19); code.beq("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetFacing(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x00); code.bne("@face_right");
+	code.lda_zp(0xa4); code.and_imm(0xbf); code.sta_zp(0xa4);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@face_right");
+	code.lda_zp(0xa4); code.ora_imm(0x40); code.sta_zp(0xa4);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetPlayerPosition(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.lda_zp(0x0e); code.bne("@reject");
+	code.db(0xba);
+	code.lda_abs_x(0x0101); code.and_imm(0xf0); code.cmp_imm(0xb0); code.bcs("@reject");
+	code.lda_abs_x(0x0101); code.tax();
+	code.db(0xbc); code.dw(0x0600); code.jsr(0xe8c6); code.bne("@reject");
+	code.txa(); code.clc(); code.adc_imm(0x10); code.tax();
+	code.db(0xbc); code.dw(0x0600); code.jsr(0xe8c6); code.bne("@reject");
+	code.txa(); code.clc(); code.adc_imm(0x10); code.tax();
+	code.db(0xbc); code.dw(0x0600); code.jsr(0xe8c6); code.cmp_imm(0x01); code.bne("@reject");
+	code.pla(); code.tax();
+	code.and_imm(0xf0); code.sta_zp(0xa1); code.sta_zp(0xb3);
+	code.txa(); code.asl_a(); code.asl_a(); code.asl_a(); code.asl_a();
+	code.sta_zp(0x9e); code.sta_zp(0xb2);
+	code.lda_zp(0xa4); code.and_imm(0x40); code.sta_zp(0xa4);
+	code.lda_zp(0xa5); code.and_imm(0x80); code.sta_zp(0xa5);
+	code.lda_imm(0x00);
+	code.sta_zp(0x9d); code.sta_zp(0x9f); code.sta_zp(0xa0);
+	code.sta_zp(0xa2); code.sta_zp(0xa3); code.sta_zp(0xa6);
+	code.sta_zp(0xa9); code.sta_zp(0xaa); code.sta_zp(0xac);
+	code.sta_zp(0xae); code.sta_zp(0xb1); code.sta_zp(0xb4);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@reject");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -2571,6 +2669,30 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevIfSelectedMagic:
 			cpu_addr = apply_AtlasDevIfSelectedMagic(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevWaitFrames:
+			cpu_addr = apply_AtlasDevWaitFrames(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevWaitForButtonPress:
+			cpu_addr = apply_AtlasDevWaitForButtonPress(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfButtonHeld:
+			cpu_addr = apply_AtlasDevIfButtonHeld(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfButtonPressed:
+			cpu_addr = apply_AtlasDevIfButtonPressed(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevSetFacing:
+			cpu_addr = apply_AtlasDevSetFacing(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevSetPlayerPosition:
+			cpu_addr = apply_AtlasDevSetPlayerPosition(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
