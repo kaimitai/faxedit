@@ -1861,6 +1861,18 @@
 			<entry key="AtlasDevLayTextAt" value="Args=Byte+Byte" />
 			<entry key="AtlasDevClearTextLine" value="Args=Byte" />
 			<entry key="AtlasDevLayTextLine" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevSetHealth" value="Args=Byte" />
+			<entry key="AtlasDevSetMana" value="Args=Byte" />
+			<entry key="AtlasDevFullHeal" />
+			<entry key="AtlasDevFullMana" />
+			<entry key="AtlasDevIfHealthBelow" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevAddExperience" value="Args=Short" />
+			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />
+			<entry key="AtlasDevIfItemCount" value="Args=Byte:Item+Byte,Flow=Jump" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

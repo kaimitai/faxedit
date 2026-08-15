@@ -268,6 +268,18 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
 | AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
 | AtlasDevLayTextLine | Byte, Byte, Byte | Lays one 16-tile row at X, Y from a caller-selected tile base | AtlasDevLayTextLine 4 10 $40 |
+| AtlasDevSetHealth | Byte | Sets health to 0-80 through the game's own HP setter; higher values clamp to 80, the fractional HP byte is cleared, and zero does not itself kill the player | AtlasDevSetHealth 40 ; half Power |
+| AtlasDevSetMana | Byte | Sets current MP through the game's own fixed-bank setter, which redraws the HUD magic bar in the same call; 80 ($50) is the fixed maximum and higher values clamp to it | AtlasDevSetMana 80 ; magic completely full |
+| AtlasDevFullHeal | — | Refills HP to the game's fixed maximum $50:$00 through the HUD's own setter, so the power bar redraws immediately | AtlasDevFullHeal |
+| AtlasDevFullMana | — | Restores MP to the fixed $50 maximum through the game's own setter, redrawing the magic bar in the same call | AtlasDevFullMana |
+| AtlasDevIfHealthBelow | Byte, Label | Jumps when the player's HP is strictly below the operand; only the whole-points byte is compared, so equal HP never jumps even with a nonzero fraction | AtlasDevIfHealthBelow 40 @hp_low |
+| AtlasDevIfHealthAtLeast | Byte, Label | Jumps when the player's integer HP, the value the HUD bar shows, is at least the operand; the fractional HP byte is ignored | AtlasDevIfHealthAtLeast 40 @healthy |
+| AtlasDevIfManaAtLeast | Byte, Label | Jumps when the player's magic points are greater than or equal to the operand; MP is one byte the game caps at 80 ($50) | AtlasDevIfManaAtLeast 40 @enough_mp |
+| AtlasDevAddExperience | Short (0-65,535) | Adds experience through the enemy-kill award path: saturating add, promotion check and HUD digit redraw; "next rank" can advance at most once per call | AtlasDevAddExperience 500 |
+| AtlasDevSetGold | Byte, Byte, Byte | Sets gold to an exact 24-bit value, given low byte first, and redraws the seven-digit gold HUD through the game's own conversion routine | AtlasDevSetGold 244 1 0 ; gold becomes 500 (244 + 1*256) |
+| AtlasDevIfGoldAtLeast | Byte, Byte, Byte, Label | Jumps when the 24-bit gold counter is at least the threshold; the three operands are the threshold's low, middle and high bytes, the counter's own little-endian order | AtlasDevIfGoldAtLeast 232 3 0 @rich ; jumps at 1000 gold or more |
+| AtlasDevIfXPAtLeast | Short (0-65,535), Label | Jumps when the player's experience is at least the given value | AtlasDevIfXPAtLeast 3000 @veteran |
+| AtlasDevIfItemCount | Item, Byte, Label | Jumps when the exact vanilla ownership count for the item — live carried copies plus a matching selected/equipped register, or the single special-item bit — is at least Count; undefined ids are always false | AtlasDevIfItemCount SPECIAL_RING_OF_ELF 1 @has_ring |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 

@@ -55,6 +55,11 @@ namespace fh {
 		// One vanilla caller; inputs $ea/$eb tile position, $ec/$ed/$ee value,
 		// Y digit count 1..7.  Emits through the buffered PPU queue.
 		constexpr word Number_DrawAtPos{ 0xfa03 };
+		constexpr word UI_DrawPlayerHPValue{ 0xfa75 };
+		constexpr word Player_SetMP{ 0xfa85 };
+		constexpr word Hud_DrawGold{ 0xf9e7 };
+		constexpr word SpecialItemIdTable{ 0x9add };
+		constexpr word SpecialItemMaskTable{ 0x8d52 };
 	}
 
 	namespace RAM {
@@ -119,6 +124,17 @@ namespace fh {
 		constexpr word CurrentStage{ 0x0435 };
 		constexpr word PlayerIsDead{ 0x0438 };
 		constexpr word ScreenBuffer{ 0x0600 };
+		constexpr word PlayerHPFraction{ 0x0432 };
+		constexpr word PlayerHP{ 0x0431 };
+		constexpr word PlayerGold_L{ 0x0392 };
+		constexpr word PlayerGold_M{ 0x0393 };
+		constexpr word PlayerGold_U{ 0x0394 };
+		constexpr word InventoryArrays{ 0x039d };
+		constexpr word InventoryCounts{ 0x03c2 };
+		constexpr word SpecialItemBitfield{ 0x042c };
+		constexpr word PlayerMana{ 0x039a };
+		constexpr word PlayerXP_L{ 0x0390 };
+		constexpr word PlayerXP_U{ 0x0391 };
 	}
 
 	namespace c {
