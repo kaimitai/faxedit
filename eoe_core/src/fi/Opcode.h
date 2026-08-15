@@ -28,7 +28,9 @@ namespace fi {
 		Quest,
 		Rank,
 		TextBox,
-		TextString
+		TextString,
+		ButtonMask,
+		PlayerPackedYX
 	};
 
 	struct Argument {

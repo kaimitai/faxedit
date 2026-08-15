@@ -303,7 +303,7 @@ int fi::AsmReader::parse_numeric(const std::string& token) const {
 		base = 2;
 		digits = token.substr(1);
 	}
-	if (token[0] == '$') {
+	else if (token[0] == '$') {
 		base = 16;
 		digits = token.substr(1);
 	}

@@ -4,7 +4,7 @@
 
 <hr>
 
-[Echoes of Eolis](https://github.com/kaimitai/faxedit) and [FaxIScripts](https://github.com/kaimitai/FaxIScripts) include an optional set of advanced features for creating ROM hacks that go beyond the capabilities of the original Faxanadu engine.
+[Echoes of Eolis](https://github.com/kaimitai/faxedit) includes an optional set of advanced features for creating ROM hacks that go beyond the capabilities of the original Faxanadu engine.
 
 These features allow projects to:
 
@@ -15,9 +15,9 @@ These features allow projects to:
 - Create conditional tilemap changes that permanently alter the world
 - Inject runtime code automatically without manually relocating assembly
 
-The advanced systems are completely optional. Projects that do not enable them produce behavior identical to the original game. No knowledge of 6502 assembly is required to use the built-in runtime library. Most projects simply enable the desired opcodes and use them from ordinary FaxIScripts assembly.
+The advanced systems are completely optional. Projects that do not enable them produce behavior identical to the original game. No knowledge of 6502 assembly is required to use the built-in runtime library. Most projects simply enable the desired opcodes and use them from ordinary iScript assembly.
 
-This document assumes you are already familiar with the basic FaxIScripts assembly syntax described in the main documentation.
+This document assumes you are already familiar with the basic iScript assembly syntax described in the [scripting documentation](scripting-guide.md).
 
 <hr>
 
@@ -47,31 +47,31 @@ This document assumes you are already familiar with the basic FaxIScripts assemb
 
 ## Getting Started
 
-Echoes of Eolis and FaxIScripts load their default configuration from ```eoe_config.xml```. This file should never be modified. It is part of the application and may be replaced when upgrading to a newer version.
+Echoes of Eolis loads its default configuration from ```eoe_config.xml```. This file should never be modified. It is part of the application and may be replaced when upgrading to a newer version.
 
 Instead, project-specific configuration belongs in ```eoe_config_override.xml```. Any settings present in the override file replace the corresponding defaults in ```eoe_config.xml```, while all omitted settings continue to use the built-in values.
 
 Many projects never need an override file. However, the advanced scripting system uses it to define the project's custom script language, making an override file the recommended starting point for the features described in this document.
 
-A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to the directory containing the faxedit and faxiscripts executables, rename it to ```eoe_config_override.xml```, and modify it as needed.
+A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to the directory containing the Echoes of Eolis executables, rename it to ```eoe_config_override.xml```, and modify it as needed.
 
 The provided file is only a starting point. It enables a representative selection of the built-in runtime opcodes, but most projects should remove unused entries, reorder them if desired, and add or replace implementations as their scripting language evolves.
 
 Think of the runtime library as a toolbox. Each ```Impl``` entry selects one tool from that toolbox. The selected tools become new script opcodes in your project's scripting language.
 
-When the advanced scripting features are used, ```eoe_config_override.xml``` does more than configure the tools - it also defines the project's scripting language. The iscript_opcodes map specifies which opcodes exist, their mnemonics, argument types, and any runtime implementations they use. **The XML is no longer just configuration - it defines the project's scripting language.**
+When the advanced scripting features are used, ```eoe_config_override.xml``` does more than configure the tools - it also defines the project's scripting language. The iscript_opcodes map specifies which opcodes exist, their mnemonics, argument types, and any runtime implementations they use. **The XML is no longer just configuration - it defines the project's scripting language.** When assembling iScripts through the GUI, this configuration is reloaded automatically before assembly. This makes it possible to edit the scripting language in ```eoe_config_override.xml``` and immediately assemble scripts using the new definition without restarting Echoes of Eolis.
 
-Both FaxIScripts and Echoes of Eolis read this information. FaxIScripts uses it when assembling scripts and disassembling ROM files, while Echoes of Eolis uses the same definitions to disassemble and display scripts correctly in the editor.
+Both the graphical editor and command-line tool use the same scripting implementation and configuration. The opcode definitions are used by both applications when assembling and disassembling scripts.
 
-The custom scripting opcodes are defined in ```iscript_opcodes``` in the configuration xml. Opcodes 0-23 define the vanilla scripting language, and should typically be left as-is. Opcodes 24 and up will be configured based on a project's needs. The opcode numbers themselves are arbitrary. Any unused values from 24 upward may be used, as long as the list is dense. For example, if 24 and 26 are defined, then 25 must also be defined.
+The custom scripting opcodes are defined in ```iscript_opcodes``` in the configuration xml. Opcodes 0-23 define the vanilla scripting language, and should typically be left as-is. Opcodes 24 and up will be configured based on a project's needs. The opcode numbers themselves are arbitrary, but each opcode must have a unique number. The configured opcode map does not need to be dense: Echoes of Eolis automatically densifies it when loading the scripting language. However, all opcodes that specify an ```Impl``` must appear after all opcodes without an ```Impl```.
 
 Most advanced projects only need to:
 
-1. Enable the runtime opcode implementations they intend to use by editing or adding entries to ```iscript_opcodes``` that specify an ```Impl``` value. The ```Impl``` selects one of the built-in runtime implementations provided by FaxIScripts.
+1. Enable the runtime opcode implementations they intend to use by editing or adding entries to ```iscript_opcodes``` that specify an ```Impl``` value. The ```Impl``` selects one of the built-in runtime implementations.
 2. Use the new opcodes in your assembly source files
 3. Assemble their script file as usual
 
-FaxIScripts automatically determines which runtime helpers are required, assembles them into free space, rebuilds the script dispatch table when necessary, and reports the amount of ROM space consumed.
+The assembler automatically determines which runtime helpers are required, assembles them into free space, rebuilds the script dispatch table when necessary, and reports the amount of ROM space consumed.
 
 No manual relocation, address calculation, or runtime installation is required by the script author.
 
@@ -80,23 +80,23 @@ No manual relocation, address calculation, or runtime installation is required b
 1. Copy ```util/eoe_config_override-advanced.xml``` next to the executables and rename it to ```eoe_config_override.xml```.
 2. Open the ```iscript_opcodes``` map in this file.
 3. Leave opcode entries 0-23 unchanged. These define the vanilla scripting language.
-4. Review the example runtime opcodes starting at entry 24. Remove any you do not need, add others, or rearrange them as desired. Opcode numbers must remain unique and dense (no gaps in numbering). **You can change the opcode set at any time later; existing assembly will continue to build as long as every opcode it uses is still defined in the map**.
+4. Review the example runtime opcodes starting at entry 24. Remove any you do not need, add others, or rearrange them as desired. Opcode numbers must be unique, but gaps are allowed; Echoes of Eolis automatically densifies the opcode map when it is loaded. All opcodes with an Impl must appear after all opcodes without one. **You can change the opcode set at any time later; existing assembly will continue to build as long as every opcode it uses is still defined in the map.**
 5. Use the configured mnemonics in your assembly source and assemble as usual.
 
 
 ```text
-eoe_config_override.xml
-          │
-          ▼
-  opcode definitions
-          │
-          ├──────────────┐
-          ▼              ▼
-      FaxIScripts  Echoes of Eolis
-          │              │
-       assemble     disassemble for showing scripts in GUI
-          │              │
-          └─► same ROM ◄─┘
+ eoe_config_override.xml
+           │
+           ▼
+   opcode definitions
+           │
+           ▼
+    iScript system
+       │       │
+       ▼       ▼
+   assemble  disassemble
+       │       │
+       └── ROM ┘
 ```
 
 <hr>
@@ -120,9 +120,9 @@ Once you are comfortable with the workflow, the same techniques can be combined 
 
 ## Extended Script System
 
-FaxIScripts extends the original Faxanadu scripting engine with an optional runtime library that allows new script opcodes to be added without modifying the original game engine. The system is fully data-driven and is designed to preserve vanilla behavior unless extensions are explicitly enabled.
+The Echoes of Eolis iScript system extends the original Faxanadu scripting engine with an optional runtime library that allows new script opcodes to be added without modifying the original game engine. The system is fully data-driven and is designed to preserve vanilla behavior unless extensions are explicitly enabled.
 
-Unlike the original game, where the script opcode table is fixed, FaxIScripts generates a new opcode dispatch table during assembly. Vanilla opcode implementations are preserved, while any enabled runtime implementations are assembled into free space and appended to the dispatch table automatically.
+Unlike the original game, where the script opcode table is fixed, the assembler generates a new opcode dispatch table during assembly. Vanilla opcode implementations are preserved, while any enabled runtime implementations are assembled into free space and appended to the dispatch table automatically.
 
 The runtime library is assembled on demand. Helper routines and opcode implementations are only emitted if they are required by the opcodes configured for the current project. As a result, different projects may produce different runtime layouts while remaining fully compatible with the same scripting system.
 
@@ -132,20 +132,17 @@ The flow of the advanced features is roughly as follows.
       Assembly (.asm)
              │
              ▼
-       FaxIScripts
+      iScript assembler
              │
              ▼
        Modified ROM
              │
              ▼
-  Echoes of Eolis
-     │
-     ├── Edit maps
-     ├── Assign screen handlers
-     └── Save
+     Echoes of Eolis
              │
-             ▼
-            Test
+             ├── Edit maps
+             ├── Assign screen handlers
+             └── Test / continue editing
 ```
 
 
@@ -153,11 +150,11 @@ The flow of the advanced features is roughly as follows.
 
 Runtime opcode implementations are configured through ```eoe_config_override.xml```.
 
-Only opcodes that specify an Impl value are implemented by the runtime library. All remaining opcodes continue to use the game's original implementations.
+Only opcodes that specify an ```Impl``` value are implemented by the runtime library. All remaining opcodes continue to use the game's original implementations.
 
 ### Assembly Process
 
-When a script file is assembled, FaxIScripts performs the following steps:
+When a script file is assembled, the assembler performs the following steps:
 
 - Reads the configured opcode definitions.
 - Determines which runtime implementations and helper routines are required.
@@ -209,6 +206,9 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | |
 | GetXP | Short (0-65,535) | Gives player xp; note that "next rank" can only increase by 1 each time XP is given | GetXP 100 ; player gets 100xp |
 | Die | None | Kills the player when the script ends | |
+| IfAddrEquals | Short, Byte, Label | Jumps to label if value at cpu-address equals the byte | IfAddrEquals $03d1 5 @music_no_is_5 |
+| IfAddrBetween | Short, Byte, Byte, Label | Jumps to label if value at cpu-address lies between the byte operands | IfAddrBetween $03d1 2 5 @music_no_is_between_2_and_5 |
+| SetAddr | Short, Byte | Sets value at given cpu-address (must be RAM) to the byte value given | SetAddr $03d1 5 ; set music to 5 |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
 | AtlasDevFadeIn | Byte, Byte | Fades the background/UI palette back in over the given number of NMI frames, reversing the given stage depth (1-4) | AtlasDevFadeIn 60 4 ; fades back in over 60 frames |
@@ -242,6 +242,44 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
 | AtlasDevEntityFieldToVar | Byte, Byte, Byte | **Do not use yet.** Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group | AtlasDevEntityFieldToVar 0 6 2 |
 | AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | **Do not use yet.** Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7 | AtlasDevDrawVarNumber 0 4 24 3 |
+| AtlasDevIfPlayerFacing | Byte, Label | Jumps when the player faces the requested direction; even values mean left and odd values mean right | AtlasDevIfPlayerFacing 1 @facing_right |
+| AtlasDevIfPlayerClimbing | Label | Jumps while the engine's own climbing predicate is true | AtlasDevIfPlayerClimbing @on_ladder |
+| AtlasDevIfPlayerGrounded | Label | Jumps when the player is not jumping, falling, or actively climbing | AtlasDevIfPlayerGrounded @on_ground |
+| AtlasDevIfPlayerAttacking | Label | Jumps while a sword swing is in progress | AtlasDevIfPlayerAttacking @swinging |
+| AtlasDevIfPlayerInvincible | Label | Jumps while the player's hurt/invincibility timer is nonzero | AtlasDevIfPlayerInvincible @protected |
+| AtlasDevIfPlayerDead | Label | Jumps while Faxanadu's reserved death-dialogue script (root 31) is executing | AtlasDevIfPlayerDead @dead |
+| AtlasDevIfSelectedWeapon | Byte, Label | Jumps when the selected weapon's category-local id equals the operand | AtlasDevIfSelectedWeapon 2 @giant_blade |
+| AtlasDevIfSelectedMagic | Byte, Label | Jumps when the selected magic's category-local id equals the operand | AtlasDevIfSelectedMagic 2 @fire |
+| AtlasDevWaitFrames | Byte | Waits for 0-255 NMI frames; zero is a no-op | AtlasDevWaitFrames 30 |
+| AtlasDevWaitForButtonPress | Byte | Waits for every requested button to be released, then for any requested button's next press edge | AtlasDevWaitForButtonPress $80 |
+| AtlasDevIfButtonHeld | Byte, Label | Jumps when any requested button is held in the latest complete controller sample | AtlasDevIfButtonHeld $40 @holding_b |
+| AtlasDevIfButtonPressed | Byte, Label | Jumps on the current rising edge of any requested button | AtlasDevIfButtonPressed $80 @pressed_a |
+| AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
+| AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
+| AtlasDevOpenWindow | Byte, Byte, Byte, Byte | Draws a bordered window at X, Y, width, height | AtlasDevOpenWindow 4 8 20 10 |
+| AtlasDevShowIcon | Byte, Byte, Byte | Draws one of the 20 resident item icons at a window-relative offset | AtlasDevShowIcon 3 2 2 |
+| AtlasDevCloseWindow | — | Restores the game background beneath the current window rectangle | AtlasDevCloseWindow |
+| AtlasDevLayText | — | Lays the vanilla 16x4 text grid inside the current window | AtlasDevLayText |
+| AtlasDevOpenWindowAtEntity | Byte, Byte, Byte, Byte, Byte | Opens an even-sized window relative to an entity slot, or the player for slots 8+ | AtlasDevOpenWindowAtEntity 0 4 248 20 8 |
+| AtlasDevRestoreRect | Byte, Byte, Byte, Byte | Restores an explicit even-aligned rectangle from the game background | AtlasDevRestoreRect 4 8 20 10 |
+| AtlasDevShowItemName | Item, Byte, Byte | Draws an item's canonical resident-font name at an absolute tile position | AtlasDevShowItemName WEAPON_HAND_DAGGER 4 12 |
+| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Draws a resident icon with independent shape and palette selection | AtlasDevShowIconEx 3 1 2 2 |
+| AtlasDevClearText | — | Blanks all four rows of the current text grid while keeping the window and portrait | AtlasDevClearText |
+| AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
+| AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
+| AtlasDevLayTextLine | Byte, Byte, Byte | Lays one 16-tile row at X, Y from a caller-selected tile base | AtlasDevLayTextLine 4 10 $40 |
+| AtlasDevSetHealth | Byte | Sets health to 0-80 through the game's own HP setter; higher values clamp to 80, the fractional HP byte is cleared, and zero does not itself kill the player | AtlasDevSetHealth 40 ; half Power |
+| AtlasDevSetMana | Byte | Sets current MP through the game's own fixed-bank setter, which redraws the HUD magic bar in the same call; 80 ($50) is the fixed maximum and higher values clamp to it | AtlasDevSetMana 80 ; magic completely full |
+| AtlasDevFullHeal | — | Refills HP to the game's fixed maximum $50:$00 through the HUD's own setter, so the power bar redraws immediately | AtlasDevFullHeal |
+| AtlasDevFullMana | — | Restores MP to the fixed $50 maximum through the game's own setter, redrawing the magic bar in the same call | AtlasDevFullMana |
+| AtlasDevIfHealthBelow | Byte, Label | Jumps when the player's HP is strictly below the operand; only the whole-points byte is compared, so equal HP never jumps even with a nonzero fraction | AtlasDevIfHealthBelow 40 @hp_low |
+| AtlasDevIfHealthAtLeast | Byte, Label | Jumps when the player's integer HP, the value the HUD bar shows, is at least the operand; the fractional HP byte is ignored | AtlasDevIfHealthAtLeast 40 @healthy |
+| AtlasDevIfManaAtLeast | Byte, Label | Jumps when the player's magic points are greater than or equal to the operand; MP is one byte the game caps at 80 ($50) | AtlasDevIfManaAtLeast 40 @enough_mp |
+| AtlasDevAddExperience | Short (0-65,535) | Adds experience through the enemy-kill award path: saturating add, promotion check and HUD digit redraw; "next rank" can advance at most once per call | AtlasDevAddExperience 500 |
+| AtlasDevSetGold | Byte, Byte, Byte | Sets gold to an exact 24-bit value, given low byte first, and redraws the seven-digit gold HUD through the game's own conversion routine | AtlasDevSetGold 244 1 0 ; gold becomes 500 (244 + 1*256) |
+| AtlasDevIfGoldAtLeast | Byte, Byte, Byte, Label | Jumps when the 24-bit gold counter is at least the threshold; the three operands are the threshold's low, middle and high bytes, the counter's own little-endian order | AtlasDevIfGoldAtLeast 232 3 0 @rich ; jumps at 1000 gold or more |
+| AtlasDevIfXPAtLeast | Short (0-65,535), Label | Jumps when the player's experience is at least the given value | AtlasDevIfXPAtLeast 3000 @veteran |
+| AtlasDevIfItemCount | Item, Byte, Label | Jumps when the exact vanilla ownership count for the item — live carried copies plus a matching selected/equipped register, or the single special-item bit — is at least Count; undefined ids are always false | AtlasDevIfItemCount SPECIAL_RING_OF_ELF 1 @has_ring |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
@@ -350,6 +388,129 @@ above without reading the table. Bit 7 set is the engine's own free marker, so
 no live entity can carry such an identity, and searching for one would
 otherwise match an empty slot and report it as a find.
 
+#### AtlasDev player-state conditionals
+
+These eight opcodes are read-only and use state the vanilla engine already
+maintains. They require no hooks, scheduler, or project RAM. Every true branch
+uses the ordinary iScript jump continuation, and every false branch consumes
+the label and continues normally.
+
+```AtlasDevIfPlayerFacing``` reads the engine's facing bit, not the current
+controller input, so it remains meaningful while controls are locked. Its
+direction operand follows the engine's binary convention: the low bit selects
+left (0) or right (1). ```AtlasDevIfPlayerAttacking``` is similarly a state
+test: it remains true for the duration of the sword-swing state machine, not
+only on the frame when the attack button was pressed.
+
+```AtlasDevIfPlayerGrounded``` means none of jumping, falling, or active
+climbing is set. ```AtlasDevIfPlayerClimbing``` is narrower and calls the
+same fixed-bank predicate vanilla uses before movement actions. The helper is
+byte-identical at CPU ```$ECF6``` in the US, US Rev A, EU and JP ROMs. The
+expanded English translation has no verified address yet, so installing this
+one opcode there fails by the missing ```rom_player_isclimbing``` constant
+unless the project supplies a verified override; the other seven predicates
+do not need that routine.
+
+```AtlasDevIfPlayerInvincible``` tests the countdown that blocks ordinary
+damage. It therefore covers both vanilla post-hit protection and any other
+feature that deliberately writes that timer.
+
+```AtlasDevIfPlayerDead``` tests the script context rather than HP. Faxanadu
+clears its one-shot death latch before running any dialogue, and a fatal
+fixed-point subtraction can leave fractional HP nonzero. Conversely, the
+player can still be alive below one whole HP, so neither the latch nor an HP
+test is truthful from inside an iScript. The vanilla death path instead calls
+```IScripts_Begin``` with ```$FF```, which maps to reserved root 31 (the
+"Remember your mantra" dialogue) and stores 31 as the active root before the
+textbox opens. The opcode branches while that root is executing. Modders can
+replace the contents of entrypoint 31 to create alternate death dialogue,
+penalties, resurrection choices, or quest-specific death events. Calling
+entrypoint 31 for an unrelated purpose is therefore unsupported: vanilla
+reserves it as the death context.
+
+There is deliberately no ```AtlasDevIfPlayerCasting```. Faxanadu has no
+persistent casting state: casting is a one-frame trigger, while the spawned
+spell is represented by the magic-object slot. Testing that slot would be
+an ```IfMagicActive``` predicate, and calling it "casting" would misdescribe
+what the ROM actually knows.
+
+The selected-equipment operands are category-local ids, not packed item ids.
+Weapons are 0 Hand Dagger, 1 Long Sword, 2 Giant Blade, and 3 Dragon Slayer.
+Magic is 0 Deluge, 1 Thunder, 2 Fire, 3 Death, and 4 Tilte.
+
+#### AtlasDev flow and player-control helpers
+
+These six implementations are independent, opt-in handlers. They require no
+resident scheduler, ROM hook, or newly reserved RAM. With only these six
+selected, the installed script library occupies 272 bytes: 212 bytes of
+handlers and 60 bytes for the two 30-entry dispatch tables.
+
+```AtlasDevWaitFrames``` calls the fixed-bank NMI wait once per requested
+frame. Zero is explicitly handled as a no-op. ```AtlasDevWaitForButtonPress```
+first requires a fully released sample, then waits for a new rising edge. This
+prevents the button used to open a conversation from immediately satisfying
+the wait. A button mask may combine buttons; the tests are ANY-of, and a zero
+mask is rejected by the assembler. The controller bits are Right ```$01```,
+Left ```$02```, Down ```$04```, Up ```$08```, Start ```$10```, Select
+```$20```, B ```$40```, and A ```$80```.
+
+The release-gated wait updates the portrait/interaction frame through the
+vanilla iScript helper at ```$87B0```. That address is verified for US, US Rev
+A, EU, and Randum. No JP or expanded-English address is guessed; selecting
+this implementation for either region requires a verified project override.
+The two button conditionals and ```AtlasDevWaitFrames``` do not have this
+region-specific dependency.
+
+```AtlasDevSetFacing``` changes only player-property bit 6 and then resumes
+the script. ```AtlasDevSetPlayerPosition``` accepts a packed top-left block
+coordinate, ```$YX```, where each nibble is a 16-pixel grid coordinate. The
+assembler rejects Y greater than 10. At runtime the move is accepted only
+while the screen is ready, both body cells are ordinary air, and the cell
+beneath is ordinary solid ground. A rejected target is a safe no-op. An
+accepted move preserves facing, Wing Boots, HP, equipment, inventory, and
+progress while clearing transient movement state so physics can resume
+normally.
+
+#### AtlasDev windows, icons, and text grids
+
+These twelve handlers expose the drawing primitives used underneath the
+vanilla dialogue system. They require no hooks, scheduler, or reserved
+project RAM. Selected by themselves, they occupy 548 bytes: 476 handler bytes
+and 72 bytes for the two 36-entry dispatch tables. Adding the packet to an
+already extended library costs 500 bytes.
+
+```AtlasDevOpenWindow``` writes the live window rectangle at
+```$0208-$020B``` and asks the vanilla renderer to draw it. X, Y, width, and
+height are clamped independently, so the opcode does not guarantee that
+X+width or Y+height remains on-screen. Width and height must be even; the
+vanilla two-tile fill loops can wrap and jam the PPU queue on odd dimensions.
+```AtlasDevOpenWindowAtEntity``` forces every geometry value even. Slots 0-7
+use that entity's live pixel position, while slots 8 and above use the player.
+Its signed DX/DY operands are ordinary two's-complement bytes.
+
+```AtlasDevCloseWindow``` restores the background beneath the most recently
+described rectangle. ```AtlasDevRestoreRect``` performs the same restoration
+after replacing that rectangle with explicit, even-aligned geometry. Window
+drawing and restoration enqueue PPU work; allow several frames before drawing
+or restoring another large overlapping rectangle. A 15-frame wait is a
+conservative transition between ordinary dialogue-sized boxes.
+
+```AtlasDevShowIcon``` selects both shape and the icon's ordinary palette from
+one clamped ID, 0-19. ```AtlasDevShowIconEx``` separates shape from palette;
+shape still clamps to 19 and palette is masked to five bits by the same
+contract used by the ROM. Both positions are relative to the current window.
+```AtlasDevShowItemName``` instead uses the resident static font and an
+absolute tile position. Packed IDs in categories without a vanilla name table
+are consumed safely without drawing.
+
+Faxanadu dialogue streams glyph graphics into one shared 16x4 CHR tile grid,
+```$40-$7F```. ```AtlasDevLayText``` places that grid at the current window's
+origin+2,+2; ```AtlasDevLayTextAt``` places all four rows explicitly; and
+```AtlasDevLayTextLine``` places one 16-tile row from any chosen tile base.
+```AtlasDevClearText``` and ```AtlasDevClearTextLine``` erase nametable
+references without closing the window or portrait. After clearing, call a lay
+opcode before expecting a later ```Msg``` to become visible in that area.
+
 #### AtlasDev visual effect presets
 
 These named constants reproduce values chosen from a rendered matrix and confirmed on hardware. Paste the block into a script's ```[defines]``` section so call sites read as intent rather than magic numbers:
@@ -457,7 +618,7 @@ We will need the following custom opcodes in ```iscript_opcodes``` in ```eoe_con
   <entry byte="32" str="Impl=SelectFlag" />
 ```
 
-We only specify the implementation (Impl) value, since FaxIScripts knows the function signatures. The order here does not matter, but each opcode needs a unique byte value - and all ```Impl``` entries must appear after all non-```Impl``` entries. If you want custom mnemonics that is possible too, for example:
+We only specify the implementation (Impl) value, since the assembler knows the function signatures. Each opcode needs a unique byte value, but the values do not need to be contiguous; Echoes of Eolis automatically densifies the opcode map when it is loaded. All ```Impl``` entries must appear after all non-```Impl``` entries. If you want custom mnemonics that is possible too, for example:
 
 ```xml
 <entry byte="30" str="Impl=Return,Mnemonic=Ret" />
@@ -740,7 +901,7 @@ Paste into section [tilemap_changes] in the asm-file
         Write script logic
                 │
                 ▼
-     Assemble with FaxIScripts
+        Assemble iScripts
                 │
                 ▼
    Reload ROM in Echoes of Eolis
@@ -840,9 +1001,7 @@ By default the subsystem is installed in bank 9 CPU address $a000 for 16-bank RO
 
 **Important**: For 16 bank ROMs you need to make sure this subsystem does not overwrite tilemap data which can also live in bank 9.
 
-The final step is to add the screen event handler to the screen. If you had the ROM open in Echoes of Eolis while building this assembly file, you can use button "**Apply External ROM Changes**" to reload the modified scripts from ROM. Otherwise open the file in EoE. Navigate to Trunk screen 12. Go to Sprites and click "Add Event Handler". Assign event handler 3, which is the custom tilemap change handler installed by FaxIScripts. The handler will now execute every time this screen is entered.
-
-**Note**: Echoes of Eolis reads ```eoe_config.xml``` and ```eoe_config_override.xml``` only when the program starts. If you change the script language definition (for example by adding, removing, or modifying entries in ```iscript_opcodes``` in the override file), you must close and reopen Echoes of Eolis after assembling. Applying external ROM changes only reloads the ROM data; it does not reload the scripting language definition. If the output gives you a message like "Could not parse iScript #(number)" after loading ROM, or applying external changes, there is most likely a mismatch between the script language definition the ROM was assembled with, and the language definition Echoes of Eolis expects. **This does not indicate that the ROM is invalid. The only consequence is that Echoes of Eolis cannot disassemble and display the interaction scripts until it is restarted. Interaction scripts are read-only in Echoes of Eolis, so restarting the application is sufficient to resolve the problem.**
+The final step is to add the screen event handler to the screen. If you had the ROM open in Echoes of Eolis while building this assembly file, you can use button "**Apply External ROM Changes**" to reload the modified scripts from ROM. Otherwise open the file in EoE. Navigate to Trunk screen 12. Go to Sprites and click "Add Event Handler". Assign event handler 3, which is the custom tilemap change handler installed by the assembler. The handler will now execute every time this screen is entered.
 
 ![Tilemap Change Event Handler example](./img/event_handler_tilemap_change_example.png)
 
@@ -895,7 +1054,7 @@ Currently the dynamic tilemap changes have these limitations:
 
 ## Bank 15 Hack Injection Points
 
-ROM hacks can be injected by both Echoes of Eolis and FaxIScripts. For bank 15 we use space where normally unreachable code lives to inject these. The config ID-column shows the name of the configuration constant in ```eoe_config.xml``` which corresponds to the injection points. Users can configure them with config overrides if needed.
+Echoes of Eolis can inject several optional ROM hacks. For bank 15, these use space where normally unreachable code lives. The Config ID column shows the corresponding configuration constant in ```eoe_config.xml```. These locations can be changed through configuration overrides if they conflict with other modifications.
 
 | Feature | CPU Address  | Size (bytes) | Comments | Config ID |
 |---|---|---|---|---|
@@ -904,11 +1063,12 @@ ROM hacks can be injected by both Echoes of Eolis and FaxIScripts. For bank 15 w
 | Stage Door Hack - Extract Requirements | $dfa8  | 15/15  | Echoes of Eolis - Enabled under Settings > Advanced | hack_decode_req_addr |
 | Stage Door Hack - Load World | $dfb7  | 8/14  | Echoes of Eolis - Enabled under Settings > Advanced | hack_load_world_addr |
 | Stage Door Hack - Palette Handler | $f389 | 23/28 | Echoes of Eolis - Enabled under Settings > Advanced | hack_handle_palette_addr |
-| Clear Extended Flags on Init ($0101-$011f) | $d005 | 14/17 | FaxIScripts - if any of the opcodes SetFlag, IfFlag or ClearFlag are enabled | hack_clear_persistent_flags |
-| Event Handler Table | $cb0c | 8/11 | FaxIScripts - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_table_cpu_addr |
-| Event Handler Code | $e894 | 23/30 | FaxIScripts - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_cpu_addr |
+| Clear Extended Flags on Init ($0101-$011f) | $d005 | 14/17 | iScript assembler - if any of the opcodes SetFlag, IfFlag or ClearFlag are enabled | hack_clear_persistent_flags |
+| Event Handler Table | $cb0c | 8/11 | iScript assembler - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_table_cpu_addr |
+| Event Handler Code | $e894 | 23/30 | iScript assembler - If section [tilemap_changes] exists when a script file is assembled | hack_tm_handler_cpu_addr |
 
 <hr>
+
 
 Runtime extensions also reserve some RAM locations.
 
@@ -922,6 +1082,6 @@ Runtime extensions also reserve some RAM locations.
 | Custom script opcodes JSR and Return | $0182-$0183 | Used to store the return address | hack_script_jsr_ram_addr_lo, hack_script_jsr_ram_addr_hi |
 | Stage Door Hack | $07fe-$07ff | Stores the pending destination stage during cross-stage door transitions | - |
 
-The extended flags are cleared on game initialization (rest and power cycles), but will not be stored in mantras. They will only persist across sessions if stored in SRAM.
+The extended flags are cleared on game initialization (reset and power cycles), but will not be stored in mantras. They will only persist across sessions if stored in SRAM.
 
 <hr>

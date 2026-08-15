@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 #include "fi/fi_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/script/ScriptManager.h"
@@ -12,17 +13,17 @@
 #endif
 
 void fi::Cli::print_header(void) const {
-	std::cout << fi::appc::APP_NAME << " v" << fi::appc::APP_VERSION << " - Faxanadu Script Assembler and Disassembler\n";
+	std::cout << fe::c::APP_NAME << " " << fe::c::APP_VERSION << " - Faxanadu Script Assembler and Disassembler\n";
 	std::cout << "Author: Kai E. Fr";
 	output_oe_on_windows();
-	std::cout << "land (" << fi::appc::APP_URL << ")\n";
+	std::cout << "land (" << fe::c::APP_URL << ")\n";
 	std::cout << "Build date: " << __DATE__ << " " << __TIME__ << " CET\n\n";
 }
 
 void fi::Cli::print_help(void) const {
 	std::cout <<
 		"Usage:\n"
-		"  faxiscripts <command> <input> <output> [options]\n\n"
+		"  eoe-cli <command> <input> <output> [options]\n\n"
 		"Commands:\n"
 		"  IScripts (interaction scripts):\n"
 		"    x,   extract            - Disassemble IScripts from ROM\n"

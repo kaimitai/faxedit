@@ -1,6 +1,6 @@
 #include "BScriptWriter.h"
 #include "common/klib/Kstring.h"
-#include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 #include "fb_constants.h"
 #include <cstdint>
 #include <format>
@@ -49,8 +49,8 @@ std::string fb::BScriptWriter::generate_asm(const fb::BScriptLoader& loader) con
 	bool rg2_marked{ false };
 
 	std::string af{
-		std::format(" ; BScript asm file extracted by {} v{}\n ; {}\n\n",
-			fi::appc::APP_NAME, fi::appc::APP_VERSION, fi::appc::APP_URL)
+		std::format(" ; BScript asm file extracted by {} {}\n ; {}\n\n",
+			fe::c::APP_NAME, fe::c::APP_VERSION, fe::c::APP_URL)
 	};
 
 	add_defines(af);

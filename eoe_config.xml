@@ -1,6 +1,6 @@
-<!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
+<!-- Configuration file used by Echoes of Eolis (https://github.com/kaimitai/faxedit) -->
 <!-- Do not make changes to this file - user overrides should reside in eoe_config_override.xml (see the documentation for details) -->
-<eoe_config app_version="beta-8.2">
+<eoe_config app_version="beta-9">
 	<regions>
 		<!-- determine region by ROM signature - will take first match -->
 		<!-- make sure to use identifiers that will not change via ROM editing -->
@@ -369,10 +369,13 @@
 		<const name="rom_iscripts_jumptonextaddr" region="us,randum,eu,us-rev-a" value="$8603" />
 		<const name="rom_iscripts_jumptonextaddr" region="jp,en-transl" value="$8600" />
 		<const name="rom_iscripts_invokenextaction" value="$826e" />
+		<const name="rom_iscripts_updateportraitanimation" region="us,randum,eu,us-rev-a" value="$87b0" />
+		<const name="rom_iscripts_updateportraitanimation" region="jp,en-transl" value="$8788" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
+		<const name="rom_player_isclimbing" value="$ecf6" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
@@ -419,6 +422,8 @@
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl" />
+		<!-- whether to clear unused rom data with $ff in the sprite gfx banks -->
+		<bool name="clear_unused_sprite_gfx_space" value="true" />
 		<!-- link flag RAM to SRAM for translation hack and derivatives -->
 		<bool name="flags_wram_to_sram" value="true" region="en-transl" />
 	</bools>
@@ -1828,6 +1833,44 @@
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
 			<entry key="AtlasDevEntityFieldToVar" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDrawVarNumber" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevIfPlayerFacing" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfPlayerClimbing" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerGrounded" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerAttacking" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerInvincible" value="Flow=Jump" />
+			<entry key="AtlasDevIfPlayerDead" value="Flow=Jump" />
+			<entry key="AtlasDevIfSelectedWeapon" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfSelectedMagic" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevWaitFrames" value="Args=Byte" />
+			<entry key="AtlasDevWaitForButtonPress" value="Args=Byte:ButtonMask" />
+			<entry key="AtlasDevIfButtonHeld" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevIfButtonPressed" value="Args=Byte:ButtonMask,Flow=Jump" />
+			<entry key="AtlasDevSetFacing" value="Args=Byte" />
+			<entry key="AtlasDevSetPlayerPosition" value="Args=Byte:PlayerPackedYX" />
+			<entry key="AtlasDevOpenWindow" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowIcon" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevCloseWindow" />
+			<entry key="AtlasDevLayText" />
+			<entry key="AtlasDevOpenWindowAtEntity" value="Args=Byte+Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevRestoreRect" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowItemName" value="Args=Byte:Item+Byte+Byte" />
+			<entry key="AtlasDevShowIconEx" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevClearText" />
+			<entry key="AtlasDevLayTextAt" value="Args=Byte+Byte" />
+			<entry key="AtlasDevClearTextLine" value="Args=Byte" />
+			<entry key="AtlasDevLayTextLine" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevSetHealth" value="Args=Byte" />
+			<entry key="AtlasDevSetMana" value="Args=Byte" />
+			<entry key="AtlasDevFullHeal" />
+			<entry key="AtlasDevFullMana" />
+			<entry key="AtlasDevIfHealthBelow" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevAddExperience" value="Args=Short" />
+			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />
+			<entry key="AtlasDevIfItemCount" value="Args=Byte:Item+Byte,Flow=Jump" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

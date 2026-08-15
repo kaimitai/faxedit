@@ -1,6 +1,6 @@
 #include "MiscWriter.h"
 #include "common/klib/Kstring.h"
-#include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 #include "fv_constants.h"
 #include <format>
 
@@ -459,8 +459,8 @@ std::string fv::MiscWriter::get_line_comment(fv::MiscCategory p_category, fv::Mi
 
 std::string fv::MiscWriter::generate_txt(void) const {
 	std::string txt{
-		std::format(" ; Faxanadu miscellaneous data file extracted by {} v{}\n ; {}\n",
-			fi::appc::APP_NAME, fi::appc::APP_VERSION, fi::appc::APP_URL)
+		std::format(" ; Faxanadu miscellaneous data file extracted by {} {}\n ; {}\n",
+			fe::c::APP_NAME, fe::c::APP_VERSION, fe::c::APP_URL)
 	};
 
 	for (const auto& kv : items) {

@@ -1,5 +1,5 @@
 <!--
-    Echoes of Eolis / FaxIScripts
+    Echoes of Eolis (https://github.com/kaimitai/faxedit)
     Advanced configuration examples
 
     Rename this file to:
@@ -110,5 +110,9 @@
 		</byte_to_string_map>
 
 	</byte_to_string_maps>
+
+	<!-- string map overrides -->
+	<string_to_string_maps>
+	</string_to_string_maps>
 
 </eoe_config>

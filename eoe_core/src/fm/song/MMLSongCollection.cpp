@@ -1,6 +1,6 @@
 #include "MMLSongCollection.h"
 #include "fm/fm_constants.h"
-#include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 #include "mml_constants.h"
 #include "Fraction.h"
 #include <format>
@@ -171,7 +171,7 @@ std::vector<fm::BytecodeChannel> fm::MMLSongCollection::extract_bytecode_song(MS
 
 std::string fm::MMLSongCollection::to_string(void) const {
 	std::string result{
-		std::format(" ; Faxanadu mml (music macro language) file extracted by FaxIScripts v{}\n ; https://github.com/kaimitai/FaxIScripts\n\n", fi::appc::APP_VERSION)
+		std::format(" ; Faxanadu mml (music macro language) file extracted by {} {}\n ; {}\n\n", fe::c::APP_NAME, fe::c::APP_VERSION, fe::c::APP_URL)
 	};
 
 	for (std::size_t i{ 0 }; i < global_transpose.size(); ++i)

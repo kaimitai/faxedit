@@ -59,7 +59,6 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_exit_app_granted{ false }
 {
 	add_message("It is recommended to read the documentation for usage tips", 6);
-	add_message("For script and music editing try FaxIScripts (https://github.com/kaimitai/FaxIScripts)", 2);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
 	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
 	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
@@ -70,7 +69,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), 6);
 	add_message(std::format("Version: {}", c::APP_VERSION), 6);
-	add_message("https://github.com/kaimitai/faxedit", 2);
+	add_message(c::APP_URL, 2);
 	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
 
 	fe::xml::load_settings_xml(get_settings_xml_path(), m_settings);

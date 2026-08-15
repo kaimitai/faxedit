@@ -34,7 +34,8 @@ namespace fe {
 		constexpr int WIN_ISCRIPT_H{ WIN_TILEMAP_H };
 
 		constexpr char APP_NAME[]{ "Echoes of Eolis" };
-		constexpr char APP_VERSION[]{ "beta-8.2" };
+		constexpr char APP_VERSION[]{ "beta-9" };
+		constexpr char APP_URL[]{ "https://github.com/kaimitai/faxedit" };
 
 		constexpr unsigned char APP_ICON[64] = {
 			0b00010000, 0b01000001, 0b01000001, 0b00000100,

@@ -1,7 +1,7 @@
 #include "AsmWriter.h"
 #include "Opcode.h"
 #include "fi_constants.h"
-#include "fi/cli/application_constants.h"
+#include "fe/fe_app_constants.h"
 
 #include <format>
 #include <map>
@@ -45,8 +45,8 @@ std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
 		l_eps[p_entrypoints[i]].push_back(i);
 
 	std::string af{
-	std::format(" ; IScript assembly file extracted by {} v{}\n ; {}\n\n",
-		fi::appc::APP_NAME, fi::appc::APP_VERSION, fi::appc::APP_URL)
+	std::format(" ; IScript assembly file extracted by {} {}\n ; {}\n\n",
+		fe::c::APP_NAME, fe::c::APP_VERSION, fe::c::APP_URL)
 	};
 
 	append_defines_section(af);

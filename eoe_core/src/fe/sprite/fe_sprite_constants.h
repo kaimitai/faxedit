@@ -106,6 +106,9 @@ namespace fe {
 		// npc constants
 		constexpr char ID_GFX_NPC_ANIM_IDX_OFFSET[]{ "gfx_npc_anim_index_offset" };
 		constexpr char ID_GFX_NPC_TILE_COUNT_OFFSET[]{ "gfx_npc_ppu_tile_count_offset" };
+
+		// booleans
+		constexpr char ID_CLEAR_UNUSED_SPRITE_GFX_SPACE[]{ "clear_unused_sprite_gfx_space" };
 	}
 
 }

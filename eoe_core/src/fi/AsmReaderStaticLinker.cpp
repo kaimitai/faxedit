@@ -210,7 +210,12 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 					}
 				}
 				else {
-					operands.push_back(static_cast<uint16_t>(resolve_token(tokens.at(current_token))));
+					const auto value{ resolve_token(tokens.at(current_token)) };
+					if (arg.domain == fi::ArgDomain::ButtonMask && value == 0)
+						throw std::runtime_error("ButtonMask must be nonzero");
+					if (arg.domain == fi::ArgDomain::PlayerPackedYX && value > 0xaf)
+						throw std::runtime_error("PlayerPackedYX requires Y in 0..10");
+					operands.push_back(static_cast<uint16_t>(value));
 				}
 
 				++current_token;

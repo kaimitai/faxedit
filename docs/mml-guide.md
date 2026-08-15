@@ -19,10 +19,9 @@ Composers are encouraged to **experiment freely**:
 
 Faxanadu’s sound engine has many quirks, and part of the fun is uncovering them together. If you find behavior that differs from what’s written here, please treat it as an opportunity to refine and expand our collective understanding.
 
-This tool would not exist without **Christian Hammond’s reverse engineering of Faxanadu’s music engine**, which provided the foundation for understanding how the original system works. His disassembly and research can be found here:  
-  [https://chipx86.com/faxanadu/](https://chipx86.com/faxanadu/)
+This tool would not exist without **Christian Hammond’s reverse engineering of Faxanadu’s music engine**, which provided the foundation for understanding how the original system works. His disassembly and research can be found [here](https://chipx86.com/faxanadu/).
 
-Special thanks to [Jessica](https://www.romhacking.net/community/9037/) for helping out with the documentation, and for providing us with high quality well-commented [MML files, which serve as great examples](#example-mml-songs). These can be a used as starting points for learning MML music composition as they exemplify a lot of what is covered in this document.
+Special thanks to [Jessica](https://www.romhacking.net/community/9037/) for helping out with the documentation, and for providing us with high quality well-commented [MML files, which serve as great examples](#example-mml-songs). These can be a used as starting point for learning MML music composition as they exemplify a lot of what is covered in this document.
 
 ---
 
@@ -32,7 +31,8 @@ Special thanks to [Jessica](https://www.romhacking.net/community/9037/) for help
   - [The NES Audio Channels](#the-nes-audio-channels)
   - [Timing & Tempo: Making It Simple for Composers](#timing-tempo-making-it-simple-for-composers)
   - [Fractional Drift & Loops: Why Tempo Choice Matters](#fractional-drift-loops-why-tempo-choice-matters)
-  - [CLI Commands for MML Extraction and Injection](#cli-commands-for-mml-extraction-and-injection)
+  - [MML Tools in Echoes of Eolis](#mml-tools-in-echoes-of-eolis)
+  - [Command-Line Interface](#command-line-interface)
     - [**Extract MML from ROM**](#extract-mml-from-rom)
     - [**Compile and Inject MML into ROM**](#compile-and-inject-mml-into-rom)
     - [**Extract Songs as MIDI from ROM**](#extract-songs-as-midi-from-rom)
@@ -201,15 +201,31 @@ We’ll provide a **recommended tempo chart** later in this documentation so you
 
 ---
 
-## CLI Commands for MML Extraction and Injection
+## MML Tools in Echoes of Eolis
 
-The `FaxIScripts` CLI application provides several commands to work with MML files and the Faxanadu ROM:
+The MML tools are available directly from the **Scripting &gt; MML (music)** tab in Echoes of Eolis.
+
+The GUI provides commands for:
+
+- Compiling MML and injecting the resulting music into the current ROM
+- Decompiling the current ROM's music to MML
+- Exporting music from the ROM to MIDI
+- Exporting MML to MIDI
+- Exporting music to LilyPond
+
+The same functionality is also available from the `eoe-cli` command-line application, as described below.
+
+---
+
+## Command-Line Interface
+
+The `eoe-cli` CLI application provides several commands to work with MML files and the Faxanadu ROM:
 
 ---
 
 ### **Extract MML from ROM**
 ```bash
-faxiscripts xmml "faxanadu (u).nes" "faxanadu.mml"
+eoe-cli xmml "faxanadu (u).nes" "faxanadu.mml"
 ```
 **Description:**  
 Extracts the music layer from `faxanadu (u).nes` and saves it as an MML file named `faxanadu.mml`.
@@ -218,7 +234,7 @@ Extracts the music layer from `faxanadu (u).nes` and saves it as an MML file nam
 
 ### **Compile and Inject MML into ROM**
 ```bash
-faxiscripts bmml "faxanadu.mml" "faxanadu.nes" -s "faxanadu (u).nes"
+eoe-cli bmml "faxanadu.mml" "faxanadu.nes" -s "faxanadu (u).nes"
 ```
 **Description:**  
 Compiles and injects the music layer from `faxanadu.mml` into `faxanadu.nes`.  
@@ -229,7 +245,7 @@ Compiles and injects the music layer from `faxanadu.mml` into `faxanadu.nes`.
 
 ### **Extract Songs as MIDI from ROM**
 ```bash
-faxiscripts r2m "faxanadu (u).nes" faxanadu
+eoe-cli r2m "faxanadu (u).nes" faxanadu
 ```
 **Description:**  
 Extracts all songs from `faxanadu (u).nes` into MIDI files named:  
@@ -239,7 +255,7 @@ Extracts all songs from `faxanadu (u).nes` into MIDI files named:
 
 ### **Convert MML to MIDI**
 ```bash
-faxiscripts m2m faxanadu.mml faxanadu
+eoe-cli m2m faxanadu.mml faxanadu
 ```
 **Description:**  
 Translates all songs in `faxanadu.mml` into MIDI files named:  
@@ -250,7 +266,7 @@ This command is **independent of any ROM file** and can be used as a general MML
 
 ## MML Syntax Basics
 
-When you extract a ROM to MML using `faxiscripts xmml`, the top of the file will include comments like:
+When you extract a ROM to MML using `eoe-cli xmml`, the top of the file will include comments like:
 
 ```mml
 ; global transpose for channel sq1: -12 semitones
@@ -953,7 +969,7 @@ Note also that all quarter notes in this table have integer tick lengths. If you
 
 ---
 
-## mml extracted from ROM
+## MML extracted from ROM
 
 The Faxanadu music tools provide a **perfect round‑trip at the bytecode level**, not at the MML level.
 
@@ -1034,12 +1050,12 @@ For deeper testing, you can assign your composition to any song index, but the i
 
 [Lilypond](https://lilypond.org/) is a music engraving program, which is free, open-source, and part of the [GNU Project](https://www.gnu.org/).
 
-The application can export an mml file - or music directly from ROM - to LilyPond files.
+Echoes of Eolis can export an mml file - or music directly from ROM - to LilyPond files.
 
 The command
 
 ```
-faxiscripts r2l faxanadu.nes faxanadu
+eoe-cli r2l faxanadu.nes faxanadu
 ```
 
 will read music data from faxanadu.nes and output them to faxanadu-01.ly to faxanadu-16.ly.
@@ -1047,7 +1063,7 @@ will read music data from faxanadu.nes and output them to faxanadu-01.ly to faxa
 The command
 
 ```
-faxiscripts m2l faxanadu.mml faxanadu -lp
+eoe-cli m2l faxanadu.mml faxanadu -lp
 ```
 
 will export all songs in faxanadu.mml to individual LilyPond files, starting with faxanadu-01.ly - and with the ```-lp``` option enabled, the percussion channel will be included as a drum staff in the output. This is optional, and disabled by default.
@@ -1547,7 +1563,7 @@ t120
 ---
 ## Troubleshooting
 
-Some common problems that can occurr when compiling mml.
+Some common problems that can occur when compiling mml.
 
 - A note length becomes 0 or higher than 255 ticks. This is not allowed by the engine. The error message will tell you which song and channel caused the error. Maybe you tied too many notes together, or your tempo was too fast or too slow relative to the note lengths you used. The calculated illegal tick count (0 or &gt;255) will also show in the error message.
 - If a note length does not sound for as many ticks as expected, it has been reported that you need to use length counter halt. ($len_halt)

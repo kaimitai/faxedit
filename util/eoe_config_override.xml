@@ -1,4 +1,4 @@
-<!-- Configuration file used by Echoes of Eolis and FaxIScripts (https://github.com/kaimitai/faxedit) -->
+<!-- Configuration file used by Echoes of Eolis (https://github.com/kaimitai/faxedit) -->
 <!-- User overrides -->
 <eoe_config>
 
@@ -25,5 +25,9 @@
 	<!-- byte map overrides -->
 	<byte_to_string_maps>
 	</byte_to_string_maps>
+
+	<!-- string map overrides -->
+	<string_to_string_maps>
+	</string_to_string_maps>
 
 </eoe_config>
