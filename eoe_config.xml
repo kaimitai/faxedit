@@ -1232,7 +1232,7 @@
 			<entry byte="$bd" str="9" />
 			<entry byte="$be" str="0" />
 			<entry byte="$bf" str="&lt;short_bar&gt;" />
-			<entry byte="$c0" str="&lt;arrowhead_right&gt;" />
+			<entry byte="$c0" str="&lt;arrow_right&gt;" />
 			<entry byte="$c1" str="&lt;long_bar&gt;" />
 			<entry byte="$c2" str="&lt;arrow_left&gt;" />
 			<entry byte="$c3" str="&lt;block&gt;" />
