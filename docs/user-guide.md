@@ -1346,7 +1346,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
   * **Unified FaxIScripts and Echoes of Eolis under the Echoes of Eolis name**, with the existing applications now distributed as `eoe` and `eoe-cli`
   * Added a **Scripting window** for iScripts, bScripts, mScripts, MML, miscellaneous data, MIDI, and LilyPond workflows
-  * Greatly expanded configurable iScripts, with multi-argument opcodes, hot-reloaded definitions, improved validation, new generic RAM operations, and 33 opcode implementations for dialogue, entities, audio, and visual effects contributed by [mal.exe](https://github.com/malexe3169)
+  * Greatly expanded configurable iScripts, with multi-argument opcodes, hot-reloaded definitions, improved validation and new generic RAM operations. Numerous opcode implementations for dialogue, sprites, audio, visual effects and more were contributed by [mal.exe](https://github.com/malexe3169)
   * bScript assembly no longer clears unused script space automatically, and clearing unused sprite graphics space (banks 6, 7 and 8) is now a configurable option
   * Reworked and expanded all **documentation** after unifying the core
 

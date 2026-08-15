@@ -8,7 +8,7 @@ Precompiled Windows x64 builds are available on the [repository releases](https:
 
 The editor supports all major Faxanadu ROM regions, including US, US Revision A, EU, JP, and the [English Translation Hack](https://www.romhacking.net/translations/4281/).
 
-Echoes of Eolis also includes integrated tools for editing and assembling scripts, music, and other game data. These tools are available directly from the editor, as well as through the `eoe-cli` command-line application.
+Scripting and music tools are available both through the GUI editor and through a command-line application, `eoe-cli`.
 
 See the [documentation](./docs/user-guide.md) for a detailed overview of the editor and the [changelog](./docs/user-guide.md#changelog) for version history.
 
@@ -82,8 +82,6 @@ Alternatively, community-provided helper scripts are available in the `scripts` 
 
 ## Editor Capabilities
 
-Echoes of Eolis can edit:
-
 * **Screen Data:** Tilemaps, scrolling connections, transitions, doors, and sprites
 * **World Data:** Metatiles, scenes (palettes, music, tilesets), and mattock animations
 * **Game Data:** Stages, spawn points, building parameters, push-blocks, jump-on blocks, palette/music mappings, and fog
@@ -147,6 +145,7 @@ Notable community projects include:
 * [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala.
 * [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/) - A full music replacement hack for Faxanadu.
 * [Faxanadu 40th Anniversary edition](https://fax40.net/) - Songbirder's enhancement project, currently in beta.
+* [Faxanadu Retranslation+ and Sara's Quest](https://github.com/UnsavoryMaggot/) - By Ascended Mermaid
 
 <hr>
 
