@@ -70,8 +70,13 @@ namespace fh {
 		constexpr byte ZP_Temp_Int24_M{ 0xed };
 		constexpr byte ZP_Temp_Int24_U{ 0xee };
 		constexpr byte ZP_MusicCurrent{ 0xfa };
+		constexpr byte ZP_PlayerState{ 0xa4 };
+		constexpr byte ZP_PlayerInvincibilityTimer{ 0xad };
 
 		constexpr word CurrentROMBank{ 0x0100 };
+		// IScripts_Begin stores the active root index here before opening the
+		// textbox. Vanilla root $1f is reserved for the death dialogue.
+		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
@@ -94,6 +99,8 @@ namespace fh {
 		constexpr byte ZP_PlayerX{ 0x9e };
 		constexpr byte ZP_PlayerY{ 0xa1 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
+		constexpr word SelectedWeapon{ 0x03bd };
+		constexpr word SelectedMagic{ 0x03c0 };
 
 		constexpr word Flags{ 0x0101 };
 		constexpr word DoorKeyRequirement{ 0x042b };
@@ -113,6 +120,7 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_INVOKENEXTACTION[]{ "rom_iscripts_invokenextaction" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
+		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };

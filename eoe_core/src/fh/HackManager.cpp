@@ -1897,6 +1897,154 @@ word fh::HackManager::apply_AtlasDevDrawVarNumber(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevIfPlayerFacing Direction Label: jumps when the player faces the
+// requested way; even values mean left, odd mean right. $A4 bit 6 is the
+// engine's own facing bit, clear for left and set for right, so the test
+// reads the same state the sprite flipper does.
+word fh::HackManager::apply_AtlasDevIfPlayerFacing(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0x01);
+	code.beq("@want_left");
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x40);
+	code.bne("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@want_left");
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x40);
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfPlayerClimbing Label: jumps while the player is actively on a
+// ladder. Goes through the same fixed-bank predicate the movement code
+// itself uses; carry comes back set only during an actual climb.
+word fh::HackManager::apply_AtlasDevIfPlayerClimbing(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_ISCLIMBING));
+	code.bcs("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfPlayerGrounded Label: jumps when the player stands on ground.
+// Grounded here means none of the engine's jumping, falling or climbing
+// state bits are set, so a jump's landing frame answers true.
+word fh::HackManager::apply_AtlasDevIfPlayerGrounded(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x15);
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfPlayerAttacking Label: $A4 bit 7 is a sword swing in progress.
+word fh::HackManager::apply_AtlasDevIfPlayerAttacking(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.bmi("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfPlayerInvincible Label: the nonzero hurt timer blocks damage.
+word fh::HackManager::apply_AtlasDevIfPlayerInvincible(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_zp(RAM::ZP_PlayerInvincibilityTimer);
+	code.bne("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfPlayerDead Label: jumps inside the death dialogue. HP cannot
+// answer this; the death path clears its one-shot latch before the script
+// starts, and fatal fixed-point damage can leave a nonzero fractional HP
+// byte, so zero-versus-nonzero lies in both directions. What is truthful:
+// the death call enters IScripts_Begin with $ff, which maps to reserved
+// root $1f and is stored at $0200 for the dialogue. Testing that root
+// needs no hook and cannot false-positive in ordinary play.
+word fh::HackManager::apply_AtlasDevIfPlayerDead(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::CurrentIScriptRoot);
+	code.cmp_imm(0x1f);
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfSelectedWeapon Weapon Label
+word fh::HackManager::apply_AtlasDevIfSelectedWeapon(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_abs(RAM::SelectedWeapon);
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfSelectedMagic Magic Label
+word fh::HackManager::apply_AtlasDevIfSelectedMagic(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_abs(RAM::SelectedMagic);
+	code.beq("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // DO NOT USE YET.  This opcode is published for review, not for shipping
 // scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
 // hack_script_var_count), which is not upstream, so Config::constant throws
@@ -2391,6 +2539,38 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevDrawVarNumber:
 			cpu_addr = apply_AtlasDevDrawVarNumber(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerFacing:
+			cpu_addr = apply_AtlasDevIfPlayerFacing(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerClimbing:
+			cpu_addr = apply_AtlasDevIfPlayerClimbing(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerGrounded:
+			cpu_addr = apply_AtlasDevIfPlayerGrounded(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerAttacking:
+			cpu_addr = apply_AtlasDevIfPlayerAttacking(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerInvincible:
+			cpu_addr = apply_AtlasDevIfPlayerInvincible(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfPlayerDead:
+			cpu_addr = apply_AtlasDevIfPlayerDead(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfSelectedWeapon:
+			cpu_addr = apply_AtlasDevIfSelectedWeapon(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfSelectedMagic:
+			cpu_addr = apply_AtlasDevIfSelectedMagic(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
