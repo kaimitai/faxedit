@@ -376,6 +376,11 @@
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
 		<const name="rom_player_isclimbing" value="$ecf6" />
+		<!-- These PPU helpers move in the Japanese fixed bank. -->
+		<const name="rom_ppu_address_from_pos" region="jp,en-transl" value="$f8cc" />
+		<const name="rom_ppu_address_from_pos" value="$f804" />
+		<const name="rom_ppu_queue_payload" region="jp,en-transl" value="$f90d" />
+		<const name="rom_ppu_queue_payload" value="$f845" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
@@ -1871,6 +1876,18 @@
 			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />
 			<entry key="AtlasDevIfItemCount" value="Args=Byte:Item+Byte,Flow=Jump" />
+			<entry key="AtlasDevSetPalette" value="Args=Byte+Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevRestorePalette" />
+			<entry key="AtlasDevLoadBgPalette" value="Args=Byte" />
+			<entry key="AtlasDevLoadSpritePalette" value="Args=Byte" />
+			<entry key="AtlasDevFlashScreen" value="Args=Byte" />
+			<entry key="AtlasDevSetColorEmphasis" value="Args=Byte" />
+			<entry key="AtlasDevQueuePaletteFlush" />
+			<entry key="AtlasDevWipeScreenStep" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevAnimateTiles" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetTextColor" value="Args=Byte" />
+			<entry key="AtlasDevSetAttrRect" value="Args=Byte+Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevPlaceChrTile" value="Args=Byte+Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

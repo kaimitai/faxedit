@@ -37,7 +37,10 @@ namespace fh {
 		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
 		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
 		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
-		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
+		AtlasDevSetPalette, AtlasDevRestorePalette, AtlasDevLoadBgPalette, AtlasDevLoadSpritePalette,
+		AtlasDevFlashScreen, AtlasDevSetColorEmphasis, AtlasDevQueuePaletteFlush, AtlasDevWipeScreenStep,
+		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile
 	};
 
 	class HackManager {
@@ -155,6 +158,18 @@ namespace fh {
 		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfItemCount(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetPalette(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevRestorePalette(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLoadBgPalette(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevLoadSpritePalette(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFlashScreen(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetColorEmphasis(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevQueuePaletteFlush(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWipeScreenStep(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevAnimateTiles(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetTextColor(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetAttrRect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevPlaceChrTile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
