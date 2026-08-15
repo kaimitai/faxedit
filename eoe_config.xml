@@ -1849,6 +1849,18 @@
 			<entry key="AtlasDevIfButtonPressed" value="Args=Byte:ButtonMask,Flow=Jump" />
 			<entry key="AtlasDevSetFacing" value="Args=Byte" />
 			<entry key="AtlasDevSetPlayerPosition" value="Args=Byte:PlayerPackedYX" />
+			<entry key="AtlasDevOpenWindow" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowIcon" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevCloseWindow" />
+			<entry key="AtlasDevLayText" />
+			<entry key="AtlasDevOpenWindowAtEntity" value="Args=Byte+Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevRestoreRect" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevShowItemName" value="Args=Byte:Item+Byte+Byte" />
+			<entry key="AtlasDevShowIconEx" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevClearText" />
+			<entry key="AtlasDevLayTextAt" value="Args=Byte+Byte" />
+			<entry key="AtlasDevClearTextLine" value="Args=Byte" />
+			<entry key="AtlasDevLayTextLine" value="Args=Byte+Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

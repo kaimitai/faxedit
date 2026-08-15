@@ -2325,6 +2325,192 @@ word fh::HackManager::apply_AtlasDevSetPlayerPosition(const fe::Config& p_config
 	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevOpenWindow(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x1d); code.bcc("@x_ok"); code.lda_imm(0x1c);
+	code.label("@x_ok"); code.sta_abs(0x0208);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x1b); code.bcc("@y_ok"); code.lda_imm(0x1a);
+	code.label("@y_ok"); code.sta_abs(0x0209);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x21); code.bcc("@width_ok"); code.lda_imm(0x20);
+	code.label("@width_ok"); code.sta_abs(0x020a);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x1f); code.bcc("@height_ok"); code.lda_imm(0x1e);
+	code.label("@height_ok"); code.sta_abs(0x020b);
+	code.jsr(ROM::OpenWindowDraw);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevShowIcon(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x14); code.bcc("@icon_ok"); code.lda_imm(0x13);
+	code.label("@icon_ok"); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(0xee); code.lda_abs(0x0208); code.clc(); code.adc_zp(0xee); code.sta_zp(0xea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(0xef); code.lda_abs(0x0209); code.clc(); code.adc_zp(0xef); code.sta_zp(0xeb);
+	code.pla(); code.tax(); code.jsr(ROM::IconDraw);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevCloseWindow(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(ROM::WindowClose);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevLayText(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.lda_abs(0x0208); code.clc(); code.adc_imm(0x02); code.sta_zp(0xea);
+	code.lda_abs(0x0209); code.clc(); code.adc_imm(0x02); code.sta_zp(0xeb);
+	code.jsr(ROM::TextGridLay);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevOpenWindowAtEntity(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x08); code.bcs("@player"); code.tax();
+	code.db(0xb5); code.db(0xba); code.sta_zp(0xe8);
+	code.db(0xb5); code.db(0xc2); code.sta_zp(0xe9); code.bcc("@join");
+	code.label("@player");
+	code.lda_zp(0x9e); code.sta_zp(0xe8); code.lda_zp(0xa1); code.sta_zp(0xe9);
+	code.label("@join");
+	code.lda_zp(0xe8); code.lsr_a(3); code.sta_zp(0xee);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.clc(); code.adc_zp(0xee); code.and_imm(0xfe); code.sta_abs(0x0208);
+	code.lda_zp(0xe9); code.lsr_a(3); code.sta_zp(0xef);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.clc(); code.adc_zp(0xef); code.and_imm(0xfe); code.sta_abs(0x0209);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x020a);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x020b);
+	code.jsr(ROM::OpenWindowDraw);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevRestoreRect(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x0208);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x0209);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x020a);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0xfe); code.sta_abs(0x020b);
+	code.jsr(ROM::WindowClose);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevShowItemName(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0); code.bcs("@invalid"); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xeb);
+	code.pla(); code.jsr(ROM::ItemNameDraw);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@invalid");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevShowIconEx(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x14); code.bcc("@shape_ok"); code.lda_imm(0x13);
+	code.label("@shape_ok"); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.and_imm(0x1f); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(0xee); code.lda_abs(0x0208); code.clc(); code.adc_zp(0xee); code.sta_zp(0xea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(0xef); code.lda_abs(0x0209); code.clc(); code.adc_zp(0xef); code.sta_zp(0xeb);
+	code.pla(); code.sta_zp(0xee); code.pla(); code.tax(); code.lda_zp(0xee);
+	code.jsr(ROM::IconDraw);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevClearText(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.lda_abs(0x0208); code.clc(); code.adc_imm(0x02); code.sta_zp(0xea);
+	code.lda_abs(0x0209); code.clc(); code.adc_imm(0x02); code.sta_zp(0xeb);
+	code.jsr(ROM::PPUAddressFromPos);
+	code.lda_imm(0x04); code.sta_zp(0xef);
+	code.label("@row");
+	code.lda_imm(0x10); code.jsr(ROM::PPUQueueAppendHeader);
+	code.lda_imm(0x10); code.sta_zp(0xec);
+	code.label("@byte");
+	code.lda_imm(0x00); code.jsr(ROM::PPUQueuePayload);
+	code.db(0xc6); code.db(0xec); code.bne("@byte");
+	code.db(0x86); code.db(0x20); code.jsr(ROM::PPUAdvanceRow);
+	code.db(0xc6); code.db(0xef); code.bne("@row");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevLayTextAt(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xeb);
+	code.jsr(ROM::TextGridLay);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevClearTextLine(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0x03); code.clc(); code.adc_imm(0x02);
+	code.db(0x6d); code.dw(0x0209); code.sta_zp(0xeb);
+	code.lda_abs(0x0208); code.clc(); code.adc_imm(0x02); code.sta_zp(0xea);
+	code.jsr(ROM::PPUAddressFromPos);
+	code.lda_imm(0x10); code.jsr(ROM::PPUQueueAppendHeader);
+	code.lda_imm(0x10); code.sta_zp(0xec);
+	code.label("@byte");
+	code.lda_imm(0x00); code.jsr(ROM::PPUQueuePayload);
+	code.db(0xc6); code.db(0xec); code.bne("@byte");
+	code.db(0x86); code.db(0x20);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevLayTextLine(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.sta_zp(0xeb);
+	code.jsr(ROM::PPUAddressFromPos);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.tay();
+	code.jsr(ROM::TextGridRowQueue);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -2693,6 +2879,54 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevSetPlayerPosition:
 			cpu_addr = apply_AtlasDevSetPlayerPosition(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevOpenWindow:
+			cpu_addr = apply_AtlasDevOpenWindow(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevShowIcon:
+			cpu_addr = apply_AtlasDevShowIcon(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevCloseWindow:
+			cpu_addr = apply_AtlasDevCloseWindow(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevLayText:
+			cpu_addr = apply_AtlasDevLayText(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevOpenWindowAtEntity:
+			cpu_addr = apply_AtlasDevOpenWindowAtEntity(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevRestoreRect:
+			cpu_addr = apply_AtlasDevRestoreRect(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevShowItemName:
+			cpu_addr = apply_AtlasDevShowItemName(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevShowIconEx:
+			cpu_addr = apply_AtlasDevShowIconEx(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevClearText:
+			cpu_addr = apply_AtlasDevClearText(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevLayTextAt:
+			cpu_addr = apply_AtlasDevLayTextAt(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevClearTextLine:
+			cpu_addr = apply_AtlasDevClearTextLine(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevLayTextLine:
+			cpu_addr = apply_AtlasDevLayTextLine(p_config, p_rom, cpu_addr);
 			break;
 
 		default:

@@ -19,7 +19,12 @@ namespace fh {
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
 		constexpr word Menu_WaitInput{ 0x84ed };
 		constexpr word Portrait_Pump{ 0x87b0 };
+		constexpr word ItemNameDraw{ 0x8c36 };
+		constexpr word IconDraw{ 0x8c58 };
+		constexpr word OpenWindowDraw{ 0x8ef1 };
+		constexpr word WindowClose{ 0x9002 };
 		constexpr word Text_ContinueGate{ 0x9956 };
+		constexpr word TextGridLay{ 0x9910 };
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
@@ -30,6 +35,7 @@ namespace fh {
 		constexpr word WaitForInterrupt{ 0xca2e };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
+		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
@@ -42,6 +48,10 @@ namespace fh {
 		constexpr word Portrait_Clear{ 0xf281 };
 		constexpr word Messages_Load{ 0xf3f5 };
 		constexpr word Text_ShowNextChar{ 0xf466 };
+		constexpr word TextGridRowQueue{ 0xf5d9 };
+		constexpr word PPUAddressFromPos{ 0xf804 };
+		constexpr word PPUAdvanceRow{ 0xf826 };
+		constexpr word PPUQueuePayload{ 0xf845 };
 		// One vanilla caller; inputs $ea/$eb tile position, $ec/$ed/$ee value,
 		// Y digit count 1..7.  Emits through the buffered PPU queue.
 		constexpr word Number_DrawAtPos{ 0xfa03 };
