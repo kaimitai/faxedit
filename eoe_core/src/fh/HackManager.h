@@ -154,7 +154,7 @@ namespace fh {
 		word apply_AtlasDevSetGold(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-word apply_AtlasDevIfItemCount(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfItemCount(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,

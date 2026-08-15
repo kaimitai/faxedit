@@ -370,14 +370,12 @@
 		<const name="rom_iscripts_jumptonextaddr" region="jp,en-transl" value="$8600" />
 		<const name="rom_iscripts_invokenextaction" value="$826e" />
 		<const name="rom_iscripts_updateportraitanimation" region="us,randum,eu,us-rev-a" value="$87b0" />
+		<const name="rom_iscripts_updateportraitanimation" region="jp,en-transl" value="$8788" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
-		<!-- Byte-identical in the four official ROMs. The expanded English
-		     translation is intentionally not guessed; projects based on it must
-		     provide a verified override before installing IfPlayerClimbing. -->
-		<const name="rom_player_isclimbing" region="us,us-rev-a,eu,jp,randum" value="$ecf6" />
+		<const name="rom_player_isclimbing" value="$ecf6" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
