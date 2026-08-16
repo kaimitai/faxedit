@@ -180,11 +180,18 @@ copy /Y "$(SolutionDir)eoe_config.xml" "$(TargetDir)eoe_config.xml"
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\eoe_test\ScriptRoundTripTests.cpp" />
+    <ClCompile Include="src\eoe_test\hash.cpp" />
+    <ClCompile Include="src\eoe_test\private_tests.cpp" />
+    <ClCompile Include="src\eoe_test\TestHelper.cpp" />
+    <ClCompile Include="src\eoe_test\TestSuite.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\eoe_test\ScriptRoundTripTests.h" />
+    <ClInclude Include="src\common\picosha2.h" />
+    <ClInclude Include="src\eoe_test\hash.h" />
+    <ClInclude Include="src\eoe_test\private_tests.h" />
+    <ClInclude Include="src\eoe_test\TestHelper.h" />
+    <ClInclude Include="src\eoe_test\TestSuite.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

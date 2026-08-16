@@ -19,17 +19,41 @@
     <Filter Include="Source Files\eoe_test">
       <UniqueIdentifier>{00dc0420-814f-4922-a054-1a0771ba5f19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\common">
+      <UniqueIdentifier>{700d125c-3682-4c6d-964e-2bc2078b3d08}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\eoe_test\ScriptRoundTripTests.cpp">
+    <ClCompile Include="src\eoe_test\hash.cpp">
+      <Filter>Source Files\eoe_test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\eoe_test\TestSuite.cpp">
+      <Filter>Source Files\eoe_test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\eoe_test\private_tests.cpp">
+      <Filter>Source Files\eoe_test</Filter>
+    </ClCompile>
+    <ClCompile Include="src\eoe_test\TestHelper.cpp">
       <Filter>Source Files\eoe_test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\eoe_test\ScriptRoundTripTests.h">
+    <ClInclude Include="src\common\picosha2.h">
+      <Filter>Header Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="src\eoe_test\hash.h">
+      <Filter>Header Files\eoe_test</Filter>
+    </ClInclude>
+    <ClInclude Include="src\eoe_test\TestSuite.h">
+      <Filter>Header Files\eoe_test</Filter>
+    </ClInclude>
+    <ClInclude Include="src\eoe_test\private_tests.h">
+      <Filter>Header Files\eoe_test</Filter>
+    </ClInclude>
+    <ClInclude Include="src\eoe_test\TestHelper.h">
       <Filter>Header Files\eoe_test</Filter>
     </ClInclude>
   </ItemGroup>
