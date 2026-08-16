@@ -34,9 +34,13 @@ namespace fh {
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
+		// Waits until the PPU queue has room for up to $24 bytes.
+		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
+		// Stages the selected sprite palette and stores its index at $03d4.
+		constexpr word Screen_CopySpritePaletteToShadow{ 0xd062 };
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
@@ -65,6 +69,14 @@ namespace fh {
 	namespace RAM {
 		constexpr byte ZP_Temp07{ 0x07 };
 		constexpr byte ZP_Temp08{ 0x08 };
+		// PPUMASK shadow copied to $2001 by the NMI.
+		constexpr byte ZP_PPUMaskShadow{ 0x0b };
+		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
+		constexpr byte ZP_CameraNametableParity{ 0x0d };
+		// Producer cursor of the $0500 PPU command ring.  Producers seed X
+		// from it, write payload bytes, and publish with one STX; the NMI
+		// consumer compares it against the read cursor $1f.
+		constexpr byte ZP_PPUBufferWriteCursor{ 0x20 };
 		constexpr byte ZP_CurrentWorld{ 0x24 };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
@@ -81,9 +93,16 @@ namespace fh {
 		constexpr byte ZP_e5{ 0xe5 };
 		constexpr byte ZP_e6{ 0xe6 };
 		constexpr byte ZP_e7{ 0xe7 };
+		// $e8/$e9 are PPUQueueAppendHeader's PPU address input (lo/hi);
+		// $ea/$eb are PPUAddressFromPos' tile position input (x/y).
+		constexpr byte ZP_e8{ 0xe8 };
+		constexpr byte ZP_e9{ 0xe9 };
+		constexpr byte ZP_ea{ 0xea };
+		constexpr byte ZP_eb{ 0xeb };
 		constexpr byte ZP_Temp_Int24_L{ 0xec };
 		constexpr byte ZP_Temp_Int24_M{ 0xed };
 		constexpr byte ZP_Temp_Int24_U{ 0xee };
+		constexpr byte ZP_ef{ 0xef };
 		constexpr byte ZP_MusicCurrent{ 0xfa };
 		constexpr byte ZP_PlayerState{ 0xa4 };
 		constexpr byte ZP_PlayerInvincibilityTimer{ 0xad };
@@ -135,6 +154,17 @@ namespace fh {
 		constexpr word PlayerMana{ 0x039a };
 		constexpr word PlayerXP_L{ 0x0390 };
 		constexpr word PlayerXP_U{ 0x0391 };
+		// The 32-byte staged palette ($0293-$02b2, background then sprite
+		// half) that queue command $00 copies to PPU palette RAM whole.
+		constexpr word PaletteShadow{ 0x0293 };
+		// The sub-palette the engine caches for textbox glyphs (single
+		// vanilla writer, $d048); glyphs render in that sub's colour 3.
+		constexpr word TextBoxSubPalette{ 0x038d };
+		// Selector for the ROM background palette set; area transitions
+		// overwrite it, RestorePalette re-stages from it.
+		constexpr word ScreenPaletteIndex{ 0x03d0 };
+		// PPU command ring; write cursor $20, read cursor $1f.
+		constexpr word PPUBufferRing{ 0x0500 };
 	}
 
 	namespace c {
@@ -148,6 +178,8 @@ namespace fh {
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
+		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
+		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
