@@ -40,7 +40,10 @@ namespace fh {
 		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
 		AtlasDevSetPalette, AtlasDevRestorePalette, AtlasDevLoadBgPalette, AtlasDevLoadSpritePalette,
 		AtlasDevFlashScreen, AtlasDevSetColorEmphasis, AtlasDevQueuePaletteFlush, AtlasDevWipeScreenStep,
-		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile
+		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile,
+		AtlasDevWarpToDoor, AtlasDevWarpAreaScreenPos,
+		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
+		AtlasDevDespawnAllEntities, AtlasDevSetMetatile
 	};
 
 	class HackManager {
@@ -170,6 +173,13 @@ namespace fh {
 		word apply_AtlasDevSetTextColor(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetAttrRect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevPlaceChrTile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWarpToDoor(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevWarpAreaScreenPos(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSpawnEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDropItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDespawnEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDespawnAllEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,

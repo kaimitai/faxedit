@@ -28,6 +28,7 @@ namespace fh {
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
+		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
 		// bank 15 addresses
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
@@ -45,6 +46,9 @@ namespace fh {
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
 		constexpr word Area_SetBlocks{ 0xd7c5 };
+		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
+		constexpr word EntityAllocate{ 0xc205 };
+		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };
@@ -64,6 +68,16 @@ namespace fh {
 		constexpr word Hud_DrawGold{ 0xf9e7 };
 		constexpr word SpecialItemIdTable{ 0x9add };
 		constexpr word SpecialItemMaskTable{ 0x8d52 };
+
+		constexpr byte TransitionBank{ 0x0e };
+		constexpr word Door_Dispatch{ 0xe533 };
+		constexpr word Game_SetupEnterScreen{ 0xdaa0 };
+		constexpr word Game_SetupNewArea{ 0xdacd };
+		constexpr word Screen_PaletteFadeOut{ 0xda2f };
+		constexpr word Door_MatchAtBlockPos{ 0xe7f5 };
+		constexpr word Game_MainLoop{ 0xdb45 };
+		constexpr word RegionAreaTable{ 0xdafe };
+		constexpr word AreaPaletteTable{ 0xdf4c };
 	}
 
 	namespace RAM {
@@ -165,6 +179,11 @@ namespace fh {
 		constexpr word ScreenPaletteIndex{ 0x03d0 };
 		// PPU command ring; write cursor $20, read cursor $1f.
 		constexpr word PPUBufferRing{ 0x0500 };
+		constexpr byte ZP_DoorMatchFlag{ 0xb7 };
+		constexpr byte ZP_TransitionScreen{ 0x64 };
+		constexpr byte ZP_TransitionPalette{ 0x65 };
+		constexpr byte ZP_TransitionStartPos{ 0x6c };
+		constexpr word LiveWeapon{ 0x03c8 };
 	}
 
 	namespace c {
@@ -180,6 +199,8 @@ namespace fh {
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
+		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };
+		constexpr char ID_ROM_VANILLA_FAR_CALL[]{ "rom_vanilla_far_call" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };

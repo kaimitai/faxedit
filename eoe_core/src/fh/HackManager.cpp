@@ -3369,6 +3369,271 @@ word fh::HackManager::apply_AtlasDevPlaceChrTile(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// Finds the door at packed YX and runs the normal door transition.
+// Missing doors continue the script. Region exits keep their normal lock.
+word fh::HackManager::apply_AtlasDevWarpToDoor(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = packed door pos
+	code.tax();
+	code.lda_imm(0x00);
+	code.sta_zp(RAM::ZP_DoorMatchFlag);
+	code.jsr(ROM::Door_MatchAtBlockPos);
+	code.lda_zp(RAM::ZP_DoorMatchFlag);
+	code.bne("@found");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@found");
+	code.jsr(ROM::TextBox_RectRecompute);
+	code.jsr(cfg_word(p_config, c::ID_ROM_WINDOW_CLOSE));
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::DoorKeyRequirement);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::Door_Dispatch - 1);
+	code.jmp(ROM::Game_MainLoop);
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// Runs the normal same-area or cross-area transition.
+// Rejects area 4 and values above 7. Screen IDs are not checked.
+word fh::HackManager::apply_AtlasDevWarpAreaScreenPos(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = target area
+	code.sta_zp(0xee);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = target screen
+	code.sta_zp(0xef);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = packed start pos
+	code.pha();
+
+	code.lda_zp(0xee);
+	code.cmp_imm(0x04);
+	code.beq("@refused");
+	code.cmp_imm(0x08);
+	code.bcc("@loadable");
+	code.label("@refused");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@loadable");
+	code.lda_zp(RAM::ZP_CurrentWorld);
+	code.cmp_imm(0x04);
+	code.bne("@weapon_live");
+	code.lda_abs(RAM::SelectedWeapon);
+	code.sta_abs(RAM::LiveWeapon);
+	code.label("@weapon_live");
+
+	code.jsr(ROM::TextBox_RectRecompute);
+	code.jsr(cfg_word(p_config, c::ID_ROM_WINDOW_CLOSE));
+
+	code.pla();
+	code.sta_zp(RAM::ZP_TransitionStartPos);
+	code.lda_zp(0xef);
+	code.sta_zp(RAM::ZP_TransitionScreen);
+	code.db(0xa6); code.db(0xee); // LDX $EE
+	code.lda_abs_x(ROM::AreaPaletteTable);
+	code.sta_zp(RAM::ZP_TransitionPalette);
+	code.lda_zp(0xee);
+	code.cmp_zp(RAM::ZP_CurrentWorld);
+	code.beq("@same_area");
+
+	code.sta_zp(RAM::ZP_CurrentWorld);
+	code.ldx_imm(0x05);
+	code.label("@region_scan");
+	code.lda_abs_x(ROM::RegionAreaTable);
+	code.cmp_zp(RAM::ZP_CurrentWorld);
+	code.beq("@region_set");
+	code.dex();
+	code.bpl("@region_scan");
+	code.bne("@region_done");
+	code.label("@region_set");
+	code.db(0x8e); code.dw(RAM::CurrentStage); // STX $0435
+	code.label("@region_done");
+	code.jsr(ROM::Screen_PaletteFadeOut);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::Game_SetupNewArea - 1);
+	code.jmp(ROM::Game_MainLoop);
+
+	code.label("@same_area");
+	code.jsr(ROM::Screen_PaletteFadeOut);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::Game_SetupEnterScreen - 1);
+	code.jmp(ROM::Game_MainLoop);
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSpawnEntity(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x65);
+	code.bcc("@type_ok");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@type_ok");
+	code.sta_abs(0x038b);
+	code.ldx_imm(0x07);
+	code.label("@scan");
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.cmp_imm(0xff);
+	code.beq("@slot");
+	code.dex();
+	code.bpl("@scan");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@slot");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.and_imm(0xf0);
+	code.sta_abs(0x038a);
+	code.pla();
+	code.asl_a(); code.asl_a(); code.asl_a(); code.asl_a();
+	code.sta_abs(0x0389);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityAllocate - 1);
+	code.db(0xae); code.dw(0x0378); // LDX allocated slot
+	code.lda_imm(0x00);
+	code.sta_abs_x(RAM::EntityHitStun);
+	code.lda_imm(0xff);
+	code.sta_abs_x(RAM::EntityScriptRoot);
+	code.jsr(ROM::EntityChrPass);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevDropItem(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x65);
+	code.bcc("@type_ok");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@type_ok");
+	code.sta_abs(0x038b);
+	code.ldx_imm(0x07);
+	code.label("@scan");
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.cmp_imm(0xff);
+	code.beq("@slot");
+	code.dex();
+	code.bpl("@scan");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@slot");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.and_imm(0xf0);
+	code.sta_abs(0x038a);
+	code.pla();
+	code.asl_a(); code.asl_a(); code.asl_a(); code.asl_a();
+	code.sta_abs(0x0389);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityAllocate - 1);
+	code.db(0xae); code.dw(0x0378); // LDX allocated slot
+	code.lda_imm(0x00);
+	code.sta_abs_x(RAM::EntityHitStun);
+	code.pla();
+	code.sta_abs_x(RAM::EntityScriptRoot);
+	code.jsr(ROM::EntityChrPass);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevDespawnEntity(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_imm(0xff);
+	code.sta_abs_x(RAM::EntitySlotActive);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevDespawnAllEntities(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.ldx_imm(0x07);
+	code.lda_imm(0xff);
+	code.label("@loop");
+	code.sta_abs_x(RAM::EntitySlotActive);
+	code.dex();
+	code.bpl("@loop");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word max_tile_table{ static_cast<word>(cpu_addr + 53) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.db(0xba); // TSX
+	code.lda_abs_x(0x0102);
+	code.and_imm(0xf0);
+	code.cmp_imm(0xd0);
+	code.bcs("@reject");
+	code.lda_abs_x(0x0101);
+	code.db(0xa6); code.db(RAM::ZP_CurrentWorld); // LDX current area
+	code.cpx_imm(0x08);
+	code.bcs("@reject");
+	code.cmp_abs_x(max_tile_table);
+	code.bcc("@apply");
+	code.beq("@apply");
+	code.label("@reject");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@apply");
+	code.pla(); code.sta_abs(0x03ce);
+	code.pla(); code.sta_abs(0x03cf);
+	code.jsr(ROM::Area_SetBlockAtPosition);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	for (const byte maximum : { 0x7f, 0x88, 0x87, 0x6f, 0xff, 0x5d, 0x62, 0x3f })
+		code.db(maximum);
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -3857,6 +4122,27 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevPlaceChrTile:
 			cpu_addr = apply_AtlasDevPlaceChrTile(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevWarpToDoor:
+			cpu_addr = apply_AtlasDevWarpToDoor(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevWarpAreaScreenPos:
+			cpu_addr = apply_AtlasDevWarpAreaScreenPos(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSpawnEntity:
+			cpu_addr = apply_AtlasDevSpawnEntity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevDropItem:
+			cpu_addr = apply_AtlasDevDropItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevDespawnEntity:
+			cpu_addr = apply_AtlasDevDespawnEntity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevDespawnAllEntities:
+			cpu_addr = apply_AtlasDevDespawnAllEntities(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMetatile:
+			cpu_addr = apply_AtlasDevSetMetatile(p_config, p_rom, cpu_addr);
 			break;
 
 		default:

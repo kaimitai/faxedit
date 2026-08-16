@@ -381,6 +381,10 @@
 		<const name="rom_ppu_address_from_pos" value="$f804" />
 		<const name="rom_ppu_queue_payload" region="jp,en-transl" value="$f90d" />
 		<const name="rom_ppu_queue_payload" value="$f845" />
+		<const name="rom_window_close" region="jp,en-transl" value="$8fda" />
+		<const name="rom_window_close" value="$9002" />
+		<const name="rom_vanilla_far_call" region="jp,en-transl" value="$f921" />
+		<const name="rom_vanilla_far_call" value="$f859" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
@@ -1888,6 +1892,13 @@
 			<entry key="AtlasDevSetTextColor" value="Args=Byte" />
 			<entry key="AtlasDevSetAttrRect" value="Args=Byte+Byte+Byte+Byte+Byte" />
 			<entry key="AtlasDevPlaceChrTile" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevWarpToDoor" value="Args=Byte" />
+			<entry key="AtlasDevWarpAreaScreenPos" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevSpawnEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevDropItem" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevDespawnEntity" value="Args=Byte" />
+			<entry key="AtlasDevDespawnAllEntities" />
+			<entry key="AtlasDevSetMetatile" value="Args=Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>
