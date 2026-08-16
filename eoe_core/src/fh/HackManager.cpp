@@ -3000,6 +3000,375 @@ word fh::HackManager::apply_AtlasDevIfItemCount(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevSetPalette Sub C0 C1 C2 C3: queues four colours at
+// $3f00 + Sub*4. Attribute cells using that sub-palette recolour together.
+// The queue cursor is published after all four payload bytes are written.
+word fh::HackManager::apply_AtlasDevSetPalette(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = sub 0-3
+	code.and_imm(0x03);
+	code.asl_a();
+	code.asl_a();                           // sub * 4
+	code.sta_zp(RAM::ZP_e8);                // PPU address = $3f00 + sub*4
+	code.lda_imm(0x3f);
+	code.sta_zp(RAM::ZP_e9);
+	code.lda_imm(0x04);
+	code.jsr(ROM::PPUQueueAppendHeader);    // four-byte raw packet
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // colour 0
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // colour 1
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // colour 2
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // colour 3
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.db(0x86); code.db(RAM::ZP_PPUBufferWriteCursor); // STX $20 -- publish (no stx_zp mnemonic)
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevRestorePalette: drains the queue, stages the area's background
+// palette selected by $03d0, and queues the 32-byte palette upload.
+word fh::HackManager::apply_AtlasDevRestorePalette(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(ROM::PPUBuffer_WaitEmpty);
+	code.lda_abs(RAM::ScreenPaletteIndex);
+	code.jsr(ROM::Screen_CopyBgPaletteToShadow);
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevLoadBgPalette Index: stores the selector at $03d0, drains the
+// queue, stages the background palette, and queues its upload.
+word fh::HackManager::apply_AtlasDevLoadBgPalette(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = palette set
+	code.sta_abs(RAM::ScreenPaletteIndex);
+	code.jsr(ROM::PPUBuffer_WaitEmpty);
+	code.lda_abs(RAM::ScreenPaletteIndex);
+	code.jsr(ROM::Screen_CopyBgPaletteToShadow);
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevLoadSpritePalette Index: drains the queue, stages the selected
+// sprite palette, and queues the complete palette shadow.
+word fh::HackManager::apply_AtlasDevLoadSpritePalette(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = palette set
+	code.pha();
+	code.jsr(ROM::PPUBuffer_WaitEmpty);
+	code.pla();
+	code.jsr(ROM::Screen_CopySpritePaletteToShadow);
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFlashScreen Frames: sets the PPUMASK greyscale bit in $0b for
+// the requested frames, then restores the previous value. Zero is a no-op.
+word fh::HackManager::apply_AtlasDevFlashScreen(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = frames
+	code.tax();
+	code.beq("@done");
+	code.lda_zp(RAM::ZP_PPUMaskShadow);
+	code.pha();                              // saved pre-flash shadow
+	code.ora_imm(0x01);                      // greyscale on
+	code.sta_zp(RAM::ZP_PPUMaskShadow);
+	code.label("@frame");
+	code.jsr(ROM::WaitForInterrupt);
+	code.dex();
+	code.bne("@frame");
+	code.pla();
+	code.sta_zp(RAM::ZP_PPUMaskShadow);      // restore the previous mask
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetColorEmphasis Emphasis: replaces PPUMASK bits 5..7 in the
+// $0b shadow while preserving bits 0..4. The NMI copies $0b to $2001.
+word fh::HackManager::apply_AtlasDevSetColorEmphasis(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = emphasis byte
+	code.db(0x45); code.db(RAM::ZP_PPUMaskShadow); // EOR $0b (no eor_zp mnemonic)
+	code.and_imm(0xe0);
+	code.db(0x45); code.db(RAM::ZP_PPUMaskShadow); // EOR $0b
+	code.sta_zp(RAM::ZP_PPUMaskShadow);            // publish once; NMI does the rest
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevQueuePaletteFlush: queues command $00, which copies the staged
+// palette at $0293-$02b2 to PPU palette RAM.
+word fh::HackManager::apply_AtlasDevQueuePaletteFlush(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(ROM::PPUBuffer_WaitForCapacity);
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevWipeScreenStep Phase AddrHi AddrLo: queues command $fa as
+// [$fa, Phase, AddrHi, AddrLo]. It erodes one 16-byte CHR tile, with Phase
+// selecting the columns cleared by this step.
+word fh::HackManager::apply_AtlasDevWipeScreenStep(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(ROM::PPUBuffer_WaitForCapacity);
+	code.db(0xa6); code.db(RAM::ZP_PPUBufferWriteCursor); // LDX $20 (no ldx_zp mnemonic)
+	code.lda_imm(0xfa);                      // queue command: column erase
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // phase 0-7
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // PPU address hi
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // PPU address lo
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.db(0x86); code.db(RAM::ZP_PPUBufferWriteCursor); // STX $20 -- publish
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevAnimateTiles FirstTile Count: queues one command $fc rotation
+// for each consecutive PT1 tile. Zero is a no-op and Count clamps to 8.
+// Eight calls return a tile to its original pixels.
+word fh::HackManager::apply_AtlasDevAnimateTiles(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = first tile
+	code.sta_zp(RAM::ZP_Temp_Int24_U);       // running tile id
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = count
+	code.beq("@done");
+	code.cmp_imm(0x09);
+	code.bcc("@count_ok");
+	code.lda_imm(0x08);                      // clamp to 8 tiles
+	code.label("@count_ok");
+	code.sta_zp(RAM::ZP_ef);
+	code.jsr(ROM::PPUBuffer_WaitForCapacity);
+	code.db(0xa6); code.db(RAM::ZP_PPUBufferWriteCursor); // LDX $20 (no ldx_zp mnemonic)
+	code.label("@tile");
+	code.lda_imm(0xfc);                      // queue command: rotate tiles
+	code.sta_abs_x(RAM::PPUBufferRing);
+	code.inx();
+	code.lda_zp(RAM::ZP_Temp_Int24_U);
+	code.lsr_a(4);
+	code.clc();
+	code.adc_imm(0x10);                      // pattern table 1
+	code.sta_abs_x(RAM::PPUBufferRing);      // PPU address hi
+	code.inx();
+	code.lda_zp(RAM::ZP_Temp_Int24_U);
+	code.asl_a();
+	code.asl_a();
+	code.asl_a();
+	code.asl_a();
+	code.sta_abs_x(RAM::PPUBufferRing);      // PPU address lo
+	code.inx();
+	code.db(0xe6); code.db(RAM::ZP_Temp_Int24_U); // INC $ee (no inc_zp mnemonic)
+	code.dec_zp(RAM::ZP_ef);
+	code.bne("@tile");
+	code.db(0x86); code.db(RAM::ZP_PPUBufferWriteCursor); // STX $20 -- publish
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetTextColor Colour: changes colour 3 of the textbox sub-palette
+// selected by $038d. The same colour is used by the HUD. $ff reloads the
+// room's background palette. Some textbox-close paths also reload it.
+word fh::HackManager::apply_AtlasDevSetTextColor(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = colour, $ff restores
+	code.cmp_imm(0xff);
+	code.beq("@restore");
+	code.pha();
+	code.jsr(ROM::PPUBuffer_WaitEmpty);
+	code.lda_abs(RAM::TextBoxSubPalette);
+	code.and_imm(0x03);
+	code.asl_a();
+	code.asl_a();
+	code.adc_imm(0x03);                      // sub*4 + 3, carry clear (see above)
+	code.tax();
+	code.pla();
+	code.sta_abs_x(RAM::PaletteShadow);      // the staged glyph-colour byte
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@restore");
+	code.jsr(ROM::PPUBuffer_WaitEmpty);
+	code.lda_abs(RAM::ScreenPaletteIndex);
+	code.jsr(ROM::Screen_CopyBgPaletteToShadow);
+	code.jsr(ROM::PPUBuffer_QueuePaletteUpload);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetAttrRect AttrX AttrY AttrW AttrH Sub: assigns one sub-palette
+// to a rectangle of 32x32-pixel attribute cells. The value is copied into
+// all four quadrants of each attribute byte. Zero sizes are no-ops and the
+// rectangle clips at the 8x8 table edge.
+word fh::HackManager::apply_AtlasDevSetAttrRect(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // attr x
+	code.and_imm(0x07);
+	code.sta_zp(RAM::ZP_ea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // attr y
+	code.and_imm(0x07);
+	code.sta_zp(RAM::ZP_eb);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // attr width
+	code.sta_zp(RAM::ZP_Temp_Int24_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // attr height
+	code.sta_zp(RAM::ZP_Temp_Int24_M);
+
+	// sub -> all four quadrants: v = s | s<<2, then v |= v<<4
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // sub 0-3
+	code.and_imm(0x03);
+	code.sta_zp(RAM::ZP_Temp_Int24_U);
+	code.asl_a();
+	code.asl_a();
+	code.db(0x05); code.db(RAM::ZP_Temp_Int24_U); // ORA $ee (no ora_zp mnemonic)
+	code.sta_zp(RAM::ZP_Temp_Int24_U);
+	code.asl_a();
+	code.asl_a();
+	code.asl_a();
+	code.asl_a();
+	code.db(0x05); code.db(RAM::ZP_Temp_Int24_U); // ORA $ee
+	code.sta_zp(RAM::ZP_Temp_Int24_U);            // finished attribute byte
+
+	// Clip width to 8-x.  All operands have already been consumed, so a
+	// zero dimension can continue at @done without desynchronizing the script.
+	code.lda_imm(0x08);
+	code.sec();
+	code.db(0xe5); code.db(RAM::ZP_ea);      // SBC $ea (no sbc_zp mnemonic)
+	code.cmp_zp(RAM::ZP_Temp_Int24_L);
+	code.bcs("@width_ok");
+	code.sta_zp(RAM::ZP_Temp_Int24_L);
+	code.label("@width_ok");
+	code.lda_zp(RAM::ZP_Temp_Int24_L);
+	code.beq("@done");
+
+	// Clip height to 8-y.
+	code.lda_imm(0x08);
+	code.sec();
+	code.db(0xe5); code.db(RAM::ZP_eb);      // SBC $eb (no sbc_zp mnemonic)
+	code.cmp_zp(RAM::ZP_Temp_Int24_M);
+	code.bcs("@height_ok");
+	code.sta_zp(RAM::ZP_Temp_Int24_M);
+	code.label("@height_ok");
+	code.lda_zp(RAM::ZP_Temp_Int24_M);
+	code.beq("@done");
+
+	code.lda_zp(RAM::ZP_CameraNametableParity);
+	code.and_imm(0x01);
+	code.asl_a();
+	code.asl_a();
+	code.ora_imm(0x23);
+	code.sta_zp(RAM::ZP_e9);                 // attribute base hi: $23 or $27
+	code.lda_zp(RAM::ZP_eb);
+	code.asl_a();
+	code.asl_a();
+	code.asl_a();                            // row * 8
+	code.clc();
+	code.adc_zp(RAM::ZP_ea);                 // + column
+	code.clc();
+	code.adc_imm(0xc0);                      // + $c0: the attribute table
+	code.sta_zp(RAM::ZP_e8);
+
+	code.label("@row");
+	code.lda_zp(RAM::ZP_Temp_Int24_L);
+	code.jsr(ROM::PPUQueueAppendHeader);     // one packet of Width bytes
+	code.lda_zp(RAM::ZP_Temp_Int24_L);
+	code.sta_zp(RAM::ZP_ef);                 // per-row counter, in memory
+	code.label("@byte");
+	code.lda_zp(RAM::ZP_Temp_Int24_U);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.dec_zp(RAM::ZP_ef);
+	code.bne("@byte");
+	code.db(0x86); code.db(RAM::ZP_PPUBufferWriteCursor); // STX $20 -- publish the row
+	code.lda_zp(RAM::ZP_e8);
+	code.clc();
+	code.adc_imm(0x08);                      // next attribute row
+	code.sta_zp(RAM::ZP_e8);
+	code.dec_zp(RAM::ZP_Temp_Int24_M);
+	code.bne("@row");
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevPlaceChrTile Tile X Y: queues one background tile. X is limited
+// to 0..31 and Y to 0..29 so the write stays outside the attribute table.
+word fh::HackManager::apply_AtlasDevPlaceChrTile(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // tile
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // x
+	code.and_imm(0x1f);
+	code.sta_zp(RAM::ZP_ea);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // y
+	code.cmp_imm(0x1e);
+	code.bcc("@y_ok");
+	code.lda_imm(0x1d);
+	code.label("@y_ok");
+	code.sta_zp(RAM::ZP_eb);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_ADDRESS_FROM_POS));
+	code.lda_imm(0x01);
+	code.jsr(ROM::PPUQueueAppendHeader);
+	code.pla();
+	code.jsr(cfg_word(p_config, c::ID_ROM_PPU_QUEUE_PAYLOAD));
+	code.db(0x86); code.db(RAM::ZP_PPUBufferWriteCursor); // STX $20 -- publish
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -3452,6 +3821,42 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevIfItemCount:
 			cpu_addr = apply_AtlasDevIfItemCount(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetPalette:
+			cpu_addr = apply_AtlasDevSetPalette(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevRestorePalette:
+			cpu_addr = apply_AtlasDevRestorePalette(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevLoadBgPalette:
+			cpu_addr = apply_AtlasDevLoadBgPalette(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevLoadSpritePalette:
+			cpu_addr = apply_AtlasDevLoadSpritePalette(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevFlashScreen:
+			cpu_addr = apply_AtlasDevFlashScreen(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetColorEmphasis:
+			cpu_addr = apply_AtlasDevSetColorEmphasis(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevQueuePaletteFlush:
+			cpu_addr = apply_AtlasDevQueuePaletteFlush(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevWipeScreenStep:
+			cpu_addr = apply_AtlasDevWipeScreenStep(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevAnimateTiles:
+			cpu_addr = apply_AtlasDevAnimateTiles(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetTextColor:
+			cpu_addr = apply_AtlasDevSetTextColor(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetAttrRect:
+			cpu_addr = apply_AtlasDevSetAttrRect(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevPlaceChrTile:
+			cpu_addr = apply_AtlasDevPlaceChrTile(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
