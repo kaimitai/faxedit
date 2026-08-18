@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "fi/cli/application_constants.h"
 #include "fe/fe_app_constants.h"
+#include "fe/Message.h"
 #include "fi/fi_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/script/ScriptManager.h"
@@ -11,6 +12,10 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+static void print_message(const fe::Message& p_message) {
+	std::cout << p_message.text << '\n';
+}
 
 void fi::Cli::print_header(void) const {
 	std::cout << fe::c::APP_NAME << " " << fe::c::APP_VERSION << " - Faxanadu Script Assembler and Disassembler\n";
@@ -145,10 +150,7 @@ void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
 	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 	const auto opcode_defs{ fe::script::get_iscript_opcode_info(m_config) };
 
-	fe::script::asm_iscripts_to_file(m_config, rom, p_asm_filename, p_out_filename, opcode_defs, p_strict,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::asm_iscripts_to_file(m_config, rom, p_asm_filename, p_out_filename, opcode_defs, p_strict, print_message);
 }
 
 void fi::Cli::basm_to_nes(const std::string& p_basm_filename,
@@ -157,10 +159,7 @@ void fi::Cli::basm_to_nes(const std::string& p_basm_filename,
 	bool p_strict) {
 
 	const auto rom{ load_rom_and_config(p_source_rom_filename) };
-	fe::script::asm_bscripts_to_file(m_config, rom, p_basm_filename, p_nes_filename, p_strict,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::asm_bscripts_to_file(m_config, rom, p_basm_filename, p_nes_filename, p_strict, print_message);
 
 }
 
@@ -169,10 +168,7 @@ void fi::Cli::masm_to_nes(const std::string& p_mml_filename,
 	const std::string& p_source_rom_filename) {
 
 	const auto rom{ load_rom_and_config(p_source_rom_filename) };
-	fe::script::asm_mscripts_to_file(m_config, rom, p_mml_filename, p_nes_filename,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::asm_mscripts_to_file(m_config, rom, p_mml_filename, p_nes_filename, print_message);
 }
 
 void fi::Cli::misc_to_nes(const std::string& p_txt_filename,
@@ -181,10 +177,7 @@ void fi::Cli::misc_to_nes(const std::string& p_txt_filename,
 
 	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 
-	fe::script::build_misc_to_file(m_config, rom, p_txt_filename, p_nes_filename,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::build_misc_to_file(m_config, rom, p_txt_filename, p_nes_filename, print_message);
 }
 
 void fi::Cli::nes_to_asm(const std::string& p_nes_filename,
@@ -200,10 +193,7 @@ void fi::Cli::nes_to_asm(const std::string& p_nes_filename,
 	const auto opcode_info{ fe::script::get_iscript_opcode_info(m_config) };
 
 	fe::script::disasm_iscripts_to_file(m_config, rom_data, opcode_info.opcodes,
-		p_asm_filename, p_shop_comments, p_overwrite,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+		p_asm_filename, p_shop_comments, p_overwrite, print_message);
 }
 
 void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
@@ -214,10 +204,7 @@ void fi::Cli::nes_to_basm(const std::string& p_nes_filename,
 		std::cout << "Will overwrite output assembly file if it already exists\n";
 
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
-	fe::script::disasm_bscripts_to_file(m_config, rom_data, p_basm_filename, p_overwrite,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::disasm_bscripts_to_file(m_config, rom_data, p_basm_filename, p_overwrite, print_message);
 }
 
 void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
@@ -225,10 +212,7 @@ void fi::Cli::nes_to_masm(const std::string& p_nes_filename,
 
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
-	fe::script::disasm_mscripts_to_file(m_config, rom_data, p_mml_filename, m_notes, p_overwrite,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::disasm_mscripts_to_file(m_config, rom_data, p_mml_filename, m_notes, p_overwrite, print_message);
 }
 
 void fi::Cli::nes_to_misc(const std::string& p_nes_filename,
@@ -236,10 +220,7 @@ void fi::Cli::nes_to_misc(const std::string& p_nes_filename,
 	bool p_overwrite) {
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
-	fe::script::extract_misc_to_file(m_config, rom_data, p_txt_filename, m_strict, p_overwrite,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::extract_misc_to_file(m_config, rom_data, p_txt_filename, m_strict, p_overwrite, print_message);
 }
 
 void fi::Cli::nes_to_mml(const std::string& p_nes_filename,
@@ -248,10 +229,7 @@ void fi::Cli::nes_to_mml(const std::string& p_nes_filename,
 
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
-	fe::script::decompile_mml_to_file(m_config, rom_data, p_mml_filename, p_overwrite,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::decompile_mml_to_file(m_config, rom_data, p_mml_filename, p_overwrite, print_message);
 }
 
 void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
@@ -260,10 +238,7 @@ void fi::Cli::mml_to_nes(const std::string& p_mml_filename,
 
 	const auto rom{ load_rom_and_config(p_source_rom_filename) };
 
-	fe::script::compile_mml_to_file(m_config, rom, p_mml_filename, p_nes_filename,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::compile_mml_to_file(m_config, rom, p_mml_filename, p_nes_filename, print_message);
 }
 
 void fi::Cli::rom_to_midi(const std::string& p_nes_filename,
@@ -271,10 +246,7 @@ void fi::Cli::rom_to_midi(const std::string& p_nes_filename,
 
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
-	fe::script::rom_to_midi_files(m_config, rom_data, p_out_file_prefix,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+	fe::script::rom_to_midi_files(m_config, rom_data, p_out_file_prefix, print_message);
 }
 
 void fi::Cli::mml_to_midi(const std::string& p_mml_filename,
@@ -282,9 +254,7 @@ void fi::Cli::mml_to_midi(const std::string& p_mml_filename,
 	fe::script::mml_to_midi_files(
 		p_mml_filename,
 		p_out_file_prefix,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+		print_message);
 }
 
 void fi::Cli::rom_to_lilypond(const std::string& p_nes_filename,
@@ -292,17 +262,13 @@ void fi::Cli::rom_to_lilypond(const std::string& p_nes_filename,
 	const auto rom_data{ load_rom_and_config(p_nes_filename) };
 
 	fe::script::rom_to_lilypond_files(m_config, rom_data, p_out_file_prefix, m_lilypond_percussion,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+		print_message);
 }
 
 void fi::Cli::mml_to_lilypond(const std::string& p_mml_filename,
 	const std::string& p_out_file_prefix) {
 	fe::script::mml_to_lilypond_files(p_mml_filename, p_out_file_prefix, m_lilypond_percussion,
-		[](const std::string& p_message) {
-			std::cout << p_message << '\n';
-		});
+		print_message);
 }
 
 void fi::Cli::dump_config(const std::string& p_nes_filename,

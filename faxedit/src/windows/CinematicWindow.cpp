@@ -92,7 +92,7 @@ void fe::MainWindow::draw_cinematic_window(SDL_Renderer* p_rnd) {
 
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		add_message(ex.what(), fe::MsgType::Error);
 	}
 
 	ImGui::End();
@@ -261,7 +261,7 @@ void fe::MainWindow::show_cinematic_frames(SDL_Renderer* p_rnd) {
 		m_sprite_snap_manager.add_flat_snapshot(c::CINEMATIC_NUM_ID_GFX_COLL,
 			cinema.tiles, cinema.frames);
 		add_message(std::format("Stored cinematic chr-bank and {} frames as snapshot",
-			cinema.frames.size()), 2, true);
+			cinema.frames.size()), fe::MsgType::Success, true);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Restore Snapshot", 4, "Restore snapshot of related chr-banks and frames",
@@ -273,7 +273,7 @@ void fe::MainWindow::show_cinematic_frames(SDL_Renderer* p_rnd) {
 
 		ls_redraw_bank = true;
 		ls_redraw_frame = true;
-		add_message(std::format("Restored cinematic chr-bank and {} frame(s) from snapshot", restoreres.second), 2);
+		add_message(std::format("Restored cinematic chr-bank and {} frame(s) from snapshot", restoreres.second), fe::MsgType::Success);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Query Snapshot", 4, "Check count of banks and frames stored in the most recent snapshot",
@@ -281,7 +281,7 @@ void fe::MainWindow::show_cinematic_frames(SDL_Renderer* p_rnd) {
 		) {
 		const auto queryres{ m_sprite_snap_manager.query_snapshot(c::CINEMATIC_NUM_ID_GFX_COLL) };
 		add_message(std::format("Most recent snapshot contains {} chr-bank(s) and {} frame(s)",
-			queryres.first, queryres.second), 2);
+			queryres.first, queryres.second), fe::MsgType::Success);
 	}
 }
 
@@ -342,7 +342,7 @@ void fe::MainWindow::import_cinematic_frame_bmps(void) {
 	m_sprite_snap_manager.apply_flat_bmp_import(c::CINEMATIC_NUM_ID_GFX_COLL,
 		importedbank, impres.frames, cinema.tiles, cinema.frames);
 
-	add_message(std::format("Created snapshot, and imported {} bmp files", impres.frames.size()), 2);
+	add_message(std::format("Created snapshot, and imported {} bmp files", impres.frames.size()), fe::MsgType::Success);
 }
 
 void fe::MainWindow::export_cinematic_frame_bmps(void) {
@@ -355,7 +355,7 @@ void fe::MainWindow::export_cinematic_frame_bmps(void) {
 
 	add_message(std::format("Saved {} bmps as {}", cinema.frames.size(),
 		m_gfx.get_sprite_frame_bmp_wc_filpath(get_bmp_path(),
-			get_sprite_gfx_file_prefix(c::CINEMATIC_NUM_ID_GFX_COLL), 0)), 2);
+			get_sprite_gfx_file_prefix(c::CINEMATIC_NUM_ID_GFX_COLL), 0)), fe::MsgType::Success);
 }
 
 void fe::MainWindow::export_cinematic_chr_bank(const std::vector<klib::NES_tile>& p_bank) {
@@ -388,5 +388,5 @@ void fe::MainWindow::import_cinematic_chr_bank(std::vector<klib::NES_tile>& p_ci
 	m_sprite_snap_manager.apply_flat_chr_import(c::CINEMATIC_NUM_ID_GFX_COLL, 0,
 		imp_bank, p_cinematic_bank);
 
-	add_message(std::format("Created snapshot, and imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), 2);
+	add_message(std::format("Created snapshot, and imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), fe::MsgType::Success);
 }

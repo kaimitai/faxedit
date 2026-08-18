@@ -2,6 +2,7 @@
 #include <format>
 #include <stdexcept>
 #include "ScriptManager.h"
+#include "fe/MessageCallback.h"
 #include "fe/ROM_Manager.h"
 #include "fe/fe_constants.h"
 #include "fi/fi_constants.h"
@@ -23,17 +24,12 @@
 #include "common/klib/Kstring.h"
 
 // helpers
-void fe::script::message(const MessageCallback& p_callback, const std::string& p_message) {
-	if (p_callback)
-		p_callback(p_message);
-}
-
 void fe::script::try_patch(const std::string& p_data_type, std::size_t p_data_size,
 	std::size_t p_data_max_size, const MessageCallback& p_message) {
-	message(p_message, std::format(
+	send_message(p_message, { std::format(
 		"Trying to patch {}: Using {} of {} available bytes ({:.2f}%)",
 		p_data_type, p_data_size, p_data_max_size,
-		100.0f * static_cast<float>(p_data_size) / static_cast<float>(p_data_max_size)));
+		100.0f * static_cast<float>(p_data_size) / static_cast<float>(p_data_max_size)) });
 
 	if (p_data_size > p_data_max_size)
 		throw std::runtime_error(std::format("Size limits exceeded for {}", p_data_type));
@@ -77,7 +73,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	auto rom{ p_rom };
 
 	if (p_strict)
-		message(p_message, "Using strict mode - Only original ROM data region will be used");
+		send_message(p_message, { "Using strict mode - Only original ROM data region will be used" });
 
 	fi::AsmReader reader(p_opcode_info.opcodes);
 
@@ -103,8 +99,8 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 		l_iscript_rg2_start = hack_mgr.apply_script_library(p_config, rom, l_iscript_rg2_start,
 			required_libs, p_opcode_info.base_opcode_count);
 
-		message(p_message, std::format("Installed new script library routines ({} bytes)",
-			l_iscript_rg2_start - old_rg2_start));
+		send_message(p_message, { std::format("Installed new script library routines ({} bytes)",
+			l_iscript_rg2_start - old_rg2_start), fe::MsgType::Success });
 	}
 
 	reader.read_asm(p_config, p_asm, l_iscript_rg2_start);
@@ -112,7 +108,7 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	auto bytes{ reader.get_script_bytes(p_config) };
 	auto strbytes{ reader.get_string_bytes(p_config) };
 
-	message(p_message, std::format("Using {} unique strings out of a maximum of 255", reader.get_string_count()));
+	send_message(p_message, { std::format("Using {} unique strings out of a maximum of 255", reader.get_string_count()) });
 
 	std::size_t l_iscript_string_start{ p_config.constant(fi::c::ID_STRING_DATA_START) };
 	std::size_t l_iscript_string_end{ p_config.constant(fi::c::ID_STRING_DATA_END) };
@@ -160,14 +156,14 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	if (!tmchanges.empty()) {
 		fh::HackManager hack_mgr;
 		std::size_t tmsub_size{ hack_mgr.apply_tilemap_change_subsystem(p_config, rom, tmchanges) };
-		message(p_message, std::format("Installed tilemap change subsystem ({} bytes)", tmsub_size));
+		send_message(p_message, { std::format("Installed tilemap change subsystem ({} bytes)", tmsub_size), fe::MsgType::Success });
 	}
 
 	// duplicate bank 15 if needed
 	if (fe::ROM_Manager::duplicate_static_bank_if_needed(p_config, rom))
-		message(p_message, "Bank 15 was duplicated to bank 31 post-patch");
+		send_message(p_message, { "Bank 15 was duplicated to bank 31 post-patch" });
 
-	message(p_message, "Verifying generated ROM contents");
+	send_message(p_message, { "Verifying generated ROM contents" });
 
 	// parse it to see if disassembly succeeds without throwing
 	validate_iscript_layer(p_config, rom, p_opcode_info.opcodes);
@@ -180,13 +176,13 @@ void fe::script::asm_iscripts_to_file(const fe::Config& p_config, const std::vec
 	const fi::ScriptOpcodeInfo& p_opcode_info, bool p_strict,
 	const MessageCallback& p_message) {
 
-	message(p_message, std::format("Attempting to parse assembly file {}", p_asm_filename));
+	send_message(p_message, { std::format("Attempting to parse assembly file {}", p_asm_filename) });
 	const auto asm_code{ klib::file::read_file_as_strings(p_asm_filename) };
 	const auto patched_rom{ asm_iscripts(p_config, p_rom, asm_code,	p_opcode_info,p_strict,	p_message) };
 
-	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	send_message(p_message, { std::format("Attempting to patch file {}", p_out_filename) });
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
-	message(p_message, "File patched");
+	send_message(p_message, { "File patched", fe::MsgType::Success });
 }
 
 std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
@@ -218,12 +214,12 @@ void fe::script::disasm_iscripts_to_file(const fe::Config& p_config, const std::
 	if (!p_overwrite && klib::file::file_exists(p_filename))
 		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_filename));
 
-	message(p_message, "Attempting to parse ROM scripting layer");
+	send_message(p_message, { "Attempting to parse ROM scripting layer" });
 	const auto asm_code{ disasm_iscripts(p_config, p_rom, p_opcodes, p_shop_comments, script_count) };
-	message(p_message, std::format("Detected {} script entrypoints", script_count));
-	message(p_message, std::format("Generating output file {}", p_filename));
+	send_message(p_message, { std::format("Detected {} script entrypoints", script_count) });
+	send_message(p_message, { std::format("Generating output file {}", p_filename) });
 	klib::file::write_string_to_file(asm_code, p_filename);
-	message(p_message, "Extraction complete!");
+	send_message(p_message, { "Extraction complete!", fe::MsgType::Success });
 }
 
 // bScripts
@@ -232,15 +228,15 @@ std::vector<byte> fe::script::asm_bscripts(const fe::Config& p_config, const std
 	auto rom{ p_rom };
 
 	if (p_strict)
-		message(p_message, "Using strict mode - Only original ROM data region will be used");
+		send_message(p_message, { "Using strict mode - Only original ROM data region will be used" });
 
 	fb::BScriptReader reader(p_config);
 	reader.read_asm(p_asm, p_config);
 
 	const auto bytes{ reader.to_bytes() };
 
-	message(p_message, std::format("Total script byte size (including ptr table): {}",
-		bytes.first.size() + bytes.second.size()));
+	send_message(p_message, { std::format("Total script byte size (including ptr table): {}",
+		bytes.first.size() + bytes.second.size()) });
 
 	auto bscriptptr{ p_config.pointer(fb::c::ID_BSCRIPT_PTR) };
 
@@ -265,7 +261,7 @@ std::vector<byte> fe::script::asm_bscripts(const fe::Config& p_config, const std
 	for (std::size_t i{ 0 }; i < bytes.second.size(); ++i)
 		rom.at(l_rg2_start + i) = bytes.second[i];
 
-	message(p_message, "Verifying generated ROM contents");
+	send_message(p_message, { "Verifying generated ROM contents" });
 	// parse generated ROM to verify the behavior script layer is valid
 	try {
 		fb::BScriptLoader staticanalysisread(p_config, rom);
@@ -282,15 +278,15 @@ void fe::script::asm_bscripts_to_file(const fe::Config& p_config, const std::vec
 	const std::string& p_basm_filename, const std::string& p_out_filename, bool p_strict,
 	const MessageCallback& p_message) {
 
-	message(p_message,
-		std::format("Attempting to parse assembly file {}", p_basm_filename));
+	send_message(p_message,
+		{ std::format("Attempting to parse assembly file {}", p_basm_filename) });
 
 	const auto asm_code{ klib::file::read_file_as_strings(p_basm_filename) };
 	const auto patched_rom{ asm_bscripts(p_config,p_rom,asm_code,p_strict,p_message) };
 
-	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	send_message(p_message, { std::format("Attempting to patch file {}", p_out_filename) });
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
-	message(p_message, "File patched");
+	send_message(p_message, { "File patched", fe::MsgType::Success });
 }
 
 std::string fe::script::disasm_bscripts(const fe::Config& p_config, const std::vector<byte>& p_rom) {
@@ -307,11 +303,11 @@ void fe::script::disasm_bscripts_to_file(const fe::Config& p_config, const std::
 	if (!p_overwrite && klib::file::file_exists(p_filename))
 		throw std::runtime_error(std::format("Assembly file {} exists, and overwrite-flag is not set", p_filename));
 
-	message(p_message, "Attempting to parse ROM behavior script layer");
+	send_message(p_message, { "Attempting to parse ROM behavior script layer" });
 	const auto asm_code{ disasm_bscripts(p_config, p_rom) };
-	message(p_message, std::format("Generating output file {}", p_filename));
+	send_message(p_message, { std::format("Generating output file {}", p_filename) });
 	klib::file::write_string_to_file(asm_code, p_filename);
-	message(p_message, "Extraction complete!");
+	send_message(p_message, { "Extraction complete!", fe::MsgType::Success });
 }
 
 // mScripts
@@ -336,13 +332,13 @@ void fe::script::asm_mscripts_to_file(const fe::Config& p_config, const std::vec
 	const std::string& p_asm_filename, const std::string& p_out_filename,
 	const MessageCallback& p_message) {
 
-	message(p_message, std::format("Attempting to parse assembly file {}", p_asm_filename));
+	send_message(p_message, { std::format("Attempting to parse assembly file {}", p_asm_filename) });
 	const auto asm_code{ klib::file::read_file_as_strings(p_asm_filename) };
 	const auto patched_rom{ asm_mscripts(p_config, p_rom, asm_code, p_message) };
 
-	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	send_message(p_message, { std::format("Attempting to patch file {}", p_out_filename) });
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
-	message(p_message, "File patched");
+	send_message(p_message, { "File patched", fe::MsgType::Success });
 }
 
 std::string fe::script::disasm_mscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
@@ -350,7 +346,7 @@ std::string fe::script::disasm_mscripts(const fe::Config& p_config, const std::v
 	fm::MScriptLoader loader(p_config, p_rom);
 	loader.parse_rom();
 
-	message(p_message, std::format("Detected {} music tracks", loader.get_song_count()));
+	send_message(p_message, { std::format("Detected {} music tracks", loader.get_song_count()) });
 
 	fm::MMLWriter writer(p_config);
 	return writer.generate_mml(
@@ -371,13 +367,13 @@ void fe::script::disasm_mscripts_to_file(const fe::Config& p_config, const std::
 			"Music asm file {} exists, and overwrite-flag is not set",
 			p_filename));
 
-	message(p_message, std::format("Note value emission {}", p_emit_notes ? "enabled" : "disabled"));
+	send_message(p_message, { std::format("Note value emission {}", p_emit_notes ? "enabled" : "disabled") });
 
-	message(p_message, "Attempting to parse ROM music layer");
+	send_message(p_message, { "Attempting to parse ROM music layer" });
 	const auto mscript_asm{ disasm_mscripts(p_config, p_rom, p_emit_notes, p_message) };
-	message(p_message, std::format("Generating output file {}", p_filename));
+	send_message(p_message, { std::format("Generating output file {}", p_filename) });
 	klib::file::write_string_to_file(mscript_asm, p_filename);
-	message(p_message, "Extraction complete!");
+	send_message(p_message, { "Extraction complete!", fe::MsgType::Success });
 }
 
 // misc interface
@@ -391,9 +387,9 @@ std::vector<byte> fe::script::build_misc(const fe::Config& p_config, const std::
 	const int item_count{ reader.patch_rom(rom, p_config) };
 
 	if (fe::ROM_Manager::duplicate_static_bank_if_needed(p_config, rom))
-		message(p_message, "Bank 15 was duplicated to bank 31 post-patch");
+		send_message(p_message, { "Bank 15 was duplicated to bank 31 post-patch" });
 
-	message(p_message, std::format("Patched {} miscellaneous data items", item_count));
+	send_message(p_message, { std::format("Patched {} miscellaneous data items", item_count) });
 
 	return rom;
 }
@@ -401,14 +397,14 @@ std::vector<byte> fe::script::build_misc(const fe::Config& p_config, const std::
 void fe::script::build_misc_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_txt_filename, const std::string& p_out_filename,
 	const MessageCallback& p_message) {
-	message(p_message, std::format("Attempting to parse {}", p_txt_filename));
+	send_message(p_message, { std::format("Attempting to parse {}", p_txt_filename) });
 
 	const auto txt{ klib::file::read_file_as_strings(p_txt_filename) };
 	const auto patched_rom{ build_misc(p_config, p_rom, txt, p_message) };
 
-	message(p_message, std::format("Attempting to patch {}", p_out_filename));
+	send_message(p_message, { std::format("Attempting to patch {}", p_out_filename) });
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
-	message(p_message, std::format("Misc data written to file {}!", p_out_filename));
+	send_message(p_message, { std::format("Misc data written to file {}!", p_out_filename), fe::MsgType::Success });
 }
 
 std::string fe::script::extract_misc(const fe::Config& p_config, const std::vector<byte>& p_rom,
@@ -426,15 +422,15 @@ void fe::script::extract_misc_to_file(const fe::Config& p_config, const std::vec
 		throw std::runtime_error(std::format("Txt file {} exists, and overwrite-flag is not set", p_filename));
 
 	if (p_include_all_sprites)
-		message(p_message, "Will output misc data for all sprites (not only enemies and bosses)");
+		send_message(p_message, { "Will output misc data for all sprites (not only enemies and bosses)" });
 
-	message(p_message, "Extracting miscellaneous ROM data");
+	send_message(p_message, { "Extracting miscellaneous ROM data" });
 
 	const auto txt{ extract_misc(p_config, p_rom, p_include_all_sprites) };
 
-	message(p_message, std::format("Generating output file {}", p_filename));
+	send_message(p_message, { std::format("Generating output file {}", p_filename) });
 	klib::file::write_string_to_file(txt, p_filename);
-	message(p_message, std::format("Extraction to {} complete!", p_filename));
+	send_message(p_message, { std::format("Extraction to {} complete!", p_filename), fe::MsgType::Success });
 }
 
 // MML interface
@@ -453,12 +449,12 @@ void fe::script::decompile_mml_to_file(const fe::Config& p_config, const std::ve
 	if (!p_overwrite && klib::file::file_exists(p_filename))
 		throw std::runtime_error(std::format("MML file {} exists, and overwrite-flag is not set", p_filename));
 
-	message(p_message, "Decompiling music to MML");
+	send_message(p_message, { "Decompiling music to MML" });
 
 	const auto mml{ decompile_mml(p_config, p_rom) };
 	klib::file::write_string_to_file(mml, p_filename);
-	message(p_message,
-		std::format("MML extracted to {}!", p_filename));
+	send_message(p_message,
+		{ std::format("MML extracted to {}!", p_filename), fe::MsgType::Success });
 }
 
 fm::MMLSongCollection fe::script::parse_mml(const std::vector<std::string>& p_mml) {
@@ -498,14 +494,14 @@ std::vector<byte> fe::script::compile_mml(const fe::Config& p_config, const std:
 
 void fe::script::compile_mml_to_file(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_mml_filename, const std::string& p_out_filename, const MessageCallback& p_message) {
-	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+	send_message(p_message, { std::format("Attempting to parse MML file {}", p_mml_filename) });
 
 	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
 	const auto patched_rom{ compile_mml(p_config, p_rom, mml, p_message) };
 
-	message(p_message, std::format("Attempting to patch file {}", p_out_filename));
+	send_message(p_message, { std::format("Attempting to patch file {}", p_out_filename) });
 	klib::file::write_bytes_to_file(patched_rom, p_out_filename);
-	message(p_message, "File patched");
+	send_message(p_message, { "File patched", fe::MsgType::Success });
 }
 
 // midi
@@ -527,19 +523,19 @@ std::vector<smf::MidiFile> fe::script::rom_to_midi(const fe::Config& p_config, c
 void fe::script::write_midi_files(std::vector<smf::MidiFile>& p_midis, const std::string& p_out_file_prefix,
 	const MessageCallback& p_message) {
 
-	message(p_message, "Attempting to write MIDI files...");
+	send_message(p_message, { "Attempting to write MIDI files..." });
 
 	for (std::size_t i{ 0 }; i < p_midis.size(); ++i) {
 		const std::string filename{ std::format("{}-{:02}.mid", p_out_file_prefix, i + 1) };
 		p_midis[i].write(filename);
-		message(p_message,
-			std::format("Wrote {}!", filename));
+		send_message(p_message,
+			{ std::format("Wrote {}!", filename), fe::MsgType::Success });
 	}
 }
 
 void fe::script::mml_to_midi_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
 	const MessageCallback& p_message) {
-	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+	send_message(p_message, { std::format("Attempting to parse MML file {}", p_mml_filename) });
 
 	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
 	auto midis{ mml_to_midi(mml) };
@@ -569,19 +565,19 @@ std::vector<std::string> fe::script::rom_to_lilypond(const fe::Config& p_config,
 void fe::script::write_lilypond_files(const std::vector<std::string>& p_lilypond,
 	const std::string& p_out_file_prefix, const MessageCallback& p_message) {
 
-	message(p_message, "Attempting to write LilyPond files...");
+	send_message(p_message, { "Attempting to write LilyPond files..." });
 
 	for (std::size_t i{ 0 }; i < p_lilypond.size(); ++i) {
 		const std::string filename{ std::format("{}-{:02}.ly", p_out_file_prefix, i + 1) };
 		klib::file::write_string_to_file(p_lilypond[i], filename);
-		message(p_message, std::format("Wrote {}!", filename));
+		send_message(p_message, { std::format("Wrote {}!", filename), fe::MsgType::Success });
 	}
 }
 
 void fe::script::mml_to_lilypond_files(const std::string& p_mml_filename, const std::string& p_out_file_prefix,
 	bool p_percussion, const MessageCallback& p_message) {
-	message(p_message, std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled"));
-	message(p_message, std::format("Attempting to parse MML file {}", p_mml_filename));
+	send_message(p_message, { std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled") });
+	send_message(p_message, { std::format("Attempting to parse MML file {}", p_mml_filename) });
 
 	const auto mml{ klib::file::read_file_as_strings(p_mml_filename) };
 	const auto lilypond{ mml_to_lilypond(mml, p_percussion) };
@@ -590,7 +586,7 @@ void fe::script::mml_to_lilypond_files(const std::string& p_mml_filename, const 
 
 void fe::script::rom_to_lilypond_files(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::string& p_out_file_prefix, bool p_percussion, const MessageCallback& p_message) {
-	message(p_message, std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled"));
+	send_message(p_message, { std::format("LilyPond percussion staff {}", p_percussion ? "enabled" : "disabled") });
 	const auto lilypond{ rom_to_lilypond(p_config, p_rom, p_percussion) };
 	write_lilypond_files(lilypond, p_out_file_prefix, p_message);
 }
