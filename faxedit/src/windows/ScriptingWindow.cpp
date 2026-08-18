@@ -13,13 +13,8 @@ void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_include_all_sprites{ false };
 	static bool ls_lilypond_percussion{ false };
 
-	const auto message_callback = [this](const std::string& p_message) -> void {
-		add_message(p_message, fe::MsgType::Info);
-		};
-
-	const auto mark_last_message_success = [this](void) -> void {
-		if (!m_messages.empty())
-			m_messages.front().type = fe::MsgType::Success;
+	const auto message_callback = [this](const fe::Message& p_message) -> void {
+		add_message(p_message.text, p_message.type);
 		};
 
 	const auto get_script_dir = [this](void) -> std::filesystem::path {
@@ -95,7 +90,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
 					m_cache.iscript_opcode_info.opcodes,
 					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
-				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -135,7 +129,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("Disassemble", 4, "Disassemble sprite behavior scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_bscripts_to_file(m_config, m_game->m_rom_data,
 					get_script_path("bscript", "asm"), l_shift, message_callback);
-				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -175,7 +168,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("Disassemble", 4, "Disassemble music scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_mscripts_to_file(m_config, m_game->m_rom_data,
 					get_script_path("mscript", "asm"), ls_emit_mscript_notes, l_shift, message_callback);
-				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -214,7 +206,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("Extract", 4, "Extract misc data from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::extract_misc_to_file(m_config, m_game->m_rom_data,
 					get_script_path("misc", "txt"), ls_include_all_sprites, l_shift, message_callback);
-				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -257,7 +248,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("Decompile", 4, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::decompile_mml_to_file(m_config, m_game->m_rom_data,
 					get_mml_path(), l_shift, message_callback);
-				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
