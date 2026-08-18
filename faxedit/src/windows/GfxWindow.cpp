@@ -127,13 +127,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				get_bmp_filename(l_gfx_key)
 			);
 
-			add_message(std::format("Saved {}", get_bmp_filepath(l_gfx_key)), 2);
+			add_message(std::format("Saved {}", get_bmp_filepath(l_gfx_key)), fe::MsgType::Success);
 		}
 		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		if (ui::imgui_button("Load bmp", 4)) try {
@@ -184,15 +184,15 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 				get_bmp_filename(l_gfx_key),
 				l_gfx_key);
 
-			add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), 2);
+			add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), fe::MsgType::Success);
 			add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
-				bmpimportres.first, bmpimportres.second), 6);
+				bmpimportres.first, bmpimportres.second), bmpimportres.second == 0 ? fe::MsgType::Success : fe::MsgType::Warning);
 		}
 		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		ImGui::SameLine();
@@ -251,13 +251,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			m_gfx.clear_all_tilemap_import_results();
 			m_undo->clear_metatile_history();
 
-			add_message("Imported graphics committed to ROM", 2);
+			add_message("Imported graphics committed to ROM", fe::MsgType::Success);
 		}
 		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		if (m_gfx.has_tilemap_import_result(l_gfx_key)) {
@@ -317,13 +317,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			);
 
 			add_message(std::format("Saved {}",
-				get_bmp_filepath(l_gfx_key)), 2);
+				get_bmp_filepath(l_gfx_key)), fe::MsgType::Success);
 		}
 		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		if (ui::imgui_button("Load bmp", 2)) {
@@ -339,15 +339,15 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 					get_bmp_filename(l_gfx_key),
 					l_gfx_key);
 
-				add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), 2);
+				add_message(std::format("Loaded {}", get_bmp_filepath(l_gfx_key)), fe::MsgType::Success);
 				add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
-					bmpimportres.first, bmpimportres.second), 6);
+					bmpimportres.first, bmpimportres.second), bmpimportres.second == 0 ? fe::MsgType::Success : fe::MsgType::Warning);
 			}
 			catch (const std::runtime_error& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 		}
@@ -364,13 +364,13 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			// make life easy for ourselves and wipe all staging data on commit
 			m_gfx.clear_all_tilemap_import_results();
 
-			add_message("Graphics committed to ROM", 2);
+			add_message("Graphics committed to ROM", fe::MsgType::Success);
 		}
 		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 	}
@@ -487,7 +487,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			show_world_chr_bank_screen(p_rnd);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::GfxChrBank) {
@@ -495,7 +495,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			show_gfx_chr_bank_screen(p_rnd);
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 	}
 
@@ -652,7 +652,7 @@ bool fe::MainWindow::show_palette_window(std::size_t p_pal_key, std::vector<byte
 			newpalette);
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		add_message(ex.what(), fe::MsgType::Error);
 	}
 
 	return was_changed;
@@ -889,13 +889,13 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 		}
 	}
 	catch (const std::runtime_error& ex) {
-		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()));
+		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()), fe::MsgType::Error);
 	}
 	catch (const std::exception& ex) {
-		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()));
+		add_message(std::format("Could not generate door requirement graphics: {}", ex.what()), fe::MsgType::Error);
 	}
 	catch (...) {
-		add_message("Could not generate door requirement graphics: Unknown exception");
+		add_message("Could not generate door requirement graphics: Unknown exception", fe::MsgType::Error);
 	}
 
 }
@@ -1306,7 +1306,7 @@ void fe::MainWindow::save_chr(const std::vector<klib::NES_tile>& tiles, const st
 	}
 	std::string out_file{ get_chr_file_path(p_bank_id) };
 	klib::file::write_bytes_to_file(out_data, out_file);
-	add_message(std::format("chr-data written to '{}' ({} chr-tiles, {} bytes)", out_file, tiles.size(), out_data.size()), 2);
+	add_message(std::format("chr-data written to '{}' ({} chr-tiles, {} bytes)", out_file, tiles.size(), out_data.size()), fe::MsgType::Success);
 }
 
 std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count) {
@@ -1320,7 +1320,7 @@ std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_i
 	for (std::size_t i{ 0 }; i < chrbytes.size(); i += 16)
 		out_tiles.push_back(klib::NES_tile(chrbytes, i));
 
-	add_message(std::format("Loaded {} chr-tiles from '{}'", out_tiles.size(), in_file), 2);
+	add_message(std::format("Loaded {} chr-tiles from '{}'", out_tiles.size(), in_file), fe::MsgType::Success);
 
 	return out_tiles;
 }

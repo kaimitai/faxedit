@@ -14,12 +14,12 @@ void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_lilypond_percussion{ false };
 
 	const auto message_callback = [this](const std::string& p_message) -> void {
-		add_message(p_message, 6);
+		add_message(p_message, fe::MsgType::Info);
 		};
 
 	const auto mark_last_message_success = [this](void) -> void {
 		if (!m_messages.empty())
-			m_messages.front().status = 2;
+			m_messages.front().type = fe::MsgType::Success;
 		};
 
 	const auto get_script_dir = [this](void) -> std::filesystem::path {
@@ -83,10 +83,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 				if (!refresh_iscript_cache(m_game->m_rom_data))
 					throw std::runtime_error("iScript assembly succeeded, but GUI cache refresh failed");
 
-				add_message("iScript assembly succeeded", 2);
+				add_message("iScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("iScript Disassembly");
@@ -98,7 +98,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ui::imgui_checkbox("Shop contents as comments", ls_shop_data_as_comments,
@@ -124,10 +124,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 				m_game->m_rom_data = std::move(xrom);
 
-				add_message("bScript assembly succeeded", 2);
+				add_message("bScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("bScript Disassembly");
@@ -138,7 +138,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::EndTabItem();
@@ -164,10 +164,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 				if (!refresh_mscript_cache(m_game->m_rom_data))
 					throw std::runtime_error("mScript assembly succeeded, but GUI cache refresh failed");
 
-				add_message("mScript assembly succeeded", 2);
+				add_message("mScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("mScript Disassembly");
@@ -178,7 +178,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ui::imgui_checkbox("Emit note names", ls_emit_mscript_notes,
@@ -203,10 +203,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 				m_game->m_rom_data = std::move(xrom);
 
-				add_message("Miscellaneous data build succeeded", 2);
+				add_message("Miscellaneous data build succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("Miscellaneous Extraction");
@@ -217,7 +217,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ui::imgui_checkbox("Include all sprites", ls_include_all_sprites,
@@ -246,10 +246,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 				if (!refresh_mscript_cache(m_game->m_rom_data))
 					throw std::runtime_error("MML compilation succeeded, but GUI cache refresh failed");
 
-				add_message("MML compilation succeeded", 2);
+				add_message("MML compilation succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("MML Decompilation");
@@ -260,7 +260,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				mark_last_message_success();
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("MIDI");
@@ -269,10 +269,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 				fe::script::rom_to_midi_files(m_config, m_game->m_rom_data,
 					get_script_file_prefix(m_filename),
 					message_callback);
-				add_message("MIDI files generated from ROM", 2);
+				add_message("MIDI files generated from ROM", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SameLine();
@@ -281,10 +281,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 				fe::script::mml_to_midi_files(get_mml_path(),
 					get_script_file_prefix(m_filename),
 					message_callback);
-				add_message("MIDI files generated from MML", 2);
+				add_message("MIDI files generated from MML", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("LilyPond");
@@ -294,10 +294,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 					get_script_file_prefix(m_filename),
 					ls_lilypond_percussion,
 					message_callback);
-				add_message("LilyPond files generated from ROM", 2);
+				add_message("LilyPond files generated from ROM", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SameLine();
@@ -307,10 +307,10 @@ void fe::MainWindow::draw_scripting_window(void) {
 					get_script_file_prefix(m_filename),
 					ls_lilypond_percussion,
 					message_callback);
-				add_message("LilyPond files generated from MML", 2);
+				add_message("LilyPond files generated from MML", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ui::imgui_checkbox("Add LilyPond percussion track", ls_lilypond_percussion);

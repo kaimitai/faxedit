@@ -58,19 +58,19 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	m_exit_app_requested{ false },
 	m_exit_app_granted{ false }
 {
-	add_message("It is recommended to read the documentation for usage tips", 6);
-	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", 4);
-	add_message("Sprites Mode: Shift+Left Click to move sprites", 4);
-	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", 4);
-	add_message("ESC: Return to default view and close optional windows", 4);
-	add_message("Camera: Ctrl+Wheel/Plus/Minus = Zoom, Space+Drag or Middle Drag = Pan", 4);
-	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", 4);
-	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", 4);
+	add_message("It is recommended to read the documentation for usage tips", fe::MsgType::Info);
+	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", fe::MsgType::Info);
+	add_message("Sprites Mode: Shift+Left Click to move sprites", fe::MsgType::Info);
+	add_message("Doors Mode: Shift+Left Click to move doors, Ctrl+Left Click to move destionation position", fe::MsgType::Info);
+	add_message("ESC: Return to default view and close optional windows", fe::MsgType::Info);
+	add_message("Camera: Ctrl+Wheel/Plus/Minus = Zoom, Space+Drag or Middle Drag = Pan", fe::MsgType::Info);
+	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", fe::MsgType::Info);
+	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", fe::MsgType::Info);
 	add_message(std::format("Build date: {} {} CET",
-		__DATE__, __TIME__), 6);
-	add_message(std::format("Version: {}", c::APP_VERSION), 6);
-	add_message(c::APP_URL, 2);
-	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", 2);
+		__DATE__, __TIME__), fe::MsgType::Info);
+	add_message(std::format("Version: {}", c::APP_VERSION), fe::MsgType::Info);
+	add_message(c::APP_URL, fe::MsgType::Success);
+	add_message("Welcome to Echoes of Eolis by Kai E. Froeland <kai.froland@gmail.com>", fe::MsgType::Success);
 
 	fe::xml::load_settings_xml(get_settings_xml_path(), m_settings);
 	camera.set_zoom_factor(m_settings.m_cam_zoom_factor);
@@ -186,17 +186,17 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 
 				else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Z)) {
 					if (!m_undo->undo(m_sel_chunk, m_sel_screen))
-						add_message("No tilemap changes to undo", 4);
+						add_message("No tilemap changes to undo", fe::MsgType::Info);
 				}
 				else if (l_ctrl && ImGui::IsKeyPressed(ImGuiKey_Y)) {
 					if (!m_undo->redo(m_sel_chunk, m_sel_screen))
-						add_message("No tilemap changes to redo", 4);
+						add_message("No tilemap changes to redo", fe::MsgType::Info);
 				}
 			}
 
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		// input handling end
@@ -243,9 +243,20 @@ void fe::MainWindow::imgui_text(const std::string& p_str) const {
 }
 
 void fe::MainWindow::show_output_messages(void) const {
+	const auto get_style_idx = [](fe::MsgType p_type) -> std::size_t {
+		switch (p_type) {
+		case fe::MsgType::Info: return 6;
+		case fe::MsgType::Error: return 1;
+		case fe::MsgType::Warning: return 4;
+		case fe::MsgType::Success: return 2;
+		default:
+			throw std::runtime_error("Message Type not linked to UI color style");
+		}
+		};
+
 	ImGui::SeparatorText("Output Messages");
 	for (const auto& msg : m_messages) {
-		ImGui::PushStyleColor(ImGuiCol_Text, ui::g_uiStyles[msg.status].active);
+		ImGui::PushStyleColor(ImGuiCol_Text, ui::g_uiStyles[get_style_idx(msg.type)].active);
 		ImGui::TextUnformatted(msg.text.c_str());
 		ImGui::PopStyleColor();
 	}
@@ -357,13 +368,12 @@ std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 		fe::SpriteGUILoader::SpriteCatToString(m_cache.m_sprite_dims[p_sprite_id].category));
 }
 
-void fe::MainWindow::add_message(const std::string& p_msg, int p_status,
-	bool p_allow_repeat) {
+void fe::MainWindow::add_message(const std::string& p_msg, fe::MsgType p_type, bool p_allow_repeat) {
 	if (m_messages.size() > 50)
 		m_messages.pop_back();
 
 	if (p_allow_repeat || m_messages.empty() || m_messages.front().text != p_msg)
-		m_messages.push_front(fe::Message(p_msg, p_status));
+		m_messages.push_front({ p_msg, p_type });
 }
 
 // remember to push and pop IDs before calling this function
@@ -539,7 +549,7 @@ void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
 						l_bset_used = true;
 
 		if (l_bset_used)
-			add_message("Building Sprite Set has references", 1);
+			add_message("Building Sprite Set has references", fe::MsgType::Error);
 		else {
 			m_game->m_npc_bundles.erase(begin(m_game->m_npc_bundles) + m_sel_npc_bundle);
 			if (m_sel_npc_bundle >= m_game->m_npc_bundles.size())
@@ -595,17 +605,17 @@ void fe::MainWindow::clipboard_copy(void) {
 	m_clip_manager.copy_tilemap(l_clip);
 
 	add_message(std::format("Copied {}x{} rectangle to clipboard",
-		l_clip.at(0).size(), l_clip.size()), 6);
+		l_clip.at(0).size(), l_clip.size()), fe::MsgType::Info);
 }
 
 void fe::MainWindow::clipboard_paste(bool l_update_data) {
 	const auto l_clip{ m_clip_manager.paste_tilemap() };
 
 	if (l_clip.empty())
-		add_message("Clipboard is empty", 6);
+		add_message("Clipboard is empty", fe::MsgType::Error);
 	else if (m_sel_tile_y + l_clip.size() > 13 ||
 		m_sel_tile_x + l_clip[0].size() > 16)
-		add_message("Clipboard data does not fit.", 6);
+		add_message("Clipboard data does not fit.", fe::MsgType::Error);
 	// all good, paste or at least show selection rectangle
 	else {
 		if (l_update_data) {
@@ -628,7 +638,7 @@ void fe::MainWindow::clipboard_paste(bool l_update_data) {
 		m_sel_tile_y2 = m_sel_tile_y + l_clip.size() - 1;
 
 		if (l_update_data)
-			add_message("Clipboard data pasted", 6);
+			add_message("Clipboard data pasted", fe::MsgType::Info);
 	}
 }
 
@@ -660,7 +670,7 @@ void fe::MainWindow::clipboard_copy_tilemap_changes(bool p_incl_header) {
 		std::format("Copied {}x{} tilemap {} to clipboard",
 			rect.w, rect.h,
 			p_incl_header ? "block" : "entries"),
-		6);
+		fe::MsgType::Info);
 }
 
 bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size) {
@@ -670,7 +680,7 @@ bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::siz
 		p_data_type,
 		(l_ok ? "succeeded" : "failed"),
 		p_patch_data_size, p_max_data_size,
-		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? 2 : 1);
+		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? fe::MsgType::Success : fe::MsgType::Error);
 
 	return l_ok;
 }
@@ -760,7 +770,7 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) {
-	add_message("Attempting to load file " + p_filepath, 6);
+	add_message("Attempting to load file " + p_filepath, fe::MsgType::Info);
 	const auto config_files{ get_config_file_paths() };
 	auto l_config_xml_path{ config_files.first };
 	auto l_config_override_xml_path{ config_files.second };
@@ -772,11 +782,11 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_config = fe::Config(l_config_xml_path, l_config_override_xml_path, bytes, p_region);
 
 		if (p_region.empty()) {
-			add_message(std::format("ROM region detected: '{}'", m_config.get_region()), 4);
+			add_message(std::format("ROM region detected: '{}'", m_config.get_region()), fe::MsgType::Info);
 			m_region_override.clear();
 		}
 		else {
-			add_message(std::format("Region specified as '{}'", p_region), 4);
+			add_message(std::format("Region specified as '{}'", p_region), fe::MsgType::Info);
 			m_region_override = p_region;
 		}
 
@@ -794,8 +804,8 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			m_cache.iscript_opcode_info = fe::script::get_iscript_opcode_info(m_config);
 		}
 		catch (const std::exception& ex) {
-			add_message(std::format("Error when reading iScript opcode definitions: {}", ex.what()), 1);
-			add_message("Using original iScript opcode definitions", 6);
+			add_message(std::format("Error when reading iScript opcode definitions: {}", ex.what()), fe::MsgType::Error);
+			add_message("Using original iScript opcode definitions", fe::MsgType::Info);
 			m_cache.iscript_opcode_info = fi::load_vanilla_opcodes();
 		}
 
@@ -819,7 +829,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		load_external_rom_data(bytes, true);
 
 		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
-			add_message("Door hack detected; Sameworld doors are stage doors!", 4);
+			add_message("Door hack detected; Sameworld doors are stage doors!", fe::MsgType::Info);
 
 		if (m_game->m_chunks.size() > 0)
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
@@ -827,13 +837,13 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		m_undo.reset();
 		m_undo.emplace(m_game.value());
 
-		add_message("Loaded " + p_filepath, 2);
+		add_message("Loaded " + p_filepath, fe::MsgType::Success);
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		add_message(ex.what(), fe::MsgType::Error);
 	}
 	catch (...) {
-		add_message("Unknown error occurred", 1);
+		add_message("Unknown error occurred", fe::MsgType::Error);
 	}
 }
 
@@ -1495,7 +1505,7 @@ bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, boo
 		m_cache.m_iscript_count = loader.get_script_count();
 
 		if (p_report_count)
-			add_message(std::format("Detected {} iScripts", m_cache.m_iscript_count), 4);
+			add_message(std::format("Detected {} iScripts", m_cache.m_iscript_count), fe::MsgType::Info);
 
 		for (std::size_t i{ 0 }; i < m_cache.m_iscript_count; ++i) {
 			try {
@@ -1503,13 +1513,13 @@ bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, boo
 			}
 			catch (const std::exception& ex) {
 				add_message(
-					std::format("Unable to parse iScript #{}: {}", i, ex.what()), 1);
+					std::format("Unable to parse iScript #{}: {}", i, ex.what()), fe::MsgType::Error);
 				result = false;
 			}
 		}
 	}
 	catch (...) {
-		add_message("Malformed script section - script count could not be deduced - using default (152)", 1);
+		add_message("Malformed script section - script count could not be deduced - using default (152)", fe::MsgType::Error);
 		m_cache.m_iscript_count = 152;
 		return false;
 	}
@@ -1521,11 +1531,11 @@ bool fe::MainWindow::refresh_mscript_cache(const std::vector<byte>& p_bytes, boo
 	try {
 		m_cache.m_music_count = m_rom_manager.get_music_count(m_config, p_bytes);
 		if (p_report)
-			add_message(std::format("Detected {} music tracks", m_cache.m_music_count), 4);
+			add_message(std::format("Detected {} music tracks", m_cache.m_music_count), fe::MsgType::Info);
 		return true;
 	}
 	catch (...) {
-		add_message("Music count could not be deduced - using default (16)", 1);
+		add_message("Music count could not be deduced - using default (16)", fe::MsgType::Error);
 		m_cache.m_music_count = 16;
 		return false;
 	}

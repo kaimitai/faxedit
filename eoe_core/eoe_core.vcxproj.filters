@@ -369,6 +369,9 @@
     <ClInclude Include="src\fe\script\ScriptManager.h">
       <Filter>Header Files\fe\script</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\Message.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">

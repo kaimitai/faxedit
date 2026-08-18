@@ -8,6 +8,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include "fe/Message.h"
 #include "gfx.h"
 #include "UndoInterface.h"
 #include "ClipBoardManager.h"
@@ -54,11 +55,6 @@ namespace fe {
 		// iscripts
 		fi::ScriptOpcodeInfo iscript_opcode_info;
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
-	};
-
-	struct Message {
-		std::string text;
-		int status; // 0=neutral, 1=good, 2=bad
 	};
 
 	struct Viewport {
@@ -200,7 +196,8 @@ namespace fe {
 
 		void show_output_messages(void) const;
 
-		void add_message(const std::string& p_msg, int p_status = 0, bool p_allow_repeat = false);
+		void add_message(const std::string& p_msg, fe::MsgType p_type = fe::MsgType::Info,
+			bool p_allow_repeat = false);
 
 		std::optional<byte> show_screen_scroll_section(const std::string& p_direction,
 			std::size_t p_screen_count, std::optional<byte> p_scroll_data);

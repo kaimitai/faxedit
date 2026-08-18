@@ -55,6 +55,7 @@
     <ClInclude Include="src\fe\GodAllocator.h" />
     <ClInclude Include="src\fe\InterChunkScroll.h" />
     <ClInclude Include="src\fe\IntraChunkScroll.h" />
+    <ClInclude Include="src\fe\Message.h" />
     <ClInclude Include="src\fe\Metatile.h" />
     <ClInclude Include="src\fe\MetatileRef.h" />
     <ClInclude Include="src\fe\PaletteMusicMap.h" />

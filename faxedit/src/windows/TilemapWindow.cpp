@@ -738,13 +738,13 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (m_sel_screen < l_chunk.m_screens.size()) {
 						l_chunk.m_screens.push_back(l_chunk.m_screens.at(m_sel_screen));
 						m_game->m_building_scenes.push_back(m_game->m_building_scenes.at(m_sel_screen));
-						add_message("New building screen created (copied from the previously selected screen)", 2, true);
+						add_message("New building screen created (copied from the previously selected screen)", fe::MsgType::Success, true);
 					}
 				}
 				else {
 					l_chunk.m_screens.push_back(fe::Screen());
 					l_chunk.m_screens.back().initialize_tilemap();
-					add_message(std::format("Added new screen to world {}", m_sel_chunk), 2, true);
+					add_message(std::format("Added new screen to world {}", m_sel_chunk), fe::MsgType::Success, true);
 				}
 
 				m_sel_screen = l_chunk.m_screens.size() - 1;
@@ -759,7 +759,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				) };
 
 				if (l_scr_ref_count > 0)
-					add_message(std::format("Cannot delete screen ({} references)", l_scr_ref_count), 1);
+					add_message(std::format("Cannot delete screen ({} references)", l_scr_ref_count), fe::MsgType::Error);
 				else {
 					m_game->delete_screens(m_sel_chunk, { static_cast<byte>(m_sel_screen) });
 					m_undo->clear_history(m_sel_chunk);
@@ -770,11 +770,11 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 					if (m_sel_chunk == c::CHUNK_IDX_BUILDINGS)
 						set_atlas_update_values();
 
-					add_message("Screen deleted", 2);
+					add_message("Screen deleted", fe::MsgType::Success);
 				}
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SameLine();
@@ -783,20 +783,20 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 				const auto screenrefs{ m_game->get_refs_to_screen(m_sel_chunk, m_sel_screen) };
 
 				if (screenrefs.empty())
-					add_message("Screen has no references", 6);
+					add_message("Screen has no references", fe::MsgType::Info);
 				else {
 					if (screenrefs.size() > 10)
-						add_message(std::format("...and {} more", screenrefs.size() - 10), 6);
+						add_message(std::format("...and {} more", screenrefs.size() - 10), fe::MsgType::Info);
 
 					for (std::size_t i{ 0 }; i < screenrefs.size() && i < 10; ++i)
-						add_message(screenrefs[i].to_string(), 6);
+						add_message(screenrefs[i].to_string(), fe::MsgType::Info);
 
 					add_message(std::format("References to World {}, Screen {} ({})",
-						m_sel_chunk, m_sel_screen, screenrefs.size()), 4);
+						m_sel_chunk, m_sel_screen, screenrefs.size()), fe::MsgType::Info);
 				}
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 		}
@@ -977,7 +977,7 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 			const auto& l_stage{ m_game->m_stages.get_stage_from_world(m_sel_chunk) };
 
 			if (!l_stage.has_value())
-				add_message("Could not deduce stage number from current world", 1);
+				add_message("Could not deduce stage number from current world", fe::MsgType::Error);
 			else {
 				bool l_next{ l_door.m_door_type == fe::NextWorld };
 				std::size_t l_dest_stage{ l_next ? l_stage.value()->m_next_stage :
@@ -993,7 +993,7 @@ void fe::MainWindow::enter_door_button(const fe::Screen& p_screen) {
 	}
 
 	if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size()) {
-		add_message("Invalid door destination", 1);
+		add_message("Invalid door destination", fe::MsgType::Error);
 		m_sel_screen = 0;
 	}
 }

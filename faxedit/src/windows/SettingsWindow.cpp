@@ -140,10 +140,10 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 				!ImGui::IsKeyDown(ImGuiMod_Shift) ||
 				m_game->m_sw_door_type != fe::SameWorldDoorType::Normal)) try {
 				patch_randumizer_doors(*m_game, true);
-				add_message("Sameworld-door to Stage-door hack applied!", 2);
+				add_message("Sameworld-door to Stage-door hack applied!", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ImGui::SeparatorText("Persistent Door Helper");
@@ -152,10 +152,10 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Generate asm", 2,
 				"Generates a shared @select_door_flag subroutine that maps every key-locked door to an extended flag")) try {
 				generate_extended_flag_to_door_map_asm(*m_game, ls_def_returns);
-				add_message("Generated assembly copied to clipboard!", 2);
+				add_message("Generated assembly copied to clipboard!", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
-				add_message(ex.what(), 1);
+				add_message(ex.what(), fe::MsgType::Error);
 			}
 
 			ui::imgui_checkbox("Defensive Return-Statements", ls_def_returns,

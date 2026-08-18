@@ -94,7 +94,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
 						add_message(std::format("{} metatiles deleted from world {}",
-							l_del_cnt, m_sel_chunk), 6);
+							l_del_cnt, m_sel_chunk), fe::MsgType::Info);
 						if (l_del_cnt > 0) {
 							generate_metatile_textures(p_rnd);
 							// clear undo history for this world if a metatile was deleted
@@ -114,7 +114,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 								set_atlas_update_values();
 						}
 						add_message(std::format("{} screen(s) deleted from world {}",
-							l_del_cnt, m_sel_chunk), 6);
+							l_del_cnt, m_sel_chunk), fe::MsgType::Info);
 					}
 
 					ImGui::EndTabItem();
@@ -191,12 +191,12 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 							const auto spawn_to_script_no{ extract_set_spawn_scripts() };
 
 							if (spawn_to_script_no.empty())
-								add_message("No SetSpawn script information loaded - can not deduce spawns", 1);
+								add_message("No SetSpawn script information loaded - can not deduce spawns", fe::MsgType::Error);
 							else
 								add_message(std::format("Fully deduced {} of {} spawn points",
 									m_game->calculate_spawn_locations_by_guru(spawn_to_script_no),
 									m_game->m_spawn_locations.size()),
-									4);
+									fe::MsgType::Info);
 						}
 
 					}
@@ -363,9 +363,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					if (ui::imgui_button("Deduce", 4, "Try to deduce as many parameters as possible")) {
 						if (m_game->calculate_push_block_parameters())
-							add_message("Push-block parameters deduced", 2);
+							add_message("Push-block parameters deduced", fe::MsgType::Success);
 						else
-							add_message("Could not deduce Push-block parameters", 1);
+							add_message("Could not deduce Push-block parameters", fe::MsgType::Error);
 					}
 
 					ImGui::EndTabItem();
@@ -791,16 +791,16 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		if (ui::imgui_button("Delete metatile", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
 			std::size_t l_mt_refs{ m_game->get_metatile_reference_count(m_sel_chunk, m_sel_metatile) };
 			if (l_mt_refs > 0)
-				add_message("Metatile is in use", 1, true);
+				add_message("Metatile is in use", fe::MsgType::Error, true);
 			else {
 				m_game->delete_metatiles(m_sel_chunk, { static_cast<byte>(m_sel_metatile) });
 				m_undo->clear_history(m_sel_chunk);
-				add_message("Metatile deleted", 2);
+				add_message("Metatile deleted", fe::MsgType::Success);
 				mt_no_to_regen = 256; // regenerate all
 			}
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		ImGui::SameLine();
@@ -808,20 +808,20 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 		if (ui::imgui_button("List References", 4, "")) try {
 			const auto metatilerefs{ m_game->get_refs_to_metatile(m_sel_chunk, m_sel_metatile) };
 			if (metatilerefs.empty())
-				add_message("Metatile has no references", 6);
+				add_message("Metatile has no references", fe::MsgType::Info);
 			else {
 				if (metatilerefs.size() > 10)
-					add_message(std::format("...and {} more", metatilerefs.size() - 10), 6);
+					add_message(std::format("...and {} more", metatilerefs.size() - 10), fe::MsgType::Info);
 
 				for (std::size_t i{ 0 }; i < metatilerefs.size() && i < 10; ++i)
-					add_message(metatilerefs[i].to_string(), 6);
+					add_message(metatilerefs[i].to_string(), fe::MsgType::Info);
 
 				add_message(std::format("References to World {}, Metatile {} ({})",
-					m_sel_chunk, m_sel_metatile, metatilerefs.size()), 4);
+					m_sel_chunk, m_sel_metatile, metatilerefs.size()), fe::MsgType::Info);
 			}
 		}
 		catch (const std::exception& ex) {
-			add_message(ex.what(), 1);
+			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		ImGui::SeparatorText("Display chr-tiles");

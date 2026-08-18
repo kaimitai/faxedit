@@ -62,7 +62,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::SeparatorText("GUI");
 			if (ui::imgui_button("Regenerate GUI sprites", 4, "Regenerate the sprite graphics seen in the editor UI")) {
 				generate_editor_sprite_gfx(p_rnd);
-				add_message("GUI sprite textures regenerated", 2);
+				add_message("GUI sprite textures regenerated", fe::MsgType::Success);
 			}
 
 			// DEVELOPER-CODE - BEGIN
@@ -96,7 +96,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 							import_sprite_frame_bmps(npccoll, c::KEY_COLL_NPCS, i);
 						}
 						catch (const std::exception& ex) {
-							add_message(ex.what(), 1);
+							add_message(ex.what(), fe::MsgType::Error);
 						}
 
 					}
@@ -129,7 +129,7 @@ void fe::MainWindow::draw_sprite_gfx_window(SDL_Renderer* p_rnd) {
 
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		add_message(ex.what(), fe::MsgType::Error);
 	}
 
 	ImGui::End();
@@ -367,7 +367,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 			l_impact);
 
 		add_message(std::format("Stored {} chr-banks and {} frames as snapshot",
-			l_impact.chr_bank_indexes.size(), l_impact.frame_indexes.size()), 2);
+			l_impact.chr_bank_indexes.size(), l_impact.frame_indexes.size()), fe::MsgType::Success);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Restore Snapshot", 4, "Restore snapshot of related chr-banks and frames",
@@ -376,7 +376,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 		auto restore_result{ m_sprite_snap_manager.restore_snapshot(p_collection, p_coll) };
 		ls_redraw_bank = true;
 		ls_redraw_frame = true;
-		add_message(std::format("Restored {} chr-bank(s) and {} frame(s) from snapshot", restore_result.first, restore_result.second), 2);
+		add_message(std::format("Restored {} chr-bank(s) and {} frame(s) from snapshot", restore_result.first, restore_result.second), fe::MsgType::Success);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Query Snapshot", 4, "Check count of banks and frames stored in the most recent snapshot",
@@ -384,7 +384,7 @@ void fe::MainWindow::show_sprite_gfx_editor(SDL_Renderer* p_rnd,
 		) {
 		const auto queryres{ m_sprite_snap_manager.query_snapshot(p_coll) };
 		add_message(std::format("Most recent snapshot contains {} chr-bank(s) and {} frame(s)",
-			queryres.first, queryres.second), 2);
+			queryres.first, queryres.second), fe::MsgType::Info);
 	}
 }
 
@@ -509,14 +509,14 @@ void fe::MainWindow::import_sprite_chr_bank(fe::SpriteFrameCollection& p_coll, s
 	if (p_coll_id == c::KEY_COLL_NPCS && p_bank_id == p_coll.banks.size() - 1) {
 		fe::SpriteFrameCollection::expand_bank(imp_bank);
 		if (imp_bank.at(c::SPRITE_0_PPU_IDX) != m_game->m_sprite_gfx_manager.get_sprite_0_hit_tile()) {
-			add_message(std::format("Warning: chr-tile {} is not equal to the original 0-hit sprite. See the documentation.", c::SPRITE_0_PPU_IDX), 1);
+			add_message(std::format("Warning: chr-tile {} is not equal to the original 0-hit sprite. See the documentation.", c::SPRITE_0_PPU_IDX), fe::MsgType::Warning);
 		}
 	}
 
 	// store bank after making snapshot
 	m_sprite_snap_manager.apply_chr_import(p_coll, p_coll_id, p_bank_id, imp_bank);
 
-	add_message(std::format("Created snapshot, and imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), 2);
+	add_message(std::format("Created snapshot, and imported a {}-tile chr-bank from file {}", imp_bank.size(), in_file), fe::MsgType::Success);
 }
 
 void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
@@ -525,7 +525,7 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 	const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_coll, p_bank_id) };
 
 	if (impact.frame_indexes.empty())
-		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
+		add_message(std::format("No frames using chr bank {}", p_bank_id), fe::MsgType::Info);
 	else if (impact.banks_identical) {
 		auto impres{ m_gfx.import_sprite_frames_from_folder(get_bmp_path(), get_sprite_gfx_file_prefix(p_coll_id),
 			p_bank_id, impact.frame_indexes, m_game->m_palettes.at(m_settings.coll_palettes[p_coll_id]),
@@ -550,7 +550,7 @@ void fe::MainWindow::import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll,
 		// run bmp import through snapshot manager after validation
 		m_sprite_snap_manager.apply_bmp_import(p_coll, p_coll_id, impres, impact);
 
-		add_message(std::format("Created snapshot, and imported {} bmp files", impact.frame_indexes.size()), 2);
+		add_message(std::format("Created snapshot, and imported {} bmp files", impact.frame_indexes.size()), fe::MsgType::Success);
 	}
 	else {
 		throw std::runtime_error(
@@ -565,7 +565,7 @@ void fe::MainWindow::export_sprite_frame_bmps(const fe::SpriteFrameCollection& p
 	const auto impact{ m_game->m_sprite_gfx_manager.analyze_bank_impact(p_coll, p_bank_id) };
 
 	if (impact.frame_indexes.empty()) {
-		add_message(std::format("No frames using chr bank {}", p_bank_id), 6);
+		add_message(std::format("No frames using chr bank {}", p_bank_id), fe::MsgType::Info);
 	}
 	else {
 		m_gfx.save_sprite_frames_bmp(p_coll,
@@ -577,7 +577,7 @@ void fe::MainWindow::export_sprite_frame_bmps(const fe::SpriteFrameCollection& p
 
 		add_message(std::format("Saved {} bmps as {}", impact.frame_indexes.size(),
 			m_gfx.get_sprite_frame_bmp_wc_filpath(get_bmp_path(),
-				get_sprite_gfx_file_prefix(p_coll_id), p_bank_id)), 2);
+				get_sprite_gfx_file_prefix(p_coll_id), p_bank_id)), fe::MsgType::Success);
 	}
 }
 

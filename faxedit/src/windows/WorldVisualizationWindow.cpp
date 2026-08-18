@@ -26,7 +26,7 @@ void fe::MainWindow::export_world_png(const fe::WorldVisualizer& p_visualizer,
 	m_gfx.save_world_visualizer_png(res, png_path, png_filename);
 
 	add_message(std::format("Saved world {} as {}/{}.png", p_world,
-		png_path, png_filename), 2);
+		png_path, png_filename), fe::MsgType::Success);
 }
 
 void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
@@ -105,7 +105,7 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 			"Same-world transition tiles within this distance from a screen edge are treated as scroll connections when building the world graph");
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), 1);
+		add_message(ex.what(), fe::MsgType::Error);
 	}
 
 	ImGui::End();
@@ -152,7 +152,7 @@ fe::MainWindow::extract_script_semantics(void) try {
 	return result;
 }
 catch (const std::exception& ex) {
-	add_message(std::format("Script extraction failed: {}", ex.what()), 1);
+	add_message(std::format("Script extraction failed: {}", ex.what()), fe::MsgType::Error);
 	return {};
 }
 
@@ -178,6 +178,6 @@ std::map<byte, byte> fe::MainWindow::extract_set_spawn_scripts(void) try {
 	return result;
 }
 catch (const std::exception& ex) {
-	add_message(std::format("Spawn script extraction failed: {}", ex.what()), 1);
+	add_message(std::format("Spawn script extraction failed: {}", ex.what()), fe::MsgType::Error);
 	return {};
 }
