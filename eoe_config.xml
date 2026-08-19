@@ -1899,6 +1899,7 @@
 			<entry key="AtlasDevDespawnEntity" value="Args=Byte" />
 			<entry key="AtlasDevDespawnAllEntities" />
 			<entry key="AtlasDevSetMetatile" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetScreenEvent" value="Args=Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

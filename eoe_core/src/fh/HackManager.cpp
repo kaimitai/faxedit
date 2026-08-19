@@ -3634,6 +3634,25 @@ word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// Accepts events 0-2 and $FF. Invalid values leave the current event unchanged.
+word fh::HackManager::apply_AtlasDevSetScreenEvent(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x03);
+	code.bcc("@apply");
+	code.cmp_imm(0xff);
+	code.bne("@done");
+	code.label("@apply");
+	code.sta_abs(RAM::CurrentScreen_SpecialEventID);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -4143,6 +4162,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevSetMetatile:
 			cpu_addr = apply_AtlasDevSetMetatile(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetScreenEvent:
+			cpu_addr = apply_AtlasDevSetScreenEvent(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
