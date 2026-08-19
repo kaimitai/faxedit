@@ -1,6 +1,7 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
 #include "fe/fe_constants.h"
+#include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
 #include <format>
 
@@ -47,6 +48,159 @@ fe::game::LoadedGame fe::game::load_rom(
 }
 
 // analysis and validation
+void fe::game::analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
+	bool p_warn_00_doors, const MessageCallback& p_message) {
+	fe::ROM_Manager rom_mgr;
+	const auto lc_sprite_types{ p_game.extract_sprite_types(p_config) };
+
+	send_message(p_message, { "Starting integrity analysis", fe::MsgType::Info });
+
+	// check tilemap sizes
+	constexpr std::size_t BANK_SIZE{ 0x4000 };
+	const auto tilemap_sizes{ rom_mgr.get_world_tilemap_sizes(p_game) };
+
+	for (std::size_t w{ 0 }; w < tilemap_sizes.size(); ++w) {
+		const auto l_wtm_size{ tilemap_sizes[w] };
+
+		if (l_wtm_size > BANK_SIZE) {
+			send_message(p_message,
+				{ std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
+					w, l_wtm_size, BANK_SIZE,
+					100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
+				fe::MsgType::Error });
+		}
+		else if (p_warn_tilemap_95_pct &&
+			l_wtm_size * 100 >= BANK_SIZE * 95) {
+			send_message(p_message,
+				{ std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
+					w, l_wtm_size, BANK_SIZE,
+					100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
+				fe::MsgType::Warning });
+		}
+	}
+
+	for (std::size_t c{ 0 }; c < p_game.m_chunks.size(); ++c) {
+		const auto l_ref_scr{ p_game.get_referenced_screens(c) };
+		for (std::size_t s{ 0 }; s < p_game.m_chunks[c].m_screens.size(); ++s) {
+			const auto& scr{ p_game.m_chunks[c].m_screens[s] };
+
+			// check if screen is referenced
+			if (c != c::CHUNK_IDX_BUILDINGS && l_ref_scr.find(static_cast<byte>(s)) == end(l_ref_scr))
+				send_message(p_message, { std::format("World {}, Screen {} has no references", c, s), fe::MsgType::Error });
+
+			// check that defined other-world transitions can be used
+			if (scr.m_intrachunk_scroll.has_value()) {
+				bool l_ow_block{ false };
+				for (const auto& row : scr.m_tilemap)
+					for (byte b : row) {
+						byte l_block_prop{ p_game.m_chunks[c].m_metatiles.at(b).m_block_property };
+						if (l_block_prop == c::BLOCK_PROPERTY_OW_FOREGROUND ||
+							l_block_prop == c::BLOCK_PROPERTY_OW_RETURN) {
+							l_ow_block = true;
+							break;
+						}
+					}
+
+				if (!l_ow_block)
+					send_message(p_message, { std::format("World {}, Screen {}: Other-world transition is defined, but no metatile with property ow-transition is used",
+						c, s), fe::MsgType::Error });
+			}
+
+			// check that defined same-world transitions can be used
+			if (scr.m_interchunk_scroll.has_value()) {
+				bool l_sw_block{ false };
+				for (const auto& row : scr.m_tilemap)
+					for (byte b : row) {
+						byte l_block_prop{ p_game.m_chunks[c].m_metatiles.at(b).m_block_property };
+						if (l_block_prop == c::BLOCK_PROPERTY_SW_LADDER ||
+							l_block_prop == c::BLOCK_PROPERTY_SW_FOREGROUND) {
+							l_sw_block = true;
+							break;
+						}
+					}
+
+				if (!l_sw_block)
+					send_message(p_message, { std::format("World {}, Screen {}: Same-world transition is defined, but no metatile with property sw-transition is used",
+						c, s), fe::MsgType::Error });
+			}
+
+			// check that doors are correctly placed
+			std::set<std::pair<byte, byte>> unique_door_pos;
+			std::size_t doorcnt{ scr.m_doors.size() };
+
+			for (std::size_t d{ 0 }; d < doorcnt; ++d) {
+				const auto& door{ scr.m_doors[d] };
+
+				if (p_game.m_chunks[c].m_metatiles.at(
+					scr.get_mt_at_pos(door.m_coords.first,
+						door.m_coords.second)).m_block_property
+					!= 0x03) {
+					send_message(p_message, { std::format("World {}, Screen {}, Door ({},{}): Not placed on door-type metatile",
+						c, s, door.m_coords.first, door.m_coords.second), fe::MsgType::Error });
+				}
+
+				// no need to check dest coords for doors to building - they come from the scene data
+				if (p_warn_00_doors &&
+					door.m_door_type != fe::DoorType::Building &&
+					door.m_dest_coords.first == 0 &&
+					door.m_dest_coords.second == 0)
+					send_message(p_message, { std::format("World {}, Screen {}, Door ({},{}): Destination coords are (0, 0) - was this intentional?",
+						c, s, door.m_coords.first, door.m_coords.second), fe::MsgType::Warning });
+
+				unique_door_pos.insert(door.m_coords);
+			}
+
+			if (unique_door_pos.size() != doorcnt)
+				send_message(p_message, { std::format("World {}, Screen {}: Several doors defined at the same position", c, s), fe::MsgType::Error });
+
+			// validate sprite counts and total ppu tile counts
+			// also check that only NPCs have scripts attached
+			const auto& sprites{ scr.m_sprite_set.m_sprites };
+			std::size_t total_ppu_tile_count{ 0 };
+			for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr) {
+				total_ppu_tile_count += p_game.m_sprite_gfx_manager.get_sprite_chr_bank_size(sprites[spr].m_id);
+
+				if (sprites[spr].m_text_id && sprites[spr].m_id < lc_sprite_types.size()) {
+					const auto sprite_cat{ lc_sprite_types[sprites[spr].m_id] };
+					if (sprite_cat != fe::SpriteType::NPC &&
+						sprite_cat != fe::SpriteType::GameTrigger)
+						send_message(p_message,
+							{ std::format("World {}, Screen {}, Sprite {}: Script attached, but sprite category is not compatible",
+								c, s, spr),
+							fe::MsgType::Error });
+				}
+
+			}
+			if (total_ppu_tile_count > c::PPU_DYNAMIC_TILE_COUNT)
+				send_message(p_message,
+					{ std::format("World {}, Screen {}: Sprites use {} dynamic sprite chr-tiles, but the maximum is {}",
+						c, s, total_ppu_tile_count, c::PPU_DYNAMIC_TILE_COUNT),
+					fe::MsgType::Error }
+				);
+		}
+	}
+
+	// check that metatile usage for buildings don't go across tilesets
+	std::map<byte, std::set<std::size_t>> l_mt_usage; // <metatile no> -> set <tileset no>
+	const auto& buildingscreens{ p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens };
+
+	for (std::size_t i{ 0 }; i < buildingscreens.size(); ++i) {
+		std::size_t tileset_no{ p_game.get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) };
+
+		for (std::size_t y{ 0 }; y < 13; ++y)
+			for (std::size_t x{ 0 }; x < 16; ++x)
+				l_mt_usage[buildingscreens.at(i).get_mt_at_pos(x, y)].insert(tileset_no);
+	}
+
+	for (const auto& kv : l_mt_usage) {
+		if (kv.second.size() != 1) {
+			send_message(p_message, { std::format("Metatile {} in the buildings world used across tilesets", kv.first), fe::MsgType::Error });
+		}
+	}
+
+	send_message(p_message, { "Integrity analysis completed", fe::MsgType::Success });
+}
+
 void fe::game::validate_and_repair_spawn_points(Game& p_game, const MessageCallback& p_message) {
 	for (auto& spawn : p_game.m_spawn_locations) {
 

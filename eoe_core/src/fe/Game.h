@@ -62,6 +62,18 @@ namespace fe {
 		std::size_t end_index(void) const;
 	};
 
+	enum class SpriteType : byte {
+		Enemy = 0,
+		DroppedItem = 1,
+		NPC = 2,
+		SpecialEffect = 3,
+		GameTrigger = 4,
+		Item = 5,
+		MagicEffect = 6,
+		Boss = 7,
+		Unknown = 8
+	};
+
 	enum class SameWorldDoorType { Normal, Randumizer_0_30 };
 
 	class Config;
@@ -128,6 +140,7 @@ namespace fe {
 		void extract_palette_to_music(const fe::Config& p_config);
 		void extract_fog_parameters(const fe::Config& p_config);
 		void extract_hud_attributes(const fe::Config& p_config);
+		std::vector<SpriteType> extract_sprite_types(const fe::Config& p_config) const;
 
 		std::map<std::size_t, std::string> get_shared_palettes(const fe::Config& p_config) const;
 		void sync_palettes(const std::map<std::size_t, std::string>& p_wpal_to_gfx);

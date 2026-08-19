@@ -38,6 +38,8 @@ namespace fe::game {
 		const MessageCallback& p_message = nullptr);
 
 	// analysis and validation
+	void analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
+		bool p_warn_00_doors, const MessageCallback& p_message = nullptr);
 	void validate_and_repair_spawn_points(fe::Game& p_game, const fe::MessageCallback& p_message = nullptr);
 	void validate_and_repair_game(Game& p_game, const MessageCallback& p_message = nullptr);
 }
