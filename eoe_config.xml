@@ -385,6 +385,8 @@
 		<const name="rom_window_close" value="$9002" />
 		<const name="rom_vanilla_far_call" region="jp,en-transl" value="$f921" />
 		<const name="rom_vanilla_far_call" value="$f859" />
+		<const name="rom_hud_draw_timer" region="jp,en-transl" value="$fa58" />
+		<const name="rom_hud_draw_timer" value="$f990" />
 		<!-- tilemap change hack injection points -->
 		<const name="hack_tm_change_bank" region="en-transl" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
@@ -1899,6 +1901,8 @@
 			<entry key="AtlasDevDespawnEntity" value="Args=Byte" />
 			<entry key="AtlasDevDespawnAllEntities" />
 			<entry key="AtlasDevSetMetatile" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetScreenEvent" value="Args=Byte" />
+			<entry key="AtlasDevApplyEffect" value="Args=Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>
