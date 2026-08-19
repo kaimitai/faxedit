@@ -3,6 +3,7 @@
 #include "common/klib/Bitreader.h"
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
+#include "fe/script/ScriptManager.h"
 #include <algorithm>
 #include <unordered_map>
 
@@ -187,8 +188,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 						ImGui::SeparatorText("Automatic Deduction");
 
-						if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) {
-							const auto spawn_to_script_no{ extract_set_spawn_scripts() };
+						if (ui::imgui_button("Deduce", 4, "Try to deduce spawn locations")) try {
+							const auto spawn_to_script_no{ fe::script::extract_set_spawn_scripts(m_config,
+								m_game->m_rom_data, m_cache.iscript_opcode_info.opcodes) };
 
 							if (spawn_to_script_no.empty())
 								add_message("No SetSpawn script information loaded - can not deduce spawns", fe::MsgType::Error);
@@ -198,7 +200,9 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 									m_game->m_spawn_locations.size()),
 									fe::MsgType::Info);
 						}
-
+						catch (const std::exception& ex) {
+							add_message(std::format("Spawn script extraction failed: {}", ex.what()), fe::MsgType::Error);
+						}
 					}
 					else
 						ImGui::Text("No Spawn Points defined");

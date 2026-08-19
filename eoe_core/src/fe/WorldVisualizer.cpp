@@ -8,7 +8,7 @@
 
 fe::WorldVisualizer::WorldVisualizer(
 	const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,
-	const std::unordered_map<byte, fe::ScriptSemanticInfo>& p_scripts) :
+	const std::unordered_map<byte, fe::script::ScriptSemanticInfo>& p_scripts) :
 	tilesets{ p_complete_tilesets }, scripts{ p_scripts }
 {
 }

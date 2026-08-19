@@ -6,6 +6,7 @@
 #include "common/klib/NES_tile.h"
 #include "./sprite/SpriteAnimationFrame.h"
 #include "./sprite/SpriteGUILoader.h"
+#include "fe/script/ScriptTypes.h"
 #include <map>
 #include <optional>
 #include <unordered_map>
@@ -21,11 +22,6 @@ using IntPosition = std::pair<int, int>;
 namespace fe {
 
 	class Config;
-
-	struct ScriptSemanticInfo {
-		std::vector<byte> gifts;
-		std::unordered_set<byte> shop_items;
-	};
 
 	struct WorldVisualizationOptions {
 		// screen selection
@@ -155,7 +151,7 @@ namespace fe {
 			std::size_t p_screen_id) const;
 
 		std::vector<std::vector<klib::NES_tile>> tilesets;
-		std::unordered_map<byte, fe::ScriptSemanticInfo> scripts;
+		std::unordered_map<byte, fe::script::ScriptSemanticInfo> scripts;
 
 		static constexpr std::size_t BUILDING_GRAPH_WIDTH{ 4 };
 		static constexpr std::size_t BUILDING_SCREEN_IDX_OFFSET{ 0x100 };
@@ -198,7 +194,7 @@ namespace fe {
 
 	public:
 		WorldVisualizer(const std::vector<std::vector<klib::NES_tile>>& p_complete_tilesets,
-			const std::unordered_map<byte, fe::ScriptSemanticInfo>& p_scripts);
+			const std::unordered_map<byte, fe::script::ScriptSemanticInfo>& p_scripts);
 
 		fe::WorldVisualization visualize_world(const fe::Config& p_config,
 			const fe::Game& game, std::size_t world_no,

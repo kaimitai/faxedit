@@ -65,6 +65,7 @@
     <ClInclude Include="src\fe\Screen.h" />
     <ClInclude Include="src\fe\ScreenRef.h" />
     <ClInclude Include="src\fe\script\ScriptManager.h" />
+    <ClInclude Include="src\fe\script\ScriptTypes.h" />
     <ClInclude Include="src\fe\Sprite.h" />
     <ClInclude Include="src\fe\sprite\fe_sprite_constants.h" />
     <ClInclude Include="src\fe\sprite\SpriteAnimationFrame.h" />
