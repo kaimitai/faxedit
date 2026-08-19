@@ -23,6 +23,80 @@
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 
+// analyzers
+std::unordered_map<byte, fe::script::ScriptSemanticInfo> fe::script::extract_script_semantics(
+	const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::map<byte, fi::Opcode>& p_opcodes) {
+	std::unordered_map<byte, ScriptSemanticInfo> result;
+
+	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
+
+	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
+		const auto& instrs{ loader.parse_script_raw(p_rom, i) };
+
+		for (const auto& kv : instrs) {
+			const byte opcode{ kv.second.opcode_byte };
+
+			if (opcode == fi::c::OPCODE_GET_ITEM) {
+				if (kv.second.operands.empty())
+					continue;
+
+				const auto op_value{ kv.second.operands[0] };
+
+				result[static_cast<byte>(i)].gifts.push_back(
+					static_cast<byte>(op_value)
+				);
+			}
+			else if (opcode == fi::c::OPCODE_SHOP_BUY ||
+				opcode == fi::c::OPCODE_SHOP_SELL) {
+				if (!kv.second.shop_index)
+					continue;
+
+				const auto& shops{ loader.get_shops() };
+				const auto shop_index{ *kv.second.shop_index };
+
+				if (shop_index < shops.size())
+					for (const auto& entry : shops[shop_index].m_entries)
+						result[static_cast<byte>(i)].shop_items.insert(entry.m_item);
+			}
+		}
+	}
+
+	return result;
+}
+
+std::unordered_map<byte, fe::script::ScriptSemanticInfo> fe::script::extract_script_semantics(
+	const fe::Config& p_config, const std::vector<byte>& p_rom) {
+	return extract_script_semantics(p_config, p_rom, get_iscript_opcode_info(p_config).opcodes);
+}
+
+std::map<byte, byte> fe::script::extract_set_spawn_scripts(
+	const fe::Config& p_config, const std::vector<byte>& p_rom,
+	const std::map<byte, fi::Opcode>& p_opcodes) {
+	std::map<byte, byte> result;
+	fi::IScriptLoader loader(p_config, p_rom, p_opcodes);
+
+	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
+		const auto& instrs{ loader.parse_script_raw(p_rom, i) };
+
+		for (const auto& kv : instrs) {
+			const auto& instr{ kv.second };
+
+			if (instr.opcode_byte != fi::c::OPCODE_SET_SPAWN || instr.operands.empty())
+				continue;
+
+			result[static_cast<byte>(instr.operands[0])] = static_cast<byte>(i);
+		}
+	}
+
+	return result;
+}
+
+std::map<byte, byte> fe::script::extract_set_spawn_scripts(
+	const fe::Config& p_config, const std::vector<byte>& p_rom) {
+	return extract_set_spawn_scripts(p_config, p_rom, get_iscript_opcode_info(p_config).opcodes);
+}
+
 // helpers
 void fe::script::try_patch(const std::string& p_data_type, std::size_t p_data_size,
 	std::size_t p_data_max_size, const MessageCallback& p_message) {

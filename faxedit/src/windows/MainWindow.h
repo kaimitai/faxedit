@@ -311,10 +311,6 @@ namespace fe {
 			const fe::SpriteGUILoader& p_sprites,
 			const fe::WorldVisualizationOptions& p_options);
 
-		// on-demand script info extraction helpers
-		std::unordered_map<byte, fe::ScriptSemanticInfo> extract_script_semantics(void);
-		std::map<byte, byte> extract_set_spawn_scripts(void);
-
 		void export_sprite_frame_bmps(const fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,
 			std::size_t p_bank_id);
 		void import_sprite_frame_bmps(fe::SpriteFrameCollection& p_coll, std::size_t p_coll_id,

@@ -3,15 +3,13 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 #include "Imgui_helper.h"
-#include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
+#include "fe/script/ScriptManager.h"
 #include "common/klib/Kfile.h"
 #include <format>
 #include <SDL3/SDL.h>
 #include "fe/WorldVisualizer.h"
-#include "fi/fi_constants.h"
 #include <unordered_map>
-#include <unordered_set>
 
 void fe::MainWindow::export_world_png(const fe::WorldVisualizer& p_visualizer,
 	std::size_t p_world, std::size_t p_screen,
@@ -48,11 +46,19 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 		if (ui::imgui_button("Export png", 2, "Save the selected world as a PNG image. Hold Shift to export all worlds (starting from screen 0 in each world)")) {
 			bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
 
+			// extract script data 
+			std::unordered_map<byte, fe::script::ScriptSemanticInfo> script_semantics;
+			try {
+				script_semantics = fe::script::extract_script_semantics(m_config, m_game->m_rom_data, m_cache.iscript_opcode_info.opcodes);
+			}
+			catch (const std::exception& ex) {
+				add_message(std::format("Script extraction failed: {}", ex.what()), fe::MsgType::Error);
+			}
+			// generate sprite gfx definitions
 			fe::SpriteGUILoader visual_sprites;
 			visual_sprites.load_sprites_for_gui(m_config,
 				m_game->m_sprite_gfx_manager, m_game->m_rom_data);
-			auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets,
-				extract_script_semantics()) };
+			auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets, script_semantics) };
 
 			if (l_shift)
 				for (std::size_t i{ 0 }; i < m_game->m_chunks.size(); ++i)
@@ -109,75 +115,4 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 	}
 
 	ImGui::End();
-}
-
-std::unordered_map<byte, fe::ScriptSemanticInfo>
-fe::MainWindow::extract_script_semantics(void) try {
-	std::unordered_map<byte, fe::ScriptSemanticInfo> result;
-	const auto& rom_bytes{ m_game->m_rom_data };
-
-	fi::IScriptLoader loader(m_config, rom_bytes, m_cache.iscript_opcode_info.opcodes);
-
-	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
-		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };
-
-		for (const auto& kv : instrs) {
-			const byte opcode{ kv.second.opcode_byte };
-
-			if (opcode == fi::c::OPCODE_GET_ITEM) {
-				if (kv.second.operands.empty())
-					continue;
-
-				const auto op_value{ kv.second.operands[0] };
-
-				result[static_cast<byte>(i)].gifts.push_back(
-					static_cast<byte>(op_value)
-				);
-			}
-			else if (opcode == fi::c::OPCODE_SHOP_BUY ||
-				opcode == fi::c::OPCODE_SHOP_SELL) {
-				if (!kv.second.shop_index)
-					continue;
-
-				const auto& shops{ loader.get_shops() };
-				const auto shop_index{ *kv.second.shop_index };
-
-				if (shop_index < shops.size())
-					for (const auto& entry : shops[shop_index].m_entries)
-						result[static_cast<byte>(i)].shop_items.insert(entry.m_item);
-			}
-		}
-	}
-
-	return result;
-}
-catch (const std::exception& ex) {
-	add_message(std::format("Script extraction failed: {}", ex.what()), fe::MsgType::Error);
-	return {};
-}
-
-std::map<byte, byte> fe::MainWindow::extract_set_spawn_scripts(void) try {
-	std::map<byte, byte> result;
-	const auto& rom_bytes{ m_game->m_rom_data };
-
-	fi::IScriptLoader loader(m_config, rom_bytes, m_cache.iscript_opcode_info.opcodes);
-
-	for (std::size_t i{ 0 }; i < loader.get_script_count(); ++i) {
-		const auto& instrs{ loader.parse_script_raw(rom_bytes, i) };
-
-		for (const auto& kv : instrs) {
-			const auto& instr{ kv.second };
-
-			if (instr.opcode_byte != fi::c::OPCODE_SET_SPAWN || instr.operands.empty())
-				continue;
-
-			result[static_cast<byte>(instr.operands[0])] = static_cast<byte>(i);
-		}
-	}
-
-	return result;
-}
-catch (const std::exception& ex) {
-	add_message(std::format("Spawn script extraction failed: {}", ex.what()), fe::MsgType::Error);
-	return {};
 }

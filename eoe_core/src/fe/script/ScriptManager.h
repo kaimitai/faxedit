@@ -1,8 +1,11 @@
 #ifndef FE_SCRIPTMANAGER_H
 #define FE_SCRIPTMANAGER_H
 
+#include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
+#include "ScriptTypes.h"
 #include "fe/MessageCallback.h"
 #include "fe/Config.h"
 #include "fi/Opcode.h"
@@ -12,6 +15,19 @@
 using byte = unsigned char;
 
 namespace fe::script {
+
+	// analyzers
+	std::unordered_map<byte, ScriptSemanticInfo> extract_script_semantics(
+		const fe::Config& p_config, const std::vector<byte>& p_rom,
+		const std::map<byte, fi::Opcode>& p_opcodes);
+	std::unordered_map<byte, ScriptSemanticInfo> extract_script_semantics(
+		const fe::Config& p_config, const std::vector<byte>& p_rom);
+
+	std::map<byte, byte> extract_set_spawn_scripts(
+		const fe::Config& p_config, const std::vector<byte>& p_rom,
+		const std::map<byte, fi::Opcode>& p_opcodes);
+	std::map<byte, byte> extract_set_spawn_scripts(
+		const fe::Config& p_config, const std::vector<byte>& p_rom);
 
 	// helpers
 	void try_patch(const std::string& p_data_type, std::size_t p_data_size,

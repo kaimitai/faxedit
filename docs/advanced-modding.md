@@ -294,13 +294,23 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevPlaceChrTile | Byte, Byte, Byte | Places one CHR tile on the background through the PPU command queue; X is limited to 0..31 and Y to 0..29 | AtlasDevPlaceChrTile $6a 12 8 |
 | AtlasDevWarpToDoor | Byte | Warps through the door at packed YX on the current screen. Normal locks are bypassed; region-exit locks are not. A missing door continues the script. A successful warp ends it, so put this last and follow it with End | AtlasDevWarpToDoor 152 ; door at block (8,9) |
 | AtlasDevWarpAreaScreenPos | Byte, Byte, Byte | Warps to Area, Screen and packed YX with the game's normal loader. Area 4 and values above 7 are rejected; Screen is not checked. A successful warp ends the script, so put this last and follow it with End | AtlasDevWarpAreaScreenPos 2 0 154 ; Mist, screen 0, block (10,9) |
-| AtlasDevSpawnEntity | Byte, Byte | Spawns an entity with the game's normal allocator. Invalid types and a full eight-slot table do nothing | AtlasDevSpawnEntity 2 154 ; coin at block (10,9) |
+| AtlasDevSpawnEntity | Byte, Byte | Spawns an entity with the game's normal allocator, then reloads graphics for every live entity. Invalid types and a full eight-slot table do nothing | AtlasDevSpawnEntity 2 154 ; coin at block (10,9) |
 | AtlasDevDropItem | Byte, Byte, Byte | Spawns a pickup and sets its amount | AtlasDevDropItem 2 5 154 ; coin worth 5 |
 | AtlasDevDespawnEntity | Byte | Removes entity slot 0-7. Other values do nothing | AtlasDevDespawnEntity 7 |
 | AtlasDevDespawnAllEntities | None | Removes all eight entity slots | AtlasDevDespawnAllEntities |
 | AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
+| AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
+| AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
+
+#### AtlasDev screen events
+
+Event 0 checks the Mascon-path quest bit once. It cancels itself immediately when the bit is clear; when set, it runs the hardcoded path change and then cancels itself. Event 1 manages boss music while at least one class-7 entity exists, then restores area music. Event 2 starts the ending when all eight entity slots are empty.
+
+These handlers keep their original assumptions. Event 1 does not spawn a boss, lock the room or create a reward. Events 0 and 2 should only be used in their intended story context.
+
+```AtlasDevSpawnEntity``` reruns the full entity CHR pass starting at PPU CHR address ```$0900```. Portrait graphics use the same CHR area, so spawning while a portrait is displayed replaces its tiles with entity graphics. Use a generic textbox or clear the portrait first.
 
 #### AtlasDev visual effects
 
