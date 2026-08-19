@@ -56,7 +56,9 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	},
 	// exit handler variables
 	m_exit_app_requested{ false },
-	m_exit_app_granted{ false }
+	m_exit_app_granted{ false },
+	// message callback
+	m_msg_callback{ [this](const fe::Message& p_message) { add_message(p_message.text, p_message.type); } }
 {
 	add_message("It is recommended to read the documentation for usage tips", fe::MsgType::Info);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", fe::MsgType::Info);

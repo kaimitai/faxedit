@@ -8,7 +8,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "fe/Message.h"
+#include "fe/MessageCallback.h"
 #include "gfx.h"
 #include "UndoInterface.h"
 #include "ClipBoardManager.h"
@@ -91,6 +91,8 @@ namespace fe {
 
 	class MainWindow {
 
+		// message callback for reports from eoe_core
+		fe::MessageCallback m_msg_callback;
 		// config
 		fe::Config m_config;
 		// tilemap undo interface
