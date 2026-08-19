@@ -1903,6 +1903,9 @@
 			<entry key="AtlasDevSetMetatile" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetScreenEvent" value="Args=Byte" />
 			<entry key="AtlasDevApplyEffect" value="Args=Byte+Byte" />
+			<entry key="AtlasDevCastSpell" value="Args=Byte" />
+			<entry key="AtlasDevIfMagicActive" value="Flow=Jump" />
+			<entry key="AtlasDevClearVisibleMagic" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

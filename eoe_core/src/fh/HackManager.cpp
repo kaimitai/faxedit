@@ -3683,6 +3683,76 @@ word fh::HackManager::apply_AtlasDevApplyEffect(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevCastSpell(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x05);
+	code.bcc("@cast");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@cast");
+	code.tay();
+	code.sta_abs(RAM::VisibleMagicState);
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x40);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+	code.lda_zp(RAM::ZP_PlayerPosX);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_zp(RAM::ZP_PlayerPosY);
+	code.cpy_imm(0x01);
+	code.beq("@store_y");
+	code.cpy_imm(0x02);
+	code.beq("@store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@done");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfMagicActive(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bpl("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevClearVisibleMagic(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0xff);
+	code.sta_abs(RAM::VisibleMagicState);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -4198,6 +4268,15 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevApplyEffect:
 			cpu_addr = apply_AtlasDevApplyEffect(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevCastSpell:
+			cpu_addr = apply_AtlasDevCastSpell(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfMagicActive:
+			cpu_addr = apply_AtlasDevIfMagicActive(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearVisibleMagic:
+			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
