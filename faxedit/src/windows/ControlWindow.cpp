@@ -10,6 +10,7 @@
 #include "fe/fe_app_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "fe/WorldVisualizer.h"
+#include "fe/game/GameManager.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
@@ -290,7 +291,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	if (ui::imgui_button("Apply External ROM Changes", 4,
 		"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
-		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path), false) };
+		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path)) };
 		add_message(std::format("Applied external changes from {} ({} bytes different)", m_loaded_rom_path, byte_diffs), fe::MsgType::Success);
 	}
 	catch (const std::exception& ex) {
@@ -323,7 +324,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.m_rom_data = l_rom;
 
 		// validate and extract everything on the temporary
-		validate_game_data(new_game);
+		fe::game::validate_and_repair_game(new_game, m_msg_callback);
 		new_game.extract_scenes_if_empty(m_config);
 		new_game.extract_palette_to_music(m_config);
 		new_game.extract_hud_attributes(m_config);
@@ -628,212 +629,6 @@ void fe::MainWindow::report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& res
 	add_message(bank6res, result.bank6_used ? fe::MsgType::Info : fe::MsgType::Error);
 	add_message(bank7res, result.bank7_used ? fe::MsgType::Info : fe::MsgType::Error);
 	add_message(bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error);
-}
-
-void fe::MainWindow::validate_game_data(fe::Game& p_game) {
-
-	const auto validate_screen_connection = [this](std::optional<byte>& conn, std::size_t world,
-		std::size_t screen, std::size_t screen_count) -> void {
-			if (conn && (static_cast<std::size_t>(conn.value()) >= screen_count)) {
-				conn.reset();
-				add_message(
-					std::format("Invalid connection reference on World {}, Screen {}: connection disabled", world, screen), fe::MsgType::Error
-				);
-			}
-		};
-
-	const auto validate_door_dest_palette = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
-		if (door.m_dest_palette_id >= p_game.m_palettes.size()) {
-			door.m_dest_palette_id = 0;
-			add_message(
-				std::format("Invalid destination palette for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
-					door.m_coords.first, door.m_coords.second), fe::MsgType::Error
-			);
-		}
-		};
-
-	const auto validate_door_dest_screen = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
-		if (door.m_dest_screen_id >= p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size()) {
-			door.m_dest_screen_id = 0;
-			add_message(
-				std::format("Invalid destination screen for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
-					door.m_coords.first, door.m_coords.second), fe::MsgType::Error
-			);
-		}
-		};
-
-	// check worlds
-	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
-		auto& world{ p_game.m_chunks[w] };
-
-		// check all screen data for world
-		std::size_t screen_count{ world.m_screens.size() };
-		for (std::size_t s{ 0 }; s < screen_count; ++s) {
-			auto& screen{ world.m_screens[s] };
-
-			// validate connections
-			validate_screen_connection(screen.m_scroll_left, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_right, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_up, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_down, w, s, screen_count);
-
-			// validate doors
-			for (std::size_t d{ 0 }; d < screen.m_doors.size(); ++d) {
-				auto& door{ screen.m_doors[d] };
-				if (door.m_door_type == fe::DoorType::SameWorld)
-					validate_door_dest_palette(door, w, s);
-				else if (door.m_door_type == fe::DoorType::Building)
-					validate_door_dest_screen(door, w, s);
-			}
-
-			// validate tilemap
-			for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
-				for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x)
-					if (static_cast<std::size_t>(screen.get_mt_at_pos(x, y)) >= world.m_metatiles.size()) {
-						add_message(
-							std::format("Invalid metatile reference on World {}, Screen {}, x {}, y {}: {} was set to 0", w, s, x, y, screen.m_tilemap[y][x]), fe::MsgType::Error
-						);
-						screen.m_tilemap[y][x] = 0;
-					}
-		}
-
-		// check scene for world
-		if (world.m_scene.m_palette >= p_game.m_palettes.size()) {
-			add_message(std::format("Invalid palette reference on World {}: {} was set to 0", w, world.m_scene.m_palette), fe::MsgType::Error);
-			world.m_scene.m_palette = 0;
-		}
-	}
-
-	// check building scenes
-	for (std::size_t bscene{ 0 }; bscene < p_game.m_building_scenes.size(); ++bscene) {
-		auto& bScene{ p_game.m_building_scenes[bscene] };
-
-		if (bScene.m_palette >= p_game.m_palettes.size()) {
-			add_message(std::format("Invalid palette reference on scene for building screen {}: {} was set to 0", bscene, bScene.m_palette), fe::MsgType::Error);
-			bScene.m_palette = 0;
-		}
-	}
-
-	// stages
-	auto& stages = p_game.m_stages.m_stages;
-
-	for (std::size_t i = 0; i < stages.size(); ++i) {
-		auto& stage = stages[i];
-
-		if (stage.m_next_stage >= stages.size()) {
-			add_message(
-				std::format("Invalid next_stage index {} in stage {}: set to 0",
-					stage.m_next_stage, i), fe::MsgType::Error
-			);
-			stage.m_next_stage = 0;
-		}
-
-		if (stage.m_prev_stage >= stages.size()) {
-			add_message(
-				std::format("Invalid prev_stage index {} in stage {}: set to 0",
-					stage.m_prev_stage, i), fe::MsgType::Error
-			);
-			stage.m_prev_stage = 0;
-		}
-
-		// validate next screen
-		const auto& next = stages[stage.m_next_stage];
-		if (next.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[next.m_world_id];
-			if (stage.m_next_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid next_screen {} in stage {}: set to 0",
-						stage.m_next_screen, i), fe::MsgType::Error
-				);
-				stage.m_next_screen = 0;
-			}
-		}
-
-		// validate prev screen
-		const auto& prev = stages[stage.m_prev_stage];
-		if (prev.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[prev.m_world_id];
-			if (stage.m_prev_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid prev_screen {} in stage {}: set to 0",
-						stage.m_prev_screen, i), fe::MsgType::Error
-				);
-				stage.m_prev_screen = 0;
-			}
-		}
-	}
-
-	// start screen
-	if (!p_game.m_stages.m_stages.empty()) {
-		const auto& start = p_game.m_stages.m_stages[0];
-
-		if (start.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[start.m_world_id];
-
-			if (p_game.m_stages.m_start_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid start screen {}: set to 0",
-						p_game.m_stages.m_start_screen), fe::MsgType::Error
-				);
-				p_game.m_stages.m_start_screen = 0;
-			}
-		}
-	}
-
-	// push-block
-	if (p_game.m_push_block.m_stage >= p_game.m_stages.m_stages.size()) {
-		add_message("Invalid push-block stage: set to 0", fe::MsgType::Error);
-		p_game.m_push_block.m_stage = 0;
-	}
-
-	const auto pb_world =
-		p_game.m_stages.m_stages[p_game.m_push_block.m_stage].m_world_id;
-
-	if (pb_world < p_game.m_chunks.size()) {
-		const auto& world = p_game.m_chunks[pb_world];
-
-		auto clamp_mt = [&](byte& mt) {
-			if (mt >= world.m_metatiles.size()) {
-				add_message("Invalid push-block metatile: set to 0", fe::MsgType::Error);
-				mt = 0;
-			}
-			};
-
-		clamp_mt(p_game.m_push_block.m_draw_block);
-		clamp_mt(p_game.m_push_block.m_source_0);
-		clamp_mt(p_game.m_push_block.m_source_1);
-		clamp_mt(p_game.m_push_block.m_target_0);
-		clamp_mt(p_game.m_push_block.m_target_1);
-
-		if (p_game.m_push_block.m_screen >= world.m_screens.size()) {
-			add_message("Invalid push-block screen: set to 0", fe::MsgType::Error);
-			p_game.m_push_block.m_screen = 0;
-		}
-	}
-
-	validate_spawn_points(p_game);
-}
-
-void fe::MainWindow::validate_spawn_points(fe::Game& p_game) {
-	for (auto& spawn : p_game.m_spawn_locations) {
-
-		if (spawn.m_world >= p_game.m_chunks.size()) {
-			add_message(
-				std::format("Invalid spawn world {}: set to 0", spawn.m_world), fe::MsgType::Error
-			);
-			spawn.m_world = 0;
-		}
-
-		const auto& world = p_game.m_chunks[spawn.m_world];
-
-		if (spawn.m_screen >= world.m_screens.size()) {
-			add_message(
-				std::format("Invalid spawn screen {} in world {}: set to 0",
-					spawn.m_screen, spawn.m_world), fe::MsgType::Error
-			);
-			spawn.m_screen = 0;
-		}
-	}
 }
 
 // dump debug data to disk

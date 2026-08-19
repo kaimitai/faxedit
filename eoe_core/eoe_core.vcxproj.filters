@@ -106,6 +106,12 @@
     <Filter Include="Source Files\fe\script">
       <UniqueIdentifier>{9c732878-ffed-4739-ad14-fd85e90cfccb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\fe\game">
+      <UniqueIdentifier>{8b74372e-1a01-49e1-91ae-44f75808d9d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\fe\game">
+      <UniqueIdentifier>{292db3e2-1ac6-4e0f-8c38-c33a737e21c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\common\klib\Asm6502.h">
@@ -378,6 +384,9 @@
     <ClInclude Include="src\fe\script\ScriptTypes.h">
       <Filter>Header Files\fe\script</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\game\GameManager.h">
+      <Filter>Header Files\fe\game</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -592,6 +601,9 @@
     </ClCompile>
     <ClCompile Include="src\fe\script\ScriptManager.cpp">
       <Filter>Source Files\fe\script</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fe\game\GameManager.cpp">
+      <Filter>Source Files\fe\game</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
