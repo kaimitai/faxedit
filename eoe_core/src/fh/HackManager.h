@@ -43,7 +43,8 @@ namespace fh {
 		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile,
 		AtlasDevWarpToDoor, AtlasDevWarpAreaScreenPos,
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
-		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent
+		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
+		AtlasDevApplyEffect
 	};
 
 	class HackManager {
@@ -181,6 +182,7 @@ namespace fh {
 		word apply_AtlasDevDespawnAllEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetScreenEvent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevApplyEffect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
