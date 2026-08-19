@@ -3634,6 +3634,35 @@ word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevApplyEffect Effect Duration: starts one of the four vanilla timed
+// effects (0 ointment, 1 glove, 2 wing boots, 3 hour glass). Writing the
+// counter is the whole implementation. The engine's effect tick owns the
+// flight bit, the cadence and expiry. Effect masks to 0-3, Duration to
+// $00-$7f because bit 7 is the inactive encoding. No item is consumed.
+word fh::HackManager::apply_AtlasDevApplyEffect(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // effect
+	code.and_imm(0x03);
+	code.sta_zp(RAM::ZP_Temp_Int24_U);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // duration
+	code.cmp_imm(0x80);
+	code.bcc("@duration_ok");
+	code.lda_imm(0x7f);
+	code.label("@duration_ok");
+	code.db(0xa6); code.db(RAM::ZP_Temp_Int24_U); // LDX effect
+	code.sta_abs_x(RAM::TimedEffectTimers);
+	code.cpx_imm(0x02);
+	code.bne("@no_hud");
+	code.jsr(cfg_word(p_config, c::ID_ROM_HUD_DRAW_TIMER));
+	code.label("@no_hud");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -4143,6 +4172,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevSetMetatile:
 			cpu_addr = apply_AtlasDevSetMetatile(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevApplyEffect:
+			cpu_addr = apply_AtlasDevApplyEffect(p_config, p_rom, cpu_addr);
 			break;
 
 		default:

@@ -184,6 +184,13 @@ namespace fh {
 		constexpr byte ZP_TransitionPalette{ 0x65 };
 		constexpr byte ZP_TransitionStartPos{ 0x6c };
 		constexpr word LiveWeapon{ 0x03c8 };
+		// The four one-byte timed-effect counters, in this order: ointment,
+		// glove, wing boots, hour glass.  Bit 7 set is the engine's own
+		// "inactive" encoding - $c6af initialises all four to $ff - and the
+		// effect tick decrements them one step per 64 frames while it is
+		// clear.  Region-invariant: all four retail images reference
+		// $0427-$042a the same number of times.
+		constexpr word TimedEffectTimers{ 0x0427 };
 	}
 
 	namespace c {
@@ -201,6 +208,7 @@ namespace fh {
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
 		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };
 		constexpr char ID_ROM_VANILLA_FAR_CALL[]{ "rom_vanilla_far_call" };
+		constexpr char ID_ROM_HUD_DRAW_TIMER[]{ "rom_hud_draw_timer" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
