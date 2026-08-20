@@ -15,8 +15,17 @@ pugi::xml_document fe::xml::load_xml_file(const std::string& p_filepath) {
 	return l_doc;
 }
 
+void fe::xml::save_xml_file(const pugi::xml_document& p_doc, const std::string& p_filepath) {
+	if (!p_doc.save_file(p_filepath.c_str()))
+		throw std::runtime_error("Could not save " + p_filepath);
+}
+
 fe::Game fe::xml::load_game_xml_from_file(const std::string& p_filepath) {
 	return load_game_xml(load_xml_file(p_filepath));
+}
+
+void fe::xml::save_game_xml_to_file(const std::string& p_filepath, const fe::Game& p_game) {
+	save_xml_file(save_game_xml(p_game), p_filepath);
 }
 
 fe::Game fe::xml::load_game_xml(const pugi::xml_document& l_doc) {
@@ -550,7 +559,7 @@ void fe::xml::read_cinematic_data(pugi::xml_node p_node, fe::Game& p_game) {
 	}
 }
 
-void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
+pugi::xml_document fe::xml::save_game_xml(const fe::Game& p_game) {
 
 	// create document object
 	pugi::xml_document doc;
@@ -1194,9 +1203,8 @@ void fe::xml::save_xml(const std::string p_filepath, const fe::Game& p_game) {
 	for (std::size_t i{ 0 }; i < cinema.frames.size(); ++i)
 		add_frame(n_cinema_frames, i, cinema.frames[i]);
 
-	// save document to disk
-	if (!doc.save_file(p_filepath.c_str()))
-		throw std::runtime_error("Could not save " + p_filepath);
+	// return generated xml doc
+	return doc;
 }
 
 // sprite gfx helpers
