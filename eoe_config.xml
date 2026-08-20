@@ -1897,6 +1897,11 @@
 			<entry key="AtlasDevWarpToDoor" value="Args=Byte" />
 			<entry key="AtlasDevWarpAreaScreenPos" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevSpawnEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevDissolveEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetEntityPosition" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevSetEntityScript" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetEntityBScript" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfEntityInRange" value="Args=Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevDropItem" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDespawnEntity" value="Args=Byte" />
 			<entry key="AtlasDevDespawnAllEntities" />

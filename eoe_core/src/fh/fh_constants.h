@@ -136,6 +136,8 @@ namespace fh {
 		constexpr word EntityPhase{ 0x02e4 };
 		constexpr word EntitySpeedFraction{ 0x02ec };
 		constexpr word EntitySpeedWhole{ 0x02f4 };
+		constexpr word EntityDropIdentity{ 0x02fc };
+		constexpr word EntityMagicState{ 0x0334 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };

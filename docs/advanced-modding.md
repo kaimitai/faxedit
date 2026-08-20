@@ -295,6 +295,11 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevWarpToDoor | Byte | Warps through the door at packed YX on the current screen. Normal locks are bypassed; region-exit locks are not. A missing door continues the script. A successful warp ends it, so put this last and follow it with End | AtlasDevWarpToDoor 152 ; door at block (8,9) |
 | AtlasDevWarpAreaScreenPos | Byte, Byte, Byte | Warps to Area, Screen and packed YX with the game's normal loader. Area 4 and values above 7 are rejected; Screen is not checked. A successful warp ends the script, so put this last and follow it with End | AtlasDevWarpAreaScreenPos 2 0 154 ; Mist, screen 0, block (10,9) |
 | AtlasDevSpawnEntity | Byte, Byte | Spawns an entity with the game's normal allocator, then reloads graphics for every live entity. Invalid types and a full eight-slot table do nothing | AtlasDevSpawnEntity 2 154 ; coin at block (10,9) |
+| AtlasDevDissolveEntity | Byte, Byte | Replaces an active slot with the vanilla dissolve effect. Mode bit 0 suppresses its drop and bit 1 uses the boss burst | AtlasDevDissolveEntity 3 1 |
+| AtlasDevSetEntityPosition | Byte, Byte, Byte | Moves slot 0-7 to a pixel X/Y position. Its behavior may move it again on the next tick | AtlasDevSetEntityPosition 3 128 112 |
+| AtlasDevSetEntityScript | Byte, Byte | Changes the interaction script ID for slot 0-7. $FF disables it; the entity must still be an NPC category | AtlasDevSetEntityScript 3 12 |
+| AtlasDevSetEntityBScript | Byte, Byte, Byte | Starts slot 0-7 at a BScript CPU address. The address must begin a valid yielding program | AtlasDevSetEntityBScript 3 $5c $af |
+| AtlasDevIfEntityInRange | Byte, Byte, Label | Jumps when an active slot is within the inclusive 0-15 metatile radius on both axes | AtlasDevIfEntityInRange 3 2 @near |
 | AtlasDevDropItem | Byte, Byte, Byte | Spawns a pickup and sets its amount | AtlasDevDropItem 2 5 154 ; coin worth 5 |
 | AtlasDevDespawnEntity | Byte | Removes entity slot 0-7. Other values do nothing | AtlasDevDespawnEntity 7 |
 | AtlasDevDespawnAllEntities | None | Removes all eight entity slots | AtlasDevDespawnAllEntities |
