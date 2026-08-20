@@ -38,6 +38,7 @@ namespace fh {
 		// Waits until the PPU queue has room for up to $24 bytes.
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
+		constexpr word Sprites_FlipRanges{ 0xcba8 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
 		// Stages the selected sprite palette and stores its index at $03d4.
@@ -53,6 +54,7 @@ namespace fh {
 		constexpr word Screen_Load{ 0xdd46 };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
+		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
@@ -95,6 +97,7 @@ namespace fh {
 		constexpr byte ZP_PPUMaskShadow{ 0x0b };
 		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
 		constexpr byte ZP_CameraNametableParity{ 0x0d };
+		constexpr byte ZP_Joy1_ChangedButtonMask{ 0x19 };
 		// Producer cursor of the $0500 PPU command ring.  Producers seed X
 		// from it, write payload bytes, and publish with one STX; the NMI
 		// consumer compares it against the read cursor $1f.

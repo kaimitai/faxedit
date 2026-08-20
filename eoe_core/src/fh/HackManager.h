@@ -50,6 +50,10 @@ namespace fh {
 		AtlasDevClearVisibleMagic
 	};
 
+	enum class GeneralHackLib {
+		KillSwitch
+	};
+
 	class HackManager {
 
 		// script action library
@@ -223,6 +227,9 @@ namespace fh {
 		word install_hack_tm_event_handler(const fe::Config& p_config, std::vector<byte>& p_rom,
 			byte tm_lookup_bank, word tm_lookup_cpu_addr) const;
 
+		// general hack library implementations
+		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
+
 		// util
 		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;
 		word cfg_word(const fe::Config& p_config, const std::string& p_id) const;
@@ -242,6 +249,8 @@ namespace fh {
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
+		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
+			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHackLib>& p_hacks) const;
 	};
 
 }

@@ -23,6 +23,13 @@ namespace fe {
 		std::vector<std::size_t> m_sizes;
 	};
 
+	struct Bank15PatchResult {
+		std::size_t used_bytes;
+		std::size_t available_bytes;
+		std::size_t free_range_cpu_start;
+		std::size_t free_range_cpu_end;
+	};
+
 	class ROM_Manager {
 	public:
 
@@ -75,7 +82,7 @@ namespace fe {
 		// encode in place and return a pair of used size and max size
 		std::pair<std::size_t, std::size_t> encode_metadata(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
 		std::pair<std::size_t, std::size_t> encode_sprite_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom) const;
-		std::pair<std::size_t, std::size_t> encode_bank_15_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom,
+		Bank15PatchResult encode_bank_15_data(const fe::Config& p_config, const fe::Game& p_game, std::vector<byte>& p_rom,
 			bool p_encode_pal2mus = true) const;
 
 		// encoding data in-place using a given address and stride-indexed
