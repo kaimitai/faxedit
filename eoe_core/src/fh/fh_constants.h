@@ -136,6 +136,8 @@ namespace fh {
 		constexpr word EntityPhase{ 0x02e4 };
 		constexpr word EntitySpeedFraction{ 0x02ec };
 		constexpr word EntitySpeedWhole{ 0x02f4 };
+		constexpr word EntityDropIdentity{ 0x02fc };
+		constexpr word EntityMagicState{ 0x0334 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };
@@ -149,6 +151,14 @@ namespace fh {
 		constexpr word PortraitSavedPalette{ 0x03d3 };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
+		constexpr word VisibleMagicState{ 0x02b3 };
+		constexpr word VisibleMagicFlags{ 0x02b4 };
+		constexpr word VisibleMagicXFraction{ 0x02b5 };
+		constexpr word VisibleMagicX{ 0x02b6 };
+		constexpr word VisibleMagicYFraction{ 0x02b7 };
+		constexpr word VisibleMagicY{ 0x02b8 };
+		constexpr word VisibleMagicCounter{ 0x02b9 };
+		constexpr word VisibleMagicPhase{ 0x02ba };
 
 		constexpr word Flags{ 0x0101 };
 		constexpr word DoorKeyRequirement{ 0x042b };

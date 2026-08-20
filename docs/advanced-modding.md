@@ -295,12 +295,27 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevWarpToDoor | Byte | Warps through the door at packed YX on the current screen. Normal locks are bypassed; region-exit locks are not. A missing door continues the script. A successful warp ends it, so put this last and follow it with End | AtlasDevWarpToDoor 152 ; door at block (8,9) |
 | AtlasDevWarpAreaScreenPos | Byte, Byte, Byte | Warps to Area, Screen and packed YX with the game's normal loader. Area 4 and values above 7 are rejected; Screen is not checked. A successful warp ends the script, so put this last and follow it with End | AtlasDevWarpAreaScreenPos 2 0 154 ; Mist, screen 0, block (10,9) |
 | AtlasDevSpawnEntity | Byte, Byte | Spawns an entity with the game's normal allocator, then reloads graphics for every live entity. Invalid types and a full eight-slot table do nothing | AtlasDevSpawnEntity 2 154 ; coin at block (10,9) |
+| AtlasDevDissolveEntity | Byte, Byte | Replaces an active slot with the vanilla dissolve effect. Mode bit 0 suppresses its drop and bit 1 uses the boss burst | AtlasDevDissolveEntity 3 1 |
+| AtlasDevSetEntityPosition | Byte, Byte, Byte | Moves slot 0-7 to a pixel X/Y position. Its behavior may move it again on the next tick | AtlasDevSetEntityPosition 3 128 112 |
+| AtlasDevSetEntityScript | Byte, Byte | Changes the interaction script ID for slot 0-7. $FF disables it; the entity must still be an NPC category | AtlasDevSetEntityScript 3 12 |
+| AtlasDevSetEntityBScript | Byte, Byte, Byte | Starts slot 0-7 at a BScript CPU address. The address must begin a valid yielding program | AtlasDevSetEntityBScript 3 $5c $af |
+| AtlasDevIfEntityInRange | Byte, Byte, Label | Jumps when an active slot is within the inclusive 0-15 metatile radius on both axes | AtlasDevIfEntityInRange 3 2 @near |
 | AtlasDevDropItem | Byte, Byte, Byte | Spawns a pickup and sets its amount | AtlasDevDropItem 2 5 154 ; coin worth 5 |
 | AtlasDevDespawnEntity | Byte | Removes entity slot 0-7. Other values do nothing | AtlasDevDespawnEntity 7 |
 | AtlasDevDespawnAllEntities | None | Removes all eight entity slots | AtlasDevDespawnAllEntities |
 | AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
 | AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
 | AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
+| AtlasDevCastSpell | Byte | Initializes spell 0-4 at the player without using MP or checking input. It is silent and starts moving after the script returns to gameplay. Other values do nothing | AtlasDevCastSpell 2 |
+| AtlasDevIfMagicActive | Label | Uses the game's visible-magic sign test. Valid active states are 0-11, including dormant state 9 | AtlasDevIfMagicActive @spell_active |
+| AtlasDevClearVisibleMagic | None | Ends the current visible-magic state. Its auxiliary bytes are left unchanged, matching the vanilla clear | AtlasDevClearVisibleMagic |
+
+`AtlasDevCastSpell` replaces the current magic state. The normal magic loop
+moves it after the script ends. Use `AtlasDevPlaySFX` separately when needed.
+
+`AtlasDevIfMagicActive` uses the game's sign test. State 9 has no update or
+finish handler and stays active until cleared or replaced. Values 12-127 are
+invalid magic states and should not be written directly.
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 

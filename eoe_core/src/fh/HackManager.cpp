@@ -3634,6 +3634,198 @@ word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevDissolveEntity(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e3);
+	code.pla();
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@done");
+	code.lda_zp(RAM::ZP_e3);
+	code.and_imm(0x01);
+	code.beq("@keep_drop");
+	code.lda_imm(0x13);
+	code.bne("@store_drop");
+	code.label("@keep_drop");
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.label("@store_drop");
+	code.sta_abs_x(RAM::EntityDropIdentity);
+	code.lda_zp(RAM::ZP_e3);
+	code.and_imm(0x02);
+	code.beq("@normal");
+	code.lda_imm(0x64);
+	code.sta_abs_x(RAM::EntitySlotActive);
+	code.lda_imm(0x64);
+	code.sta_abs_x(RAM::EntityProgramLo);
+	code.bne("@program_hi");
+	code.label("@normal");
+	code.lda_imm(0x13);
+	code.sta_abs_x(RAM::EntitySlotActive);
+	code.lda_imm(0x5c);
+	code.sta_abs_x(RAM::EntityProgramLo);
+	code.label("@program_hi");
+	code.lda_imm(0xaf);
+	code.sta_abs_x(RAM::EntityProgramHi);
+	code.lda_imm(0xff);
+	code.sta_abs_x(RAM::EntityOpsMode);
+	code.sta_abs_x(RAM::EntityMagicState);
+	code.lda_imm(0x00);
+	code.sta_abs_x(RAM::EntitySpeedFraction);
+	code.sta_abs_x(RAM::EntityHitStun);
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xbf);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.lda_imm(0x03);
+	code.jsr(ROM::Sound_PlayEffect);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetEntityPosition(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e3);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e4);
+	code.lda_zp(RAM::ZP_e2);
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_zp(RAM::ZP_e3);
+	code.db(0x95); code.db(RAM::ZP_EntityX); // STA entity X,X
+	code.lda_zp(RAM::ZP_e4);
+	code.db(0x95); code.db(RAM::ZP_EntityY); // STA entity Y,X
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetEntityScript(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e3);
+	code.lda_zp(RAM::ZP_e2);
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_zp(RAM::ZP_e3);
+	code.sta_abs_x(RAM::EntityScriptRoot);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSetEntityBScript(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e3);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e4);
+	code.lda_zp(RAM::ZP_e2);
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_zp(RAM::ZP_e3);
+	code.sta_abs_x(RAM::EntityProgramLo);
+	code.lda_zp(RAM::ZP_e4);
+	code.sta_abs_x(RAM::EntityProgramHi);
+	code.lda_imm(0xff);
+	code.sta_abs_x(RAM::EntityOpsMode);
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xbf);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.lda_imm(0x00);
+	code.sta_abs_x(RAM::EntityPhase);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfEntityInRange(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(RAM::ZP_e3);
+	code.cmp_imm(0x10);
+	code.bcs("@false");
+	code.lda_zp(RAM::ZP_e2);
+	code.cmp_imm(0x08);
+	code.bcs("@false");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@false");
+	code.db(0xb5); code.db(RAM::ZP_EntityX); // LDA entity X,X
+	code.and_imm(0xf0);
+	code.sta_zp(RAM::ZP_e4);
+	code.lda_zp(RAM::ZP_PlayerX);
+	code.and_imm(0xf0);
+	code.sec();
+	code.db(0xe5); code.db(RAM::ZP_e4); // SBC entity X block
+	code.bcs("@x_abs");
+	code.eor_imm(0xff);
+	code.adc_imm(0x01);
+	code.label("@x_abs");
+	code.lsr_a(4);
+	code.cmp_zp(RAM::ZP_e3);
+	code.bcc("@check_y");
+	code.beq("@check_y");
+	code.bcs("@false");
+	code.label("@check_y");
+	code.db(0xb5); code.db(RAM::ZP_EntityY); // LDA entity Y,X
+	code.and_imm(0xf0);
+	code.sta_zp(RAM::ZP_e4);
+	code.lda_zp(RAM::ZP_PlayerY);
+	code.and_imm(0xf0);
+	code.sec();
+	code.db(0xe5); code.db(RAM::ZP_e4); // SBC entity Y block
+	code.bcs("@y_abs");
+	code.eor_imm(0xff);
+	code.adc_imm(0x01);
+	code.label("@y_abs");
+	code.lsr_a(4);
+	code.cmp_zp(RAM::ZP_e3);
+	code.bcc("@true");
+	code.beq("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // Accepts events 0-2 and $FF. Invalid values leave the current event unchanged.
 word fh::HackManager::apply_AtlasDevSetScreenEvent(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
@@ -3677,6 +3869,76 @@ word fh::HackManager::apply_AtlasDevApplyEffect(const fe::Config& p_config,
 	code.bne("@no_hud");
 	code.jsr(cfg_word(p_config, c::ID_ROM_HUD_DRAW_TIMER));
 	code.label("@no_hud");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevCastSpell(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x05);
+	code.bcc("@cast");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@cast");
+	code.tay();
+	code.sta_abs(RAM::VisibleMagicState);
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x40);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+	code.lda_zp(RAM::ZP_PlayerPosX);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_zp(RAM::ZP_PlayerPosY);
+	code.cpy_imm(0x01);
+	code.beq("@store_y");
+	code.cpy_imm(0x02);
+	code.beq("@store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@done");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfMagicActive(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bpl("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevClearVisibleMagic(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0xff);
+	code.sta_abs(RAM::VisibleMagicState);
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -4193,11 +4455,35 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		case HackLib::AtlasDevSetMetatile:
 			cpu_addr = apply_AtlasDevSetMetatile(p_config, p_rom, cpu_addr);
 			break;
+		case HackLib::AtlasDevDissolveEntity:
+			cpu_addr = apply_AtlasDevDissolveEntity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetEntityPosition:
+			cpu_addr = apply_AtlasDevSetEntityPosition(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetEntityScript:
+			cpu_addr = apply_AtlasDevSetEntityScript(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetEntityBScript:
+			cpu_addr = apply_AtlasDevSetEntityBScript(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfEntityInRange:
+			cpu_addr = apply_AtlasDevIfEntityInRange(p_config, p_rom, cpu_addr);
+			break;
 		case HackLib::AtlasDevSetScreenEvent:
 			cpu_addr = apply_AtlasDevSetScreenEvent(p_config, p_rom, cpu_addr);
 			break;
 		case HackLib::AtlasDevApplyEffect:
 			cpu_addr = apply_AtlasDevApplyEffect(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevCastSpell:
+			cpu_addr = apply_AtlasDevCastSpell(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfMagicActive:
+			cpu_addr = apply_AtlasDevIfMagicActive(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearVisibleMagic:
+			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
 			break;
 
 		default:
