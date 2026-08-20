@@ -89,6 +89,24 @@ fe::Game fe::game::load_game_xml_from_file(
 	return load_game_xml(p_config, xml::load_xml_file(p_filepath), p_rom, p_message);
 }
 
+pugi::xml_document fe::game::save_game_xml(
+	const Config& p_config,
+	Game& p_game) {
+	// gfx context is authoritative for palettes which share ROM storage
+	p_game.sync_palettes(p_game.get_shared_palettes(p_config));
+	return xml::save_game_xml(p_game);
+}
+
+// save game to xml file
+void fe::game::save_game_xml_to_file(
+	const Config& p_config,
+	Game& p_game,
+	const std::string& p_filepath,
+	const MessageCallback& p_message) {
+	xml::save_xml_file(save_game_xml(p_config, p_game), p_filepath);
+	send_message(p_message, { "xml file written to " + p_filepath, MsgType::Success });
+}
+
 // analysis and validation
 void fe::game::analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
 	bool p_warn_00_doors, const MessageCallback& p_message) {

@@ -15,9 +15,7 @@
 
 void fe::MainWindow::save_xml(void) {
 	try {
-		m_game->sync_palettes(m_cache.m_shared_palettes);
-		xml::save_game_xml_to_file(get_xml_path(), m_game.value());
-		add_message("xml file written to " + get_xml_path(), fe::MsgType::Success, true);
+		fe::game::save_game_xml_to_file(m_config, m_game.value(), get_xml_path(), m_msg_callback);
 	}
 	catch (const std::runtime_error& p_ex) {
 		add_message(p_ex.what(), fe::MsgType::Error);

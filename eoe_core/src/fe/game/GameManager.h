@@ -51,6 +51,18 @@ namespace fe::game {
 		const std::vector<byte>& p_rom,
 		const MessageCallback& p_message = nullptr);
 
+	// save game to in-memory xml
+	pugi::xml_document save_game_xml(
+		const Config& p_config,
+		Game& p_game);
+
+	// save game to xml file
+	void save_game_xml_to_file(
+		const Config& p_config,
+		Game& p_game,
+		const std::string& p_filepath,
+		const MessageCallback& p_message = nullptr);
+
 	// analysis and validation
 	void analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
 		bool p_warn_00_doors, const MessageCallback& p_message = nullptr);
