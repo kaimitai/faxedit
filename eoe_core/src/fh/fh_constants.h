@@ -49,7 +49,15 @@ namespace fh {
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
+		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
+		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
+		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
+		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
+		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
+		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
+		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };
 		constexpr word Portrait_LoadTiles{ 0xf24d };
@@ -148,6 +156,7 @@ namespace fh {
 		constexpr byte ZP_EntityY{ 0xc2 };
 		constexpr byte ZP_PlayerX{ 0x9e };
 		constexpr byte ZP_PlayerY{ 0xa1 };
+		constexpr word World_DefaultMusic{ 0x03d1 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
@@ -201,6 +210,10 @@ namespace fh {
 		// clear.  Region-invariant: all four retail images reference
 		// $0427-$042a the same number of times.
 		constexpr word TimedEffectTimers{ 0x0427 };
+
+		// RAM used by the sameworld to stage-door hack
+		constexpr word Hack_StageChangePending{ 0x1fff };
+		constexpr word Hack_PendingStage{ 0x1ffe };
 	}
 
 	namespace c {
@@ -232,6 +245,15 @@ namespace fh {
 		constexpr char ID_HACK_SCRIPT_JSR_RAM_ADDR_LO[]{ "hack_script_jsr_ram_addr_lo" };
 		constexpr char ID_HACK_SCRIPT_JSR_RAM_ADDR_HI[]{ "hack_script_jsr_ram_addr_hi" };
 		constexpr char ID_HACK_SCRIPT_SELECTED_FLAG_RAM_ADDR[]{ "hack_script_selected_flag_ram_addr" };
+
+		// sameworld to stage-door hack injection point IDs
+		constexpr char ID_HACK_HANDLE_PALETTE_ADDR[]{ "hack_handle_palette_addr" };
+		constexpr char ID_HACK_SET_PENDING_STAGE_ADDR[]{ "hack_set_pending_stage_addr" };
+		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
+		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
+
+		// enable pal2mus for sameworld transitions hack
+		constexpr char ID_HACK_SW_TRANS_PAL2MUS_ADDR[]{ "hack_sw_trans_pal2mus_addr" };
 
 		// Used only by AtlasDevShowMessageFromVar. No default is shipped: a
 		// project must define both before that opcode can be installed, and

@@ -1,5 +1,6 @@
 #include "HackManager.h"
 #include "fh_constants.h"
+#include "fe/fe_constants.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
@@ -4762,6 +4763,137 @@ word fh::HackManager::install_hack_clear_flag_memory(const fe::Config& p_config,
 	code.apply_hack_and_clear(p_rom, 15, ROM::Game_Init_JSR_Game_InitMMCAndBank);
 
 	return result;
+}
+
+// installs a series of hacks, static and dynamic, which allow the requirement byte in
+// sameworld doors to encode a destination stage as well
+// door data must be migrated elsewhere by setting requirement = (destination_stage) << 4 + requirement
+void fh::HackManager::install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	// new routine addresses
+
+	// randumizer addresses for reference
+	// const word Hack_ClearPendingStageAndLoadWorld{ 0xfda0 };
+	// const word Hack_SetPendingStage{ 0xfe00 };
+	// const word Hack_HandlePalette{ 0xfe20 };
+	// const word Hack_ExtractStageAndRequirement{ 0xfe40 };
+	// (we do not add a separate function for palette to music like the
+	// randomizer as we already handle the map dynamically in the frontend)
+
+	// new routine addresses to avoid claiming free space
+	// default: use the sound effect priority table from index 1
+	const word Hack_HandlePalette{ static_cast<word>(p_config.constant_or(c::ID_HACK_HANDLE_PALETTE_ADDR, 0xf389)) };
+	// default: use the normally unreachable debug code, lay the functions out contiguously there
+	const word Hack_SetPendingStage{ static_cast<word>(p_config.constant_or(c::ID_HACK_SET_PENDING_STAGE_ADDR, 0xdf99)) };
+	const word Hack_ExtractStageAndRequirement{ static_cast<word>(p_config.constant_or(c::ID_HACK_DECODE_REQ_ADDR, 0xdfa8)) };
+	const word Hack_ClearPendingStageAndLoadWorld{ static_cast<word>(p_config.constant_or(c::ID_HACK_LOAD_WORLD_ADDR, 0xdfb7)) };
+
+	klib::Asm6502 code{};
+
+	// new routine for setting pending stage: Hack_SetPendingStage
+	code.lda_imm(0x01);
+	code.sta_abs(RAM::Hack_StageChangePending);
+	code.lda_abs(RAM::Hack_PendingStage);
+	code.sta_abs(RAM::CurrentStage);
+	code.jsr(ROM::Game_SetupAndLoadOutsideArea);
+	code.rts();
+	code.apply_hack_and_clear(p_rom, 15, Hack_SetPendingStage);
+
+	// update the sameworld-door logic to jump into our new routine instead of vanilla
+	code.jmp(Hack_SetPendingStage);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Player_CheckHandleEnterDoor_enterScreen);
+
+	// new routine for handling hack door palette: Hack_HandlePalette
+	code.lda_imm(0x00);
+	code.jsr(ROM::Screen_CopySpritePaletteToShadow);
+	code.lda_abs(RAM::Hack_StageChangePending);
+	code.cmp_imm(0x01);
+	code.beq("@stage_pending");
+	// hack stage change not pending, use vanilla palette logic
+	code.jmp(ROM::Game_LoadCurrentArea_LDX_Stage);
+	// hack stage change pending - clear the flag and load screen
+	code.label("@stage_pending");
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::Hack_StageChangePending);
+	code.jmp(ROM::Screen_Load);
+	code.apply_hack_and_clear(p_rom, 15, Hack_HandlePalette);
+
+	// update the stage palette logic to jump into our palette handler
+	code.jmp(Hack_HandlePalette);
+	code.nop();
+	code.nop();
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_LoadCurrentArea_LoadPalette);
+
+	// extract stage and actual door requirement from hack-door data: Hack_ExtractStageAndRequirement
+	code.tay();
+	// get stage from the requirement byte (hi nibble)
+	code.lsr_a();
+	code.lsr_a();
+	code.lsr_a();
+	code.lsr_a();
+	code.sta_abs(RAM::Hack_PendingStage);
+	code.tya();
+	// get actual requirement (lo nibble)
+	code.and_imm(0x0f);
+	code.sta_abs(RAM::DoorKeyRequirement);
+	code.rts();
+	code.apply_hack_and_clear(p_rom, 15, Hack_ExtractStageAndRequirement);
+
+	// instead of storing A in door requirement ram directly, jump to the new routine
+	code.jsr(Hack_ExtractStageAndRequirement);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Area_SetStateFromDoorDestination_STA_DoorReq);
+
+	// clear pending hack stage change flag and load world
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::Hack_StageChangePending);
+	code.jmp(ROM::Game_SetupAndLoadOutsideArea);
+	code.apply_hack_and_clear(p_rom, 15, Hack_ClearPendingStageAndLoadWorld);
+
+	// hook vanilla code into our new routine
+	code.jmp(Hack_ClearPendingStageAndLoadWorld);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Player_EnterDoorToOutside_JMP_SetupArea);
+}
+
+// hack which enables palette-to-music mapping to be applied to sameworld transitions as well as sameworld doors
+void fh::HackManager::install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	// new routine addr
+	const word HackSwTransPal2Mus{ static_cast<word>(p_config.constant_or(c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)) };
+
+	// constants from the rom
+	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
+	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
+
+	byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
+	word pal2mus_pal_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, pal_ptr.first)) };
+	word pal2mus_mus_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, mus_ptr.first)) };
+
+	klib::Asm6502 code;
+
+	// add new routine which copies the vanilla logic for sw-door pal2mus
+	code.ldx_imm(pal2mus_slot_count);
+	code.label("@paletteCheckLoop");
+	code.lda_zp(RAM::ZP_TransitionPalette);
+	code.cmp_abs_x(pal2mus_pal_table_addr);
+	code.beq("@setupArea");
+	code.dex();
+	code.bpl("@paletteCheckLoop");
+	code.bmi("@enterScreen");
+
+	code.label("@setupArea");
+	code.lda_abs_x(pal2mus_mus_table_addr);
+	code.cmp_abs(RAM::World_DefaultMusic);
+	code.beq("@enterScreen");
+	code.sta_zp(RAM::ZP_MusicCurrent);
+	code.sta_abs(RAM::World_DefaultMusic);
+
+	code.label("@enterScreen");
+	code.jmp(ROM::Game_SetupEnterScreen);
+
+	// insert the new routine in rom
+	code.apply_hack_and_clear(p_rom, 15, HackSwTransPal2Mus);
+
+	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
+	code.jmp(HackSwTransPal2Mus);
+	code.apply_hack_and_clear(p_rom, 15, ROM::SwTransJmpSetupEnterScreen);
 }
 
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives

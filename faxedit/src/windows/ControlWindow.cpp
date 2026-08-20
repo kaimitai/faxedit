@@ -11,6 +11,7 @@
 #include "fe/sprite/fe_sprite_constants.h"
 #include "fe/WorldVisualizer.h"
 #include "fe/game/GameManager.h"
+#include "fh/HackManager.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
@@ -241,7 +242,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	// skip it for randomizer ROMs as they keep the hack in different locations
 	if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 &&
 		!m_cache.m_disable_pal2_mus) {
-		patch_randumizer_doors(x_rom);
+		fh::HackManager::install_hack_sameworld_to_stage_doors(m_config, x_rom);
 	}
 
 	// world tileset chr
@@ -400,7 +401,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	}
 
 	if (m_settings.m_apply_sw_pal2mus_hack) {
-		patch_sw_transition_pal2mus(x_rom);
+		fh::HackManager::install_hack_pal2mus_for_sw_trans(m_config, x_rom);
 		add_message("Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info);
 	}
 

@@ -346,8 +346,6 @@ namespace fe {
 
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
-		void patch_randumizer_doors(std::vector<byte>& p_rom);
-		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
 		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
 
 		// scripting helpers
