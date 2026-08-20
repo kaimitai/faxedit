@@ -218,8 +218,6 @@ namespace fe {
 		void show_sprite_set_contents(std::size_t p_sprite_set);
 		void show_scene(fe::Scene& p_scene, bool p_show_pos);
 
-		bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size);
-
 		std::string get_editmode_as_string(void) const;
 
 		Size4 get_selection_dims(void) const;
@@ -292,7 +290,6 @@ namespace fe {
 		std::string get_sprite_gfx_file_prefix(std::size_t p_gfx_key) const;
 		std::string get_sprite_gfx_bank_name(std::size_t p_coll_id, std::size_t p_sel_bank_id,
 			std::size_t p_bank_id, std::size_t p_bank_count, std::size_t p_tile_count) const;
-		void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result);
 		std::optional<std::pair<int, int>> imgui_select_tile_image(SDL_Texture* tex, float scale, int& p_sel_x, int& p_sel_y) const;
 
 		// cinematic ui helpers
@@ -331,7 +328,6 @@ namespace fe {
 		// save functions
 		void save_xml(void);
 		void patch_nes_rom(bool p_in_place);
-		std::optional<std::vector<byte>> patch_rom(void);
 
 		// camera and screen rendering helpers
 		void render_screen_texture(SDL_Renderer* p_rnd);
