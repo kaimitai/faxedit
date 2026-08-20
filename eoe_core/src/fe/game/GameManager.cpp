@@ -3,6 +3,9 @@
 #include "fe/fe_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
+#include "fe/xml/Xml_helper.h"
+#include "fh/HackManager.h"
+#include "common/klib/IPS_Patch.h"
 #include <format>
 
 fe::game::LoadedGame fe::game::load_rom(
@@ -49,6 +52,61 @@ fe::game::LoadedGame fe::game::load_rom(
 	return load_rom(klib::file::read_file_as_bytes(p_rom_path),
 		p_config_path, p_config_override_path,
 		p_region, p_message);
+}
+
+// load game from xml in-memory
+fe::Game fe::game::load_game_xml(
+	const fe::Config& p_config,
+	const pugi::xml_document& p_doc,
+	const std::vector<byte>& p_rom,
+	const MessageCallback& p_message) {
+	fe::Game game{ xml::load_game_xml(p_doc) };
+
+	game.m_rom_data = p_rom;
+
+	validate_and_repair_game(game, p_message);
+	game.extract_scenes_if_empty(p_config);
+	game.extract_palette_to_music(p_config);
+	game.extract_hud_attributes(p_config);
+	game.generate_tilesets(p_config);
+	game.m_gfx_manager.initialize(p_config, game.m_rom_data);
+
+	ROM_Manager rom_manager;
+	game.m_sprite_gfx_manager.load_rom(p_config, game.m_rom_data, rom_manager);
+
+	game.cinematic.parse_rom(p_config, game.m_rom_data);
+
+	if (game.m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
+		send_message(p_message, { "Loaded XML uses the sameworld-door to stage-door hack", MsgType::Info });
+
+	return game;
+}
+
+fe::Game fe::game::load_game_xml_from_file(
+	const Config& p_config,
+	const std::string& p_filepath,
+	const std::vector<byte>& p_rom,
+	const MessageCallback& p_message) {
+	send_message(p_message, { "Attempting to load xml " + p_filepath, MsgType::Info });
+	return load_game_xml(p_config, xml::load_xml_file(p_filepath), p_rom, p_message);
+}
+
+pugi::xml_document fe::game::save_game_xml(
+	const Config& p_config,
+	Game& p_game) {
+	// gfx context is authoritative for palettes which share ROM storage
+	p_game.sync_palettes(p_game.get_shared_palettes(p_config));
+	return xml::save_game_xml(p_game);
+}
+
+// save game to xml file
+void fe::game::save_game_xml_to_file(
+	const Config& p_config,
+	Game& p_game,
+	const std::string& p_filepath,
+	const MessageCallback& p_message) {
+	xml::save_xml_file(save_game_xml(p_config, p_game), p_filepath);
+	send_message(p_message, { "xml file written to " + p_filepath, MsgType::Success });
 }
 
 // analysis and validation
@@ -444,3 +502,319 @@ void fe::game::migrate_stage_door_hack_data(Game& p_game) {
 
 	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
+
+/***** ROM PATCHING - BEGIN ****/
+
+namespace {
+	// helper which reports on generic patching attempts
+	bool check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size,
+		const fe::MessageCallback& p_message) {
+		bool l_ok{ p_patch_data_size <= p_max_data_size };
+
+		send_message(p_message, { std::format("Patching {} {}: Used {} of {} available bytes ({:.2f}%)",
+			p_data_type,
+			(l_ok ? "succeeded" : "failed"),
+			p_patch_data_size, p_max_data_size,
+			100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? fe::MsgType::Success : fe::MsgType::Error });
+
+		return l_ok;
+	}
+
+	void report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& result, const fe::MessageCallback& p_message) {
+
+		const auto bank_header = [](int p_bank_no, std::optional<std::size_t> p_bank_used) -> std::string {
+			if (!p_bank_used) {
+				return std::format("Bank {} fail: ", p_bank_no);
+			}
+			else {
+				std::size_t bank_used{ p_bank_used.value() };
+
+				return std::format("Bank {}: {}/{} bytes ({:.2f}%): ", p_bank_no, bank_used, 0x4000,
+					(100.0f * bank_used) / 0x4000);
+			}
+			};
+
+		const auto bank_item = [](const std::string& p_item_name, std::optional<std::size_t> p_value,
+			bool p_add_comma = true) -> std::string {
+				std::string l_result{ p_item_name };
+
+				if (p_value)
+					l_result += std::format("={}", p_value.value());
+				else
+					l_result += "=null";
+
+				if (p_add_comma)
+					l_result += ", ";
+
+				return l_result;
+			};
+
+		std::string bank6res{ bank_header(6, result.bank6_used) };
+		std::string bank7res{ bank_header(7, result.bank7_used) };
+		std::string bank8res{ bank_header(8, result.bank8_used) };
+
+		bank6res += bank_item("npc_chr", result.bank6_used);
+		bank6res += bank_item("sprite_cutoff", result.bank6_sprite_cutoff, false);
+
+		bank7res += bank_item("npc_chr", result.bank7_sprite_chr_used);
+		bank7res += bank_item("npc_frame", result.bank7_npc_anim_frame_used);
+		bank7res += bank_item("player_frame", result.bank7_player_anim_frame_used);
+		bank7res += bank_item("portrait_frame", result.bank7_portrait_anim_frame_used, false);
+
+		bank8res += bank_item("player_list", result.bank8_player_load_lists);
+		bank8res += bank_item("wep_list", result.bank8_weapons_load_lists);
+		bank8res += bank_item("player_chr", result.bank8_player_chr);
+		bank8res += bank_item("wep_chr", result.bank8_weapons_chr);
+		bank8res += bank_item("common_chr", result.bank8_common_chr);
+		bank8res += bank_item("shield_chr", result.bank8_shield_chr);
+		bank8res += bank_item("shield_list", result.bank8_shield_load_lists);
+		bank8res += bank_item("portrait_list", result.bank8_portrait_load_lists);
+		bank8res += bank_item("portrait_chr", result.bank8_portrait_chr, false);
+
+		send_message(p_message, { bank6res, result.bank6_used ? fe::MsgType::Info : fe::MsgType::Error });
+		send_message(p_message, { bank7res, result.bank7_used ? fe::MsgType::Info : fe::MsgType::Error });
+		send_message(p_message, { bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error });
+	}
+}
+
+std::vector<byte> fe::game::patch_rom(
+	const Config& p_config,
+	Game& p_game,
+	const RomPatchOptions& p_options,
+	const MessageCallback& p_message) {
+	bool l_good{ true };
+
+	const auto l_world_labels{ p_config.bmap(c::ID_WORLD_LABELS) };
+
+	const auto world_name = [&l_world_labels](std::size_t p_world) -> std::string {
+		auto it{ l_world_labels.find(static_cast<byte>(p_world)) };
+
+		return it != l_world_labels.end() ? it->second : "Unknown";
+		};
+
+	// the randumizer can inject a hack surrounding pal2mus so avoid patching garbage data
+	// also, we will not install the sameworld to stage-door hack since the randomizer patches that itself
+	// although it probably wouldn't have broken anything with our default hack injection points
+	bool is_randumizer{ p_config.boolean_or(c::ID_DISABLE_PAL2MUS, false) };
+	std::size_t l_dyndata_bytes{ 0 };
+	fe::ROM_Manager rom_manager;
+
+	// gfx context is authoritative for palettes which share ROM storage
+	p_game.sync_palettes(p_game.get_shared_palettes(p_config));
+
+	auto x_rom{ p_game.m_rom_data };
+
+	// ensure the door hack is applied if it is supposed to be
+	// skip it for randomizer ROMs as they keep the hack in different locations
+	if (p_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 && !is_randumizer) {
+		fh::HackManager::install_hack_sameworld_to_stage_doors(p_config, x_rom);
+	}
+
+	// world tileset chr
+	if (p_options.world_chr_data) {
+		rom_manager.encode_chr_data(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched world tileset chr data", fe::MsgType::Success });
+	}
+
+	// world palettes
+	if (p_options.palettes) {
+		rom_manager.encode_palette_data(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched world palettes", fe::MsgType::Success });
+	}
+
+	// stage definitions
+	if (p_options.stages) {
+		rom_manager.encode_stage_data(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched stage definitions", fe::MsgType::Success });
+	}
+
+	// mattock animations
+	if (p_options.mattock_animations) {
+		rom_manager.encode_mattock_animations(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched mattock animations", fe::MsgType::Success });
+	}
+
+	// push-block definition
+	if (p_options.push_blocks) {
+		rom_manager.encode_push_block(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched push-block definition", fe::MsgType::Success });
+	}
+
+	// jump-on tiles
+	if (p_options.jump_on_tiles) {
+		rom_manager.encode_jump_on_tiles(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched jump-on tiles", fe::MsgType::Success });
+	}
+
+	// world scene data
+	if (p_options.scenes) {
+		rom_manager.encode_scene_data(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched world scenes", fe::MsgType::Success });
+	}
+
+	// fog definition
+	if (p_options.fog) {
+		rom_manager.encode_fog_data(p_config, p_game, x_rom);
+		send_message(p_message, { "Patched fog definition", fe::MsgType::Success });
+	}
+
+	// background graphics
+	if (p_options.bg_gfx) {
+		p_game.m_gfx_manager.patch_rom(x_rom);
+		send_message(p_message, { "Patched background gfx", fe::MsgType::Success });
+	}
+
+	std::pair<std::size_t, std::size_t> l_bret(0, 0);
+
+	// cinematics
+	if (p_options.cinematics) {
+		auto cinema_res{ p_game.cinematic.patch_rom(p_config, x_rom) };
+		std::size_t used_space{ cinema_res.data_section_end - cinema_res.data_section_start };
+		std::size_t free_space_end{ p_options.throw_on_cinematic_overflow ?
+			p_config.constant(c::ID_ISCRIPT_DATA_RG2_START) :
+		p_config.constant(c::ID_ISCRIPT_DATA_RG2_END) };
+
+		bool cinematic_patched_ok{ check_patched_size("Cinematic Data", used_space,
+			free_space_end - cinema_res.data_section_start, p_message) };
+
+		l_good &= cinematic_patched_ok;
+
+		if (!cinematic_patched_ok && p_options.throw_on_cinematic_overflow)
+			send_message(p_message, {
+				std::format(
+					"Cinematic data overflow: constant '{}' must be set to at least 0x{:05x} (see the documentation)",
+					c::ID_ISCRIPT_DATA_RG2_START,
+					cinema_res.data_section_end),
+				fe::MsgType::Error });
+	}
+
+	// sprite gfx
+	if (p_options.sprite_gfx) {
+		auto spritegfxres{ p_game.m_sprite_gfx_manager.patch_rom(p_config, x_rom, rom_manager) };
+		l_dyndata_bytes += spritegfxres.bank6_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank7_used.value_or(0);
+		l_dyndata_bytes += spritegfxres.bank8_used.value_or(0);
+		l_good &= spritegfxres.success;
+		report_sprite_gfx_patch(spritegfxres, p_message);
+		if (spritegfxres.success)
+			send_message(p_message, { "Sprite Gfx data patched!", fe::MsgType::Success });
+		else
+			send_message(p_message, { "Could not patch Sprite Gfx data", fe::MsgType::Error });
+	}
+
+	// bank 15 - coupled dynamic data
+	if (p_options.bank15_data) {
+		l_bret = rom_manager.encode_bank_15_data(p_config, p_game, x_rom,
+			!is_randumizer);
+		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns, building scenes)",
+			l_bret.first, l_bret.second, p_message);
+		l_dyndata_bytes += l_bret.first;
+	}
+
+	// sprite metadata
+	if (p_options.sprite_data) {
+		l_bret = rom_manager.encode_sprite_data(p_config, p_game, x_rom);
+		l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second, p_message);
+		l_dyndata_bytes += l_bret.first;
+	}
+
+	// world metadata
+	if (p_options.metadata) {
+		l_bret = rom_manager.encode_metadata(p_config, p_game, x_rom);
+		l_good &= check_patched_size("Worlds Metadata", l_bret.first, l_bret.second, p_message);
+		l_dyndata_bytes += l_bret.first;
+	}
+
+	// screen tilemaps
+	if (p_options.tilemaps) {
+		auto l_tm_result{ rom_manager.encode_game_tilemaps(p_config, x_rom,
+			p_game) };
+		l_good &= l_tm_result.m_result;
+
+		std::size_t l_max_tm_byte_size{ p_config.constant(c::ID_WORLD_TILEMAP_MAX_SIZE) };
+
+		if (l_tm_result.m_result) {
+
+			for (const auto& kv : l_tm_result.m_assignments) {
+				std::size_t l_bank_byte_size{ 0 };
+				std::string l_bank_output;
+
+				for (std::size_t w : kv.second) {
+					std::size_t l_byte_size{ l_tm_result.m_sizes[w] };
+					l_bank_byte_size += l_byte_size;
+					l_dyndata_bytes += l_byte_size;
+					l_bank_output += std::format("({} {} bytes) ",
+						world_name(w), l_byte_size);
+				}
+
+				send_message(p_message, { std::format("Bank {}: {}- total bytes: {}/{} ({:.2f}%)",
+					kv.first, l_bank_output, l_bank_byte_size, l_max_tm_byte_size,
+					100.0f * static_cast<float>(l_bank_byte_size) / static_cast<float>(l_max_tm_byte_size)),
+					fe::MsgType::Info });
+			}
+
+			send_message(p_message, { "Tilemaps patched!", fe::MsgType::Success });
+		}
+		else {
+			send_message(p_message, { std::format("Could not pack all world tilemaps across the banks, each of byte size {}",
+				l_max_tm_byte_size), fe::MsgType::Error });
+			for (std::size_t i{ 0 }; i < 8; ++i) {
+				send_message(p_message, { std::format("Byte size for {}: {}",
+					world_name(i),
+					l_tm_result.m_sizes[i]), fe::MsgType::Info });
+			}
+		}
+	}
+
+	if (p_options.apply_sw_pal2mus_hack) {
+		fh::HackManager::install_hack_pal2mus_for_sw_trans(p_config, x_rom);
+		send_message(p_message, { "Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info });
+	}
+
+	// bank duplication - region-specific config and not a setting
+	// must be done after all other patching has completed
+	if (p_config.boolean_or(c::ID_DUPLICATE_STATIC_BANK, false)) {
+		rom_manager.duplicate_static_bank(x_rom);
+		send_message(p_message, { "Duplicated bank 15 into bank 31", fe::MsgType::Info });
+	}
+
+	if (l_good) {
+		send_message(p_message, { std::format("ROM data patched ({} dynamic bytes)",
+			l_dyndata_bytes), fe::MsgType::Success });
+		return x_rom;
+	}
+	else {
+		throw std::runtime_error("Could not patch ROM data");
+	}
+}
+
+void fe::game::patch_rom_to_file(
+	const Config& p_config,
+	Game& p_game,
+	const std::string& p_filepath,
+	const RomPatchOptions& p_options,
+	const MessageCallback& p_message) {
+	klib::file::write_bytes_to_file(patch_rom(p_config, p_game, p_options, p_message), p_filepath);
+	send_message(p_message, { "ROM file written to " + p_filepath, MsgType::Success });
+}
+
+std::vector<byte> fe::game::generate_ips(
+	const Config& p_config,
+	Game& p_game,
+	const RomPatchOptions& p_options,
+	const MessageCallback& p_message) {
+	return klib::ips::generate_patch(p_game.m_rom_data, patch_rom(p_config, p_game, p_options, p_message));
+}
+
+void fe::game::generate_ips_to_file(
+	const Config& p_config,
+	Game& p_game,
+	const std::string& p_filepath,
+	const RomPatchOptions& p_options,
+	const MessageCallback& p_message) {
+	const auto ips{ generate_ips(p_config, p_game, p_options, p_message) };
+	klib::file::write_bytes_to_file(ips, p_filepath);
+	send_message(p_message, { std::format("ips patch written to {} ({} bytes)",	p_filepath, ips.size()), MsgType::Success });
+}
+
+/***** ROM PATCHING - END ******/

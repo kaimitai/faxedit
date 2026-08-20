@@ -676,18 +676,6 @@ void fe::MainWindow::clipboard_copy_tilemap_changes(bool p_incl_header) {
 		fe::MsgType::Info);
 }
 
-bool fe::MainWindow::check_patched_size(const std::string& p_data_type, std::size_t p_patch_data_size, std::size_t p_max_data_size) {
-	bool l_ok{ p_patch_data_size <= p_max_data_size };
-
-	add_message(std::format("Patching {} {}: Used {} of {} available bytes ({:.2f}%)",
-		p_data_type,
-		(l_ok ? "succeeded" : "failed"),
-		p_patch_data_size, p_max_data_size,
-		100.0f * (static_cast<float>(p_patch_data_size) / static_cast<float>(p_max_data_size))), l_ok ? fe::MsgType::Success : fe::MsgType::Error);
-
-	return l_ok;
-}
-
 void fe::MainWindow::draw_exit_app_window(SDL_Renderer* p_rnd) {
 	SDL_SetRenderDrawColor(p_rnd, 96, 96, 255, 0);
 	SDL_RenderClear(p_rnd);
