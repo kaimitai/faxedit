@@ -450,7 +450,7 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_sprite_data(const fe
 	return std::make_pair(l_sprite_data.size(), l_sprite_data_size);
 }
 
-std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_config,
+fe::Bank15PatchResult fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom, bool p_encode_pal2mus) const {
 	constexpr bool PAD_WITH_FF{ false };
 
@@ -557,6 +557,9 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 	const auto allocresult{ allocator.init_and_allocate(ptrs, all_bank15_data, free_ranges,
 		PAD_WITH_FF) };
 
+	std::size_t free_range_cpu_start{ 0 };
+	std::size_t free_range_cpu_end{ 0 };
+
 	if (!allocresult)
 		throw std::runtime_error(std::format("Could not pack all bank 15 data (transitions, palette-to-music, spawns, building scenes) within {} bytes",
 			total_free_space));
@@ -570,9 +573,25 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::encode_bank_15_data(const f
 			patch_bytes(datawrite.data, p_rom, datawrite.rom_offset);
 			total_used_space += datawrite.data.size();
 		}
+
+		// calculate cpu address range of the remainder of the last range
+		// TODO: Make this more elegant
+		constexpr std::size_t BANK15_ROM_START{ 0x10 + 0x0f * 0x4000 };
+		constexpr std::size_t BANK15_CPU_START{ 0xc000 };
+
+		const auto& last_range{ free_ranges.back() };
+		const auto& last_write{ datawrites.back() };
+
+		free_range_cpu_start = BANK15_CPU_START + (last_range.first + last_write.data.size() - BANK15_ROM_START);
+		free_range_cpu_end = BANK15_CPU_START +	(last_range.second - BANK15_ROM_START);
 	}
 
-	return std::make_pair(total_used_space, total_free_space);
+	return fe::Bank15PatchResult{
+		.used_bytes = total_used_space,
+		.available_bytes = total_free_space,
+		.free_range_cpu_start = free_range_cpu_start,
+		.free_range_cpu_end = free_range_cpu_end
+	};
 }
 
 // all static data patching

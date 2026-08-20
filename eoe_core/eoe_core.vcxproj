@@ -160,6 +160,7 @@
     <ClCompile Include="src\fe\StageManager.cpp" />
     <ClCompile Include="src\fe\WorldVisualizer.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
+    <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
     <ClCompile Include="src\fh\TilemapChanges.cpp" />
     <ClCompile Include="src\fi\AsmReader.cpp" />

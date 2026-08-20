@@ -704,11 +704,21 @@ std::vector<byte> fe::game::patch_rom(
 
 	// bank 15 - coupled dynamic data
 	if (p_options.bank15_data) {
-		l_bret = rom_manager.encode_bank_15_data(p_config, p_game, x_rom,
-			!is_randumizer);
+		const auto bank15_res{ rom_manager.encode_bank_15_data(p_config, p_game, x_rom, !is_randumizer) };
+
 		l_good &= check_patched_size("Bank 15 Data (transitions, palette-to-music, spawns, building scenes)",
-			l_bret.first, l_bret.second, p_message);
-		l_dyndata_bytes += l_bret.first;
+			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
+		l_dyndata_bytes += bank15_res.used_bytes;
+
+		// TODO: Decide on how to populate this
+		std::vector<fh::GeneralHackLib> general_hacks{ };
+		if (!general_hacks.empty()) {
+			fh::HackManager hack_mgr;
+			std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
+				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, general_hacks) };
+			send_message(p_message, { std::format("Installed general hacks in bank 15 ({} bytes)", bank15_hack_size) });
+			l_dyndata_bytes += bank15_hack_size;
+		}
 	}
 
 	// sprite metadata
