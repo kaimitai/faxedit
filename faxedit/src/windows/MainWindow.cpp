@@ -909,8 +909,6 @@ void fe::MainWindow::cache_config_variables(void) {
 
 	// bools
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
-	if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
-		m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {

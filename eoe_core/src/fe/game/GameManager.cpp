@@ -12,6 +12,10 @@ fe::game::LoadedGame fe::game::load_rom(
 
 	ROM_Manager rom_manager;
 	Game game{ p_config, p_rom };
+
+	if (p_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
+		game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
+
 	game.m_sprite_gfx_manager.load_rom(p_config, game.m_rom_data, rom_manager);
 	game.generate_tilesets(p_config);
 	validate_and_repair_game(game, p_message);
@@ -405,4 +409,38 @@ void fe::game::validate_and_repair_game(fe::Game& p_game, const MessageCallback&
 	}
 
 	validate_and_repair_spawn_points(p_game, p_message);
+}
+
+// sameworld to stage-door data migration
+void fe::game::migrate_stage_door_hack_data(Game& p_game) {
+	// ensure the data has not already been migrated
+	if (p_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
+		throw std::runtime_error("Stage-door data already migrated.");
+
+	// check if the data can actually be migrated
+	// copy the world -> stages lookup map so we can use [] to populate missing entries
+	auto world2stages{ p_game.m_stages.m_world_to_stage };
+
+	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
+		const auto& stages = world2stages[w];
+
+		for (const auto& scr : p_game.m_chunks[w].m_screens)
+			for (const auto& door : scr.m_doors)
+				if (door.m_door_type == fe::DoorType::SameWorld &&
+					stages.size() != 1)
+					throw std::runtime_error(
+						std::format("World {} is referenced by {} stage(s). Expected exactly one.",
+							w, stages.size()));
+	}
+
+	// validation passed - migrate the data
+	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w)
+		for (auto& scr : p_game.m_chunks[w].m_screens)
+			for (auto& door : scr.m_doors)
+				if (door.m_door_type == fe::DoorType::SameWorld) {
+					byte dest_stage{ static_cast<byte>(world2stages[w][0]) };
+					door.m_requirement = static_cast<byte>((dest_stage << 4) | (door.m_requirement & 0x0f));
+				}
+
+	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }

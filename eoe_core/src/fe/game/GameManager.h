@@ -42,6 +42,9 @@ namespace fe::game {
 		bool p_warn_00_doors, const MessageCallback& p_message = nullptr);
 	void validate_and_repair_spawn_points(fe::Game& p_game, const fe::MessageCallback& p_message = nullptr);
 	void validate_and_repair_game(Game& p_game, const MessageCallback& p_message = nullptr);
+
+	// sameworld to stage-door data migration
+	void migrate_stage_door_hack_data(Game& p_game);
 }
 
 #endif

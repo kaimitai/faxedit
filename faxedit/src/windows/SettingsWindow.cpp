@@ -5,6 +5,7 @@
 #include "Imgui_helper.h"
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
+#include "fe/game/GameManager.h"
 #include <format>
 #include <unordered_map>
 #include <SDL3/SDL.h>
@@ -139,7 +140,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Enable Stage Doors", 4, "",
 				!ImGui::IsKeyDown(ImGuiMod_Shift) ||
 				m_game->m_sw_door_type != fe::SameWorldDoorType::Normal)) try {
-				patch_randumizer_doors(*m_game, true);
+				fe::game::migrate_stage_door_hack_data(m_game.value());
 				add_message("Sameworld-door to Stage-door hack applied!", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -172,28 +173,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 	ImGui::End();
 }
 
-void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data) {
-	// check if the patch can actually be applied
-
-	// copy the world -> stages lookup map so we can use [] to populate missing entries
-	auto world2stages{ p_game.m_stages.m_world_to_stage };
-
-	if (migrate_door_data) {
-		for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
-			const auto& stages = world2stages[w];
-
-			for (const auto& scr : p_game.m_chunks[w].m_screens)
-				for (const auto& door : scr.m_doors)
-					if (door.m_door_type == fe::DoorType::SameWorld &&
-						stages.size() != 1)
-						throw std::runtime_error(
-							std::format("World {} is referenced by {} stage(s). Expected exactly one.",
-								w, stages.size()));
-		}
-	}
-
-	auto newrom{ p_game.m_rom_data };
-
+void fe::MainWindow::patch_randumizer_doors(std::vector<byte>& newrom) {
 	// game routines
 	const word Game_SetupAndLoadOutsideArea{ 0xdadc };
 	const word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
@@ -303,22 +283,6 @@ void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_
 	// hook vanilla code into our new routine
 	code.jmp(Hack_ClearPendingStageAndLoadWorld);
 	code.apply_hack_and_clear(newrom, 15, Player_EnterDoorToOutside_JMP_SetupArea);
-
-	// apply door data changes
-	if (migrate_door_data) {
-		for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w)
-			for (auto& scr : p_game.m_chunks[w].m_screens)
-				for (auto& door : scr.m_doors)
-					if (door.m_door_type == fe::DoorType::SameWorld) {
-						byte dest_stage{ static_cast<byte>(world2stages[w][0]) };
-						door.m_requirement = static_cast<byte>((dest_stage << 4) | (door.m_requirement & 0x0f));
-					}
-	}
-
-	// apply rom patch
-	p_game.m_rom_data = newrom;
-	// set door type
-	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
 void fe::MainWindow::patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const {

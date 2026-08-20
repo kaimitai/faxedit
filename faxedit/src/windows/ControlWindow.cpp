@@ -192,17 +192,9 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
 		new_game.cinematic.parse_rom(m_config, new_game.m_rom_data);
 
-		// reconcile door type between loaded rom and loaded xml
-		if (old_game.m_sw_door_type == fe::SameWorldDoorType::Normal &&
-			new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
-			// the xml has hack-door data, while loaded rom does not
-			patch_randumizer_doors(new_game, false);
-			add_message("Loaded ROM was updated with the stage-door hack required by the incoming xml", fe::MsgType::Success);
-		}
-		else if (old_game.m_sw_door_type != new_game.m_sw_door_type) {
-			add_message("Warning: Stage-door format mismatch between loaded ROM and xml. Verify same-world door data", fe::MsgType::Warning);
-			new_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
-		}
+		// report on sameworld door hack
+		if (new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
+			add_message("Loaded XML uses the sameworld-door to stage-door hack.", fe::MsgType::Success);
 
 		// everything succeeded, so commit at this point
 		*m_game = std::move(new_game);
@@ -243,14 +235,14 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 
 	m_game->sync_palettes(m_cache.m_shared_palettes);
 
+	auto x_rom{ m_game->m_rom_data };
+
 	// ensure the door hack is applied if it is supposed to be
-	// skip it for randomizer roms as they keep the hack in different locations
+	// skip it for randomizer ROMs as they keep the hack in different locations
 	if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 &&
 		!m_cache.m_disable_pal2_mus) {
-		this->patch_randumizer_doors(*m_game, false);
+		patch_randumizer_doors(x_rom);
 	}
-
-	auto x_rom{ m_game->m_rom_data };
 
 	// world tileset chr
 	if (m_settings.m_patch_world_chr_data) {
