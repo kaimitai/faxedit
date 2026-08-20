@@ -3,6 +3,7 @@
 #include "fe/fe_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
+#include "fe/xml/xml_helper.h"
 #include <format>
 
 fe::game::LoadedGame fe::game::load_rom(
@@ -49,6 +50,43 @@ fe::game::LoadedGame fe::game::load_rom(
 	return load_rom(klib::file::read_file_as_bytes(p_rom_path),
 		p_config_path, p_config_override_path,
 		p_region, p_message);
+}
+
+// load game from xml in-memory
+fe::Game fe::game::load_game_xml(
+	const fe::Config& p_config,
+	const pugi::xml_document& p_doc,
+	const std::vector<byte>& p_rom,
+	const MessageCallback& p_message) {
+	fe::Game game{ xml::load_game_xml(p_doc) };
+
+	game.m_rom_data = p_rom;
+
+	validate_and_repair_game(game, p_message);
+	game.extract_scenes_if_empty(p_config);
+	game.extract_palette_to_music(p_config);
+	game.extract_hud_attributes(p_config);
+	game.generate_tilesets(p_config);
+	game.m_gfx_manager.initialize(p_config, game.m_rom_data);
+
+	ROM_Manager rom_manager;
+	game.m_sprite_gfx_manager.load_rom(p_config, game.m_rom_data, rom_manager);
+
+	game.cinematic.parse_rom(p_config, game.m_rom_data);
+
+	if (game.m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
+		send_message(p_message, { "Loaded XML uses the sameworld-door to stage-door hack", MsgType::Info });
+
+	return game;
+}
+
+fe::Game fe::game::load_game_xml_from_file(
+	const Config& p_config,
+	const std::string& p_filepath,
+	const std::vector<byte>& p_rom,
+	const MessageCallback& p_message) {
+	send_message(p_message, { "Attempting to load xml " + p_filepath, MsgType::Info });
+	return load_game_xml(p_config, xml::load_xml_file(p_filepath), p_rom, p_message);
 }
 
 // analysis and validation

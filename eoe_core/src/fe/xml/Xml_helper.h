@@ -30,9 +30,12 @@ namespace fe {
 
 	namespace xml {
 
+		pugi::xml_document load_xml_file(const std::string& p_filepath);
+
 		// eoe data
 		void save_xml(const std::string p_filepath, const fe::Game& p_game);
-		fe::Game load_xml(const std::string p_filepath);
+		fe::Game load_game_xml(const pugi::xml_document& p_doc);
+		fe::Game load_game_xml_from_file(const std::string& p_filepath);
 
 		// eoe settings
 		void save_settings_xml(const std::string& p_filepath, const fe::EditorSettings& p_settings);

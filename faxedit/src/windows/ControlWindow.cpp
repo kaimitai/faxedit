@@ -171,31 +171,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 	try {
-		add_message("Attempting to load xml " + get_xml_path(), fe::MsgType::Info);
-
-		// keep old game around until we know everything succeeded
-		auto old_game{ m_game.value() };
-
 		// load new game into a temporary
-		fe::Game new_game{ xml::load_xml(get_xml_path()) };
-
-		// restore rom data from old game
-		auto l_rom{ old_game.m_rom_data };
-		new_game.m_rom_data = l_rom;
-
-		// validate and extract everything on the temporary
-		fe::game::validate_and_repair_game(new_game, m_msg_callback);
-		new_game.extract_scenes_if_empty(m_config);
-		new_game.extract_palette_to_music(m_config);
-		new_game.extract_hud_attributes(m_config);
-		new_game.generate_tilesets(m_config);
-		new_game.m_gfx_manager.initialize(m_config, new_game.m_rom_data);
-		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
-		new_game.cinematic.parse_rom(m_config, new_game.m_rom_data);
-
-		// report on sameworld door hack
-		if (new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
-			add_message("Loaded XML uses the sameworld-door to stage-door hack.", fe::MsgType::Success);
+		fe::Game new_game{ fe::game::load_game_xml_from_file(m_config, get_xml_path(), m_game->m_rom_data, m_msg_callback) };
 
 		// everything succeeded, so commit at this point
 		*m_game = std::move(new_game);

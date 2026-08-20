@@ -8,12 +8,19 @@
 
 using byte = unsigned char;
 
-fe::Game fe::xml::load_xml(const std::string p_filepath) {
-	fe::Game l_game;
-
+pugi::xml_document fe::xml::load_xml_file(const std::string& p_filepath) {
 	pugi::xml_document l_doc;
 	if (!l_doc.load_file(p_filepath.c_str()))
 		throw std::runtime_error("Could not load xml file " + p_filepath);
+	return l_doc;
+}
+
+fe::Game fe::xml::load_game_xml_from_file(const std::string& p_filepath) {
+	return load_game_xml(load_xml_file(p_filepath));
+}
+
+fe::Game fe::xml::load_game_xml(const pugi::xml_document& l_doc) {
+	fe::Game l_game;
 
 	auto n_root{ l_doc.child(c::TAG_ROOT) };
 

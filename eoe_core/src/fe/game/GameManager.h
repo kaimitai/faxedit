@@ -37,6 +37,20 @@ namespace fe::game {
 		const std::string& p_region,
 		const MessageCallback& p_message = nullptr);
 
+	// load game from xml in-memory
+	fe::Game load_game_xml(
+		const fe::Config& p_config,
+		const pugi::xml_document& p_doc,
+		const std::vector<byte>& p_rom,
+		const MessageCallback& p_message = nullptr);
+
+	// game xml from file
+	fe::Game load_game_xml_from_file(
+		const Config& p_config,
+		const std::string& p_filepath,
+		const std::vector<byte>& p_rom,
+		const MessageCallback& p_message = nullptr);
+
 	// analysis and validation
 	void analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
 		bool p_warn_00_doors, const MessageCallback& p_message = nullptr);
