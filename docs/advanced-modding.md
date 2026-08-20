@@ -301,6 +301,16 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
 | AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
 | AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
+| AtlasDevCastSpell | Byte | Initializes spell 0-4 at the player without using MP or checking input. It is silent and starts moving after the script returns to gameplay. Other values do nothing | AtlasDevCastSpell 2 |
+| AtlasDevIfMagicActive | Label | Uses the game's visible-magic sign test. Valid active states are 0-11, including dormant state 9 | AtlasDevIfMagicActive @spell_active |
+| AtlasDevClearVisibleMagic | None | Ends the current visible-magic state. Its auxiliary bytes are left unchanged, matching the vanilla clear | AtlasDevClearVisibleMagic |
+
+`AtlasDevCastSpell` replaces the current magic state. The normal magic loop
+moves it after the script ends. Use `AtlasDevPlaySFX` separately when needed.
+
+`AtlasDevIfMagicActive` uses the game's sign test. State 9 has no update or
+finish handler and stays active until cleared or replaced. Values 12-127 are
+invalid magic states and should not be written directly.
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
 
