@@ -8,7 +8,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "fe/Message.h"
+#include "fe/MessageCallback.h"
 #include "gfx.h"
 #include "UndoInterface.h"
 #include "ClipBoardManager.h"
@@ -91,6 +91,8 @@ namespace fe {
 
 	class MainWindow {
 
+		// message callback for reports from eoe_core
+		fe::MessageCallback m_msg_callback;
 		// config
 		fe::Config m_config;
 		// tilemap undo interface
@@ -162,7 +164,7 @@ namespace fe {
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 			const std::string& p_region = std::string());
 		std::pair<std::string, std::string> get_config_file_paths(void) const;
-		int load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial);
+		int load_external_rom_data(const std::vector<byte>& p_bytes);
 		void cache_config_variables(void);
 
 		std::string get_ips_path(void) const;
@@ -324,8 +326,6 @@ namespace fe {
 		void generate_editor_sprite_gfx(SDL_Renderer* p_rnd);
 
 		// load functions
-		void validate_game_data(fe::Game& p_game);
-		void validate_spawn_points(fe::Game& p_game);
 		void load_xml(SDL_Renderer* p_rnd);
 
 		// save functions
@@ -346,14 +346,13 @@ namespace fe {
 
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
-		void patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data);
-		void patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const;
 		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
 
 		// scripting helpers
+		void refresh_rom_caches(const std::vector<byte>& p_rom, bool p_report = true);
 		bool refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report = true);
 		bool refresh_mscript_cache(const std::vector<byte>& p_bytes, bool p_report = true);
-		void refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes);
+		void refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes, bool p_report = true);
 
 	public:
 

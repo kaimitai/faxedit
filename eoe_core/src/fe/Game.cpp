@@ -1212,6 +1212,21 @@ void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
 		);
 }
 
+std::vector<fe::SpriteType> fe::Game::extract_sprite_types(const fe::Config& p_config) const {
+	const std::size_t offset{ p_config.constant(c::ID_SPRITE_TYPE_OFFSET) };
+	const std::size_t count{ m_sprite_gfx_manager.npc_start_frames.size() };
+
+	std::vector<fe::SpriteType> result;
+
+	for (std::size_t i{ 0 }; i < count; ++i) {
+		byte l_type{ m_rom_data.at(offset + i) };
+		result.push_back(l_type < static_cast<byte>(fe::SpriteType::Unknown) ?
+			static_cast<fe::SpriteType>(l_type) : fe::SpriteType::Unknown);
+	}
+
+	return result;
+}
+
 // a helper to cache all gfx images which use a world palette
 // the gfx context will be the master, so we can use this to syncronize
 std::map<std::size_t, std::string> fe::Game::get_shared_palettes(const fe::Config& p_config) const {

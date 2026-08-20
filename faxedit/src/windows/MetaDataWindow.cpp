@@ -4,6 +4,7 @@
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
 #include "fe/script/ScriptManager.h"
+#include "fe/game/GameManager.h"
 #include <algorithm>
 #include <unordered_map>
 
@@ -242,7 +243,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 						"Reload the selected number of spawn points directly from the ROM (normally the editor detects the correct count automatically)",
 						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
 						m_game->extract_spawn_points(m_config, ls_sel_spawn_count);
-						validate_spawn_points(m_game.value());
+						fe::game::validate_and_repair_spawn_points(m_game.value(), m_msg_callback);
 					}
 
 					ImGui::EndTabItem();

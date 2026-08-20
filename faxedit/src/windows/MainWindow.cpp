@@ -15,6 +15,7 @@
 #include "fe/xml/Xml_helper.h"
 #include "fe/script/ScriptManager.h"
 #include "common/klib/Kfile.h"
+#include "fe/game/GameManager.h"
 
 fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) :
@@ -56,7 +57,9 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	},
 	// exit handler variables
 	m_exit_app_requested{ false },
-	m_exit_app_granted{ false }
+	m_exit_app_granted{ false },
+	// message callback
+	m_msg_callback{ [this](const fe::Message& p_message) { add_message(p_message.text, p_message.type); } }
 {
 	add_message("It is recommended to read the documentation for usage tips", fe::MsgType::Info);
 	add_message("Transitions Mode: Shift+Left Click to move OW-transition destinations, Ctrl+Left Click to move SW-transition destinations", fe::MsgType::Info);
@@ -777,26 +780,13 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 	// Load file as bytes and create game
 	try {
-		auto bytes = klib::file::read_file_as_bytes(p_filepath);
-
-		m_config = fe::Config(l_config_xml_path, l_config_override_xml_path, bytes, p_region);
-
-		if (p_region.empty()) {
-			add_message(std::format("ROM region detected: '{}'", m_config.get_region()), fe::MsgType::Info);
-			m_region_override.clear();
-		}
-		else {
-			add_message(std::format("Region specified as '{}'", p_region), fe::MsgType::Info);
-			m_region_override = p_region;
-		}
-
-		fe::Game l_game{ fe::Game(m_config, bytes) };
-		l_game.m_sprite_gfx_manager.load_rom(m_config, l_game.m_rom_data, m_rom_manager);
-		l_game.generate_tilesets(m_config);
-		validate_game_data(l_game);
+		auto loaded{ fe::game::load_rom(p_filepath, l_config_xml_path, l_config_override_xml_path, p_region, m_msg_callback) };
 
 		// the game object constructed correctly - commit and build caches
-		m_game = std::move(l_game);
+		m_config = std::move(loaded.config);
+		m_game = std::move(loaded.game);
+		m_region_override = p_region;
+
 		cache_config_variables();
 		m_cache.m_shared_palettes = m_game->get_shared_palettes(m_config);
 
@@ -826,12 +816,12 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 		generate_door_req_gfx(p_rnd);
 		generate_editor_sprite_gfx(p_rnd);
 
-		load_external_rom_data(bytes, true);
+		refresh_rom_caches(m_game->m_rom_data);
 
 		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
 			add_message("Door hack detected; Sameworld doors are stage doors!", fe::MsgType::Info);
 
-		if (m_game->m_chunks.size() > 0)
+		if (!m_game->m_chunks.empty())
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
 
 		m_undo.reset();
@@ -865,21 +855,18 @@ std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) 
 	return std::make_pair(l_config_xml_path, l_config_override_xml_path);
 }
 
-int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, bool p_initial) {
+int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes) {
 	int byte_diffs{ 0 };
 
 	// check if there actually are any changes
-	if (!p_initial) {
+	if (p_bytes.size() != m_game->m_rom_data.size())
+		throw std::runtime_error("ROM file size mismatch - cannot partially reload");
 
-		if (p_bytes.size() != m_game->m_rom_data.size())
-			throw std::runtime_error("ROM file size mismatch - cannot partially reload");
+	for (std::size_t i{ 0 }; i < p_bytes.size(); ++i)
+		if (m_game->m_rom_data[i] != p_bytes[i])
+			++byte_diffs;
 
-		for (std::size_t i{ 0 }; i < p_bytes.size(); ++i)
-			if (m_game->m_rom_data[i] != p_bytes[i])
-				++byte_diffs;
-	}
-
-	if (!p_initial && m_region_override.empty()) {
+	if (m_region_override.empty()) {
 		const auto l_config_files{ get_config_file_paths() };
 
 		fe::Config tmp_config;
@@ -892,12 +879,9 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes, boo
 	}
 
 	// extract scripts, music count and screen event handler count
-	refresh_iscript_cache(p_bytes);
-	refresh_mscript_cache(p_bytes);
-	refresh_screen_event_handler_cache(p_bytes);
+	refresh_rom_caches(p_bytes);
 
-	if (!p_initial)
-		m_game->m_rom_data = p_bytes;
+	m_game->m_rom_data = p_bytes;
 
 	return byte_diffs;
 }
@@ -925,8 +909,6 @@ void fe::MainWindow::cache_config_variables(void) {
 
 	// bools
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
-	if (m_config.boolean_or(c::ID_RANDOMIZER_DOORS, false))
-		m_game->m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
 std::string fe::MainWindow::get_ips_path(void) const {
@@ -1496,6 +1478,12 @@ std::pair<float, float> fe::MainWindow::world_px_to_view_px(float world_x_px,
 	};
 }
 
+void fe::MainWindow::refresh_rom_caches(const std::vector<byte>& p_rom, bool p_report) {
+	refresh_iscript_cache(p_rom, p_report);
+	refresh_mscript_cache(p_rom, p_report);
+	refresh_screen_event_handler_cache(p_rom, p_report);
+}
+
 bool fe::MainWindow::refresh_iscript_cache(const std::vector<byte>& p_bytes, bool p_report_count) {
 	m_cache.m_iscripts.clear();
 	bool result{ true };
@@ -1541,8 +1529,14 @@ bool fe::MainWindow::refresh_mscript_cache(const std::vector<byte>& p_bytes, boo
 	}
 }
 
-void fe::MainWindow::refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes) {
+void fe::MainWindow::refresh_screen_event_handler_cache(const std::vector<byte>& p_bytes, bool p_report) {
 	// extract screen handler event count
-	if (m_config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET))
+	if (m_config.has_constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) {
 		m_cache.m_command_byte_count = p_bytes.at(m_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+
+		if (p_report)
+			add_message(std::format("Detected {} screen event handlers", m_cache.m_command_byte_count), fe::MsgType::Info);
+	}
+	else if (p_report)
+		add_message("Screen event handler count could not be deduced - using default (3)", fe::MsgType::Info);
 }

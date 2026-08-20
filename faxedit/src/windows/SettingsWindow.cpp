@@ -5,10 +5,10 @@
 #include "Imgui_helper.h"
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
+#include "fe/game/GameManager.h"
 #include <format>
 #include <unordered_map>
 #include <SDL3/SDL.h>
-#include "common/klib/Asm6502.h"
 
 void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
@@ -139,7 +139,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Enable Stage Doors", 4, "",
 				!ImGui::IsKeyDown(ImGuiMod_Shift) ||
 				m_game->m_sw_door_type != fe::SameWorldDoorType::Normal)) try {
-				patch_randumizer_doors(*m_game, true);
+				fe::game::migrate_stage_door_hack_data(m_game.value());
 				add_message("Sameworld-door to Stage-door hack applied!", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -170,208 +170,6 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 	}
 
 	ImGui::End();
-}
-
-void fe::MainWindow::patch_randumizer_doors(fe::Game& p_game, bool migrate_door_data) {
-	// check if the patch can actually be applied
-
-	// copy the world -> stages lookup map so we can use [] to populate missing entries
-	auto world2stages{ p_game.m_stages.m_world_to_stage };
-
-	if (migrate_door_data) {
-		for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
-			const auto& stages = world2stages[w];
-
-			for (const auto& scr : p_game.m_chunks[w].m_screens)
-				for (const auto& door : scr.m_doors)
-					if (door.m_door_type == fe::DoorType::SameWorld &&
-						stages.size() != 1)
-						throw std::runtime_error(
-							std::format("World {} is referenced by {} stage(s). Expected exactly one.",
-								w, stages.size()));
-		}
-	}
-
-	auto newrom{ p_game.m_rom_data };
-
-	// game routines
-	const word Game_SetupAndLoadOutsideArea{ 0xdadc };
-	const word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
-	const word Screen_LoadSpritePalette{ 0xd062 };
-	const word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
-	const word Screen_Load{ 0xdd46 };
-	const word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
-	const word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
-	const word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
-
-	// RAM
-	const word CurrentDoor_KeyRequirement{ 0x042b };
-	const word RAM_CurrentStage{ 0x0435 };
-	const word RAM_StageChangePending{ 0x1fff };
-	const word RAM_PendingStage{ 0x1ffe };
-
-	// new routine addresses
-
-	// randumizer addresses for reference
-	// const word Hack_ClearPendingStageAndLoadWorld{ 0xfda0 };
-	// const word Hack_SetPendingStage{ 0xfe00 };
-	// const word Hack_HandlePalette{ 0xfe20 };
-	// const word Hack_ExtractStageAndRequirement{ 0xfe40 };
-	// (we do not add a separate function for palette to music like the
-	// randomizer as we already handle the map dynamically in the frontend)
-
-	// new routine addresses to avoid claiming free space
-	// default: use the sound effect priority table from index 1
-	const word Hack_HandlePalette{ static_cast<word>(
-		m_config.constant_or(c::ID_HACK_HANDLE_PALETTE_ADDR, 0xf389)
-		) };
-	// default: use the normally unreachable debug code, lay the functions out contiguously there
-	const word Hack_SetPendingStage{
-		static_cast<word>(
-		m_config.constant_or(c::ID_HACK_SET_PENDING_STAGE_ADDR, 0xdf99)
-	) };
-	const word Hack_ExtractStageAndRequirement{
-		static_cast<word>(
-		m_config.constant_or(c::ID_HACK_DECODE_REQ_ADDR, 0xdfa8)
-	) };
-	const word Hack_ClearPendingStageAndLoadWorld{
-		static_cast<word>(
-		m_config.constant_or(c::ID_HACK_LOAD_WORLD_ADDR, 0xdfb7)
-	) };
-
-	klib::Asm6502 code{};
-
-	// new routine for setting pending stage: Hack_SetPendingStage
-	code.lda_imm(0x01);
-	code.sta_abs(RAM_StageChangePending);
-	code.lda_abs(RAM_PendingStage);
-	code.sta_abs(RAM_CurrentStage);
-	code.jsr(Game_SetupAndLoadOutsideArea);
-	code.rts();
-	code.apply_hack_and_clear(newrom, 15, Hack_SetPendingStage);
-
-	// update the sameworld-door logic to jump into our new routine instead of vanilla
-	code.jmp(Hack_SetPendingStage);
-	code.apply_hack_and_clear(newrom, 15, Player_CheckHandleEnterDoor_enterScreen);
-
-	// new routine for handling hack door palette: Hack_HandlePalette
-	code.lda_imm(0x00);
-	code.jsr(Screen_LoadSpritePalette);
-	code.lda_abs(RAM_StageChangePending);
-	code.cmp_imm(0x01);
-	code.beq("@stage_pending");
-	// hack stage change not pending, use vanilla palette logic
-	code.jmp(Game_LoadCurrentArea_LDX_Stage);
-	// hack stage change pending - clear the flag and load screen
-	code.label("@stage_pending");
-	code.lda_imm(0x00);
-	code.sta_abs(RAM_StageChangePending);
-	code.jmp(Screen_Load);
-	code.apply_hack_and_clear(newrom, 15, Hack_HandlePalette);
-
-	// update the stage palette logic to jump into our palette handler
-	code.jmp(Hack_HandlePalette);
-	code.nop();
-	code.nop();
-	code.apply_hack_and_clear(newrom, 15, Game_LoadCurrentArea_LoadPalette);
-
-	// extract stage and actual door requirement from hack-door data: Hack_ExtractStageAndRequirement
-	code.tay();
-	// get stage from the requirement byte (hi nibble)
-	code.lsr_a();
-	code.lsr_a();
-	code.lsr_a();
-	code.lsr_a();
-	code.sta_abs(RAM_PendingStage);
-	code.tya();
-	// get actual requirement (lo nibble)
-	code.and_imm(0x0f);
-	code.sta_abs(CurrentDoor_KeyRequirement);
-	code.rts();
-	code.apply_hack_and_clear(newrom, 15, Hack_ExtractStageAndRequirement);
-
-	// instead of storing A in door requirement ram directly, jump to the new routine
-	code.jsr(Hack_ExtractStageAndRequirement);
-	code.apply_hack_and_clear(newrom, 15, Area_SetStateFromDoorDestination_STA_DoorReq);
-
-	// clear pending hack stage change flag and load world
-	code.lda_imm(0x00);
-	code.sta_abs(RAM_StageChangePending);
-	code.jmp(Game_SetupAndLoadOutsideArea);
-	code.apply_hack_and_clear(newrom, 15, Hack_ClearPendingStageAndLoadWorld);
-
-	// hook vanilla code into our new routine
-	code.jmp(Hack_ClearPendingStageAndLoadWorld);
-	code.apply_hack_and_clear(newrom, 15, Player_EnterDoorToOutside_JMP_SetupArea);
-
-	// apply door data changes
-	if (migrate_door_data) {
-		for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w)
-			for (auto& scr : p_game.m_chunks[w].m_screens)
-				for (auto& door : scr.m_doors)
-					if (door.m_door_type == fe::DoorType::SameWorld) {
-						byte dest_stage{ static_cast<byte>(world2stages[w][0]) };
-						door.m_requirement = static_cast<byte>((dest_stage << 4) | (door.m_requirement & 0x0f));
-					}
-	}
-
-	// apply rom patch
-	p_game.m_rom_data = newrom;
-	// set door type
-	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
-}
-
-void fe::MainWindow::patch_sw_transition_pal2mus(std::vector<byte>& p_rom) const {
-	// vanilla locations
-	const word SwTransJmpSetupEnterScreen{ 0xea2c };
-	const word Game_SetupEnterScreen{ 0xdaa0 };
-	// RAM
-	const byte RAM_ZP_Screen_DestPaletteOrIndex{ 0x65 };
-	const byte RAM_ZP_Music_Current{ 0xfa };
-	const word RAM_World_DefaultMusic{ 0x03d1 };
-	// new routine addr
-	const word HackSwTransPal2Mus{ static_cast<word>(
-		m_config.constant_or(c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)
-		) };
-
-	// constants from the rom
-	const auto pal_ptr{ m_config.pointer(c::ID_PAL2MUS_PALETTE_PTR) };
-	const auto mus_ptr{ m_config.pointer(c::ID_PAL2MUS_MUSIC_PTR) };
-
-	byte pal2mus_slot_count{ p_rom.at(m_config.constant(c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
-	word pal2mus_pal_table_addr{ static_cast<word>(
-		m_rom_manager.read_uint16_le(p_rom, pal_ptr.first)) };
-	word pal2mus_mus_table_addr{ static_cast<word>(
-		m_rom_manager.read_uint16_le(p_rom, mus_ptr.first)) };
-
-	klib::Asm6502 code;
-
-	// add new routine which copies the vanilla logic for sw-door pal2mus
-	code.ldx_imm(pal2mus_slot_count);
-	code.label("@paletteCheckLoop");
-	code.lda_zp(RAM_ZP_Screen_DestPaletteOrIndex);
-	code.cmp_abs_x(pal2mus_pal_table_addr);
-	code.beq("@setupArea");
-	code.dex();
-	code.bpl("@paletteCheckLoop");
-	code.bmi("@enterScreen");
-
-	code.label("@setupArea");
-	code.lda_abs_x(pal2mus_mus_table_addr);
-	code.cmp_abs(RAM_World_DefaultMusic);
-	code.beq("@enterScreen");
-	code.sta_zp(RAM_ZP_Music_Current);
-	code.sta_abs(RAM_World_DefaultMusic);
-
-	code.label("@enterScreen");
-	code.jmp(Game_SetupEnterScreen);
-
-	// insert the new routine in rom
-	code.apply_hack_and_clear(p_rom, 15, HackSwTransPal2Mus);
-
-	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
-	code.jmp(HackSwTransPal2Mus);
-	code.apply_hack_and_clear(p_rom, 15, SwTransJmpSetupEnterScreen);
 }
 
 void fe::MainWindow::generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const {

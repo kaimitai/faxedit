@@ -41,10 +41,13 @@ namespace fh {
 		AtlasDevSetPalette, AtlasDevRestorePalette, AtlasDevLoadBgPalette, AtlasDevLoadSpritePalette,
 		AtlasDevFlashScreen, AtlasDevSetColorEmphasis, AtlasDevQueuePaletteFlush, AtlasDevWipeScreenStep,
 		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile,
+		AtlasDevDissolveEntity, AtlasDevSetEntityPosition, AtlasDevSetEntityScript,
+		AtlasDevSetEntityBScript, AtlasDevIfEntityInRange,
 		AtlasDevWarpToDoor, AtlasDevWarpAreaScreenPos,
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
 		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
-		AtlasDevApplyEffect
+		AtlasDevApplyEffect, AtlasDevCastSpell, AtlasDevIfMagicActive,
+		AtlasDevClearVisibleMagic
 	};
 
 	class HackManager {
@@ -177,12 +180,20 @@ namespace fh {
 		word apply_AtlasDevWarpToDoor(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevWarpAreaScreenPos(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSpawnEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDissolveEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityScript(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetEntityBScript(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEntityInRange(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDropItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDespawnEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDespawnAllEntities(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetScreenEvent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevApplyEffect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -225,6 +236,8 @@ namespace fh {
 	public:
 		HackManager(void) = default;
 
+		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
+		static void install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom);
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,

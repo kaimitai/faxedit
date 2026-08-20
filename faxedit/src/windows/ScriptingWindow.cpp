@@ -13,10 +13,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_include_all_sprites{ false };
 	static bool ls_lilypond_percussion{ false };
 
-	const auto message_callback = [this](const fe::Message& p_message) -> void {
-		add_message(p_message.text, p_message.type);
-		};
-
 	const auto get_script_dir = [this](void) -> std::filesystem::path {
 		const std::filesystem::path dir{ m_path / std::format("{}-scripts", m_filename) };
 		klib::file::create_directories(dir);
@@ -66,7 +62,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 						klib::file::read_file_as_strings(get_script_path("iscript", "asm")),
 						l_opcode_info,
 						false,
-						message_callback)
+						m_msg_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
@@ -89,7 +85,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("Disassemble", 4, "Disassemble interaction scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_iscripts_to_file(m_config, m_game->m_rom_data,
 					m_cache.iscript_opcode_info.opcodes,
-					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, message_callback);
+					get_script_path("iscript", "asm"), ls_shop_data_as_comments, l_shift, m_msg_callback);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -113,7 +109,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_script_path("bscript", "asm")),
 						false,
-						message_callback)
+						m_msg_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
@@ -128,7 +124,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Disassemble", 4, "Disassemble sprite behavior scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_bscripts_to_file(m_config, m_game->m_rom_data,
-					get_script_path("bscript", "asm"), l_shift, message_callback);
+					get_script_path("bscript", "asm"), l_shift, m_msg_callback);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -148,7 +144,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 					fe::script::asm_mscripts(m_config,
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_script_path("mscript", "asm")),
-						message_callback)
+						m_msg_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
@@ -167,7 +163,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Disassemble", 4, "Disassemble music scripts from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::disasm_mscripts_to_file(m_config, m_game->m_rom_data,
-					get_script_path("mscript", "asm"), ls_emit_mscript_notes, l_shift, message_callback);
+					get_script_path("mscript", "asm"), ls_emit_mscript_notes, l_shift, m_msg_callback);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -190,7 +186,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 					fe::script::build_misc(m_config,
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_script_path("misc", "txt")),
-						message_callback)
+						m_msg_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
@@ -205,7 +201,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Extract", 4, "Extract misc data from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::extract_misc_to_file(m_config, m_game->m_rom_data,
-					get_script_path("misc", "txt"), ls_include_all_sprites, l_shift, message_callback);
+					get_script_path("misc", "txt"), ls_include_all_sprites, l_shift, m_msg_callback);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -228,7 +224,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 					fe::script::compile_mml(m_config,
 						m_game->m_rom_data,
 						klib::file::read_file_as_strings(get_mml_path()),
-						message_callback)
+						m_msg_callback)
 				};
 
 				m_game->m_rom_data = std::move(xrom);
@@ -247,7 +243,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 
 			if (ui::imgui_button("Decompile", 4, "Decompile MML from ROM and write to file (hold shift to overwrite existing file)")) try {
 				fe::script::decompile_mml_to_file(m_config, m_game->m_rom_data,
-					get_mml_path(), l_shift, message_callback);
+					get_mml_path(), l_shift, m_msg_callback);
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
@@ -258,7 +254,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("ROM to MIDI", 2, "Generate MIDI files directly from ROM")) try {
 				fe::script::rom_to_midi_files(m_config, m_game->m_rom_data,
 					get_script_file_prefix(m_filename),
-					message_callback);
+					m_msg_callback);
 				add_message("MIDI files generated from ROM", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -270,7 +266,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			if (ui::imgui_button("MML to MIDI", 2, "Generate MIDI files from MML")) try {
 				fe::script::mml_to_midi_files(get_mml_path(),
 					get_script_file_prefix(m_filename),
-					message_callback);
+					m_msg_callback);
 				add_message("MIDI files generated from MML", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -283,7 +279,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				fe::script::rom_to_lilypond_files(m_config, m_game->m_rom_data,
 					get_script_file_prefix(m_filename),
 					ls_lilypond_percussion,
-					message_callback);
+					m_msg_callback);
 				add_message("LilyPond files generated from ROM", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -296,7 +292,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 				fe::script::mml_to_lilypond_files(get_mml_path(),
 					get_script_file_prefix(m_filename),
 					ls_lilypond_percussion,
-					message_callback);
+					m_msg_callback);
 				add_message("LilyPond files generated from MML", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {

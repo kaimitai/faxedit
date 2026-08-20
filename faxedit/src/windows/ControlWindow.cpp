@@ -10,6 +10,8 @@
 #include "fe/fe_app_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "fe/WorldVisualizer.h"
+#include "fe/game/GameManager.h"
+#include "fh/HackManager.h"
 
 void fe::MainWindow::save_xml(void) {
 	try {
@@ -92,153 +94,12 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Data Integrity Analysis", 4)) {
-		add_message("Starting integrity analysis", fe::MsgType::Info);
-
-		// check tilemap sizes
-		constexpr std::size_t BANK_SIZE{ 0x4000 };
-		const auto tilemap_sizes{ m_rom_manager.get_world_tilemap_sizes(m_game.value()) };
-
-		for (std::size_t w{ 0 }; w < tilemap_sizes.size(); ++w) {
-			const auto l_wtm_size{ tilemap_sizes[w] };
-
-			if (l_wtm_size > BANK_SIZE) {
-				add_message(
-					std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
-						w, l_wtm_size, BANK_SIZE,
-						100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
-					fe::MsgType::Error);
-			}
-			else if (m_settings.m_warn_tilemap_95_pct &&
-				l_wtm_size * 100 >= BANK_SIZE * 95) {
-				add_message(
-					std::format("World {} tilemap consumes {}/{} bytes ({:.2f}% of one bank)",
-						w, l_wtm_size, BANK_SIZE,
-						100.0 * static_cast<double>(l_wtm_size) / static_cast<double>(BANK_SIZE)),
-					fe::MsgType::Warning);
-			}
-		}
-
-		for (std::size_t c{ 0 }; c < m_game->m_chunks.size(); ++c) {
-			const auto l_ref_scr{ m_game->get_referenced_screens(c) };
-			for (std::size_t s{ 0 }; s < m_game->m_chunks[c].m_screens.size(); ++s) {
-				const auto& scr{ m_game->m_chunks[c].m_screens[s] };
-
-				// check if screen is referenced
-				if (c != c::CHUNK_IDX_BUILDINGS && l_ref_scr.find(static_cast<byte>(s)) == end(l_ref_scr))
-					add_message(std::format("World {}, Screen {} has no references", c, s), fe::MsgType::Error);
-
-				// check that defined other-world transitions can be used
-				if (scr.m_intrachunk_scroll.has_value()) {
-					bool l_ow_block{ false };
-					for (const auto& row : scr.m_tilemap)
-						for (byte b : row) {
-							byte l_block_prop{ m_game->m_chunks[c].m_metatiles.at(b).m_block_property };
-							if (l_block_prop == c::BLOCK_PROPERTY_OW_FOREGROUND ||
-								l_block_prop == c::BLOCK_PROPERTY_OW_RETURN) {
-								l_ow_block = true;
-								break;
-							}
-						}
-
-					if (!l_ow_block)
-						add_message(std::format("World {}, Screen {}: Other-world transition is defined, but no metatile with property ow-transition is used",
-							c, s), fe::MsgType::Error);
-				}
-
-				// check that defined same-world transitions can be used
-				if (scr.m_interchunk_scroll.has_value()) {
-					bool l_sw_block{ false };
-					for (const auto& row : scr.m_tilemap)
-						for (byte b : row) {
-							byte l_block_prop{ m_game->m_chunks[c].m_metatiles.at(b).m_block_property };
-							if (l_block_prop == c::BLOCK_PROPERTY_SW_LADDER ||
-								l_block_prop == c::BLOCK_PROPERTY_SW_FOREGROUND) {
-								l_sw_block = true;
-								break;
-							}
-						}
-
-					if (!l_sw_block)
-						add_message(std::format("World {}, Screen {}: Same-world transition is defined, but no metatile with property sw-transition is used",
-							c, s), fe::MsgType::Error);
-				}
-
-				// check that doors are correctly placed
-				std::set<std::pair<byte, byte>> unique_door_pos;
-				std::size_t doorcnt{ scr.m_doors.size() };
-
-				for (std::size_t d{ 0 }; d < doorcnt; ++d) {
-					const auto& door{ scr.m_doors[d] };
-
-					if (m_game->m_chunks[c].m_metatiles.at(
-						scr.get_mt_at_pos(door.m_coords.first,
-							door.m_coords.second)).m_block_property
-						!= 0x03) {
-						add_message(std::format("World {}, Screen {}, Door ({},{}): Not placed on door-type metatile",
-							c, s, door.m_coords.first, door.m_coords.second), fe::MsgType::Error);
-					}
-
-					// no need to check dest coords for doors to building - they come from the scene data
-					if (m_settings.m_warn_00_doors &&
-						door.m_door_type != fe::DoorType::Building &&
-						door.m_dest_coords.first == 0 &&
-						door.m_dest_coords.second == 0)
-						add_message(std::format("World {}, Screen {}, Door ({},{}): Destination coords are (0, 0) - was this intentional?",
-							c, s, door.m_coords.first, door.m_coords.second), fe::MsgType::Warning);
-
-					unique_door_pos.insert(door.m_coords);
-				}
-
-				if (unique_door_pos.size() != doorcnt)
-					add_message(std::format("World {}, Screen {}: Several doors defined at the same position", c, s), fe::MsgType::Error);
-
-				// validate sprite counts and total ppu tile counts
-				// also check that only NPCs have scripts attached
-				const auto& sprites{ scr.m_sprite_set.m_sprites };
-				std::size_t total_ppu_tile_count{ 0 };
-				for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr) {
-					total_ppu_tile_count += m_game->m_sprite_gfx_manager.get_sprite_chr_bank_size(sprites[spr].m_id);
-
-					if (sprites[spr].m_text_id && sprites[spr].m_id < m_cache.m_sprite_dims.size()) {
-						const auto sprite_cat{ m_cache.m_sprite_dims[sprites[spr].m_id].category };
-						if (sprite_cat != fe::SpriteGUICategory::NPC &&
-							sprite_cat != fe::SpriteGUICategory::GameTrigger)
-							add_message(
-								std::format("World {}, Screen {}, Sprite {}: Script attached, but sprite category is not compatible",
-									c, s, spr),
-								fe::MsgType::Error);
-					}
-
-				}
-				if (total_ppu_tile_count > c::PPU_DYNAMIC_TILE_COUNT)
-					add_message(
-						std::format("World {}, Screen {}: Sprites use {} dynamic sprite chr-tiles, but the maximum is {}",
-							c, s, total_ppu_tile_count, c::PPU_DYNAMIC_TILE_COUNT),
-						fe::MsgType::Error
-					);
-			}
-		}
-
-		// check that metatile usage for buildings don't go across tilesets
-		std::map<byte, std::set<std::size_t>> l_mt_usage; // <metatile no> -> set <tileset no>
-		const auto& buildingscreens{ m_game->m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens };
-
-		for (std::size_t i{ 0 }; i < buildingscreens.size(); ++i) {
-			std::size_t tileset_no{ m_game->get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) };
-
-			for (std::size_t y{ 0 }; y < 13; ++y)
-				for (std::size_t x{ 0 }; x < 16; ++x)
-					l_mt_usage[buildingscreens.at(i).get_mt_at_pos(x, y)].insert(tileset_no);
-		}
-
-		for (const auto& kv : l_mt_usage) {
-			if (kv.second.size() != 1) {
-				add_message(std::format("Metatile {} in the buildings world used across tilesets", kv.first), fe::MsgType::Error);
-			}
-		}
-
-		add_message("Integrity analysis completed", fe::MsgType::Info);
+	if (ui::imgui_button("Data Integrity Analysis", 4)) try {
+		fe::game::analyze_game_data(m_game.value(), m_config,
+			m_settings.m_warn_tilemap_95_pct, m_settings.m_warn_00_doors, m_msg_callback);
+	}
+	catch (const std::exception& ex) {
+		add_message(std::format("Data Integrity Analysis failed: {}", ex.what()), fe::MsgType::Error);
 	}
 
 	ImGui::SameLine();
@@ -290,7 +151,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 	if (ui::imgui_button("Apply External ROM Changes", 4,
 		"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
-		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path), false) };
+		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path)) };
 		add_message(std::format("Applied external changes from {} ({} bytes different)", m_loaded_rom_path, byte_diffs), fe::MsgType::Success);
 	}
 	catch (const std::exception& ex) {
@@ -323,7 +184,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.m_rom_data = l_rom;
 
 		// validate and extract everything on the temporary
-		validate_game_data(new_game);
+		fe::game::validate_and_repair_game(new_game, m_msg_callback);
 		new_game.extract_scenes_if_empty(m_config);
 		new_game.extract_palette_to_music(m_config);
 		new_game.extract_hud_attributes(m_config);
@@ -332,17 +193,9 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		new_game.m_sprite_gfx_manager.load_rom(m_config, new_game.m_rom_data, m_rom_manager);
 		new_game.cinematic.parse_rom(m_config, new_game.m_rom_data);
 
-		// reconcile door type between loaded rom and loaded xml
-		if (old_game.m_sw_door_type == fe::SameWorldDoorType::Normal &&
-			new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30) {
-			// the xml has hack-door data, while loaded rom does not
-			patch_randumizer_doors(new_game, false);
-			add_message("Loaded ROM was updated with the stage-door hack required by the incoming xml", fe::MsgType::Success);
-		}
-		else if (old_game.m_sw_door_type != new_game.m_sw_door_type) {
-			add_message("Warning: Stage-door format mismatch between loaded ROM and xml. Verify same-world door data", fe::MsgType::Warning);
-			new_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
-		}
+		// report on sameworld door hack
+		if (new_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
+			add_message("Loaded XML uses the sameworld-door to stage-door hack.", fe::MsgType::Success);
 
 		// everything succeeded, so commit at this point
 		*m_game = std::move(new_game);
@@ -383,14 +236,14 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 
 	m_game->sync_palettes(m_cache.m_shared_palettes);
 
+	auto x_rom{ m_game->m_rom_data };
+
 	// ensure the door hack is applied if it is supposed to be
-	// skip it for randomizer roms as they keep the hack in different locations
+	// skip it for randomizer ROMs as they keep the hack in different locations
 	if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 &&
 		!m_cache.m_disable_pal2_mus) {
-		this->patch_randumizer_doors(*m_game, false);
+		fh::HackManager::install_hack_sameworld_to_stage_doors(m_config, x_rom);
 	}
-
-	auto x_rom{ m_game->m_rom_data };
 
 	// world tileset chr
 	if (m_settings.m_patch_world_chr_data) {
@@ -548,7 +401,7 @@ std::optional<std::vector<byte>> fe::MainWindow::patch_rom(void) try {
 	}
 
 	if (m_settings.m_apply_sw_pal2mus_hack) {
-		patch_sw_transition_pal2mus(x_rom);
+		fh::HackManager::install_hack_pal2mus_for_sw_trans(m_config, x_rom);
 		add_message("Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info);
 	}
 
@@ -628,212 +481,6 @@ void fe::MainWindow::report_sprite_gfx_patch(const fe::SpriteGfxPatchResult& res
 	add_message(bank6res, result.bank6_used ? fe::MsgType::Info : fe::MsgType::Error);
 	add_message(bank7res, result.bank7_used ? fe::MsgType::Info : fe::MsgType::Error);
 	add_message(bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error);
-}
-
-void fe::MainWindow::validate_game_data(fe::Game& p_game) {
-
-	const auto validate_screen_connection = [this](std::optional<byte>& conn, std::size_t world,
-		std::size_t screen, std::size_t screen_count) -> void {
-			if (conn && (static_cast<std::size_t>(conn.value()) >= screen_count)) {
-				conn.reset();
-				add_message(
-					std::format("Invalid connection reference on World {}, Screen {}: connection disabled", world, screen), fe::MsgType::Error
-				);
-			}
-		};
-
-	const auto validate_door_dest_palette = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
-		if (door.m_dest_palette_id >= p_game.m_palettes.size()) {
-			door.m_dest_palette_id = 0;
-			add_message(
-				std::format("Invalid destination palette for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
-					door.m_coords.first, door.m_coords.second), fe::MsgType::Error
-			);
-		}
-		};
-
-	const auto validate_door_dest_screen = [this, &p_game](fe::Door& door, std::size_t world, std::size_t screen) -> void {
-		if (door.m_dest_screen_id >= p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.size()) {
-			door.m_dest_screen_id = 0;
-			add_message(
-				std::format("Invalid destination screen for door on World {}, Screen {}, (x, y)=({}, {}): was set to 0", world, screen,
-					door.m_coords.first, door.m_coords.second), fe::MsgType::Error
-			);
-		}
-		};
-
-	// check worlds
-	for (std::size_t w{ 0 }; w < p_game.m_chunks.size(); ++w) {
-		auto& world{ p_game.m_chunks[w] };
-
-		// check all screen data for world
-		std::size_t screen_count{ world.m_screens.size() };
-		for (std::size_t s{ 0 }; s < screen_count; ++s) {
-			auto& screen{ world.m_screens[s] };
-
-			// validate connections
-			validate_screen_connection(screen.m_scroll_left, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_right, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_up, w, s, screen_count);
-			validate_screen_connection(screen.m_scroll_down, w, s, screen_count);
-
-			// validate doors
-			for (std::size_t d{ 0 }; d < screen.m_doors.size(); ++d) {
-				auto& door{ screen.m_doors[d] };
-				if (door.m_door_type == fe::DoorType::SameWorld)
-					validate_door_dest_palette(door, w, s);
-				else if (door.m_door_type == fe::DoorType::Building)
-					validate_door_dest_screen(door, w, s);
-			}
-
-			// validate tilemap
-			for (std::size_t y{ 0 }; y < screen.m_tilemap.size(); ++y)
-				for (std::size_t x{ 0 }; x < screen.m_tilemap[y].size(); ++x)
-					if (static_cast<std::size_t>(screen.get_mt_at_pos(x, y)) >= world.m_metatiles.size()) {
-						add_message(
-							std::format("Invalid metatile reference on World {}, Screen {}, x {}, y {}: {} was set to 0", w, s, x, y, screen.m_tilemap[y][x]), fe::MsgType::Error
-						);
-						screen.m_tilemap[y][x] = 0;
-					}
-		}
-
-		// check scene for world
-		if (world.m_scene.m_palette >= p_game.m_palettes.size()) {
-			add_message(std::format("Invalid palette reference on World {}: {} was set to 0", w, world.m_scene.m_palette), fe::MsgType::Error);
-			world.m_scene.m_palette = 0;
-		}
-	}
-
-	// check building scenes
-	for (std::size_t bscene{ 0 }; bscene < p_game.m_building_scenes.size(); ++bscene) {
-		auto& bScene{ p_game.m_building_scenes[bscene] };
-
-		if (bScene.m_palette >= p_game.m_palettes.size()) {
-			add_message(std::format("Invalid palette reference on scene for building screen {}: {} was set to 0", bscene, bScene.m_palette), fe::MsgType::Error);
-			bScene.m_palette = 0;
-		}
-	}
-
-	// stages
-	auto& stages = p_game.m_stages.m_stages;
-
-	for (std::size_t i = 0; i < stages.size(); ++i) {
-		auto& stage = stages[i];
-
-		if (stage.m_next_stage >= stages.size()) {
-			add_message(
-				std::format("Invalid next_stage index {} in stage {}: set to 0",
-					stage.m_next_stage, i), fe::MsgType::Error
-			);
-			stage.m_next_stage = 0;
-		}
-
-		if (stage.m_prev_stage >= stages.size()) {
-			add_message(
-				std::format("Invalid prev_stage index {} in stage {}: set to 0",
-					stage.m_prev_stage, i), fe::MsgType::Error
-			);
-			stage.m_prev_stage = 0;
-		}
-
-		// validate next screen
-		const auto& next = stages[stage.m_next_stage];
-		if (next.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[next.m_world_id];
-			if (stage.m_next_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid next_screen {} in stage {}: set to 0",
-						stage.m_next_screen, i), fe::MsgType::Error
-				);
-				stage.m_next_screen = 0;
-			}
-		}
-
-		// validate prev screen
-		const auto& prev = stages[stage.m_prev_stage];
-		if (prev.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[prev.m_world_id];
-			if (stage.m_prev_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid prev_screen {} in stage {}: set to 0",
-						stage.m_prev_screen, i), fe::MsgType::Error
-				);
-				stage.m_prev_screen = 0;
-			}
-		}
-	}
-
-	// start screen
-	if (!p_game.m_stages.m_stages.empty()) {
-		const auto& start = p_game.m_stages.m_stages[0];
-
-		if (start.m_world_id < p_game.m_chunks.size()) {
-			const auto& world = p_game.m_chunks[start.m_world_id];
-
-			if (p_game.m_stages.m_start_screen >= world.m_screens.size()) {
-				add_message(
-					std::format("Invalid start screen {}: set to 0",
-						p_game.m_stages.m_start_screen), fe::MsgType::Error
-				);
-				p_game.m_stages.m_start_screen = 0;
-			}
-		}
-	}
-
-	// push-block
-	if (p_game.m_push_block.m_stage >= p_game.m_stages.m_stages.size()) {
-		add_message("Invalid push-block stage: set to 0", fe::MsgType::Error);
-		p_game.m_push_block.m_stage = 0;
-	}
-
-	const auto pb_world =
-		p_game.m_stages.m_stages[p_game.m_push_block.m_stage].m_world_id;
-
-	if (pb_world < p_game.m_chunks.size()) {
-		const auto& world = p_game.m_chunks[pb_world];
-
-		auto clamp_mt = [&](byte& mt) {
-			if (mt >= world.m_metatiles.size()) {
-				add_message("Invalid push-block metatile: set to 0", fe::MsgType::Error);
-				mt = 0;
-			}
-			};
-
-		clamp_mt(p_game.m_push_block.m_draw_block);
-		clamp_mt(p_game.m_push_block.m_source_0);
-		clamp_mt(p_game.m_push_block.m_source_1);
-		clamp_mt(p_game.m_push_block.m_target_0);
-		clamp_mt(p_game.m_push_block.m_target_1);
-
-		if (p_game.m_push_block.m_screen >= world.m_screens.size()) {
-			add_message("Invalid push-block screen: set to 0", fe::MsgType::Error);
-			p_game.m_push_block.m_screen = 0;
-		}
-	}
-
-	validate_spawn_points(p_game);
-}
-
-void fe::MainWindow::validate_spawn_points(fe::Game& p_game) {
-	for (auto& spawn : p_game.m_spawn_locations) {
-
-		if (spawn.m_world >= p_game.m_chunks.size()) {
-			add_message(
-				std::format("Invalid spawn world {}: set to 0", spawn.m_world), fe::MsgType::Error
-			);
-			spawn.m_world = 0;
-		}
-
-		const auto& world = p_game.m_chunks[spawn.m_world];
-
-		if (spawn.m_screen >= world.m_screens.size()) {
-			add_message(
-				std::format("Invalid spawn screen {} in world {}: set to 0",
-					spawn.m_screen, spawn.m_world), fe::MsgType::Error
-			);
-			spawn.m_screen = 0;
-		}
-	}
 }
 
 // dump debug data to disk

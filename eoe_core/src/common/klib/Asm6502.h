@@ -81,6 +81,7 @@ namespace klib {
 		static std::size_t apply_words_as_split_table(std::vector<byte>& p_rom, const std::vector<word>& p_words,
 			byte p_bank_no, word p_cpu_addr);
 
+		static word read_word(const std::vector<byte>& p_rom, std::size_t p_file_offset);
 		static word read_word(const std::vector<byte>& p_rom, byte p_bank_no, word p_cpu_addr);
 
 		// jumps and calls

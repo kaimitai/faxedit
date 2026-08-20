@@ -623,8 +623,10 @@ std::size_t klib::Asm6502::apply_words_as_split_table(std::vector<byte>& p_rom, 
 	return apply_words_as_split_table(p_rom, p_words, p_bank_no, p_cpu_addr, get_cpu_min_addr(p_bank_no));
 }
 
-word klib::Asm6502::read_word(const std::vector<byte>& p_rom, byte p_bank_no, word p_cpu_addr) {
-	const auto file_offset{ get_file_offset(p_bank_no, p_cpu_addr) };
+word klib::Asm6502::read_word(const std::vector<byte>& p_rom, std::size_t p_file_offset) {
+	return static_cast<word>(p_rom.at(p_file_offset) | p_rom.at(p_file_offset + 1) << 8);
+}
 
-	return static_cast<word>(p_rom.at(file_offset) | p_rom.at(file_offset + 1) << 8);
+word klib::Asm6502::read_word(const std::vector<byte>& p_rom, byte p_bank_no, word p_cpu_addr) {
+	return read_word(p_rom, get_file_offset(p_bank_no, p_cpu_addr));
 }
