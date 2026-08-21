@@ -55,6 +55,7 @@ namespace fh {
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
+		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };

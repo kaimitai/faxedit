@@ -30,7 +30,17 @@ word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector
 }
 
 word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom,
-	byte p_bank, word cpu_addr) const {
+	byte p_bank, word cpu_addr, bool p_stage_door_hack_installed) const {
+	klib::Asm6502 code;
+
+	// if the stage door hack is not installed, this becomes a static patch
+	// where we jump to the door-pal2mus logic directly
+	if (!p_stage_door_hack_installed) {
+		code.jmp(ROM::Player_CheckHandleEnterDoor_LDX_pal2mus_slots);
+		code.apply_hack_and_clear(p_rom, p_bank, ROM::SwTransJmpSetupEnterScreen);
+		return cpu_addr;
+	}
+
 	// constants from the rom
 	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
 	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
@@ -38,8 +48,6 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 	byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
 	word pal2mus_pal_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, pal_ptr.first)) };
 	word pal2mus_mus_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, mus_ptr.first)) };
-
-	klib::Asm6502 code;
 
 	// add new routine which copies the vanilla logic for sw-door pal2mus
 	code.ldx_imm(pal2mus_slot_count);
