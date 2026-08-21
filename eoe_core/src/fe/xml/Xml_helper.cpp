@@ -1611,6 +1611,7 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 	std::map<std::string, std::vector<byte>>& p_sets,
 	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, std::string>& p_strings,
 	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
 	std::map<std::string, bool>& p_bools,
 	const std::vector<byte>& p_rom) {
@@ -1706,6 +1707,26 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 		}
 	}
 
+	// strings
+	auto n_strings{ n_root.child(c::TAG_STRINGS) };
+	if (n_strings) {
+		for (auto n_string{ n_strings.child(c::TAG_STRING) }; n_string;
+			n_string = n_string.next_sibling(c::TAG_STRING)) {
+
+			if (matches_config_region(n_string, p_region)) {
+
+				std::string l_name{ n_string.attribute(c::ATTR_NAME).as_string() };
+
+				if (p_strings.find(l_name) == end(p_strings)) {
+					p_strings.insert(std::make_pair(
+						l_name,
+						n_string.attribute(c::ATTR_VALUE).as_string()
+					));
+				}
+			}
+		}
+	}
+
 	// maps byte -> string (labels, char maps etc)
 	auto n_bmaps{ n_root.child(c::TAG_BYTE_TO_STR_MAPS) };
 	if (n_bmaps) {
@@ -1775,6 +1796,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml_file,
 	std::map<std::string, std::pair<std::size_t, std::size_t>>& p_pointers,
 	std::map<std::string, std::vector<byte>>& p_sets,
 	std::map<std::string, std::map<byte, std::string>>& p_byte_maps,
+	std::map<std::string, std::string>& p_strings,
 	std::map<std::string, std::map<std::string, std::string>>& p_string_maps,
 	std::map<std::string, bool>& p_bools,
 	const std::vector<byte>& p_rom,
@@ -1782,7 +1804,7 @@ void fe::xml::load_configuration(const std::string& p_config_xml_file,
 	auto doc{ load_config_xml(p_config_xml_file, p_throw_on_file_not_exists) };
 	if (doc)
 		return load_configuration(doc, p_region, p_constants, p_pointers,
-			p_sets, p_byte_maps, p_string_maps, p_bools, p_rom);
+			p_sets, p_byte_maps, p_strings, p_string_maps, p_bools, p_rom);
 }
 
 std::vector<fe::RegionDefinition> fe::xml::load_region_defs(const std::string& p_config_xml_file,

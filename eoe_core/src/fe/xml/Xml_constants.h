@@ -245,6 +245,8 @@ namespace fe {
 			constexpr char TAG_POINTER[]{ "pointer" };
 			constexpr char TAG_SETS[]{ "sets" };
 			constexpr char TAG_SET[]{ "set" };
+			constexpr char TAG_STRINGS[]{ "strings" };
+			constexpr char TAG_STRING[]{ "string" };
 			constexpr char TAG_BYTE_TO_STR_MAPS[]{ "byte_to_string_maps" };
 			constexpr char TAG_BYTE_TO_STR_MAP[]{ "byte_to_string_map" };
 			constexpr char TAG_STRING_TO_STR_MAPS[]{ "string_to_string_maps" };

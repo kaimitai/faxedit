@@ -713,9 +713,11 @@ std::vector<byte> fe::game::patch_rom(
 
 		if (!p_options.general_hacks.empty()) {
 			fh::HackManager hack_mgr;
-			std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
+			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
+			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
 				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, p_options.general_hacks) };
-			send_message(p_message, { std::format("Installed general hacks in bank 15 ({} bytes)", bank15_hack_size) });
+			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
+				bank15_hack_size, bank15_hack_available_size) });
 			l_dyndata_bytes += bank15_hack_size;
 		}
 	}
