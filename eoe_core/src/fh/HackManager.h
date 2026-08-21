@@ -51,7 +51,7 @@ namespace fh {
 	};
 
 	enum class GeneralHackLib {
-		KillSwitch
+		KillSwitch, SameWorldTransPal2Mus
 	};
 
 	class HackManager {
@@ -244,7 +244,8 @@ namespace fh {
 		HackManager(void) = default;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
-		static void install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom);
+		// TODO: Make this private when making this hack a general hack instead of editor-managed
+		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,

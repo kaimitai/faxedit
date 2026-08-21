@@ -61,6 +61,8 @@ namespace klib {
 			word p_cpu_addr, word p_cpu_min_addr);
 		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
 			word p_cpu_addr);
+		word apply_hack_and_clear_get_next_cpu_addr(std::vector<byte>& p_rom, byte p_bank_no,
+			word p_cpu_addr);
 		static void apply_byte(std::vector<byte>& p_rom, byte p_byte,
 			byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr);
 		static void apply_byte(std::vector<byte>& p_rom, byte p_byte,

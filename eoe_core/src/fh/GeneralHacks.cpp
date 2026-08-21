@@ -2,6 +2,7 @@
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
 #include "fh_constants.h"
+#include "fe/fe_constants.h"
 #include <format>
 #include <stdexcept>
 
@@ -19,12 +20,53 @@ word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector
 	code.sta_abs(RAM::PlayerIsDead);
 	code.label("@select_not_pressed");
 	code.rts();
-	auto next_cpu_addr{ get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, p_bank, cpu_addr),
-		p_bank == 0x0f ? 0x10000 : 0xc000) };
+	const auto next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr) };
 
 	// install the hook
 	code.jsr(cpu_addr);
 	code.apply_hack_and_clear(p_rom, p_bank, ROM::GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges);
+
+	return next_cpu_addr;
+}
+
+word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom,
+	byte p_bank, word cpu_addr) const {
+	// constants from the rom
+	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
+	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
+
+	byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
+	word pal2mus_pal_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, pal_ptr.first)) };
+	word pal2mus_mus_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, mus_ptr.first)) };
+
+	klib::Asm6502 code;
+
+	// add new routine which copies the vanilla logic for sw-door pal2mus
+	code.ldx_imm(pal2mus_slot_count);
+	code.label("@paletteCheckLoop");
+	code.lda_zp(RAM::ZP_TransitionPalette);
+	code.cmp_abs_x(pal2mus_pal_table_addr);
+	code.beq("@setupArea");
+	code.dex();
+	code.bpl("@paletteCheckLoop");
+	code.bmi("@enterScreen");
+
+	code.label("@setupArea");
+	code.lda_abs_x(pal2mus_mus_table_addr);
+	code.cmp_abs(RAM::World_DefaultMusic);
+	code.beq("@enterScreen");
+	code.sta_zp(RAM::ZP_MusicCurrent);
+	code.sta_abs(RAM::World_DefaultMusic);
+
+	code.label("@enterScreen");
+	code.jmp(ROM::Game_SetupEnterScreen);
+
+	// insert the new routine in rom
+	const auto next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr) };
+
+	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
+	code.jmp(cpu_addr);
+	code.apply_hack_and_clear(p_rom, p_bank, ROM::SwTransJmpSetupEnterScreen);
 
 	return next_cpu_addr;
 }
@@ -42,7 +84,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::KillSwitch:
 			cpu_addr = install_KillSwitch(p_config, p_rom, p_bank, cpu_addr);
 			break;
-
+		case fh::GeneralHackLib::SameWorldTransPal2Mus:
+			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr);
+			break;
 		default:
 			break;
 		}

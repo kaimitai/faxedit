@@ -561,6 +561,15 @@ std::size_t klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p
 	return apply_hack_and_clear(p_rom, p_bank_no, p_cpu_addr, get_cpu_min_addr(p_bank_no));
 }
 
+word klib::Asm6502::apply_hack_and_clear_get_next_cpu_addr(std::vector<byte>& p_rom, byte p_bank_no,
+	word p_cpu_addr) {
+	const std::size_t next_addr{ static_cast<std::size_t>(p_cpu_addr) + apply_hack_and_clear(p_rom, p_bank_no, p_cpu_addr) };
+	const std::size_t end_addr{ static_cast<std::size_t>(p_bank_no == 15 ? 0x10000 : 0xc000) };
+	if (next_addr > end_addr)
+		throw std::runtime_error("Bank overflow when installing asm routine");
+	return static_cast<word>(next_addr);
+}
+
 void klib::Asm6502::apply_byte(std::vector<byte>& p_rom, byte p_byte,
 	byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr) {
 	p_rom.at(get_file_offset(p_bank_no, p_cpu_addr, p_cpu_min_addr)) = p_byte;

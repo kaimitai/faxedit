@@ -1,6 +1,7 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
 #include "fe/fe_constants.h"
+#include "fh/fh_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper.h"
@@ -710,12 +711,10 @@ std::vector<byte> fe::game::patch_rom(
 			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
 		l_dyndata_bytes += bank15_res.used_bytes;
 
-		// TODO: Decide on how to populate this
-		std::vector<fh::GeneralHackLib> general_hacks{ };
-		if (!general_hacks.empty()) {
+		if (!p_options.general_hacks.empty()) {
 			fh::HackManager hack_mgr;
 			std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, general_hacks) };
+				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, p_options.general_hacks) };
 			send_message(p_message, { std::format("Installed general hacks in bank 15 ({} bytes)", bank15_hack_size) });
 			l_dyndata_bytes += bank15_hack_size;
 		}
@@ -777,7 +776,9 @@ std::vector<byte> fe::game::patch_rom(
 	}
 
 	if (p_options.apply_sw_pal2mus_hack) {
-		fh::HackManager::install_hack_pal2mus_for_sw_trans(p_config, x_rom);
+		fh::HackManager hack_manager;
+		hack_manager.install_SameWorldTransPal2Mus(p_config, x_rom, 15,
+			static_cast<word>(p_config.constant_or(fh::c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)));
 		send_message(p_message, { "Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info });
 	}
 

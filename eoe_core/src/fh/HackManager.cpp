@@ -4853,49 +4853,6 @@ void fh::HackManager::install_hack_sameworld_to_stage_doors(const fe::Config& p_
 	code.apply_hack_and_clear(p_rom, 15, ROM::Player_EnterDoorToOutside_JMP_SetupArea);
 }
 
-// hack which enables palette-to-music mapping to be applied to sameworld transitions as well as sameworld doors
-void fh::HackManager::install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom) {
-	// new routine addr
-	const word HackSwTransPal2Mus{ static_cast<word>(p_config.constant_or(c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)) };
-
-	// constants from the rom
-	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
-	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
-
-	byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
-	word pal2mus_pal_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, pal_ptr.first)) };
-	word pal2mus_mus_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, mus_ptr.first)) };
-
-	klib::Asm6502 code;
-
-	// add new routine which copies the vanilla logic for sw-door pal2mus
-	code.ldx_imm(pal2mus_slot_count);
-	code.label("@paletteCheckLoop");
-	code.lda_zp(RAM::ZP_TransitionPalette);
-	code.cmp_abs_x(pal2mus_pal_table_addr);
-	code.beq("@setupArea");
-	code.dex();
-	code.bpl("@paletteCheckLoop");
-	code.bmi("@enterScreen");
-
-	code.label("@setupArea");
-	code.lda_abs_x(pal2mus_mus_table_addr);
-	code.cmp_abs(RAM::World_DefaultMusic);
-	code.beq("@enterScreen");
-	code.sta_zp(RAM::ZP_MusicCurrent);
-	code.sta_abs(RAM::World_DefaultMusic);
-
-	code.label("@enterScreen");
-	code.jmp(ROM::Game_SetupEnterScreen);
-
-	// insert the new routine in rom
-	code.apply_hack_and_clear(p_rom, 15, HackSwTransPal2Mus);
-
-	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
-	code.jmp(HackSwTransPal2Mus);
-	code.apply_hack_and_clear(p_rom, 15, ROM::SwTransJmpSetupEnterScreen);
-}
-
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
 void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const {
 	const word HackStaticExtraSave{ 0x90c0 };
