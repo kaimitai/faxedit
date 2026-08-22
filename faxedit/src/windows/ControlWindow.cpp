@@ -31,7 +31,6 @@ namespace {
 			.sprite_data = p_settings.m_patch_sprite_data,
 			.metadata = p_settings.m_patch_metadata,
 			.tilemaps = p_settings.m_patch_tilemaps,
-			.apply_sw_pal2mus_hack = p_settings.m_apply_sw_pal2mus_hack,
 			.throw_on_cinematic_overflow = p_settings.throw_on_cinematic_overflow
 		};
 		return options;

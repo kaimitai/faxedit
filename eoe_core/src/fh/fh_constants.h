@@ -257,9 +257,6 @@ namespace fh {
 		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
 		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
 
-		// enable pal2mus for sameworld transitions hack
-		constexpr char ID_HACK_SW_TRANS_PAL2MUS_ADDR[]{ "hack_sw_trans_pal2mus_addr" };
-
 		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };
 		constexpr char ID_HACK_SCRIPT_VAR_COUNT[]{ "hack_script_var_count" };

@@ -359,8 +359,6 @@
 		<const name="hack_decode_req_addr" value="$dfa8" />
 		<const name="hack_load_world_addr" value="$dfb7" />
 		<const name="hack_handle_palette_addr" value="$f389" />
-		<!-- sameworld transition pal2mus hack -->
-		<const name="hack_sw_trans_pal2mus_addr" value="$c033" />
 		<!-- script routine addresses needed for opcode library extension -->
 		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
 		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />

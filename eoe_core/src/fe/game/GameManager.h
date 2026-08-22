@@ -33,7 +33,6 @@ namespace fe::game {
 		bool metadata{ true };
 		bool tilemaps{ true };
 
-		bool apply_sw_pal2mus_hack{ false };
 		bool throw_on_cinematic_overflow{ true };
 	};
 

@@ -719,7 +719,7 @@ std::vector<byte> fe::game::patch_rom(
 			fh::HackManager hack_mgr;
 			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
 			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks) };
+				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks, &p_game) };
 			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
 				bank15_hack_size, bank15_hack_available_size) });
 			l_dyndata_bytes += bank15_hack_size;
@@ -779,13 +779,6 @@ std::vector<byte> fe::game::patch_rom(
 					l_tm_result.m_sizes[i]), fe::MsgType::Info });
 			}
 		}
-	}
-
-	if (p_options.apply_sw_pal2mus_hack) {
-		fh::HackManager hack_manager;
-		hack_manager.install_SameWorldTransPal2Mus(p_config, x_rom, 15,
-			static_cast<word>(p_config.constant_or(fh::c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)));
-		send_message(p_message, { "Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info });
 	}
 
 	// bank duplication - region-specific config and not a setting
