@@ -223,6 +223,7 @@ namespace fh {
 	namespace c {
 		constexpr byte FlagsByteCount{ 0x1f };
 
+		constexpr char ID_ROM_ISCRIPTS_BEGIN[]{ "rom_iscripts_begin" };
 		constexpr char ID_ROM_ISCRIPTS_LOADBYTE[]{ "rom_iscripts_loadbyte" };
 		constexpr char ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE[]{ "rom_iscripts_skipaddrandinvoke" };
 		constexpr char ID_ROM_ISCRIPTS_JUMPTONEXTADDR[]{ "rom_iscripts_jumptonextaddr" };
@@ -259,10 +260,7 @@ namespace fh {
 		// enable pal2mus for sameworld transitions hack
 		constexpr char ID_HACK_SW_TRANS_PAL2MUS_ADDR[]{ "hack_sw_trans_pal2mus_addr" };
 
-		// Used only by AtlasDevShowMessageFromVar. No default is shipped: a
-		// project must define both before that opcode can be installed, and
-		// Config::constant throws by name if either is missing, so the build
-		// fails loudly rather than reading unallocated RAM.
+		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };
 		constexpr char ID_HACK_SCRIPT_VAR_COUNT[]{ "hack_script_var_count" };
 

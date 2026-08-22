@@ -337,6 +337,18 @@ These handlers keep their original assumptions. Event 1 does not spawn a boss, l
 
 Each of the three reads its own operand count back out of its declared signature in ```iscript_opcode_impls``` rather than assuming one: the signature shown above is what ships, and declaring ```Args=Byte``` for any of them instead builds the earlier plain frame-count handler (```AtlasDevShakeScreen Frames``` shakes at amplitude 2 every frame; ```AtlasDevFadeOut Frames``` and ```AtlasDevFadeIn Frames``` run the full depth-4 fade).
 
+#### AtlasDev script variables
+
+FaxEdit provides eight one-byte script registers, numbered 0 to 7. They are
+cleared when an iScript starts and again when it ends. They are not stored in
+passwords and do not survive as quest state.
+
+```AtlasDevSetVar```, ```AtlasDevAddVar``` and ```AtlasDevSubVar``` write a
+register. Addition and subtraction wrap at 255. ```AtlasDevIfVarEqual```,
+```AtlasDevIfVarLess``` and ```AtlasDevIfVarGreaterEqual``` compare unsigned
+bytes and branch through the normal iScript label operand. An invalid register
+still consumes every operand, then does nothing or takes the false path.
+
 #### AtlasDev dialogue opcodes
 
 ```AtlasDevHideTextbox``` and ```AtlasDevCloseDialogue``` are not two names for
@@ -368,15 +380,10 @@ preserves the original pre-portrait palette so a later ```End``` still restores
 gameplay correctly.
 
 ```AtlasDevShowNumberInMessage```, ```AtlasDevShowChoiceToVar``` and
-```AtlasDevShowMessageFromVar``` **should not be used yet**. Each reads or
-writes a script register, so a project must define
-```hack_script_var_ram_addr``` and ```hack_script_var_count``` before any of
-them can be installed; without those constants the build fails by name rather
-than the ROM reading unallocated RAM. They are published for review and have
-had no validation outside a purpose-built fixture that supplied that RAM. One
-known limitation in ```AtlasDevShowNumberInMessage```: the digits are drawn as
-plain tiles at the text cursor and nothing restores the text grid underneath
-them, so they remain visible over a following shorter message.
+```AtlasDevShowMessageFromVar``` use the same eight script registers. One known
+limitation in ```AtlasDevShowNumberInMessage```: the digits are drawn as plain
+tiles at the text cursor and nothing restores the text grid underneath them,
+so they remain visible over a following shorter message.
 
 #### AtlasDev entity opcodes
 
@@ -418,14 +425,10 @@ player leaves and comes back. That is the engine's own lifecycle, not a
 limitation of the opcodes; a change that must persist belongs in a flag that a
 script re-applies on each visit.
 
-```AtlasDevCountActiveEntities``` and ```AtlasDevFindEntity``` **should not be
-used yet**. Both write a script register, so a project must define
-```hack_script_var_ram_addr``` and ```hack_script_var_count``` before either
-can be installed; without them ```Config::constant``` throws by name and the
-build stops, rather than a ROM shipping that writes RAM nobody allocated.
-Reach for ```AtlasDevIfEntityCountAtLeast``` instead wherever the question is
-a comparison, which is most of the time; these two are for when the number or
-the slot index is itself wanted.
+```AtlasDevCountActiveEntities``` and ```AtlasDevFindEntity``` write their
+answers to a script register. Reach for ```AtlasDevIfEntityCountAtLeast```
+instead wherever the question is only a comparison; the other two are for when
+the number or slot index is itself wanted.
 
 ```AtlasDevFindEntity``` answers "absent" for any identity of ```$80``` or
 above without reading the table. Bit 7 set is the engine's own free marker, so
