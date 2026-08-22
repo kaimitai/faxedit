@@ -12,6 +12,10 @@
 using byte = unsigned char;
 using word = uint16_t;
 
+namespace fe {
+	struct Game;
+}
+
 namespace fh {
 
 	enum class HackLib {
@@ -271,7 +275,8 @@ namespace fh {
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
-			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks) const;
+			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
+			const fe::Game* p_game = nullptr) const;
 	};
 
 }

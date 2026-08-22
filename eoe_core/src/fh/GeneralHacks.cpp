@@ -80,7 +80,8 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 }
 
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
-	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks) const {
+	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
+	const fe::Game* p_game) const {
 	// TODO: Throw if cpu range is invalid but that would be a config error
 	const word cpu_start{ static_cast<word>(p_cpu_addr_start) };
 	word cpu_addr{ cpu_start };
@@ -91,7 +92,8 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			cpu_addr = install_KillSwitch(p_config, p_rom, p_bank, cpu_addr);
 			break;
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
-			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr);
+			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr,
+				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
