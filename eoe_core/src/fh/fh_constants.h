@@ -195,6 +195,8 @@ namespace fh {
 		constexpr word PlayerMana{ 0x039a };
 		constexpr word PlayerXP_L{ 0x0390 };
 		constexpr word PlayerXP_U{ 0x0391 };
+		constexpr word PlayerTitle{ 0x0437 };
+		constexpr word PendingTitle{ 0x04ed };
 		// The 32-byte staged palette ($0293-$02b2, background then sprite
 		// half) that queue command $00 copies to PPU palette RAM whole.
 		constexpr word PaletteShadow{ 0x0293 };
@@ -235,6 +237,8 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION[]{ "rom_iscripts_updateportraitanimation" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
+		constexpr char ID_ROM_PLAYER_RANKREFRESH[]{ "rom_player_rankrefresh" };
+		constexpr char ID_ROM_PLAYER_EXPHUDREDRAW[]{ "rom_player_exphudredraw" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
