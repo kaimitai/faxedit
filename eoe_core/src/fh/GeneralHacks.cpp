@@ -80,15 +80,13 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 }
 
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
-	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHackLib>& p_hacks) const {
-	std::size_t max_size{ p_cpu_addr_end - p_cpu_addr_start };
-
-	// TODO: Throw if cpu range is invalid
+	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks) const {
+	// TODO: Throw if cpu range is invalid but that would be a config error
 	const word cpu_start{ static_cast<word>(p_cpu_addr_start) };
 	word cpu_addr{ cpu_start };
 
-	for (fh::GeneralHackLib hack : p_hacks) {
-		switch (hack) {
+	for (const auto& hack : p_hacks) {
+		switch (hack.get_type()) {
 		case fh::GeneralHackLib::KillSwitch:
 			cpu_addr = install_KillSwitch(p_config, p_rom, p_bank, cpu_addr);
 			break;
@@ -96,7 +94,7 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr);
 			break;
 		default:
-			break;
+			throw std::runtime_error("Unsupported general hack library routine.");
 		}
 
 		if (static_cast<std::size_t>(cpu_addr) > p_cpu_addr_end)

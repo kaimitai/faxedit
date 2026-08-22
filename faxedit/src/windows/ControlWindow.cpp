@@ -32,9 +32,7 @@ namespace {
 			.metadata = p_settings.m_patch_metadata,
 			.tilemaps = p_settings.m_patch_tilemaps,
 			.apply_sw_pal2mus_hack = p_settings.m_apply_sw_pal2mus_hack,
-			.throw_on_cinematic_overflow = p_settings.throw_on_cinematic_overflow,
-			// TODO: Decide on how to populate this
-			.general_hacks = {}
+			.throw_on_cinematic_overflow = p_settings.throw_on_cinematic_overflow
 		};
 		return options;
 	}
@@ -54,8 +52,9 @@ void fe::MainWindow::save_xml(void) {
 
 void fe::MainWindow::patch_nes_rom(bool p_in_place) {
 	try {
+		const auto tmp_config{ hot_reload_config() };
 		std::string l_out_file{ p_in_place ? m_loaded_rom_path : get_nes_path() };
-		fe::game::patch_rom_to_file(m_config, m_game.value(),
+		fe::game::patch_rom_to_file(tmp_config, m_game.value(),
 			l_out_file, get_rom_patch_options(m_settings), m_msg_callback);
 	}
 	catch (const std::exception& ex) {
@@ -87,7 +86,8 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
 
 			try {
-				fe::game::generate_ips_to_file(m_config, m_game.value(), get_ips_path(),
+				const auto tmp_config{ hot_reload_config() };
+				fe::game::generate_ips_to_file(tmp_config, m_game.value(), get_ips_path(),
 					get_rom_patch_options(m_settings), m_msg_callback);
 			}
 			catch (const std::exception& ex) {

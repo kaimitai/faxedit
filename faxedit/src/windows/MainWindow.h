@@ -166,6 +166,7 @@ namespace fe {
 		std::pair<std::string, std::string> get_config_file_paths(void) const;
 		int load_external_rom_data(const std::vector<byte>& p_bytes);
 		void cache_config_variables(void);
+		fe::Config hot_reload_config(void) const;
 
 		std::string get_ips_path(void) const;
 		std::string get_xml_path(void) const;

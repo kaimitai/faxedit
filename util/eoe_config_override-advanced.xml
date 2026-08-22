@@ -111,6 +111,18 @@
 
 	</byte_to_string_maps>
 
+	<!-- string overrides -->
+	<strings>
+
+		<!--
+					General hacks to inject when patching ROM.
+					Hacks are comma-separated and may optionally take key=value parameters.
+					Whitespace is ignored, so entries may be spaced or split across lines freely.
+					These entries are examples rather than a recommended or required set.
+		-->
+		<string name="general_hacks" value="KillSwitch,SameWorldTransPal2Mus" />
+	</strings>
+
 	<!-- string map overrides -->
 	<string_to_string_maps>
 	</string_to_string_maps>

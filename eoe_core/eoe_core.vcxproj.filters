@@ -387,6 +387,9 @@
     <ClInclude Include="src\fe\game\GameManager.h">
       <Filter>Header Files\fe\game</Filter>
     </ClInclude>
+    <ClInclude Include="src\fh\GeneralHack.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -606,6 +609,9 @@
       <Filter>Source Files\fe\game</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\GeneralHacks.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\GeneralHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
   </ItemGroup>

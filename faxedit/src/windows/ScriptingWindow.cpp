@@ -51,9 +51,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("iScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble iScripts from asm-file and patch ROM")) try {
-				// hot-reload config and update cache pertaining to iScript opcode definitions
-				const auto config_files{ get_config_file_paths() };
-				const fe::Config tmp_config(config_files.first, config_files.second, m_game->m_rom_data, m_config.get_region());
+				const auto tmp_config{ hot_reload_config() };
 				const auto l_opcode_info{ fe::script::get_iscript_opcode_info(tmp_config) };
 
 				auto xrom{

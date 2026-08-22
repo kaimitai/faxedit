@@ -35,8 +35,6 @@ namespace fe::game {
 
 		bool apply_sw_pal2mus_hack{ false };
 		bool throw_on_cinematic_overflow{ true };
-
-		std::vector<fh::GeneralHackLib> general_hacks;
 	};
 
 	// completely in-memory

@@ -4,6 +4,7 @@
 #include "common/magic_enum.hpp"
 #include "fe/Config.h"
 #include "TilemapChanges.h"
+#include "GeneralHack.h"
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -55,10 +56,6 @@ namespace fh {
 		AtlasDevClearVisibleMagic,
 		// Keep Count last.
 		Count
-	};
-
-	enum class GeneralHackLib {
-		KillSwitch, SameWorldTransPal2Mus
 	};
 
 	class HackManager {
@@ -274,7 +271,7 @@ namespace fh {
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
-			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHackLib>& p_hacks) const;
+			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks) const;
 	};
 
 }

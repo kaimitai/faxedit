@@ -585,6 +585,8 @@ std::vector<byte> fe::game::patch_rom(
 	const MessageCallback& p_message) {
 	bool l_good{ true };
 
+	const auto general_hacks{ fh::parse_general_hacks(p_config.string_or_empty(fe::c::ID_GENERAL_HACKS)) };
+
 	const auto l_world_labels{ p_config.bmap(c::ID_WORLD_LABELS) };
 
 	const auto world_name = [&l_world_labels](std::size_t p_world) -> std::string {
@@ -711,11 +713,13 @@ std::vector<byte> fe::game::patch_rom(
 			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
 		l_dyndata_bytes += bank15_res.used_bytes;
 
-		if (!p_options.general_hacks.empty()) {
+		const auto bank15_hacks{ fh::filter_general_hacks(15, general_hacks) };
+
+		if (!bank15_hacks.empty()) {
 			fh::HackManager hack_mgr;
 			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
 			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, p_options.general_hacks) };
+				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks) };
 			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
 				bank15_hack_size, bank15_hack_available_size) });
 			l_dyndata_bytes += bank15_hack_size;

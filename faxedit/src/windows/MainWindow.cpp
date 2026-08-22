@@ -899,6 +899,12 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);
 }
 
+// reload config from disk into a temporary, assuming the region is the same as current
+fe::Config fe::MainWindow::hot_reload_config(void) const {
+	const auto config_files{ get_config_file_paths() };
+	return fe::Config(config_files.first, config_files.second, m_game->m_rom_data, m_config.get_region());
+}
+
 std::string fe::MainWindow::get_ips_path(void) const {
 	return get_filepath("ips", false);
 }
