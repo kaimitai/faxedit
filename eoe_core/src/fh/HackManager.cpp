@@ -4487,6 +4487,7 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
 			break;
 
+		case HackLib::Count:
 		default:
 			throw std::runtime_error("Unsupported script library routine.");
 		}
