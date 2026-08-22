@@ -1983,6 +1983,193 @@ word fh::HackManager::apply_AtlasDevDrawVarNumber(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevGetLocationToVars WorldRegister ScreenRegister
+word fh::HackManager::apply_AtlasDevGetLocationToVars(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // $0102,X = world register; $0101,X = screen register
+	code.lda_abs_x(0x0102); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0101); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101); code.beq("@done");
+
+	code.lda_abs_x(0x0102); code.tay();
+	code.lda_zp(RAM::ZP_CurrentWorld); code.db(0x99); code.dw(Vars);
+	code.lda_abs_x(0x0101); code.tay();
+	code.lda_zp(RAM::ZP_CurrentScreen); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevGetPlayerPositionToVars XRegister YRegister
+word fh::HackManager::apply_AtlasDevGetPlayerPositionToVars(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	word helper_get_player_block_pos_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // $0102,X = X register; $0101,X = Y register
+	code.lda_abs_x(0x0102); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0101); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101); code.beq("@done");
+
+	// Use the same player-center conversion as IfYX.
+	code.jsr(helper_get_player_block_pos_addr);
+	code.txa(); code.pha(); // packed block position: YYYYXXXX
+	code.tsx();             // $0103,X = X register; $0102,X = Y register
+
+	code.db(0xbc); code.dw(0x0103); // LDY $0103,X
+	code.lda_abs_x(0x0101); code.and_imm(0x0f);
+	code.db(0x99); code.dw(Vars);
+
+	code.db(0xbc); code.dw(0x0102); // LDY $0102,X
+	code.lda_abs_x(0x0101); code.lsr_a(4);
+	code.db(0x99); code.dw(Vars);
+	code.pla();
+
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevVarBitOp Register Operation Value
+// Operation: 0 = AND, 1 = OR, 2 = XOR.
+word fh::HackManager::apply_AtlasDevVarBitOp(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // value, operation, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.beq("@and");
+	code.cmp_imm(0x01); code.beq("@or");
+	code.cmp_imm(0x02); code.bne("@done");
+
+	code.lda_abs_y(Vars); code.db(0x5d); code.dw(0x0101); // EOR $0101,X
+	code.jmp("@store");
+	code.label("@and");
+	code.lda_abs_y(Vars); code.db(0x3d); code.dw(0x0101); // AND $0101,X
+	code.jmp("@store");
+	code.label("@or");
+	code.lda_abs_y(Vars); code.db(0x1d); code.dw(0x0101); // ORA $0101,X
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevVarShift Register Direction Count
+// Direction: 0 = left, 1 = right. Counts above seven produce zero.
+word fh::HackManager::apply_AtlasDevVarShift(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // count, direction, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.beq("@left");
+	code.cmp_imm(0x01); code.bne("@done");
+
+	code.lda_abs_x(0x0101); code.cmp_imm(0x08); code.bcs("@zero");
+	code.tax(); code.lda_abs_y(Vars); code.cpx_imm(0x00); code.beq("@store");
+	code.label("@right_loop"); code.lsr_a(); code.dex(); code.bne("@right_loop");
+	code.jmp("@store");
+
+	code.label("@left");
+	code.lda_abs_x(0x0101); code.cmp_imm(0x08); code.bcs("@zero");
+	code.tax(); code.lda_abs_y(Vars); code.cpx_imm(0x00); code.beq("@store");
+	code.label("@left_loop"); code.asl_a(); code.dex(); code.bne("@left_loop");
+	code.jmp("@store");
+
+	code.label("@zero"); code.lda_imm(0x00);
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevClampVar Register Minimum Maximum
+word fh::HackManager::apply_AtlasDevClampVar(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // maximum, minimum, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101);
+	code.beq("@bounds_ok"); code.bcc("@bounds_ok"); code.jmp("@done");
+
+	code.label("@bounds_ok"); code.lda_abs_y(Vars);
+	code.cmp_abs_x(0x0102); code.bcc("@minimum");
+	code.cmp_abs_x(0x0101); code.beq("@store"); code.bcc("@store");
+	code.lda_abs_x(0x0101); code.jmp("@store");
+	code.label("@minimum"); code.lda_abs_x(0x0102);
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfVarMask Register Mask Expected Label
+word fh::HackManager::apply_AtlasDevIfVarMask(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // expected, mask, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@false");
+	code.tay();
+
+	// Expected may only contain bits selected by Mask.
+	code.lda_abs_x(0x0102); code.eor_imm(0xff);
+	code.db(0x3d); code.dw(0x0101); // AND $0101,X
+	code.bne("@false");
+	code.lda_abs_y(Vars); code.db(0x3d); code.dw(0x0102); // AND $0102,X
+	code.cmp_abs_x(0x0101); code.bne("@false");
+
+	code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevIfPlayerFacing Direction Label: jumps when the player faces the
 // requested way; even values mean left, odd mean right. $A4 bit 6 is the
 // engine's own facing bit, clear for left and set for right, so the test
@@ -4077,7 +4264,8 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	HackLib::IfAddrEquals };
 	const std::set<HackLib> COMPARE_BETWEEN_REQUIRED{ HackLib::IfAddrBetween };
 	const std::set<HackLib> LOAD_WORD_REQUIRED{ HackLib::IfAddrEquals, HackLib::IfAddrBetween, HackLib::SetAddr };
-	const std::set<HackLib> BLOCK_POS_REQUIRED{ HackLib::IfYX };
+	const std::set<HackLib> BLOCK_POS_REQUIRED{
+		HackLib::IfYX, HackLib::AtlasDevGetPlayerPositionToVars };
 	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
 		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
@@ -4085,7 +4273,10 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		HackLib::AtlasDevShowNumberInMessage, HackLib::AtlasDevShowChoiceToVar,
 		HackLib::AtlasDevShowMessageFromVar, HackLib::AtlasDevCountActiveEntities,
 		HackLib::AtlasDevFindEntity, HackLib::AtlasDevEntityFieldToVar,
-		HackLib::AtlasDevDrawVarNumber };
+		HackLib::AtlasDevDrawVarNumber, HackLib::AtlasDevGetLocationToVars,
+		HackLib::AtlasDevGetPlayerPositionToVars, HackLib::AtlasDevVarBitOp,
+		HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
+		HackLib::AtlasDevIfVarMask };
 	// flag functions need access to the bitmask lookup table
 	std::set<HackLib> BITMASK_TABLE_REQUIRED{ FLAG_REQUIRED };
 	BITMASK_TABLE_REQUIRED.insert(begin(QUEST_FLAG_REQUIRED), end(QUEST_FLAG_REQUIRED));
@@ -4408,6 +4599,31 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevDrawVarNumber:
 			cpu_addr = apply_AtlasDevDrawVarNumber(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevGetLocationToVars:
+			cpu_addr = apply_AtlasDevGetLocationToVars(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevGetPlayerPositionToVars:
+			cpu_addr = apply_AtlasDevGetPlayerPositionToVars(p_config, p_rom, cpu_addr,
+				block_pos_helper_addr.value());
+			break;
+
+		case HackLib::AtlasDevVarBitOp:
+			cpu_addr = apply_AtlasDevVarBitOp(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevVarShift:
+			cpu_addr = apply_AtlasDevVarShift(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevClampVar:
+			cpu_addr = apply_AtlasDevClampVar(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfVarMask:
+			cpu_addr = apply_AtlasDevIfVarMask(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevIfPlayerFacing:

@@ -1855,6 +1855,12 @@
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
 			<entry key="AtlasDevEntityFieldToVar" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDrawVarNumber" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevGetLocationToVars" value="Args=Byte+Byte" />
+			<entry key="AtlasDevGetPlayerPositionToVars" value="Args=Byte+Byte" />
+			<entry key="AtlasDevVarBitOp" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevVarShift" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevClampVar" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfVarMask" value="Args=Byte+Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfPlayerFacing" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfPlayerClimbing" value="Flow=Jump" />
 			<entry key="AtlasDevIfPlayerGrounded" value="Flow=Jump" />
