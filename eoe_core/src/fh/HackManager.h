@@ -1,6 +1,7 @@
 #ifndef FH_HACKMANAGER_H
 #define FH_HACKMANAGER_H
 
+#include "common/magic_enum.hpp"
 #include "fe/Config.h"
 #include "TilemapChanges.h"
 #include <cstddef>
@@ -47,7 +48,9 @@ namespace fh {
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
 		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
 		AtlasDevApplyEffect, AtlasDevCastSpell, AtlasDevIfMagicActive,
-		AtlasDevClearVisibleMagic
+		AtlasDevClearVisibleMagic,
+		// Keep Count last.
+		Count
 	};
 
 	enum class GeneralHackLib {
@@ -253,6 +256,16 @@ namespace fh {
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHackLib>& p_hacks) const;
+	};
+
+}
+
+namespace magic_enum::customize {
+
+	template<>
+	struct enum_range<fh::HackLib> {
+		static constexpr int min = 0;
+		static constexpr int max = static_cast<int>(fh::HackLib::Count) - 1;
 	};
 
 }
