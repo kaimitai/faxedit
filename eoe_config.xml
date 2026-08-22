@@ -362,6 +362,8 @@
 		<!-- sameworld transition pal2mus hack -->
 		<const name="hack_sw_trans_pal2mus_addr" value="$c033" />
 		<!-- script routine addresses needed for opcode library extension -->
+		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
+		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />
 		<const name="rom_iscripts_loadbyte" region="us,randum,eu,us-rev-a" value="$87a4" />
 		<const name="rom_iscripts_loadbyte" region="jp,en-transl" value="$877c" />
 		<const name="rom_iscripts_skipaddrandinvoke" region="us,randum,eu,us-rev-a" value="$8616" />
@@ -408,6 +410,9 @@
 		<const name="hack_script_jsr_ram_addr_hi" value="$0183" />
 		<!-- RAM address used by the SelectFlag-opcodes to store the selected flag number -->
 		<const name="hack_script_selected_flag_ram_addr" value="$0184" />
+		<!-- Eight transient script registers, cleared at iScript Begin and End -->
+		<const name="hack_script_var_ram_addr" value="$03b5" />
+		<const name="hack_script_var_count" value="$08" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -1811,6 +1816,12 @@
 			<entry key="IfAddrEquals" value="Args=Short+Byte,Flow=Jump" />
 			<entry key="IfAddrBetween" value="Args=Short+Byte+Byte,Flow=Jump" />
 			<entry key="SetAddr" value="Args=Short+Byte" />
+			<entry key="AtlasDevSetVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevAddVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSubVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevIfVarEqual" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfVarLess" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfVarGreaterEqual" value="Args=Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevShakeScreen" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevFadeOut" value="Args=Byte+Byte" />
 			<entry key="AtlasDevFadeIn" value="Args=Byte+Byte" />
