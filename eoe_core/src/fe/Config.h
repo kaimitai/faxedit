@@ -1,13 +1,13 @@
 #ifndef FE_CONFIG_H
 #define FE_CONFIG_H
 
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "./xml/Xml_helper.h"
 
 using byte = unsigned char;
 
@@ -16,6 +16,15 @@ namespace fe {
 	struct ConfigRegion {
 		std::string region;
 		std::unordered_set<std::string> compatible_regions;
+	};
+
+	struct RegionDefinition {
+		std::optional<std::size_t> m_filesize;
+		std::string m_name;
+		std::unordered_set<std::string> m_compatible_regions;
+
+		// vector of pairs {ROM offset -> vector of values matching at that offset}
+		std::vector<std::pair<std::size_t, std::vector<byte>>> m_defs;
 	};
 
 	class Config {
@@ -27,6 +36,7 @@ namespace fe {
 		std::map<std::string, std::pair<std::size_t, std::size_t>> m_pointers;
 		std::map<std::string, std::vector<byte>> m_sets;
 		std::map<std::string, std::map<byte, std::string>> m_byte_maps;
+		std::map<std::string, std::string> m_strings;
 		std::map<std::string, std::map<std::string, std::string>> m_string_maps;
 		std::map<std::string, bool> m_bools;
 
@@ -68,6 +78,9 @@ namespace fe {
 		std::map<byte, std::vector<byte>> bmap_as_numeric_vectors(const std::string& p_id) const;
 		std::map<byte, std::string> bmap_dense(const std::string& p_id) const;
 		const std::map<std::string, std::string>& str_map(const std::string& p_id) const;
+		bool has_string(const std::string& p_id) const;
+		const std::string& string(const std::string& p_id) const;
+		const std::string& string_or_empty(const std::string& p_id) const;
 		bool boolean(const std::string& p_id) const;
 		bool boolean_or(const std::string& p_id, bool p_default) const;
 	};

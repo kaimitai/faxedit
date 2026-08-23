@@ -583,7 +583,7 @@ fe::Bank15PatchResult fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_c
 		const auto& last_write{ datawrites.back() };
 
 		free_range_cpu_start = BANK15_CPU_START + (last_range.first + last_write.data.size() - BANK15_ROM_START);
-		free_range_cpu_end = BANK15_CPU_START +	(last_range.second - BANK15_ROM_START);
+		free_range_cpu_end = BANK15_CPU_START + (last_range.second - BANK15_ROM_START);
 	}
 
 	return fe::Bank15PatchResult{
@@ -925,6 +925,46 @@ void fe::ROM_Manager::clear_rom_section(std::vector<byte>& p_rom, std::size_t p_
 	std::size_t p_end, byte p_value) {
 	for (std::size_t i{ p_start }; i < p_end; ++i)
 		p_rom.at(i) = p_value;
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::file_range_to_cpu_range(const std::pair<std::size_t, std::size_t>& p_range) {
+	constexpr std::size_t INES_HEADER_SIZE{ 0x10 };
+	constexpr std::size_t PRG_BANK_SIZE{ 0x4000 };
+	constexpr std::size_t CPU_BANK_START{ 0x8000 };
+	constexpr std::size_t CPU_STATIC_BANK_START{ 0xc000 };
+
+	if (p_range.first >= p_range.second || p_range.first < INES_HEADER_SIZE)
+		throw std::runtime_error("Invalid ROM file range");
+
+	const std::size_t start_bank{ (p_range.first - INES_HEADER_SIZE) / PRG_BANK_SIZE };
+	const std::size_t end_bank{ (p_range.second - 1 - INES_HEADER_SIZE) / PRG_BANK_SIZE };
+
+	if (start_bank != end_bank)
+		throw std::runtime_error("ROM file range crosses PRG bank boundary");
+
+	const std::size_t bank_file_start{ INES_HEADER_SIZE + start_bank * PRG_BANK_SIZE };
+
+	const std::size_t cpu_bank_start{ start_bank == 15 || start_bank == 31 ?
+		CPU_STATIC_BANK_START : CPU_BANK_START };
+
+	return std::make_pair(cpu_bank_start + p_range.first - bank_file_start,
+		cpu_bank_start + p_range.second - bank_file_start);
+}
+
+std::pair<std::size_t, std::size_t> fe::ROM_Manager::find_trailing_free_range(const std::vector<byte>& p_rom,
+	const std::pair<std::size_t, std::size_t>& p_range,
+	byte p_free_value, std::size_t p_cushion) {
+	if (p_range.first >= p_range.second || p_range.second > p_rom.size())
+		throw std::runtime_error("Invalid ROM file range");
+
+	std::size_t start{ p_range.second };
+
+	while (start > p_range.first && p_rom.at(start - 1) == p_free_value)
+		--start;
+
+	start = std::min(start + p_cushion, p_range.second);
+
+	return { start, p_range.second };
 }
 
 void fe::ROM_Manager::clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const {

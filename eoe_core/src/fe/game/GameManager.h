@@ -5,8 +5,13 @@
 #include "fe/Game.h"
 #include "fe/Config.h"
 #include "fe/MessageCallback.h"
+#include "fh/HackManager.h"
 
 using byte = unsigned char;
+
+namespace pugi {
+	class xml_document;
+}
 
 namespace fe::game {
 
@@ -32,7 +37,6 @@ namespace fe::game {
 		bool metadata{ true };
 		bool tilemaps{ true };
 
-		bool apply_sw_pal2mus_hack{ false };
 		bool throw_on_cinematic_overflow{ true };
 	};
 

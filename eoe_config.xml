@@ -359,9 +359,9 @@
 		<const name="hack_decode_req_addr" value="$dfa8" />
 		<const name="hack_load_world_addr" value="$dfb7" />
 		<const name="hack_handle_palette_addr" value="$f389" />
-		<!-- sameworld transition pal2mus hack -->
-		<const name="hack_sw_trans_pal2mus_addr" value="$c033" />
 		<!-- script routine addresses needed for opcode library extension -->
+		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
+		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />
 		<const name="rom_iscripts_loadbyte" region="us,randum,eu,us-rev-a" value="$87a4" />
 		<const name="rom_iscripts_loadbyte" region="jp,en-transl" value="$877c" />
 		<const name="rom_iscripts_skipaddrandinvoke" region="us,randum,eu,us-rev-a" value="$8616" />
@@ -375,6 +375,10 @@
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
+		<const name="rom_player_rankrefresh" region="jp,en-transl" value="$fa04" />
+		<const name="rom_player_rankrefresh" value="$f93c" />
+		<const name="rom_player_exphudredraw" region="jp,en-transl" value="$fa3d" />
+		<const name="rom_player_exphudredraw" value="$f975" />
 		<const name="rom_player_isclimbing" value="$ecf6" />
 		<!-- These PPU helpers move in the Japanese fixed bank. -->
 		<const name="rom_ppu_address_from_pos" region="jp,en-transl" value="$f8cc" />
@@ -408,6 +412,9 @@
 		<const name="hack_script_jsr_ram_addr_hi" value="$0183" />
 		<!-- RAM address used by the SelectFlag-opcodes to store the selected flag number -->
 		<const name="hack_script_selected_flag_ram_addr" value="$0184" />
+		<!-- Eight transient script registers, cleared at iScript Begin and End -->
+		<const name="hack_script_var_ram_addr" value="$03b5" />
+		<const name="hack_script_var_count" value="$08" />
 	</consts>
 	<!-- value sets -->
 	<sets>
@@ -1811,6 +1818,12 @@
 			<entry key="IfAddrEquals" value="Args=Short+Byte,Flow=Jump" />
 			<entry key="IfAddrBetween" value="Args=Short+Byte+Byte,Flow=Jump" />
 			<entry key="SetAddr" value="Args=Short+Byte" />
+			<entry key="AtlasDevSetVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevAddVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSubVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevIfVarEqual" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfVarLess" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevIfVarGreaterEqual" value="Args=Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevShakeScreen" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevFadeOut" value="Args=Byte+Byte" />
 			<entry key="AtlasDevFadeIn" value="Args=Byte+Byte" />
@@ -1838,12 +1851,22 @@
 			<entry key="AtlasDevIfEntityHidden" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevSetEntityHidden" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntityHealth" value="Args=Byte+Byte" />
+			<entry key="AtlasDevDamageEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevHealEntity" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntityInvincible" value="Args=Byte+Byte" />
+			<entry key="AtlasDevFaceEntityToPlayer" value="Args=Byte" />
+			<entry key="AtlasDevKnockbackEntity" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevSetEntityBehavior" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntitySpeed" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
 			<entry key="AtlasDevEntityFieldToVar" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevDrawVarNumber" value="Args=Byte+Byte+Byte+Byte" />
+			<entry key="AtlasDevGetLocationToVars" value="Args=Byte+Byte" />
+			<entry key="AtlasDevGetPlayerPositionToVars" value="Args=Byte+Byte" />
+			<entry key="AtlasDevVarBitOp" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevVarShift" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevClampVar" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevIfVarMask" value="Args=Byte+Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfPlayerFacing" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfPlayerClimbing" value="Flow=Jump" />
 			<entry key="AtlasDevIfPlayerGrounded" value="Flow=Jump" />
@@ -1878,6 +1901,7 @@
 			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevAddExperience" value="Args=Short" />
+			<entry key="AtlasDevSetExperience" value="Args=Short" />
 			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />

@@ -1,5 +1,5 @@
 #include "Config.h"
-#include "./xml/Xml_helper.h"
+#include "./xml/Xml_helper_config.h"
 #include <algorithm>
 #include <format>
 #include <stdexcept>
@@ -28,10 +28,10 @@ fe::Config::Config(const std::string& p_config_xml,
 	// load actual configuration for this region
 	if (override_doc) {
 		xml::load_configuration(override_doc, m_region, m_constants,
-			m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom);
+			m_pointers, m_sets, m_byte_maps, m_strings, m_string_maps, m_bools, p_rom);
 	}
 	xml::load_configuration(config_doc, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom);
+		m_pointers, m_sets, m_byte_maps, m_strings, m_string_maps, m_bools, p_rom);
 }
 
 void fe::Config::load_definitions(const std::string& p_config_xml,
@@ -45,9 +45,9 @@ void fe::Config::load_config_data(const std::string& p_config_xml,
 	const std::string& p_config_override_xml,
 	const std::vector<byte>& p_rom) {
 	xml::load_configuration(p_config_override_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom, false);
+		m_pointers, m_sets, m_byte_maps, m_strings, m_string_maps, m_bools, p_rom, false);
 	xml::load_configuration(p_config_xml, m_region, m_constants,
-		m_pointers, m_sets, m_byte_maps, m_string_maps, m_bools, p_rom);
+		m_pointers, m_sets, m_byte_maps, m_strings, m_string_maps, m_bools, p_rom);
 }
 
 std::size_t fe::Config::constant(const std::string& p_id) const {
@@ -189,6 +189,24 @@ const std::map<std::string, std::string>& fe::Config::str_map(const std::string&
 		return m_string_maps.at(p_id);
 }
 
+bool fe::Config::has_string(const std::string& p_id) const {
+	return m_strings.contains(p_id);
+}
+
+const std::string& fe::Config::string(const std::string& p_id) const {
+	return m_strings.at(p_id);
+}
+
+const std::string& fe::Config::string_or_empty(const std::string& p_id) const {
+	static const std::string empty_string{};
+
+	const auto iter{ m_strings.find(p_id) };
+	if (iter == end(m_strings))
+		return empty_string;
+	else
+		return iter->second;
+}
+
 bool fe::Config::boolean(const std::string& p_id) const {
 	if (m_bools.find(p_id) == end(m_bools))
 		throw std::runtime_error(std::format("Configuration Boolean '{}' not found", p_id));
@@ -259,6 +277,7 @@ void fe::Config::clear(void) {
 	m_constants.clear();
 	m_pointers.clear();
 	m_sets.clear();
+	m_strings.clear();
 	m_string_maps.clear();
 	m_bools.clear();
 }
@@ -295,6 +314,10 @@ std::string fe::Config::to_string(void) const {
 		for (const auto& kkv : kv.second)
 			result += std::format("  ${:02x}: '{}'\n", kkv.first, kkv.second);
 	}
+
+	result += "\n--- strings ---\n";
+	for (const auto& kv : m_strings)
+		result += std::format("'{}': '{}'\n", kv.first, kv.second);
 
 	result += "\n--- string to string maps ---\n";
 	for (const auto& kv : m_string_maps) {

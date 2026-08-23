@@ -122,12 +122,6 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Reset to Defaults###advanced", 4))
 				m_settings.set_advanced_defaults();
 
-			ImGui::SeparatorText("pal2mus for Sameworld-Transitions");
-
-			ui::imgui_checkbox("Enable pal2mus for sw-transitions",
-				m_settings.m_apply_sw_pal2mus_hack,
-				"Applies palette-to-music mapping to same-world transitions, matching the behavior of same-world doors (hack is applied when patching rom)");
-
 			ImGui::SeparatorText("Apply Stage Door Hack");
 
 			imgui_text("Turns same-world doors into flexible stage doors.");

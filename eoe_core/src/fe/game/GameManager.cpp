@@ -1,11 +1,14 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
 #include "fe/fe_constants.h"
+#include "fh/fh_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
-#include "fe/xml/Xml_helper.h"
+#include "fe/xml/Xml_helper_game.h"
 #include "fh/HackManager.h"
+#include "fb/BscriptLoader.h"
 #include "common/klib/IPS_Patch.h"
+#include <algorithm>
 #include <format>
 
 fe::game::LoadedGame fe::game::load_rom(
@@ -575,6 +578,28 @@ namespace {
 		send_message(p_message, { bank7res, result.bank7_used ? fe::MsgType::Info : fe::MsgType::Error });
 		send_message(p_message, { bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error });
 	}
+
+	// helper which reports on available space in bank 14, returns [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank14_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+		const std::size_t rg2_start{ p_config.constant(fb::c::ID_BSCRIPT_RG2_START) };
+		const std::size_t rg2_end{ p_config.constant(fb::c::ID_BSCRIPT_RG2_END) };
+
+		try {
+			fb::BScriptLoader bscript_loader(p_config, p_rom);
+			bscript_loader.parse_rom();
+
+			return std::make_pair(std::max(bscript_loader.get_bytecode_end_offset(), rg2_start), rg2_end);
+		}
+		catch (const std::exception& ex) {
+			fe::send_message(p_message, {
+				std::format("Could not determine bank 14 free space from bScripts ({}); falling back to $ff heuristics",
+					ex.what()),	fe::MsgType::Warning });
+
+			return fe::ROM_Manager::find_trailing_free_range(
+				p_rom, std::make_pair(rg2_start, rg2_end));
+		}
+	}
 }
 
 std::vector<byte> fe::game::patch_rom(
@@ -583,6 +608,8 @@ std::vector<byte> fe::game::patch_rom(
 	const RomPatchOptions& p_options,
 	const MessageCallback& p_message) {
 	bool l_good{ true };
+
+	const auto general_hacks{ fh::parse_general_hacks(p_config.string_or_empty(fe::c::ID_GENERAL_HACKS)) };
 
 	const auto l_world_labels{ p_config.bmap(c::ID_WORLD_LABELS) };
 
@@ -710,13 +737,15 @@ std::vector<byte> fe::game::patch_rom(
 			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
 		l_dyndata_bytes += bank15_res.used_bytes;
 
-		// TODO: Decide on how to populate this
-		std::vector<fh::GeneralHackLib> general_hacks{ };
-		if (!general_hacks.empty()) {
+		const auto bank15_hacks{ fh::filter_general_hacks(15, general_hacks) };
+
+		if (!bank15_hacks.empty()) {
 			fh::HackManager hack_mgr;
-			std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, general_hacks) };
-			send_message(p_message, { std::format("Installed general hacks in bank 15 ({} bytes)", bank15_hack_size) });
+			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
+			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
+				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks, &p_game) };
+			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
+				bank15_hack_size, bank15_hack_available_size) });
 			l_dyndata_bytes += bank15_hack_size;
 		}
 	}
@@ -776,9 +805,20 @@ std::vector<byte> fe::game::patch_rom(
 		}
 	}
 
-	if (p_options.apply_sw_pal2mus_hack) {
-		fh::HackManager::install_hack_pal2mus_for_sw_trans(p_config, x_rom);
-		send_message(p_message, { "Enabled palette to music functionality for sameworld-transitions", fe::MsgType::Info });
+	// bank 14 general hacks, if any
+	const auto bank14_hacks{ fh::filter_general_hacks(14, general_hacks) };
+	if (!bank14_hacks.empty()) {
+		const auto [free_start, free_end] {	fe::ROM_Manager::file_range_to_cpu_range(
+			get_bank14_free_range(p_config, x_rom, p_message)) };
+
+		fh::HackManager hack_mgr;
+		const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 14,
+			free_start, free_end, bank14_hacks, &p_game) };
+
+		send_message(p_message, { std::format("Installed general hacks in bank 14 ({}/{} bytes)",
+			hack_size, free_end - free_start) });
+
+		l_dyndata_bytes += hack_size;
 	}
 
 	// bank duplication - region-specific config and not a setting

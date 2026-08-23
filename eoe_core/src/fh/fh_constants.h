@@ -55,6 +55,7 @@ namespace fh {
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
+		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
@@ -80,6 +81,8 @@ namespace fh {
 		constexpr word SpecialItemMaskTable{ 0x8d52 };
 
 		constexpr byte TransitionBank{ 0x0e };
+		constexpr word EntityFacePlayerX{ 0x867b };
+		constexpr word EntityWeaponDeathTail{ 0x889c };
 		constexpr word Door_Dispatch{ 0xe533 };
 		constexpr word Game_SetupEnterScreen{ 0xdaa0 };
 		constexpr word Game_SetupNewArea{ 0xdacd };
@@ -149,6 +152,8 @@ namespace fh {
 		constexpr word EntitySpeedWhole{ 0x02f4 };
 		constexpr word EntityDropIdentity{ 0x02fc };
 		constexpr word EntityMagicState{ 0x0334 };
+		constexpr word EntityMagicCounter{ 0x033c };
+		constexpr word CurrentEntitySlot{ 0x0378 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };
@@ -190,6 +195,8 @@ namespace fh {
 		constexpr word PlayerMana{ 0x039a };
 		constexpr word PlayerXP_L{ 0x0390 };
 		constexpr word PlayerXP_U{ 0x0391 };
+		constexpr word PlayerTitle{ 0x0437 };
+		constexpr word PendingTitle{ 0x04ed };
 		// The 32-byte staged palette ($0293-$02b2, background then sprite
 		// half) that queue command $00 copies to PPU palette RAM whole.
 		constexpr word PaletteShadow{ 0x0293 };
@@ -222,6 +229,7 @@ namespace fh {
 	namespace c {
 		constexpr byte FlagsByteCount{ 0x1f };
 
+		constexpr char ID_ROM_ISCRIPTS_BEGIN[]{ "rom_iscripts_begin" };
 		constexpr char ID_ROM_ISCRIPTS_LOADBYTE[]{ "rom_iscripts_loadbyte" };
 		constexpr char ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE[]{ "rom_iscripts_skipaddrandinvoke" };
 		constexpr char ID_ROM_ISCRIPTS_JUMPTONEXTADDR[]{ "rom_iscripts_jumptonextaddr" };
@@ -229,6 +237,8 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION[]{ "rom_iscripts_updateportraitanimation" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
+		constexpr char ID_ROM_PLAYER_RANKREFRESH[]{ "rom_player_rankrefresh" };
+		constexpr char ID_ROM_PLAYER_EXPHUDREDRAW[]{ "rom_player_exphudredraw" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
@@ -255,13 +265,7 @@ namespace fh {
 		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
 		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
 
-		// enable pal2mus for sameworld transitions hack
-		constexpr char ID_HACK_SW_TRANS_PAL2MUS_ADDR[]{ "hack_sw_trans_pal2mus_addr" };
-
-		// Used only by AtlasDevShowMessageFromVar. No default is shipped: a
-		// project must define both before that opcode can be installed, and
-		// Config::constant throws by name if either is missing, so the build
-		// fails loudly rather than reading unallocated RAM.
+		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };
 		constexpr char ID_HACK_SCRIPT_VAR_COUNT[]{ "hack_script_var_count" };
 

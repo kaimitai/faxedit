@@ -254,6 +254,8 @@ namespace fe {
 		constexpr float VIEW_CENTER_X{ TILEMAP_VIEW_MT_W / 2.0f };
 		constexpr float VIEW_CENTER_Y{ TILEMAP_VIEW_MT_H / 2.0f };
 
+		// string constants
+		constexpr char ID_GENERAL_HACKS[]{ "general_hacks" };
 	}
 
 }

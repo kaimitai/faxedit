@@ -99,3 +99,11 @@ uint16_t fb::BScriptLoader::read_short(std::size_t& offset) const {
 	byte hi = read_byte(offset);
 	return static_cast<uint16_t>(hi << 8 | lo);
 }
+
+std::size_t fb::BScriptLoader::get_bytecode_end_offset(void) const {
+	if (m_instrs.empty())
+		throw std::runtime_error("No bScript instructions parsed");
+
+	const auto& [offset, instr] { *m_instrs.rbegin() };
+	return offset + instr.size();
+}

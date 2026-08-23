@@ -1,14 +1,20 @@
 #ifndef FH_HACKMANAGER_H
 #define FH_HACKMANAGER_H
 
+#include "common/magic_enum.hpp"
 #include "fe/Config.h"
 #include "TilemapChanges.h"
+#include "GeneralHack.h"
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
 using byte = unsigned char;
 using word = uint16_t;
+
+namespace fe {
+	struct Game;
+}
 
 namespace fh {
 
@@ -18,6 +24,8 @@ namespace fh {
 		RunScreenHandler, GetXP, IfWorld, IfScreen, IfStage, Die,
 		JSR, Return, ForceDoor, IfYX, IfDoorYX,
 		IfAddrEquals, IfAddrBetween, SetAddr,
+		AtlasDevSetVar, AtlasDevAddVar, AtlasDevSubVar,
+		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual,
 		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
 		AtlasDevSetMusic, AtlasDevPlaySFX, AtlasDevIfMusic,
 		AtlasDevShowSequentialMessages, AtlasDevShowNumberInMessage, AtlasDevShowChoiceToVar, AtlasDevClearPortrait, AtlasDevEntitySayMessage, AtlasDevShowMessageFromVar, AtlasDevHideTextbox, AtlasDevSetPortrait,
@@ -25,9 +33,13 @@ namespace fh {
 		AtlasDevIfEntityCountAtLeast, AtlasDevCountActiveEntities, AtlasDevFindEntity,
 		AtlasDevFreezeEntities, AtlasDevResumeEntities, AtlasDevIfBossPresent,
 		AtlasDevIfEntityTypePresent, AtlasDevIfEntitySlotActive, AtlasDevIfEntityHidden,
-		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevSetEntityInvincible,
+		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevDamageEntity,
+		AtlasDevHealEntity, AtlasDevSetEntityInvincible, AtlasDevFaceEntityToPlayer,
+		AtlasDevKnockbackEntity,
 		AtlasDevSetEntityBehavior, AtlasDevSetEntitySpeed, AtlasDevSetEntityFacing,
 		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber,
+		AtlasDevGetLocationToVars, AtlasDevGetPlayerPositionToVars,
+		AtlasDevVarBitOp, AtlasDevVarShift, AtlasDevClampVar, AtlasDevIfVarMask,
 		AtlasDevIfPlayerFacing, AtlasDevIfPlayerClimbing, AtlasDevIfPlayerGrounded,
 		AtlasDevIfPlayerAttacking, AtlasDevIfPlayerInvincible, AtlasDevIfPlayerDead,
 		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
@@ -37,7 +49,7 @@ namespace fh {
 		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
 		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
 		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
-		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
 		AtlasDevSetPalette, AtlasDevRestorePalette, AtlasDevLoadBgPalette, AtlasDevLoadSpritePalette,
 		AtlasDevFlashScreen, AtlasDevSetColorEmphasis, AtlasDevQueuePaletteFlush, AtlasDevWipeScreenStep,
 		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile,
@@ -47,11 +59,9 @@ namespace fh {
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
 		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
 		AtlasDevApplyEffect, AtlasDevCastSpell, AtlasDevIfMagicActive,
-		AtlasDevClearVisibleMagic
-	};
-
-	enum class GeneralHackLib {
-		KillSwitch
+		AtlasDevClearVisibleMagic,
+		// Keep Count last.
+		Count
 	};
 
 	class HackManager {
@@ -96,6 +106,12 @@ namespace fh {
 			word helper_load_word_addr, word helper_if_a_between_addr) const;
 		word apply_SetAddr(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, word helper_load_word_addr) const;
+		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSubVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfVarEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfVarLess(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		word apply_AtlasDevShakeScreen(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevFadeOut(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -125,12 +141,23 @@ namespace fh {
 		word apply_AtlasDevIfEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityHealth(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDamageEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevHealEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityInvincible(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFaceEntityToPlayer(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevKnockbackEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityBehavior(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntitySpeed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevEntityFieldToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevDrawVarNumber(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevGetLocationToVars(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevGetPlayerPositionToVars(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word helper_get_player_block_pos_addr) const;
+		word apply_AtlasDevVarBitOp(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevVarShift(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClampVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfVarMask(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfPlayerFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfPlayerClimbing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfPlayerGrounded(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -165,6 +192,7 @@ namespace fh {
 		word apply_AtlasDevIfHealthAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfManaAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevAddExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetGold(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -226,9 +254,13 @@ namespace fh {
 
 		word install_hack_tm_event_handler(const fe::Config& p_config, std::vector<byte>& p_rom,
 			byte tm_lookup_bank, word tm_lookup_cpu_addr) const;
+		word install_script_variable_reset(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, word end_handler_addr) const;
 
 		// general hack library implementations
 		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
+		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+			bool p_stage_door_hack_installed = true) const;
 
 		// util
 		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;
@@ -244,13 +276,23 @@ namespace fh {
 		HackManager(void) = default;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
-		static void install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom);
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
-			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHackLib>& p_hacks) const;
+			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
+			const fe::Game* p_game = nullptr) const;
+	};
+
+}
+
+namespace magic_enum::customize {
+
+	template<>
+	struct enum_range<fh::HackLib> {
+		static constexpr int min = 0;
+		static constexpr int max = static_cast<int>(fh::HackLib::Count) - 1;
 	};
 
 }

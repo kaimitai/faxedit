@@ -571,6 +571,124 @@ word fh::HackManager::apply_SetAddr(const fe::Config& p_config, std::vector<byte
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_AtlasDevSetVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
+	code.tay(); code.lda_abs_x(0x0101); code.db(0x99); code.dw(Vars);
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevAddVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
+	code.tay(); code.lda_abs_x(0x0101); code.clc();
+	code.db(0x79); code.dw(Vars); // ADC Vars,Y
+	code.db(0x99); code.dw(Vars); // STA Vars,Y
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevSubVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
+	code.tay(); code.lda_abs_y(Vars); code.sec();
+	code.db(0xfd); code.dw(0x0101); // SBC $0101,X
+	code.db(0x99); code.dw(Vars);   // STA Vars,Y
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfVarEqual(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
+	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bne("@false");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfVarLess(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
+	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bcs("@false");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+word fh::HackManager::apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
+	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bcc("@false");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 namespace {
 
 	// The AtlasDev visual effects declare their signature by name in the
@@ -1002,18 +1120,10 @@ word fh::HackManager::apply_AtlasDevPlaySFX(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
+// AtlasDevShowNumberInMessage Message Register
 word fh::HackManager::apply_AtlasDevShowNumberInMessage(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
-	// Renders a script register, so this needs the script-variable feature
-	// exactly as AtlasDevShowChoiceToVar and AtlasDevShowMessageFromVar do.
-	// Config::constant throws by name if a project has not defined the base,
-	// which is what stops this reading unallocated RAM.
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
 	// True in-string substitution would need a new control byte in the
 	// fixed-bank text interpreter (a CMP chain with no free byte) --
@@ -1090,11 +1200,7 @@ word fh::HackManager::apply_AtlasDevShowNumberInMessage(const fe::Config& p_conf
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
+// AtlasDevShowChoiceToVar Count Register
 word fh::HackManager::apply_AtlasDevShowChoiceToVar(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -1115,11 +1221,6 @@ word fh::HackManager::apply_AtlasDevShowChoiceToVar(const fe::Config& p_config,
 	code.sta_abs(0x021f);
 	code.lda_imm(0x00);
 	code.sta_abs(0x021e); // cursor starts on the first row
-	// The chosen index is stored in a script register, so this opcode needs
-	// the script-variable feature just as AtlasDevShowMessageFromVar does.
-	// Reading the base through the config rather than hardcoding $03B5 means
-	// Config::constant throws by name when a project has not defined it,
-	// instead of silently writing to unallocated RAM.
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
 	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // register
@@ -1257,11 +1358,7 @@ word fh::HackManager::apply_AtlasDevEntitySayMessage(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
+// AtlasDevShowMessageFromVar Register
 word fh::HackManager::apply_AtlasDevShowMessageFromVar(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -1634,6 +1731,145 @@ word fh::HackManager::apply_AtlasDevSetEntityHealth(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevDamageEntity Slot Damage
+//
+// Respects the entity's hit window, plays the normal hit sound and starts the
+// normal eight-frame flinch. Lethal damage enters the weapon-death tail, so
+// experience, boss deaths and delayed drops stay under the game's control.
+// Like ordinary damage, HP 0 survives until another positive hit borrows.
+word fh::HackManager::apply_AtlasDevDamageEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@reject");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@reject");
+	code.lda_abs_x(RAM::EntityHitStun);
+	code.bne("@reject");
+	code.lda_abs_x(RAM::EntityMagicState);
+	code.bpl("@reject");
+
+	// The normal weapon path accepts category 0 enemies and category 7 bosses.
+	// Their identity ranges come from the same bank-14 table used by
+	// AtlasDevIfBossPresent, which is not mapped while this handler runs.
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.beq("@combat");                         // $00
+	code.cmp_imm(0x03);
+	code.bcc("@reject");                         // $01-$02
+	code.cmp_imm(0x0a);
+	code.bcc("@combat");                         // $03-$09
+	code.cmp_imm(0x0b);
+	code.bcc("@reject");                         // $0a
+	code.cmp_imm(0x13);
+	code.bcc("@combat");                         // $0b-$12
+	code.cmp_imm(0x15);
+	code.bcc("@reject");                         // $13-$14
+	code.cmp_imm(0x34);
+	code.bcc("@combat");                         // $15-$33
+	code.cmp_imm(0x46);
+	code.bcc("@reject");                         // $34-$45
+	code.cmp_imm(0x48);
+	code.bcc("@combat");                         // $46-$47
+
+	code.label("@reject");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@combat");
+	code.txa();
+	code.pha();                                      // stack: [slot]
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Damage
+	code.cmp_imm(0x00);
+	code.beq("@zero");
+	code.pha();                                      // stack: [slot, damage]
+
+	// Weapon hits copy the player's facing bit to the enemy. The hit-window
+	// update then moves the enemy in the attack direction.
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.asl_a(); code.asl_a();                      // player bit 6 -> carry
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xfe);
+	code.adc_imm(0x00);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.lda_imm(0x02);
+	code.jsr(ROM::Sound_PlayEffect);
+	code.lda_imm(0x08);
+
+	// Read both saved operands from the stack. This keeps the subtraction
+	// independent of shared zero-page scratch bytes across an interrupt.
+	code.tsx();
+	code.db(0xbc); code.dw(0x0102);                 // LDY $0102,X: slot
+	code.db(0x99); code.dw(RAM::EntityHitStun);     // STA $034C,Y
+	code.lda_abs_y(RAM::EntityHealth);
+	code.sec();
+	code.sbc_abs_x(0x0101);                         // damage
+	code.db(0x99); code.dw(RAM::EntityHealth);      // STA $0344,Y
+	code.bcc("@lethal");
+	code.pla(); code.pla();
+	code.jmp("@done");
+
+	code.label("@zero");
+	code.pla();                                      // discard slot
+	code.jmp("@done");
+
+	code.label("@lethal");
+	code.pla(); code.pla();                         // discard damage and slot
+	code.tya();
+	code.tax();
+
+	// The experience routine reloads X from $0378. Point it at this slot for
+	// the death call, then restore the entity loop's previous slot.
+	code.lda_abs(RAM::CurrentEntitySlot);
+	code.pha();
+	code.txa();
+	code.sta_abs(RAM::CurrentEntitySlot);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityWeaponDeathTail - 1);
+	code.pla();
+	code.sta_abs(RAM::CurrentEntitySlot);
+
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevHealEntity Slot Amount
+//
+// Entity slots do not keep a separate maximum HP value. Healing therefore
+// adds to live HP and clamps at $ff instead of wrapping through zero.
+word fh::HackManager::apply_AtlasDevHealEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Amount
+	code.clc();
+	code.adc_abs_x(RAM::EntityHealth);
+	code.bcc("@store");
+	code.lda_imm(0xff);
+	code.label("@store");
+	code.sta_abs_x(RAM::EntityHealth);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevSetEntityInvincible Slot Frames
 //
 // $034C,X is the byte vanilla's own weapon-hit handler sets to 8 on every
@@ -1654,6 +1890,95 @@ word fh::HackManager::apply_AtlasDevSetEntityInvincible(
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFaceEntityToPlayer Slot
+//
+// Calls the same horizontal-facing helper used by behavior scripts. If both
+// are on the same X coordinate, the entity keeps its current direction.
+word fh::HackManager::apply_AtlasDevFaceEntityToPlayer(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@done");
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityFacePlayerX - 1);
+
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevKnockbackEntity Slot Direction Profile
+//
+// Starts the same horizontal launch state machine used by vanilla magic hits.
+// Profile 0 is 3 px/frame for 4 frames, profile 1 is 2 px/frame for 8 frames,
+// and profile 2 is 4 px/frame until a wall. Existing launch state is replaced.
+// This is deliberately separate from EntityHitStun: that counter flashes and
+// pauses a slot, and while nonzero it defers launch movement rather than
+// participating in it.
+word fh::HackManager::apply_AtlasDevKnockbackEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Direction
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Profile
+	code.cmp_imm(0x03);
+	code.bcs("@invalid_profile");
+	code.sta_abs_x(RAM::EntityMagicState);
+	code.cmp_imm(0x00);
+	code.beq("@profile_zero");
+	code.cmp_imm(0x01);
+	code.beq("@profile_one");
+	code.lda_imm(0xff);                             // profile 2: until wall
+	code.bne("@store_counter");
+
+	code.label("@profile_zero");
+	code.lda_imm(0x04);
+	code.bne("@store_counter");
+
+	code.label("@profile_one");
+	code.lda_imm(0x08);
+
+	code.label("@store_counter");
+	code.sta_abs_x(RAM::EntityMagicCounter);
+	code.pla();
+	code.cmp_imm(0x01);                            // carry = Direction != 0
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xfe);
+	code.adc_imm(0x00);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@invalid_profile");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	// Invalid and inactive slots still consume Direction and Profile so the
+	// next byte in the script is always interpreted as an opcode.
+	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
@@ -1760,12 +2085,6 @@ word fh::HackManager::apply_AtlasDevSetEntityFacing(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
-//
 // AtlasDevEntityFieldToVar Slot Field Register
 //
 // Reads one per-slot byte into a script register.  Both entity array groups
@@ -1835,12 +2154,6 @@ word fh::HackManager::apply_AtlasDevEntityFieldToVar(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
-//
 // AtlasDevDrawVarNumber Register X Y Digits
 //
 // Draws a script register as a zero-padded decimal at a raw tile position,
@@ -1894,6 +2207,193 @@ word fh::HackManager::apply_AtlasDevDrawVarNumber(
 	code.jsr(ROM::Number_DrawAtPos);
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevGetLocationToVars WorldRegister ScreenRegister
+word fh::HackManager::apply_AtlasDevGetLocationToVars(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // $0102,X = world register; $0101,X = screen register
+	code.lda_abs_x(0x0102); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0101); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101); code.beq("@done");
+
+	code.lda_abs_x(0x0102); code.tay();
+	code.lda_zp(RAM::ZP_CurrentWorld); code.db(0x99); code.dw(Vars);
+	code.lda_abs_x(0x0101); code.tay();
+	code.lda_zp(RAM::ZP_CurrentScreen); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevGetPlayerPositionToVars XRegister YRegister
+word fh::HackManager::apply_AtlasDevGetPlayerPositionToVars(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	word helper_get_player_block_pos_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // $0102,X = X register; $0101,X = Y register
+	code.lda_abs_x(0x0102); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0101); code.cmp_imm(VarCount); code.bcs("@done");
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101); code.beq("@done");
+
+	// Use the same player-center conversion as IfYX.
+	code.jsr(helper_get_player_block_pos_addr);
+	code.txa(); code.pha(); // packed block position: YYYYXXXX
+	code.tsx();             // $0103,X = X register; $0102,X = Y register
+
+	code.db(0xbc); code.dw(0x0103); // LDY $0103,X
+	code.lda_abs_x(0x0101); code.and_imm(0x0f);
+	code.db(0x99); code.dw(Vars);
+
+	code.db(0xbc); code.dw(0x0102); // LDY $0102,X
+	code.lda_abs_x(0x0101); code.lsr_a(4);
+	code.db(0x99); code.dw(Vars);
+	code.pla();
+
+	code.label("@done"); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevVarBitOp Register Operation Value
+// Operation: 0 = AND, 1 = OR, 2 = XOR.
+word fh::HackManager::apply_AtlasDevVarBitOp(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // value, operation, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.beq("@and");
+	code.cmp_imm(0x01); code.beq("@or");
+	code.cmp_imm(0x02); code.bne("@done");
+
+	code.lda_abs_y(Vars); code.db(0x5d); code.dw(0x0101); // EOR $0101,X
+	code.jmp("@store");
+	code.label("@and");
+	code.lda_abs_y(Vars); code.db(0x3d); code.dw(0x0101); // AND $0101,X
+	code.jmp("@store");
+	code.label("@or");
+	code.lda_abs_y(Vars); code.db(0x1d); code.dw(0x0101); // ORA $0101,X
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevVarShift Register Direction Count
+// Direction: 0 = left, 1 = right. Counts above seven produce zero.
+word fh::HackManager::apply_AtlasDevVarShift(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // count, direction, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.beq("@left");
+	code.cmp_imm(0x01); code.bne("@done");
+
+	code.lda_abs_x(0x0101); code.cmp_imm(0x08); code.bcs("@zero");
+	code.tax(); code.lda_abs_y(Vars); code.cpx_imm(0x00); code.beq("@store");
+	code.label("@right_loop"); code.lsr_a(); code.dex(); code.bne("@right_loop");
+	code.jmp("@store");
+
+	code.label("@left");
+	code.lda_abs_x(0x0101); code.cmp_imm(0x08); code.bcs("@zero");
+	code.tax(); code.lda_abs_y(Vars); code.cpx_imm(0x00); code.beq("@store");
+	code.label("@left_loop"); code.asl_a(); code.dex(); code.bne("@left_loop");
+	code.jmp("@store");
+
+	code.label("@zero"); code.lda_imm(0x00);
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevClampVar Register Minimum Maximum
+word fh::HackManager::apply_AtlasDevClampVar(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // maximum, minimum, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(0x0102); code.cmp_abs_x(0x0101);
+	code.beq("@bounds_ok"); code.bcc("@bounds_ok"); code.jmp("@done");
+
+	code.label("@bounds_ok"); code.lda_abs_y(Vars);
+	code.cmp_abs_x(0x0102); code.bcc("@minimum");
+	code.cmp_abs_x(0x0101); code.beq("@store"); code.bcc("@store");
+	code.lda_abs_x(0x0101); code.jmp("@store");
+	code.label("@minimum"); code.lda_abs_x(0x0102);
+	code.label("@store"); code.db(0x99); code.dw(Vars);
+
+	code.label("@done"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfVarMask Register Mask Expected Label
+word fh::HackManager::apply_AtlasDevIfVarMask(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
+	code.tsx(); // expected, mask, register at $0101..$0103,X
+	code.lda_abs_x(0x0103); code.cmp_imm(VarCount); code.bcs("@false");
+	code.tay();
+
+	// Expected may only contain bits selected by Mask.
+	code.lda_abs_x(0x0102); code.eor_imm(0xff);
+	code.db(0x3d); code.dw(0x0101); // AND $0101,X
+	code.bne("@false");
+	code.lda_abs_y(Vars); code.db(0x3d); code.dw(0x0102); // AND $0102,X
+	code.cmp_abs_x(0x0101); code.bne("@false");
+
+	code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@false"); code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
 	return get_next_cpu_addr(cpu_addr,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
@@ -2046,12 +2546,6 @@ word fh::HackManager::apply_AtlasDevIfSelectedMagic(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
-//
 // AtlasDevCountActiveEntities Register
 //
 // Stores how many of the eight entity slots are live, 0..8, into a script
@@ -2062,10 +2556,6 @@ word fh::HackManager::apply_AtlasDevCountActiveEntities(
 	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
 
-	// Read the register file through the configuration rather than hardcoding
-	// an address, exactly as the packet 6 register opcodes do.  A project that
-	// has not defined the feature fails the build by name here, instead of
-	// shipping a ROM that writes RAM nobody allocated.
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
 	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
@@ -2102,12 +2592,6 @@ word fh::HackManager::apply_AtlasDevCountActiveEntities(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// DO NOT USE YET.  This opcode is published for review, not for shipping
-// scripts.  It needs the script-variable feature (hack_script_var_ram_addr /
-// hack_script_var_count), which is not upstream, so Config::constant throws
-// by name and the build fails rather than the ROM misbehaving.  It has had no
-// hardware validation beyond a purpose-built fixture that defined that RAM.
-//
 // AtlasDevFindEntity Identity Register
 //
 // Stores the lowest slot holding the requested entity identity, or $FF when
@@ -2680,6 +3164,36 @@ word fh::HackManager::apply_AtlasDevAddExperience(const fe::Config& p_config,
 	code.sta_zp(RAM::ZP_Temp_Int24_M);
 	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_UPDATEEXPERIENCE));
 
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetExperience Value: replaces the 16-bit XP counter, recomputes
+// both title cells from rank zero through the vanilla threshold checker, and
+// redraws the five-digit experience HUD.  The threshold helper advances by at
+// most one rank per call, so fifteen calls exhaust Faxanadu's complete 0..15
+// title domain without duplicating its comparison table in injected code.
+word fh::HackManager::apply_AtlasDevSetExperience(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP low
+	code.sta_abs(RAM::PlayerXP_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP high
+	code.sta_abs(RAM::PlayerXP_U);
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::PendingTitle);
+	code.ldy_imm(0x0f);
+	code.label("@rank");
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_RANKREFRESH));
+	code.db(0x88); // DEY -- rank helper preserves Y
+	code.bne("@rank");
+	code.lda_abs(RAM::PendingTitle);
+	code.sta_abs(RAM::PlayerTitle);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_EXPHUDREDRAW));
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -3946,6 +4460,56 @@ word fh::HackManager::apply_AtlasDevClearVisibleMagic(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word end_handler_addr) const {
+	klib::Asm6502 code;
+	const word Begin{ cfg_word(p_config, c::ID_ROM_ISCRIPTS_BEGIN) };
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+	if (Count == 0 || Count > 0x80)
+		throw std::runtime_error("Script variable count must be between 1 and 128.");
+
+	// Clear every register, then reproduce the six displaced Begin bytes.
+	code.pha();
+	code.lda_imm(0x00);
+	code.ldx_imm(Count - 1);
+	code.label("@clear_begin");
+	code.sta_abs_x(Vars);
+	code.dex();
+	code.bpl("@clear_begin");
+	code.pla();
+	code.cmp_imm(0xff);
+	code.bne("@continue");
+	code.lda_imm(0x1f);
+	code.label("@continue");
+	code.jmp(Begin + 6);
+	word next{ get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr)) };
+
+	code.jmp(cpu_addr);
+	code.nop(3);
+	code.apply_hack_and_clear(p_rom, 12, Begin);
+
+	// End is the other lifetime boundary.
+	const word end_reset{ next };
+	code.lda_imm(0x00);
+	code.ldx_imm(Count - 1);
+	code.label("@clear_end");
+	code.sta_abs_x(Vars);
+	code.dex();
+	code.bpl("@clear_end");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+	code.lda_abs(RAM::IScriptTextBoxContext);
+	code.jmp(end_handler_addr + 6);
+	next = get_next_cpu_addr(next,
+		code.apply_hack_and_clear(p_rom, 12, next));
+
+	code.jmp(end_reset);
+	code.nop(3);
+	code.apply_hack_and_clear(p_rom, 12, end_handler_addr);
+	return next;
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -3958,7 +4522,19 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	HackLib::IfAddrEquals };
 	const std::set<HackLib> COMPARE_BETWEEN_REQUIRED{ HackLib::IfAddrBetween };
 	const std::set<HackLib> LOAD_WORD_REQUIRED{ HackLib::IfAddrEquals, HackLib::IfAddrBetween, HackLib::SetAddr };
-	const std::set<HackLib> BLOCK_POS_REQUIRED{ HackLib::IfYX };
+	const std::set<HackLib> BLOCK_POS_REQUIRED{
+		HackLib::IfYX, HackLib::AtlasDevGetPlayerPositionToVars };
+	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
+		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
+		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
+		HackLib::AtlasDevIfVarGreaterEqual,
+		HackLib::AtlasDevShowNumberInMessage, HackLib::AtlasDevShowChoiceToVar,
+		HackLib::AtlasDevShowMessageFromVar, HackLib::AtlasDevCountActiveEntities,
+		HackLib::AtlasDevFindEntity, HackLib::AtlasDevEntityFieldToVar,
+		HackLib::AtlasDevDrawVarNumber, HackLib::AtlasDevGetLocationToVars,
+		HackLib::AtlasDevGetPlayerPositionToVars, HackLib::AtlasDevVarBitOp,
+		HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
+		HackLib::AtlasDevIfVarMask };
 	// flag functions need access to the bitmask lookup table
 	std::set<HackLib> BITMASK_TABLE_REQUIRED{ FLAG_REQUIRED };
 	BITMASK_TABLE_REQUIRED.insert(begin(QUEST_FLAG_REQUIRED), end(QUEST_FLAG_REQUIRED));
@@ -4026,6 +4602,10 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		block_pos_helper_addr = cpu_addr;
 		cpu_addr = apply_helper_GetPlayerBlockPos(p_rom, cpu_addr);
 	}
+
+	if (requires_any(p_lib, SCRIPT_VARIABLE_REQUIRED))
+		cpu_addr = install_script_variable_reset(p_config, p_rom, cpu_addr,
+			script_impl_addresses.at(0) + 1);
 
 	for (HackLib llib : p_lib) {
 		script_impl_addresses.push_back(cpu_addr - 1);
@@ -4126,6 +4706,25 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		}
 		case HackLib::SetAddr:
 			cpu_addr = apply_SetAddr(p_config, p_rom, cpu_addr, load_word_helper_addr.value());
+			break;
+
+		case HackLib::AtlasDevSetVar:
+			cpu_addr = apply_AtlasDevSetVar(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevAddVar:
+			cpu_addr = apply_AtlasDevAddVar(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSubVar:
+			cpu_addr = apply_AtlasDevSubVar(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfVarEqual:
+			cpu_addr = apply_AtlasDevIfVarEqual(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfVarLess:
+			cpu_addr = apply_AtlasDevIfVarLess(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfVarGreaterEqual:
+			cpu_addr = apply_AtlasDevIfVarGreaterEqual(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevShakeScreen: {
@@ -4236,8 +4835,24 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			cpu_addr = apply_AtlasDevSetEntityHealth(p_config, p_rom, cpu_addr);
 			break;
 
+		case HackLib::AtlasDevDamageEntity:
+			cpu_addr = apply_AtlasDevDamageEntity(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevHealEntity:
+			cpu_addr = apply_AtlasDevHealEntity(p_config, p_rom, cpu_addr);
+			break;
+
 		case HackLib::AtlasDevSetEntityInvincible:
 			cpu_addr = apply_AtlasDevSetEntityInvincible(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevFaceEntityToPlayer:
+			cpu_addr = apply_AtlasDevFaceEntityToPlayer(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevKnockbackEntity:
+			cpu_addr = apply_AtlasDevKnockbackEntity(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevSetEntityBehavior:
@@ -4258,6 +4873,31 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevDrawVarNumber:
 			cpu_addr = apply_AtlasDevDrawVarNumber(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevGetLocationToVars:
+			cpu_addr = apply_AtlasDevGetLocationToVars(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevGetPlayerPositionToVars:
+			cpu_addr = apply_AtlasDevGetPlayerPositionToVars(p_config, p_rom, cpu_addr,
+				block_pos_helper_addr.value());
+			break;
+
+		case HackLib::AtlasDevVarBitOp:
+			cpu_addr = apply_AtlasDevVarBitOp(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevVarShift:
+			cpu_addr = apply_AtlasDevVarShift(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevClampVar:
+			cpu_addr = apply_AtlasDevClampVar(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevIfVarMask:
+			cpu_addr = apply_AtlasDevIfVarMask(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevIfPlayerFacing:
@@ -4387,6 +5027,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		case HackLib::AtlasDevAddExperience:
 			cpu_addr = apply_AtlasDevAddExperience(p_config, p_rom, cpu_addr);
 			break;
+		case HackLib::AtlasDevSetExperience:
+			cpu_addr = apply_AtlasDevSetExperience(p_config, p_rom, cpu_addr);
+			break;
 		case HackLib::AtlasDevSetGold:
 			cpu_addr = apply_AtlasDevSetGold(p_config, p_rom, cpu_addr);
 			break;
@@ -4487,6 +5130,7 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
 			break;
 
+		case HackLib::Count:
 		default:
 			throw std::runtime_error("Unsupported script library routine.");
 		}
@@ -4851,49 +5495,6 @@ void fh::HackManager::install_hack_sameworld_to_stage_doors(const fe::Config& p_
 	// hook vanilla code into our new routine
 	code.jmp(Hack_ClearPendingStageAndLoadWorld);
 	code.apply_hack_and_clear(p_rom, 15, ROM::Player_EnterDoorToOutside_JMP_SetupArea);
-}
-
-// hack which enables palette-to-music mapping to be applied to sameworld transitions as well as sameworld doors
-void fh::HackManager::install_hack_pal2mus_for_sw_trans(const fe::Config& p_config, std::vector<byte>& p_rom) {
-	// new routine addr
-	const word HackSwTransPal2Mus{ static_cast<word>(p_config.constant_or(c::ID_HACK_SW_TRANS_PAL2MUS_ADDR, 0xc033)) };
-
-	// constants from the rom
-	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
-	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
-
-	byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
-	word pal2mus_pal_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, pal_ptr.first)) };
-	word pal2mus_mus_table_addr{ static_cast<word>(klib::Asm6502::read_word(p_rom, mus_ptr.first)) };
-
-	klib::Asm6502 code;
-
-	// add new routine which copies the vanilla logic for sw-door pal2mus
-	code.ldx_imm(pal2mus_slot_count);
-	code.label("@paletteCheckLoop");
-	code.lda_zp(RAM::ZP_TransitionPalette);
-	code.cmp_abs_x(pal2mus_pal_table_addr);
-	code.beq("@setupArea");
-	code.dex();
-	code.bpl("@paletteCheckLoop");
-	code.bmi("@enterScreen");
-
-	code.label("@setupArea");
-	code.lda_abs_x(pal2mus_mus_table_addr);
-	code.cmp_abs(RAM::World_DefaultMusic);
-	code.beq("@enterScreen");
-	code.sta_zp(RAM::ZP_MusicCurrent);
-	code.sta_abs(RAM::World_DefaultMusic);
-
-	code.label("@enterScreen");
-	code.jmp(ROM::Game_SetupEnterScreen);
-
-	// insert the new routine in rom
-	code.apply_hack_and_clear(p_rom, 15, HackSwTransPal2Mus);
-
-	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
-	code.jmp(HackSwTransPal2Mus);
-	code.apply_hack_and_clear(p_rom, 15, ROM::SwTransJmpSetupEnterScreen);
 }
 
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
