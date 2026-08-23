@@ -265,6 +265,8 @@ namespace fh {
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 
 		// util
 		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;

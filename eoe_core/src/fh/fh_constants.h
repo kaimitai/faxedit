@@ -30,7 +30,13 @@ namespace fh {
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
+		// bank 14 addresses
+		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
+		constexpr word SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests{ 0xa418 };
+
 		// bank 15 addresses
+		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
+		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };
@@ -51,6 +57,7 @@ namespace fh {
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
+		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
@@ -168,6 +175,9 @@ namespace fh {
 		constexpr byte ZP_EntityY{ 0xc2 };
 		constexpr byte ZP_PlayerX{ 0x9e };
 		constexpr byte ZP_PlayerY{ 0xa1 };
+		constexpr word ItemInventory{ 0x03ad };
+		constexpr word SelectedItem{ 0x03c1 };
+		constexpr word NumberOfItems{ 0x03c6 };
 		constexpr word World_DefaultMusic{ 0x03d1 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
 		constexpr word SelectedWeapon{ 0x03bd };

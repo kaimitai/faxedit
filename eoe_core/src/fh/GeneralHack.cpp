@@ -16,7 +16,7 @@ namespace {
 
 	const std::map<byte, std::set<fh::GeneralHackLib>> GENERAL_HACK_BANKS{
 	{ 14, {
-		fh::GeneralHackLib::FastStart,
+		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -82,6 +82,10 @@ byte fh::GeneralHack::byte_or(const std::string& p_id, byte p_default) const {
 
 bool fh::GeneralHack::bool_or(const std::string& p_id, bool p_default) const {
 	return has_param(p_id) ? get_bool(p_id) : p_default;
+}
+
+std::string fh::GeneralHack::string_or(const std::string& p_id, const std::string& p_default) const {
+	return has_param(p_id) ? get_string(p_id) : p_default;
 }
 
 std::vector<fh::GeneralHack> fh::parse_general_hacks(const std::string& p_str) {

@@ -111,6 +111,94 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
 
+// two item drops depend on quest flags; wyvern mattock and stone dropper wing boots
+// this hack will check whether the player has the item in inventory (or equipped)
+// param: type=both,wing_boots,mattock
+word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	const std::string type{ p_hack.string_or("type", "both") };
+	const bool hack_mattock{ type == "mattock" || type == "both" };
+	const bool hack_wing_boots{ type == "wing_boots" || type == "both" };
+
+	if (!hack_mattock && !hack_wing_boots)
+		throw std::runtime_error(std::format("Invalid QuestFlagItemDrops hack type: {}", type));
+
+	klib::Asm6502 code;
+	/*
+	A = item ID
+	Returns:
+		Z = 0 if the player has the item
+		Z = 1 if the player does not have the item
+	Preserves: X
+	Clobbers: A, Y
+	Could be made a generic helper if other hacks need this
+	*/
+
+	code.label("@check_has_item");
+	code.cmp_abs(RAM::SelectedItem);
+	code.beq("@found");
+	code.ldy_imm(0x00);
+
+	code.label("@loop");
+	code.cpy_abs(RAM::NumberOfItems);
+	code.beq("@not_found");
+	code.cmp_abs_y(RAM::ItemInventory);
+	code.beq("@found");
+	code.iny();
+	code.bne("@loop");
+
+	code.label("@not_found");
+	code.lda_imm(0x00);
+	code.rts();
+
+	code.label("@found");
+	code.lda_imm(0x01);
+	code.rts();
+
+	// Item-specific entry points.
+	word check_mattock{ 0 };
+	if (hack_mattock) {
+		check_mattock = static_cast<word>(cpu_addr + code.size());
+		code.lda_imm(0x09);
+		code.bne("@check_has_item");
+	}
+	word check_wing_boots{ 0 };
+	if (hack_wing_boots) {
+		check_wing_boots = static_cast<word>(cpu_addr + code.size());
+		code.lda_imm(0x0f);
+		code.bne("@check_has_item");
+	}
+
+	// install the routine in bank 14
+	const word result{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr) };
+
+	// replace vanilla quest-flag checks with inventory checks.
+	if (hack_mattock) {
+		code.jsr(check_mattock);
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests);
+
+		// do not set quest flag when picking up the item
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpMattockWithQuest);
+
+		// do not reset the quest flag when player dies
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_Spawn_LDA_Quests);
+	}
+	if (hack_wing_boots) {
+		code.jsr(check_wing_boots);
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests);
+
+		// do not set quest flag when picking up the item
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpWingBootsWithQuest);
+	}
+
+	return result;
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -129,6 +217,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::QuestFlagItemDrops:
+			cpu_addr = install_QuestFlagItemDrops(p_config, p_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
