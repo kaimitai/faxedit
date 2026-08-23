@@ -36,6 +36,7 @@ namespace fb {
 		BScriptLoader(const fe::Config& p_config,
 			const std::vector<byte>& p_rom);
 		void parse_rom(void);
+		std::size_t get_bytecode_end_offset(void) const;
 
 	};
 

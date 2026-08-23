@@ -6,7 +6,9 @@
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper.h"
 #include "fh/HackManager.h"
+#include "fb/BscriptLoader.h"
 #include "common/klib/IPS_Patch.h"
+#include <algorithm>
 #include <format>
 
 fe::game::LoadedGame fe::game::load_rom(
@@ -576,6 +578,28 @@ namespace {
 		send_message(p_message, { bank7res, result.bank7_used ? fe::MsgType::Info : fe::MsgType::Error });
 		send_message(p_message, { bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error });
 	}
+
+	// helper which reports on available space in bank 14, returns [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank14_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+		const std::size_t rg2_start{ p_config.constant(fb::c::ID_BSCRIPT_RG2_START) };
+		const std::size_t rg2_end{ p_config.constant(fb::c::ID_BSCRIPT_RG2_END) };
+
+		try {
+			fb::BScriptLoader bscript_loader(p_config, p_rom);
+			bscript_loader.parse_rom();
+
+			return std::make_pair(std::max(bscript_loader.get_bytecode_end_offset(), rg2_start), rg2_end);
+		}
+		catch (const std::exception& ex) {
+			fe::send_message(p_message, {
+				std::format("Could not determine bank 14 free space from bScripts ({}); falling back to $ff heuristics",
+					ex.what()),	fe::MsgType::Warning });
+
+			return fe::ROM_Manager::find_trailing_free_range(
+				p_rom, std::make_pair(rg2_start, rg2_end));
+		}
+	}
 }
 
 std::vector<byte> fe::game::patch_rom(
@@ -779,6 +803,22 @@ std::vector<byte> fe::game::patch_rom(
 					l_tm_result.m_sizes[i]), fe::MsgType::Info });
 			}
 		}
+	}
+
+	// bank 14 general hacks, if any
+	const auto bank14_hacks{ fh::filter_general_hacks(14, general_hacks) };
+	if (!bank14_hacks.empty()) {
+		const auto [free_start, free_end] {	fe::ROM_Manager::file_range_to_cpu_range(
+			get_bank14_free_range(p_config, x_rom, p_message)) };
+
+		fh::HackManager hack_mgr;
+		const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 14,
+			free_start, free_end, bank14_hacks, &p_game) };
+
+		send_message(p_message, { std::format("Installed general hacks in bank 14 ({}/{} bytes)",
+			hack_size, free_end - free_start) });
+
+		l_dyndata_bytes += hack_size;
 	}
 
 	// bank duplication - region-specific config and not a setting

@@ -119,6 +119,10 @@ namespace fe {
 		static bool duplicate_static_bank_if_needed(const fe::Config& p_config, std::vector<byte>& p_rom);
 		static void clear_rom_section(std::vector<byte>& p_rom, std::size_t p_start, std::size_t p_end,
 			byte p_value = 0xff);
+		static std::pair<std::size_t, std::size_t> file_range_to_cpu_range(const std::pair<std::size_t, std::size_t>& p_range);
+		static std::pair<std::size_t, std::size_t> find_trailing_free_range(const std::vector<byte>& p_rom,
+			const std::pair<std::size_t, std::size_t>& p_range,
+			byte p_free_value = 0xff, std::size_t p_cushion = 1);
 
 		// caching utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;
