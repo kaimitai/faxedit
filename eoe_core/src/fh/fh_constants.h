@@ -81,6 +81,8 @@ namespace fh {
 		constexpr word SpecialItemMaskTable{ 0x8d52 };
 
 		constexpr byte TransitionBank{ 0x0e };
+		constexpr word EntityFacePlayerX{ 0x867b };
+		constexpr word EntityWeaponDeathTail{ 0x889c };
 		constexpr word Door_Dispatch{ 0xe533 };
 		constexpr word Game_SetupEnterScreen{ 0xdaa0 };
 		constexpr word Game_SetupNewArea{ 0xdacd };
@@ -150,6 +152,8 @@ namespace fh {
 		constexpr word EntitySpeedWhole{ 0x02f4 };
 		constexpr word EntityDropIdentity{ 0x02fc };
 		constexpr word EntityMagicState{ 0x0334 };
+		constexpr word EntityMagicCounter{ 0x033c };
+		constexpr word CurrentEntitySlot{ 0x0378 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };

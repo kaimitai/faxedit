@@ -1847,7 +1847,11 @@
 			<entry key="AtlasDevIfEntityHidden" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevSetEntityHidden" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntityHealth" value="Args=Byte+Byte" />
+			<entry key="AtlasDevDamageEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevHealEntity" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntityInvincible" value="Args=Byte+Byte" />
+			<entry key="AtlasDevFaceEntityToPlayer" value="Args=Byte" />
+			<entry key="AtlasDevKnockbackEntity" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevSetEntityBehavior" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSetEntitySpeed" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevSetEntityFacing" value="Args=Byte+Byte" />
