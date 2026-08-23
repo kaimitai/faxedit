@@ -80,6 +80,37 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 	return next_cpu_addr;
 }
 
+// dynamically added to bank 14, but with hooks and constants in bank 15
+word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const word gold{ p_hack.word_or("gold", 1500) };
+	const bool ring_of_elf{ p_hack.bool_or("ring_of_elf", true) };
+
+	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Health);
+	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Mana);
+
+	klib::Asm6502 code;
+
+	// install hook from bank 15
+	code.jsr(cpu_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_Start_JSR_Game_LoadFirstLevel);
+
+	// new routine
+	code.lda_imm(gold % 256);
+	code.sta_abs(RAM::PlayerGold_L);
+	code.lda_imm(gold / 256);
+	code.sta_abs(RAM::PlayerGold_M);
+	if (ring_of_elf) {
+		// start with special items bit 7 set (ring of elf)
+		code.lda_imm(0b10000000);
+		code.sta_abs(RAM::SpecialItemBitfield);
+	}
+	code.jsr(ROM::Game_LoadFirstLevel);
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -95,6 +126,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr,
 				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
+			break;
+		case fh::GeneralHackLib::FastStart:
+			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

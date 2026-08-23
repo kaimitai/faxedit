@@ -15,9 +15,11 @@ namespace {
 	}
 
 	const std::map<byte, std::set<fh::GeneralHackLib>> GENERAL_HACK_BANKS{
+	{ 14, {
+		fh::GeneralHackLib::FastStart,
+	}},
 	{ 15, {
-		fh::GeneralHackLib::KillSwitch,
-		fh::GeneralHackLib::SameWorldTransPal2Mus,
+		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 	}},
 	};
 }
@@ -61,8 +63,25 @@ byte fh::GeneralHack::get_byte(const std::string& p_id) const {
 	return static_cast<byte>(value);
 }
 
+bool fh::GeneralHack::get_bool(const std::string& p_id) const {
+	return klib::str::parse_bool_ci(params.at(p_id));
+}
+
 const std::string& fh::GeneralHack::get_string(const std::string& p_id) const {
 	return params.at(p_id);
+}
+
+// default value helpers
+word fh::GeneralHack::word_or(const std::string& p_id, word p_default) const {
+	return has_param(p_id) ? get_word(p_id) : p_default;
+}
+
+byte fh::GeneralHack::byte_or(const std::string& p_id, byte p_default) const {
+	return has_param(p_id) ? get_byte(p_id) : p_default;
+}
+
+bool fh::GeneralHack::bool_or(const std::string& p_id, bool p_default) const {
+	return has_param(p_id) ? get_bool(p_id) : p_default;
 }
 
 std::vector<fh::GeneralHack> fh::parse_general_hacks(const std::string& p_str) {

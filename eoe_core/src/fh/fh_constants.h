@@ -51,7 +51,11 @@ namespace fh {
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
+		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
+		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_LoadFirstLevel{ 0xdea7 };
+		constexpr word Start_Health{ 0xdeaf };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };

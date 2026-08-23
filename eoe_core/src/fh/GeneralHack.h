@@ -12,7 +12,7 @@ using word = uint16_t;
 namespace fh {
 
 	enum class GeneralHackLib {
-		KillSwitch, SameWorldTransPal2Mus
+		KillSwitch, SameWorldTransPal2Mus, FastStart
 	};
 
 	class GeneralHack {
@@ -26,9 +26,16 @@ namespace fh {
 
 		GeneralHackLib get_type(void) const;
 		bool has_param(const std::string& p_id) const;
+
 		word get_word(const std::string& p_id) const;
 		byte get_byte(const std::string& p_id) const;
+		bool get_bool(const std::string& p_id) const;
 		const std::string& get_string(const std::string& p_id) const;
+
+		// default value helpers
+		word word_or(const std::string& p_id, word p_default) const;
+		byte byte_or(const std::string& p_id, byte p_default) const;
+		bool bool_or(const std::string& p_id, bool p_default) const;
 	};
 
 	std::vector<GeneralHack> parse_general_hacks(const std::string& p_str);
