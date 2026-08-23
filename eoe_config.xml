@@ -1937,6 +1937,10 @@
 			<entry key="AtlasDevCastSpell" value="Args=Byte" />
 			<entry key="AtlasDevIfMagicActive" value="Flow=Jump" />
 			<entry key="AtlasDevClearVisibleMagic" />
+			<entry key="AtlasDevSpawnMagicAt" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevCastSpellFromEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetMagicPosition" value="Args=Byte" />
+			<entry key="AtlasDevSetMagicFacing" value="Args=Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

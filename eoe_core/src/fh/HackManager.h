@@ -59,7 +59,9 @@ namespace fh {
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
 		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
 		AtlasDevApplyEffect, AtlasDevCastSpell, AtlasDevIfMagicActive,
-		AtlasDevClearVisibleMagic,
+		AtlasDevClearVisibleMagic, AtlasDevSpawnMagicAt,
+		AtlasDevCastSpellFromEntity, AtlasDevSetMagicPosition,
+		AtlasDevSetMagicFacing,
 		// Keep Count last.
 		Count
 	};
@@ -226,6 +228,10 @@ namespace fh {
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSpawnMagicAt(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCastSpellFromEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMagicPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMagicFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
