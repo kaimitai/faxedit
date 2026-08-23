@@ -33,7 +33,9 @@ namespace fh {
 		AtlasDevIfEntityCountAtLeast, AtlasDevCountActiveEntities, AtlasDevFindEntity,
 		AtlasDevFreezeEntities, AtlasDevResumeEntities, AtlasDevIfBossPresent,
 		AtlasDevIfEntityTypePresent, AtlasDevIfEntitySlotActive, AtlasDevIfEntityHidden,
-		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevSetEntityInvincible,
+		AtlasDevSetEntityHidden, AtlasDevSetEntityHealth, AtlasDevDamageEntity,
+		AtlasDevHealEntity, AtlasDevSetEntityInvincible, AtlasDevFaceEntityToPlayer,
+		AtlasDevKnockbackEntity,
 		AtlasDevSetEntityBehavior, AtlasDevSetEntitySpeed, AtlasDevSetEntityFacing,
 		AtlasDevEntityFieldToVar, AtlasDevDrawVarNumber,
 		AtlasDevGetLocationToVars, AtlasDevGetPlayerPositionToVars,
@@ -47,7 +49,7 @@ namespace fh {
 		AtlasDevOpenWindow, AtlasDevShowIcon, AtlasDevCloseWindow,
 		AtlasDevLayText, AtlasDevOpenWindowAtEntity, AtlasDevRestoreRect,
 		AtlasDevShowItemName, AtlasDevShowIconEx, AtlasDevClearText,
-		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
+		AtlasDevLayTextAt, AtlasDevClearTextLine, AtlasDevLayTextLine, AtlasDevSetHealth, AtlasDevSetMana, AtlasDevFullHeal, AtlasDevFullMana, AtlasDevIfHealthBelow, AtlasDevIfHealthAtLeast, AtlasDevIfManaAtLeast, AtlasDevAddExperience, AtlasDevSetExperience, AtlasDevSetGold, AtlasDevIfGoldAtLeast, AtlasDevIfXPAtLeast, AtlasDevIfItemCount,
 		AtlasDevSetPalette, AtlasDevRestorePalette, AtlasDevLoadBgPalette, AtlasDevLoadSpritePalette,
 		AtlasDevFlashScreen, AtlasDevSetColorEmphasis, AtlasDevQueuePaletteFlush, AtlasDevWipeScreenStep,
 		AtlasDevAnimateTiles, AtlasDevSetTextColor, AtlasDevSetAttrRect, AtlasDevPlaceChrTile,
@@ -139,7 +141,11 @@ namespace fh {
 		word apply_AtlasDevIfEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityHidden(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityHealth(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDamageEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevHealEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityInvincible(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFaceEntityToPlayer(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevKnockbackEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityBehavior(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntitySpeed(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetEntityFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -186,6 +192,7 @@ namespace fh {
 		word apply_AtlasDevIfHealthAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfManaAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevAddExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetExperience(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetGold(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfGoldAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfXPAtLeast(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;

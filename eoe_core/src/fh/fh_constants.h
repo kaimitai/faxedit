@@ -81,6 +81,8 @@ namespace fh {
 		constexpr word SpecialItemMaskTable{ 0x8d52 };
 
 		constexpr byte TransitionBank{ 0x0e };
+		constexpr word EntityFacePlayerX{ 0x867b };
+		constexpr word EntityWeaponDeathTail{ 0x889c };
 		constexpr word Door_Dispatch{ 0xe533 };
 		constexpr word Game_SetupEnterScreen{ 0xdaa0 };
 		constexpr word Game_SetupNewArea{ 0xdacd };
@@ -150,6 +152,8 @@ namespace fh {
 		constexpr word EntitySpeedWhole{ 0x02f4 };
 		constexpr word EntityDropIdentity{ 0x02fc };
 		constexpr word EntityMagicState{ 0x0334 };
+		constexpr word EntityMagicCounter{ 0x033c };
+		constexpr word CurrentEntitySlot{ 0x0378 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };
@@ -191,6 +195,8 @@ namespace fh {
 		constexpr word PlayerMana{ 0x039a };
 		constexpr word PlayerXP_L{ 0x0390 };
 		constexpr word PlayerXP_U{ 0x0391 };
+		constexpr word PlayerTitle{ 0x0437 };
+		constexpr word PendingTitle{ 0x04ed };
 		// The 32-byte staged palette ($0293-$02b2, background then sprite
 		// half) that queue command $00 copies to PPU palette RAM whole.
 		constexpr word PaletteShadow{ 0x0293 };
@@ -231,6 +237,8 @@ namespace fh {
 		constexpr char ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION[]{ "rom_iscripts_updateportraitanimation" };
 		constexpr char ID_ROM_MMC1_UPDATEROMBANK[]{ "rom_mmc1_updaterombank" };
 		constexpr char ID_ROM_PLAYER_UPDATEEXPERIENCE[]{ "rom_player_updateexperience" };
+		constexpr char ID_ROM_PLAYER_RANKREFRESH[]{ "rom_player_rankrefresh" };
+		constexpr char ID_ROM_PLAYER_EXPHUDREDRAW[]{ "rom_player_exphudredraw" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };

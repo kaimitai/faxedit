@@ -236,7 +236,11 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevIfEntityHidden | Byte, Label | Jumps when the slot's entity is hidden; an invalid slot is not hidden | AtlasDevIfEntityHidden 0 @is_hidden |
 | AtlasDevSetEntityHidden | Byte, Byte | Hides (nonzero) or shows (0) the slot's entity; its behaviour keeps running while unseen | AtlasDevSetEntityHidden 0 1 |
 | AtlasDevSetEntityHealth | Byte, Byte | Sets the slot's live HP; death fires on subtract-borrow, so 0 means dies to the next hit rather than dead | AtlasDevSetEntityHealth 0 5 |
+| AtlasDevDamageEntity | Byte, Byte | Damages an active enemy or boss unless its hit or magic-knockback window is still running. NPCs, pickups and effects are ignored. It copies the player's attack direction and uses the normal hit sound, flinch, experience, death and drop paths. Damage 0 does nothing | AtlasDevDamageEntity 0 4 |
+| AtlasDevHealEntity | Byte, Byte | Adds to an active entity's live HP and clamps at $FF. Entity slots do not keep a separate maximum HP value | AtlasDevHealEntity 0 4 |
 | AtlasDevSetEntityInvincible | Byte, Byte | Grants that many frames of hit exemption through the engine's own i-frame counter; 0 clears it | AtlasDevSetEntityInvincible 0 60 |
+| AtlasDevFaceEntityToPlayer | Byte | Faces an active entity toward the player. Equal X positions keep the current direction | AtlasDevFaceEntityToPlayer 0 |
+| AtlasDevKnockbackEntity | Byte, Byte, Byte | Starts vanilla's horizontal magic-launch machine for an active slot: Direction 0 left/nonzero right; Profile 0 is 3 px/frame for 4 frames, 1 is 2 px/frame for 8 frames, and 2 is 4 px/frame until a wall. A valid call replaces any earlier launch; hit stun delays its movement | AtlasDevKnockbackEntity 0 1 1 |
 | AtlasDevSetEntityBehavior | Byte, Byte | Selects one of the engine's behaviours for the slot and re-runs its initializer; behaviour 6 is refused | AtlasDevSetEntityBehavior 0 4 |
 | AtlasDevSetEntitySpeed | Byte, Byte, Byte | Sets a walker's cached speed, fraction then whole pixels; flyers keep their velocity elsewhere and are unaffected | AtlasDevSetEntitySpeed 0 0 3 |
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
@@ -276,6 +280,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevIfHealthAtLeast | Byte, Label | Jumps when the player's integer HP, the value the HUD bar shows, is at least the operand; the fractional HP byte is ignored | AtlasDevIfHealthAtLeast 40 @healthy |
 | AtlasDevIfManaAtLeast | Byte, Label | Jumps when the player's magic points are greater than or equal to the operand; MP is one byte the game caps at 80 ($50) | AtlasDevIfManaAtLeast 40 @enough_mp |
 | AtlasDevAddExperience | Short (0-65,535) | Adds experience through the enemy-kill award path: saturating add, promotion check and HUD digit redraw; "next rank" can advance at most once per call | AtlasDevAddExperience 500 |
+| AtlasDevSetExperience | Short (0-65,535) | Replaces experience exactly, recomputes current and pending title 0-15 through the vanilla threshold checker, and redraws the experience HUD | AtlasDevSetExperience 3000 |
 | AtlasDevSetGold | Byte, Byte, Byte | Sets gold to an exact 24-bit value, given low byte first, and redraws the seven-digit gold HUD through the game's own conversion routine | AtlasDevSetGold 244 1 0 ; gold becomes 500 (244 + 1*256) |
 | AtlasDevIfGoldAtLeast | Byte, Byte, Byte, Label | Jumps when the 24-bit gold counter is at least the threshold; the three operands are the threshold's low, middle and high bytes, the counter's own little-endian order | AtlasDevIfGoldAtLeast 232 3 0 @rich ; jumps at 1000 gold or more |
 | AtlasDevIfXPAtLeast | Short (0-65,535), Label | Jumps when the player's experience is at least the given value | AtlasDevIfXPAtLeast 3000 @veteran |
@@ -309,6 +314,21 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevCastSpell | Byte | Initializes spell 0-4 at the player without using MP or checking input. It is silent and starts moving after the script returns to gameplay. Other values do nothing | AtlasDevCastSpell 2 |
 | AtlasDevIfMagicActive | Label | Uses the game's visible-magic sign test. Valid active states are 0-11, including dormant state 9 | AtlasDevIfMagicActive @spell_active |
 | AtlasDevClearVisibleMagic | None | Ends the current visible-magic state. Its auxiliary bytes are left unchanged, matching the vanilla clear | AtlasDevClearVisibleMagic |
+
+Entity health checks do not need another runtime handler. Field 6 is live HP:
+
+```text
+    AtlasDevEntityFieldToVar 0 6 2
+    AtlasDevIfVarLess 2 5 @health_below_five
+```
+
+The normal weapon shove is also a two-opcode recipe. Facing selects the
+direction and the hit-window counter performs the movement on later frames:
+
+```text
+    AtlasDevSetEntityFacing 0 1
+    AtlasDevSetEntityInvincible 0 8
+```
 
 `AtlasDevCastSpell` replaces the current magic state. The normal magic loop
 moves it after the script ends. Use `AtlasDevPlaySFX` separately when needed.

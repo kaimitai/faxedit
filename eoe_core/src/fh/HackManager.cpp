@@ -1731,6 +1731,145 @@ word fh::HackManager::apply_AtlasDevSetEntityHealth(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevDamageEntity Slot Damage
+//
+// Respects the entity's hit window, plays the normal hit sound and starts the
+// normal eight-frame flinch. Lethal damage enters the weapon-death tail, so
+// experience, boss deaths and delayed drops stay under the game's control.
+// Like ordinary damage, HP 0 survives until another positive hit borrows.
+word fh::HackManager::apply_AtlasDevDamageEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@reject");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@reject");
+	code.lda_abs_x(RAM::EntityHitStun);
+	code.bne("@reject");
+	code.lda_abs_x(RAM::EntityMagicState);
+	code.bpl("@reject");
+
+	// The normal weapon path accepts category 0 enemies and category 7 bosses.
+	// Their identity ranges come from the same bank-14 table used by
+	// AtlasDevIfBossPresent, which is not mapped while this handler runs.
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.beq("@combat");                         // $00
+	code.cmp_imm(0x03);
+	code.bcc("@reject");                         // $01-$02
+	code.cmp_imm(0x0a);
+	code.bcc("@combat");                         // $03-$09
+	code.cmp_imm(0x0b);
+	code.bcc("@reject");                         // $0a
+	code.cmp_imm(0x13);
+	code.bcc("@combat");                         // $0b-$12
+	code.cmp_imm(0x15);
+	code.bcc("@reject");                         // $13-$14
+	code.cmp_imm(0x34);
+	code.bcc("@combat");                         // $15-$33
+	code.cmp_imm(0x46);
+	code.bcc("@reject");                         // $34-$45
+	code.cmp_imm(0x48);
+	code.bcc("@combat");                         // $46-$47
+
+	code.label("@reject");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@combat");
+	code.txa();
+	code.pha();                                      // stack: [slot]
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Damage
+	code.cmp_imm(0x00);
+	code.beq("@zero");
+	code.pha();                                      // stack: [slot, damage]
+
+	// Weapon hits copy the player's facing bit to the enemy. The hit-window
+	// update then moves the enemy in the attack direction.
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.asl_a(); code.asl_a();                      // player bit 6 -> carry
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xfe);
+	code.adc_imm(0x00);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.lda_imm(0x02);
+	code.jsr(ROM::Sound_PlayEffect);
+	code.lda_imm(0x08);
+
+	// Read both saved operands from the stack. This keeps the subtraction
+	// independent of shared zero-page scratch bytes across an interrupt.
+	code.tsx();
+	code.db(0xbc); code.dw(0x0102);                 // LDY $0102,X: slot
+	code.db(0x99); code.dw(RAM::EntityHitStun);     // STA $034C,Y
+	code.lda_abs_y(RAM::EntityHealth);
+	code.sec();
+	code.sbc_abs_x(0x0101);                         // damage
+	code.db(0x99); code.dw(RAM::EntityHealth);      // STA $0344,Y
+	code.bcc("@lethal");
+	code.pla(); code.pla();
+	code.jmp("@done");
+
+	code.label("@zero");
+	code.pla();                                      // discard slot
+	code.jmp("@done");
+
+	code.label("@lethal");
+	code.pla(); code.pla();                         // discard damage and slot
+	code.tya();
+	code.tax();
+
+	// The experience routine reloads X from $0378. Point it at this slot for
+	// the death call, then restore the entity loop's previous slot.
+	code.lda_abs(RAM::CurrentEntitySlot);
+	code.pha();
+	code.txa();
+	code.sta_abs(RAM::CurrentEntitySlot);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityWeaponDeathTail - 1);
+	code.pla();
+	code.sta_abs(RAM::CurrentEntitySlot);
+
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevHealEntity Slot Amount
+//
+// Entity slots do not keep a separate maximum HP value. Healing therefore
+// adds to live HP and clamps at $ff instead of wrapping through zero.
+word fh::HackManager::apply_AtlasDevHealEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Amount
+	code.clc();
+	code.adc_abs_x(RAM::EntityHealth);
+	code.bcc("@store");
+	code.lda_imm(0xff);
+	code.label("@store");
+	code.sta_abs_x(RAM::EntityHealth);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevSetEntityInvincible Slot Frames
 //
 // $034C,X is the byte vanilla's own weapon-hit handler sets to 8 on every
@@ -1751,6 +1890,95 @@ word fh::HackManager::apply_AtlasDevSetEntityInvincible(
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFaceEntityToPlayer Slot
+//
+// Calls the same horizontal-facing helper used by behavior scripts. If both
+// are on the same X coordinate, the entity keeps its current direction.
+word fh::HackManager::apply_AtlasDevFaceEntityToPlayer(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@done");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@done");
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(ROM::TransitionBank);
+	code.dw(ROM::EntityFacePlayerX - 1);
+
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevKnockbackEntity Slot Direction Profile
+//
+// Starts the same horizontal launch state machine used by vanilla magic hits.
+// Profile 0 is 3 px/frame for 4 frames, profile 1 is 2 px/frame for 8 frames,
+// and profile 2 is 4 px/frame until a wall. Existing launch state is replaced.
+// This is deliberately separate from EntityHitStun: that counter flashes and
+// pauses a slot, and while nonzero it defers launch movement rather than
+// participating in it.
+word fh::HackManager::apply_AtlasDevKnockbackEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.tax();
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Direction
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Profile
+	code.cmp_imm(0x03);
+	code.bcs("@invalid_profile");
+	code.sta_abs_x(RAM::EntityMagicState);
+	code.cmp_imm(0x00);
+	code.beq("@profile_zero");
+	code.cmp_imm(0x01);
+	code.beq("@profile_one");
+	code.lda_imm(0xff);                             // profile 2: until wall
+	code.bne("@store_counter");
+
+	code.label("@profile_zero");
+	code.lda_imm(0x04);
+	code.bne("@store_counter");
+
+	code.label("@profile_one");
+	code.lda_imm(0x08);
+
+	code.label("@store_counter");
+	code.sta_abs_x(RAM::EntityMagicCounter);
+	code.pla();
+	code.cmp_imm(0x01);                            // carry = Direction != 0
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0xfe);
+	code.adc_imm(0x00);
+	code.sta_abs_x(RAM::EntityFlags);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	code.label("@invalid_profile");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	// Invalid and inactive slots still consume Direction and Profile so the
+	// next byte in the script is always interpreted as an opcode.
+	code.label("@drop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
@@ -2936,6 +3164,36 @@ word fh::HackManager::apply_AtlasDevAddExperience(const fe::Config& p_config,
 	code.sta_zp(RAM::ZP_Temp_Int24_M);
 	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_UPDATEEXPERIENCE));
 
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetExperience Value: replaces the 16-bit XP counter, recomputes
+// both title cells from rank zero through the vanilla threshold checker, and
+// redraws the five-digit experience HUD.  The threshold helper advances by at
+// most one rank per call, so fifteen calls exhaust Faxanadu's complete 0..15
+// title domain without duplicating its comparison table in injected code.
+word fh::HackManager::apply_AtlasDevSetExperience(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP low
+	code.sta_abs(RAM::PlayerXP_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP high
+	code.sta_abs(RAM::PlayerXP_U);
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::PendingTitle);
+	code.ldy_imm(0x0f);
+	code.label("@rank");
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_RANKREFRESH));
+	code.db(0x88); // DEY -- rank helper preserves Y
+	code.bne("@rank");
+	code.lda_abs(RAM::PendingTitle);
+	code.sta_abs(RAM::PlayerTitle);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_EXPHUDREDRAW));
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -4577,8 +4835,24 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			cpu_addr = apply_AtlasDevSetEntityHealth(p_config, p_rom, cpu_addr);
 			break;
 
+		case HackLib::AtlasDevDamageEntity:
+			cpu_addr = apply_AtlasDevDamageEntity(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevHealEntity:
+			cpu_addr = apply_AtlasDevHealEntity(p_config, p_rom, cpu_addr);
+			break;
+
 		case HackLib::AtlasDevSetEntityInvincible:
 			cpu_addr = apply_AtlasDevSetEntityInvincible(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevFaceEntityToPlayer:
+			cpu_addr = apply_AtlasDevFaceEntityToPlayer(p_config, p_rom, cpu_addr);
+			break;
+
+		case HackLib::AtlasDevKnockbackEntity:
+			cpu_addr = apply_AtlasDevKnockbackEntity(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevSetEntityBehavior:
@@ -4752,6 +5026,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevAddExperience:
 			cpu_addr = apply_AtlasDevAddExperience(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetExperience:
+			cpu_addr = apply_AtlasDevSetExperience(p_config, p_rom, cpu_addr);
 			break;
 		case HackLib::AtlasDevSetGold:
 			cpu_addr = apply_AtlasDevSetGold(p_config, p_rom, cpu_addr);
