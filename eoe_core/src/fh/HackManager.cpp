@@ -3170,6 +3170,36 @@ word fh::HackManager::apply_AtlasDevAddExperience(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevSetExperience Value: replaces the 16-bit XP counter, recomputes
+// both title cells from rank zero through the vanilla threshold checker, and
+// redraws the five-digit experience HUD.  The threshold helper advances by at
+// most one rank per call, so fifteen calls exhaust Faxanadu's complete 0..15
+// title domain without duplicating its comparison table in injected code.
+word fh::HackManager::apply_AtlasDevSetExperience(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP low
+	code.sta_abs(RAM::PlayerXP_L);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // XP high
+	code.sta_abs(RAM::PlayerXP_U);
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::PendingTitle);
+	code.ldy_imm(0x0f);
+	code.label("@rank");
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_RANKREFRESH));
+	code.db(0x88); // DEY -- rank helper preserves Y
+	code.bne("@rank");
+	code.lda_abs(RAM::PendingTitle);
+	code.sta_abs(RAM::PlayerTitle);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_EXPHUDREDRAW));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevSetGold Lo Mid Hi
 //
 // Writes an exact gold amount.  Gold is a 24-bit little-endian counter at
@@ -4996,6 +5026,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevAddExperience:
 			cpu_addr = apply_AtlasDevAddExperience(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetExperience:
+			cpu_addr = apply_AtlasDevSetExperience(p_config, p_rom, cpu_addr);
 			break;
 		case HackLib::AtlasDevSetGold:
 			cpu_addr = apply_AtlasDevSetGold(p_config, p_rom, cpu_addr);

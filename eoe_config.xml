@@ -375,6 +375,10 @@
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />
 		<const name="rom_player_updateexperience" value="$f957" />
+		<const name="rom_player_rankrefresh" region="jp,en-transl" value="$fa04" />
+		<const name="rom_player_rankrefresh" value="$f93c" />
+		<const name="rom_player_exphudredraw" region="jp,en-transl" value="$fa3d" />
+		<const name="rom_player_exphudredraw" value="$f975" />
 		<const name="rom_player_isclimbing" value="$ecf6" />
 		<!-- These PPU helpers move in the Japanese fixed bank. -->
 		<const name="rom_ppu_address_from_pos" region="jp,en-transl" value="$f8cc" />
@@ -1897,6 +1901,7 @@
 			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevAddExperience" value="Args=Short" />
+			<entry key="AtlasDevSetExperience" value="Args=Short" />
 			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfXPAtLeast" value="Args=Short,Flow=Jump" />
