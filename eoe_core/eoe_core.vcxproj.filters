@@ -390,6 +390,15 @@
     <ClInclude Include="src\fh\GeneralHack.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_helper_config.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_helper_game.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\xml\Xml_helper_settings.h">
+      <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">

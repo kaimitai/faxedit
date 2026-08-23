@@ -1,4 +1,7 @@
 #include "Xml_helper.h"
+#include "Xml_helper_config.h"
+#include "Xml_helper_game.h"
+#include "Xml_helper_settings.h"
 #include "Xml_constants.h"
 #include "./../fe_app_constants.h"
 #include "./../Config.h"

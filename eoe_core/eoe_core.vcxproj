@@ -79,6 +79,9 @@
     <ClInclude Include="src\fe\WorldVisualizer.h" />
     <ClInclude Include="src\fe\xml\Xml_constants.h" />
     <ClInclude Include="src\fe\xml\Xml_helper.h" />
+    <ClInclude Include="src\fe\xml\Xml_helper_config.h" />
+    <ClInclude Include="src\fe\xml\Xml_helper_game.h" />
+    <ClInclude Include="src\fe\xml\Xml_helper_settings.h" />
     <ClInclude Include="src\fh\fh_constants.h" />
     <ClInclude Include="src\fh\GeneralHack.h" />
     <ClInclude Include="src\fh\HackManager.h" />

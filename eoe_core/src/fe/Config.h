@@ -1,13 +1,13 @@
 #ifndef FE_CONFIG_H
 #define FE_CONFIG_H
 
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "./xml/Xml_helper.h"
 
 using byte = unsigned char;
 
@@ -16,6 +16,15 @@ namespace fe {
 	struct ConfigRegion {
 		std::string region;
 		std::unordered_set<std::string> compatible_regions;
+	};
+
+	struct RegionDefinition {
+		std::optional<std::size_t> m_filesize;
+		std::string m_name;
+		std::unordered_set<std::string> m_compatible_regions;
+
+		// vector of pairs {ROM offset -> vector of values matching at that offset}
+		std::vector<std::pair<std::size_t, std::vector<byte>>> m_defs;
 	};
 
 	class Config {

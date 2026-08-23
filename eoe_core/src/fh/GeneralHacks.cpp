@@ -1,5 +1,6 @@
 #include "HackManager.h"
 #include "fe/Config.h"
+#include "fe/Game.h"
 #include "common/klib/Asm6502.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"

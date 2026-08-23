@@ -9,6 +9,10 @@
 
 using byte = unsigned char;
 
+namespace pugi {
+	class xml_document;
+}
+
 namespace fe::game {
 
 	struct LoadedGame {

@@ -4,7 +4,7 @@
 #include "fh/fh_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
-#include "fe/xml/Xml_helper.h"
+#include "fe/xml/Xml_helper_game.h"
 #include "fh/HackManager.h"
 #include "fb/BscriptLoader.h"
 #include "common/klib/IPS_Patch.h"

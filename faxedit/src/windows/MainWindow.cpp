@@ -12,7 +12,7 @@
 #include "Imgui_helper.h"
 #include "fe/fe_constants.h"
 #include "fe/fe_app_constants.h"
-#include "fe/xml/Xml_helper.h"
+#include "fe/xml/Xml_helper_settings.h"
 #include "fe/script/ScriptManager.h"
 #include "common/klib/Kfile.h"
 #include "fe/game/GameManager.h"
