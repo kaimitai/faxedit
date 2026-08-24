@@ -398,3 +398,11 @@ std::string fi::IScriptLoader::serialize_shop_as_string(const fi::Shop& p_shop) 
 
 	return l_shop_string;
 }
+
+std::size_t fi::IScriptLoader::get_bytecode_end_offset(void) const {
+	if (m_instructions.empty())
+		throw std::runtime_error("No iScript instructions parsed");
+
+	const auto& [offset, instr] { *m_instructions.rbegin() };
+	return offset + instr.size;
+}

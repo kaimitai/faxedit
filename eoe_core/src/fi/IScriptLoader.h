@@ -72,6 +72,7 @@ namespace fi {
 		const std::vector<fi::Shop>& get_shops(void) const;
 
 		std::size_t get_script_count(void) const;
+		std::size_t get_bytecode_end_offset(void) const;
 	};
 
 }

@@ -1,12 +1,15 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
+#include "fe/script/ScriptManager.h"
 #include "fe/fe_constants.h"
 #include "fh/fh_constants.h"
+#include "fi/fi_constants.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper_game.h"
 #include "fh/HackManager.h"
 #include "fb/BscriptLoader.h"
+#include "fi/IscriptLoader.h"
 #include "common/klib/IPS_Patch.h"
 #include <algorithm>
 #include <format>
@@ -579,6 +582,29 @@ namespace {
 		send_message(p_message, { bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error });
 	}
 
+	// helper which reports on available space in bank 12, returns [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank12_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+
+		const std::size_t rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
+		const std::size_t rg2_end{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) };
+
+		try {
+			const auto opcode_info{ fe::script::get_iscript_opcode_info(p_config) };
+			fi::IScriptLoader iscript_loader(p_config, p_rom, opcode_info.opcodes);
+			iscript_loader.parse_rom(p_rom);
+
+			return std::make_pair(std::max(iscript_loader.get_bytecode_end_offset(), rg2_start), rg2_end);
+		}
+		catch (const std::exception& ex) {
+			fe::send_message(p_message, {
+				std::format("Could not determine bank 12 free space from iScripts ({}); falling back to $ff heuristics",
+					ex.what()),	fe::MsgType::Warning });
+
+			return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
+		}
+	}
+
 	// helper which reports on available space in bank 14, returns [file offset start, file offset end)
 	std::pair<std::size_t, std::size_t> get_bank14_free_range(const fe::Config& p_config,
 		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
@@ -617,6 +643,9 @@ namespace {
 		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
 
 		switch (p_bank) {
+		case 12:
+			return get_bank12_free_range(p_config, p_rom, p_message);
+
 		case 14:
 			return get_bank14_free_range(p_config, p_rom, p_message);
 
@@ -829,7 +858,7 @@ std::vector<byte> fe::game::patch_rom(
 	if (!general_hacks.empty()) {
 		fh::HackManager hack_mgr;
 
-		for (byte bank : { 14, 15 }) {
+		for (byte bank : { 12, 14, 15 }) {
 			const auto bank_hacks{ fh::filter_general_hacks(bank, general_hacks) };
 			if (bank_hacks.empty())
 				continue;
@@ -841,7 +870,7 @@ std::vector<byte> fe::game::patch_rom(
 			const auto [free_start, free_end] = general_hack_ranges.at(bank);
 
 			const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, bank,
-				free_start, free_end,bank_hacks, &p_game) };
+				free_start, free_end, bank_hacks, &p_game) };
 
 			send_message(p_message, { std::format("Installed general hacks in bank {} ({}/{} bytes)",
 					bank, hack_size, free_end - free_start) });
