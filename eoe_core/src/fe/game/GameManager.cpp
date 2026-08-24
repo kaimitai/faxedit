@@ -1,8 +1,10 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
+#include "fe/script/ScriptManager.h"
 #include "fe/fe_constants.h"
 #include "fh/fh_constants.h"
 #include "fi/fi_constants.h"
+#include "fi/IScriptLoader.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper_game.h"
@@ -585,25 +587,21 @@ namespace {
 		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
 		const std::size_t rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
 		const std::size_t rg2_end{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) };
-		return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
 
-		// the following is dangerous if extended opcodes are installed but no script bytecode is in region 2
-		/*
 		try {
 			const auto opcode_info{ fe::script::get_iscript_opcode_info(p_config) };
 			fi::IScriptLoader iscript_loader(p_config, p_rom, opcode_info.opcodes);
 			iscript_loader.parse_rom(p_rom);
+			const std::size_t bytecode_end{ iscript_loader.get_bytecode_end_offset() };
 
-			return std::make_pair(std::max(iscript_loader.get_bytecode_end_offset(), rg2_start), rg2_end);
+			if (bytecode_end > rg2_start && bytecode_end <= rg2_end)
+				return std::make_pair(bytecode_end, rg2_end);
 		}
-		catch (const std::exception& ex) {
-			fe::send_message(p_message, {
-				std::format("Could not determine bank 12 free space from iScripts ({}); falling back to $ff heuristics",
-					ex.what()),	fe::MsgType::Warning });
+		catch (const std::exception&) {
+			// fall through to $ff-heuristics
+		}
 
-			return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
-		}
-		*/
+		return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
 	}
 
 	// helper which reports on available space in bank 14, returns [file offset start, file offset end)
