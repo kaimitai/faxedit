@@ -600,6 +600,34 @@ namespace {
 				p_rom, std::make_pair(rg2_start, rg2_end));
 		}
 	}
+
+	// returns the lowest-priority configured free range in bank 15 as [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank15_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom) {
+		const auto free_ranges{ fe::ROM_Manager::parse_bank_15_free_ranges(p_config) };
+
+		if (free_ranges.empty())
+			throw std::runtime_error("No free space configured for bank 15");
+
+		return fe::ROM_Manager::find_trailing_free_range(p_rom, free_ranges.back());
+	}
+
+	// general helper for general hack free ranges, takes a bank as argument and dispatches
+	std::pair<std::size_t, std::size_t> get_general_hack_free_range(byte p_bank, const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+
+		switch (p_bank) {
+		case 14:
+			return get_bank14_free_range(p_config, p_rom, p_message);
+
+		case 15:
+			return get_bank15_free_range(p_config, p_rom);
+
+		default:
+			throw std::runtime_error(
+				std::format("No general hack free-space strategy for bank {}", p_bank));
+		}
+	}
 }
 
 std::vector<byte> fe::game::patch_rom(
@@ -610,6 +638,8 @@ std::vector<byte> fe::game::patch_rom(
 	bool l_good{ true };
 
 	const auto general_hacks{ fh::parse_general_hacks(p_config.string_or_empty(fe::c::ID_GENERAL_HACKS)) };
+	// map from bank to [cpu addr begin, cpu addr end) for general hacks
+	std::map<byte, std::pair<std::size_t, std::size_t>> general_hack_ranges;
 
 	const auto l_world_labels{ p_config.bmap(c::ID_WORLD_LABELS) };
 
@@ -737,17 +767,7 @@ std::vector<byte> fe::game::patch_rom(
 			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
 		l_dyndata_bytes += bank15_res.used_bytes;
 
-		const auto bank15_hacks{ fh::filter_general_hacks(15, general_hacks) };
-
-		if (!bank15_hacks.empty()) {
-			fh::HackManager hack_mgr;
-			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
-			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks, &p_game) };
-			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
-				bank15_hack_size, bank15_hack_available_size) });
-			l_dyndata_bytes += bank15_hack_size;
-		}
+		general_hack_ranges[15] = std::make_pair(bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end);
 	}
 
 	// sprite metadata
@@ -805,20 +825,29 @@ std::vector<byte> fe::game::patch_rom(
 		}
 	}
 
-	// bank 14 general hacks, if any
-	const auto bank14_hacks{ fh::filter_general_hacks(14, general_hacks) };
-	if (!bank14_hacks.empty()) {
-		const auto [free_start, free_end] {	fe::ROM_Manager::file_range_to_cpu_range(
-			get_bank14_free_range(p_config, x_rom, p_message)) };
-
+	// install general hacks, if any
+	if (!general_hacks.empty()) {
 		fh::HackManager hack_mgr;
-		const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 14,
-			free_start, free_end, bank14_hacks, &p_game) };
 
-		send_message(p_message, { std::format("Installed general hacks in bank 14 ({}/{} bytes)",
-			hack_size, free_end - free_start) });
+		for (byte bank : { 14, 15 }) {
+			const auto bank_hacks{ fh::filter_general_hacks(bank, general_hacks) };
+			if (bank_hacks.empty())
+				continue;
 
-		l_dyndata_bytes += hack_size;
+			if (!general_hack_ranges.contains(bank))
+				general_hack_ranges[bank] = fe::ROM_Manager::file_range_to_cpu_range(
+					get_general_hack_free_range(bank, p_config, x_rom, p_message));
+
+			const auto [free_start, free_end] = general_hack_ranges.at(bank);
+
+			const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, bank,
+				free_start, free_end,bank_hacks, &p_game) };
+
+			send_message(p_message, { std::format("Installed general hacks in bank {} ({}/{} bytes)",
+					bank, hack_size, free_end - free_start) });
+
+			l_dyndata_bytes += hack_size;
+		}
 	}
 
 	// bank duplication - region-specific config and not a setting

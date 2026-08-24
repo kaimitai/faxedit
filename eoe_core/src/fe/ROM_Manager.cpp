@@ -454,23 +454,11 @@ fe::Bank15PatchResult fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_c
 	const fe::Game& p_game, std::vector<byte>& p_rom, bool p_encode_pal2mus) const {
 	constexpr bool PAD_WITH_FF{ false };
 
-	const auto freespace_strs{ p_config.bmap(c::ID_BANK15_FREE_SPACE) };
-	std::vector<std::pair<std::size_t, std::size_t>> free_ranges;
+	const auto free_ranges{ parse_bank_15_free_ranges(p_config) };
 	std::size_t total_free_space{ 0 }, total_used_space{ 0 };
 
-	for (const auto& kv : freespace_strs) {
-		auto endpoints{ klib::str::split_string(kv.second, ':') };
-		if (endpoints.size() != 2)
-			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
-
-		std::size_t start_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(0)))) };
-		std::size_t end_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(1)))) };
-		if (start_ep >= end_ep)
-			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
-
-		free_ranges.push_back(std::make_pair(start_ep, end_ep));
-		total_free_space += end_ep - start_ep;
-	}
+	for (const auto& [start, end] : free_ranges)
+		total_free_space += end - start;
 
 	std::vector<std::vector<std::vector<byte>>> all_bank15_data;
 	std::vector<Pointer> ptrs;
@@ -982,4 +970,25 @@ bool fe::ROM_Manager::is_bank_clear(const std::vector<byte>& p_rom, byte p_bank_
 			return false;
 
 	return true;
+}
+
+std::vector<std::pair<std::size_t, std::size_t>> fe::ROM_Manager::parse_bank_15_free_ranges(const fe::Config& p_config) {
+	const auto freespace_strs{ p_config.bmap(c::ID_BANK15_FREE_SPACE) };
+	std::vector<std::pair<std::size_t, std::size_t>> free_ranges;
+
+	for (const auto& kv : freespace_strs) {
+		auto endpoints{ klib::str::split_string(kv.second, ':') };
+		if (endpoints.size() != 2)
+			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
+
+		std::size_t start_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(0)))) };
+		std::size_t end_ep{ static_cast<std::size_t>(klib::str::parse_numeric(klib::str::trim(endpoints.at(1)))) };
+
+		if (start_ep >= end_ep)
+			throw std::runtime_error(std::format("Invalid ROM range: {}", kv.second));
+
+		free_ranges.emplace_back(start_ep, end_ep);
+	}
+
+	return free_ranges;
 }
