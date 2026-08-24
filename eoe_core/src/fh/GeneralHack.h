@@ -12,6 +12,7 @@ using word = uint16_t;
 namespace fh {
 
 	enum class GeneralHackLib {
+		FlexibleItems,
 		KillSwitch, SameWorldTransPal2Mus,
 		FastStart, QuestFlagItemDrops
 	};

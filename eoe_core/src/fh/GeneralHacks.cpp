@@ -199,6 +199,55 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 	return result;
 }
 
+word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const bool buildings{ p_hack.bool_or("buildings", true) };
+	const bool state{ p_hack.bool_or("state", true) };
+	const bool selling{ p_hack.bool_or("selling", true) };
+	const word price{ p_hack.word_or("price", 100) };
+
+	klib::Asm6502 code;
+
+	// compare against nonexistent world $ff instead of building world $04
+	if (buildings)
+		klib::Asm6502::apply_byte(p_rom, 0xff, 12, ROM::PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo);
+
+	if (state) {
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_BNE_Return);
+	}
+
+	if (!selling)
+		return cpu_addr;
+	else {
+		// install hook
+		code.jmp(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 12, ROM::ShowSellMenu_JSR_FindSellMenuEntry);
+
+		// preserve the original item ID in X when no sell-table entry is found
+		code.nop();
+		code.apply_hack_and_clear(p_rom, 12, ROM::FindSellMenuEntry_TAX);
+
+		// the sell-any-item routine itself
+		code.jsr(ROM::FindSellMenuEntry);
+		code.cmp_imm(0xff);
+		code.beq("@shop_entry_missing");
+		// item has a normal sell-table entry; continue with vanilla logic
+		code.jmp(ROM::ShowSellMenu_LDX_StringCount);
+
+		code.label("@shop_entry_missing");
+		code.txa();
+		code.ldx_abs(RAM::UIStringCount);
+		code.sta_abs_x(RAM::UIDataArray);
+		code.lda_imm(price % 256);
+		code.sta_abs_x(RAM::ShopItemCostsLo);
+		code.lda_imm(price / 256);
+		code.jmp(ROM::ShowSellMenu_STA_CostHi);
+		
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+	}
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -220,6 +269,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::QuestFlagItemDrops:
 			cpu_addr = install_QuestFlagItemDrops(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::FlexibleItems:
+			cpu_addr = install_FlexibleItems(p_config, p_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

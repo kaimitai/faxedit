@@ -15,6 +15,9 @@ namespace {
 	}
 
 	const std::map<byte, std::set<fh::GeneralHackLib>> GENERAL_HACK_BANKS{
+	{ 12, {
+		fh::GeneralHackLib::FlexibleItems,
+	}},
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
 	}},

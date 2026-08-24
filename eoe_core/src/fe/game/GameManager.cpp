@@ -1,6 +1,5 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
-#include "fe/script/ScriptManager.h"
 #include "fe/fe_constants.h"
 #include "fh/fh_constants.h"
 #include "fi/fi_constants.h"
@@ -9,7 +8,6 @@
 #include "fe/xml/Xml_helper_game.h"
 #include "fh/HackManager.h"
 #include "fb/BscriptLoader.h"
-#include "fi/IscriptLoader.h"
 #include "common/klib/IPS_Patch.h"
 #include <algorithm>
 #include <format>
@@ -585,10 +583,12 @@ namespace {
 	// helper which reports on available space in bank 12, returns [file offset start, file offset end)
 	std::pair<std::size_t, std::size_t> get_bank12_free_range(const fe::Config& p_config,
 		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
-
 		const std::size_t rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
 		const std::size_t rg2_end{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) };
+		return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
 
+		// the following is dangerous if extended opcodes are installed but no script bytecode is in region 2
+		/*
 		try {
 			const auto opcode_info{ fe::script::get_iscript_opcode_info(p_config) };
 			fi::IScriptLoader iscript_loader(p_config, p_rom, opcode_info.opcodes);
@@ -603,6 +603,7 @@ namespace {
 
 			return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
 		}
+		*/
 	}
 
 	// helper which reports on available space in bank 14, returns [file offset start, file offset end)

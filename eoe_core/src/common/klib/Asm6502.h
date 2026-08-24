@@ -101,6 +101,7 @@ namespace klib {
 		void lda_abs_y(word p_addr);
 		void lda_ind_y(byte p_addr);
 		void ldx_imm(byte p_value);
+		void ldx_abs(word p_addr);
 		void ldx_abs_y(word p_addr);
 		void ldy_imm(byte p_value);
 		void ldy_zp(byte p_value);

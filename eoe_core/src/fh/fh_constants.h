@@ -18,7 +18,13 @@ namespace fh {
 		constexpr word TextBox_ClearForPortraitAndText{ 0x822b };
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
 		constexpr word Menu_WaitInput{ 0x84ed };
+		constexpr word ShowSellMenu_JSR_FindSellMenuEntry{ 0x8691 };
+		constexpr word ShowSellMenu_LDX_StringCount{ 0x8696 };
+		constexpr word ShowSellMenu_STA_CostHi{ 0x86a9 };
+		constexpr word FindSellMenuEntry{ 0x8704 };
+		constexpr word FindSellMenuEntry_TAX{ 0x8716 };
 		constexpr word Portrait_Pump{ 0x87b0 };
+		constexpr word PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo{ 0x8b87 };
 		constexpr word ItemNameDraw{ 0x8c36 };
 		constexpr word IconDraw{ 0x8c58 };
 		constexpr word OpenWindowDraw{ 0x8ef1 };
@@ -35,6 +41,7 @@ namespace fh {
 		constexpr word SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests{ 0xa418 };
 
 		// bank 15 addresses
+		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
@@ -151,6 +158,9 @@ namespace fh {
 		// textbox. Vanilla root $1f is reserved for the death dialogue.
 		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
+		constexpr word UIStringCount{ 0x021f };
+		constexpr word UIDataArray{ 0x0220 };
+		constexpr word ShopItemCostsLo{ 0x0228 };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
 		// references in the vanilla PRG gives 72 for $02cc, 141 for $02dc and
