@@ -88,7 +88,6 @@
     <ClInclude Include="src\fh\TilemapChanges.h" />
     <ClInclude Include="src\fi\AsmReader.h" />
     <ClInclude Include="src\fi\AsmWriter.h" />
-    <ClInclude Include="src\fi\cli\application_constants.h" />
     <ClInclude Include="src\fi\FaxString.h" />
     <ClInclude Include="src\fi\fi_constants.h" />
     <ClInclude Include="src\fi\IScriptLoader.h" />

@@ -2,11 +2,12 @@
 #include <format>
 #include <iostream>
 #include <stdexcept>
-#include "fi/cli/application_constants.h"
+#include "application_constants.h"
 #include "fe/fe_app_constants.h"
 #include "fe/Message.h"
 #include "fi/fi_constants.h"
 #include "common/klib/Kfile.h"
+#include "common/klib/Kstring.h"
 #include "fe/script/ScriptManager.h"
 
 #ifdef _WIN32
@@ -18,7 +19,7 @@ static void print_message(const fe::Message& p_message) {
 }
 
 void fi::Cli::print_header(void) const {
-	std::cout << fe::c::APP_NAME << " " << fe::c::APP_VERSION << " - Faxanadu Script Assembler and Disassembler\n";
+	std::cout << fe::c::APP_NAME << " " << fe::c::APP_VERSION << " - Command-line interface\n";
 	std::cout << "Author: Kai E. Fr";
 	output_oe_on_windows();
 	std::cout << "land (" << fe::c::APP_URL << ")\n";
@@ -30,33 +31,37 @@ void fi::Cli::print_help(void) const {
 		"Usage:\n"
 		"  eoe-cli <command> <input> <output> [options]\n\n"
 		"Commands:\n"
+		"  Project XML:\n"
+		"    xproj,   extract-project - Extract project XML from ROM\n"
+		"    bproj,   build-project   - Build ROM from project XML\n"
+		"\n"
 		"  IScripts (interaction scripts):\n"
-		"    x,   extract            - Disassemble IScripts from ROM\n"
-		"    b,   build              - Assemble IScripts into ROM\n"
+		"    x,   extract             - Disassemble IScripts from ROM\n"
+		"    b,   build               - Assemble IScripts into ROM\n"
 		"\n"
 		"  BScripts (behavior scripts):\n"
-		"    xb,  extract-bscript    - Disassemble BScripts from ROM\n"
-		"    bb,  build-bscript      - Assemble BScripts and patch ROM\n"
+		"    xb,  extract-bscript     - Disassemble BScripts from ROM\n"
+		"    bb,  build-bscript       - Assemble BScripts and patch ROM\n"
 		"\n"
 		"  MScripts (low level music format):\n"
-		"    xm,  extract-music     - Disassemble MScripts from ROM\n"
-		"    bm,  build-music       - Assemble MScripts and patch ROM\n"
+		"    xm,  extract-music       - Disassemble MScripts from ROM\n"
+		"    bm,  build-music         - Assemble MScripts and patch ROM\n"
 		"\n"
 		"  MML (high level music format):\n"
-		"    xmml, extract-mml      - Extract music as MML from ROM\n"
-		"    bmml, build-mml        - Compile MML and patch ROM\n"
+		"    xmml, extract-mml        - Extract music as MML from ROM\n"
+		"    bmml, build-mml          - Compile MML and patch ROM\n"
 		"\n"
 		"  Miscellaneous strings and constants:\n"
-		"    xmisc, extract-misc    - Extract miscellaneous data from ROM\n"
-		"    bmisc, build-misc      - Patch ROM with miscellaneous data\n"
+		"    xmisc, extract-misc      - Extract miscellaneous data from ROM\n"
+		"    bmisc, build-misc        - Patch ROM with miscellaneous data\n"
 		"\n"
 		"  MIDI:\n"
-		"    m2m, mml-to-midi       - Convert MML to MIDI files\n"
-		"    r2m, rom-to-midi       - Extract music from ROM as MIDI files\n"
+		"    m2m, mml-to-midi         - Convert MML to MIDI files\n"
+		"    r2m, rom-to-midi         - Extract music from ROM as MIDI files\n"
 		"\n"
 		"  LilyPond:\n"
-		"    m2l, mml-to-ly         - Convert MML to LilyPond files\n"
-		"    r2l, rom-to-ly         - Extract music from ROM as LilyPond files\n\n";
+		"    m2l, mml-to-ly           - Convert MML to LilyPond files\n"
+		"    r2l, rom-to-ly           - Extract music from ROM as LilyPond files\n\n";
 
 	std::cout << "Options:\n";
 	std::cout << "  Common options:\n";
@@ -70,6 +75,9 @@ void fi::Cli::print_help(void) const {
 	std::cout << "    -n, --no-notes               Do not emit notes in music disassembly (notes enabled by default)\n";
 	std::cout << "  MML options:\n";
 	std::cout << "    -lp, --lilypond-percussion   Add percussion staff to the LilyPond output (disabled by default)\n";
+	std::cout << "  Project build options:\n";
+	std::cout << "    -skip, --skip <list>         Comma-separated list of subsystems to omit from patching (see the docs)\n";
+	std::cout << "    -aco, --allow-cin-overflow   Allow cinematic data to grow into iScript region 2\n";
 }
 
 fi::Cli::Cli(int argc, char** argv) :
@@ -77,7 +85,8 @@ fi::Cli::Cli(int argc, char** argv) :
 	m_shop_comments{ true },
 	m_overwrite{ false },
 	m_notes{ true },
-	m_lilypond_percussion{ false }
+	m_lilypond_percussion{ false },
+	m_allow_cinematic_overflow{ false }
 {
 	print_header();
 
@@ -137,9 +146,31 @@ fi::Cli::Cli(int argc, char** argv) :
 	// debug
 	else if (m_script_mode == fi::ScriptMode::DumpConfig)
 		dump_config(m_in_file, m_out_file);
+	// project commands
+	else if (m_script_mode == fi::ScriptMode::ProjectBuild)
+		project_to_nes(m_in_file, m_out_file, m_source_rom.empty() ? m_out_file : m_source_rom);
+	else if (m_script_mode == fi::ScriptMode::ProjectExtract)
+		nes_to_project(m_in_file, m_out_file, m_overwrite);
 	// can't really happen
 	else
 		throw(std::runtime_error("Invalid script mode"));
+}
+
+void fi::Cli::project_to_nes(const std::string& p_xml_filename, const std::string& p_out_filename,
+	const std::string& p_source_rom_filename) {
+	const auto rom{ load_rom_and_config(p_source_rom_filename) };
+	auto game{ fe::game::load_game_xml_from_file(m_config, p_xml_filename, rom, print_message) };
+	fe::game::patch_rom_to_file(m_config, game, p_out_filename,
+		get_rom_patch_options(), print_message);
+}
+
+void fi::Cli::nes_to_project(const std::string& p_nes_filename, const std::string& p_xml_filename,
+	bool p_overwrite) {
+	if (!p_overwrite && klib::file::file_exists(p_xml_filename))
+		throw std::runtime_error(std::format("File {} already exists, and overwrite flag (-f) not set",
+			p_xml_filename));
+	fe::Game game{ load_game(p_nes_filename) };
+	fe::game::save_game_xml_to_file(m_config, game, p_xml_filename, print_message);
 }
 
 void fi::Cli::asm_to_nes(const std::string& p_asm_filename,
@@ -296,6 +327,20 @@ void fi::Cli::parse_arguments(int arg_start, int argc, char** argv) {
 			else
 				m_region = argv[++i];
 		}
+		else if (argvi == appc::CLI_SKIP_PATCHING.first ||
+			argvi == appc::CLI_SKIP_PATCHING.second) {
+			if (i + 1 >= argc)
+				throw std::runtime_error("Skip ROM patching option was used, but no options list was specified");
+			else {
+				const auto skip_list{ klib::str::split_string(argv[++i], ',') };
+				for (const auto& list_elem : skip_list) {
+					const auto option{ klib::str::to_lower(klib::str::trim(list_elem)) };
+					if (option.empty())
+						throw std::runtime_error("Empty ROM patch option in skip list");
+					m_patch_skips.push_back(option);
+				}
+			}
+		}
 		else
 			set_flag(argvi);
 	}
@@ -320,6 +365,54 @@ std::vector<byte> fi::Cli::load_rom_and_config(
 		std::cout << "ROM region specified as '" << m_region << "'\n";
 
 	return rom_data;
+}
+
+fe::Game fi::Cli::load_game(const std::string& p_nes_filename) {
+	const auto rom{ load_rom_and_config(p_nes_filename) };
+	return fe::game::load_rom(rom, m_config, print_message).game;
+}
+
+fe::game::RomPatchOptions fi::Cli::get_rom_patch_options(void) const {
+	fe::game::RomPatchOptions options{};
+
+	for (const auto& list_elem : m_patch_skips) {
+		if (list_elem == "bank15_data")
+			options.bank15_data = false;
+		else if (list_elem == "bg_gfx")
+			options.bg_gfx = false;
+		else if (list_elem == "cinematics")
+			options.cinematics = false;
+		else if (list_elem == "fog")
+			options.fog = false;
+		else if (list_elem == "jump_on_tiles")
+			options.jump_on_tiles = false;
+		else if (list_elem == "mattock_animations")
+			options.mattock_animations = false;
+		else if (list_elem == "metadata")
+			options.metadata = false;
+		else if (list_elem == "palettes")
+			options.palettes = false;
+		else if (list_elem == "push_blocks")
+			options.push_blocks = false;
+		else if (list_elem == "scenes")
+			options.scenes = false;
+		else if (list_elem == "sprite_data")
+			options.sprite_data = false;
+		else if (list_elem == "sprite_gfx")
+			options.sprite_gfx = false;
+		else if (list_elem == "stages")
+			options.stages = false;
+		else if (list_elem == "tilemaps")
+			options.tilemaps = false;
+		else if (list_elem == "world_chr_data")
+			options.world_chr_data = false;
+		else
+			throw std::runtime_error(std::format("Unknown patching skip code: {}", list_elem));
+	}
+
+	options.throw_on_cinematic_overflow = !m_allow_cinematic_overflow;
+
+	return options;
 }
 
 void fi::Cli::set_mode(const std::string& p_mode) {
@@ -368,6 +461,12 @@ void fi::Cli::set_mode(const std::string& p_mode) {
 	else if (check_mode(p_mode, appc::CMD_DUMP_CONFIG)) {
 		m_script_mode = fi::ScriptMode::DumpConfig;
 	}
+	else if (check_mode(p_mode, appc::CMD_BUILD_PROJECT)) {
+		m_script_mode = fi::ScriptMode::ProjectBuild;
+	}
+	else if (check_mode(p_mode, appc::CMD_EXTRACT_PROJECT)) {
+		m_script_mode = fi::ScriptMode::ProjectExtract;
+	}
 	else throw std::runtime_error("Unknown command " + p_mode);
 }
 
@@ -399,6 +498,8 @@ void fi::Cli::toggle_flag(std::size_t p_flag_idx) {
 		m_notes = !m_notes;
 	else if (p_flag_idx == 4)
 		m_lilypond_percussion = !m_lilypond_percussion;
+	else if (p_flag_idx == 5)
+		m_allow_cinematic_overflow = !m_allow_cinematic_overflow;
 }
 
 // sad that this is needed in 2026

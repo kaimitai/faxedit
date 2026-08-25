@@ -5,6 +5,7 @@
 #include <string>
 #include "fe/Config.h"
 #include "fm/song/MMLSongCollection.h"
+#include "fe/game/GameManager.h"
 
 namespace fi {
 
@@ -15,7 +16,8 @@ namespace fi {
 		MScriptBuild, MScriptExtract,
 		BScriptBuild, BScriptExtract,
 		MiscBuild, MiscExtract,
-		DumpConfig
+		DumpConfig,
+		ProjectBuild, ProjectExtract
 	};
 
 	class Cli {
@@ -24,7 +26,8 @@ namespace fi {
 
 		std::string m_in_file, m_out_file, m_source_rom, m_region;
 		bool m_strict, m_shop_comments, m_overwrite, m_notes,
-			m_lilypond_percussion;
+			m_lilypond_percussion, m_allow_cinematic_overflow;
+		std::vector<std::string> m_patch_skips;
 		fe::Config m_config;
 
 		void set_mode(const std::string& p_mode);
@@ -36,7 +39,13 @@ namespace fi {
 
 		void output_oe_on_windows(void) const;
 
-		// main logic
+		// project
+		void project_to_nes(const std::string& p_xml_filename, const std::string& p_out_filename,
+			const std::string& p_source_rom_filename);
+		void nes_to_project(const std::string& p_xml_filename, const std::string& p_out_filename,
+			bool p_overwrite);
+
+		// iscripts
 		void asm_to_nes(const std::string& p_asm_filename,
 			const std::string& p_nes_filename,
 			const std::string& p_source_rom_filename,
@@ -95,6 +104,8 @@ namespace fi {
 
 		// common
 		std::vector<byte> load_rom_and_config(const std::string& p_nes_filename);
+		fe::Game load_game(const std::string& p_nes_filename);
+		fe::game::RomPatchOptions get_rom_patch_options(void) const;
 		bool check_mode(const std::string& p_mode,
 			const std::pair<std::string, std::string>& p_cmds);
 
