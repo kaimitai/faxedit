@@ -314,6 +314,10 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevCastSpell | Byte | Initializes spell 0-4 at the player without using MP or checking input. It is silent and starts moving after the script returns to gameplay. Other values do nothing | AtlasDevCastSpell 2 |
 | AtlasDevIfMagicActive | Label | Uses the game's visible-magic sign test. Valid active states are 0-11, including dormant state 9 | AtlasDevIfMagicActive @spell_active |
 | AtlasDevClearVisibleMagic | None | Ends the current visible-magic state. Its auxiliary bytes are left unchanged, matching the vanilla clear | AtlasDevClearVisibleMagic |
+| AtlasDevSpawnMagicAt | Byte, Byte, Byte | Initializes spell 0-4 at packed metatile YX, facing exactly 0 left or 1 right. A valid call replaces the one visible projectile, costs no MP and starts moving after the script returns | AtlasDevSpawnMagicAt 2 $74 1 |
+| AtlasDevCastSpellFromEntity | Byte, Byte | Initializes spell 0-4 from a live entity slot's pixel position and facing. Invalid/free slots do nothing; a valid call replaces the one visible projectile and costs no MP | AtlasDevCastSpellFromEntity 3 1 |
+| AtlasDevSetMagicPosition | Byte | Teleports a valid active magic state to packed metatile YX and clears its fractional coordinates. Inactive/invalid states and Y outside 0-12 do nothing | AtlasDevSetMagicPosition $74 |
+| AtlasDevSetMagicFacing | Byte | Redirects a valid active magic state left (0) or right (1), preserving every other flag. Other directions and inactive/invalid states do nothing | AtlasDevSetMagicFacing 0 |
 
 Entity health checks do not need another runtime handler. Field 6 is live HP:
 
