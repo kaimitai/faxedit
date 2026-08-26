@@ -4460,6 +4460,202 @@ word fh::HackManager::apply_AtlasDevClearVisibleMagic(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevSpawnMagicAt Magic PackedYX Direction
+//
+// Rebuilds the complete eight-byte visible-magic initializer at an explicit
+// metatile origin. PackedYX uses the screen-list convention (Y high nibble,
+// X low nibble); Direction is exactly 0 left or 1 right. Like CastSpell, a
+// valid call replaces the single current projectile and does not spend MP.
+word fh::HackManager::apply_AtlasDevSpawnMagicAt(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // magic
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // PackedYX
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // direction
+	code.pha();
+	code.cmp_imm(0x02);
+	code.bcs("@drop");
+	code.tsx();
+	code.lda_abs_x(0x0102); // PackedYX
+	code.cmp_imm(0xd0);
+	code.bcs("@drop");
+	code.lda_abs_x(0x0103); // magic
+	code.cmp_imm(0x05);
+	code.bcs("@drop");
+	code.tay();
+	code.sta_abs(RAM::VisibleMagicState);
+
+	code.lda_abs_x(0x0101); // direction
+	code.beq("@left");
+	code.lda_imm(0x40);
+	code.label("@left");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+
+	code.lda_abs_x(0x0102);
+	code.db(0x0a); code.db(0x0a); code.db(0x0a); code.db(0x0a);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_abs_x(0x0102);
+	code.and_imm(0xf0);
+	code.cpy_imm(0x01);
+	code.beq("@store_y");
+	code.cpy_imm(0x02);
+	code.beq("@store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+
+	code.label("@drop");
+	code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevCastSpellFromEntity Slot Magic
+//
+// Uses a live slot's pixel coordinates and maps its bit-0 facing flag to the
+// visible-magic block's bit-6 direction flag. A free or invalid slot and an
+// invalid magic id are exact no-ops after both operands are consumed.
+word fh::HackManager::apply_AtlasDevCastSpellFromEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // slot
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // magic
+	code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); // slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.lda_abs_x(0x0101); // magic
+	code.cmp_imm(0x05);
+	code.bcs("@drop");
+	code.tay();
+	code.lda_abs_x(0x0102);
+	code.tax(); // entity slot; Y keeps magic
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+	code.tya();
+	code.sta_abs(RAM::VisibleMagicState);
+
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0x01);
+	code.beq("@entity_left");
+	code.lda_imm(0x40);
+	code.label("@entity_left");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+	code.db(0xb5); code.db(RAM::ZP_EntityX); // LDA $BA,X
+	code.sta_abs(RAM::VisibleMagicX);
+	code.db(0xb5); code.db(RAM::ZP_EntityY); // LDA $C2,X
+	code.cpy_imm(0x01);
+	code.beq("@entity_store_y");
+	code.cpy_imm(0x02);
+	code.beq("@entity_store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@entity_store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+
+	code.label("@drop");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetMagicPosition PackedYX
+//
+// Teleports only a valid active magic state (0..11). Fractional coordinates
+// are cleared and the vanilla collision scratch is rebuilt on the next tick.
+word fh::HackManager::apply_AtlasDevSetMagicPosition(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.cmp_imm(0xd0);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bmi("@drop");
+	code.cmp_imm(0x0c);
+	code.bcs("@drop");
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.tsx();
+	code.lda_abs_x(0x0101);
+	code.db(0x0a); code.db(0x0a); code.db(0x0a); code.db(0x0a);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_abs_x(0x0101);
+	code.and_imm(0xf0);
+	code.sta_abs(RAM::VisibleMagicY);
+	code.label("@drop");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetMagicFacing Direction
+//
+// Redirects only a valid active magic state. Bit 7 is Tilte's vertical phase
+// and is preserved; only bit 6 changes. Direction must be exactly 0 or 1.
+word fh::HackManager::apply_AtlasDevSetMagicFacing(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.cmp_imm(0x02);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bmi("@drop");
+	code.cmp_imm(0x0c);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.and_imm(0xbf);
+	code.tsx();
+	code.db(0xbc); code.dw(0x0101); // LDY direction
+	code.beq("@store");
+	code.ora_imm(0x40);
+	code.label("@store");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.label("@drop");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr, word end_handler_addr) const {
 	klib::Asm6502 code;
@@ -5128,6 +5324,18 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevClearVisibleMagic:
 			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSpawnMagicAt:
+			cpu_addr = apply_AtlasDevSpawnMagicAt(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevCastSpellFromEntity:
+			cpu_addr = apply_AtlasDevCastSpellFromEntity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMagicPosition:
+			cpu_addr = apply_AtlasDevSetMagicPosition(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMagicFacing:
+			cpu_addr = apply_AtlasDevSetMagicFacing(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:
