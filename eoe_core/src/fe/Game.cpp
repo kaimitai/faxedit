@@ -5,18 +5,21 @@
 #include "Config.h"
 #include "ROM_Manager.h"
 #include <algorithm>
+#include <format>
 #include <utility>
 
 fe::Game::Game(void) :
 	m_jump_on_animation{ 0x34, 0x2c, 0x5c, 0x13 },
 	m_push_block(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-	m_sw_door_type{ SameWorldDoorType::Normal }
+	m_sw_door_type{ SameWorldDoorType::Normal },
+	m_tileset_type{ TilesetType::Normal }
 {
 }
 
 fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
-	m_sw_door_type{ SameWorldDoorType::Normal }
+	m_sw_door_type{ SameWorldDoorType::Normal },
+	m_tileset_type{ p_config.boolean_or(c::ID_DOUBLE_TILESET, false) ? TilesetType::Doubled : TilesetType::Normal }
 {
 	// start of 8-byte map from world to bank no
 	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
@@ -170,12 +173,26 @@ std::size_t fe::Tileset::end_index(void) const {
 
 void fe::Game::generate_tilesets(const fe::Config& p_config) {
 	std::size_t l_tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
-	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
+	std::size_t l_chr_wtile_offset{ fe::ROM_Manager::bank_no_to_file_offset(static_cast<byte>(p_config.constant(c::ID_TILESET_PRIMARY_BANK))) };
+	std::size_t l_chr_wtile_offset_2nd{ 0 };
 	std::size_t l_tileset_to_addr{ p_config.constant(c::ID_WORLD_TILESET_TO_ADDR_OFFSET) };
 	std::size_t l_tileset_chr_ppu_start_offset{ l_tileset_to_addr + 2 * l_tileset_count };
 	std::size_t l_tileset_chr_count_offset{ l_tileset_chr_ppu_start_offset + l_tileset_count };
 
-	for (std::size_t i{ m_tilesets.size() }; i < l_tileset_count; ++i) {
+	std::size_t l_expected_total_count{ l_tileset_count };
+	if (m_tileset_type == fe::TilesetType::Doubled) {
+		l_chr_wtile_offset_2nd = fe::ROM_Manager::bank_no_to_file_offset(static_cast<byte>(p_config.constant(c::ID_TILESET_SECONDARY_BANK)));
+		l_expected_total_count *= 2;
+	}
+
+	if (!m_tilesets.empty() && m_tilesets.size() != l_expected_total_count)
+		throw std::runtime_error(std::format("Expected {} tilesets, but found {}", l_expected_total_count, m_tilesets.size()));
+	else if (m_tilesets.size() == l_expected_total_count)
+		return;
+
+	std::vector<fe::Tileset> secondary_tilesets;
+
+	for (std::size_t i{ 0 }; i < l_tileset_count; ++i) {
 		auto l_local_addr_lo{ l_tileset_to_addr + 2 * i };
 		auto l_local_addr_hi{ l_tileset_to_addr + 2 * i + 1 };
 		std::size_t l_local_addr{
@@ -200,7 +217,19 @@ void fe::Game::generate_tilesets(const fe::Config& p_config) {
 				l_local_addr + 16 * tidx));
 
 		m_tilesets.push_back(l_tileset);
+
+		if (m_tileset_type == fe::TilesetType::Doubled) {
+			const std::size_t l_local_addr_2nd{ l_chr_wtile_offset_2nd + l_local_addr - l_chr_wtile_offset };
+
+			fe::Tileset l_tileset_2nd(l_tileset_start);
+			for (std::size_t tidx{ 0 }; tidx < l_tile_count; ++tidx)
+				l_tileset_2nd.tiles.push_back(klib::NES_tile(m_rom_data,
+					l_local_addr_2nd + 16 * tidx));
+			secondary_tilesets.push_back(l_tileset_2nd);
+		}
 	}
+
+	m_tilesets.insert(end(m_tilesets), begin(secondary_tilesets), end(secondary_tilesets));
 }
 
 std::size_t fe::Game::get_pointer_address(std::size_t p_offset,

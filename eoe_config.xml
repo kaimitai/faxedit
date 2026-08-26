@@ -14,6 +14,25 @@
 			<!-- look for "Dialogue" left behind after dialogue section relocation -->
 			<signature no="0" offset="0x35f50" values="$44,$69,$61,$6c,$6f,$67,$75,$65" />
 		</region>
+		<!-- expanded versions of the vanilla regions -->
+		<region name="us-512" file_size="524304" compatible_regions="512,us">
+			<!-- look for address of script ptr table (lo bytes start) -->
+			<signature no="0" offset="0x3025d" values="$6b,$9f" />
+		</region>
+		<!-- look for addresses of script (lo bytes start) and music ptr table -->
+		<region name="us-rev-a-512" file_size="524304" compatible_regions="512,us-rev-a">
+			<signature no="0" offset="0x3025d" values="$b6,$9f" />
+			<signature no="1" offset="0x14096" values="$fa,$8e" />
+		</region>
+		<!-- look for address of script ptr table (lo bytes start) -->
+		<region name="eu-512" file_size="524304" compatible_regions="512,eu">
+			<signature no="0" offset="0x3025d" values="$b6,$9f" />
+		</region>
+		<!-- look for address of script ptr table (lo bytes start) -->
+		<region name="jp-512" file_size="524304" compatible_regions="512,jp">
+			<signature no="0" offset="0x3025d" values="$67,$a3" />
+		</region>
+		<!-- vanilla regions -->
 		<region name="randum">
 			<!-- look for "RANDUMIZER" -->
 			<signature no="0" offset="0x31ddc" values="$f1,$e0,$ed,$e3,$f4,$ec,$e8,$f9,$e4,$f1" />
@@ -178,7 +197,6 @@
 		<const name="music_channel_pitch_offset" region="eu" value="0x145cb" />
 		<!-- chr tile offsets -->
 		<const name="world_tileset_count" value="9" />
-		<const name="chr_world_tile_offset" value="0x10010" />
 		<const name="chr_hud_tile_offset" value="0x28150" />
 		<const name="world_tileset_to_addr_offset" value="0x3cf17" />
 		<!-- scene offsets -->
@@ -359,6 +377,10 @@
 		<const name="hack_decode_req_addr" value="$dfa8" />
 		<const name="hack_load_world_addr" value="$dfb7" />
 		<const name="hack_handle_palette_addr" value="$f389" />
+		<!-- double tileset hack -->
+		<const name="hack_double_tileset_addr" value="$c033" />
+		<const name="tileset_primary_bank" value="0x04" />
+		<const name="tileset_secondary_bank" value="29" region="en-transl,512" />
 		<!-- script routine addresses needed for opcode library extension -->
 		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
 		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />
@@ -392,9 +414,9 @@
 		<const name="rom_hud_draw_timer" region="jp,en-transl" value="$fa58" />
 		<const name="rom_hud_draw_timer" value="$f990" />
 		<!-- tilemap change hack injection points -->
-		<const name="hack_tm_change_bank" region="en-transl" value="30" />
+		<const name="hack_tm_change_bank" region="en-transl,512" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
-		<const name="hack_tm_change_cpu_addr" region="en-transl" value="$8000" />
+		<const name="hack_tm_change_cpu_addr" region="en-transl,512" value="$8000" />
 		<const name="hack_tm_change_cpu_addr" value="$a000" />
 		<const name="hack_tm_handler_cpu_addr" value="$e894" />
 		<const name="hack_tm_handler_table_cpu_addr" value="$cb0c" />
@@ -419,7 +441,7 @@
 	<!-- value sets -->
 	<sets>
 		<!-- banks which can be used for tilemap data -->
-		<set name="tilemap_banks" values="0,1,2,9,17,18,19,20,21,22,23,24,25,26,27,28,29,30" region="en-transl" />
+		<set name="tilemap_banks" values="0,1,2,9,17,18,19,20,21,22,23,24,25,26,27,28" region="en-transl,512" />
 		<set name="tilemap_banks" values="0,1,2,9" />
 		<!-- reserved string indexes - will not be re-indexed or discarded by the assembler -->
 		<!-- strings called directly from the action handler; like "You can't carry any more." -->
@@ -438,8 +460,10 @@
 		<!-- detect the randomizer sameworld door to stage door hack -->
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
+		<!-- detect the double tileset hack -->
+		<bool name="double_tileset" condition="0x3c043=$4b,$46,$00" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
-		<bool name="duplicate_static_bank" value="true" region="en-transl" />
+		<bool name="duplicate_static_bank" value="true" region="en-transl,512" />
 		<!-- whether to clear unused rom data with $ff in the sprite gfx banks -->
 		<bool name="clear_unused_sprite_gfx_space" value="true" />
 		<!-- link flag RAM to SRAM for translation hack and derivatives -->
@@ -758,6 +782,14 @@
 			<entry byte="$02" str="End-Game Room" />
 		</byte_to_string_map>
 		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
+		<byte_to_string_map name="bank15_free_space" region="eu-512,us-512,us-rev-a-512">
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3fd0a:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
 			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
 			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
@@ -773,6 +805,14 @@
 			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
 			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
 			<entry byte="$05" str="0x3ffde:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="jp-512">
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+			<entry byte="$05" str="0x3fdef:0x3fff0" original="bank end unused space" />
 		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="jp">
 			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
@@ -1935,6 +1975,10 @@
 			<entry key="AtlasDevCastSpell" value="Args=Byte" />
 			<entry key="AtlasDevIfMagicActive" value="Flow=Jump" />
 			<entry key="AtlasDevClearVisibleMagic" />
+			<entry key="AtlasDevSpawnMagicAt" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevCastSpellFromEntity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSetMagicPosition" value="Args=Byte" />
+			<entry key="AtlasDevSetMagicFacing" value="Args=Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

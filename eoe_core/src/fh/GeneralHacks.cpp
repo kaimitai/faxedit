@@ -80,6 +80,174 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 	return next_cpu_addr;
 }
 
+// dynamically added to bank 14, but with hooks and constants in bank 15
+word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const word gold{ p_hack.word_or("gold", 1500) };
+	const bool ring_of_elf{ p_hack.bool_or("ring_of_elf", true) };
+
+	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Health);
+	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Mana);
+
+	klib::Asm6502 code;
+
+	// install hook from bank 15
+	code.jsr(cpu_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_Start_JSR_Game_LoadFirstLevel);
+
+	// new routine
+	code.lda_imm(gold % 256);
+	code.sta_abs(RAM::PlayerGold_L);
+	code.lda_imm(gold / 256);
+	code.sta_abs(RAM::PlayerGold_M);
+	if (ring_of_elf) {
+		// start with special items bit 7 set (ring of elf)
+		code.lda_imm(0b10000000);
+		code.sta_abs(RAM::SpecialItemBitfield);
+	}
+	code.jsr(ROM::Game_LoadFirstLevel);
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+}
+
+// two item drops depend on quest flags; wyvern mattock and stone dropper wing boots
+// this hack will check whether the player has the item in inventory (or equipped)
+// param: type=both,wing_boots,mattock
+word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	const std::string type{ p_hack.string_or("type", "both") };
+	const bool hack_mattock{ type == "mattock" || type == "both" };
+	const bool hack_wing_boots{ type == "wing_boots" || type == "both" };
+
+	if (!hack_mattock && !hack_wing_boots)
+		throw std::runtime_error(std::format("Invalid QuestFlagItemDrops hack type: {}", type));
+
+	klib::Asm6502 code;
+	/*
+	A = item ID
+	Returns:
+		Z = 0 if the player has the item
+		Z = 1 if the player does not have the item
+	Preserves: X
+	Clobbers: A, Y
+	Could be made a generic helper if other hacks need this
+	*/
+
+	code.label("@check_has_item");
+	code.cmp_abs(RAM::SelectedItem);
+	code.beq("@found");
+	code.ldy_imm(0x00);
+
+	code.label("@loop");
+	code.cpy_abs(RAM::NumberOfItems);
+	code.beq("@not_found");
+	code.cmp_abs_y(RAM::ItemInventory);
+	code.beq("@found");
+	code.iny();
+	code.bne("@loop");
+
+	code.label("@not_found");
+	code.lda_imm(0x00);
+	code.rts();
+
+	code.label("@found");
+	code.lda_imm(0x01);
+	code.rts();
+
+	// Item-specific entry points.
+	word check_mattock{ 0 };
+	if (hack_mattock) {
+		check_mattock = static_cast<word>(cpu_addr + code.size());
+		code.lda_imm(0x09);
+		code.bne("@check_has_item");
+	}
+	word check_wing_boots{ 0 };
+	if (hack_wing_boots) {
+		check_wing_boots = static_cast<word>(cpu_addr + code.size());
+		code.lda_imm(0x0f);
+		code.bne("@check_has_item");
+	}
+
+	// install the routine in bank 14
+	const word result{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr) };
+
+	// replace vanilla quest-flag checks with inventory checks.
+	if (hack_mattock) {
+		code.jsr(check_mattock);
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests);
+
+		// do not set quest flag when picking up the item
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpMattockWithQuest);
+
+		// do not reset the quest flag when player dies
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_Spawn_LDA_Quests);
+	}
+	if (hack_wing_boots) {
+		code.jsr(check_wing_boots);
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests);
+
+		// do not set quest flag when picking up the item
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpWingBootsWithQuest);
+	}
+
+	return result;
+}
+
+word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const bool buildings{ p_hack.bool_or("buildings", true) };
+	const bool state{ p_hack.bool_or("state", true) };
+	const bool selling{ p_hack.bool_or("selling", true) };
+	const word price{ p_hack.word_or("price", 100) };
+
+	klib::Asm6502 code;
+
+	// compare against nonexistent world $ff instead of building world $04
+	if (buildings)
+		klib::Asm6502::apply_byte(p_rom, 0xff, 12, ROM::PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo);
+
+	if (state) {
+		code.nop(2);
+		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_BNE_Return);
+	}
+
+	if (!selling)
+		return cpu_addr;
+	else {
+		// install hook
+		code.jmp(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 12, ROM::ShowSellMenu_JSR_FindSellMenuEntry);
+
+		// preserve the original item ID in X when no sell-table entry is found
+		code.nop();
+		code.apply_hack_and_clear(p_rom, 12, ROM::FindSellMenuEntry_TAX);
+
+		// the sell-any-item routine itself
+		code.jsr(ROM::FindSellMenuEntry);
+		code.cmp_imm(0xff);
+		code.beq("@shop_entry_missing");
+		// item has a normal sell-table entry; continue with vanilla logic
+		code.jmp(ROM::ShowSellMenu_LDX_StringCount);
+
+		code.label("@shop_entry_missing");
+		code.txa();
+		code.ldx_abs(RAM::UIStringCount);
+		code.sta_abs_x(RAM::UIDataArray);
+		code.lda_imm(price % 256);
+		code.sta_abs_x(RAM::ShopItemCostsLo);
+		code.lda_imm(price / 256);
+		code.jmp(ROM::ShowSellMenu_STA_CostHi);
+		
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+	}
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -95,6 +263,15 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr,
 				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
+			break;
+		case fh::GeneralHackLib::FastStart:
+			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::QuestFlagItemDrops:
+			cpu_addr = install_QuestFlagItemDrops(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::FlexibleItems:
+			cpu_addr = install_FlexibleItems(p_config, p_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

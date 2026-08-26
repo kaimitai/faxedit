@@ -18,7 +18,13 @@ namespace fh {
 		constexpr word TextBox_ClearForPortraitAndText{ 0x822b };
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
 		constexpr word Menu_WaitInput{ 0x84ed };
+		constexpr word ShowSellMenu_JSR_FindSellMenuEntry{ 0x8691 };
+		constexpr word ShowSellMenu_LDX_StringCount{ 0x8696 };
+		constexpr word ShowSellMenu_STA_CostHi{ 0x86a9 };
+		constexpr word FindSellMenuEntry{ 0x8704 };
+		constexpr word FindSellMenuEntry_TAX{ 0x8716 };
 		constexpr word Portrait_Pump{ 0x87b0 };
+		constexpr word PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo{ 0x8b87 };
 		constexpr word ItemNameDraw{ 0x8c36 };
 		constexpr word IconDraw{ 0x8c58 };
 		constexpr word OpenWindowDraw{ 0x8ef1 };
@@ -30,7 +36,14 @@ namespace fh {
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
+		// bank 14 addresses
+		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
+		constexpr word SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests{ 0xa418 };
+
 		// bank 15 addresses
+		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
+		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
+		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };
@@ -39,6 +52,10 @@ namespace fh {
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
 		constexpr word Sprites_FlipRanges{ 0xcba8 };
+		constexpr word MMC1_UpdateROMBank_SerialWrite{ 0xcc21 };
+		constexpr word MMC1_EnsurePRG_fastPath{ 0xccd2 };
+		constexpr word Area_LoadTiles{ 0xceb8 };
+		constexpr word Area_LoadTiles_LDX_Bank{ 0xcee1 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
 		// Stages the selected sprite palette and stores its index at $03d4.
@@ -51,7 +68,12 @@ namespace fh {
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
+		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
+		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
+		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_LoadFirstLevel{ 0xdea7 };
+		constexpr word Start_Health{ 0xdeaf };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
@@ -108,6 +130,7 @@ namespace fh {
 		constexpr byte ZP_CurrentWorld{ 0x24 };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
+		constexpr byte ZP_TilesIndex = 0x95;
 		constexpr byte ZP_PlayerPosX = 0x9e;
 		constexpr byte ZP_PlayerPosY = 0xa1;
 		constexpr byte ZP_PlayerPosArgX = 0xb5;
@@ -140,6 +163,9 @@ namespace fh {
 		// textbox. Vanilla root $1f is reserved for the death dialogue.
 		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
+		constexpr word UIStringCount{ 0x021f };
+		constexpr word UIDataArray{ 0x0220 };
+		constexpr word ShopItemCostsLo{ 0x0228 };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
 		// references in the vanilla PRG gives 72 for $02cc, 141 for $02dc and
@@ -164,6 +190,9 @@ namespace fh {
 		constexpr byte ZP_EntityY{ 0xc2 };
 		constexpr byte ZP_PlayerX{ 0x9e };
 		constexpr byte ZP_PlayerY{ 0xa1 };
+		constexpr word ItemInventory{ 0x03ad };
+		constexpr word SelectedItem{ 0x03c1 };
+		constexpr word NumberOfItems{ 0x03c6 };
 		constexpr word World_DefaultMusic{ 0x03d1 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
 		constexpr word SelectedWeapon{ 0x03bd };
@@ -264,6 +293,9 @@ namespace fh {
 		constexpr char ID_HACK_SET_PENDING_STAGE_ADDR[]{ "hack_set_pending_stage_addr" };
 		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
 		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
+
+		// double tileset hack
+		constexpr char ID_HACK_DOUBLE_TILESET_ADDR[]{ "hack_double_tileset_addr" };
 
 		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };

@@ -59,7 +59,9 @@ namespace fh {
 		AtlasDevSpawnEntity, AtlasDevDropItem, AtlasDevDespawnEntity,
 		AtlasDevDespawnAllEntities, AtlasDevSetMetatile, AtlasDevSetScreenEvent,
 		AtlasDevApplyEffect, AtlasDevCastSpell, AtlasDevIfMagicActive,
-		AtlasDevClearVisibleMagic,
+		AtlasDevClearVisibleMagic, AtlasDevSpawnMagicAt,
+		AtlasDevCastSpellFromEntity, AtlasDevSetMagicPosition,
+		AtlasDevSetMagicFacing,
 		// Keep Count last.
 		Count
 	};
@@ -226,6 +228,10 @@ namespace fh {
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSpawnMagicAt(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevCastSpellFromEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMagicPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetMagicFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -258,14 +264,23 @@ namespace fh {
 			word cpu_addr, word end_handler_addr) const;
 
 		// general hack library implementations
+		// bank 15 general hacks
 		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
 		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 			bool p_stage_door_hack_installed = true) const;
+		// bank 14 general hacks
+		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
+		word install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
+		// bank 12 general hacks
+		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 
 		// util
 		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;
-		word cfg_word(const fe::Config& p_config, const std::string& p_id) const;
-		byte cfg_byte(const fe::Config& p_config, const std::string& p_id) const;
+		static word cfg_word(const fe::Config& p_config, const std::string& p_id);
+		static byte cfg_byte(const fe::Config& p_config, const std::string& p_id);
 		std::vector<word> read_script_opcode_addrs(const std::vector<byte>& p_rom, std::size_t p_opcode_count) const;
 		std::size_t write_script_opcode_table(std::vector<byte>& p_rom, word cpu_addr,
 			const std::vector<word>& p_jump_table) const;
@@ -276,6 +291,7 @@ namespace fh {
 		HackManager(void) = default;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
+		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -283,6 +299,7 @@ namespace fh {
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 			const fe::Game* p_game = nullptr) const;
+		static void install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom);
 	};
 
 }

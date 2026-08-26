@@ -80,7 +80,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		std::size_t l_ts_no{ m_game->get_default_tileset_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
 		std::size_t l_palette_no{ m_game->get_default_palette_no(m_sel_gfx_ts_world, m_sel_gfx_ts_screen) };
 
-		imgui_text(std::format("Tileset {}: {}", l_ts_no, m_cache.m_labels_tilesets.at(l_ts_no)));
+		imgui_text(std::format("Tileset {}: {}", l_ts_no, get_description(static_cast<byte>(l_ts_no), m_cache.m_labels_tilesets)));
 		imgui_text(std::format("Palette: {}",
 			get_description(static_cast<byte>(l_palette_no), m_cache.m_labels_palettes)
 		));

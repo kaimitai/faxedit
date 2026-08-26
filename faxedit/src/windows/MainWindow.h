@@ -40,9 +40,8 @@ namespace fe {
 		std::map<byte, std::string> m_labels_cmd_byte,
 			m_labels_door_reqs, m_labels_block_props,
 			m_labels_palettes, m_labels_spec_sprite_sets,
-			m_labels_music, m_labels_buildings;
-		std::vector<std::string> m_labels_worlds, m_labels_sprites,
-			m_labels_tilesets;
+			m_labels_music, m_labels_buildings, m_labels_tilesets;
+		std::vector<std::string> m_labels_worlds, m_labels_sprites;
 		// counts
 		std::size_t m_sprite_count, m_iscript_count, m_music_count,
 			m_command_byte_count;

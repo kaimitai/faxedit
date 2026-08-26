@@ -105,6 +105,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 		}
 
 		if (ImGui::BeginTabItem("Advanced")) {
+			const static bool ls_secondary_chr_bank{ m_config.has_constant(c::ID_TILESET_SECONDARY_BANK) };
 
 			ImGui::SeparatorText("Debug");
 			ui::imgui_checkbox("Enable Debug Features", m_settings.m_enable_config_dump);
@@ -138,6 +139,20 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			}
 			catch (const std::exception& ex) {
 				add_message(ex.what(), fe::MsgType::Error);
+			}
+
+			if (ls_secondary_chr_bank) {
+				ImGui::SeparatorText("Apply Double Tileset Hack");
+
+				if (ui::imgui_button("Enable Double Tileset", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
+					m_game->m_tileset_type != fe::TilesetType::Normal)) try {
+					fe::game::migrate_double_tileset_data(m_game.value());
+					generate_world_tilesets();
+					add_message("Double Tileset enabled!", fe::MsgType::Success);
+				}
+				catch (const std::exception& ex) {
+					add_message(ex.what(), fe::MsgType::Error);
+				}
 			}
 
 			ImGui::SeparatorText("Persistent Door Helper");

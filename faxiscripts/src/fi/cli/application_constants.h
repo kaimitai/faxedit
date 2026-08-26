@@ -27,13 +27,17 @@ namespace fi {
 		inline const std::pair<std::string, std::string> CMD_EXTRACT_MISC{ "extract-misc" , "xmisc" };
 		inline const std::pair<std::string, std::string> CMD_BUILD_MISC{ "build-misc" , "bmisc" };
 		inline const std::pair<std::string, std::string> CMD_DUMP_CONFIG{ "dump-config" , "dc" };
+		inline const std::pair<std::string, std::string> CMD_EXTRACT_PROJECT{ "extract-project" , "xproj" };
+		inline const std::pair<std::string, std::string> CMD_BUILD_PROJECT{ "build-project" , "bproj" };
+		inline const std::pair<std::string, std::string> CMD_EXPAND_ROM{ "expand-rom" , "expand" };
 
 		inline const std::vector<std::pair<std::string, std::string>> CLI_FLAGS{
 			{"--no-shop-comments", "-p"},
 			{"--original-size", "-o"},
 			{"--force", "-f"},
 			{"--no-notes", "-n"},
-			{"--lilypond-percussion", "-lp"}
+			{"--lilypond-percussion", "-lp"},
+			{"--allow-cin-overflow", "-aco"}
 		};
 
 		inline const std::pair<std::string, std::string> CLI_SOURCE_ROM
@@ -41,6 +45,9 @@ namespace fi {
 
 		inline const std::pair<std::string, std::string> CLI_REGION
 		{ "--region", "-r" };
+
+		inline const std::pair<std::string, std::string> CLI_SKIP_PATCHING
+		{ "--skip", "-skip" };
 
 	}
 }

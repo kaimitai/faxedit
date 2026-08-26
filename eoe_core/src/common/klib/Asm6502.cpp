@@ -115,68 +115,73 @@ void klib::Asm6502::branch(byte p_opcode, const std::string& p_label) {
 	emit(byte{ 0 }); // patched later
 }
 
-// opcode constants
-constexpr byte OP_ORA_IMM{ 0x09 };
-constexpr byte OP_ASL_A{ 0x0a };
-constexpr byte OP_BPL{ 0x10 };
-constexpr byte OP_CLC{ 0x18 };
-constexpr byte OP_ORA_ABS_Y{ 0x19 };
-constexpr byte OP_JSR{ 0x20 };
-constexpr byte OP_AND_ZP{ 0x25 };
-constexpr byte OP_AND_IMM{ 0x29 };
-constexpr byte OP_BMI{ 0x30 };
-constexpr byte OP_SEC{ 0x38 };
-constexpr byte OP_AND_ABS_Y{ 0x39 };
-constexpr byte OP_PHA{ 0x48 };
-constexpr byte OP_EOR_IMM{ 0x49 };
-constexpr byte OP_LSR_A{ 0x4a };
-constexpr byte OP_JMP{ 0x4c };
-constexpr byte OP_RTS{ 0x60 };
-constexpr byte OP_ADC_ZP{ 0x65 };
-constexpr byte OP_PLA{ 0x68 };
-constexpr byte OP_ADC_IMM{ 0x69 };
-constexpr byte OP_JMP_IND{ 0x6c };
-constexpr byte OP_ADC_ABS_X{ 0x7d };
-constexpr byte OP_STY_ZP{ 0x84 };
-constexpr byte OP_STA_ZP{ 0x85 };
-constexpr byte OP_STA_ABS{ 0x8d };
-constexpr byte OP_TXA{ 0x8a };
-constexpr byte OP_BCC{ 0x90 };
-constexpr byte OP_STA_IND_Y{ 0x91 };
-constexpr byte OP_TYA{ 0x98 };
-constexpr byte OP_STA_ABS_X{ 0x9d };
-constexpr byte OP_LDY_IMM{ 0xa0 };
-constexpr byte OP_LDX_IMM{ 0xa2 };
-constexpr byte OP_LDY_ZP{ 0xa4 };
-constexpr byte OP_LDA_ZP{ 0xa5 };
-constexpr byte OP_TAY{ 0xa8 };
-constexpr byte OP_LDA_IMM{ 0xa9 };
-constexpr byte OP_TAX{ 0xaa };
-constexpr byte OP_LDA_ABS{ 0xad };
-constexpr byte OP_BCS{ 0xb0 };
-constexpr byte OP_LDA_IND_Y{ 0xb1 };
-constexpr byte OP_LDA_ABS_Y{ 0xb9 };
-constexpr byte OP_TSX{ 0xba };
-constexpr byte OP_LDA_ABS_X{ 0xbd };
-constexpr byte OP_LDX_ABS_Y{ 0xbe };
-constexpr byte OP_CPY_IMM{ 0xc0 };
-constexpr byte OP_CMP_ZP{ 0xc5 };
-constexpr byte OP_DEC_ZP{ 0xc6 };
-constexpr byte OP_DEX{ 0xca };
-constexpr byte OP_CPY_ABS{ 0xcc };
-constexpr byte OP_CMP_ABS{ 0xcd };
-constexpr byte OP_INY{ 0xc8 };
-constexpr byte OP_CMP_IMM{ 0xc9 };
-constexpr byte OP_BNE{ 0xd0 };
-constexpr byte OP_CMP_ABS_Y{ 0xd9 };
-constexpr byte OP_CMP_ABS_X{ 0xdd };
-constexpr byte OP_DEC_ABS_X{ 0xde };
-constexpr byte OP_CPX_IMM{ 0xe0 };
-constexpr byte OP_INX{ 0xe8 };
-constexpr byte OP_SBC_IMM{ 0xe9 };
-constexpr byte OP_NOP{ 0xea };
-constexpr byte OP_BEQ{ 0xf0 };
-constexpr byte OP_SBC_ABS_X{ 0xfd };
+namespace {
+	// opcode constants
+	constexpr byte OP_ORA_IMM{ 0x09 };
+	constexpr byte OP_ASL_A{ 0x0a };
+	constexpr byte OP_BPL{ 0x10 };
+	constexpr byte OP_CLC{ 0x18 };
+	constexpr byte OP_ORA_ABS_Y{ 0x19 };
+	constexpr byte OP_JSR{ 0x20 };
+	constexpr byte OP_AND_ZP{ 0x25 };
+	constexpr byte OP_AND_IMM{ 0x29 };
+	constexpr byte OP_BMI{ 0x30 };
+	constexpr byte OP_SEC{ 0x38 };
+	constexpr byte OP_AND_ABS_Y{ 0x39 };
+	constexpr byte OP_PHA{ 0x48 };
+	constexpr byte OP_EOR_IMM{ 0x49 };
+	constexpr byte OP_LSR_A{ 0x4a };
+	constexpr byte OP_JMP{ 0x4c };
+	constexpr byte OP_RTS{ 0x60 };
+	constexpr byte OP_ADC_ZP{ 0x65 };
+	constexpr byte OP_PLA{ 0x68 };
+	constexpr byte OP_ADC_IMM{ 0x69 };
+	constexpr byte OP_JMP_IND{ 0x6c };
+	constexpr byte OP_ADC_ABS_X{ 0x7d };
+	constexpr byte OP_STY_ZP{ 0x84 };
+	constexpr byte OP_STA_ZP{ 0x85 };
+	constexpr byte OP_STX_ZP{ 0x86 };
+	constexpr byte OP_STA_ABS{ 0x8d };
+	constexpr byte OP_TXA{ 0x8a };
+	constexpr byte OP_BCC{ 0x90 };
+	constexpr byte OP_STA_IND_Y{ 0x91 };
+	constexpr byte OP_TYA{ 0x98 };
+	constexpr byte OP_STA_ABS_X{ 0x9d };
+	constexpr byte OP_LDY_IMM{ 0xa0 };
+	constexpr byte OP_LDX_IMM{ 0xa2 };
+	constexpr byte OP_LDY_ZP{ 0xa4 };
+	constexpr byte OP_LDA_ZP{ 0xa5 };
+	constexpr byte OP_LDX_ZP{ 0xa6 };
+	constexpr byte OP_TAY{ 0xa8 };
+	constexpr byte OP_LDA_IMM{ 0xa9 };
+	constexpr byte OP_TAX{ 0xaa };
+	constexpr byte OP_LDA_ABS{ 0xad };
+	constexpr byte OP_LDX_ABS{ 0xae };
+	constexpr byte OP_BCS{ 0xb0 };
+	constexpr byte OP_LDA_IND_Y{ 0xb1 };
+	constexpr byte OP_LDA_ABS_Y{ 0xb9 };
+	constexpr byte OP_TSX{ 0xba };
+	constexpr byte OP_LDA_ABS_X{ 0xbd };
+	constexpr byte OP_LDX_ABS_Y{ 0xbe };
+	constexpr byte OP_CPY_IMM{ 0xc0 };
+	constexpr byte OP_CMP_ZP{ 0xc5 };
+	constexpr byte OP_DEC_ZP{ 0xc6 };
+	constexpr byte OP_DEX{ 0xca };
+	constexpr byte OP_CPY_ABS{ 0xcc };
+	constexpr byte OP_CMP_ABS{ 0xcd };
+	constexpr byte OP_INY{ 0xc8 };
+	constexpr byte OP_CMP_IMM{ 0xc9 };
+	constexpr byte OP_BNE{ 0xd0 };
+	constexpr byte OP_CMP_ABS_Y{ 0xd9 };
+	constexpr byte OP_CMP_ABS_X{ 0xdd };
+	constexpr byte OP_DEC_ABS_X{ 0xde };
+	constexpr byte OP_CPX_IMM{ 0xe0 };
+	constexpr byte OP_INX{ 0xe8 };
+	constexpr byte OP_SBC_IMM{ 0xe9 };
+	constexpr byte OP_NOP{ 0xea };
+	constexpr byte OP_BEQ{ 0xf0 };
+	constexpr byte OP_SBC_ABS_X{ 0xfd };
+}
 
 // jumps and calls
 void klib::Asm6502::jmp(word p_addr) {
@@ -240,9 +245,19 @@ void klib::Asm6502::lda_ind_y(byte p_addr) {
 	emit(p_addr);
 }
 
+void klib::Asm6502::ldx_zp(byte p_addr) {
+	emit(OP_LDX_ZP);
+	emit(p_addr);
+}
+
 void klib::Asm6502::ldx_imm(byte p_value) {
 	emit(OP_LDX_IMM);
 	emit(p_value);
+}
+
+void klib::Asm6502::ldx_abs(word p_addr) {
+	emit(OP_LDX_ABS);
+	emit_word(p_addr);
 }
 
 void klib::Asm6502::ldx_abs_y(word p_addr) {
@@ -286,6 +301,11 @@ void klib::Asm6502::sta_abs_x(word p_addr) {
 
 void klib::Asm6502::sta_ind_y(byte p_addr) {
 	emit(OP_STA_IND_Y);
+	emit(p_addr);
+}
+
+void klib::Asm6502::stx_zp(byte p_addr) {
+	emit(OP_STX_ZP);
 	emit(p_addr);
 }
 

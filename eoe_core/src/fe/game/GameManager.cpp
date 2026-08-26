@@ -1,7 +1,10 @@
 #include "GameManager.h"
 #include "fe/ROM_Manager.h"
+#include "fe/script/ScriptManager.h"
 #include "fe/fe_constants.h"
 #include "fh/fh_constants.h"
+#include "fi/fi_constants.h"
+#include "fi/IScriptLoader.h"
 #include "fe/sprite/fe_sprite_constants.h"
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper_game.h"
@@ -81,6 +84,8 @@ fe::Game fe::game::load_game_xml(
 
 	if (game.m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
 		send_message(p_message, { "Loaded XML uses the sameworld-door to stage-door hack", MsgType::Info });
+	if (game.m_tileset_type == TilesetType::Doubled)
+		send_message(p_message, { "Loaded XML uses the double tileset hack", MsgType::Info });
 
 	return game;
 }
@@ -506,6 +511,12 @@ void fe::game::migrate_stage_door_hack_data(Game& p_game) {
 	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
+void fe::game::migrate_double_tileset_data(Game& p_game) {
+	const auto tilesets{ p_game.m_tilesets };
+	p_game.m_tilesets.insert(end(p_game.m_tilesets), begin(tilesets), end(tilesets));
+	p_game.m_tileset_type = fe::TilesetType::Doubled;
+}
+
 /***** ROM PATCHING - BEGIN ****/
 
 namespace {
@@ -579,6 +590,28 @@ namespace {
 		send_message(p_message, { bank8res, result.bank8_used ? fe::MsgType::Info : fe::MsgType::Error });
 	}
 
+	// helper which reports on available space in bank 12, returns [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank12_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+		const std::size_t rg2_start{ p_config.constant(fi::c::ID_ISCRIPT_RG2_START) };
+		const std::size_t rg2_end{ p_config.constant(fi::c::ID_ISCRIPT_RG2_END) };
+
+		try {
+			const auto opcode_info{ fe::script::get_iscript_opcode_info(p_config) };
+			fi::IScriptLoader iscript_loader(p_config, p_rom, opcode_info.opcodes);
+			iscript_loader.parse_rom(p_rom);
+			const std::size_t bytecode_end{ iscript_loader.get_bytecode_end_offset() };
+
+			if (bytecode_end > rg2_start && bytecode_end <= rg2_end)
+				return std::make_pair(bytecode_end, rg2_end);
+		}
+		catch (const std::exception&) {
+			// fall through to $ff-heuristics
+		}
+
+		return fe::ROM_Manager::find_trailing_free_range(p_rom, std::make_pair(rg2_start, rg2_end));
+	}
+
 	// helper which reports on available space in bank 14, returns [file offset start, file offset end)
 	std::pair<std::size_t, std::size_t> get_bank14_free_range(const fe::Config& p_config,
 		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
@@ -600,6 +633,37 @@ namespace {
 				p_rom, std::make_pair(rg2_start, rg2_end));
 		}
 	}
+
+	// returns the lowest-priority configured free range in bank 15 as [file offset start, file offset end)
+	std::pair<std::size_t, std::size_t> get_bank15_free_range(const fe::Config& p_config,
+		const std::vector<byte>& p_rom) {
+		const auto free_ranges{ fe::ROM_Manager::parse_bank_15_free_ranges(p_config) };
+
+		if (free_ranges.empty())
+			throw std::runtime_error("No free space configured for bank 15");
+
+		return fe::ROM_Manager::find_trailing_free_range(p_rom, free_ranges.back());
+	}
+
+	// general helper for general hack free ranges, takes a bank as argument and dispatches
+	std::pair<std::size_t, std::size_t> get_general_hack_free_range(byte p_bank, const fe::Config& p_config,
+		const std::vector<byte>& p_rom, const fe::MessageCallback& p_message) {
+
+		switch (p_bank) {
+		case 12:
+			return get_bank12_free_range(p_config, p_rom, p_message);
+
+		case 14:
+			return get_bank14_free_range(p_config, p_rom, p_message);
+
+		case 15:
+			return get_bank15_free_range(p_config, p_rom);
+
+		default:
+			throw std::runtime_error(
+				std::format("No general hack free-space strategy for bank {}", p_bank));
+		}
+	}
 }
 
 std::vector<byte> fe::game::patch_rom(
@@ -610,6 +674,8 @@ std::vector<byte> fe::game::patch_rom(
 	bool l_good{ true };
 
 	const auto general_hacks{ fh::parse_general_hacks(p_config.string_or_empty(fe::c::ID_GENERAL_HACKS)) };
+	// map from bank to [cpu addr begin, cpu addr end) for general hacks
+	std::map<byte, std::pair<std::size_t, std::size_t>> general_hack_ranges;
 
 	const auto l_world_labels{ p_config.bmap(c::ID_WORLD_LABELS) };
 
@@ -636,6 +702,9 @@ std::vector<byte> fe::game::patch_rom(
 	if (p_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 && !is_randumizer) {
 		fh::HackManager::install_hack_sameworld_to_stage_doors(p_config, x_rom);
 	}
+	// install doubled tileset hack if enabled
+	if (p_game.m_tileset_type == fe::TilesetType::Doubled)
+		fh::HackManager::install_hack_double_tileset(p_config, x_rom);
 
 	// world tileset chr
 	if (p_options.world_chr_data) {
@@ -737,17 +806,7 @@ std::vector<byte> fe::game::patch_rom(
 			bank15_res.used_bytes, bank15_res.available_bytes, p_message);
 		l_dyndata_bytes += bank15_res.used_bytes;
 
-		const auto bank15_hacks{ fh::filter_general_hacks(15, general_hacks) };
-
-		if (!bank15_hacks.empty()) {
-			fh::HackManager hack_mgr;
-			const auto bank15_hack_available_size{ bank15_res.free_range_cpu_end - bank15_res.free_range_cpu_start };
-			const std::size_t bank15_hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 15,
-				bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end, bank15_hacks, &p_game) };
-			send_message(p_message, { std::format("Installed general hacks in bank 15 ({}/{} bytes)",
-				bank15_hack_size, bank15_hack_available_size) });
-			l_dyndata_bytes += bank15_hack_size;
-		}
+		general_hack_ranges[15] = std::make_pair(bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end);
 	}
 
 	// sprite metadata
@@ -805,20 +864,29 @@ std::vector<byte> fe::game::patch_rom(
 		}
 	}
 
-	// bank 14 general hacks, if any
-	const auto bank14_hacks{ fh::filter_general_hacks(14, general_hacks) };
-	if (!bank14_hacks.empty()) {
-		const auto [free_start, free_end] {	fe::ROM_Manager::file_range_to_cpu_range(
-			get_bank14_free_range(p_config, x_rom, p_message)) };
-
+	// install general hacks, if any
+	if (!general_hacks.empty()) {
 		fh::HackManager hack_mgr;
-		const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, 14,
-			free_start, free_end, bank14_hacks, &p_game) };
 
-		send_message(p_message, { std::format("Installed general hacks in bank 14 ({}/{} bytes)",
-			hack_size, free_end - free_start) });
+		for (byte bank : { 12, 14, 15 }) {
+			const auto bank_hacks{ fh::filter_general_hacks(bank, general_hacks) };
+			if (bank_hacks.empty())
+				continue;
 
-		l_dyndata_bytes += hack_size;
+			if (!general_hack_ranges.contains(bank))
+				general_hack_ranges[bank] = fe::ROM_Manager::file_range_to_cpu_range(
+					get_general_hack_free_range(bank, p_config, x_rom, p_message));
+
+			const auto [free_start, free_end] = general_hack_ranges.at(bank);
+
+			const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, bank,
+				free_start, free_end, bank_hacks, &p_game) };
+
+			send_message(p_message, { std::format("Installed general hacks in bank {} ({}/{} bytes)",
+					bank, hack_size, free_end - free_start) });
+
+			l_dyndata_bytes += hack_size;
+		}
 	}
 
 	// bank duplication - region-specific config and not a setting

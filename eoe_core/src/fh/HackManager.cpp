@@ -1,6 +1,8 @@
 #include "HackManager.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"
+#include "fe/nes_constants.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
@@ -4460,6 +4462,202 @@ word fh::HackManager::apply_AtlasDevClearVisibleMagic(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevSpawnMagicAt Magic PackedYX Direction
+//
+// Rebuilds the complete eight-byte visible-magic initializer at an explicit
+// metatile origin. PackedYX uses the screen-list convention (Y high nibble,
+// X low nibble); Direction is exactly 0 left or 1 right. Like CastSpell, a
+// valid call replaces the single current projectile and does not spend MP.
+word fh::HackManager::apply_AtlasDevSpawnMagicAt(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // magic
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // PackedYX
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // direction
+	code.pha();
+	code.cmp_imm(0x02);
+	code.bcs("@drop");
+	code.tsx();
+	code.lda_abs_x(0x0102); // PackedYX
+	code.cmp_imm(0xd0);
+	code.bcs("@drop");
+	code.lda_abs_x(0x0103); // magic
+	code.cmp_imm(0x05);
+	code.bcs("@drop");
+	code.tay();
+	code.sta_abs(RAM::VisibleMagicState);
+
+	code.lda_abs_x(0x0101); // direction
+	code.beq("@left");
+	code.lda_imm(0x40);
+	code.label("@left");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+
+	code.lda_abs_x(0x0102);
+	code.db(0x0a); code.db(0x0a); code.db(0x0a); code.db(0x0a);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_abs_x(0x0102);
+	code.and_imm(0xf0);
+	code.cpy_imm(0x01);
+	code.beq("@store_y");
+	code.cpy_imm(0x02);
+	code.beq("@store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+
+	code.label("@drop");
+	code.pla(); code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevCastSpellFromEntity Slot Magic
+//
+// Uses a live slot's pixel coordinates and maps its bit-0 facing flag to the
+// visible-magic block's bit-6 direction flag. A free or invalid slot and an
+// invalid magic id are exact no-ops after both operands are consumed.
+word fh::HackManager::apply_AtlasDevCastSpellFromEntity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // slot
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // magic
+	code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0102); // slot
+	code.cmp_imm(0x08);
+	code.bcs("@drop");
+	code.lda_abs_x(0x0101); // magic
+	code.cmp_imm(0x05);
+	code.bcs("@drop");
+	code.tay();
+	code.lda_abs_x(0x0102);
+	code.tax(); // entity slot; Y keeps magic
+	code.lda_abs_x(RAM::EntitySlotActive);
+	code.bmi("@drop");
+	code.tya();
+	code.sta_abs(RAM::VisibleMagicState);
+
+	code.lda_abs_x(RAM::EntityFlags);
+	code.and_imm(0x01);
+	code.beq("@entity_left");
+	code.lda_imm(0x40);
+	code.label("@entity_left");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.sta_abs(RAM::VisibleMagicCounter);
+	code.sta_abs(RAM::VisibleMagicPhase);
+	code.db(0xb5); code.db(RAM::ZP_EntityX); // LDA $BA,X
+	code.sta_abs(RAM::VisibleMagicX);
+	code.db(0xb5); code.db(RAM::ZP_EntityY); // LDA $C2,X
+	code.cpy_imm(0x01);
+	code.beq("@entity_store_y");
+	code.cpy_imm(0x02);
+	code.beq("@entity_store_y");
+	code.clc();
+	code.adc_imm(0x08);
+	code.label("@entity_store_y");
+	code.sta_abs(RAM::VisibleMagicY);
+	code.cpy_imm(0x04);
+	code.bne("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.ora_imm(0x80);
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.lda_imm(0x21);
+	code.sta_abs(RAM::VisibleMagicCounter);
+
+	code.label("@drop");
+	code.pla(); code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetMagicPosition PackedYX
+//
+// Teleports only a valid active magic state (0..11). Fractional coordinates
+// are cleared and the vanilla collision scratch is rebuilt on the next tick.
+word fh::HackManager::apply_AtlasDevSetMagicPosition(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.cmp_imm(0xd0);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bmi("@drop");
+	code.cmp_imm(0x0c);
+	code.bcs("@drop");
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::VisibleMagicXFraction);
+	code.sta_abs(RAM::VisibleMagicYFraction);
+	code.tsx();
+	code.lda_abs_x(0x0101);
+	code.db(0x0a); code.db(0x0a); code.db(0x0a); code.db(0x0a);
+	code.sta_abs(RAM::VisibleMagicX);
+	code.lda_abs_x(0x0101);
+	code.and_imm(0xf0);
+	code.sta_abs(RAM::VisibleMagicY);
+	code.label("@drop");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetMagicFacing Direction
+//
+// Redirects only a valid active magic state. Bit 7 is Tilte's vertical phase
+// and is preserved; only bit 6 changes. Direction must be exactly 0 or 1.
+word fh::HackManager::apply_AtlasDevSetMagicFacing(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.pha();
+	code.cmp_imm(0x02);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicState);
+	code.bmi("@drop");
+	code.cmp_imm(0x0c);
+	code.bcs("@drop");
+	code.lda_abs(RAM::VisibleMagicFlags);
+	code.and_imm(0xbf);
+	code.tsx();
+	code.db(0xbc); code.dw(0x0101); // LDY direction
+	code.beq("@store");
+	code.ora_imm(0x40);
+	code.label("@store");
+	code.sta_abs(RAM::VisibleMagicFlags);
+	code.label("@drop");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr, word end_handler_addr) const {
 	klib::Asm6502 code;
@@ -5129,6 +5327,18 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		case HackLib::AtlasDevClearVisibleMagic:
 			cpu_addr = apply_AtlasDevClearVisibleMagic(p_config, p_rom, cpu_addr);
 			break;
+		case HackLib::AtlasDevSpawnMagicAt:
+			cpu_addr = apply_AtlasDevSpawnMagicAt(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevCastSpellFromEntity:
+			cpu_addr = apply_AtlasDevCastSpellFromEntity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMagicPosition:
+			cpu_addr = apply_AtlasDevSetMagicPosition(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetMagicFacing:
+			cpu_addr = apply_AtlasDevSetMagicFacing(p_config, p_rom, cpu_addr);
+			break;
 
 		case HackLib::Count:
 		default:
@@ -5497,6 +5707,51 @@ void fh::HackManager::install_hack_sameworld_to_stage_doors(const fe::Config& p_
 	code.apply_hack_and_clear(p_rom, 15, ROM::Player_EnterDoorToOutside_JMP_SetupArea);
 }
 
+// installs a hack which loads tilesets from two different banks depending on index
+void fh::HackManager::install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	const word HackDoubleTilesetAddr{ cfg_word(p_config, c::ID_HACK_DOUBLE_TILESET_ADDR) };
+	const byte PrimaryBank{ cfg_byte(p_config, fe::c::ID_TILESET_PRIMARY_BANK) };
+	const byte SecondaryBank{ cfg_byte(p_config, fe::c::ID_TILESET_SECONDARY_BANK) };
+	const byte tileset_count{ cfg_byte(p_config, fe::c::ID_WORLD_TILESET_COUNT) };
+	const word MMC1_UpdateROMBank{ cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK) };
+
+	klib::Asm6502 code;
+	// signature and version number
+	code.db(0x4b);
+	code.db(0x46);
+	code.db(0x00);
+
+	code.lda_zp(RAM::ZP_TilesIndex);
+	code.cmp_imm(tileset_count);
+	code.bcc("@primary");
+	code.sec();
+	code.sbc_imm(tileset_count);
+	code.sta_zp(RAM::ZP_TilesIndex);
+	code.ldx_imm(SecondaryBank);
+	code.bne("@selected");
+
+	code.label("@primary");
+	code.ldx_imm(PrimaryBank);
+
+	code.label("@selected");
+	code.stx_zp(RAM::ZP_e2);
+	code.lda_zp(RAM::ZP_TilesIndex);
+	code.asl_a();
+	code.tay();
+	code.rts();
+
+	code.apply_hack_and_clear(p_rom, 15, HackDoubleTilesetAddr);
+
+	// inject hook
+	code.jsr(HackDoubleTilesetAddr + 3); // jump past the signature
+	code.nop();
+	code.apply_hack_and_clear(p_rom, 15, ROM::Area_LoadTiles);
+
+	// make the final gfx loader use the stored bank
+	code.ldx_zp(RAM::ZP_e2);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Area_LoadTiles_LDX_Bank);
+}
+
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
 void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const {
 	const word HackStaticExtraSave{ 0x90c0 };
@@ -5552,11 +5807,11 @@ void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_conf
 	code.apply_hack_and_clear(p_rom, 12, SRAM_Load_Hook);
 }
 
-word fh::HackManager::cfg_word(const fe::Config& p_config, const std::string& p_id) const {
+word fh::HackManager::cfg_word(const fe::Config& p_config, const std::string& p_id) {
 	return static_cast<word>(p_config.constant(p_id));
 }
 
-byte fh::HackManager::cfg_byte(const fe::Config& p_config, const std::string& p_id) const {
+byte fh::HackManager::cfg_byte(const fe::Config& p_config, const std::string& p_id) {
 	return static_cast<byte>(p_config.constant(p_id));
 }
 
@@ -5612,4 +5867,58 @@ std::vector<word> fh::HackManager::read_screen_event_handler_addrs(const fe::Con
 std::size_t fh::HackManager::detect_screen_event_handler_count(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) const {
 	return p_rom.at(p_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+}
+
+void fh::HackManager::install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	if (p_rom.size() != fe::nc::VANILLA_ROM_SIZE || p_rom[4] != fe::nc::VANILLA_BANK_COUNT)
+		throw std::runtime_error("ROM not eligible for expansion");
+
+	const auto bank15_free{ fe::ROM_Manager::parse_bank_15_free_ranges(p_config) };
+	if (bank15_free.empty())
+		throw std::runtime_error("No free space configured in bank15");
+	const auto cpu_range{ fe::ROM_Manager::file_range_to_cpu_range(bank15_free.back()) };
+	const word cpu_addr{ static_cast<word>(cpu_range.first) };
+
+	klib::Asm6502 code;
+	code.txa();
+	code.and_imm(0x10);
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.txa();
+	code.and_imm(0x0f);
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.rts();
+	const word next_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+	if (static_cast<std::size_t>(next_addr) > cpu_range.second)
+		throw std::runtime_error("Not enough free space in bank 15 to install the bank switch routine");
+
+	// call site 1
+	code.jsr(cpu_addr);
+	code.nop(17);
+	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_UpdateROMBank_SerialWrite);
+	// call site 2
+	code.jsr(cpu_addr);
+	code.nop(17);
+	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_EnsurePRG_fastPath);
+
+	p_rom.resize(p_rom.size() + fe::nc::VANILLA_BANK_COUNT * fe::nc::PRG_BANK_SIZE, 0xff);
+	fe::ROM_Manager::duplicate_static_bank(p_rom);
+
+	// update iNES header
+	p_rom.at(4) = fe::nc::EXPANDED_BANK_COUNT;
 }

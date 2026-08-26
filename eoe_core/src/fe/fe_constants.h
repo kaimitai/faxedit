@@ -187,9 +187,10 @@ namespace fe {
 
 		// chr constants
 		constexpr char ID_WORLD_TILESET_COUNT[]{ "world_tileset_count" };
-		constexpr char ID_CHR_WORLD_TILE_OFFSET[]{ "chr_world_tile_offset" };
 		constexpr char ID_CHR_HUD_TILE_OFFSET[]{ "chr_hud_tile_offset" };
 		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
+		constexpr char ID_TILESET_PRIMARY_BANK[]{ "tileset_primary_bank" };
+		constexpr char ID_TILESET_SECONDARY_BANK[]{ "tileset_secondary_bank" };
 
 		// other
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
@@ -202,6 +203,7 @@ namespace fe {
 		// bools
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
 		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
+		constexpr char ID_DOUBLE_TILESET[]{ "double_tileset" };
 		constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 
 		// constants not stored in the config xml

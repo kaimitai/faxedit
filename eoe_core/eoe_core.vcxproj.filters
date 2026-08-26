@@ -61,9 +61,6 @@
     <Filter Include="Source Files\fh">
       <UniqueIdentifier>{4e1dba66-8619-41f2-80f0-721c17b428b1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\fi\cli">
-      <UniqueIdentifier>{9da44cb3-5cd2-4d20-96c7-88d900e6125b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\fb">
       <UniqueIdentifier>{2147c454-6c81-4713-9a7f-f990588f8725}</UniqueIdentifier>
     </Filter>
@@ -276,9 +273,6 @@
     <ClInclude Include="src\fi\AsmWriter.h">
       <Filter>Header Files\fi</Filter>
     </ClInclude>
-    <ClInclude Include="src\fi\cli\application_constants.h">
-      <Filter>Header Files\fi\cli</Filter>
-    </ClInclude>
     <ClInclude Include="src\fb\BScriptLoader.h">
       <Filter>Header Files\fb</Filter>
     </ClInclude>
@@ -398,6 +392,9 @@
     </ClInclude>
     <ClInclude Include="src\fe\xml\Xml_helper_settings.h">
       <Filter>Header Files\fe\xml</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fe\nes_constants.h">
+      <Filter>Header Files\fe</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

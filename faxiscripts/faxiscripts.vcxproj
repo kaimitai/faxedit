@@ -189,6 +189,7 @@
     <ClCompile Include="src\mantra\MantraCli.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\fi\cli\application_constants.h" />
     <ClInclude Include="src\fi\cli\Cli.h" />
     <ClInclude Include="src\mantra\MantraCli.h" />
     <ClInclude Include="src\mantra\MantraCli_constants.h" />
