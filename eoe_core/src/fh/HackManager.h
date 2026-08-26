@@ -299,6 +299,7 @@ namespace fh {
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 			const fe::Game* p_game = nullptr) const;
+		static void install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom);
 	};
 
 }

@@ -29,6 +29,7 @@ namespace fi {
 		inline const std::pair<std::string, std::string> CMD_DUMP_CONFIG{ "dump-config" , "dc" };
 		inline const std::pair<std::string, std::string> CMD_EXTRACT_PROJECT{ "extract-project" , "xproj" };
 		inline const std::pair<std::string, std::string> CMD_BUILD_PROJECT{ "build-project" , "bproj" };
+		inline const std::pair<std::string, std::string> CMD_EXPAND_ROM{ "expand-rom" , "expand" };
 
 		inline const std::vector<std::pair<std::string, std::string>> CLI_FLAGS{
 			{"--no-shop-comments", "-p"},

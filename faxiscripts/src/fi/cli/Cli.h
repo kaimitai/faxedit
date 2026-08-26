@@ -17,7 +17,8 @@ namespace fi {
 		BScriptBuild, BScriptExtract,
 		MiscBuild, MiscExtract,
 		DumpConfig,
-		ProjectBuild, ProjectExtract
+		ProjectBuild, ProjectExtract,
+		ExpandROM
 	};
 
 	class Cli {
@@ -101,6 +102,10 @@ namespace fi {
 		// debug
 		void dump_config(const std::string& p_nes_filename,
 			const std::string& p_dump_filename);
+
+		// expand rom
+		void expand_rom(const std::string& p_nes_filename,
+			const std::string& p_out_nes_filename);
 
 		// common
 		std::vector<byte> load_rom_and_config(const std::string& p_nes_filename);

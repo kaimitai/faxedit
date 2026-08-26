@@ -1,6 +1,8 @@
 #include "HackManager.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"
+#include "fe/nes_constants.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
@@ -5865,4 +5867,58 @@ std::vector<word> fh::HackManager::read_screen_event_handler_addrs(const fe::Con
 std::size_t fh::HackManager::detect_screen_event_handler_count(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) const {
 	return p_rom.at(p_config.constant(c::ID_COMMAND_BYTE_COUNT_OFFSET)) / 2;
+}
+
+void fh::HackManager::install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	if (p_rom.size() != fe::nc::VANILLA_ROM_SIZE || p_rom[4] != fe::nc::VANILLA_BANK_COUNT)
+		throw std::runtime_error("ROM not eligible for expansion");
+
+	const auto bank15_free{ fe::ROM_Manager::parse_bank_15_free_ranges(p_config) };
+	if (bank15_free.empty())
+		throw std::runtime_error("No free space configured in bank15");
+	const auto cpu_range{ fe::ROM_Manager::file_range_to_cpu_range(bank15_free.back()) };
+	const word cpu_addr{ static_cast<word>(cpu_range.first) };
+
+	klib::Asm6502 code;
+	code.txa();
+	code.and_imm(0x10);
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.lsr_a();
+	code.sta_abs(0xbfff);
+	code.txa();
+	code.and_imm(0x0f);
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.lsr_a();
+	code.sta_abs(0xffff);
+	code.rts();
+	const word next_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+	if (static_cast<std::size_t>(next_addr) > cpu_range.second)
+		throw std::runtime_error("Not enough free space in bank 15 to install the bank switch routine");
+
+	// call site 1
+	code.jsr(cpu_addr);
+	code.nop(17);
+	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_UpdateROMBank_SerialWrite);
+	// call site 2
+	code.jsr(cpu_addr);
+	code.nop(17);
+	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_EnsurePRG_fastPath);
+
+	p_rom.resize(p_rom.size() + fe::nc::VANILLA_BANK_COUNT * fe::nc::PRG_BANK_SIZE, 0xff);
+	fe::ROM_Manager::duplicate_static_bank(p_rom);
+
+	// update iNES header
+	p_rom.at(4) = fe::nc::EXPANDED_BANK_COUNT;
 }

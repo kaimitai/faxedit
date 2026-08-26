@@ -151,6 +151,9 @@ fi::Cli::Cli(int argc, char** argv) :
 		project_to_nes(m_in_file, m_out_file, m_source_rom.empty() ? m_out_file : m_source_rom);
 	else if (m_script_mode == fi::ScriptMode::ProjectExtract)
 		nes_to_project(m_in_file, m_out_file, m_overwrite);
+	// ROM expansion
+	else if (m_script_mode == fi::ScriptMode::ExpandROM)
+		expand_rom(m_in_file, m_out_file);
 	// can't really happen
 	else
 		throw(std::runtime_error("Invalid script mode"));
@@ -310,6 +313,14 @@ void fi::Cli::dump_config(const std::string& p_nes_filename,
 	std::cout << "Wrote resolved configuration dump to " << p_dump_filename << "!\n";
 }
 
+void fi::Cli::expand_rom(const std::string& p_nes_filename,
+	const std::string& p_out_nes_filename) {
+	auto rom{ load_rom_and_config(p_nes_filename) };
+	fh::HackManager::install_hack_surom_expansion(m_config, rom);
+	klib::file::write_bytes_to_file(rom, p_out_nes_filename);
+	std::cout << "ROM expanded!\n";
+}
+
 void fi::Cli::parse_arguments(int arg_start, int argc, char** argv) {
 	for (int i{ arg_start }; i < argc; ++i) {
 		std::string argvi{ argv[i] };
@@ -466,6 +477,9 @@ void fi::Cli::set_mode(const std::string& p_mode) {
 	}
 	else if (check_mode(p_mode, appc::CMD_EXTRACT_PROJECT)) {
 		m_script_mode = fi::ScriptMode::ProjectExtract;
+	}
+	else if (check_mode(p_mode, appc::CMD_EXPAND_ROM)) {
+		m_script_mode = fi::ScriptMode::ExpandROM;
 	}
 	else throw std::runtime_error("Unknown command " + p_mode);
 }

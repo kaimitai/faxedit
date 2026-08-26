@@ -60,6 +60,7 @@
     <ClInclude Include="src\fe\MessageCallback.h" />
     <ClInclude Include="src\fe\Metatile.h" />
     <ClInclude Include="src\fe\MetatileRef.h" />
+    <ClInclude Include="src\fe\nes_constants.h" />
     <ClInclude Include="src\fe\PaletteMusicMap.h" />
     <ClInclude Include="src\fe\ROM_Manager.h" />
     <ClInclude Include="src\fe\Scene.h" />

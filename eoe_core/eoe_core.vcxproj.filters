@@ -393,6 +393,9 @@
     <ClInclude Include="src\fe\xml\Xml_helper_settings.h">
       <Filter>Header Files\fe\xml</Filter>
     </ClInclude>
+    <ClInclude Include="src\fe\nes_constants.h">
+      <Filter>Header Files\fe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">

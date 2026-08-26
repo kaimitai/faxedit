@@ -52,6 +52,8 @@ namespace fh {
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
 		constexpr word Sprites_FlipRanges{ 0xcba8 };
+		constexpr word MMC1_UpdateROMBank_SerialWrite{ 0xcc21 };
+		constexpr word MMC1_EnsurePRG_fastPath{ 0xccd2 };
 		constexpr word Area_LoadTiles{ 0xceb8 };
 		constexpr word Area_LoadTiles_LDX_Bank{ 0xcee1 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
