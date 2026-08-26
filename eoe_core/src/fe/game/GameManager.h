@@ -96,6 +96,7 @@ namespace fe::game {
 
 	// sameworld to stage-door data migration
 	void migrate_stage_door_hack_data(Game& p_game);
+	void migrate_double_tileset_data(Game& p_game);
 
 	// rom patching - the MacDaddy!
 	std::vector<byte> patch_rom(

@@ -84,6 +84,8 @@ fe::Game fe::game::load_game_xml(
 
 	if (game.m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
 		send_message(p_message, { "Loaded XML uses the sameworld-door to stage-door hack", MsgType::Info });
+	if (game.m_tileset_type == TilesetType::Doubled)
+		send_message(p_message, { "Loaded XML uses the double tileset hack", MsgType::Info });
 
 	return game;
 }
@@ -509,6 +511,12 @@ void fe::game::migrate_stage_door_hack_data(Game& p_game) {
 	p_game.m_sw_door_type = fe::SameWorldDoorType::Randumizer_0_30;
 }
 
+void fe::game::migrate_double_tileset_data(Game& p_game) {
+	const auto tilesets{ p_game.m_tilesets };
+	p_game.m_tilesets.insert(end(p_game.m_tilesets), begin(tilesets), end(tilesets));
+	p_game.m_tileset_type = fe::TilesetType::Doubled;
+}
+
 /***** ROM PATCHING - BEGIN ****/
 
 namespace {
@@ -694,6 +702,9 @@ std::vector<byte> fe::game::patch_rom(
 	if (p_game.m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30 && !is_randumizer) {
 		fh::HackManager::install_hack_sameworld_to_stage_doors(p_config, x_rom);
 	}
+	// install doubled tileset hack if enabled
+	if (p_game.m_tileset_type == fe::TilesetType::Doubled)
+		fh::HackManager::install_hack_double_tileset(p_config, x_rom);
 
 	// world tileset chr
 	if (p_options.world_chr_data) {

@@ -52,6 +52,8 @@ namespace fh {
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
 		constexpr word Sprites_FlipRanges{ 0xcba8 };
+		constexpr word Area_LoadTiles{ 0xceb8 };
+		constexpr word Area_LoadTiles_LDX_Bank{ 0xcee1 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
 		constexpr word Screen_CopyBgPaletteToShadow{ 0xd03b };
 		// Stages the selected sprite palette and stores its index at $03d4.
@@ -126,6 +128,7 @@ namespace fh {
 		constexpr byte ZP_CurrentWorld{ 0x24 };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
+		constexpr byte ZP_TilesIndex = 0x95;
 		constexpr byte ZP_PlayerPosX = 0x9e;
 		constexpr byte ZP_PlayerPosY = 0xa1;
 		constexpr byte ZP_PlayerPosArgX = 0xb5;
@@ -288,6 +291,9 @@ namespace fh {
 		constexpr char ID_HACK_SET_PENDING_STAGE_ADDR[]{ "hack_set_pending_stage_addr" };
 		constexpr char ID_HACK_DECODE_REQ_ADDR[]{ "hack_decode_req_addr" };
 		constexpr char ID_HACK_LOAD_WORLD_ADDR[]{ "hack_load_world_addr" };
+
+		// double tileset hack
+		constexpr char ID_HACK_DOUBLE_TILESET_ADDR[]{ "hack_double_tileset_addr" };
 
 		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };

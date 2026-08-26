@@ -603,20 +603,40 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 	const std::size_t tileset_count{ p_config.constant(c::ID_WORLD_TILESET_COUNT) };
 
 	// drop all chr tiles in the tileset chr bank
-	std::size_t l_chr_wtile_offset{ p_config.constant(c::ID_CHR_WORLD_TILE_OFFSET) };
+	std::size_t l_chr_wtile_offset{ bank_no_to_file_offset(static_cast<byte>(p_config.constant(c::ID_TILESET_PRIMARY_BANK))) };
+	std::size_t l_chr_wtile_offset_2nd{ 0 };
+	if (p_game.m_tileset_type == TilesetType::Doubled)
+		l_chr_wtile_offset_2nd = bank_no_to_file_offset(static_cast<byte>(p_config.constant(c::ID_TILESET_SECONDARY_BANK)));
 
-	std::size_t l_chr_offset{ 0 };
-	for (const auto& tileset : p_game.m_tilesets) {
-		if (tileset.tiles.size() % 16 != 0 || tileset.start_idx % 16 != 0)
-			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but both must be divisible by 16 to fit on ppu pages", tileset.tiles.size(), tileset.start_idx));
-		else if (tileset.start_idx + tileset.tiles.size() > 256)
-			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but last index must be < 256", tileset.tiles.size(), tileset.start_idx));
+	std::size_t l_chr_offset{ 0 }, l_chr_2nd_offset{ 0 };
 
-		for (const auto& tile : tileset.tiles) {
+	for (std::size_t i{ 0 }; i < tileset_count; ++i) {
+		const auto& primary{ p_game.m_tilesets.at(i) };
+
+		if (primary.tiles.size() % 16 != 0 || primary.start_idx % 16 != 0)
+			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but both must be divisible by 16 to fit on ppu pages", primary.tiles.size(), primary.start_idx));
+		else if (primary.start_idx + primary.tiles.size() > 256)
+			throw std::runtime_error(std::format("Tileset has chr-tile count of {} and ppu start index {} - but last index must be < 256", primary.tiles.size(), primary.start_idx));
+
+		for (const auto& tile : primary.tiles) {
 			if (l_chr_offset >= 0x4000)
 				throw std::runtime_error("Chr-tiles across world tilesets exceeds bank size");
 			patch_bytes(tile.to_bytes(), p_rom, l_chr_wtile_offset + l_chr_offset);
 			l_chr_offset += 16;
+		}
+
+		if (p_game.m_tileset_type == TilesetType::Doubled) {
+			const auto& secondary{ p_game.m_tilesets.at(i + tileset_count) };
+
+			if (secondary.start_idx != primary.start_idx ||	secondary.tiles.size() != primary.tiles.size()) {
+				throw std::runtime_error(std::format("Tileset {} and doubled tileset {} must have identical metadata",
+					i, i + tileset_count));
+			}
+
+			for (const auto& tile : secondary.tiles) {
+				patch_bytes(tile.to_bytes(), p_rom, l_chr_wtile_offset_2nd + l_chr_2nd_offset);
+				l_chr_2nd_offset += 16;
+			}
 		}
 	}
 

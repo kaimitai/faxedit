@@ -273,8 +273,8 @@ namespace fh {
 
 		// util
 		word get_next_cpu_addr(word cpu_addr, std::size_t hack_size, std::size_t max_addr = 0xc000) const;
-		word cfg_word(const fe::Config& p_config, const std::string& p_id) const;
-		byte cfg_byte(const fe::Config& p_config, const std::string& p_id) const;
+		static word cfg_word(const fe::Config& p_config, const std::string& p_id);
+		static byte cfg_byte(const fe::Config& p_config, const std::string& p_id);
 		std::vector<word> read_script_opcode_addrs(const std::vector<byte>& p_rom, std::size_t p_opcode_count) const;
 		std::size_t write_script_opcode_table(std::vector<byte>& p_rom, word cpu_addr,
 			const std::vector<word>& p_jump_table) const;
@@ -285,6 +285,7 @@ namespace fh {
 		HackManager(void) = default;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
+		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,

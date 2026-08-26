@@ -808,9 +808,13 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
 			add_message("Door hack detected; Sameworld doors are stage doors!", fe::MsgType::Info);
+		if (m_game->m_tileset_type == TilesetType::Doubled)
+			add_message("Double tileset hack deteded!", MsgType::Info);
 
-		if (!m_game->m_chunks.empty())
+		if (!m_game->m_chunks.empty()) {
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);
+			m_atlas_new_tileset_no = m_game->get_default_tileset_no(0, 0);
+		}
 
 		m_undo.reset();
 		m_undo.emplace(m_game.value());
@@ -885,6 +889,7 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_cache.m_labels_spec_sprite_sets = m_config.bmap(c::ID_SPECIAL_SPRITE_SET_LABELS);
 	m_cache.m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
 	m_cache.m_labels_buildings = m_config.bmap(c::ID_BUILDING_LABELS);
+	m_cache.m_labels_tilesets = m_config.bmap(c::ID_TILESET_LABELS);
 
 	// constants
 	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);
@@ -892,8 +897,6 @@ void fe::MainWindow::cache_config_variables(void) {
 	// maps we convert to vectors
 	m_cache.m_labels_worlds = m_config.bmap_as_vec(c::ID_WORLD_LABELS, 8);
 	m_cache.m_labels_sprites = m_config.bmap_as_vec(c::ID_SPRITE_LABELS, m_cache.m_sprite_count);
-	m_cache.m_labels_tilesets = m_config.bmap_as_vec(c::ID_TILESET_LABELS,
-		m_config.constant(c::ID_WORLD_TILESET_COUNT));
 
 	// bools
 	m_cache.m_disable_pal2_mus = m_config.boolean_or(c::ID_DISABLE_PAL2MUS, false);

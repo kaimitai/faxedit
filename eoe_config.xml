@@ -178,7 +178,6 @@
 		<const name="music_channel_pitch_offset" region="eu" value="0x145cb" />
 		<!-- chr tile offsets -->
 		<const name="world_tileset_count" value="9" />
-		<const name="chr_world_tile_offset" value="0x10010" />
 		<const name="chr_hud_tile_offset" value="0x28150" />
 		<const name="world_tileset_to_addr_offset" value="0x3cf17" />
 		<!-- scene offsets -->
@@ -359,6 +358,10 @@
 		<const name="hack_decode_req_addr" value="$dfa8" />
 		<const name="hack_load_world_addr" value="$dfb7" />
 		<const name="hack_handle_palette_addr" value="$f389" />
+		<!-- double tileset hack -->
+		<const name="hack_double_tileset_addr" value="$c033" />
+		<const name="tileset_primary_bank" value="0x04" />
+		<const name="tileset_secondary_bank" value="29" region="en-transl" />
 		<!-- script routine addresses needed for opcode library extension -->
 		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
 		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />
@@ -438,6 +441,8 @@
 		<!-- detect the randomizer sameworld door to stage door hack -->
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$00,$fe 0x3e85c=$20,$40,$fe" region="randum" />
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
+		<!-- detect the double tileset hack -->
+		<bool name="double_tileset" condition="0x3c043=$4b,$46,$00" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl" />
 		<!-- whether to clear unused rom data with $ff in the sprite gfx banks -->

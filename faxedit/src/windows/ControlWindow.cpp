@@ -199,6 +199,7 @@ void fe::MainWindow::load_xml(SDL_Renderer* p_rnd) {
 		if (m_sel_screen >= m_game->m_chunks[m_sel_chunk].m_screens.size())
 			m_sel_screen = 0;
 		m_atlas_new_palette_no = m_game->get_default_palette_no(m_sel_chunk, m_sel_screen);
+		m_atlas_new_tileset_no = m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen);
 
 		add_message("Loaded xml file " + get_xml_path(), fe::MsgType::Success);
 	}

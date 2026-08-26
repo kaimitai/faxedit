@@ -5497,6 +5497,51 @@ void fh::HackManager::install_hack_sameworld_to_stage_doors(const fe::Config& p_
 	code.apply_hack_and_clear(p_rom, 15, ROM::Player_EnterDoorToOutside_JMP_SetupArea);
 }
 
+// installs a hack which loads tilesets from two different banks depending on index
+void fh::HackManager::install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	const word HackDoubleTilesetAddr{ cfg_word(p_config, c::ID_HACK_DOUBLE_TILESET_ADDR) };
+	const byte PrimaryBank{ cfg_byte(p_config, fe::c::ID_TILESET_PRIMARY_BANK) };
+	const byte SecondaryBank{ cfg_byte(p_config, fe::c::ID_TILESET_SECONDARY_BANK) };
+	const byte tileset_count{ cfg_byte(p_config, fe::c::ID_WORLD_TILESET_COUNT) };
+	const word MMC1_UpdateROMBank{ cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK) };
+
+	klib::Asm6502 code;
+	// signature and version number
+	code.db(0x4b);
+	code.db(0x46);
+	code.db(0x00);
+
+	code.lda_zp(RAM::ZP_TilesIndex);
+	code.cmp_imm(tileset_count);
+	code.bcc("@primary");
+	code.sec();
+	code.sbc_imm(tileset_count);
+	code.sta_zp(RAM::ZP_TilesIndex);
+	code.ldx_imm(SecondaryBank);
+	code.bne("@selected");
+
+	code.label("@primary");
+	code.ldx_imm(PrimaryBank);
+
+	code.label("@selected");
+	code.stx_zp(RAM::ZP_e2);
+	code.lda_zp(RAM::ZP_TilesIndex);
+	code.asl_a();
+	code.tay();
+	code.rts();
+
+	code.apply_hack_and_clear(p_rom, 15, HackDoubleTilesetAddr);
+
+	// inject hook
+	code.jsr(HackDoubleTilesetAddr + 3); // jump past the signature
+	code.nop();
+	code.apply_hack_and_clear(p_rom, 15, ROM::Area_LoadTiles);
+
+	// make the final gfx loader use the stored bank
+	code.ldx_zp(RAM::ZP_e2);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Area_LoadTiles_LDX_Bank);
+}
+
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
 void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const {
 	const word HackStaticExtraSave{ 0x90c0 };
@@ -5552,11 +5597,11 @@ void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_conf
 	code.apply_hack_and_clear(p_rom, 12, SRAM_Load_Hook);
 }
 
-word fh::HackManager::cfg_word(const fe::Config& p_config, const std::string& p_id) const {
+word fh::HackManager::cfg_word(const fe::Config& p_config, const std::string& p_id) {
 	return static_cast<word>(p_config.constant(p_id));
 }
 
-byte fh::HackManager::cfg_byte(const fe::Config& p_config, const std::string& p_id) const {
+byte fh::HackManager::cfg_byte(const fe::Config& p_config, const std::string& p_id) {
 	return static_cast<byte>(p_config.constant(p_id));
 }
 

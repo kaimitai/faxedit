@@ -140,6 +140,7 @@ namespace {
 	constexpr byte OP_ADC_ABS_X{ 0x7d };
 	constexpr byte OP_STY_ZP{ 0x84 };
 	constexpr byte OP_STA_ZP{ 0x85 };
+	constexpr byte OP_STX_ZP{ 0x86 };
 	constexpr byte OP_STA_ABS{ 0x8d };
 	constexpr byte OP_TXA{ 0x8a };
 	constexpr byte OP_BCC{ 0x90 };
@@ -150,6 +151,7 @@ namespace {
 	constexpr byte OP_LDX_IMM{ 0xa2 };
 	constexpr byte OP_LDY_ZP{ 0xa4 };
 	constexpr byte OP_LDA_ZP{ 0xa5 };
+	constexpr byte OP_LDX_ZP{ 0xa6 };
 	constexpr byte OP_TAY{ 0xa8 };
 	constexpr byte OP_LDA_IMM{ 0xa9 };
 	constexpr byte OP_TAX{ 0xaa };
@@ -243,6 +245,11 @@ void klib::Asm6502::lda_ind_y(byte p_addr) {
 	emit(p_addr);
 }
 
+void klib::Asm6502::ldx_zp(byte p_addr) {
+	emit(OP_LDX_ZP);
+	emit(p_addr);
+}
+
 void klib::Asm6502::ldx_imm(byte p_value) {
 	emit(OP_LDX_IMM);
 	emit(p_value);
@@ -294,6 +301,11 @@ void klib::Asm6502::sta_abs_x(word p_addr) {
 
 void klib::Asm6502::sta_ind_y(byte p_addr) {
 	emit(OP_STA_IND_Y);
+	emit(p_addr);
+}
+
+void klib::Asm6502::stx_zp(byte p_addr) {
+	emit(OP_STX_ZP);
 	emit(p_addr);
 }
 
