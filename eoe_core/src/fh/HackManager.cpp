@@ -5912,8 +5912,7 @@ void fh::HackManager::install_hack_surom_expansion(const fe::Config& p_config, s
 	code.nop(17);
 	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_UpdateROMBank_SerialWrite);
 	// call site 2
-	code.jsr(cpu_addr);
-	code.nop(17);
+	code.jmp(cpu_addr);
 	code.apply_hack_and_clear(p_rom, 15, ROM::MMC1_EnsurePRG_fastPath);
 
 	p_rom.resize(p_rom.size() + fe::nc::VANILLA_BANK_COUNT * fe::nc::PRG_BANK_SIZE, 0xff);
