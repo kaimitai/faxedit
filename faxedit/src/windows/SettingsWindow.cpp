@@ -74,10 +74,17 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			ui::imgui_slider_with_arrows("###balpha", "Adjacent Screen Alpha",
 				m_settings.m_border_alpha, 0, 255, "How much to darken adjacent screens");
 
+			ImGui::SeparatorText("GUI");
+
+			ui::imgui_float_slider("###fontscale", "Font Scale", m_settings.m_font_scale, 0.75f, 3.0f);
+			if (ImGui::IsItemDeactivatedAfterEdit())
+				apply_font_scale(m_settings.m_font_scale);
+
 			ImGui::SeparatorText("Default Rendering Settings");
 			if (ui::imgui_button("Reset to Defaults###render", 4)) {
 				m_settings.set_rendering_defaults();
 				camera.set_zoom_factor(m_settings.m_cam_zoom_factor);
+				apply_font_scale(m_settings.m_font_scale);
 			}
 
 			ImGui::EndTabItem();

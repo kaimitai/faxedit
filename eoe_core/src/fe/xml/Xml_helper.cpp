@@ -1410,6 +1410,7 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 			p_settings.coll_palettes[i]);
 	add_setting(n_settings, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
 	add_setting(n_settings, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
+	add_setting(n_settings, c::SETTINGS_PARAM_FONT_SCALE, p_settings.m_font_scale);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 	add_setting(n_settings, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
@@ -1477,6 +1478,7 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 
 		read_setting_float(n_root, c::SETTINGS_PARAM_FRAME_SCALING, p_settings.scale_frame);
 		read_setting_float(n_root, c::SETTINGS_PARAM_BANK_SCALING, p_settings.scale_bank);
+		read_setting_float(n_root, c::SETTINGS_PARAM_FONT_SCALE, p_settings.m_font_scale);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS, p_settings.m_show_sprite_sets_in_buildings);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_GRID, p_settings.m_show_grid);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ANIMATE_SPRITES, p_settings.m_animate);
