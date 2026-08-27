@@ -540,7 +540,7 @@ void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
 	ImGui::SameLine();
 
 	// don't delete below 70 - there are some hard coded references in the game code
-	if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift)
+	if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiMod_Shift)
 		|| l_bset.size() <= 70 || m_sel_npc_bundle != m_game->m_npc_bundles.size() - 1)) {
 
 		bool l_bset_used{ false };

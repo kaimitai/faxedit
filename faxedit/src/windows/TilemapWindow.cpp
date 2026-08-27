@@ -753,7 +753,7 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 			ImGui::SameLine();
 
 			if (ui::imgui_button("Delete Screen", 1, "",
-				l_chunk.m_screens.size() <= 1 || !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
+				l_chunk.m_screens.size() <= 1 || !ImGui::IsKeyDown(ImGuiMod_Shift))) try {
 				std::size_t l_scr_ref_count{ m_game->get_screen_reference_count(
 				m_sel_chunk, m_sel_screen
 				) };
