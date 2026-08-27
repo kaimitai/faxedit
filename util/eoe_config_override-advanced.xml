@@ -28,11 +28,11 @@
 		<const name="hack_tm_change_sound_effect" value="$17" />
 
 		<!-- bank for tilemap change subsystem -->
-		<const name="hack_tm_change_bank" region="en-transl" value="30" />
+		<const name="hack_tm_change_bank" region="en-transl,512" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
 
 		<!-- cpu address in that bank for the tilemap change subsystem -->
-		<const name="hack_tm_change_cpu_addr" region="en-transl" value="$8000" />
+		<const name="hack_tm_change_cpu_addr" region="en-transl,512" value="$8000" />
 		<const name="hack_tm_change_cpu_addr" value="$a000" />
 	</consts>
 
@@ -55,32 +55,6 @@
 		</byte_to_string_map>
 
 		<byte_to_string_map name="iscript_opcodes">
-			<!-- regular implementations - do not modify unless a corresponding hack has been sideloaded -->
-			<entry byte="0" str="Mnemonic=End,Flow=End,Terminal=true" />
-			<entry byte="1" str="Mnemonic=MsgNoskip,Args=Byte:TextString" />
-			<entry byte="2" str="Mnemonic=MsgPrompt,Args=Byte:TextString" />
-			<entry byte="3" str="Mnemonic=Msg,Args=Byte:TextString" />
-			<entry byte="4" str="Mnemonic=IfTitleChange,Flow=Jump" />
-			<entry byte="5" str="Mnemonic=LoseGold,Args=Short" />
-			<entry byte="6" str="Mnemonic=SetSpawn,Args=Byte" />
-			<entry byte="7" str="Mnemonic=GetItem,Args=Byte:Item" />
-			<entry byte="8" str="Mnemonic=OpenShopBuy,Flow=Read" />
-			<entry byte="9" str="Mnemonic=GetGold,Args=Short" />
-			<entry byte="10" str="Mnemonic=GetMana,Args=Byte" />
-			<entry byte="11" str="Mnemonic=IfQuest,Args=Byte:Quest,Flow=Jump" />
-			<entry byte="12" str="Mnemonic=IfRank,Args=Byte:Rank,Flow=Jump" />
-			<entry byte="13" str="Mnemonic=IfGold,Flow=Jump" />
-			<entry byte="14" str="Mnemonic=SetQuest,Args=Byte:Quest" />
-			<entry byte="15" str="Mnemonic=IfBuy,Flow=Jump" />
-			<entry byte="16" str="Mnemonic=LoseItem,Args=Byte:Item" />
-			<entry byte="17" str="Mnemonic=OpenShopSell,Flow=Read" />
-			<entry byte="18" str="Mnemonic=IfItem,Args=Byte:Item,Flow=Jump" />
-			<entry byte="19" str="Mnemonic=GetHealth,Args=Byte" />
-			<entry byte="20" str="Mnemonic=ShowMantra" />
-			<entry byte="21" str="Mnemonic=EndGame,Flow=End,Terminal=true" />
-			<entry byte="22" str="Mnemonic=IfMsgPrompt,Args=Byte:TextString,Flow=Jump" />
-			<entry byte="23" str="Mnemonic=Jump,Flow=Jump,Terminal=true" />
-
 			<!--
 					Built-in runtime library.
 
@@ -88,9 +62,10 @@
 					Impl entries must appear after all non-Impl entries. If the opcode
 					numbers have gaps, the map becomes dense when loaded.
 					
+					Important: Vanilla opcodes occupy bytes 0-23! Use bytes 24 and up!
+					
 					The entries below are examples rather than a recommended or required set.
 			-->
-
 			<entry byte="24" str="Impl=IfSelectedFlag" />
 			<entry byte="25" str="Impl=SetSelectedFlag" />
 			<entry byte="26" str="Impl=IfWorld" />
@@ -113,14 +88,19 @@
 
 	<!-- string overrides -->
 	<strings>
-
 		<!--
 					General hacks to inject when patching ROM.
-					Hacks are comma-separated and may optionally take key=value parameters.
-					Whitespace is ignored, so entries may be spaced or split across lines freely.
+					Specify one hack per line, optionally followed by key=value parameters.
+					Comma-separated entries in the value attribute are also supported for compatibility.
 					These entries are examples rather than a recommended or required set.
-		-->
-		<string name="general_hacks" value="KillSwitch,SameWorldTransPal2Mus" />
+			-->
+		<string name="general_hacks">
+			KillSwitch
+			SameWorldTransPal2Mus
+			FlexibleItems price=250
+			FastStart
+			BossLockedItems enemies=false
+		</string>
 	</strings>
 
 	<!-- string map overrides -->

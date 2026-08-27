@@ -801,7 +801,7 @@
 			<entry byte="$00" str="$00" />
 		</byte_to_string_map>
 		<!-- iScript opcodes  -->
-		<byte_to_string_map name="iscript_opcodes">
+		<byte_to_string_map name="iscript_opcodes" merge="true">
 			<entry byte="$00" str="Mnemonic=End,Flow=End,Terminal=true" />
 			<entry byte="$01" str="Mnemonic=MsgNoskip,Args=Byte:TextString" />
 			<entry byte="$02" str="Mnemonic=MsgPrompt,Args=Byte:TextString" />

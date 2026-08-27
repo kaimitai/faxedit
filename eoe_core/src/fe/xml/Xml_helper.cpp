@@ -1726,9 +1726,11 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 				std::string l_name{ n_string.attribute(c::ATTR_NAME).as_string() };
 
 				if (p_strings.find(l_name) == end(p_strings)) {
+					const auto attr_value{ n_string.attribute(c::ATTR_VALUE) };
+
 					p_strings.insert(std::make_pair(
 						l_name,
-						n_string.attribute(c::ATTR_VALUE).as_string()
+						attr_value ? attr_value.as_string() : n_string.text().as_string()
 					));
 				}
 			}
