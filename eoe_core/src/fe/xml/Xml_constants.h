@@ -266,6 +266,7 @@ namespace fe {
 			constexpr char ATTR_KEY[]{ "key" };
 			constexpr char ATTR_VALUE[]{ "value" };
 			constexpr char ATTR_CONDITION[]{ "condition" };
+			constexpr char ATTR_MERGE[]{ "merge" };
 			constexpr char ATTR_ZERO_ADDR[]{ "zero_addr" };
 			constexpr char ATTR_BYTE[]{ "byte" };
 			constexpr char ATTR_STRING[]{ "str" };
