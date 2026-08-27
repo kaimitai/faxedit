@@ -28,6 +28,7 @@ namespace fe {
 
 			constexpr char SETTINGS_PARAM_FRAME_SCALING[]{ "frame_scaling" };
 			constexpr char SETTINGS_PARAM_BANK_SCALING[]{ "bank_scaling" };
+			constexpr char SETTINGS_PARAM_FONT_SCALE[]{ "font_scale" };
 			constexpr char SETTINGS_PARAM_TRANSP_TOLERANCE[]{ "transparency_tolerance" };
 			constexpr char SETTINGS_PARAM_SPRITE_PALETTE[]{ "sprite_palette" };
 

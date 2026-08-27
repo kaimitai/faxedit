@@ -77,6 +77,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 
 	fe::xml::load_settings_xml(get_settings_xml_path(), m_settings);
 	camera.set_zoom_factor(m_settings.m_cam_zoom_factor);
+	apply_font_scale(m_settings.m_font_scale);
 
 	if (!p_filepath.empty())
 		load_rom(p_rnd, p_filepath, p_region);
@@ -239,6 +240,16 @@ void fe::MainWindow::draw(SDL_Renderer* p_rnd) {
 	else {
 		draw_filepicker_window(p_rnd);
 	}
+}
+
+void fe::MainWindow::apply_font_scale(float p_scale) const {
+#ifdef __APPLE__
+	constexpr float PLATFORM_FONT_SCALE{ 1.5f };
+#else
+	constexpr float PLATFORM_FONT_SCALE{ 1.0f };
+#endif
+
+	ImGui::GetStyle().FontScaleMain = PLATFORM_FONT_SCALE * p_scale;
 }
 
 void fe::MainWindow::imgui_text(const std::string& p_str) const {
@@ -540,7 +551,7 @@ void fe::MainWindow::show_sprite_npc_bundle_screen(void) {
 	ImGui::SameLine();
 
 	// don't delete below 70 - there are some hard coded references in the game code
-	if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift)
+	if (ui::imgui_button("Remove Sprite Set", 1, "", !ImGui::IsKeyDown(ImGuiMod_Shift)
 		|| l_bset.size() <= 70 || m_sel_npc_bundle != m_game->m_npc_bundles.size() - 1)) {
 
 		bool l_bset_used{ false };

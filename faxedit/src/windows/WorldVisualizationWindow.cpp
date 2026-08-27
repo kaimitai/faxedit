@@ -44,7 +44,7 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 		ImGui::Separator();
 
 		if (ui::imgui_button("Export png", 2, "Save the selected world as a PNG image. Hold Shift to export all worlds (starting from screen 0 in each world)")) {
-			bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+			bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 			// extract script data 
 			std::unordered_map<byte, fe::script::ScriptSemanticInfo> script_semantics;

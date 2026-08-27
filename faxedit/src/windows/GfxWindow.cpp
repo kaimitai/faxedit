@@ -975,7 +975,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
 
-	bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank",
 		!l_shift)) {
@@ -1048,7 +1048,7 @@ void fe::MainWindow::show_world_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
 
-	bool l_shift{ ImGui::IsKeyDown(ImGuiKey_ModShift) };
+	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank", !l_shift)) {
 		auto chrbank{ get_world_tileset_w_metadata(ls_tileset_no) };

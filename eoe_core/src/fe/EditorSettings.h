@@ -23,6 +23,7 @@ namespace fe {
 			m_show_adjacent_screens, m_mattock_overlay, m_door_req_overlay,
 			m_show_diagonal_adjacent, m_show_ambiguous_diagonals;
 		std::vector<char> m_overlays;
+		float m_font_scale;
 		// sprite gfx settings
 		bool m_redraw_sprite_gfx, m_redraw_cinema_gfx;
 		std::vector<std::size_t> coll_palettes;

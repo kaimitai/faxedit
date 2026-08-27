@@ -93,7 +93,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::SeparatorText("Remove unused assets");
 
 					if (ui::imgui_button("Delete Unreferenced Metatiles", 1, "",
-						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+						!ImGui::IsKeyDown(ImGuiMod_Shift))) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_metatiles(m_sel_chunk) };
 						add_message(std::format("{} metatiles deleted from world {}",
 							l_del_cnt, m_sel_chunk), fe::MsgType::Info);
@@ -105,7 +105,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					}
 
 					if (ui::imgui_button("Delete Unreferenced Screens", 1, "",
-						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+						!ImGui::IsKeyDown(ImGuiMod_Shift))) {
 						std::size_t l_del_cnt{ m_game->delete_unreferenced_screens(m_sel_chunk) };
 						// clear undo history for this world if a screen was deleted
 						if (l_del_cnt > 0) {
@@ -241,7 +241,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 					if (ui::imgui_button("Load Spawn Points from ROM", 4,
 						"Reload the selected number of spawn points directly from the ROM (normally the editor detects the correct count automatically)",
-						!ImGui::IsKeyDown(ImGuiKey_ModShift))) {
+						!ImGui::IsKeyDown(ImGuiMod_Shift))) {
 						m_game->extract_spawn_points(m_config, ls_sel_spawn_count);
 						fe::game::validate_and_repair_spawn_points(m_game.value(), m_msg_callback);
 					}
@@ -610,7 +610,7 @@ void fe::MainWindow::show_screen_scroll_data(void) {
 			ImGui::TableSetColumnIndex(1);
 			if (kv.second.has_value()) {
 
-				if (ImGui::IsKeyDown(ImGuiKey_ModCtrl)) {
+				if (ImGui::IsKeyDown(ImGuiMod_Ctrl)) {
 					if (ui::imgui_button("Go To", 4)) {
 						m_sel_screen = kv.second.value();
 					}
@@ -793,7 +793,7 @@ void fe::MainWindow::show_mt_definition_tab(SDL_Renderer* p_rnd, fe::Chunk& p_ch
 
 		ImGui::SameLine();
 
-		if (ui::imgui_button("Delete metatile", 1, "", !ImGui::IsKeyDown(ImGuiKey_ModShift))) try {
+		if (ui::imgui_button("Delete metatile", 1, "", !ImGui::IsKeyDown(ImGuiMod_Shift))) try {
 			std::size_t l_mt_refs{ m_game->get_metatile_reference_count(m_sel_chunk, m_sel_metatile) };
 			if (l_mt_refs > 0)
 				add_message("Metatile is in use", fe::MsgType::Error, true);

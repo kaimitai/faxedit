@@ -158,6 +158,7 @@ namespace fe {
 		// application exit handler variables
 		bool m_exit_app_requested, m_exit_app_granted;
 
+		void apply_font_scale(float p_scale) const;
 		void imgui_text(const std::string& p_str) const;
 		void regenerate_atlas_if_needed(SDL_Renderer* p_rnd);
 		void load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,

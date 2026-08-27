@@ -78,6 +78,7 @@ void fe::EditorSettings::set_rendering_defaults(void) {
 	m_invert_zoom = false;
 	m_show_diagonal_adjacent = false;
 	m_show_ambiguous_diagonals = false;
+	m_font_scale = 1.0f;
 }
 
 void fe::EditorSettings::set_advanced_defaults(void) {
@@ -96,9 +97,11 @@ void fe::EditorSettings::sanitize_float(float& p_val, float p_default) {
 void fe::EditorSettings::sanitize(void) {
 	sanitize_float(scale_frame, 3.0f);
 	sanitize_float(scale_bank, 2.0f);
+	sanitize_float(m_font_scale, 1.0f);
 
 	clamp_value(scale_frame, 1.0f, 8.0f);
 	clamp_value(scale_bank, 1.0f, 8.0f);
+	clamp_value(m_font_scale, 0.75f, 3.0f);
 	clamp_value(transp_tolerance, 0, 15);
 
 	if (coll_palettes.size() != 3)
