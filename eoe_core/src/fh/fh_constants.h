@@ -38,7 +38,15 @@ namespace fh {
 
 		// bank 14 addresses
 		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
+		constexpr word SpriteBehavior_BattleSuit_CheckForBosses{ 0xa379 };
+		constexpr word SpriteBehavior_BattleHelmet_CheckForBosses{ 0xa3a9 };
+		constexpr word SpriteBehavior_DragonSlayer_CheckForBosses{ 0xa3e4 };
+		constexpr word SpriteBehavior_QMattock_CheckForBosses{ 0xa408 };
 		constexpr word SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests{ 0xa418 };
+		constexpr word SpriteBehavior_QWingBoots_CheckForBosses{ 0xa42c };
+		constexpr word SpriteBehavior_BlackOnyx_CheckForBosses{ 0xa450 };
+		constexpr word SpriteBehavior_Pendant_CheckForBosses{ 0xa474 };
+		constexpr word SpriteTypeTable{ 0xb544 };
 
 		// bank 15 addresses
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
@@ -224,6 +232,16 @@ namespace fh {
 		constexpr word PlayerMana{ 0x039a };
 		constexpr word PlayerXP_L{ 0x0390 };
 		constexpr word PlayerXP_U{ 0x0391 };
+		constexpr word Inventory_Weapons{ 0x039d };
+		constexpr word Inventory_Armors{ 0x03a1 };
+		constexpr word Inventory_Shields{ 0x03a5 };
+		constexpr word Inventory_Magics{ 0x03a9 };
+		constexpr word Inventory_Items{ 0x03ad };
+		constexpr word Inventory_WeaponsCount{ 0x03c2 };
+		constexpr word Inventory_ArmorsCount{ 0x03c3 };
+		constexpr word Inventory_ShieldsCount{ 0x03c4 };
+		constexpr word Inventory_MagicsCount{ 0x03c5 };
+		constexpr word Inventory_ItemsCount{ 0x03c6 };
 		constexpr word PlayerTitle{ 0x0437 };
 		constexpr word PendingTitle{ 0x04ed };
 		// The 32-byte staged palette ($0293-$02b2, background then sprite

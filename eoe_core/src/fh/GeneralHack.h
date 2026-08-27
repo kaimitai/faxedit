@@ -14,7 +14,7 @@ namespace fh {
 	enum class GeneralHackLib {
 		FlexibleItems,
 		KillSwitch, SameWorldTransPal2Mus,
-		FastStart, QuestFlagItemDrops
+		FastStart, QuestFlagItemDrops, BossLockedItems
 	};
 
 	class GeneralHack {

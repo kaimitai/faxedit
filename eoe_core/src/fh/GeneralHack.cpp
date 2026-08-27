@@ -1,4 +1,5 @@
 #include "GeneralHack.h"
+#include <algorithm>
 #include <format>
 #include <set>
 #include <stdexcept>
@@ -20,6 +21,7 @@ namespace {
 	}},
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
+		fh::GeneralHackLib::BossLockedItems,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -94,7 +96,10 @@ std::string fh::GeneralHack::string_or(const std::string& p_id, const std::strin
 std::vector<fh::GeneralHack> fh::parse_general_hacks(const std::string& p_str) {
 	std::vector<fh::GeneralHack> result;
 
-	for (const auto& raw_entry : klib::str::split_string(p_str, ',')) {
+	std::string entries{ p_str };
+	std::replace(entries.begin(), entries.end(), '\n', ',');
+
+	for (const auto& raw_entry : klib::str::split_string(entries, ',')) {
 		const std::string entry{ klib::str::trim(raw_entry) };
 
 		if (entry.empty())

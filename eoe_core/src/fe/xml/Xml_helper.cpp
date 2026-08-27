@@ -1726,9 +1726,11 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 				std::string l_name{ n_string.attribute(c::ATTR_NAME).as_string() };
 
 				if (p_strings.find(l_name) == end(p_strings)) {
+					const auto attr_value{ n_string.attribute(c::ATTR_VALUE) };
+
 					p_strings.insert(std::make_pair(
 						l_name,
-						n_string.attribute(c::ATTR_VALUE).as_string()
+						attr_value ? attr_value.as_string() : n_string.text().as_string()
 					));
 				}
 			}
@@ -1745,7 +1747,9 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 
 				std::string l_name{ n_bmap.attribute(c::ATTR_NAME).as_string() };
 
-				if (p_byte_maps.find(l_name) == end(p_byte_maps)) {
+				// first matching map wins; merge maps only add missing entries
+				if (p_byte_maps.find(l_name) == end(p_byte_maps) ||
+					n_bmap.attribute(c::ATTR_MERGE).as_bool(false)) {
 					std::map<byte, std::string> l_tmp_bmap;
 
 					for (auto n_entry{ n_bmap.child(c::TAG_ENTRY) }; n_entry;
@@ -1764,7 +1768,12 @@ void fe::xml::load_configuration(const pugi::xml_document& p_doc,
 						));
 					}
 
-					p_byte_maps.insert(std::make_pair(l_name, l_tmp_bmap));
+					auto l_it{ p_byte_maps.find(l_name) };
+					if (l_it == end(p_byte_maps))
+						p_byte_maps.insert(std::make_pair(l_name, std::move(l_tmp_bmap)));
+					else
+						for (const auto& [key, value] : l_tmp_bmap)
+							l_it->second.insert(std::make_pair(key, value));
 				}
 			}
 		}

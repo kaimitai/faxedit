@@ -105,8 +105,7 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 		code.lda_imm(0b10000000);
 		code.sta_abs(RAM::SpecialItemBitfield);
 	}
-	code.jsr(ROM::Game_LoadFirstLevel);
-	code.rts();
+	code.jmp(ROM::Game_LoadFirstLevel);
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
@@ -199,6 +198,66 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 	return result;
 }
 
+// make the boss locked items show in the screen regardless of which boss it is
+// optionally keep the item hidden until all enemy sprites have been removed
+word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const bool enemies{ p_hack.bool_or("enemies", true) };
+
+	klib::Asm6502 code;
+	code.jsr(cpu_addr);
+
+	// all boss locked items will no longer check for a given sprite ID in A, but for any
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_BattleSuit_CheckForBosses);
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_BattleHelmet_CheckForBosses);
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_DragonSlayer_CheckForBosses);
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_QMattock_CheckForBosses);
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_QWingBoots_CheckForBosses);
+	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_BlackOnyx_CheckForBosses);
+	code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_Pendant_CheckForBosses);
+
+	// return C=0 if a boss/enemy is present, C=1 otherwise
+	code.txa();
+	code.pha();
+	code.ldy_imm(0x07);
+
+	code.label("@next_sprite");
+	code.lda_abs_y(RAM::EntitySlotActive);
+	code.cmp_imm(0xff);
+	code.beq("@next_slot");
+	code.tax();
+	code.lda_abs_x(ROM::SpriteTypeTable);
+
+	// boss always blocks
+	code.cmp_imm(0x07); // sprite type 7 - boss
+	code.beq("@sprite_blocks_item");
+
+	if (enemies) {
+		// enemy blocks when requested
+		code.cmp_imm(0x00); // sprite type 0 - enemy
+		code.beq("@sprite_blocks_item");
+	}
+
+	code.label("@next_slot");
+	code.dey();
+	code.bpl("@next_sprite");
+
+	code.pla();
+	code.tax();
+	code.sec();
+	code.rts();
+
+	code.label("@sprite_blocks_item");
+	code.pla();
+	code.tax();
+	code.clc();
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+}
+
+// supports using items inside buildings, disregarding player state flags
+// and selling items to shops which do not sell those items for a given price
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) const {
 	const bool buildings{ p_hack.bool_or("buildings", true) };
@@ -243,7 +302,7 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 		code.sta_abs_x(RAM::ShopItemCostsLo);
 		code.lda_imm(price / 256);
 		code.jmp(ROM::ShowSellMenu_STA_CostHi);
-		
+
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
 }
@@ -272,6 +331,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::FlexibleItems:
 			cpu_addr = install_FlexibleItems(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::BossLockedItems:
+			cpu_addr = install_BossLockedItems(p_config, p_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

@@ -57,6 +57,8 @@ namespace klib {
 		void label(const std::string& p_name);
 
 		void clear(void);
+		std::size_t apply_hack_noclear(std::vector<byte>& p_rom, byte p_bank_no,
+			word p_cpu_addr);
 		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
 			word p_cpu_addr, word p_cpu_min_addr);
 		std::size_t apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,
@@ -176,6 +178,7 @@ namespace klib {
 		void sbc_imm(byte p_value);
 		void sbc_abs_x(word p_addr);
 		void dex(void);
+		void dey(void);
 		void iny(void);
 		void sec(void);
 		void clc(void);

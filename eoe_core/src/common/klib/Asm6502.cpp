@@ -141,6 +141,7 @@ namespace {
 	constexpr byte OP_STY_ZP{ 0x84 };
 	constexpr byte OP_STA_ZP{ 0x85 };
 	constexpr byte OP_STX_ZP{ 0x86 };
+	constexpr byte OP_DEY{ 0x88 };
 	constexpr byte OP_STA_ABS{ 0x8d };
 	constexpr byte OP_TXA{ 0x8a };
 	constexpr byte OP_BCC{ 0x90 };
@@ -534,6 +535,10 @@ void klib::Asm6502::dex(void) {
 	emit(OP_DEX);
 }
 
+void klib::Asm6502::dey(void) {
+	emit(OP_DEY);
+}
+
 void klib::Asm6502::iny(void) {
 	emit(OP_INY);
 }
@@ -565,6 +570,14 @@ void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
 	const std::size_t file_offset = get_file_offset(p_bank_no, p_cpu_addr, p_cpu_min_addr);
 	assert(file_offset + m_bytes.size() <= p_rom.size());
 	std::copy(m_bytes.begin(), m_bytes.end(), p_rom.begin() + file_offset);
+}
+
+std::size_t klib::Asm6502::apply_hack_noclear(std::vector<byte>& p_rom, byte p_bank_no,
+	word p_cpu_addr) {
+	resolve_labels(p_cpu_addr);
+	std::size_t result{ size() };
+	apply_hack(p_rom, p_bank_no, p_cpu_addr, get_cpu_min_addr(p_bank_no));
+	return result;
 }
 
 std::size_t klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p_bank_no,

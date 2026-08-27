@@ -512,31 +512,6 @@
 			<entry byte="$0c" str="OW/Return" />
 			<entry byte="$0d" str="OW/Return (fg)" />
 		</byte_to_string_map>
-		<!-- labels for door requirements (randomizer) -->
-		<byte_to_string_map name="door_requirement_labels" region="randum">
-			<entry byte="$00" str="None" />
-			<entry byte="$01" str="Key A" />
-			<entry byte="$02" str="Key K" />
-			<entry byte="$03" str="Key Q" />
-			<entry byte="$04" str="Key J" />
-			<entry byte="$05" str="Key Jo" />
-			<entry byte="$06" str="Ring of Elf" />
-			<entry byte="$07" str="Ring of Dwarf" />
-			<entry byte="$08" str="Demon's Ring" />
-			<entry byte="$09" str="Extra Requirement" />
-		</byte_to_string_map>
-		<!-- item gfx for door requirements - used to draw door icon overlays (randomizer) -->
-		<byte_to_string_map name="door_requirement_item_gfx" region="randum">
-			<entry byte="$01" str="21" />
-			<entry byte="$02" str="22" />
-			<entry byte="$03" str="23" />
-			<entry byte="$04" str="24" />
-			<entry byte="$05" str="25" />
-			<entry byte="$06" str="17" />
-			<entry byte="$07" str="19" />
-			<entry byte="$08" str="20" />
-			<entry byte="$09" str="3" />
-		</byte_to_string_map>
 		<!-- labels for door requirements -->
 		<byte_to_string_map name="door_requirement_labels">
 			<entry byte="$00" str="None" />
@@ -549,6 +524,9 @@
 			<entry byte="$07" str="Ring of Dwarf" />
 			<entry byte="$08" str="Demon's Ring" />
 		</byte_to_string_map>
+		<byte_to_string_map name="door_requirement_labels" region="randum" merge="true">
+			<entry byte="$09" str="Extra Requirement" />
+		</byte_to_string_map>
 		<!-- item gfx for door requirements - used to draw door icon overlays -->
 		<byte_to_string_map name="door_requirement_item_gfx">
 			<entry byte="$01" str="21" />
@@ -559,6 +537,9 @@
 			<entry byte="$06" str="17" />
 			<entry byte="$07" str="19" />
 			<entry byte="$08" str="20" />
+		</byte_to_string_map>
+		<byte_to_string_map name="door_requirement_item_gfx" region="randum" merge="true">
+			<entry byte="$09" str="3" />
 		</byte_to_string_map>
 		<!-- script item index to item gfx entry index -->
 		<byte_to_string_map name="script_item_gfx">
@@ -782,54 +763,6 @@
 			<entry byte="$02" str="End-Game Room" />
 		</byte_to_string_map>
 		<!-- blocks of free space in bank 15, half open ranges [start, end) -->
-		<byte_to_string_map name="bank15_free_space" region="eu-512,us-512,us-rev-a-512">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3fd0a:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3fcdd:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="ng+1.08">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3ffde:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="jp-512">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3fdef:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="jp">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3fdc2:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
-		<byte_to_string_map name="bank15_free_space" region="en-transl">
-			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
-			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
-			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
-			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
-			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
-			<entry byte="$05" str="0x3fe0a:0x3fff0" original="bank end unused space" />
-		</byte_to_string_map>
 		<byte_to_string_map name="bank15_free_space" region="randum">
 			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
 			<entry byte="$01" str="0x3dfa9:0x3dfd5" original="unused debug code" />
@@ -837,13 +770,38 @@
 			<entry byte="$03" str="0x3ea57:0x3ea60" original="sw-transitions" />
 			<entry byte="$04" str="0x3eabc:0x3eb3f" original="ow-transitions" />
 		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space">
+			<entry byte="$00" str="0x3e60f:0x3e637" original="building scenes" />
+			<entry byte="$01" str="0x3e579:0x3e587" original="pal2mus" />
+			<entry byte="$02" str="0x3ea57:0x3ea60" original="sw-transitions" />
+			<entry byte="$03" str="0x3eabc:0x3eb3f" original="ow-transitions" />
+			<entry byte="$04" str="0x3ddbd:0x3dded" original="spawns" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="eu-512,us-512,us-rev-a-512" merge="true">
+			<entry byte="$05" str="0x3fd0a:0x3fff0" original="bank end unused space"/>
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="eu,us,us-rev-a" merge="true">
+			<entry byte="$05" str="0x3fcdd:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="ng+1.08" merge="true">
+			<entry byte="$05" str="0x3ffde:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="jp-512" merge="true">
+			<entry byte="$05" str="0x3fdef:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="jp" merge="true">
+			<entry byte="$05" str="0x3fdc2:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
+		<byte_to_string_map name="bank15_free_space" region="en-transl" merge="true">
+			<entry byte="$05" str="0x3fe0a:0x3fff0" original="bank end unused space" />
+		</byte_to_string_map>
 		<!-- world tilemaps to predefined bank -->
 		<byte_to_string_map name="world_tilemap_to_predefined_bank">
 			<!-- due to a bug in the game code, world 0 tilemaps must be in bank 0 -->
 			<entry byte="$00" str="$00" />
 		</byte_to_string_map>
 		<!-- iScript opcodes  -->
-		<byte_to_string_map name="iscript_opcodes">
+		<byte_to_string_map name="iscript_opcodes" merge="true">
 			<entry byte="$00" str="Mnemonic=End,Flow=End,Terminal=true" />
 			<entry byte="$01" str="Mnemonic=MsgNoskip,Args=Byte:TextString" />
 			<entry byte="$02" str="Mnemonic=MsgPrompt,Args=Byte:TextString" />
