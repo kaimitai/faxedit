@@ -12,6 +12,10 @@
 using byte = unsigned char;
 using word = uint16_t;
 
+namespace klib {
+	class Asm6502;
+}
+
 namespace fe {
 	struct Game;
 }
@@ -62,6 +66,7 @@ namespace fh {
 		AtlasDevClearVisibleMagic, AtlasDevSpawnMagicAt,
 		AtlasDevCastSpellFromEntity, AtlasDevSetMagicPosition,
 		AtlasDevSetMagicFacing,
+		AtlasDevArmRole, AtlasDevDayNight,
 		// Keep Count last.
 		Count
 	};
@@ -232,6 +237,9 @@ namespace fh {
 		word apply_AtlasDevCastSpellFromEntity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetMagicPosition(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetMagicFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevArmRole(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDayNight(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		void emit_arm_role_tail(const fe::Config& p_config, klib::Asm6502& p_code) const;
 
 		// shared helpers for the script action library
 		word apply_helper_DecodeScriptFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -275,6 +283,11 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		word install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		// bank 15
+		word install_AtlasDevFrameScheduler(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevDayNightCycle(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
 		// bank 12 general hacks
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

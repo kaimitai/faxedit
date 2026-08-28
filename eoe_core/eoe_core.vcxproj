@@ -84,6 +84,7 @@
     <ClInclude Include="src\fe\xml\Xml_helper_game.h" />
     <ClInclude Include="src\fe\xml\Xml_helper_settings.h" />
     <ClInclude Include="src\fh\fh_constants.h" />
+    <ClInclude Include="src\fh\AtlasDevFrameScheduler.h" />
     <ClInclude Include="src\fh\GeneralHack.h" />
     <ClInclude Include="src\fh\HackManager.h" />
     <ClInclude Include="src\fh\TilemapChanges.h" />
@@ -165,6 +166,8 @@
     <ClCompile Include="src\fe\WorldVisualizer.cpp" />
     <ClCompile Include="src\fe\xml\Xml_helper.cpp" />
     <ClCompile Include="src\fh\GeneralHack.cpp" />
+    <ClCompile Include="src\fh\AtlasDevDayNightCycle.cpp" />
+    <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
     <ClCompile Include="src\fh\TilemapChanges.cpp" />

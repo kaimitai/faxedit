@@ -85,6 +85,8 @@ add_library(eoe_core STATIC
 
     # fh
     src/fh/HackManager.cpp
+    src/fh/AtlasDevDayNightCycle.cpp
+    src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp
     src/fh/TilemapChanges.cpp

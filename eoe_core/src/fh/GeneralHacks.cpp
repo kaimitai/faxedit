@@ -404,6 +404,12 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::BossLockedItems:
 			cpu_addr = install_BossLockedItems(p_config, p_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevFrameScheduler:
+			cpu_addr = install_AtlasDevFrameScheduler(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevDayNightCycle:
+			cpu_addr = install_AtlasDevDayNightCycle(p_config, p_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
