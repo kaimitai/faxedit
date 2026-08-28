@@ -25,6 +25,7 @@ namespace {
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
+		fh::GeneralHackLib::FogRules,
 	}},
 	};
 }
@@ -74,6 +75,51 @@ bool fh::GeneralHack::get_bool(const std::string& p_id) const {
 
 const std::string& fh::GeneralHack::get_string(const std::string& p_id) const {
 	return params.at(p_id);
+}
+
+std::vector<std::string> fh::GeneralHack::split(const std::string& p_id, char p_delim) const {
+	std::vector<std::string> result;
+
+	for (const auto& elem : klib::str::split_string(get_string(p_id), p_delim))
+		result.push_back(klib::str::trim(elem));
+
+	return result;
+}
+
+std::vector<std::vector<std::string>> fh::GeneralHack::split_twice(const std::string& p_id,
+	char p_delim_outer, char p_delim_inner) const {
+	std::vector<std::vector<std::string>> result;
+
+	const auto outer{ split(p_id, p_delim_outer) };
+
+	for (const auto& elem : outer) {
+		const auto inner_raw{ klib::str::split_string(elem, p_delim_inner) };
+		std::vector<std::string> inner;
+
+		for (const auto& inner_elem : inner_raw)
+			inner.push_back(klib::str::trim(inner_elem));
+
+		result.push_back(inner);
+	}
+
+	return result;
+}
+
+std::vector<std::pair<byte, std::optional<byte>>> fh::GeneralHack::split_byte_optional_byte(
+	const std::string& p_id) const {
+	std::vector<std::pair<byte, std::optional<byte>>> result;
+
+	for (const auto& vec : split_twice(p_id)) {
+		if (vec.size() == 1)
+			result.push_back(std::make_pair(static_cast<byte>(klib::str::parse_numeric(vec[0])), std::nullopt));
+		else if (vec.size() == 2)
+			result.push_back(std::make_pair(static_cast<byte>(klib::str::parse_numeric(vec[0])),
+				static_cast<byte>(klib::str::parse_numeric(vec[1]))));
+		else
+			throw std::runtime_error("invalid parameter format for " + p_id);
+	}
+
+	return result;
 }
 
 // default value helpers

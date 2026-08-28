@@ -307,6 +307,72 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 	}
 }
 
+// routine which enables fogs for arbitrary (world, palette)-combinations
+word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	std::map<byte, std::set<std::optional<byte>>> rules;
+
+	const auto rules_raw{ p_hack.split_byte_optional_byte("rules") };
+
+	for (const auto& rule : rules_raw)
+		rules[rule.first].insert(rule.second);
+
+	if (rules.empty())
+		throw std::runtime_error("FogRules requires at least one rule");
+
+	klib::Asm6502 code;
+
+	// install hook
+	code.jsr(cpu_addr);
+	code.nop(6);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Fog_OnTick_CMP_02);
+
+	// replacement fog predicate - world is in A on entry
+	// returns A=0 (Z set) when fog is active, otherwise A=1 (Z clear),
+	// allowing the original BNE after return to remain and be used
+	std::map<byte, std::string> labels;
+
+	// world dispatch
+	for (const auto& [world, palettes] : rules) {
+		if (palettes.contains(std::nullopt)) {
+			code.cmp_imm(world);
+			code.beq("@fog_active");
+		}
+		else {
+			const auto label{ std::format("@world_{:02X}", world) };
+			labels.emplace(world, label);
+			code.cmp_imm(world);
+			code.beq(label);
+		}
+	}
+
+	// no world match
+	code.bne("@fog_inactive");
+
+	// palette checks
+	for (const auto& [world, label] : labels) {
+		code.label(label);
+		code.lda_abs(RAM::ScreenPaletteIndex);
+
+		for (const auto& palette : rules.at(world)) {
+			code.cmp_imm(*palette);
+			code.beq("@fog_active");
+		}
+
+		// no palette match for this world
+		code.bne("@fog_inactive");
+	}
+
+	code.label("@fog_active");
+	code.lda_imm(0x00);
+	code.rts();
+	code.label("@fog_inactive");
+	code.lda_imm(0x01);
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -322,6 +388,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr,
 				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
+			break;
+		case fh::GeneralHackLib::FogRules:
+			cpu_addr = install_FogRules(p_config, p_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);

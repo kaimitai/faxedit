@@ -84,6 +84,7 @@ namespace fh {
 		constexpr word Start_Health{ 0xdeaf };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
+		constexpr word Fog_OnTick_CMP_02{ 0xdfc7 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
 		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
