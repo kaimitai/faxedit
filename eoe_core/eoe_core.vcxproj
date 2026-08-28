@@ -52,6 +52,7 @@
     <ClInclude Include="src\fe\fe_constants.h" />
     <ClInclude Include="src\fe\Game.h" />
     <ClInclude Include="src\fe\game\GameManager.h" />
+    <ClInclude Include="src\fe\game\game_gfx.h" />
     <ClInclude Include="src\fe\GfxTilemapManager.h" />
     <ClInclude Include="src\fe\GodAllocator.h" />
     <ClInclude Include="src\fe\InterChunkScroll.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="src\fe\EditorSettings.cpp" />
     <ClCompile Include="src\fe\Game.cpp" />
     <ClCompile Include="src\fe\game\GameManager.cpp" />
+    <ClCompile Include="src\fe\game\game_gfx.cpp" />
     <ClCompile Include="src\fe\GfxTilemapManager.cpp" />
     <ClCompile Include="src\fe\GodAllocator.cpp" />
     <ClCompile Include="src\fe\InterChunkScroll.cpp" />

@@ -50,6 +50,7 @@ add_library(eoe_core STATIC
     src/fe/sprite/SpriteGUILoader.cpp
 
     src/fe/game/GameManager.cpp
+    src/fe/game/game_gfx.cpp
 
     src/fe/script/ScriptManager.cpp
 

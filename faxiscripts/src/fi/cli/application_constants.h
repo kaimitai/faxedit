@@ -30,6 +30,7 @@ namespace fi {
 		inline const std::pair<std::string, std::string> CMD_EXTRACT_PROJECT{ "extract-project" , "xproj" };
 		inline const std::pair<std::string, std::string> CMD_BUILD_PROJECT{ "build-project" , "bproj" };
 		inline const std::pair<std::string, std::string> CMD_EXPAND_ROM{ "expand-rom" , "expand" };
+		inline const std::pair<std::string, std::string> CMD_REMAP_FOG{ "remap-fog" , "fog" };
 
 		inline const std::vector<std::pair<std::string, std::string>> CLI_FLAGS{
 			{"--no-shop-comments", "-p"},
@@ -40,14 +41,11 @@ namespace fi {
 			{"--allow-cin-overflow", "-aco"}
 		};
 
-		inline const std::pair<std::string, std::string> CLI_SOURCE_ROM
-		{ "--source-rom", "-s" };
-
-		inline const std::pair<std::string, std::string> CLI_REGION
-		{ "--region", "-r" };
-
-		inline const std::pair<std::string, std::string> CLI_SKIP_PATCHING
-		{ "--skip", "-skip" };
+		inline const std::pair<std::string, std::string> CLI_SOURCE_ROM	{ "--source-rom", "-s" };
+		inline const std::pair<std::string, std::string> CLI_REGION	{ "--region", "-r" };
+		inline const std::pair<std::string, std::string> CLI_SKIP_PATCHING { "--skip", "-skip" };
+		inline const std::pair<std::string, std::string> CLI_TILESET{ "--tileset", "-tileset" };
+		inline const std::pair<std::string, std::string> CLI_TILES{ "--tiles", "-tiles" };
 
 	}
 }
