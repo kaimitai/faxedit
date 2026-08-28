@@ -5,6 +5,7 @@
 #include "application_constants.h"
 #include "fe/fe_app_constants.h"
 #include "fe/Message.h"
+#include "fe/game/game_gfx.h"
 #include "fi/fi_constants.h"
 #include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
@@ -154,6 +155,9 @@ fi::Cli::Cli(int argc, char** argv) :
 	// ROM expansion
 	else if (m_script_mode == fi::ScriptMode::ExpandROM)
 		expand_rom(m_in_file, m_out_file);
+	else if (m_script_mode == fi::ScriptMode::RemapFog)
+		remap_fog(m_in_file, m_source_rom.empty() ? m_out_file : m_source_rom,
+			m_out_file, m_tileset_no, m_tiles);
 	// can't really happen
 	else
 		throw(std::runtime_error("Invalid script mode"));
@@ -321,6 +325,18 @@ void fi::Cli::expand_rom(const std::string& p_nes_filename,
 	std::cout << "ROM expanded!\n";
 }
 
+void fi::Cli::remap_fog(const std::string& p_in_nes_filename,
+	const std::string& p_in_xml_filename,
+	const std::string& p_out_xml_filename,
+	byte p_tileset_no, const std::vector<byte>& p_tiles) {
+	const auto rom{ load_rom_and_config(p_in_nes_filename) };
+	auto game{ fe::game::load_game_xml_from_file(m_config, p_in_xml_filename, rom, print_message) };
+
+	std::cout << "Attempting to remap fog chr-tile indexes\n";
+	fe::game::gfx::remap_fog_chr_tiles(m_config, game, p_tileset_no, p_tiles);
+	fe::game::save_game_xml_to_file(m_config, game, p_out_xml_filename, print_message);
+}
+
 void fi::Cli::parse_arguments(int arg_start, int argc, char** argv) {
 	for (int i{ arg_start }; i < argc; ++i) {
 		std::string argvi{ argv[i] };
@@ -337,6 +353,21 @@ void fi::Cli::parse_arguments(int arg_start, int argc, char** argv) {
 				throw std::runtime_error("Region option was used, but no ROM region was specified");
 			else
 				m_region = argv[++i];
+		}
+		else if (argvi == appc::CLI_TILESET.first ||
+			argvi == appc::CLI_TILESET.second) {
+			if (i + 1 >= argc)
+				throw std::runtime_error("Tileset index not specified");
+			else
+				m_tileset_no = static_cast<byte>(klib::str::parse_numeric(argv[++i]));
+		}
+		else if (argvi == appc::CLI_TILES.first ||
+			argvi == appc::CLI_TILES.second) {
+			if (i + 1 >= argc)
+				throw std::runtime_error("chr-tiles list not given");
+			else {
+				m_tiles = klib::str::parse_byte_list(argv[++i]);
+			}
 		}
 		else if (argvi == appc::CLI_SKIP_PATCHING.first ||
 			argvi == appc::CLI_SKIP_PATCHING.second) {
@@ -480,6 +511,9 @@ void fi::Cli::set_mode(const std::string& p_mode) {
 	}
 	else if (check_mode(p_mode, appc::CMD_EXPAND_ROM)) {
 		m_script_mode = fi::ScriptMode::ExpandROM;
+	}
+	else if (check_mode(p_mode, appc::CMD_REMAP_FOG)) {
+		m_script_mode = fi::ScriptMode::RemapFog;
 	}
 	else throw std::runtime_error("Unknown command " + p_mode);
 }

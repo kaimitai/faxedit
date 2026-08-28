@@ -63,6 +63,21 @@ int klib::str::parse_numeric(const std::string& token) {
 	return negative ? -value : value;
 }
 
+std::vector<byte> klib::str::parse_byte_list(const std::string& p_str) {
+	std::vector<byte> result;
+
+	for (const auto& elem : split_string(p_str, ',')) {
+		const auto value{ parse_numeric(trim(elem)) };
+
+		if (value > 0xff || value < 0)
+			throw std::runtime_error("Byte value out of range: " + elem);
+
+		result.push_back(static_cast<byte>(value));
+	}
+
+	return result;
+}
+
 std::string klib::str::strip_comment(const std::string& line, char p_comment_char) {
 	size_t pos = line.find(p_comment_char);
 	if (pos != std::string::npos)

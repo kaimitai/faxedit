@@ -18,7 +18,7 @@ namespace fi {
 		MiscBuild, MiscExtract,
 		DumpConfig,
 		ProjectBuild, ProjectExtract,
-		ExpandROM
+		ExpandROM, RemapFog
 	};
 
 	class Cli {
@@ -28,6 +28,8 @@ namespace fi {
 		std::string m_in_file, m_out_file, m_source_rom, m_region;
 		bool m_strict, m_shop_comments, m_overwrite, m_notes,
 			m_lilypond_percussion, m_allow_cinematic_overflow;
+		byte m_tileset_no;
+		std::vector<byte> m_tiles;
 		std::vector<std::string> m_patch_skips;
 		fe::Config m_config;
 
@@ -106,6 +108,11 @@ namespace fi {
 		// expand rom
 		void expand_rom(const std::string& p_nes_filename,
 			const std::string& p_out_nes_filename);
+		// remap fog
+		void remap_fog(const std::string& p_in_nes_filename,
+			const std::string& p_in_xml_filename,
+			const std::string& p_out_xml_filename,
+			byte tileset_no, const std::vector<byte>& p_tiles);
 
 		// common
 		std::vector<byte> load_rom_and_config(const std::string& p_nes_filename);
