@@ -294,6 +294,8 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevInfectedTint(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
+		word install_AtlasDevTimeOfDay(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
 		// bank 12 general hacks
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

@@ -170,6 +170,7 @@
     <ClCompile Include="src\fh\GeneralHack.cpp" />
     <ClCompile Include="src\fh\AtlasDevDayNightCycle.cpp" />
     <ClCompile Include="src\fh\AtlasDevInfectedTint.cpp" />
+    <ClCompile Include="src\fh\AtlasDevTimeOfDay.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
