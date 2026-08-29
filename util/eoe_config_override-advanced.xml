@@ -82,6 +82,8 @@
 			<entry byte="37" str="Impl=IfFlag" />
 			<entry byte="38" str="Impl=RunScreenHandler" />
 			<entry byte="39" str="Impl=Die" />
+			<entry byte="40" str="Impl=AtlasDevDayNight" />
+			<entry byte="41" str="Impl=AtlasDevArmRole" />
 		</byte_to_string_map>
 
 	</byte_to_string_maps>
@@ -94,6 +96,15 @@
 					Comma-separated entries in the value attribute are also supported for compatibility.
 					These entries are examples rather than a recommended or required set.
 			-->
+		<string name="general_hacks" region="us">
+			KillSwitch
+			SameWorldTransPal2Mus
+			AtlasDevFrameScheduler
+			AtlasDevDayNightCycle length=7200
+			FlexibleItems price=250
+			FastStart
+			BossLockedItems enemies=false
+		</string>
 		<string name="general_hacks">
 			KillSwitch
 			SameWorldTransPal2Mus

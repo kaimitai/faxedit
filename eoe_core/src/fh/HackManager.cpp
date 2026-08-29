@@ -1,4 +1,5 @@
 #include "HackManager.h"
+#include "AtlasDevFrameScheduler.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"
 #include "fe/nes_constants.h"
@@ -4708,6 +4709,85 @@ word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	return next;
 }
 
+// AtlasDevArmRole Kind State
+//
+// runtime control for AtlasDevFrameScheduler roles. the scheduler's
+// three slot bytes are ram, so a script can arm and disarm roles
+// mid-game; this opcode is that writer. a nonzero State arms Kind: a
+// slot already holding it is left alone, otherwise the first free slot
+// takes it, and with all three busy nothing happens. State zero clears
+// every slot holding Kind. Kind zero is the empty slot marker and is
+// refused. without the scheduler installed the slot bytes drive
+// nothing, so the opcode is inert.
+word fh::HackManager::apply_AtlasDevArmRole(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = Kind
+	code.cmp_imm(0x00);
+	code.bne("@kind_ok");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // consume State
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@kind_ok");
+	code.tax();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = State
+	emit_arm_role_tail(p_config, code);
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevDayNight State
+//
+// sugar for AtlasDevArmRole with the day/night kind: a nonzero State
+// starts the cycle, zero stops it. the AtlasDevDayNightCycle role
+// restores the palette to full daylight before going quiet, so stopping
+// the cycle at midnight does not strand a dark screen.
+word fh::HackManager::apply_AtlasDevDayNight(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = State
+	code.ldx_imm(0x02);                                        // day/night kind
+	emit_arm_role_tail(p_config, code);
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// shared tail for the role control opcodes: A = State with stale
+// flags (LoadByte's own flags describe its pointer), X = the role kind
+void fh::HackManager::emit_arm_role_tail(const fe::Config& p_config, klib::Asm6502& p_code) const {
+	constexpr word slots[3]{ fh::afs::RAM_SLOT0, fh::afs::RAM_SLOT1, fh::afs::RAM_SLOT2 };
+
+	p_code.cmp_imm(0x00);
+	p_code.beq("@disarm");
+	p_code.txa();
+	for (word slot : slots) {
+		p_code.cmp_abs(slot);
+		p_code.beq("@done");
+	}
+	p_code.lda_abs(slots[0]); p_code.beq("@put0");
+	p_code.lda_abs(slots[1]); p_code.beq("@put1");
+	p_code.lda_abs(slots[2]); p_code.beq("@put2");
+	p_code.jmp("@done");
+	p_code.label("@put0"); p_code.txa(); p_code.sta_abs(slots[0]); p_code.jmp("@done");
+	p_code.label("@put1"); p_code.txa(); p_code.sta_abs(slots[1]); p_code.jmp("@done");
+	p_code.label("@put2"); p_code.txa(); p_code.sta_abs(slots[2]); p_code.jmp("@done");
+	p_code.label("@disarm");
+	p_code.txa();
+	p_code.cmp_abs(slots[0]); p_code.bne("@d1");
+	p_code.lda_imm(0x00); p_code.sta_abs(slots[0]); p_code.txa();
+	p_code.label("@d1");
+	p_code.cmp_abs(slots[1]); p_code.bne("@d2");
+	p_code.lda_imm(0x00); p_code.sta_abs(slots[1]); p_code.txa();
+	p_code.label("@d2");
+	p_code.cmp_abs(slots[2]); p_code.bne("@done");
+	p_code.lda_imm(0x00); p_code.sta_abs(slots[2]);
+	p_code.label("@done");
+	p_code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+}
+
 // main orchestrator - injects the script routines specified by users through the configuration xml
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -5338,6 +5418,12 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevSetMagicFacing:
 			cpu_addr = apply_AtlasDevSetMagicFacing(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevArmRole:
+			cpu_addr = apply_AtlasDevArmRole(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevDayNight:
+			cpu_addr = apply_AtlasDevDayNight(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:
