@@ -623,6 +623,9 @@
     <ClCompile Include="src\fh\AtlasDevInfectedTint.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevTimeOfDay.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>

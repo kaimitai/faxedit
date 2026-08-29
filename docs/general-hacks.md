@@ -26,6 +26,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
+  - [AtlasDevTimeOfDay](#atlasdevtimeofday)
 
 <hr>
 
@@ -178,4 +179,25 @@ day cycle demands an unclaimed one.
 
 ```text
 AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
+```
+
+### AtlasDevTimeOfDay
+
+An in-game clock with a two-digit hour readout in the HUD, running as a
+role on the AtlasDevFrameScheduler. The readout uses the engine's own
+digit convention, so it inherits the HUD font and palette automatically.
+Requires AtlasDevFrameScheduler. Like the tint, it chains onto a post
+lane another role already holds, so the day cycle, the tint and the
+clock can all run in the same frame. Scripts switch it with
+AtlasDevArmRole 4; switching off blanks the readout and resets the
+clock, so re-arming starts the day at the start hour again.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hourlength` | `300` | frames per in-game hour |
+| `start` | `12` | the hour the clock boots at, `0` to `23` |
+| `cell` | `$2038` | nametable address of the two readout cells |
+
+```text
+AtlasDevTimeOfDay hourlength=600 start=6 cell=$2038
 ```
