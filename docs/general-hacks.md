@@ -23,6 +23,8 @@ This document describes the hacks in the current library and their parameters. I
   - [BossLockedItems](#bosslockeditems)
   - [FlexibleItems](#flexibleitems)
   - [FogRules](#fogrules)
+  - [AtlasDevFrameScheduler](#atlasdevframescheduler)
+  - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
 
 <hr>
 
@@ -129,4 +131,28 @@ Enables the fog effect on arbitrary world and palette combinations while reusing
 
 ```text
 FogRules rules=0:1+0:3+0:5+6:3+7
+```
+
+### AtlasDevFrameScheduler
+
+A neutral frame scheduler other hacks build on: an NMI tick with three role slots and a post-deadline lane for work that must run after the frame's last critical PPU write. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
+
+The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes.
+
+No parameters.
+
+```text
+AtlasDevFrameScheduler
+```
+
+### AtlasDevDayNightCycle
+
+A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping restores full daylight before going quiet.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `length` | `2048` | frames per full day cycle, multiple of 8 |
+
+```text
+AtlasDevDayNightCycle length=7200
 ```
