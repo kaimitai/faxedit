@@ -278,8 +278,8 @@ namespace fh {
 			bool p_stage_door_hack_installed = true) const;
 		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
-		word install_DynamicTilesets(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack, const fe::Game* p_game) const;
+		word install_DynamicTilesets(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
+			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) const;
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
