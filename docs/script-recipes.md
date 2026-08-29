@@ -1,17 +1,24 @@
 # Script Recipes
 
-Working, tested script patterns for common game moments. Every
-recipe here was assembled through eoe-cli and verified in an
-emulator harness before publication. Paste the block, change the
-defines, and bind it to an entrypoint.
+These recipes are integration fragments for common game moments,
+not standalone assembly files. Use them inside a full script export:
+
+1. Copy any define fragment into the existing `[defines]` section.
+2. Copy its script body into `[iscript]`, immediately after the
+   `.entrypoint N` that you want to bind.
+
+The fragments omit section headers and numeric entrypoints so several
+recipes can be combined in one file without duplicate sections or
+entrypoint numbers.
 
 Each recipe lists the opcode implementations it needs in your
 `iscript_opcodes` map (as `<entry byte="$xx" str="Impl=Name" />`).
 
-One rule that applies to every recipe: the `define` lines belong
-in your `[defines]` section, not inside the entrypoint. A define
-in the middle of `[iscript]` makes the assembly fail, and before
-eoe-cli returned proper exit codes that failure was easy to miss.
+Extended flags persist across screen and area visits, but on an
+ordinary ROM they are cleared on game initialization and are not
+stored in mantras. Unless a project explicitly stores them in SRAM,
+"once" in these recipes means once per loaded session, until reset or
+mantra load.
 
 ## Table of Contents
 
@@ -20,7 +27,7 @@ eoe-cli returned proper exit codes that failure was easy to miss.
 - [A door opened by a lever elsewhere](#lever-opens-door)
 - [An NPC with three moods](#npc-moods)
 - [A choice with consequences](#choice-with-consequences)
-- [A switch that permanently changes the room](#switch-changes-room)
+- [A switch that changes the room](#switch-changes-room)
 - [A trapped treasure](#trapped-chest)
 - [Random loot](#random-loot)
 - [A healing spring that charges gold](#healing-spring)
@@ -37,8 +44,15 @@ The flag guards the gift: the first talk gives the item and sets the flag, every
 
 Needs: `SetFlag`, `IfFlag`
 
+Add to `[defines]`:
+
 ```asm
 define GIFT_FLAG 100
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag GIFT_FLAG @again
     GetItem ITEM_RED_POTION
@@ -58,12 +72,19 @@ define GIFT_FLAG 100
 <a name="toll-gate"></a>
 ### A toll gate
 
-Vanilla LoseGold does the charging, exactly as the game's own pay-doors do; the flag makes the payment stick.
+Vanilla LoseGold does the charging, exactly as the game's own pay-doors do; the flag remembers the payment for the loaded session.
 
 Needs: `AtlasDevIfGoldAtLeast`, `SetFlag`, `IfFlag`
 
+Add to `[defines]`:
+
 ```asm
 define PAID_FLAG 101
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag PAID_FLAG @open
     AtlasDevIfGoldAtLeast 100 0 0 @canpay
@@ -91,13 +112,19 @@ define PAID_FLAG 101
 <a name="lever-opens-door"></a>
 ### A door opened by a lever elsewhere
 
-Two scripts share one flag. The lever sets it; the door script refuses until it is set, then ForceDoor lets the transition through. Bind the second block to the door's requirement script.
+Two scripts share one flag. The lever sets it; the door script refuses until it is set, then ForceDoor lets the transition through. Bind the two bodies to separate entrypoints, with the second used as the door's requirement script.
 
 Needs: `SetFlag`, `IfFlag`, `ForceDoor`
 
+Add to `[defines]`:
+
 ```asm
 define LEVER_FLAG 102
-; --- the lever (an NPC or object script) ---
+```
+
+Add the lever body to `[iscript]` after its entrypoint:
+
+```asm
 .textbox GENERIC
     IfFlag LEVER_FLAG @done
     SetFlag LEVER_FLAG
@@ -106,15 +133,19 @@ define LEVER_FLAG 102
 @done:
     Msg "The lever will<n>not move again."
     End
+```
 
-; --- the door (bind to the door requirement script) ---
-;.textbox GENERIC
-;    IfFlag LEVER_FLAG @openup
-;    Msg "It will not<n>budge."
-;    End
-;@openup:
-;    ForceDoor
-;    End
+Add the door body to `[iscript]` after a different entrypoint, and bind
+that entrypoint as the door requirement script:
+
+```asm
+.textbox GENERIC
+    IfFlag LEVER_FLAG @openup
+    Msg "It will not<n>budge."
+    End
+@openup:
+    ForceDoor
+    End
 ```
 
 | change this | default | meaning |
@@ -128,9 +159,16 @@ Flag checks fall through from latest to earliest, so the NPC always speaks to yo
 
 Needs: `IfFlag`
 
+Add to `[defines]`:
+
 ```asm
 define MOOD_FLAG_A 103
 define MOOD_FLAG_B 104
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag MOOD_FLAG_B @c
     IfFlag MOOD_FLAG_A @b
@@ -152,12 +190,19 @@ define MOOD_FLAG_B 104
 <a name="choice-with-consequences"></a>
 ### A choice with consequences
 
-IfMsgPrompt is the vanilla yes/no box as a branch; the flag makes the refusal permanent.
+IfMsgPrompt is the vanilla yes/no box as a branch; the flag remembers the refusal for the loaded session.
 
-Needs: `SetFlag`
+Needs: `SetFlag`, `IfFlag`
+
+Add to `[defines]`:
 
 ```asm
 define CHOICE_FLAG 105
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag CHOICE_FLAG @never
     IfMsgPrompt "I can teach you<n>a secret.<p>Do you want it?" @teach
@@ -174,17 +219,24 @@ define CHOICE_FLAG 105
 
 | change this | default | meaning |
 | --- | --- | --- |
-| `CHOICE_FLAG` | `105` | remembers the refusal forever |
+| `CHOICE_FLAG` | `105` | remembers the refusal until reset or mantra load |
 
 <a name="switch-changes-room"></a>
-### A switch that permanently changes the room
+### A switch that changes the room
 
-The [tilemap_changes] section binds tile edits to the flag; RunScreenHandler applies them immediately, and the screen handler re-applies them on every later visit. Set the screen's event handler to 3 in the editor.
+The [tilemap_changes] section binds tile edits to the flag; RunScreenHandler applies them immediately, and the screen handler re-applies them on later visits in the loaded session. Set the screen's event handler to 3 in the editor.
 
 Needs: `SetFlag`, `IfFlag`, `RunScreenHandler`
 
+Add to `[defines]`:
+
 ```asm
 define WALL_FLAG 106
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag WALL_FLAG @done
     SetFlag WALL_FLAG
@@ -204,7 +256,7 @@ tiles with Ctrl+Shift+C in the editor):
 
   world 0
   screen 5
-  flag 106
+  flag WALL_FLAG
 
   4,4,66
   5,4,66
@@ -223,8 +275,15 @@ The gift and the ambush share one script: the item lands first, then the guards 
 
 Needs: `SetFlag`, `IfFlag`, `AtlasDevSpawnEntity`, `AtlasDevPlaySFX`
 
+Add to `[defines]`:
+
 ```asm
 define TRAP_FLAG 107
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag TRAP_FLAG @empty
     SetFlag TRAP_FLAG
@@ -241,7 +300,7 @@ define TRAP_FLAG 107
 
 | change this | default | meaning |
 | --- | --- | --- |
-| `TRAP_FLAG` | `107` | one trap per game |
+| `TRAP_FLAG` | `107` | one trap per loaded session |
 | `$21` | `monster id` | who jumps out (SpawnEntity id) |
 | `$84 / $88` | `positions` | packed YX spawn spots |
 
@@ -251,6 +310,8 @@ define TRAP_FLAG 107
 Sampling the free-running frame counter at talk time is the cheapest honest coin flip the console has.
 
 Needs: `IfAddrBetween`
+
+Add to `[iscript]` after the entrypoint you bind:
 
 ```asm
 .textbox GENERIC
@@ -266,14 +327,16 @@ Needs: `IfAddrBetween`
 | change this | default | meaning |
 | --- | --- | --- |
 | `$1a` | `-` | the game's frame counter, the randomness source |
-| `0 / 127` | `odds` | the counter band that wins (127 of 256 here) |
+| `0 / 127` | `odds` | the inclusive counter band that wins (128 of 256 here) |
 
 <a name="healing-spring"></a>
 ### A healing spring that charges gold
 
-GetHealth is the vanilla healer the hospitals use; the gold check and charge wrap it in a price.
+GetHealth is the vanilla additive healer the hospitals use; it restores the operand amount and caps total health at 80. The gold check and charge wrap it in a price.
 
 Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevPlaySFX`
+
+Add to `[iscript]` after the entrypoint you bind:
 
 ```asm
 .textbox GENERIC
@@ -295,18 +358,20 @@ Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevPlaySFX`
 | change this | default | meaning |
 | --- | --- | --- |
 | `(price)` | `50` | in the IfGoldAtLeast and LoseGold lines |
-| `(amount)` | `80` | GetHealth heals to this many points |
+| `(amount)` | `80` | health GetHealth adds, capped at 80 total HP |
 
 <a name="night-gated-door"></a>
 ### A door only open after dark
 
-The day/night hack keeps its phase at $04e3; IfAddrBetween reads it straight from RAM. Requires AtlasDevDayNightCycle in the general hacks list.
+The day/night hack publishes its current darkness level at $04e2. Daylight is $00, while $10 through $20 covers every dim or dark phase and repeats correctly each cycle. Requires AtlasDevDayNightCycle in the general hacks list.
 
 Needs: `IfAddrBetween`, `ForceDoor` — and the hacks `AtlasDevFrameScheduler`, `AtlasDevDayNightCycle`
 
+Add to `[iscript]` after the entrypoint you bind:
+
 ```asm
 .textbox GENERIC
-    IfAddrBetween $04e3 2 6 @dark
+    IfAddrBetween $04e2 $10 $20 @dark
     Msg "The shrine<n>opens only<n>after dark."
     End
 @dark:
@@ -317,15 +382,17 @@ Needs: `IfAddrBetween`, `ForceDoor` — and the hacks `AtlasDevFrameScheduler`, 
 
 | change this | default | meaning |
 | --- | --- | --- |
-| `$04e3` | `-` | the day/night phase byte (requires AtlasDevDayNightCycle) |
-| `2 / 6` | `dark band` | phases that count as night |
+| `$04e2` | `-` | current darkness level (requires AtlasDevDayNightCycle) |
+| `$10 / $20` | `dark band` | inclusive levels that count as night |
 
 <a name="vision-cutscene"></a>
 ### A vision - a mini cutscene
 
-Freeze the world, fade it away, hold the dark, come back, and reopen the box for the aftermath text. Every step is blocking, so the script reads top to bottom exactly as it plays.
+Freeze the entities, fade the background and UI while sprites remain lit, hold the background at full fade, come back, and reopen the box for the aftermath text. The fade and wait steps are blocking, so the timing reads top to bottom as it plays.
 
 Needs: `AtlasDevHideTextbox`, `AtlasDevOpenTextbox`, `AtlasDevFreezeEntities`, `AtlasDevResumeEntities`, `AtlasDevFadeOut`, `AtlasDevFadeIn`, `AtlasDevWaitFrames`, `AtlasDevPlaySFX`
+
+Add to `[iscript]` after the entrypoint you bind:
 
 ```asm
 .textbox GENERIC
@@ -344,8 +411,8 @@ Needs: `AtlasDevHideTextbox`, `AtlasDevOpenTextbox`, `AtlasDevFreezeEntities`, `
 
 | change this | default | meaning |
 | --- | --- | --- |
-| `60 / 4` | `fade` | frames and depth of the darkness |
-| `45` | `hold` | frames of black |
+| `60 / 4` | `fade` | frames and depth of the background fade |
+| `45` | `hold` | frames at full background fade; sprites stay lit |
 
 <a name="boss-introduction"></a>
 ### A boss introduction
@@ -354,11 +421,13 @@ Freeze, shake, switch the music, put a face on the words, release. Eight lines o
 
 Needs: `AtlasDevFreezeEntities`, `AtlasDevResumeEntities`, `AtlasDevShakeScreen`, `AtlasDevSetMusic`, `AtlasDevSetPortrait`, `AtlasDevClearPortrait`
 
+Add to `[iscript]` after the entrypoint you bind:
+
 ```asm
 .textbox GENERIC
     AtlasDevFreezeEntities
     AtlasDevShakeScreen 60 2 1
-    AtlasDevSetMusic 5
+    AtlasDevSetMusic 10
     AtlasDevSetPortrait KING
     MsgNoskip "You dare enter<n>my hall?"
     AtlasDevClearPortrait
@@ -369,7 +438,7 @@ Needs: `AtlasDevFreezeEntities`, `AtlasDevResumeEntities`, `AtlasDevShakeScreen`
 
 | change this | default | meaning |
 | --- | --- | --- |
-| `5` | `song` | the battle music id (1-16) |
+| `10 / $0a` | `song` | the boss music id |
 | `60 2 1` | `shake` | frames, amplitude, period |
 
 <a name="veterans-door"></a>
@@ -378,6 +447,8 @@ Needs: `AtlasDevFreezeEntities`, `AtlasDevResumeEntities`, `AtlasDevShakeScreen`
 One experience check; the door itself does the gatekeeping.
 
 Needs: `AtlasDevIfXPAtLeast`, `ForceDoor`
+
+Add to `[iscript]` after the entrypoint you bind:
 
 ```asm
 .textbox GENERIC
@@ -401,10 +472,17 @@ The same falling-through pattern as the moods recipe, scaled up: quest flags for
 
 Needs: `IfFlag`
 
+Add to `[defines]`:
+
 ```asm
 define STEP_ONE 110
 define STEP_TWO 111
 define STEP_THREE 112
+```
+
+Add to `[iscript]` after the entrypoint you bind:
+
+```asm
 .textbox GENERIC
     IfFlag STEP_THREE @s3
     IfFlag STEP_TWO @s2
