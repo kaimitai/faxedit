@@ -26,6 +26,7 @@ namespace {
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
+		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 	}},
 	};
 }
