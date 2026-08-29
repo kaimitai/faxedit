@@ -23,8 +23,11 @@ This document describes the hacks in the current library and their parameters. I
   - [BossLockedItems](#bosslockeditems)
   - [FlexibleItems](#flexibleitems)
   - [FogRules](#fogrules)
+  - [DynamicTilesets](#dynamictilesets)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
+  - [AtlasDevInfectedTint](#atlasdevinfectedtint)
+  - [AtlasDevTimeOfDay](#atlasdevtimeofday)
 
 <hr>
 
@@ -133,6 +136,47 @@ Enables the fog effect on arbitrary world and palette combinations while reusing
 FogRules rules=0:1+0:3+0:5+6:3+7
 ```
 
+### DynamicTilesets
+
+Allows individual screens to override their world's normal tileset. Overrides are given as `world:screen:tileset` entries separated by `+`. Screens without an entry continue to use the tileset selected by the normal game logic.
+
+The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` and `addr` can place them in another PRG bank instead.
+
+The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own tileset selection mechanism.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `data` | none, required | `world:screen:tileset` entries separated by `+`
+| `bank` | 15 | PRG bank containing the lookup code and data table |
+| `addr` | none | CPU address of the lookup code when `bank` is not 15 |
+| `enter_building` | `false` | apply overrides when entering buildings |
+| `exit_building` | `true` | apply overrides when exiting buildings |
+| `sameworld` | `true` | apply overrides to same-world doors and screen transitions |
+| `start_screen` | `true` | apply an override when loading the starting screen |
+| `otherworld` | `true` | apply overrides to otherworld-transitions |
+| `stage_doors` | `true` | apply overrides to stage-door transitions |
+
+For normal use, no placement parameters are necessary:
+
+```text
+DynamicTilesets data=0:1:6+2:2:5+2:3:5+7:0:5
+```
+
+To keep the lookup code and data in another bank:
+
+```text
+DynamicTilesets bank=28 addr=0x8000 data=0:1:6+2:2:5+2:3:5+7:0:5
+```
+
+
+Hooks can be disabled when a project does not need those transition types:
+
+```text
+DynamicTilesets start_screen=false enter_building=false exit_building=false data=0:1:6+2:2:5
+```
+
+DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature.
+
 ### AtlasDevFrameScheduler
 
 A neutral frame scheduler other hacks build on: an NMI tick with three role slots and an exclusive post-deadline lane for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
@@ -157,4 +201,45 @@ A day and night cycle: the three background palette rows dim from the engine's o
 
 ```text
 AtlasDevDayNightCycle length=7200
+```
+
+### AtlasDevInfectedTint
+
+Tints sprite palette 0 with three configurable colors and a pulse, for a
+poisoned or cursed look on the hero. Requires AtlasDevFrameScheduler.
+Runs beside other roles on the same scheduler; scripts switch it with
+AtlasDevArmRole 3, and switching off restores the palette from the
+engine's shadow. When combined with AtlasDevDayNightCycle, list the
+tint after it - the tint chains onto a claimed post lane, while the
+day cycle demands an unclaimed one.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `colors` | `$09+$19+$29` | three palette values, plus separated |
+| `pulse` | `$20` | pulse mask, a power of two; `0` for a steady tint |
+| `armed` | `1` | `0` installs it dormant, for scripts to switch on |
+
+```text
+AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
+```
+
+### AtlasDevTimeOfDay
+
+An in-game clock with a two-digit hour readout in the HUD, running as a
+role on the AtlasDevFrameScheduler. The readout uses the engine's own
+digit convention, so it inherits the HUD font and palette automatically.
+Requires AtlasDevFrameScheduler. Like the tint, it chains onto a post
+lane another role already holds, so the day cycle, the tint and the
+clock can all run in the same frame. Scripts switch it with
+AtlasDevArmRole 4; switching off blanks the readout and resets the
+clock, so re-arming starts the day at the start hour again.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hourlength` | `300` | frames per in-game hour |
+| `start` | `12` | the hour the clock boots at, `0` to `23` |
+| `cell` | `$2038` | nametable address of the two readout cells |
+
+```text
+AtlasDevTimeOfDay hourlength=600 start=6 cell=$2038
 ```

@@ -14,9 +14,10 @@ using word = uint16_t;
 namespace fh {
 
 	enum class GeneralHackLib {
-		FlexibleItems,
+		FlexibleItems, DynamicTilesets,
 		KillSwitch, SameWorldTransPal2Mus, FogRules,
-		AtlasDevFrameScheduler, AtlasDevDayNightCycle,
+		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
+		AtlasDevTimeOfDay,
 		FastStart, QuestFlagItemDrops, BossLockedItems
 	};
 
@@ -43,6 +44,8 @@ namespace fh {
 			char p_delim_outer = '+', char p_delim_inner = ':') const;
 		std::vector<std::pair<byte, std::optional<byte>>> split_byte_optional_byte(
 			const std::string& p_id) const;
+		std::vector<std::vector<byte>> split_twice_bytes(const std::string& p_id,
+			std::size_t inner_size = 0) const;
 
 		// default value helpers
 		word word_or(const std::string& p_id, word p_default) const;

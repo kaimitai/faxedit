@@ -111,6 +111,7 @@ namespace klib {
 		void lda_abs(word p_addr);
 		void lda_abs_x(word p_addr);
 		void lda_abs_y(word p_addr);
+		void lda_abs_y(const std::string& p_label);
 		void lda_ind_y(byte p_addr);
 		void ldx_zp(byte p_addr);
 		void ldx_imm(byte p_value);
@@ -203,6 +204,7 @@ namespace klib {
 		void nop(std::size_t count = 1);
 		void db(byte p_value);
 		void dw(word p_word);
+		void dw(const std::string& p_label);
 	};
 
 }

@@ -25,8 +25,10 @@ namespace {
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
-		fh::GeneralHackLib::FogRules,
+		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
+		fh::GeneralHackLib::AtlasDevInfectedTint,
+		fh::GeneralHackLib::AtlasDevTimeOfDay,
 	}},
 	};
 
@@ -37,9 +39,12 @@ namespace {
 		{ fh::GeneralHackLib::FogRules, { "rules" } },
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
+		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
+		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
+		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
@@ -155,6 +160,27 @@ std::vector<std::pair<byte, std::optional<byte>>> fh::GeneralHack::split_byte_op
 		}
 
 		result.emplace_back(static_cast<byte>(first), second);
+	}
+
+	return result;
+}
+
+std::vector<std::vector<byte>> fh::GeneralHack::split_twice_bytes(const std::string& p_id,
+	std::size_t inner_size) const {
+	const auto vec2d{ split_twice(p_id) };
+
+	std::vector<std::vector<byte>> result;
+
+	for (const auto& vec : vec2d) {
+		std::vector<byte> inner_bytes;
+		for (const auto& str : vec)
+			inner_bytes.push_back(klib::str::parse_byte(str));
+
+		if (inner_size != 0 && inner_bytes.size() != inner_size)
+			throw std::runtime_error(std::format("Hack parameter '{}' expected list with {} elements, but got {}",
+				p_id, inner_size, inner_bytes.size()));
+		else
+			result.push_back(inner_bytes);
 	}
 
 	return result;

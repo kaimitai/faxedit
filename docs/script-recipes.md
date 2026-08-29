@@ -36,6 +36,14 @@ mantra load.
 - [A boss introduction](#boss-introduction)
 - [A door for veterans](#veterans-door)
 - [A guide who follows your progress](#progress-guide)
+- [A ferryman - a repeatable paid crossing](#ferryman)
+- [A merchant with limited stock](#limited-stock)
+- [A combination lock](#combination-lock)
+- [A training hall - buying experience](#training-hall)
+- [An arena master - clear the beasts for a prize](#arena-master)
+- [A collector - bring me three](#potion-collector)
+- [A merchant who only trades at night](#nocturnal-merchant)
+- [A gambling den - double or nothing](#gambling-den)
 
 <a name="give-item-once"></a>
 ### An NPC who gives an item once
@@ -503,3 +511,277 @@ Add to `[iscript]` after the entrypoint you bind:
 | change this | default | meaning |
 | --- | --- | --- |
 | `110-112` | `flags` | the milestones the guide tracks |
+
+<a name="ferryman"></a>
+### A ferryman - a repeatable paid crossing
+
+The toll gate without the flag: no memory, so every crossing costs again. Bind it to a door's requirement script and the door becomes the boat.
+
+Needs: `AtlasDevIfGoldAtLeast`, `ForceDoor`
+
+```asm
+.textbox GENERIC
+    AtlasDevIfGoldAtLeast 100 0 0 @canpay
+    Msg "The crossing<n>costs 100."
+    End
+@canpay:
+    IfMsgPrompt "Cross for<n>100 golds?" @sail
+    Msg "The river<n>waits."
+    End
+@sail:
+    LoseGold 100
+    Msg "Hold tight."
+    ForceDoor
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `(fare)` | `100` | in the IfGoldAtLeast and LoseGold lines |
+
+<a name="limited-stock"></a>
+
+<a name="limited-stock"></a>
+### A merchant with limited stock
+
+Extended flags only ever turn on, so a chain of them is a counter that survives forever: each sale sets the next flag, and the third closes the shop for the rest of the game.
+
+Needs: `SetFlag`, `IfFlag`, `AtlasDevIfGoldAtLeast`
+
+```asm
+define SOLD_ONE 114
+define SOLD_TWO 115
+define SOLD_THREE 116
+.textbox GENERIC
+    IfFlag SOLD_THREE @out
+    AtlasDevIfGoldAtLeast 80 0 0 @sell
+    Msg "80 golds<n>a bottle."
+    End
+@sell:
+    LoseGold 80
+    GetItem ITEM_RED_POTION
+    IfFlag SOLD_TWO @last
+    IfFlag SOLD_ONE @second
+    SetFlag SOLD_ONE
+    Msg "Two left."
+    End
+@second:
+    SetFlag SOLD_TWO
+    Msg "Last one<n>after this."
+    End
+@last:
+    SetFlag SOLD_THREE
+    Msg "That is the<n>last bottle."
+    End
+@out:
+    Msg "Sold out.<p>Come back<n>next season."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `SOLD_ONE..THREE` | `114-116` | one flag per bottle sold |
+| `(price)` | `80` | in the IfGoldAtLeast and LoseGold lines |
+
+<a name="combination-lock"></a>
+
+<a name="combination-lock"></a>
+### A combination lock
+
+Three lever scripts set three flags; the door demands left and middle set with the right one clear. A wrong flag is checked first, so pulling everything is not the answer.
+
+Needs: `SetFlag`, `IfFlag`, `ForceDoor`
+
+```asm
+define LEVER_LEFT 117
+define LEVER_MID 118
+define LEVER_RIGHT 119
+; --- the door (the levers are three one-line SetFlag scripts) ---
+.textbox GENERIC
+    IfFlag LEVER_RIGHT @wrong
+    IfFlag LEVER_LEFT @l1
+    Msg "Cold iron.<n>Nothing moves."
+    End
+@l1:
+    IfFlag LEVER_MID @open
+    Msg "Something<n>clicks,<n>half-way."
+    End
+@open:
+    Msg "The seal<n>breaks!"
+    ForceDoor
+    End
+@wrong:
+    Msg "A grinding<n>noise. It<n>resets."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `LEVER_LEFT/MID/RIGHT` | `117-119` | the levers; the right one must stay untouched |
+
+<a name="training-hall"></a>
+
+<a name="training-hall"></a>
+### A training hall - buying experience
+
+The reward mirror of the veterans' door: gold in, experience out, and the engine's own level thresholds do the rest.
+
+Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevAddExperience`, `AtlasDevPlaySFX`
+
+```asm
+.textbox GENERIC
+    AtlasDevIfGoldAtLeast 200 0 0 @afford
+    Msg "Training costs<n>200 golds."
+    End
+@afford:
+    IfMsgPrompt "Train for<n>200 golds?" @train
+    Msg "Rest, then."
+    End
+@train:
+    LoseGold 200
+    AtlasDevAddExperience 500
+    AtlasDevPlaySFX 9
+    Msg "You feel<n>seasoned."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `(fee)` | `200` | in the IfGoldAtLeast and LoseGold lines |
+| `500` | `lesson` | experience per session (AddExperience) |
+
+<a name="arena-master"></a>
+
+<a name="arena-master"></a>
+### An arena master - clear the beasts for a prize
+
+The first recipe where combat is the quest. The count check reads the live entity slots, so the master knows the beasts are dead without any flag from them - the threshold counts the master's own NPC too, so it is one more than the beasts left.
+
+Needs: `SetFlag`, `IfFlag`, `AtlasDevSpawnEntity`, `AtlasDevIfEntityCountAtLeast`
+
+```asm
+define ARENA_OPEN 120
+define ARENA_WON 121
+.textbox GENERIC
+    IfFlag ARENA_WON @champ
+    IfFlag ARENA_OPEN @check
+    SetFlag ARENA_OPEN
+    AtlasDevSpawnEntity $21 $84
+    AtlasDevSpawnEntity $21 $86
+    AtlasDevSpawnEntity $21 $88
+    Msg "Three beasts!<p>Survive them,<n>then return."
+    End
+@check:
+    AtlasDevIfEntityCountAtLeast 2 @fighting
+    SetFlag ARENA_WON
+    GetGold 800
+    Msg "Cleared!<p>Your purse<n>grows heavy."
+    End
+@fighting:
+    Msg "They still<n>breathe."
+    End
+@champ:
+    Msg "The crowd<n>remembers you."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `ARENA_OPEN/WON` | `120-121` | challenge started / prize taken |
+| `$21` | `monster id` | who fights (SpawnEntity id) |
+| `2` | `threshold` | entity count that still means fighting |
+
+<a name="potion-collector"></a>
+
+<a name="potion-collector"></a>
+### A collector - bring me three
+
+Stackable items keep their count in one RAM byte (red potions at $03c6), so IfAddrBetween reads the player's stock directly - AtlasDevIfItemCount counts item slots, and a stack only ever occupies one. The collector inspects rather than confiscates (nothing upstream can take items yet), and the flag keeps the reward single.
+
+Needs: `IfAddrBetween`, `SetFlag`, `IfFlag`
+
+```asm
+define BOUNTY_FLAG 122
+.textbox GENERIC
+    IfFlag BOUNTY_FLAG @paid
+    IfAddrBetween $03c6 3 255 @enough
+    Msg "Three red<n>potions buy<n>my secret."
+    End
+@enough:
+    SetFlag BOUNTY_FLAG
+    GetGold 400
+    Msg "All three!<p>The secret is<n>yours."
+    End
+@paid:
+    Msg "I keep no<n>more secrets."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `BOUNTY_FLAG` | `122` | pays out once |
+| `$03c6` | `count byte` | red potions stack here; 3/255 is the band |
+
+<a name="nocturnal-merchant"></a>
+
+<a name="nocturnal-merchant"></a>
+### A merchant who only trades at night
+
+The night-gated door pattern applied to commerce: the phase byte decides whether the shop exists at all. Requires AtlasDevDayNightCycle in the general hacks list.
+
+Needs: `IfAddrBetween`, `AtlasDevIfGoldAtLeast` — and the hacks `AtlasDevFrameScheduler`, `AtlasDevDayNightCycle`
+
+```asm
+.textbox GENERIC
+    IfAddrBetween $04e3 2 6 @open
+    Msg "We open when<n>the sun dies."
+    End
+@open:
+    AtlasDevIfGoldAtLeast 60 0 0 @sell
+    Msg "The night rate<n>is 60 golds."
+    End
+@sell:
+    LoseGold 60
+    GetItem ITEM_RED_POTION
+    Msg "Sold, shadow<n>to shadow."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `$04e3` | `-` | the day/night phase byte (requires AtlasDevDayNightCycle) |
+| `2 / 6` | `dark band` | phases that count as night |
+
+<a name="gambling-den"></a>
+
+<a name="gambling-den"></a>
+### A gambling den - double or nothing
+
+Random loot with stakes: the wager leaves first, and the frame counter decides whether twice of it comes back.
+
+Needs: `AtlasDevIfGoldAtLeast`, `IfAddrBetween`
+
+```asm
+.textbox GENERIC
+    AtlasDevIfGoldAtLeast 100 0 0 @stake
+    Msg "Stakes are<n>100. You<n>lack them."
+    End
+@stake:
+    IfMsgPrompt "Double or<n>nothing?<n>100 golds." @flip
+    Msg "Wise,<n>perhaps."
+    End
+@flip:
+    LoseGold 100
+    IfAddrBetween $001a 0 127 @win
+    Msg "The coin<n>laughs at you."
+    End
+@win:
+    GetGold 200
+    Msg "Doubled!<p>Walk away<n>while you can."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `(stake)` | `100` | in the gold check and LoseGold lines |
+| `0 / 127` | `odds` | the frame-counter band that wins |

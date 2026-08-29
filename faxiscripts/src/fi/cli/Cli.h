@@ -26,6 +26,7 @@ namespace fi {
 		fi::ScriptMode m_script_mode;
 
 		std::string m_in_file, m_out_file, m_source_rom, m_region;
+		std::string m_config_xml, m_config_override_xml;
 		bool m_strict, m_shop_comments, m_overwrite, m_notes,
 			m_lilypond_percussion, m_allow_cinematic_overflow;
 		byte m_tileset_no;

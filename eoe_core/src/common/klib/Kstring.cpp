@@ -63,6 +63,14 @@ int klib::str::parse_numeric(const std::string& token) {
 	return negative ? -value : value;
 }
 
+byte klib::str::parse_byte(const std::string& token) {
+	auto val{ parse_numeric(token) };
+	if (val >= 0 && val <= 0xff)
+		return static_cast<byte>(val);
+	else
+		throw std::runtime_error(std::format("Invalid byte value: '{}'", val));
+}
+
 std::vector<byte> klib::str::parse_byte_list(const std::string& p_str) {
 	std::vector<byte> result;
 
