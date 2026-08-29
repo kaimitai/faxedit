@@ -410,6 +410,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevDayNightCycle:
 			cpu_addr = install_AtlasDevDayNightCycle(p_config, p_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevInfectedTint:
+			cpu_addr = install_AtlasDevInfectedTint(p_config, p_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
