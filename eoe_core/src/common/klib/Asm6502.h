@@ -27,7 +27,7 @@ namespace klib {
 
 		// A JMP whose target is a label rather than a literal address; the
 		// operand is patched once every label position is known.
-		struct JumpRef {
+		struct LabelRef {
 			std::size_t offset;
 			std::string label;
 		};
@@ -35,7 +35,7 @@ namespace klib {
 		std::vector<byte> m_bytes;
 		std::unordered_map<std::string, std::size_t> m_labels;
 		std::vector<BranchRef> m_branch_refs;
-		std::vector<JumpRef> m_jump_refs;
+		std::vector<LabelRef> m_jump_refs; // absolute label operands (jmp/jsr/lda)
 
 		void emit(byte p_byte);
 		void emit(sbyte p_byte);
@@ -93,6 +93,16 @@ namespace klib {
 		void jmp(const std::string& p_label);
 		void jmp_ind(word p_addr);
 		void jsr(word p_addr);
+		void jsr(const std::string& p_label);
+		void lda_abs(const std::string& p_label);
+		void lda_abs_x(const std::string& p_label);
+		void ora_abs(word p_addr);
+		void ora_abs(const std::string& p_label);
+		void ora_zp(byte p_addr);
+		void eor_zp(byte p_addr);
+		void inc_abs(word p_addr);
+		void dec_abs(word p_addr);
+		std::size_t label_position(const std::string& p_name) const;
 		void rts(void);
 
 		// loads
@@ -176,6 +186,7 @@ namespace klib {
 		void adc_zp(byte p_addr);
 		void adc_abs_x(word p_addr);
 		void sbc_imm(byte p_value);
+		void sbc_abs(word p_addr);
 		void sbc_abs_x(word p_addr);
 		void dex(void);
 		void dey(void);

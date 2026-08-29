@@ -381,6 +381,9 @@
     <ClInclude Include="src\fe\game\GameManager.h">
       <Filter>Header Files\fe\game</Filter>
     </ClInclude>
+    <ClInclude Include="src\fh\AtlasDevFrameScheduler.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
     <ClInclude Include="src\fh\GeneralHack.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
@@ -616,6 +619,12 @@
     </ClCompile>
     <ClCompile Include="src\fe\game\GameManager.cpp">
       <Filter>Source Files\fe\game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevDayNightCycle.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">
+      <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\GeneralHacks.cpp">
       <Filter>Source Files\fh</Filter>

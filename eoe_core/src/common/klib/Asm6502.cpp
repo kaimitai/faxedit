@@ -123,6 +123,11 @@ namespace {
 	constexpr byte OP_CLC{ 0x18 };
 	constexpr byte OP_ORA_ABS_Y{ 0x19 };
 	constexpr byte OP_JSR{ 0x20 };
+	constexpr byte OP_ORA_ABS{ 0x0d };
+	constexpr byte OP_ORA_ZP{ 0x05 };
+	constexpr byte OP_EOR_ZP{ 0x45 };
+	constexpr byte OP_INC_ABS{ 0xee };
+	constexpr byte OP_DEC_ABS{ 0xce };
 	constexpr byte OP_AND_ZP{ 0x25 };
 	constexpr byte OP_AND_IMM{ 0x29 };
 	constexpr byte OP_BMI{ 0x30 };
@@ -179,6 +184,7 @@ namespace {
 	constexpr byte OP_CPX_IMM{ 0xe0 };
 	constexpr byte OP_INX{ 0xe8 };
 	constexpr byte OP_SBC_IMM{ 0xe9 };
+	constexpr byte OP_SBC_ABS{ 0xed };
 	constexpr byte OP_NOP{ 0xea };
 	constexpr byte OP_BEQ{ 0xf0 };
 	constexpr byte OP_SBC_ABS_X{ 0xfd };
@@ -188,6 +194,71 @@ namespace {
 void klib::Asm6502::jmp(word p_addr) {
 	emit(OP_JMP);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::jsr(const std::string& p_label) {
+	emit(OP_JSR);
+
+	m_jump_refs.push_back({
+		m_bytes.size(),
+		p_label
+		});
+
+	emit_word(word{ 0 }); // patched later
+}
+
+void klib::Asm6502::lda_abs(const std::string& p_label) {
+	emit(OP_LDA_ABS);
+
+	m_jump_refs.push_back({
+		m_bytes.size(),
+		p_label
+		});
+
+	emit_word(word{ 0 }); // patched later
+}
+
+void klib::Asm6502::ora_abs(word p_addr) {
+	emit(OP_ORA_ABS);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::ora_abs(const std::string& p_label) {
+	emit(OP_ORA_ABS);
+
+	m_jump_refs.push_back({
+		m_bytes.size(),
+		p_label
+		});
+
+	emit_word(word{ 0 }); // patched later
+}
+
+void klib::Asm6502::ora_zp(byte p_addr) {
+	emit(OP_ORA_ZP);
+	emit(p_addr);
+}
+
+void klib::Asm6502::eor_zp(byte p_addr) {
+	emit(OP_EOR_ZP);
+	emit(p_addr);
+}
+
+void klib::Asm6502::inc_abs(word p_addr) {
+	emit(OP_INC_ABS);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::dec_abs(word p_addr) {
+	emit(OP_DEC_ABS);
+	emit_word(p_addr);
+}
+
+std::size_t klib::Asm6502::label_position(const std::string& p_name) const {
+	auto it{ m_labels.find(p_name) };
+	if (it == m_labels.end())
+		throw std::runtime_error(std::format("Undefined label: {}", p_name));
+	return it->second;
 }
 
 void klib::Asm6502::jmp(const std::string& p_label) {
@@ -224,6 +295,17 @@ void klib::Asm6502::lda_zp(byte p_addr) {
 void klib::Asm6502::lda_imm(byte p_value) {
 	emit(OP_LDA_IMM);
 	emit(p_value);
+}
+
+void klib::Asm6502::lda_abs_x(const std::string& p_label) {
+	emit(OP_LDA_ABS_X);
+
+	m_jump_refs.push_back({
+		m_bytes.size(),
+		p_label
+		});
+
+	emit_word(word{ 0 }); // patched later
 }
 
 void klib::Asm6502::lda_abs(word p_addr) {
@@ -524,6 +606,11 @@ void klib::Asm6502::adc_abs_x(word p_addr) {
 void klib::Asm6502::sbc_imm(byte p_value) {
 	emit(OP_SBC_IMM);
 	emit(p_value);
+}
+
+void klib::Asm6502::sbc_abs(word p_addr) {
+	emit(OP_SBC_ABS);
+	emit_word(p_addr);
 }
 
 void klib::Asm6502::sbc_abs_x(word p_addr) {
