@@ -261,11 +261,16 @@ std::vector<std::string> fe::Config::get_region_names(void) const {
 }
 
 void fe::Config::set_region(const std::string& p_region_name) {
-	m_region.region = p_region_name;
-	for (const auto& reg : m_region_defs)
-		if (reg.m_name == p_region_name)
-			m_region.compatible_regions = reg.m_compatible_regions;
+	const auto region{ std::find_if(begin(m_region_defs), end(m_region_defs),
+		[&p_region_name](const RegionDefinition& candidate) {
+			return candidate.m_name == p_region_name;
+		}) };
+	if (region == end(m_region_defs))
+		throw std::runtime_error(std::format(
+			"Unknown ROM region '{}'", p_region_name));
 
+	m_region.region = region->m_name;
+	m_region.compatible_regions = region->m_compatible_regions;
 	m_region_defs.clear();
 }
 
