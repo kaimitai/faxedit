@@ -12,13 +12,18 @@ int main(int argc, char** argv) try {
 	}
 	else
 		fi::Cli cli(argc, argv);
+
+	return 0;
 }
 catch (const std::runtime_error& ex) {
 	std::cerr << "Runtime error: " << ex.what() << "\n";
+	return 1;
 }
 catch (const std::exception& ex) {
 	std::cerr << "Runtime exception: " << ex.what() << "\n";
+	return 1;
 }
 catch (...) {
 	std::cerr << "Unknown runtime error:\n";
+	return 1;
 }
