@@ -38,6 +38,7 @@ namespace {
 		{ fh::GeneralHackLib::FogRules, { "rules" } },
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
+		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
