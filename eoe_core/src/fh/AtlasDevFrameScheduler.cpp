@@ -38,11 +38,15 @@ namespace {
 		code.bne("qbusy");
 		code.lda_zp(0x73); code.ora_zp(0x74);
 		code.ora_zp(0x75); code.ora_zp(0x76);
-		code.sta_abs(RAM_HEAVY);
-		code.jmp("quiet");
+		code.beq("clear");
 		code.label("qbusy");
 		code.sta_abs(RAM_HEAVY);
 		code.jmp("dma");
+		// Unreachable size pad: placing it before clear keeps quiet and
+		// queue-busy timing unchanged while preserving every ABI offset.
+		code.nop();
+		code.label("clear");
+		code.sta_abs(RAM_HEAVY);
 		code.label("quiet");
 		code.inc_abs(RAM_CNT_LO);
 		code.bne("nohi");
@@ -148,6 +152,7 @@ word fh::HackManager::install_AtlasDevFrameScheduler(const fe::Config&, std::vec
 		|| code.label_position("pre1") + 1 != OFF_PRE1
 		|| code.label_position("pre2") + 1 != OFF_PRE2
 		|| code.label_position("post") + 1 != OFF_POST
+		|| code.label_position("stub") != OFF_STUB
 		|| code.label_position("postarmed") != OFF_POSTARMED
 		|| code.label_position("arm0") != OFF_ARM0)
 		throw std::runtime_error("AtlasDevFrameScheduler: abi offsets drifted from the header");

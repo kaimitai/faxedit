@@ -39,12 +39,18 @@
     <ClCompile Include="src\fi\cli\Cli.cpp">
       <Filter>Source Files\fi\cli</Filter>
     </ClCompile>
+    <ClCompile Include="src\fi\cli\ConfigPaths.cpp">
+      <Filter>Source Files\fi\cli</Filter>
+    </ClCompile>
     <ClCompile Include="src\mantra\MantraCli.cpp">
       <Filter>Source Files\mantra</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\fi\cli\Cli.h">
+      <Filter>Header Files\fi\cli</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fi\cli\ConfigPaths.h">
       <Filter>Header Files\fi\cli</Filter>
     </ClInclude>
     <ClInclude Include="src\mantra\MantraCli.h">

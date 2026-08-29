@@ -6,6 +6,7 @@
 #include "fe/fe_constants.h"
 #include <format>
 #include <stdexcept>
+#include <utility>
 
 // kill switch; Pressing Select while the game is paused kills the player when the game is unpaused
 word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const {
@@ -376,50 +377,87 @@ word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<b
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
+	if (p_hacks.empty())
+		return 0;
+
+	std::size_t cpu_window_start{ 0 };
+	std::size_t cpu_window_end{ 0 };
+	switch (p_bank) {
+	case 12:
+	case 14:
+		cpu_window_start = 0x8000;
+		cpu_window_end = 0xc000;
+		break;
+	case 15:
+		cpu_window_start = 0xc000;
+		cpu_window_end = 0x10000;
+		break;
+	default:
+		throw std::runtime_error(std::format(
+			"Unsupported general-hack PRG bank {}", p_bank));
+	}
+
+	if (p_cpu_addr_start < cpu_window_start
+		|| p_cpu_addr_start > 0xffff
+		|| p_cpu_addr_end > cpu_window_end
+		|| p_cpu_addr_start > p_cpu_addr_end)
+		throw std::runtime_error("Invalid general-hack CPU range");
+
+	// Work transactionally: a rejected installer or a final capacity failure
+	// must not leave a partially modified ROM in memory.
+	std::vector<byte> patched_rom{ p_rom };
 	// TODO: Throw if cpu range is invalid but that would be a config error
 	const word cpu_start{ static_cast<word>(p_cpu_addr_start) };
 	word cpu_addr{ cpu_start };
 
 	for (const auto& hack : p_hacks) {
+		const word previous_cpu_addr{ cpu_addr };
 		switch (hack.get_type()) {
 		case fh::GeneralHackLib::KillSwitch:
-			cpu_addr = install_KillSwitch(p_config, p_rom, p_bank, cpu_addr);
+			cpu_addr = install_KillSwitch(p_config, patched_rom, p_bank, cpu_addr);
 			break;
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
-			cpu_addr = install_SameWorldTransPal2Mus(p_config, p_rom, p_bank, cpu_addr,
+			cpu_addr = install_SameWorldTransPal2Mus(p_config, patched_rom, p_bank, cpu_addr,
 				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
 			break;
 		case fh::GeneralHackLib::FogRules:
-			cpu_addr = install_FogRules(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_FogRules(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
-			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::QuestFlagItemDrops:
-			cpu_addr = install_QuestFlagItemDrops(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_QuestFlagItemDrops(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FlexibleItems:
-			cpu_addr = install_FlexibleItems(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_FlexibleItems(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::BossLockedItems:
-			cpu_addr = install_BossLockedItems(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_BossLockedItems(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
-			cpu_addr = install_AtlasDevFrameScheduler(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevDayNightCycle:
-			cpu_addr = install_AtlasDevDayNightCycle(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_AtlasDevDayNightCycle(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevInfectedTint:
+			cpu_addr = install_AtlasDevInfectedTint(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevTimeOfDay:
-			cpu_addr = install_AtlasDevTimeOfDay(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_AtlasDevTimeOfDay(p_config, patched_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
 
+		if (cpu_addr < previous_cpu_addr)
+			throw std::runtime_error(std::format(
+				"Hack address wrapped in bank ${:02x}", p_bank));
 		if (static_cast<std::size_t>(cpu_addr) > p_cpu_addr_end)
 			throw std::runtime_error(std::format("Hack overflow in bank ${:02x}", p_bank));
 	}
 
+	p_rom = std::move(patched_rom);
 	return static_cast<std::size_t>(cpu_addr) - p_cpu_addr_start;
 }

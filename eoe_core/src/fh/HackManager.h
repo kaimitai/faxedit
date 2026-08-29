@@ -269,7 +269,7 @@ namespace fh {
 		word install_hack_tm_event_handler(const fe::Config& p_config, std::vector<byte>& p_rom,
 			byte tm_lookup_bank, word tm_lookup_cpu_addr) const;
 		word install_script_variable_reset(const fe::Config& p_config, std::vector<byte>& p_rom,
-			word cpu_addr, word end_handler_addr) const;
+			word cpu_addr) const;
 
 		// general hack library implementations
 		// bank 15 general hacks
@@ -287,6 +287,8 @@ namespace fh {
 		word install_AtlasDevFrameScheduler(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevDayNightCycle(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevInfectedTint(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevTimeOfDay(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
