@@ -25,6 +25,7 @@ This document describes the hacks in the current library and their parameters. I
   - [FogRules](#fogrules)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
+  - [AtlasDevInfectedTint](#atlasdevinfectedtint)
 
 <hr>
 
@@ -155,4 +156,21 @@ A day and night cycle: the three background palette rows dim from the engine's o
 
 ```text
 AtlasDevDayNightCycle length=7200
+```
+
+### AtlasDevInfectedTint
+
+Tints sprite palette 0 with three configurable colors and a pulse, for a
+poisoned or cursed look on the hero. Requires AtlasDevFrameScheduler.
+Runs beside other roles on the same scheduler; scripts switch it with
+AtlasDevArmRole 3, and switching off restores the palette from the
+engine's shadow.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `colors` | `$09+$19+$29` | three palette values, plus separated |
+| `pulse` | `$20` | pulse mask, a power of two; `0` for a steady tint |
+
+```text
+AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
 ```
