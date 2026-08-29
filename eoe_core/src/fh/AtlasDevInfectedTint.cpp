@@ -94,12 +94,20 @@ word fh::HackManager::install_AtlasDevInfectedTint(const fe::Config&, std::vecto
 		}
 	}
 	const byte pulse_mask{ p_hack.byte_or("pulse", 0x20) };
+	const byte armed{ p_hack.byte_or("armed", 0x01) };
+	if (armed > 1)
+		throw std::runtime_error("AtlasDevInfectedTint: armed must be 0 or 1");
 
-	// chain if another role already claimed the POST vector
+	// chain if another role already claimed the POST vector; an
+	// unclaimed lane must still hold the scheduler's default stub, so
+	// an unknown claimant fails the build instead of being overwritten
 	const auto scheduler{ klib::Asm6502::get_file_offset(15, base) };
 	const bool chain{ p_rom[scheduler + OFF_POSTARMED] != 0x00 };
 	const word chain_to{ static_cast<word>(
 		p_rom[scheduler + OFF_POST] | (p_rom[scheduler + OFF_POST + 1] << 8)) };
+	if (!chain && chain_to != static_cast<word>(base + OFF_STUB))
+		throw std::runtime_error(
+			"AtlasDevInfectedTint: scheduler POST lane has an unknown claimant");
 
 	klib::Asm6502 code;
 	emit_tint(code, colors, pulse_mask, chain, chain_to);
@@ -120,7 +128,10 @@ word fh::HackManager::install_AtlasDevInfectedTint(const fe::Config&, std::vecto
 	p_rom[scheduler + OFF_POST] = org & 0xff;
 	p_rom[scheduler + OFF_POST + 1] = org >> 8;
 	p_rom[scheduler + OFF_POSTARMED] = 0x01;
-	// arm the tint in the next free arm table slot
+	// arm the tint in the next free arm table slot; with armed=0 the
+	// body stays dormant until a script arms kind 3 at runtime
+	if (armed == 0)
+		return cpu_addr;
 	for (std::size_t i{ 0 }; i < 3; ++i) {
 		if (p_rom[scheduler + OFF_ARM0 + i] == 0x00) {
 			p_rom[scheduler + OFF_ARM0 + i] = KIND_TINT;

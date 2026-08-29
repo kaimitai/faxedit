@@ -166,12 +166,15 @@ Tints sprite palette 0 with three configurable colors and a pulse, for a
 poisoned or cursed look on the hero. Requires AtlasDevFrameScheduler.
 Runs beside other roles on the same scheduler; scripts switch it with
 AtlasDevArmRole 3, and switching off restores the palette from the
-engine's shadow.
+engine's shadow. When combined with AtlasDevDayNightCycle, list the
+tint after it - the tint chains onto a claimed post lane, while the
+day cycle demands an unclaimed one.
 
 | parameter | default | meaning |
 | --- | --- | --- |
 | `colors` | `$09+$19+$29` | three palette values, plus separated |
 | `pulse` | `$20` | pulse mask, a power of two; `0` for a steady tint |
+| `armed` | `1` | `0` installs it dormant, for scripts to switch on |
 
 ```text
 AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
