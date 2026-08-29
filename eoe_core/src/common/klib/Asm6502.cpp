@@ -323,6 +323,11 @@ void klib::Asm6502::lda_abs_y(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::lda_abs_y(const std::string& p_label) {
+	emit(OP_LDA_ABS_Y);
+	dw(p_label);
+}
+
 void klib::Asm6502::lda_ind_y(byte p_addr) {
 	emit(OP_LDA_IND_Y);
 	emit(p_addr);
@@ -650,6 +655,11 @@ void klib::Asm6502::db(byte p_value) {
 
 void klib::Asm6502::dw(word p_word) {
 	emit_word(p_word);
+}
+
+void klib::Asm6502::dw(const std::string& p_label) {
+	m_jump_refs.push_back({ m_bytes.size(), p_label });
+	emit_word(word{ 0 }); // patched later
 }
 
 void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,

@@ -212,7 +212,9 @@ namespace fh {
 		constexpr word SelectedItem{ 0x03c1 };
 		constexpr word NumberOfItems{ 0x03c6 };
 		constexpr word World_DefaultMusic{ 0x03d1 };
+		constexpr word SavedScreen{ 0x03d6 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
+		constexpr word DestBuildingScreen{ 0x03da };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
 		constexpr word VisibleMagicState{ 0x02b3 };

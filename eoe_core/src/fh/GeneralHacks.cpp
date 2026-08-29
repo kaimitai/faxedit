@@ -373,13 +373,14 @@ word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<b
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
 }
 
-// makes a trampoline for calls to the tileset loader
+// makes a trampoline for calls to the tileset loader, with data lookup
 word fh::HackManager::install_DynamicTilesets(
 	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
 
-	const byte bank{ p_hack.get_byte("bank") };
-	const word addr{ p_hack.get_word("addr") };
+	const std::size_t world_count{ p_game ? p_game->m_chunks.size() : 8 };
+	byte loader_bank{ p_hack.get_byte("bank") };
+	word loader_addr{ p_hack.get_word("addr") };
 	const auto entries{ p_hack.split_twice_bytes("data", 3) };
 
 	// world -> (screen -> tileset)
@@ -387,119 +388,172 @@ word fh::HackManager::install_DynamicTilesets(
 	for (const auto& entry : entries)
 		assigns[entry[0]][entry[1]] = entry[2];
 
-	const word MMC1_UpdateROMBank{
-		cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK)
-	};
+	const word MMC1_UpdateROMBank{ cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK) };
 	const word CurrentROMBank{ RAM::CurrentROMBank };
 
 	klib::Asm6502 code;
 
-	// -------------------------------------------------------------------------
-	// remote routine - stage doors and other-world transitions
-	// -------------------------------------------------------------------------
+	// *************** DATA LOADER - BEGIN *************** //
+	// Inputs:
+	// Current world  - $e2
+	// Current screen - $e3
+	// uses ($e4, $e5) for ptr lookup
+	// stores tile index override in $95 if a match is found
+	// on return; stores 0 (no match) or 1 (match) in $e2
+	const byte current_world_and_retval{ RAM::ZP_e2 };
+	const byte current_screen{ RAM::ZP_e3 };
+	const byte ptr_lo{ RAM::ZP_e4 };
+	const byte ptr_hi{ RAM::ZP_e5 };
 
-	code.lda_zp(RAM::ZP_CurrentWorld);
-	code.cmp_imm(0x00);
-	code.bne("@done");
-	code.lda_zp(RAM::ZP_CurrentScreen);
-	code.cmp_imm(0x01);
-	code.bne("@done");
+	// deref world ptr
+	code.lda_zp(current_world_and_retval);
+	code.asl_a();
+	code.tay();
 
-	code.lda_imm(0x0f);
-	code.sta_zp(RAM::ZP_TilesIndex);
+	code.lda_abs_y("@world_ptrs");
+	code.sta_zp(ptr_lo);
+	code.iny();
+	code.lda_abs_y("@world_ptrs");
+	code.sta_zp(ptr_hi);
+	code.ldy_imm(0x00);
 
-	code.label("@done");
+	// walk array (2 bytes per entry) sorted by screen no
+	code.label("@loop");
+	code.lda_ind_y(ptr_lo);
+	code.cmp_imm(0xff);
+	code.beq("@not_found");
+
+	code.cmp_zp(current_screen);
+	code.beq("@found");
+	code.bcs("@not_found"); // if screen no in table > current_screen, stop searching
+
+	code.iny();
+	code.iny();
+	code.bne("@loop");
+
+	code.label("@not_found");
+	code.lda_imm(0x00);
+	code.sta_zp(current_world_and_retval);
 	code.rts();
 
-	const word sameworld_addr{
-		code.apply_hack_and_clear_get_next_cpu_addr(p_rom, bank, addr)
-	};
-
-	// -------------------------------------------------------------------------
-	// remote routine - same-world doors and transitions
-	// -------------------------------------------------------------------------
-
-	code.lda_zp(RAM::ZP_CurrentWorld);
-	code.cmp_imm(0x00);
-	code.bne("@done");
-	code.lda_zp(RAM::ZP_TransitionScreen);
-	code.cmp_imm(0x01);
-	code.bne("@done");
-
-	code.lda_imm(0x0f);
+	code.label("@found");
+	code.iny();
+	code.lda_ind_y(ptr_lo);
 	code.sta_zp(RAM::ZP_TilesIndex);
 
-	code.label("@done");
+	code.lda_imm(0x01);
+	code.sta_zp(current_world_and_retval);
 	code.rts();
 
-	code.apply_hack_and_clear_get_next_cpu_addr(p_rom, bank, sameworld_addr);
+	// *************** DATA LOADER - END, DATA TABLE - BEGIN *************** //
+	// emit ptr table
+	code.label("@world_ptrs");
+	for (std::size_t world{ 0 }; world < world_count; ++world) {
+		const byte w{ static_cast<byte>(world) };
+		if (assigns.contains(w))
+			code.dw(std::format("@world{}", world));
+		else
+			code.dw("@empty");
+	}
+
+	// screen to tileset data for each world (sorted by screen index)
+	for (auto it{ assigns.begin() }; it != assigns.end(); ++it) {
+		const auto& [world, assignment] { *it };
+
+		code.label(std::format("@world{}", world));
+
+		for (const auto& [screen, tileset] : assignment) {
+			code.db(screen);
+			code.db(tileset);
+		}
+
+		// @empty immediately follows the final world's data so let's save a byte :)
+		if (std::next(it) != assigns.end())
+			code.db(0xff);
+	}
+	// shared terminator
+	code.label("@empty");
+	code.db(0xff);
+	// *************** DATA TABLE - END *************** //
+	code.apply_hack_and_clear(p_rom, loader_bank, loader_addr);
 
 	// -------------------------------------------------------------------------
-	// bank 15 - stage doors / other-world trampoline
+	// bank 15 - shared lookup helper
+	// Inputs: $e3 = screen (uses current world from $24)
+	// Output: $e2 = 0/1
 	// -------------------------------------------------------------------------
-
-	code.jsr(cpu_addr);
-	code.apply_hack_noclear(
-		p_rom, 15, ROM::Game_EnterAreaHandler_JSR_Area_LoadTiles);
-	code.apply_hack_noclear(
-		p_rom, 15, ROM::Game_LoadCurrentArea_JSR_Area_LoadTiles);
-	code.apply_hack_and_clear(
-		p_rom, 15, ROM::Game_LoadFirstLevel_JSR_Area_LoadTiles);
-
+	code.lda_zp(RAM::ZP_CurrentWorld);
+	code.sta_zp(current_world_and_retval);
 	// save currently mapped switchable bank
 	code.lda_abs(CurrentROMBank);
 	code.pha();
-
-	// switch to DynamicTilesets bank
-	code.ldx_imm(bank);
+	// switch to DynamicTilesets loader bank
+	code.ldx_imm(loader_bank);
 	code.jsr(MMC1_UpdateROMBank);
-
 	// perform lookup
-	code.jsr(addr);
-
+	code.jsr(loader_addr);
 	// restore previous bank
 	code.pla();
 	code.tax();
 	code.jsr(MMC1_UpdateROMBank);
+	code.rts();
+	const word otherworld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
 
+	// -------------------------------------------------------------------------
+	// bank 15 - stage doors / other-world transitions / game start trampoline
+	// -------------------------------------------------------------------------
+	code.lda_zp(RAM::ZP_CurrentScreen);
+	code.sta_zp(current_screen);
+	code.jsr(cpu_addr); // shared lookup helper
+	// vanilla path always loads tiles
 	code.jmp(ROM::Area_LoadTiles);
-
-	const word sameworld_cpu_addr{
-		code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr)
-	};
-
+	const word sameworld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, otherworld_cpu_addr) };
 	// -------------------------------------------------------------------------
 	// bank 15 - same-world trampoline
 	// -------------------------------------------------------------------------
-
-	code.jsr(sameworld_cpu_addr);
-	code.apply_hack_and_clear(
-		p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
-
-	// save currently mapped switchable bank
-	code.lda_abs(CurrentROMBank);
-	code.pha();
-
-	// switch to DynamicTilesets bank
-	code.ldx_imm(bank);
-	code.jsr(MMC1_UpdateROMBank);
-
-	// perform lookup
-	code.jsr(sameworld_addr);
-
-	// restore previous bank
-	code.pla();
-	code.tax();
-	code.jsr(MMC1_UpdateROMBank);
-
-	// If the lookup changed ZP_TilesIndex this reloads the tileset.
-	// For the POC we're still doing this unconditionally on this path.
+	code.lda_zp(RAM::ZP_TransitionScreen);
+	code.sta_zp(current_screen);
+	code.jsr(cpu_addr);
+	// only reload tiles if an override was found
+	code.lda_zp(current_world_and_retval);
+	code.beq("@load_screen");
 	code.jsr(ROM::Area_LoadTiles);
-
+	code.label("@load_screen");
 	code.jmp(ROM::Screen_Load);
+	const word exit_bld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, sameworld_cpu_addr) };
+	// -------------------------------------------------------------------------
+	// bank 15 - exit-building trampoline
+	// -------------------------------------------------------------------------
+	code.lda_abs(RAM::SavedScreen);
+	code.sta_zp(current_screen);
+	code.jsr(cpu_addr);
+	code.jmp(ROM::Area_LoadTiles);
+	const word enter_bld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, exit_bld_cpu_addr) };
+	// -------------------------------------------------------------------------
+	// bank 15 - enter-building trampoline
+	// -------------------------------------------------------------------------
+	code.lda_zp(RAM::ZP_TransitionScreen);
+	code.sta_zp(current_screen);
+	code.jsr(cpu_addr);
+	code.jmp(ROM::Area_LoadTiles);
+	const word next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, enter_bld_cpu_addr) };
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(
-		p_rom, 15, sameworld_cpu_addr);
+	// enter-building hook
+	code.jsr(enter_bld_cpu_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterBuilding_JSR_Area_LoadTiles);
+	// exit-building hook
+	code.jsr(exit_bld_cpu_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_ExitBuilding_JSR_Area_LoadTiles);
+	// sameworld doors and transitions
+	code.jsr(sameworld_cpu_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
+	// otherworld hooks
+	code.jsr(otherworld_cpu_addr);
+	code.apply_hack_noclear(p_rom, 15, ROM::Game_EnterAreaHandler_JSR_Area_LoadTiles);
+	code.apply_hack_noclear(p_rom, 15, ROM::Game_LoadCurrentArea_JSR_Area_LoadTiles);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_LoadFirstLevel_JSR_Area_LoadTiles);
+
+	return next_cpu_addr;
 }
 
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
@@ -522,7 +576,7 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			cpu_addr = install_FogRules(p_config, p_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::DynamicTilesets:
-			cpu_addr = install_DynamicTilesets(p_config, p_rom, cpu_addr, hack);
+			cpu_addr = install_DynamicTilesets(p_config, p_rom, cpu_addr, hack, p_game);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);
