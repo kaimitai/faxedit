@@ -53,7 +53,7 @@ Instead, project-specific configuration belongs in ```eoe_config_override.xml```
 
 Many projects never need an override file. However, the advanced scripting system uses it to define the project's custom script language, making an override file the recommended starting point for the features described in this document.
 
-A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to the directory containing the Echoes of Eolis executables, rename it to ```eoe_config_override.xml```, and modify it as needed.
+A skeleton override file, ```eoe_config_override-advanced.xml```, is included in the ```util``` directory. Copy it to your project directory, rename it to ```eoe_config_override.xml```, and modify it as needed. When using ```eoe-cli```, run the command from that project directory. A shared fallback override may instead be placed beside the executable.
 
 The provided file is only a starting point. It enables a representative selection of the built-in runtime opcodes, but most projects should remove unused entries, reorder them if desired, and add or replace implementations as their scripting language evolves.
 
@@ -77,7 +77,7 @@ No manual relocation, address calculation, or runtime installation is required b
 
 #### Quick Setup
 
-1. Copy ```util/eoe_config_override-advanced.xml``` next to the executables and rename it to ```eoe_config_override.xml```.
+1. Copy ```util/eoe_config_override-advanced.xml``` to your project directory and rename it to ```eoe_config_override.xml```.
 2. Open the ```iscript_opcodes``` map in this file.
 3. Leave opcode entries 0-23 unchanged. These define the vanilla scripting language.
 4. Review the example runtime opcodes starting at entry 24. Remove any you do not need, add others, or rearrange them as desired. Opcode numbers must be unique, but gaps are allowed; Echoes of Eolis automatically densifies the opcode map when it is loaded. All opcodes with an Impl must appear after all opcodes without one. **You can change the opcode set at any time later; existing assembly will continue to build as long as every opcode it uses is still defined in the map.**

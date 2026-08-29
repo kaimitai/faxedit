@@ -6,7 +6,7 @@
 
 [Echoes of Eolis](https://github.com/kaimitai/faxedit) ships a library of optional general hacks: self-contained gameplay and engine modifications that are enabled from the configuration and injected into the ROM at build time. Unlike the extended script opcodes, a general hack needs no script changes at all — enabling it is the whole integration.
 
-General hacks are completely optional. A project that enables none of them produces behavior identical to the original game. Each hack verifies its patch sites before writing and refuses the build loudly if the ROM does not match what it expects, so a wrong combination fails at build time rather than at play time.
+General hacks are completely optional. A project that enables none of them produces behavior identical to the original game. Installers validate their parameters and available output capacity, and newer engine-level installers also verify their hook preimages. Some legacy installers do not yet verify every overwritten byte, so use a ROM compatible with the selected configuration region and do not assume arbitrary pre-patched ROMs can safely compose with every hack.
 
 This document describes the hacks in the current library and their parameters. It assumes you are familiar with the configuration override system described in the [advanced modding documentation](advanced-modding.md).
 
@@ -32,6 +32,7 @@ This document describes the hacks in the current library and their parameters. I
   - [DynamicTilesets](#dynamictilesets)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
+  - [AtlasDevInfectedTint](#atlasdevinfectedtint)
 
 <hr>
 
@@ -183,9 +184,11 @@ DynamicTilesets changes which CHR tileset is loaded; it does not change a world'
 
 ### AtlasDevFrameScheduler
 
-A neutral frame scheduler other hacks build on: an NMI tick with three role slots and a post-deadline lane for work that must run after the frame's last critical PPU write. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
+A neutral frame scheduler other hacks build on: an NMI tick with three role slots and an exclusive post-deadline lane for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
 
-The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes.
+The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes. At build time, a boot slot is unclaimed only when its arm byte is zero and its PRE vector still points to the scheduler's default stub. A role installer reuses only a compatible existing kind or claims the first unclaimed slot, refusing without modifying the ROM when none is available. The single POST lane similarly refuses a second claimant.
+
+The current runtime opcodes do not retain persistent kind-to-slot affinity: when arming an inactive kind, they select the first zero RAM slot. Runtime composition is therefore safe only while candidate slots use stub PRE vectors. A future scheduler ABI extension is required before boot-off non-stub PRE roles can reserve a lane across runtime disarm/rearm operations.
 
 No parameters.
 
@@ -195,7 +198,7 @@ AtlasDevFrameScheduler
 
 ### AtlasDevDayNightCycle
 
-A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping restores full daylight before going quiet.
+A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list and exclusive ownership of its POST lane. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -203,4 +206,24 @@ A day and night cycle: the three background palette rows dim from the engine's o
 
 ```text
 AtlasDevDayNightCycle length=7200
+```
+
+### AtlasDevInfectedTint
+
+Tints sprite palette 0 with three configurable colors and a pulse, for a
+poisoned or cursed look on the hero. Requires AtlasDevFrameScheduler.
+Runs beside other roles on the same scheduler; scripts switch it with
+AtlasDevArmRole 3, and switching off restores the palette from the
+engine's shadow. When combined with AtlasDevDayNightCycle, list the
+tint after it - the tint chains onto a claimed post lane, while the
+day cycle demands an unclaimed one.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `colors` | `$09+$19+$29` | three palette values, plus separated |
+| `pulse` | `$20` | pulse mask, a power of two; `0` for a steady tint |
+| `armed` | `1` | `0` installs it dormant, for scripts to switch on |
+
+```text
+AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
 ```

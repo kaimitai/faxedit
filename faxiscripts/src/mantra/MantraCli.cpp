@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 fman::MantraCli::MantraCli(int argc, char** argv) :
+	m_terse{ false },
 	m_spawn_count{ 8 }
 {
 	int l_idx{ 2 };

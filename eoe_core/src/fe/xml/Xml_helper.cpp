@@ -5,8 +5,11 @@
 #include "Xml_constants.h"
 #include "./../fe_app_constants.h"
 #include "./../Config.h"
+#include "common/klib/Kfile.h"
 #include "common/klib/Kstring.h"
 #include <format>
+#include <limits>
+#include <sstream>
 #include <stdexcept>
 
 using byte = unsigned char;
@@ -19,8 +22,14 @@ pugi::xml_document fe::xml::load_xml_file(const std::string& p_filepath) {
 }
 
 void fe::xml::save_xml_file(const pugi::xml_document& p_doc, const std::string& p_filepath) {
-	if (!p_doc.save_file(p_filepath.c_str()))
-		throw std::runtime_error("Could not save " + p_filepath);
+	std::ostringstream output;
+	p_doc.save(output);
+	if (!output)
+		throw std::runtime_error("Could not serialize " + p_filepath);
+
+	const auto xml{ output.str() };
+	klib::file::write_bytes_to_file(
+		std::vector<byte>(xml.begin(), xml.end()), p_filepath);
 }
 
 fe::Game fe::xml::load_game_xml_from_file(const std::string& p_filepath) {
@@ -1457,9 +1466,9 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_WARN_TILEMAP_95, p_settings.m_warn_tilemap_95_pct);
 	add_setting(n_settings, c::SETTINGS_PARAM_WARN_DOOR_DEST_00, p_settings.m_warn_00_doors);
 
-	// save document to disk
-	if (!doc.save_file(p_filepath.c_str()))
-		throw std::runtime_error("Could not save " + p_filepath);
+	// Serialize before replacing the existing settings file. This keeps the
+	// previous valid document intact if either serialization or writing fails.
+	save_xml_file(doc, p_filepath);
 }
 
 void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSettings& p_settings) {
@@ -2020,7 +2029,7 @@ size_t fe::xml::parse_numeric(const std::string& p_token) {
 	std::string number = value;
 
 	// Hex formats: 0xNN or $NN
-	if (value.size() > 2 && value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
+	if (value.size() >= 2 && value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
 		base = 16;
 		number = value.substr(2);
 	}
@@ -2028,17 +2037,26 @@ size_t fe::xml::parse_numeric(const std::string& p_token) {
 		base = 16;
 		number = value.substr(1);
 	}
+	if (number.empty())
+		throw std::runtime_error("Numeric prefix has no digits: " + p_token);
 
 	size_t result = 0;
 	for (char c : number) {
-		if (!std::isxdigit(static_cast<unsigned char>(c))) {
-			throw std::runtime_error("Invalid digit in token: " + p_token);
-		}
+		int digit{ -1 };
+		if (c >= '0' && c <= '9')
+			digit = c - '0';
+		else if (c >= 'a' && c <= 'f')
+			digit = c - 'a' + 10;
+		else if (c >= 'A' && c <= 'F')
+			digit = c - 'A' + 10;
 
-		int digit = std::isdigit(static_cast<unsigned char>(c))
-			? c - '0'
-			: std::toupper(static_cast<unsigned char>(c)) - 'A' + 10;
-		result = result * base + digit;
+		if (digit < 0 || digit >= base)
+			throw std::runtime_error("Invalid digit in token: " + p_token);
+		if (result > (std::numeric_limits<size_t>::max() - static_cast<size_t>(digit))
+			/ static_cast<size_t>(base))
+			throw std::runtime_error("Numeric token out of range: " + p_token);
+
+		result = result * static_cast<size_t>(base) + static_cast<size_t>(digit);
 	}
 
 	return result;

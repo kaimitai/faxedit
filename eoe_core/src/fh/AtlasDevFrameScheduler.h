@@ -27,15 +27,23 @@ namespace fh::afs {
 	// the handler is called with the slot's kind byte in A, before OAM DMA,
 	// on frames where the engine's ppu queue and nametable strips are idle.
 	// the POST vector runs with bank 9 switched in, after the frame's last
-	// deadline critical ppu write; enable it by setting OFF_POSTARMED
-	// nonzero. arm a slot at boot by writing the role's kind byte at
-	// OFF_ARM0 plus the slot number.
+	// deadline critical ppu write. the POST lane is unclaimed only while
+	// its operand points to base plus OFF_STUB and OFF_POSTARMED is zero;
+	// a role installer must verify both before claiming it. a boot slot is
+	// free to an installer only when its arm byte is zero and its PRE
+	// operand still points to base plus OFF_STUB. reusing an existing kind
+	// likewise requires the role's expected PRE operand. this is build-time
+	// ownership only: the current runtime role opcodes retain no persistent
+	// kind-to-slot affinity and are composition-safe only while candidate
+	// zero RAM slots have stub PRE vectors. persistent affinity for boot-off
+	// non-stub PRE roles requires a future ABI extension.
 	constexpr std::size_t CORE_SIZE{ 150 };
 	constexpr std::size_t OFF_TRAMP{ 0x6d };       // trampoline entry (hook 2 target)
 	constexpr std::size_t OFF_PRE0{ 0x55 };        // jsr operand, slot 0
 	constexpr std::size_t OFF_PRE1{ 0x5d };        // jsr operand, slot 1
 	constexpr std::size_t OFF_PRE2{ 0x65 };        // jsr operand, slot 2
 	constexpr std::size_t OFF_POST{ 0x87 };        // jsr operand, POST lane
+	constexpr std::size_t OFF_STUB{ 0x91 };        // default RTS target
 	constexpr std::size_t OFF_POSTARMED{ 0x92 };   // 0 = POST disabled
 	constexpr std::size_t OFF_ARM0{ 0x93 };        // three arm table bytes
 

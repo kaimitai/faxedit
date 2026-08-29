@@ -10,9 +10,9 @@ DMG_NAME="EchoesOfEolis.dmg"
 BUILD_DIR="$ROOT/build"
 # Staging directory holding everything that ends up in the DMG.
 STAGE_DIR="$ROOT/build/dmg-stage"
-# faxiscripts is a terminal application, so it ships beside the app bundle
+# eoe-cli is a terminal application, so it ships beside the app bundle
 # rather than inside it, together with its own copy of eoe_config.xml.
-CLI_DIR="$STAGE_DIR/faxiscripts"
+CLI_DIR="$STAGE_DIR/eoe-cli"
 
 echo "==> Checking dependencies..."
 if ! command -v dylibbundler &> /dev/null; then
@@ -27,8 +27,8 @@ fi
 "$ROOT/scripts/mac-build.sh" --no-run
 
 # CMake copies eoe_config.xml next to each executable.
-FAXEDIT_BIN="$BUILD_DIR/faxedit/faxedit"
-FAXISCRIPTS_BIN="$BUILD_DIR/faxiscripts/faxiscripts"
+FAXEDIT_BIN="$BUILD_DIR/faxedit/eoe"
+FAXISCRIPTS_BIN="$BUILD_DIR/faxiscripts/eoe-cli"
 CONFIG_XML="$BUILD_DIR/faxedit/eoe_config.xml"
 for f in "$FAXEDIT_BIN" "$FAXISCRIPTS_BIN" "$CONFIG_XML"; do
     if [ ! -f "$f" ]; then
@@ -55,22 +55,23 @@ sips -z 1024 1024 "$ICON_SRC" --out "$ICONSET/icon_512x512@2x.png"
 iconutil -c icns "$ICONSET" -o "$ROOT/scripts/icon.icns"
 rm -rf "$ICONSET"
 
-echo "==> Creating app bundle (faxedit)..."
+echo "==> Creating app bundle (eoe)..."
 rm -rf "$APP_BUNDLE"
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Frameworks"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
-cp "$FAXEDIT_BIN" "$APP_BUNDLE/Contents/MacOS/faxedit_bin"
+cp "$FAXEDIT_BIN" "$APP_BUNDLE/Contents/MacOS/eoe_bin"
 cp "$CONFIG_XML" "$APP_BUNDLE/Contents/Resources/"
 cp "$ROOT/scripts/icon.icns" "$APP_BUNDLE/Contents/Resources/"
 
-cat > "$APP_BUNDLE/Contents/MacOS/faxedit" << 'LAUNCHER'
+cat > "$APP_BUNDLE/Contents/MacOS/eoe" << 'LAUNCHER'
 #!/bin/bash
-cd "$(dirname "$0")/../Resources"
-exec "$(dirname "$0")/faxedit_bin" "$@"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/../Resources"
+exec "$SCRIPT_DIR/eoe_bin" "$@"
 LAUNCHER
-chmod +x "$APP_BUNDLE/Contents/MacOS/faxedit"
+chmod +x "$APP_BUNDLE/Contents/MacOS/eoe"
 
 cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -78,7 +79,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" << 'EOF'
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>faxedit</string>
+    <string>eoe</string>
     <key>CFBundleIdentifier</key>
     <string>com.kaimitai.faxedit</string>
     <key>CFBundleName</key>
@@ -95,7 +96,7 @@ EOF
 
 echo "==> Bundling SDL3 library..."
 dylibbundler -od -b \
-    -x "$APP_BUNDLE/Contents/MacOS/faxedit_bin" \
+    -x "$APP_BUNDLE/Contents/MacOS/eoe_bin" \
     -d "$APP_BUNDLE/Contents/Frameworks/" \
     -p @executable_path/../Frameworks/
 
@@ -104,8 +105,8 @@ rm -rf "$STAGE_DIR"
 mkdir -p "$CLI_DIR"
 cp -R "$APP_BUNDLE" "$STAGE_DIR/"
 
-# faxiscripts links only against system libraries, so it needs no dylib bundling.
-cp "$FAXISCRIPTS_BIN" "$CLI_DIR/faxiscripts"
+# eoe-cli links only against system libraries, so it needs no dylib bundling.
+cp "$FAXISCRIPTS_BIN" "$CLI_DIR/eoe-cli"
 cp "$CONFIG_XML" "$CLI_DIR/eoe_config.xml"
 cp "$ROOT/util/eoe_config_override-advanced.xml" "$CLI_DIR/"
 
@@ -116,7 +117,7 @@ music and other data that does not lend itself to GUI editing.
 This is a terminal application. Copy this folder somewhere convenient, open
 Terminal in it and run:
 
-    ./faxiscripts
+    ./eoe-cli
 
 to see the available commands.
 
@@ -137,7 +138,7 @@ create-dmg \
     --icon-size 100 \
     --icon "$APP_BUNDLE" 150 150 \
     --app-drop-link 470 150 \
-    --icon "faxiscripts" 310 310 \
+    --icon "eoe-cli" 310 310 \
     "$DMG_NAME" \
     "$STAGE_DIR"
 
@@ -145,6 +146,6 @@ rm -rf "$STAGE_DIR"
 
 echo ""
 echo "==> Done! Created $DMG_NAME"
-echo "    Contents: $APP_BUNDLE (GUI editor) and faxiscripts/ (command-line tool)"
+echo "    Contents: $APP_BUNDLE (GUI editor) and eoe-cli/ (command-line tool)"
 echo "    Note: recipients will need to right-click -> Open the first time"
 echo "    due to macOS Gatekeeper (no code signing)."

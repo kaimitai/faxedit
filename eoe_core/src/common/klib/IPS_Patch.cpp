@@ -1,4 +1,5 @@
 #include "IPS_Patch.h"
+#include <algorithm>
 #include <stdexcept>
 
 namespace klib {
@@ -24,17 +25,29 @@ std::vector<byte> klib::ips::generate_patch(const std::vector<byte>& p_source,
 		while (i < p_source.size() && p_source[i] != p_target[i]) {
 			l_patch_bytes.push_back(p_target[i++]);
 		}
-		if (l_patch_bytes.size() > 0)
+		if (l_patch_bytes.size() > 0) {
+			// $454f46 is the IPS EOF marker and cannot be used as a record
+			// offset. Include the preceding target byte when a hunk begins
+			// there so that the resulting record starts at an encodable offset.
+			if (l_offset == PATCH_EOF_AS_OFFSET) {
+				--l_offset;
+				l_patch_bytes.insert(begin(l_patch_bytes), p_target.at(l_offset));
+			}
 			generate_hunk(result, l_offset, l_patch_bytes);
+		}
 		else
 			++i;
 	}
 
 	std::size_t l_append_byte_count{ p_target.size() - p_source.size() };
 	if (l_append_byte_count != 0) {
-		write_number(result, p_source.size(), 3);
-		write_number(result, l_append_byte_count, 2);
-		result.insert(end(result), begin(p_target) + p_source.size(), end(p_target));
+		std::size_t offset{ p_source.size() };
+		std::vector<byte> append_bytes(begin(p_target) + p_source.size(), end(p_target));
+		if (offset == PATCH_EOF_AS_OFFSET) {
+			--offset;
+			append_bytes.insert(begin(append_bytes), p_target.at(offset));
+		}
+		generate_hunk(result, offset, append_bytes);
 	}
 
 	for (std::size_t i{ 0 }; i < 3; ++i)
@@ -69,24 +82,48 @@ std::size_t klib::ips::get_run_length(const std::vector<byte>& p_patch_bytes,
 }
 
 void klib::ips::generate_hunk(std::vector<byte>& pr_result, std::size_t p_offset, const std::vector<byte>& p_patch_bytes) {
-	bool l_all_equal{ true };
-	byte l_cmp_byte{ p_patch_bytes.at(0) };
-	for (std::size_t i{ 1 }; i < p_patch_bytes.size(); ++i)
-		if (p_patch_bytes[i] != l_cmp_byte) {
-			l_all_equal = false;
-			break;
+	constexpr std::size_t MAX_RECORD_LENGTH{ 0xffff };
+	constexpr std::size_t MAX_RECORD_OFFSET{ 0xffffff };
+	std::size_t source_offset{ 0 };
+
+	while (source_offset < p_patch_bytes.size()) {
+		if (p_offset > MAX_RECORD_OFFSET || source_offset > MAX_RECORD_OFFSET - p_offset)
+			throw std::runtime_error("IPS patch offset exceeds the 24-bit format limit");
+		const std::size_t record_offset{ p_offset + source_offset };
+		if (record_offset == PATCH_EOF_AS_OFFSET)
+			throw std::runtime_error("IPS record offset collides with the EOF marker");
+
+		const std::size_t remaining{ p_patch_bytes.size() - source_offset };
+		std::size_t record_length{ std::min(remaining, MAX_RECORD_LENGTH) };
+
+		// Do not make the following record start at the reserved EOF marker.
+		// Ending this record one byte earlier makes the next one begin before
+		// the marker and cover it as ordinary data.
+		if (remaining > record_length
+			&& record_offset + record_length == PATCH_EOF_AS_OFFSET) {
+			--record_length;
 		}
 
-	if (p_patch_bytes.size() > 3 && l_all_equal) {
-		write_number(pr_result, p_offset, 3);
-		write_number(pr_result, 0, 2);
-		write_number(pr_result, p_patch_bytes.size(), 2);
-		pr_result.push_back(l_cmp_byte);
-	}
-	else {
-		write_number(pr_result, p_offset, 3);
-		write_number(pr_result, p_patch_bytes.size(), 2);
-		pr_result.insert(end(pr_result), begin(p_patch_bytes), end(p_patch_bytes));
+		const byte value{ p_patch_bytes.at(source_offset) };
+		const bool all_equal{ std::all_of(
+			begin(p_patch_bytes) + source_offset,
+			begin(p_patch_bytes) + source_offset + record_length,
+			[value](byte candidate) { return candidate == value; }) };
+
+		write_number(pr_result, record_offset, 3);
+		if (record_length > 3 && all_equal) {
+			write_number(pr_result, 0, 2);
+			write_number(pr_result, record_length, 2);
+			pr_result.push_back(value);
+		}
+		else {
+			write_number(pr_result, record_length, 2);
+			pr_result.insert(end(pr_result),
+				begin(p_patch_bytes) + source_offset,
+				begin(p_patch_bytes) + source_offset + record_length);
+		}
+
+		source_offset += record_length;
 	}
 }
 
@@ -156,6 +193,8 @@ void klib::ips::write_number(std::vector<byte>& pr_result, std::size_t p_value, 
 		l_reverse.push_back(p_value % 256);
 		p_value /= 256;
 	}
+	if (p_value != 0)
+		throw std::runtime_error("Value exceeds IPS field width");
 
 	for (auto iter = rbegin(l_reverse); iter != rend(l_reverse); ++iter)
 		pr_result.push_back(*iter);

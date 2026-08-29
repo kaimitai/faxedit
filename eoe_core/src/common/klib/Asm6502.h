@@ -189,6 +189,11 @@ namespace klib {
 		void sbc_imm(byte p_value);
 		void sbc_abs(word p_addr);
 		void sbc_abs_x(word p_addr);
+		void sta_abs_y(word p_addr);
+		void ldy_abs_x(word p_addr);
+		void eor_abs_x(word p_addr);
+		void and_abs_x(word p_addr);
+		void ora_abs_x(word p_addr);
 		void dex(void);
 		void dey(void);
 		void iny(void);
