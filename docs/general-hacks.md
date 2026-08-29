@@ -12,12 +12,6 @@ This document describes the hacks in the current library and their parameters. I
 
 <hr>
 
-> **Important:** General hacks modify fixed call sites in the ROM. Rebuilding from a previously patched ROM is generally safe if the same hacks remain enabled on every subsequent build. Problems can arise when the enabled hack set changes: for example, building a ROM with hacks A, B and C, then using that patched ROM as the source for a later build with hacks D, E and F. Call sites modified by the first build may then be stale or no longer match what the later build expects.
->
-> For this reason, we recommend keeping an unmodified base ROM and treating generated ROMs as transient build outputs. Your project sources - project data xml, ASM and music sources, and configuration overrides - should be the master copy from which ROMs are rebuilt.
-
-<hr>
-
 ## Table of Contents
 
 - [Enabling General Hacks](#enabling-general-hacks)

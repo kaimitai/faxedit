@@ -61,7 +61,14 @@ namespace {
 		if (invoked.has_parent_path())
 			return invoked;
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
 		const char* path_value{ std::getenv("PATH") };
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 		if (path_value == nullptr)
 			return invoked;
 

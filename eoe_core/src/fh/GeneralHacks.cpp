@@ -652,7 +652,7 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			cpu_addr = install_FogRules(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::DynamicTilesets:
-			cpu_addr = install_DynamicTilesets(p_config, p_rom, p_bank, cpu_addr, hack, p_game);
+			cpu_addr = install_DynamicTilesets(p_config, patched_rom, p_bank, cpu_addr, hack, p_game);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);
