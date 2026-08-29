@@ -12,6 +12,12 @@ This document describes the hacks in the current library and their parameters. I
 
 <hr>
 
+> **Important:** General hacks modify fixed call sites in the ROM. Rebuilding from a previously patched ROM is generally safe if the same hacks remain enabled on every subsequent build. Problems can arise when the enabled hack set changes: for example, building a ROM with hacks A, B and C, then using that patched ROM as the source for a later build with hacks D, E and F. Call sites modified by the first build may then be stale or no longer match what the later build expects.
+>
+> For this reason, we recommend keeping an unmodified base ROM and treating generated ROMs as transient build outputs. Your project sources - project data xml, ASM and music sources, and configuration overrides - should be the master copy from which ROMs are rebuilt.
+
+<hr>
+
 ## Table of Contents
 
 - [Enabling General Hacks](#enabling-general-hacks)
@@ -23,6 +29,7 @@ This document describes the hacks in the current library and their parameters. I
   - [BossLockedItems](#bosslockeditems)
   - [FlexibleItems](#flexibleitems)
   - [FogRules](#fogrules)
+  - [DynamicTilesets](#dynamictilesets)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
 
@@ -132,6 +139,47 @@ Enables the fog effect on arbitrary world and palette combinations while reusing
 ```text
 FogRules rules=0:1+0:3+0:5+6:3+7
 ```
+
+### DynamicTilesets
+
+Allows individual screens to override their world's normal tileset. Overrides are given as `world:screen:tileset` entries separated by `+`. Screens without an entry continue to use the tileset selected by the normal game logic.
+
+The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` and `addr` can place them in another PRG bank instead.
+
+The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own tileset selection mechanism.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `data` | none, required | `world:screen:tileset` entries separated by `+`
+| `bank` | 15 | PRG bank containing the lookup code and data table |
+| `addr` | none | CPU address of the lookup code when `bank` is not 15 |
+| `enter_building` | `false` | apply overrides when entering buildings |
+| `exit_building` | `true` | apply overrides when exiting buildings |
+| `sameworld` | `true` | apply overrides to same-world doors and screen transitions |
+| `start_screen` | `true` | apply an override when loading the starting screen |
+| `otherworld` | `true` | apply overrides to otherworld-transitions |
+| `stage_doors` | `true` | apply overrides to stage-door transitions |
+
+For normal use, no placement parameters are necessary:
+
+```text
+DynamicTilesets data=0:1:6+2:2:5+2:3:5+7:0:5
+```
+
+To keep the lookup code and data in another bank:
+
+```text
+DynamicTilesets bank=28 addr=0x8000 data=0:1:6+2:2:5+2:3:5+7:0:5
+```
+
+
+Hooks can be disabled when a project does not need those transition types:
+
+```text
+DynamicTilesets start_screen=false enter_building=false exit_building=false data=0:1:6+2:2:5
+```
+
+DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature.
 
 ### AtlasDevFrameScheduler
 

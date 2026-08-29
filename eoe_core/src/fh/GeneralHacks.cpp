@@ -382,6 +382,14 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	const byte loader_bank{ p_hack.byte_or("bank", p_bank) };
 	const bool local_loader{ loader_bank == p_bank };
 	const word loader_addr{ local_loader ? cpu_addr : p_hack.get_word("addr") };
+
+	const bool opt_enter_building{ p_hack.bool_or("enter_building", false) };
+	const bool opt_exit_building{ p_hack.bool_or("exit_building", true) };
+	const bool opt_sameworld{ p_hack.bool_or("sameworld", true) };
+	const bool opt_start_screen{ p_hack.bool_or("start_screen", true) };
+	const bool opt_otherworld{ p_hack.bool_or("otherworld", true) };
+	const bool opt_stage_doors{ p_hack.bool_or("stage_doors", true) };
+
 	const auto entries{ p_hack.split_twice_bytes("data", 3) };
 
 	// world -> (screen -> tileset)
@@ -508,63 +516,89 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 		code.jsr(MMC1_UpdateROMBank);
 	}
 	code.rts();
-	const word otherworld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr) };
+	cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 
-	// -------------------------------------------------------------------------
-	// bank 15 - stage doors / other-world transitions / game start trampoline
-	// -------------------------------------------------------------------------
-	code.lda_zp(RAM::ZP_CurrentScreen);
-	code.sta_zp(current_screen);
-	code.jsr(lookup_cpu_addr); // shared lookup helper
-	// vanilla path always loads tiles
-	code.jmp(ROM::Area_LoadTiles);
-	const word sameworld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, otherworld_cpu_addr) };
-	// -------------------------------------------------------------------------
-	// bank 15 - same-world trampoline
-	// -------------------------------------------------------------------------
-	code.lda_zp(RAM::ZP_TransitionScreen);
-	code.sta_zp(current_screen);
-	code.jsr(lookup_cpu_addr);
-	// only reload tiles if an override was found
-	code.lda_zp(current_world_and_retval);
-	code.beq("@load_screen");
-	code.jsr(ROM::Area_LoadTiles);
-	code.label("@load_screen");
-	code.jmp(ROM::Screen_Load);
-	const word exit_bld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, sameworld_cpu_addr) };
-	// -------------------------------------------------------------------------
-	// bank 15 - exit-building trampoline
-	// -------------------------------------------------------------------------
-	code.lda_abs(RAM::SavedScreen);
-	code.sta_zp(current_screen);
-	code.jsr(lookup_cpu_addr);
-	code.jmp(ROM::Area_LoadTiles);
-	const word enter_bld_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, exit_bld_cpu_addr) };
-	// -------------------------------------------------------------------------
-	// bank 15 - enter-building trampoline
-	// -------------------------------------------------------------------------
-	code.lda_zp(RAM::ZP_TransitionScreen);
-	code.sta_zp(current_screen);
-	code.jsr(lookup_cpu_addr);
-	code.jmp(ROM::Area_LoadTiles);
-	const word next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, enter_bld_cpu_addr) };
+	if (opt_otherworld || opt_stage_doors || opt_start_screen) {
+		// -------------------------------------------------------------------------
+		// bank 15 - stage doors / other-world transitions / game start trampoline
+		// -------------------------------------------------------------------------
+		const word trampoline_addr{ cpu_addr };
 
-	// enter-building hook
-	code.jsr(enter_bld_cpu_addr);
-	code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterBuilding_JSR_Area_LoadTiles);
-	// exit-building hook
-	code.jsr(exit_bld_cpu_addr);
-	code.apply_hack_and_clear(p_rom, 15, ROM::Game_ExitBuilding_JSR_Area_LoadTiles);
-	// sameworld doors and transitions
-	code.jsr(sameworld_cpu_addr);
-	code.apply_hack_and_clear(p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
-	// otherworld hooks
-	code.jsr(otherworld_cpu_addr);
-	code.apply_hack_noclear(p_rom, 15, ROM::Game_EnterAreaHandler_JSR_Area_LoadTiles);
-	code.apply_hack_noclear(p_rom, 15, ROM::Game_LoadCurrentArea_JSR_Area_LoadTiles);
-	code.apply_hack_and_clear(p_rom, 15, ROM::Game_LoadFirstLevel_JSR_Area_LoadTiles);
+		code.lda_zp(RAM::ZP_CurrentScreen);
+		code.sta_zp(current_screen);
+		code.jsr(lookup_cpu_addr); // shared lookup helper
+		// vanilla path always loads tiles
+		code.jmp(ROM::Area_LoadTiles);
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
 
-	return next_cpu_addr;
+		if (opt_otherworld) {
+			code.jsr(trampoline_addr);
+			code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterAreaHandler_JSR_Area_LoadTiles);
+		}
+		if (opt_stage_doors) {
+			code.jsr(trampoline_addr);
+			code.apply_hack_and_clear(p_rom, 15, ROM::Game_LoadCurrentArea_JSR_Area_LoadTiles);
+		}
+		if (opt_start_screen) {
+			code.jsr(trampoline_addr);
+			code.apply_hack_and_clear(p_rom, 15, ROM::Game_LoadFirstLevel_JSR_Area_LoadTiles);
+		}
+	}
+
+	if (opt_sameworld) {
+		// -------------------------------------------------------------------------
+		// bank 15 - same-world trampoline (doors and transitions)
+		// -------------------------------------------------------------------------
+		const word trampoline_addr{ cpu_addr };
+
+		code.lda_zp(RAM::ZP_TransitionScreen);
+		code.sta_zp(current_screen);
+		code.jsr(lookup_cpu_addr);
+		// only reload tiles if an override was found
+		code.lda_zp(current_world_and_retval);
+		code.beq("@load_screen");
+		code.jsr(ROM::Area_LoadTiles);
+		code.label("@load_screen");
+		code.jmp(ROM::Screen_Load);
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+
+		code.jsr(trampoline_addr);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
+	}
+
+	if (opt_exit_building) {
+		// -------------------------------------------------------------------------
+		// bank 15 - exit-building trampoline
+		// -------------------------------------------------------------------------
+		const word trampoline_addr{ cpu_addr };
+
+		code.lda_abs(RAM::SavedScreen);
+		code.sta_zp(current_screen);
+		code.jsr(lookup_cpu_addr);
+		code.jmp(ROM::Area_LoadTiles);
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+
+		code.jsr(trampoline_addr);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Game_ExitBuilding_JSR_Area_LoadTiles);
+	}
+
+	if (opt_enter_building) {
+		// -------------------------------------------------------------------------
+		// bank 15 - enter-building trampoline
+		// -------------------------------------------------------------------------
+		const word trampoline_addr{ cpu_addr };
+
+		code.lda_zp(RAM::ZP_TransitionScreen);
+		code.sta_zp(current_screen);
+		code.jsr(lookup_cpu_addr);
+		code.jmp(ROM::Area_LoadTiles);
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+
+		code.jsr(trampoline_addr);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterBuilding_JSR_Area_LoadTiles);
+	}
+
+	return cpu_addr;
 }
 
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
