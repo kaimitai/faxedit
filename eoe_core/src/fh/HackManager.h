@@ -268,6 +268,10 @@ namespace fh {
 		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
 		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 			bool p_stage_door_hack_installed = true) const;
+		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
+		word install_DynamicTilesets(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
@@ -277,8 +281,6 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		// bank 12 general hacks
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
-		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 
 		// util

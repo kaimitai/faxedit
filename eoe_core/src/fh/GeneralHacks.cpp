@@ -373,6 +373,135 @@ word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<b
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
 }
 
+// makes a trampoline for calls to the tileset loader
+word fh::HackManager::install_DynamicTilesets(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+
+	const byte bank{ p_hack.get_byte("bank") };
+	const word addr{ p_hack.get_word("addr") };
+	const auto entries{ p_hack.split_twice_bytes("data", 3) };
+
+	// world -> (screen -> tileset)
+	std::map<byte, std::map<byte, byte>> assigns;
+	for (const auto& entry : entries)
+		assigns[entry[0]][entry[1]] = entry[2];
+
+	const word MMC1_UpdateROMBank{
+		cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK)
+	};
+	const word CurrentROMBank{ RAM::CurrentROMBank };
+
+	klib::Asm6502 code;
+
+	// -------------------------------------------------------------------------
+	// remote routine - stage doors and other-world transitions
+	// -------------------------------------------------------------------------
+
+	code.lda_zp(RAM::ZP_CurrentWorld);
+	code.cmp_imm(0x00);
+	code.bne("@done");
+	code.lda_zp(RAM::ZP_CurrentScreen);
+	code.cmp_imm(0x01);
+	code.bne("@done");
+
+	code.lda_imm(0x0f);
+	code.sta_zp(RAM::ZP_TilesIndex);
+
+	code.label("@done");
+	code.rts();
+
+	const word sameworld_addr{
+		code.apply_hack_and_clear_get_next_cpu_addr(p_rom, bank, addr)
+	};
+
+	// -------------------------------------------------------------------------
+	// remote routine - same-world doors and transitions
+	// -------------------------------------------------------------------------
+
+	code.lda_zp(RAM::ZP_CurrentWorld);
+	code.cmp_imm(0x00);
+	code.bne("@done");
+	code.lda_zp(RAM::ZP_TransitionScreen);
+	code.cmp_imm(0x01);
+	code.bne("@done");
+
+	code.lda_imm(0x0f);
+	code.sta_zp(RAM::ZP_TilesIndex);
+
+	code.label("@done");
+	code.rts();
+
+	code.apply_hack_and_clear_get_next_cpu_addr(p_rom, bank, sameworld_addr);
+
+	// -------------------------------------------------------------------------
+	// bank 15 - stage doors / other-world trampoline
+	// -------------------------------------------------------------------------
+
+	code.jsr(cpu_addr);
+	code.apply_hack_noclear(
+		p_rom, 15, ROM::Game_EnterAreaHandler_JSR_Area_LoadTiles);
+	code.apply_hack_noclear(
+		p_rom, 15, ROM::Game_LoadCurrentArea_JSR_Area_LoadTiles);
+	code.apply_hack_and_clear(
+		p_rom, 15, ROM::Game_LoadFirstLevel_JSR_Area_LoadTiles);
+
+	// save currently mapped switchable bank
+	code.lda_abs(CurrentROMBank);
+	code.pha();
+
+	// switch to DynamicTilesets bank
+	code.ldx_imm(bank);
+	code.jsr(MMC1_UpdateROMBank);
+
+	// perform lookup
+	code.jsr(addr);
+
+	// restore previous bank
+	code.pla();
+	code.tax();
+	code.jsr(MMC1_UpdateROMBank);
+
+	code.jmp(ROM::Area_LoadTiles);
+
+	const word sameworld_cpu_addr{
+		code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr)
+	};
+
+	// -------------------------------------------------------------------------
+	// bank 15 - same-world trampoline
+	// -------------------------------------------------------------------------
+
+	code.jsr(sameworld_cpu_addr);
+	code.apply_hack_and_clear(
+		p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
+
+	// save currently mapped switchable bank
+	code.lda_abs(CurrentROMBank);
+	code.pha();
+
+	// switch to DynamicTilesets bank
+	code.ldx_imm(bank);
+	code.jsr(MMC1_UpdateROMBank);
+
+	// perform lookup
+	code.jsr(sameworld_addr);
+
+	// restore previous bank
+	code.pla();
+	code.tax();
+	code.jsr(MMC1_UpdateROMBank);
+
+	// If the lookup changed ZP_TilesIndex this reloads the tileset.
+	// For the POC we're still doing this unconditionally on this path.
+	code.jsr(ROM::Area_LoadTiles);
+
+	code.jmp(ROM::Screen_Load);
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(
+		p_rom, 15, sameworld_cpu_addr);
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -391,6 +520,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::FogRules:
 			cpu_addr = install_FogRules(p_config, p_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::DynamicTilesets:
+			cpu_addr = install_DynamicTilesets(p_config, p_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, p_rom, cpu_addr, hack);

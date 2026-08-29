@@ -80,8 +80,13 @@ namespace fh {
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_EnterBuilding_JSR_Area_LoadTiles{ 0xde53 };
+		constexpr word Game_ExitBuilding_JSR_Area_LoadTiles{ 0xde92 };
 		constexpr word Game_LoadFirstLevel{ 0xdea7 };
 		constexpr word Start_Health{ 0xdeaf };
+		constexpr word Game_LoadFirstLevel_JSR_Area_LoadTiles{ 0xded7 };
+		constexpr word Game_LoadCurrentArea_JSR_Area_LoadTiles{ 0xdf1a };
+		constexpr word Game_EnterAreaHandler_JSR_Area_LoadTiles{ 0xdf8e };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
 		constexpr word Fog_OnTick_CMP_02{ 0xdfc7 };
@@ -122,6 +127,10 @@ namespace fh {
 		constexpr word Game_MainLoop{ 0xdb45 };
 		constexpr word RegionAreaTable{ 0xdafe };
 		constexpr word AreaPaletteTable{ 0xdf4c };
+
+		constexpr word SameWorldDoor_JMP_Game_SetupEnterScreen{ 0xe565 };
+		constexpr word SameWorldTransition_JMP_Game_SetupEnterScreen{ 0xea2c };
+		constexpr word Game_SetupEnterScreen_JSR_Screen_Load{ 0xdaa3 };
 	}
 
 	namespace RAM {

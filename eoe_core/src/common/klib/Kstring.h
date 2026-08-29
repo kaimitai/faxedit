@@ -32,6 +32,7 @@ namespace klib {
 		std::string to_binary(byte b);
 
 		int parse_numeric(const std::string& token);
+		byte parse_byte(const std::string& token);
 		std::vector<byte> parse_byte_list(const std::string& p_str);
 
 		template<class T, class U>
