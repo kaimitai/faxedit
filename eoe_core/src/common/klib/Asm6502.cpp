@@ -188,6 +188,11 @@ namespace {
 	constexpr byte OP_NOP{ 0xea };
 	constexpr byte OP_BEQ{ 0xf0 };
 	constexpr byte OP_SBC_ABS_X{ 0xfd };
+	constexpr byte OP_STA_ABS_Y{ 0x99 };
+	constexpr byte OP_LDY_ABS_X{ 0xbc };
+	constexpr byte OP_EOR_ABS_X{ 0x5d };
+	constexpr byte OP_AND_ABS_X{ 0x3d };
+	constexpr byte OP_ORA_ABS_X{ 0x1d };
 }
 
 // jumps and calls
@@ -615,6 +620,31 @@ void klib::Asm6502::sbc_abs(word p_addr) {
 
 void klib::Asm6502::sbc_abs_x(word p_addr) {
 	emit(OP_SBC_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::sta_abs_y(word p_addr) {
+	emit(OP_STA_ABS_Y);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::ldy_abs_x(word p_addr) {
+	emit(OP_LDY_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::eor_abs_x(word p_addr) {
+	emit(OP_EOR_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::and_abs_x(word p_addr) {
+	emit(OP_AND_ABS_X);
+	emit_word(p_addr);
+}
+
+void klib::Asm6502::ora_abs_x(word p_addr) {
+	emit(OP_ORA_ABS_X);
 	emit_word(p_addr);
 }
 
