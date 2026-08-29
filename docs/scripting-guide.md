@@ -102,7 +102,7 @@ The same functionality is available from the command line through `eoe-cli`. The
 
 The idea is that users will extract the scripting layer to files, make modifications to these files, and then patch the ROM with their changes.
 
-The assembler needs access to a configuration file ```eoe_config.xml``` in order to use the correct constants for its calculations. These constants differ by ROM region.
+The assembler needs access to a configuration file ```eoe_config.xml``` in order to use the correct constants for its calculations. These constants differ by ROM region. The installed ```eoe-cli``` finds this base file beside its executable, even when invoked through ```PATH``` from another directory. If the current project directory contains ```eoe_config_override.xml```, that project-specific override takes precedence over a fallback override beside the executable.
 
 The assembler will report on how much space it used for each data section, and how much more space is available, if any. If we can't fit the data within the limits patching will not take place.
 

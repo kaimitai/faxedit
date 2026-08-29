@@ -1,4 +1,5 @@
 #include "Cli.h"
+#include "ConfigPaths.h"
 #include <format>
 #include <iostream>
 #include <stdexcept>
@@ -88,18 +89,25 @@ fi::Cli::Cli(int argc, char** argv) :
 	m_lilypond_percussion{ false },
 	m_allow_cinematic_overflow{ false }
 {
+	const auto config_paths{ paths::resolve_config_paths(argc > 0 ? argv[0] : nullptr) };
+	m_config_xml = config_paths.base.string();
+	m_config_override_xml = config_paths.override.string();
+
 	print_header();
 
-	if (argc < 4) {
+	if (argc <= 1) {
 		print_help();
 		return;
 	}
-	else {
-		set_mode(argv[1]);
-		m_in_file = argv[2];
-		m_out_file = argv[3];
-		parse_arguments(4, argc, argv);
-	}
+
+	set_mode(argv[1]);
+	if (argc < 4)
+		throw std::runtime_error(std::format(
+			"Command '{}' requires both input and output arguments", argv[1]));
+
+	m_in_file = argv[2];
+	m_out_file = argv[3];
+	parse_arguments(4, argc, argv);
 
 	// we have the info we need to execute
 	// IScript dispatch
@@ -364,8 +372,8 @@ std::vector<byte> fi::Cli::load_rom_and_config(
 	const auto rom_data{ klib::file::read_file_as_bytes(p_nes_filename) };
 
 	m_config = fe::Config(
-		appc::CONFIG_XML,
-		appc::CONFIG_OVERRIDE_FILE_NAME,
+		m_config_xml,
+		m_config_override_xml,
 		rom_data,
 		m_region
 	);

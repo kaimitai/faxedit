@@ -841,21 +841,25 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 }
 
 std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) const {
-	std::string l_config_xml_path;
-
+	std::filesystem::path l_config_dir;
 	const char* basePath{ SDL_GetBasePath() };
-	if (!basePath) {
-		l_config_xml_path = "./";
-	}
-	else {
-		l_config_xml_path = basePath;
+	if (basePath)
+		l_config_dir = basePath;
+	else
+		l_config_dir = std::filesystem::current_path();
+
+	std::error_code ec;
+	if (!std::filesystem::is_regular_file(l_config_dir / c::CONFIG_FILE_NAME, ec)) {
+		// Native app bundles keep data files in Contents/Resources while
+		// SDL_GetBasePath() points to Contents/MacOS.
+		const auto l_bundle_resources{ l_config_dir.parent_path() / "Resources" };
+		if (std::filesystem::is_regular_file(l_bundle_resources / c::CONFIG_FILE_NAME, ec))
+			l_config_dir = l_bundle_resources;
 	}
 
-	std::string l_config_override_xml_path{ l_config_xml_path };
-	l_config_xml_path += c::CONFIG_FILE_NAME;
-	l_config_override_xml_path += c::CONFIG_OVERRIDE_FILE_NAME;
-
-	return std::make_pair(l_config_xml_path, l_config_override_xml_path);
+	return std::make_pair(
+		(l_config_dir / c::CONFIG_FILE_NAME).string(),
+		(l_config_dir / c::CONFIG_OVERRIDE_FILE_NAME).string());
 }
 
 int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes) {
