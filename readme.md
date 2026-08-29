@@ -75,7 +75,11 @@ Alternatively, community-provided helper scripts are available in the `scripts` 
 ./scripts/mac-build.sh
 ```
 
-**Note:** `eoe_config.xml` must be located in the same directory as the executable when loading ROM files.
+**Note:** `eoe_config.xml` is copied beside the executables by the build. In the
+macOS app bundle it is stored under `Contents/Resources` and found automatically.
+`eoe-cli` may be run from any directory; a project-local
+`eoe_config_override.xml` in the current directory takes precedence over an
+application-wide override beside the executable.
 
 
 <hr>

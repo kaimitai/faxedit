@@ -1295,7 +1295,7 @@ The **Enable Stage Doors** button will turn sameworld doors into other-stage doo
 
 The application comes with a file ```eoe_config.xml``` which provides all necessary information about ROM regions, offsets, pointers, constants etc. It ensures that ROMs are correctly loaded and patched for any region.
 
-If users want to define their own regions for custom ROM hacks with other offsets, pointers and constants and such - do not edit eoe_config.xml directly. Instead use the skeleton ```eoe_config_override.xml```-file in the util-folder, and populate it. Copy the file to the same folder as the application, where eoe_config.xml is located.
+If users want to define their own regions for custom ROM hacks with other offsets, pointers and constants and such - do not edit eoe_config.xml directly. Instead use the skeleton ```eoe_config_override.xml```-file in the util-folder, and populate it. The GUI reads an override from its application resources. For ```eoe-cli```, an override in the current project directory takes precedence over a fallback override beside the executable.
 
 When the application starts it will look for eoe_config_override.xml and load region definitions from it before it loads region definitions from eoe_config.xml.
 

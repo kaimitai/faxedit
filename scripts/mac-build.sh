@@ -6,12 +6,13 @@ cd "$ROOT"
 
 BUILD_DIR="$ROOT/build"
 
-RUN_TARGET="faxedit"
+RUN_DIRECTORY="faxedit"
+RUN_BINARY="eoe"
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --no-run)      RUN_TARGET="" ;;
-        --run-cli)     RUN_TARGET="faxiscripts" ;;
+        --no-run)      RUN_BINARY="" ;;
+        --run-cli)     RUN_DIRECTORY="faxiscripts"; RUN_BINARY="eoe-cli" ;;
         *) echo "Usage: $0 [--no-run | --run-cli]" >&2; exit 1 ;;
     esac
     shift
@@ -30,13 +31,11 @@ make -j"$(sysctl -n hw.ncpu)"
 
 echo ""
 echo "==> Built:"
-echo "    $BUILD_DIR/faxedit/faxedit"
-echo "    $BUILD_DIR/faxiscripts/faxiscripts"
+echo "    $BUILD_DIR/faxedit/eoe"
+echo "    $BUILD_DIR/faxiscripts/eoe-cli"
 
-if [ -n "$RUN_TARGET" ]; then
+if [ -n "$RUN_BINARY" ]; then
     echo ""
-    echo "==> Running $RUN_TARGET..."
-    # Run from the executable's directory so eoe_config.xml is picked up.
-    cd "$BUILD_DIR/$RUN_TARGET"
-    ./"$RUN_TARGET"
+    echo "==> Running $RUN_BINARY..."
+    "$BUILD_DIR/$RUN_DIRECTORY/$RUN_BINARY"
 fi

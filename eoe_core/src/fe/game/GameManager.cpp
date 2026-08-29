@@ -9,7 +9,7 @@
 #include "common/klib/Kfile.h"
 #include "fe/xml/Xml_helper_game.h"
 #include "fh/HackManager.h"
-#include "fb/BscriptLoader.h"
+#include "fb/BScriptLoader.h"
 #include "common/klib/IPS_Patch.h"
 #include <algorithm>
 #include <format>

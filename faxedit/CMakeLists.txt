@@ -49,19 +49,23 @@ target_link_libraries(faxedit
         SDL3::SDL3
 )
 
-set(EOE_CONFIG_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/eoe_config.xml")
-
-add_custom_command(
-    OUTPUT "${EOE_CONFIG_OUTPUT}"
+add_custom_target(faxedit_config ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:faxedit>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${EOE_CONFIG_SOURCE}"
-        "${EOE_CONFIG_OUTPUT}"
+        "$<TARGET_FILE_DIR:faxedit>/eoe_config.xml"
     DEPENDS "${EOE_CONFIG_SOURCE}"
+    COMMENT "Copying eoe_config.xml beside eoe"
     VERBATIM
 )
 
-add_custom_target(faxedit_config ALL
-    DEPENDS "${EOE_CONFIG_OUTPUT}"
-)
-
 add_dependencies(faxedit faxedit_config)
+
+if(BUILD_TESTING)
+    add_test(NAME faxedit_config_copy
+        COMMAND ${CMAKE_COMMAND} -E compare_files
+            "${EOE_CONFIG_SOURCE}"
+            "$<TARGET_FILE_DIR:faxedit>/eoe_config.xml"
+    )
+endif()
