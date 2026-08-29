@@ -4119,24 +4119,22 @@ word fh::HackManager::apply_AtlasDevDespawnAllEntities(const fe::Config& p_confi
 word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
-	const word max_tile_table{ static_cast<word>(cpu_addr + 53) };
 
+	// no metatile-id upper bound here: the vanilla per-world maxima do not
+	// hold once metatile definitions are edited, so the position and world
+	// checks remain and the id is the modder's responsibility
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.pha();
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
 	code.pha();
-	code.db(0xba); // TSX
+	code.tsx();
 	code.lda_abs_x(0x0102);
 	code.and_imm(0xf0);
 	code.cmp_imm(0xd0);
 	code.bcs("@reject");
-	code.lda_abs_x(0x0101);
-	code.db(0xa6); code.db(RAM::ZP_CurrentWorld); // LDX current area
+	code.ldx_zp(RAM::ZP_CurrentWorld);
 	code.cpx_imm(0x08);
-	code.bcs("@reject");
-	code.cmp_abs_x(max_tile_table);
 	code.bcc("@apply");
-	code.beq("@apply");
 	code.label("@reject");
 	code.pla(); code.pla();
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
@@ -4145,8 +4143,6 @@ word fh::HackManager::apply_AtlasDevSetMetatile(const fe::Config& p_config,
 	code.pla(); code.sta_abs(0x03cf);
 	code.jsr(ROM::Area_SetBlockAtPosition);
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
-	for (const byte maximum : { 0x7f, 0x88, 0x87, 0x6f, 0xff, 0x5d, 0x62, 0x3f })
-		code.db(maximum);
 
 	return get_next_cpu_addr(cpu_addr,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
@@ -4660,7 +4656,7 @@ word fh::HackManager::apply_AtlasDevSetMagicFacing(
 }
 
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr, word end_handler_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
 	const word Begin{ cfg_word(p_config, c::ID_ROM_ISCRIPTS_BEGIN) };
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
@@ -4669,6 +4665,9 @@ word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 		throw std::runtime_error("Script variable count must be between 1 and 128.");
 
 	// Clear every register, then reproduce the six displaced Begin bytes.
+	// The Begin clear alone defines the lifetime: every script starts from
+	// zeroed registers, so no clear at End is needed and the end handler
+	// is left unpatched.
 	code.pha();
 	code.lda_imm(0x00);
 	code.ldx_imm(Count - 1);
@@ -4689,23 +4688,6 @@ word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	code.nop(3);
 	code.apply_hack_and_clear(p_rom, 12, Begin);
 
-	// End is the other lifetime boundary.
-	const word end_reset{ next };
-	code.lda_imm(0x00);
-	code.ldx_imm(Count - 1);
-	code.label("@clear_end");
-	code.sta_abs_x(Vars);
-	code.dex();
-	code.bpl("@clear_end");
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
-	code.lda_abs(RAM::IScriptTextBoxContext);
-	code.jmp(end_handler_addr + 6);
-	next = get_next_cpu_addr(next,
-		code.apply_hack_and_clear(p_rom, 12, next));
-
-	code.jmp(end_reset);
-	code.nop(3);
-	code.apply_hack_and_clear(p_rom, 12, end_handler_addr);
 	return next;
 }
 
@@ -4882,8 +4864,7 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	}
 
 	if (requires_any(p_lib, SCRIPT_VARIABLE_REQUIRED))
-		cpu_addr = install_script_variable_reset(p_config, p_rom, cpu_addr,
-			script_impl_addresses.at(0) + 1);
+		cpu_addr = install_script_variable_reset(p_config, p_rom, cpu_addr);
 
 	for (HackLib llib : p_lib) {
 		script_impl_addresses.push_back(cpu_addr - 1);

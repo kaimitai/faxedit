@@ -106,3 +106,12 @@ target_include_directories(eoe_core
 )
 
 target_compile_features(eoe_core PUBLIC cxx_std_20)
+
+if(BUILD_TESTING)
+    add_executable(eoe_core_data_integrity_tests
+        tests/data_integrity_tests.cpp
+    )
+    target_link_libraries(eoe_core_data_integrity_tests PRIVATE eoe_core)
+    target_compile_features(eoe_core_data_integrity_tests PRIVATE cxx_std_20)
+    add_test(NAME eoe_core.data-integrity COMMAND eoe_core_data_integrity_tests)
+endif()

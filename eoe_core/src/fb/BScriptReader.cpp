@@ -17,6 +17,9 @@ fb::BScriptReader::BScriptReader(const fe::Config& p_config) :
 
 void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 	const fe::Config& p_config) {
+	defines.clear();
+	instructions.clear();
+	ptr_table.clear();
 
 	std::map<fb::SectionType, std::vector<std::string>> sections;
 
@@ -40,7 +43,10 @@ void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 	if (sections.contains(fb::SectionType::Defines))
 		for (const std::string& s : sections[fb::SectionType::Defines]) {
 			const auto def{ klib::str::parse_define(s) };
-			defines.insert(std::make_pair(def.first, klib::str::parse_numeric(def.second)));
+			if (defines.contains(def.first))
+				throw std::runtime_error(std::format(
+					"Duplicate define '{}'", def.first));
+			defines.emplace(def.first, klib::str::parse_numeric(def.second));
 		}
 
 	if (!sections.contains(fb::SectionType::BScript))
@@ -88,9 +94,6 @@ void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 		   between our local data-relative zero addr offset and bank zero addr offset
 
  */
-
-	instructions.clear();
-	ptr_table.clear();
 
 	// make opcode mnemonic reverse lookup
 	std::map<std::string, byte> op_mnemonics, bh_mnemonics;
@@ -146,10 +149,21 @@ void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 		}
 
 		if (is_label(line, args)) {
-			label_to_instr_idx.insert(std::make_pair(get_label(args), instructions.size()));
+			const auto label{ get_label(args) };
+			if (!label_to_instr_idx.emplace(label, instructions.size()).second)
+				throw std::runtime_error(std::format(
+					"Duplicate label '@{}' on line '{}'", label, line));
 		}
-		else if (is_entrypoint(line, args))
-			ptr_to_instr_index.insert(std::make_pair(get_entrypoint(args), instructions.size()));
+		else if (is_entrypoint(line, args)) {
+			const auto entrypoint{ get_entrypoint(args) };
+			if (entrypoint >= bscript_count)
+				throw std::runtime_error(std::format(
+					"Entrypoint {} is outside the valid range 0..{} on line '{}'",
+					entrypoint, bscript_count - 1, line));
+			if (!ptr_to_instr_index.emplace(entrypoint, instructions.size()).second)
+				throw std::runtime_error(std::format(
+					"Duplicate entrypoint {} on line '{}'", entrypoint, line));
+		}
 		else {
 			// we have an instruction - generate bytes
 			std::string mnemonic{ klib::str::to_lower(args.at(0)) };
@@ -196,12 +210,20 @@ void fb::BScriptReader::read_asm(const std::vector<std::string>& p_asm,
 					fb::ArgDataType valtype{ fb::ArgDataType::Byte };
 					if (argtmp[i].domain == fb::ArgDomain::RAM)
 						valtype = fb::ArgDataType::Word;
-					std::size_t finalvalue{ 0 };
+					const bool signed_byte{ argtmp[i].domain == fb::ArgDomain::SignedByte };
+					if (signed_byte && (value < -128 || value > 0xff))
+						throw std::runtime_error(std::format(
+							"Signed-byte operand {} is outside -128..255 on line '{}'", value, line));
+					if (valtype == fb::ArgDataType::Byte && !signed_byte && (value < 0 || value > 0xff))
+						throw std::runtime_error(std::format(
+							"Byte operand {} is outside 0..255 on line '{}'", value, line));
+					if (valtype == fb::ArgDataType::Word && (value < 0 || value > 0xffff))
+						throw std::runtime_error(std::format(
+							"Word operand {} is outside 0..65535 on line '{}'", value, line));
 
-					if (valtype == fb::ArgDataType::Byte)
-						finalvalue = static_cast<std::size_t>(static_cast<byte>(value));
-					else
-						finalvalue = static_cast<std::size_t>(value);
+					const std::size_t finalvalue{ signed_byte
+						? static_cast<std::size_t>(static_cast<byte>(value))
+						: static_cast<std::size_t>(value) };
 
 					instr.operands.push_back(fb::ArgInstance(valtype, finalvalue));
 				}
@@ -326,7 +348,11 @@ bool fb::BScriptReader::is_entrypoint(const std::string& p_asm, const std::vecto
 }
 
 std::size_t fb::BScriptReader::get_entrypoint(const std::vector<std::string>& p_line) const {
-	return klib::str::parse_numeric(p_line.at(1));
+	const int entrypoint{ klib::str::parse_numeric(p_line.at(1)) };
+	if (entrypoint < 0)
+		throw std::runtime_error(std::format(
+			"Entrypoint {} is outside the valid non-negative range", entrypoint));
+	return static_cast<std::size_t>(entrypoint);
 }
 
 std::map<fb::ArgDomain, std::string> fb::BScriptReader::get_argmap(const std::string& p_asm,
@@ -341,7 +367,9 @@ std::map<fb::ArgDomain, std::string> fb::BScriptReader::get_argmap(const std::st
 			throw std::runtime_error(std::format("Unknown argument type {} on line {}", p_line[i], p_asm));
 		fb::ArgDomain domain{ c::STR_ARGDOMAIN.at(klib::str::to_lower(p_line[i])) };
 
-		result.insert(std::make_pair(domain, p_line[i + 1]));
+		if (!result.emplace(domain, p_line[i + 1]).second)
+			throw std::runtime_error(std::format(
+				"Argument type {} specified more than once on line {}", p_line[i], p_asm));
 	}
 
 	return result;

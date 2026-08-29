@@ -11,9 +11,9 @@
 // background palette rows from the engine's own palette shadow and
 // leaves the hud row untouched.
 //
-// the role is on at boot (the scheduler's arm table seeds slot 0 with
-// the day/night kind) and stays script controllable: the
-// AtlasDevDayNight and AtlasDevArmRole opcodes write the slot bytes, and
+// the role is on at boot (the scheduler's arm table seeds the first
+// compatible slot with the day/night kind) and stays script controllable:
+// the AtlasDevDayNight and AtlasDevArmRole opcodes write the slot bytes, and
 // the body checks them every call. when the role is switched off while
 // the screen is dim, an 8 call sweep rewrites the three rows at full
 // daylight before the role goes quiet, so switching off at midnight
@@ -22,7 +22,7 @@
 namespace {
 	constexpr word DN_ORG{ 0x8000 };            // bank 9 window
 	constexpr word LEVEL{ 0x04e2 }, PHASE{ 0x04e3 };
-	constexpr word DIV_LO{ 0x04e4 }, DIV_HI{ 0x04e5 }, RESTORE{ 0x04e6 };
+	constexpr word DIV_LO{ 0x04e4 }, DIV_HI{ 0x04e5 }, RESTORE_PENDING{ 0x04e6 };
 	constexpr word PAL_SHADOW{ 0x0293 };
 	constexpr byte KIND_DAYNIGHT{ 0x02 };
 	constexpr byte DAY_TABLE[8]{ 0x00, 0x00, 0x10, 0x10, 0x20, 0x10, 0x10, 0x00 };
@@ -46,23 +46,24 @@ word fh::HackManager::install_AtlasDevDayNightCycle(const fe::Config& p_config, 
 		code.cmp_imm(KIND_DAYNIGHT);
 		code.beq("@enabled");
 	}
-	// switched off: if the screen is still dim, arm an 8 call restore
-	// sweep. 8 calls is one full row selector cycle, so every background
-	// row is rewritten from the shadow at daylight, then the role goes
-	// quiet. the level byte alone cannot gate this, because the body
-	// zeroes it on the first restore call and two rows would stay dim.
-	code.lda_abs(LEVEL);
-	code.beq("@chkrest");
-	code.lda_imm(0x08); code.sta_abs(RESTORE);
-	code.lda_imm(0x00); code.sta_abs(LEVEL); code.sta_abs(PHASE);
-	code.label("@chkrest");
-	code.lda_abs(RESTORE);
+	// RESTORE_PENDING is an explicit obligation rather than a proxy for
+	// the current level. while enabled it stays at 8; after disarm it
+	// counts one complete row-selector sweep down to zero. this remains
+	// correct when phase 7 has already made LEVEL zero after only one row.
+	code.lda_abs(RESTORE_PENDING);
+	code.beq("@quiet");
+	code.cmp_imm(0x08);
 	code.bne("@sweep");
-	code.rts();
+	code.lda_imm(0x00); code.sta_abs(LEVEL); code.sta_abs(PHASE);
 	code.label("@sweep");
-	code.dec_abs(RESTORE);
+	code.dec_abs(RESTORE_PENDING);
 	code.jmp("@body");
+	code.label("@quiet");
+	code.rts();
 	code.label("@enabled");
+	// Any enabled call promises a full daylight sweep if the role is
+	// subsequently disarmed, including at the minimum cycle length of 8.
+	code.lda_imm(0x08); code.sta_abs(RESTORE_PENDING);
 	// divider: countdown per call; on zero reload and advance the phase
 	code.lda_abs(DIV_LO);
 	code.ora_abs(DIV_HI);
@@ -119,11 +120,46 @@ word fh::HackManager::install_AtlasDevDayNightCycle(const fe::Config& p_config, 
 		if (p_rom[off9 + i] != 0xff)
 			throw std::runtime_error("AtlasDevDayNightCycle: bank 9 window at $8000 is not free");
 	const auto scheduler{ klib::Asm6502::get_file_offset(15, base) };
+	const auto read_operand{ [&p_rom, scheduler](std::size_t site) {
+		return static_cast<word>(p_rom[scheduler + site]
+			| (p_rom[scheduler + site + 1] << 8));
+	} };
+	const word stub_target{ static_cast<word>(base + OFF_STUB) };
+	const word post_target{ read_operand(OFF_POST) };
+	if (post_target != stub_target || p_rom[scheduler + OFF_POSTARMED] != 0x00)
+		throw std::runtime_error("AtlasDevDayNightCycle: scheduler POST lane is already claimed");
+
+	constexpr std::size_t pre_sites[3]{ OFF_PRE0, OFF_PRE1, OFF_PRE2 };
+	std::size_t arm_site{ OFF_ARM0 + 3 };
+	for (std::size_t i{ 0 }; i < 3; ++i) {
+		if (p_rom[scheduler + OFF_ARM0 + i] == KIND_DAYNIGHT) {
+			// Day/night is POST-only. A non-stub PRE paired with kind 2 is
+			// a conflicting claimant, not an extension we can safely share:
+			// the role opcodes arm/disarm every slot carrying the same kind.
+			if (read_operand(pre_sites[i]) != stub_target)
+				throw std::runtime_error(
+					"AtlasDevDayNightCycle: scheduler kind 2 slot has a PRE claimant");
+			if (arm_site == OFF_ARM0 + 3)
+				arm_site = OFF_ARM0 + i;
+		}
+	}
+	if (arm_site == OFF_ARM0 + 3)
+		for (std::size_t i{ 0 }; i < 3; ++i)
+			if (p_rom[scheduler + OFF_ARM0 + i] == 0x00
+				&& read_operand(pre_sites[i]) == stub_target) {
+				arm_site = OFF_ARM0 + i;
+				break;
+			}
+	if (arm_site == OFF_ARM0 + 3)
+		throw std::runtime_error("AtlasDevDayNightCycle: scheduler arm table has no unclaimed slot");
+
+	// All space and ownership checks above are complete before the first
+	// mutation, so a refused install leaves the ROM byte-identical.
 	code.apply_hack_and_clear(p_rom, 9, DN_ORG);
 	p_rom[scheduler + OFF_POST] = DN_ORG & 0xff;
 	p_rom[scheduler + OFF_POST + 1] = DN_ORG >> 8;
 	p_rom[scheduler + OFF_POSTARMED] = 0x01;
-	p_rom[scheduler + OFF_ARM0] = KIND_DAYNIGHT;
+	p_rom[scheduler + arm_site] = KIND_DAYNIGHT;
 
 	return cpu_addr;
 }

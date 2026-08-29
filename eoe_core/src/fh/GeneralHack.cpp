@@ -30,17 +30,43 @@ namespace {
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 	}},
 	};
+
+	const std::map<fh::GeneralHackLib, std::set<std::string>> GENERAL_HACK_PARAMS{
+		{ fh::GeneralHackLib::FlexibleItems, { "buildings", "price", "selling", "state" } },
+		{ fh::GeneralHackLib::KillSwitch, {} },
+		{ fh::GeneralHackLib::SameWorldTransPal2Mus, {} },
+		{ fh::GeneralHackLib::FogRules, { "rules" } },
+		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
+		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
+		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
+		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
+		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
+	};
+
+	void validate_general_hack_params(fh::GeneralHackLib p_type,
+		const std::map<std::string, std::string>& p_params) {
+		const auto& valid_params{ GENERAL_HACK_PARAMS.at(p_type) };
+		for (const auto& [name, value] : p_params) {
+			(void)value;
+			if (!valid_params.contains(name))
+				throw std::runtime_error(std::format(
+					"Unknown parameter '{}' for general hack '{}'",
+					name, klib::str::enum_to_string(p_type)));
+		}
+	}
 }
 
 fh::GeneralHack::GeneralHack(const std::string& p_type) :
 	type{ parse_general_hack_type(p_type) }
 {
+	validate_general_hack_params(type, params);
 }
 
 fh::GeneralHack::GeneralHack(const std::string& p_type, const std::map<std::string, std::string>& p_params) :
 	type{ parse_general_hack_type(p_type) },
 	params{ p_params }
 {
+	validate_general_hack_params(type, params);
 }
 
 fh::GeneralHackLib fh::GeneralHack::get_type() const {
@@ -112,13 +138,24 @@ std::vector<std::pair<byte, std::optional<byte>>> fh::GeneralHack::split_byte_op
 	std::vector<std::pair<byte, std::optional<byte>>> result;
 
 	for (const auto& vec : split_twice(p_id)) {
-		if (vec.size() == 1)
-			result.push_back(std::make_pair(static_cast<byte>(klib::str::parse_numeric(vec[0])), std::nullopt));
-		else if (vec.size() == 2)
-			result.push_back(std::make_pair(static_cast<byte>(klib::str::parse_numeric(vec[0])),
-				static_cast<byte>(klib::str::parse_numeric(vec[1]))));
-		else
+		if (vec.empty() || vec.size() > 2)
 			throw std::runtime_error("invalid parameter format for " + p_id);
+
+		const int first{ klib::str::parse_numeric(vec[0]) };
+		if (first < 0 || first > 0xff)
+			throw std::runtime_error(std::format(
+				"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[0]));
+
+		std::optional<byte> second;
+		if (vec.size() == 2) {
+			const int value{ klib::str::parse_numeric(vec[1]) };
+			if (value < 0 || value > 0xff)
+				throw std::runtime_error(std::format(
+					"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[1]));
+			second = static_cast<byte>(value);
+		}
+
+		result.emplace_back(static_cast<byte>(first), second);
 	}
 
 	return result;
