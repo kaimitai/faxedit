@@ -44,6 +44,14 @@ word fh::HackManager::install_AtlasDevTimeOfDay(const fe::Config&, std::vector<b
 
 	const auto scheduler{ klib::Asm6502::get_file_offset(15, base) };
 	const bool chain{ p_rom[scheduler + OFF_POSTARMED] != 0x00 };
+	// an unclaimed post lane must still hold the scheduler's default
+	// stub, so an unknown claimant fails the build instead of losing
+	// its vector
+	const word post_vector{ static_cast<word>(
+		p_rom[scheduler + OFF_POST] | (p_rom[scheduler + OFF_POST + 1] << 8)) };
+	if (!chain && post_vector != static_cast<word>(base + OFF_STUB))
+		throw std::runtime_error(
+			"AtlasDevTimeOfDay: scheduler post lane has an unknown claimant");
 	const word chain_to{ static_cast<word>(
 		p_rom[scheduler + OFF_POST] | (p_rom[scheduler + OFF_POST + 1] << 8)) };
 
