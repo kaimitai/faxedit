@@ -141,13 +141,13 @@ Working directly on a ROM is fine for small or experimental changes, but we reco
 Special thanks to the following contributors and fellow digital archaeologists:
 
   * [mal.exe](https://github.com/malexe3169/) - For major contributions that extend Faxanadu far beyond its original engine, including a greatly expanded scripting system, advanced gameplay and entity control, frame scheduling, day/night cycles, dynamic visual effects, extensive documentation, and numerous improvements to the codebase.
+  * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, helping with testing, bug reports and feature suggestions, and for providing the SUROM expansion hack used by Echoes of Eolis.
+  * ["Vagla"](https://www.romhacking.net/community/627/) - For documenting the original Faxanadu data formats. This documentation was the foundation on which Echoes of Eolis was originally started.
   * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
-  * ["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats.
   * [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data.
   * [Jessica](https://www.romhacking.net/community/9037/) - For testing out the MML compiler and improving the [MML documentation](./docs/mml-guide.md) - and for providing example music files which were also added to the docs.
-  * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, and for helping out with testing, bug reports and suggestions for new features.
-  * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions.
-  * [Notlob](https://github.com/Notlobb/Randumizer) - For making the Faxanadu Randumizer from which we got a very useful rom hack to increase door flexibility
+  * [Notlob](https://github.com/Notlobb/Randumizer) - For creating the Faxanadu Randumizer, from which we adapted several general hacks, most notably the sameworld door to stage door hack that greatly increases door flexibility.
+  * [Ok Impala!](https://www.okimpala.net) - For feedback and suggestions, and whipping us into adding more functionality.
 
 <hr>
 

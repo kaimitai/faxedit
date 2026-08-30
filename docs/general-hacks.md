@@ -10,6 +10,13 @@ General hacks are completely optional. A project that enables none of them produ
 
 This document describes the hacks in the current library and their parameters. It assumes you are familiar with the configuration override system described in the [advanced modding documentation](advanced-modding.md).
 
+> **Warning:** General hacks are not automatically removed from an already patched ROM. If you build a ROM with hacks A, B and C, then load that ROM and rebuild it with only hacks D, E and F, hooks and other patches from A, B and C may remain in the ROM.
+>
+> Keep a clean base ROM and treat patched ROMs as build outputs. Your project XML, config overrides, ASM/music sources and other source files should be considered the authoritative project state.
+>
+> Rebuilding an already patched ROM is generally safe when you continue installing the same hacks, but changing the selected set of hacks should be done from a clean base ROM.
+
+
 <hr>
 
 ## Table of Contents
@@ -111,6 +118,8 @@ BossLockedItems enemies=false
 
 ### FlexibleItems
 
+> FlexibleItems is currently unsupported for JP and JP-derived ROM regions
+
 Loosens the vanilla item restrictions in three independent ways: items can be used inside buildings, the player-state gate on item use is removed, and shops will buy any item — items without a sell-table entry sell for a configurable price.
 
 | parameter | default | meaning |
@@ -168,6 +177,7 @@ To keep the lookup code and data in another bank:
 DynamicTilesets bank=28 addr=0x8000 data=0:1:6+2:2:5+2:3:5+7:0:5
 ```
 
+For expanded ROMs, it is reasonable to use `bank=28` and `addr=$8000` unless something else was deliberately put there. By default bank 29 is used for the doubled tileset collection, and bank 30 for dynamic tilemap changes.
 
 Hooks can be disabled when a project does not need those transition types:
 

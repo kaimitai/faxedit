@@ -69,6 +69,7 @@ fe::MainWindow::MainWindow(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	add_message("Camera: Ctrl+Wheel/Plus/Minus = Zoom, Space+Drag or Middle Drag = Pan", fe::MsgType::Info);
 	add_message("              Ctrl+Z (undo), Ctrl+Y (redo)", fe::MsgType::Info);
 	add_message("Tilemap Mode: Ctrl+C (copy), Ctrl+V (paste), Shift+V (Show selection), Ctrl+Left Click to \"tile pick\", Right Click to paint", fe::MsgType::Info);
+	add_message("New: Change font scale under Settings > Rendering!", fe::MsgType::Success);
 	add_message(std::format("Build date: {} {} CET",
 		__DATE__, __TIME__), fe::MsgType::Info);
 	add_message(std::format("Version: {}", c::APP_VERSION), fe::MsgType::Info);
