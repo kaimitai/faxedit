@@ -1345,7 +1345,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 ### Changelog
 
-* 2026-08-30: version beta-9 - "Caution to the Wind"
+* 2026-08-30: version beta-9.1 - "Caution to the Wind"
 
 ⚠️ Breaking Change
 > Same-world transition palette-to-music is no longer a front-end option. The previous toggle and fixed config injection points have been removed. To retain this behavior, enable the SameWorldTransPal2Mus general hack in eoe_config_override.xml.
