@@ -142,7 +142,7 @@ Allows individual screens to override their world's normal tileset. Overrides ar
 
 The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` and `addr` can place them in another PRG bank instead.
 
-The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own tileset selection mechanism.
+The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own per-screen tileset selection mechanism via the Building Scene objects.
 
 | parameter | default | meaning |
 | --- | --- | --- |

@@ -1129,7 +1129,7 @@ Echoes of Eolis can inject several optional ROM hacks. For bank 15, these use sp
 
 | Feature | CPU Address  | Size (bytes) | Comments | Config ID |
 |---|---|---|---|---|
-| Pal2Mus for Sameworld Transitions | $c033 | 30/37 | Echoes of Eolis - Enabled under Settings > Advanced | hack_sw_trans_pal2mus_addr |
+| Double Tileset Hack | $c033 | 30/37 | Echoes of Eolis - Enabled under Settings > Advanced | hack_double_tileset_addr |
 | Stage Door Hack - Set Stage | $df99  | 15/15  | Echoes of Eolis - Enabled under Settings > Advanced | hack_set_pending_stage_addr |
 | Stage Door Hack - Extract Requirements | $dfa8  | 15/15  | Echoes of Eolis - Enabled under Settings > Advanced | hack_decode_req_addr |
 | Stage Door Hack - Load World | $dfb7  | 8/14  | Echoes of Eolis - Enabled under Settings > Advanced | hack_load_world_addr |

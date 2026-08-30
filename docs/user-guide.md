@@ -1,12 +1,12 @@
 # Echoes of Eolis - User Guide
 
-This is the user documentation for Echoes of Eolis (version beta-9), a Faxanadu data editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
+This is the user documentation for Echoes of Eolis, a Faxanadu editor which can be found on its [GitHub repository](https://github.com/kaimitai/faxedit/). It is assumed that users are somewhat acquainted with Faxanadu on the NES.
 
 <hr>
 
 You can start the editor with a filename parameter to make the editor load a given ROM, or use the file picker that appears if no ROM is loaded at startup, to select a file to load. The editor depends on a ROM being loaded and cannot be used without one.
 
-It also depends on configuration file eoe_config.xml being present, as this file contains necessary constants per ROM region. This configuration file contains the needed information to know which ROM region you are using, and how to read and write data from it - which differs between regions.
+It also depends on configuration file `eoe_config.xml` being present, as this file contains necessary constants per ROM region. This configuration file contains the needed information to know which ROM region you are using, and how to read and write data from it - which differs between regions.
 
 The editor will automatically deduce the ROM region, unless you specify it as a command-line parameter following a ROM-filename.
 
@@ -1284,10 +1284,13 @@ will be considered transparent.
 - Warn on world tilemap >= 95% bank size: Adds a warning in the data integrity analysis if any world's tilemap data is approaching the maximum space of one bank. (16kb)
 - Enable IPS patching: Turns on the "Save ips"-button next to "Patch nes ROM" in the Project Control window.
 - Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
-- Enable pal2mus for sw-transitions: Toggles an optional rom hack that enables palette-to-music mapping for same-world transitions, matching the behavior of same-world doors. The hack is applied when the rom is patched.
 - Generate asm: For use with the advanced scripting features. See [separate documentation](./advanced-modding.md).
 
 The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
+
+The **Enable Double Tileset** button will double your tilesets. It will create a copy of your 9 tilesets and add them to your existing tilesets, allowing you to edit and assign them separately. This requires a free bank for the new chr data, and installs a hack which loads CHR-data from the appropriate bank depending on tileset index.
+
+The Double Tileset hack is only available for expanded ROMs by default, depending on configuration parameter `tileset_secondary_bank` being present for the currently loaded ROM's region.
 
 <hr>
 
@@ -1341,6 +1344,52 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 <hr>
 
 ### Changelog
+
+* 2026-08-30: version beta-9 - "Caution to the Wind"
+
+⚠️ Breaking Change
+> Same-world transition palette-to-music is no longer a front-end option. The previous toggle and fixed config injection points have been removed. To retain this behavior, enable the SameWorldTransPal2Mus general hack in eoe_config_override.xml.
+
+* Scripting
+
+  * Added many new `AtlasDev` opcodes for palette/PPU effects, maps, warps, entities, combat, magic, timed effects, transient variables and other advanced scripting.
+  * Added script recipes and expanded scripting documentation.
+
+* General Hacks
+
+  * Added configurable general hacks with parameters and dynamic free-space allocation across PRG banks 12, 14 and 15.
+  * Added **FastStart**, **FlexibleItems**, **QuestFlagItemDrops**, **BossLockedItems**, **FogRules**, **DynamicTilesets** and **SameWorldTransPal2Mus**.
+  * Added **AtlasDevFrameScheduler**, an NMI-driven scheduler subsystem by **mal.exe** for frame-based runtime effects. New **DayNightCycle**, **InfectedTint** and **TimeOfDay** hacks build on the scheduler.
+  * Added documentation and improved configuration examples for general hacks.
+
+* ROM & Graphics
+
+  * Added optional **Double Tileset** support.
+  * Added per-screen **Dynamic Tilesets**.
+  * Added fog CHR remapping and the `fogremap` CLI command.
+  * Added CLI support for expanding vanilla ROMs to **32-bank SUROM**.
+
+* CLI
+
+  * Added `xproj` / `bproj` for extracting and rebuilding complete projects.
+  * Added patch subsystem skipping and cinematic overflow options.
+  * Improved CLI error handling, platform builds and runtime paths.
+
+* Editor
+
+  * Added vector font and a font scaling option in `Settings > Rendering`.
+  * Added mergeable config maps and multiline configuration strings.
+  * Moved ROM/XML loading, saving, validation and patching into `eoe_core`, shared by the GUI and CLI.
+  * Hardened project validation, hack installation and script handling.
+
+* Documentation
+
+  * Added general hack documentation and a script recipes cookbook.
+  * Expanded advanced modding and configuration examples.
+
+Thanks to **mal.exe** for the extensive scripting, general hack, documentation and reliability contributions in this release.
+
+---
 
 * 2026-08-15: version beta-9 - "Unity"
 

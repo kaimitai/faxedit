@@ -17,9 +17,12 @@ See the [documentation](./docs/user-guide.md) for a detailed overview of the edi
 ## Quick Links
 
 - [Main User Documentation](./docs/user-guide.md)
+- [Command-Line Documentation](./docs/cli-guide.md)
 - [Scripting Documentation](./docs/scripting-guide.md)
+  - [Script Recipes](./docs/script-recipes.md)
 - [MML (Music Macro Language) documentation](./docs/mml-guide.md)
 - [Advanced Modding documentation](./docs/advanced-modding.md)
+  - [General Hacks](./docs/general-hacks.md)
 - [Changelog](./docs/user-guide.md#changelog)
 - [Building from Source](#building-from-source)
 - [Editor Capabilities](#editor-capabilities)
@@ -93,7 +96,8 @@ application-wide override beside the executable.
 * **Cinematics:** Intro/outro metadata and graphics
 * **Scripting:** Disassemble and assemble interaction scripts, behavior scripts, music scripts, MML, and miscellaneous game data
 * **Visualizer:** Parameterized world map export to PNG
-* **Optional ROM hacks:** Deploy supported ROM hacks directly from the editor to unlock additional editing capabilities and flexibility
+* **Managed ROM hacks:** Deploy ROM hacks that extend the editor's capabilities, such as more flexible doors and additional tilesets. These are managed by the editor because they affect how ROM data is interpreted or edited.
+* **General ROM hacks:** Mix and match optional, parameterized hacks to customize the generated game runtime. These do not affect the editor's data model and can be enabled and configured independently for each build.
 
 The main editor supports zooming, panning, and previewing adjacent screens.
 
@@ -105,21 +109,30 @@ Projects can be saved as patched ROMs, IPS patches, or XML files suitable for ve
 
 ![The editor in action](./docs/img/eoe_presentation.png)
 
-Echoes of Eolis also supports advanced scripting and ROM-hacking features, including custom script opcodes, persistent screen changes, and dynamic tilemap changes. See the [Advanced Modding documentation](./docs/advanced-modding.md) for details.
+Echoes of Eolis also supports advanced scripting and ROM-hacking features, including custom script opcodes, persistent screen changes, dynamic tilemap changes and parametrized general hacks. See the [Advanced Modding documentation](./docs/advanced-modding.md) and the [General Hacks documentation](./docs/general-hacks.md) for details.
 
 <hr>
 
 ## Recommended Workflow
 
-For small or experimental changes, working directly on ROM files is perfectly fine.
+For larger projects, it is recommended to keep a clean base ROM and treat the exported project files as the source of truth. A project taking advantage of all functionality in Echoes of Eolis might look like this:
 
-For larger projects, it is recommended to export your data to XML and treat the XML file as the project's primary source of truth. If you also modify scripts or music, keep the corresponding script and music source files alongside the XML data.
+```text
+faxanadu.nes
+faxanadu.xml
+eoe_config_override.xml
+faxanadu-scripts/
+    faxanadu-iscript.asm
+    faxanadu-bscript.asm
+    faxanadu-misc.txt
+    faxanadu.mml
+```
 
-Using git or another version control system is highly recommended. XML, script, and music source files are easy to diff, merge, revert, and track over time.
+`eoe_config.xml` is also used during builds, but is supplied with Echoes of Eolis rather than being part of the project.
 
-Most project data is region-agnostic. When patching a ROM, the editor uses `eoe_config.xml` to resolve region-specific offsets and layouts automatically.
+The textual project files should ideally be kept in a version control system such as git. ROMs can be built from them using either the GUI or `eoe-cli`, making automated builds possible as well.
 
-If you override default configuration via `eoe_config_override.xml`, that file should normally be considered part of the project source data as well.
+Working directly on a ROM is fine for small or experimental changes, but we recommend treating output ROMs as transient build artifacts.
 
 <hr>
 
@@ -127,7 +140,7 @@ If you override default configuration via `eoe_config_override.xml`, that file s
 
 Special thanks to the following contributors and fellow digital archaeologists:
 
-  * [mal.exe](https://github.com/malexe3169/) - For contributing numerous custom script opcode implementations and creative additions to the scripting system.
+  * [mal.exe](https://github.com/malexe3169/) - For major contributions that extend Faxanadu far beyond its original engine, including a greatly expanded scripting system, advanced gameplay and entity control, frame scheduling, day/night cycles, dynamic visual effects, extensive documentation, and numerous improvements to the codebase.
   * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
   * ["Vagla"](https://www.romhacking.net/community/627/) - For providing the original documentation of various Faxanadu data formats.
   * [Sebastian Porst](https://github.com/sporst) - For discovering and documenting the data format for special screen-transitions and mapping out the door data.
