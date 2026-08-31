@@ -1,4 +1,5 @@
 #include "Image.h"
+#include <stdexcept>
 
 klib::Image::Image(std::size_t p_width, std::size_t p_height) :
 	m_width{ p_width },
@@ -15,6 +16,13 @@ const klib::RGB& klib::Image::at(std::size_t p_x, std::size_t p_y) const {
 
 klib::RGB& klib::Image::at(std::size_t p_x, std::size_t p_y) {
 	return m_pixels.at(p_y * m_width + p_x);
+}
+
+klib::RGB& klib::Image::at(int p_x, int p_y) {
+	if (p_x < 0 || p_y < 0)
+		throw std::runtime_error("Image coordinate(s) negative");
+
+	return at(static_cast<std::size_t>(p_x), static_cast<std::size_t>(p_y));
 }
 
 const std::vector<klib::RGB>& klib::Image::pixels(void) const {

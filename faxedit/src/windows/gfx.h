@@ -19,22 +19,6 @@ using NES_Palette = std::vector<byte>;
 
 namespace fe {
 
-	struct MetaTileCandidate {
-		std::vector<klib::NES_tile> m_tiles;
-		std::size_t paletteIndex;
-
-		std::vector<int> m_quad_errors;
-		int reuseCount; // how many quadrants already exist
-		int rgbError; // visual diff score
-
-		MetaTileCandidate(void) :
-			paletteIndex{ 0 },
-			reuseCount{ 0 },
-			rgbError{ 0 }
-		{
-		}
-	};
-
 	struct SpriteTileBuildResult {
 		klib::NES_tile tile;
 		int score = 0;
@@ -75,12 +59,6 @@ namespace fe {
 		bool h_flip;
 		bool v_flip;
 		int score;
-	};
-
-	enum ChrDedupMode {
-		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
-		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically
-		rgb_Eq           // visual equivalence: tiles equal if resolved RGB values match
 	};
 
 	class gfx {

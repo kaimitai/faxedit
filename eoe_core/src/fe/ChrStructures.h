@@ -62,6 +62,30 @@ namespace fe {
 		int approximated_tile_count;
 	};
 
+	// bitmap import option type
+	enum ChrDedupMode {
+		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
+		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically
+		rgb_Eq           // visual equivalence: tiles equal if resolved RGB values match
+	};
+
+	// candidate type used during bitmap import to bg gfx
+	struct MetaTileCandidate {
+		std::vector<klib::NES_tile> m_tiles;
+		std::size_t paletteIndex;
+
+		std::vector<int> m_quad_errors;
+		int reuseCount; // how many quadrants already exist
+		int rgbError; // visual diff score
+
+		MetaTileCandidate(void) :
+			paletteIndex{ 0 },
+			reuseCount{ 0 },
+			rgbError{ 0 }
+		{
+		}
+	};
+
 }
 
 #endif

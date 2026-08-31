@@ -25,6 +25,7 @@ namespace klib {
 		std::size_t height(void) const;
 		const RGB& at(std::size_t p_x, std::size_t p_y) const;
 		RGB& at(std::size_t p_x, std::size_t p_y);
+		RGB& at(int p_x, int p_y);
 		const std::vector<RGB>& pixels(void) const;
 		std::vector<RGB>& pixels(void);
 	};
