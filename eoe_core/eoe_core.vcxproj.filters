@@ -402,6 +402,9 @@
     <ClInclude Include="src\fe\game\game_gfx.h">
       <Filter>Header Files\fe\game</Filter>
     </ClInclude>
+    <ClInclude Include="src\common\klib\Image.h">
+      <Filter>Header Files\common\klib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\common\klib\Asm6502.cpp">
@@ -640,6 +643,9 @@
     </ClCompile>
     <ClCompile Include="src\fe\game\game_gfx.cpp">
       <Filter>Source Files\fe\game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\common\klib\Image.cpp">
+      <Filter>Source Files\common\klib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

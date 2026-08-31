@@ -1,7 +1,10 @@
 #include "game_gfx.h"
 #include "fe/fe_constants.h"
 #include "fe/Config.h"
+#include "common/lodepng.h"
+#include "common/klib/Kfile.h"
 #include <algorithm>
+#include <format>
 #include <numeric>
 #include <stdexcept>
 
@@ -202,4 +205,65 @@ std::set<std::size_t> fe::game::gfx::get_building_metatiles_using_tileset(const 
 	}
 
 	return result;
+}
+
+std::vector<byte> fe::game::gfx::encode_png(const klib::Image& p_image) {
+	std::vector<byte> rgb;
+	rgb.reserve(p_image.width() * p_image.height() * 3);
+
+	for (const auto& px : p_image.pixels()) {
+		rgb.push_back(px.r);
+		rgb.push_back(px.g);
+		rgb.push_back(px.b);
+	}
+
+	std::vector<byte> result;
+
+	const auto err{
+		lodepng::encode(result, rgb,
+			static_cast<unsigned>(p_image.width()),
+			static_cast<unsigned>(p_image.height()),
+			LCT_RGB)
+	};
+
+	if (err)
+		throw std::runtime_error(std::format("PNG encode failed: {}", lodepng_error_text(err)));
+
+	return result;
+}
+
+void fe::game::gfx::save_png_to_file(const klib::Image& p_image, const std::string& p_filename) {
+	klib::file::write_bytes_to_file(encode_png(p_image), p_filename);
+}
+
+klib::Image fe::game::gfx::decode_png(const std::vector<byte>& p_data) {
+	std::vector<byte> rgb;
+	unsigned width{};
+	unsigned height{};
+
+	const auto err{ lodepng::decode(rgb, width, height,	p_data,	LCT_RGB) };
+
+	if (err)
+		throw std::runtime_error(std::format("PNG decode failed: {}", lodepng_error_text(err)));
+
+	klib::Image result{ width, height };
+
+	for (std::size_t y{ 0 }; y < height; ++y) {
+		for (std::size_t x{ 0 }; x < width; ++x) {
+			const std::size_t idx{ 3 * (y * width + x) };
+
+			result.at(x, y) = {
+				rgb[idx],
+				rgb[idx + 1],
+				rgb[idx + 2]
+			};
+		}
+	}
+
+	return result;
+}
+
+klib::Image fe::game::gfx::load_png_from_file(
+	const std::string& p_filename) {
+	return decode_png(klib::file::read_file_as_bytes(p_filename));
 }

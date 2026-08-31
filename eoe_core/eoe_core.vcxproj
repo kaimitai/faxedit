@@ -22,6 +22,7 @@
     <ClInclude Include="src\common\klib\Asm6502.h" />
     <ClInclude Include="src\common\klib\Bitreader.h" />
     <ClInclude Include="src\common\klib\Bitwriter.h" />
+    <ClInclude Include="src\common\klib\Image.h" />
     <ClInclude Include="src\common\klib\IPS_Patch.h" />
     <ClInclude Include="src\common\klib\Kfile.h" />
     <ClInclude Include="src\common\klib\Kstring.h" />
@@ -121,6 +122,7 @@
     <ClCompile Include="src\common\klib\Asm6502.cpp" />
     <ClCompile Include="src\common\klib\Bitreader.cpp" />
     <ClCompile Include="src\common\klib\Bitwriter.cpp" />
+    <ClCompile Include="src\common\klib\Image.cpp" />
     <ClCompile Include="src\common\klib\IPS_Patch.cpp" />
     <ClCompile Include="src\common\klib\Kfile.cpp" />
     <ClCompile Include="src\common\klib\Kstring.cpp" />

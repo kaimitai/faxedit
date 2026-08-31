@@ -5,6 +5,7 @@
 #include <set>
 #include <vector>
 #include "fe/Game.h"
+#include "common/klib/Image.h"
 
 namespace fe {
 	class Config;
@@ -37,6 +38,13 @@ namespace fe::game::gfx {
 	std::set<std::size_t> get_worlds_using_tileset(const Game& p_game, std::size_t p_tileset_no);
 	std::set<std::size_t> get_building_metatiles_using_tileset(const Game& p_game,
 		std::size_t p_tileset_no);
+
+	// png and file I/O
+	std::vector<byte> encode_png(const klib::Image& p_image);
+	void save_png_to_file(const klib::Image& p_image, const std::string& p_filename);
+
+	klib::Image decode_png(const std::vector<byte>& p_data);
+	klib::Image load_png_from_file(const std::string& p_filename);
 }
 
 #endif

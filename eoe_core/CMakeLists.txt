@@ -7,6 +7,7 @@ add_library(eoe_core STATIC
     src/common/klib/Kfile.cpp
     src/common/klib/Kstring.cpp
     src/common/klib/NES_tile.cpp
+    src/common/klib/Image.cpp
 
     src/common/midifile/Binasc.cpp
     src/common/midifile/MidiEvent.cpp
