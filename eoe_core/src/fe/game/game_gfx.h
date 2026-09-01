@@ -48,7 +48,15 @@ namespace fe::game::gfx {
 	klib::Image decode_png(const std::vector<byte>& p_data);
 	klib::Image load_png_from_file(const std::string& p_filename);
 
+	// helpers
+	std::vector<klib::RGB> parse_nes_palette(const fe::Config& p_config);
+
 	// background gfx import pipeline
+	fe::TilemapImportResult import_tilemap_image(const klib::Image& p_image,
+		std::vector<ChrGfxTile>& p_tiles,
+		const std::vector<std::vector<byte>>& p_palette,
+		const std::vector<klib::RGB>& p_nes_palette,
+		ChrDedupMode p_dedupmode);
 	klib::NES_tile image_region_to_nes_tile(const klib::Image& p_image,
 		const std::vector<klib::RGB>& p_nes_palette, const std::vector<byte>& p_palette,
 		int p_x, int p_y);

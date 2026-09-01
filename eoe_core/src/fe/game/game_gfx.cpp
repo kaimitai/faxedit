@@ -272,7 +272,142 @@ klib::Image fe::game::gfx::load_png_from_file(
 	return decode_png(klib::file::read_file_as_bytes(p_filename));
 }
 
+// helpers
+std::vector<klib::RGB> fe::game::gfx::parse_nes_palette(const fe::Config& p_config) {
+	std::vector<klib::RGB> result;
+	const auto nespalvec{ p_config.bmap_as_numeric_vec(fe::c::ID_NES_PALETTE, 64) };
+
+	for (std::size_t rgb : nespalvec)
+		result.push_back(klib::RGB{
+			.r = static_cast<byte>((rgb >> 16) & 0xff),
+			.g = static_cast<byte>((rgb >> 8) & 0xff),
+			.b = static_cast<byte>(rgb & 0xff)
+			});
+
+	return result;
+}
+
 // bg gfx import pipeline
+fe::TilemapImportResult fe::game::gfx::import_tilemap_image(
+	const klib::Image& p_image,
+	std::vector<ChrGfxTile>& p_tiles,
+	const std::vector<std::vector<byte>>& p_palette,
+	const std::vector<klib::RGB>& p_nes_palette,
+	ChrDedupMode p_dedupmode) {
+
+	// return values - did we have room to spare or did we overflow?
+	fe::TilemapImportResult result{};
+
+	// enforce multiples of 16
+	if ((p_image.width() % 16) != 0 || (p_image.height() % 16) != 0)
+		throw std::runtime_error("Image dimensions must be multiples of 16");
+
+	std::size_t mt_w{ p_image.width() / 16 };
+	std::size_t mt_h{ p_image.height() / 16 };
+
+	// the tilemap, containing concrete chr tiles
+	std::vector<std::vector<std::optional<ChrMetaTile>>> l_final_tilemap(
+		mt_h, std::vector<std::optional<ChrMetaTile>>(mt_w));
+
+	// the candidate tilemap, also containing concrete chr tiles
+	// but we don't know if we can use all of them before we execute
+	std::vector<std::vector<std::optional<MetaTileCandidate>>> l_tilemap(
+		mt_h, std::vector<std::optional<MetaTileCandidate>>(mt_w));
+
+	for (std::size_t j{ 0 }; j < mt_h; ++j)
+		for (std::size_t i{ 0 }; i < mt_w; ++i) {
+			if (is_optional_image_region(p_image, i, j))
+				l_tilemap[j][i] = std::nullopt;
+			else {
+				std::vector<fe::MetaTileCandidate> l_cands;
+				for (std::size_t pal{ 0 }; pal < 4; ++pal)
+					l_cands.push_back(slice_and_quantize(
+						p_image, p_nes_palette, i, j, p_palette, pal, p_dedupmode, p_tiles
+					));
+
+				l_tilemap[j][i] = collapse_candidates(l_cands);
+			}
+		}
+
+	// we now have the full tilemap with concrete chr tiles
+	// and pre-calculated rgb-errors vs the image
+	// we now emit chr tiles to our generated tilemap
+	std::map<klib::NES_tile, std::vector<std::size_t>> tileToIndices;
+
+	// fill out all read-only and unusable tiles
+	for (std::size_t i{ 0 }; i < p_tiles.size(); ++i)
+		if (!p_tiles[i].m_allowed || p_tiles[i].m_readonly)
+			tileToIndices[p_tiles[i].m_tile].push_back(i);
+
+	for (std::size_t j{ 0 }; j < mt_h; ++j)
+		for (std::size_t i{ 0 }; i < mt_w; ++i)
+			if (l_tilemap[j][i].has_value()) {
+				l_final_tilemap[j][i] = fe::ChrMetaTile();
+				l_final_tilemap[j][i]->m_palette = l_tilemap[j][i]->paletteIndex;
+
+				for (std::size_t t{ 0 }; t < 4; ++t) {
+					std::size_t idx{ allocate_or_reuse_chr(l_tilemap[j][i]->m_tiles[t],
+					p_tiles, tileToIndices,
+					p_nes_palette,
+					p_palette[l_tilemap[j][i]->paletteIndex],
+					p_dedupmode) };
+
+					if (idx < 256)
+						l_final_tilemap[j][i]->m_idxs.push_back(idx);
+					else {
+						auto pxpos{ mt_to_pixels(i, j, t) };
+
+						l_final_tilemap[j][i]->m_idxs.push_back(
+							best_substitute_chr_index(p_image, pxpos.first, pxpos.second,
+								p_nes_palette,
+								p_palette.at(l_final_tilemap[j][i]->m_palette),
+								tileToIndices, p_tiles)
+						);
+
+						++result.overflowChrCount;
+					}
+				}
+			}
+			else
+				l_final_tilemap[j][i] = std::nullopt;
+
+	// if we have leftover chr space, set it to the empty tile
+	std::vector<std::size_t> spareindices;
+
+	for (std::size_t i{ 0 }; i < 256; ++i) {
+		bool l_found{ false };
+		for (const auto& kv : tileToIndices)
+			for (std::size_t tidx : kv.second)
+				if (i == tidx)
+					l_found = true;
+
+		if (!l_found)
+			spareindices.push_back(i);
+	}
+
+	result.leftoverChrCount = static_cast<int>(spareindices.size());
+
+	if (!spareindices.empty()) {
+		klib::NES_tile l_empty;
+		auto iter{ tileToIndices.find(l_empty) };
+
+		if (iter != end(tileToIndices)) {
+			for (std::size_t i : spareindices)
+				iter->second.push_back(i);
+		}
+		else {
+			tileToIndices.insert(std::make_pair(l_empty, spareindices));
+		}
+	}
+
+	// finally done ... update result map and texture
+	result.tilemap = fe::ChrTilemap(l_final_tilemap,
+		chrtiletoindex_map_to_vector(tileToIndices, 256),
+		p_palette);
+
+	return result;
+}
+
 klib::NES_tile fe::game::gfx::image_region_to_nes_tile(const klib::Image& p_image,
 	const std::vector<klib::RGB>& p_nes_palette, const std::vector<byte>& p_palette,
 	int p_x, int p_y) {

@@ -62,6 +62,13 @@ namespace fe {
 		int approximated_tile_count;
 	};
 
+	// Result type after importing background gfx from bmp, must be visible from several places
+	struct TilemapImportResult {
+		ChrTilemap tilemap;
+		int leftoverChrCount{ 0 };
+		int overflowChrCount{ 0 };
+	};
+
 	// bitmap import option type
 	enum ChrDedupMode {
 		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
