@@ -223,6 +223,7 @@ namespace fe {
 		static const inline std::array<std::string, 4> CHR_GFX_IDS = {
 		CHR_GFX_ID_TITLE, CHR_GFX_ID_INTRO, CHR_GFX_ID_OUTRO, CHR_GFX_ID_ITEMS
 		};
+		constexpr std::size_t CHR_GFX_NUM_ID_CUSTOM_WORLD{ 800 };
 
 		// cinematic gfx keys - unique identifiers needed by various pipelines
 		constexpr std::size_t CINEMATIC_NUM_ID_INTRO{ 25000 };

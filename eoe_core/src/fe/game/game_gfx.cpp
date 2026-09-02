@@ -567,6 +567,39 @@ fe::WorldTilesetGfxDef fe::game::gfx::get_world_tileset_gfx_def(const Config& p_
 	return result;
 }
 
+fe::WorldTilesetGfxDef fe::game::gfx::get_custom_world_tileset_gfx_def(const Config& p_config,
+	const Game& p_game, std::size_t p_world_no, std::size_t p_tileset_no,
+	std::size_t p_palette_no, std::size_t p_metatile_start, std::size_t p_metatile_end) {
+	WorldTilesetGfxDef result;
+
+	result.world_no = p_world_no;
+	result.tileset_no = p_tileset_no;
+	result.palette = flat_pal_to_2d_pal(p_game.m_palettes.at(p_palette_no));
+
+	const auto& mts{ p_game.m_chunks.at(p_world_no).m_metatiles };
+	if (p_metatile_start >= p_metatile_end || p_metatile_end > mts.size())
+		throw std::runtime_error("invalid metatile range");
+	for (std::size_t i{ p_metatile_start }; i < p_metatile_end; ++i)
+		result.writable_metatile_idxs.insert(i);
+
+	const auto chrtiles{ gen_world_tileset(p_game, p_config, p_tileset_no) };
+	const auto& tileset{ p_game.m_tilesets.at(p_tileset_no) };
+	
+	for (std::size_t i{ 0 }; i < chrtiles.size(); ++i) {
+		const bool in_hud{ i < c::CHR_HUD_TILE_COUNT };
+		const bool in_tileset{
+			i >= tileset.start_idx && i < tileset.end_index()
+		};
+
+		result.chr_tiles.emplace_back(
+			chrtiles[i],
+			in_hud,
+			in_hud || in_tileset);
+	}
+
+	return result;
+}
+
 // commits
 void fe::game::gfx::apply_world_tileset_gfx(fe::Game& p_game, const fe::WorldTilesetGfxDef& p_def,
 	const fe::ChrTilemap& p_result) {

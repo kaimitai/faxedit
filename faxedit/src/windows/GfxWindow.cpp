@@ -89,20 +89,14 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		if (txt == nullptr)
 			imgui_text("Graphics not yet extracted");
 		else {
-			ImGui::Image(txt, ImVec2(
-				static_cast<float>(2 * txt->w),
-				static_cast<float>(2 * txt->h)
-			));
+			ImGui::Image(txt, ImVec2(static_cast<float>(2 * txt->w), static_cast<float>(2 * txt->h)));
 		}
 
 		ImGui::Separator();
 
 		if (ui::imgui_button("Refresh", 4)) try {
-			const auto gfxdef{ fe::game::gfx::get_world_tileset_gfx_def(
-					m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen) };
-			m_gfx.gen_tilemap_texture(p_rnd, fe::game::gfx::get_world_mt_tilemap(*m_game, gfxdef),
-				l_gfx_key);
-			m_gfx.clear_tilemap_import_result(l_gfx_key);
+			refresh_world_gfx(p_rnd, l_gfx_key, fe::game::gfx::get_world_tileset_gfx_def(
+				m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen));
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
@@ -111,40 +105,18 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 		ImGui::SameLine();
 
 		if (ui::imgui_button("Save bmp", 2)) try {
-			const auto gfxdef{ fe::game::gfx::get_world_tileset_gfx_def(
-				m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen) };
-			m_gfx.save_tilemap_bmp(fe::game::gfx::get_world_mt_tilemap(*m_game, gfxdef),
-				get_bmp_path(), get_bmp_filename(l_gfx_key));
-
-			add_message(std::format("Saved {}", get_bmp_filepath(l_gfx_key)),
-				fe::MsgType::Success);
+			save_world_gfx(l_gfx_key, fe::game::gfx::get_world_tileset_gfx_def(
+				m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen));
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
 		}
 
 		if (ui::imgui_button("Load bmp", 2)) try {
-			auto gfxdef{ fe::game::gfx::get_world_tileset_gfx_def(
-				m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen) };
-
-			auto l_image{ m_gfx.load_image_from_bmp_file(
-				get_bmp_path(), get_bmp_filename(l_gfx_key)) };
-
-			auto bmpimportres{ fe::game::gfx::import_tilemap_image(
-				l_image,
-				gfxdef.chr_tiles,
-				gfxdef.palette,
-				m_cache.m_nes_palette,
-				ls_dedup_strat) };
-
-			m_gfx.set_tilemap_import_result(l_gfx_key, bmpimportres.tilemap);
-			// TODO: defer until next frame to avoid flicker
-			m_gfx.gen_tilemap_texture(p_rnd, bmpimportres.image, fe::game::gfx::get_hot_pink(),
-				l_gfx_key);
-
-			add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
-				bmpimportres.leftoverChrCount, bmpimportres.overflowChrCount),
-				bmpimportres.overflowChrCount == 0 ? fe::MsgType::Success : fe::MsgType::Warning);
+			load_world_gfx(p_rnd, l_gfx_key,
+				fe::game::gfx::get_world_tileset_gfx_def(m_config, *m_game,
+					m_sel_gfx_ts_world, l_pass_screen),
+				ls_dedup_strat);
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
@@ -156,24 +128,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 		if (ui::imgui_button("Commit to ROM",
 			l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
-
-			const auto gfxres{ m_gfx.get_tilemap_import_result(l_gfx_key) };
-			const auto gfxdef{ fe::game::gfx::get_world_tileset_gfx_def(
-					m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen) };
-
-			fe::game::gfx::apply_world_tileset_gfx(*m_game, gfxdef, gfxres);
-
-			// the world tileset chr-tiles were updated, update the ui cache
-			generate_world_tilesets();
-
-			if (l_ts_no == m_game->get_default_tileset_no(m_sel_chunk, m_sel_screen))
-				m_atlas_force_update = true;
-
-			// make life easy for ourselves and wipe all staging and undo data on commit
-			m_gfx.clear_all_tilemap_import_results();
-			m_undo->clear_metatile_history();
-
-			add_message("Imported graphics committed to ROM", fe::MsgType::Success);
+			commit_world_gfx(l_gfx_key, fe::game::gfx::get_world_tileset_gfx_def(
+				m_config, *m_game, m_sel_gfx_ts_world, l_pass_screen));
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
@@ -198,6 +154,8 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			ImGui::Separator();
 		}
 
+		if (ImGui::CollapsingHeader("Advanced: Custom Import Definition"))
+			draw_custom_world_gfx(p_rnd, ls_dedup_strat);
 	}
 	else if (m_gfx_emode == fe::GfxEditMode::BgGraphics) {
 		static std::size_t ls_sel_bg_game_gfx{ 0 };
@@ -220,7 +178,7 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			));
 		}
 
-		if (ui::imgui_button("Extract from ROM", 4)) {
+		if (ui::imgui_button("Refresh", 4)) {
 			m_gfx.gen_tilemap_texture(p_rnd,
 				gfxman.get_chrtilemap(gfxkey), l_gfx_key);
 
@@ -237,9 +195,6 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 
 			add_message(std::format("Saved {}",
 				get_bmp_filepath(l_gfx_key)), fe::MsgType::Success);
-		}
-		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
@@ -283,9 +238,6 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 			m_gfx.clear_all_tilemap_import_results();
 
 			add_message("Graphics committed to ROM", fe::MsgType::Success);
-		}
-		catch (const std::runtime_error& ex) {
-			add_message(ex.what(), fe::MsgType::Error);
 		}
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
@@ -1106,4 +1058,154 @@ std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_i
 
 void fe::MainWindow::generate_world_tilesets(void) {
 	m_cache.m_world_ppu_tilesets = fe::game::gfx::gen_world_tilesets(*m_game, m_config);
+}
+
+void fe::MainWindow::refresh_world_gfx(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+	const fe::WorldTilesetGfxDef& p_gfx_def) {
+	m_gfx.gen_tilemap_texture(p_rnd,
+		fe::game::gfx::get_world_mt_tilemap(*m_game, p_gfx_def),
+		p_gfx_key);
+	m_gfx.clear_tilemap_import_result(p_gfx_key);
+}
+
+void fe::MainWindow::save_world_gfx(std::size_t p_gfx_key, const fe::WorldTilesetGfxDef& p_gfx_def) {
+	m_gfx.save_tilemap_bmp(fe::game::gfx::get_world_mt_tilemap(*m_game, p_gfx_def),
+		get_bmp_path(), get_bmp_filename(p_gfx_key));
+	add_message(std::format("Saved {}", get_bmp_filepath(p_gfx_key)),
+		fe::MsgType::Success);
+}
+
+void fe::MainWindow::load_world_gfx(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+	fe::WorldTilesetGfxDef p_gfx_def, fe::ChrDedupMode p_dedup_mode) {
+	auto l_image{ m_gfx.load_image_from_bmp_file(
+	get_bmp_path(), get_bmp_filename(p_gfx_key)) };
+
+	auto importres{ fe::game::gfx::import_tilemap_image(l_image, p_gfx_def.chr_tiles,
+		p_gfx_def.palette, m_cache.m_nes_palette,p_dedup_mode) };
+	m_gfx.set_tilemap_import_result(p_gfx_key, importres.tilemap);
+	// TODO: defer until next frame to avoid flicker
+	m_gfx.gen_tilemap_texture(p_rnd, importres.image,
+		fe::game::gfx::get_hot_pink(), p_gfx_key);
+	add_message(std::format("{} chr-tiles to spare, {} chr-tiles approximated",
+		importres.leftoverChrCount, importres.overflowChrCount),
+		importres.overflowChrCount == 0 ?
+		fe::MsgType::Success : fe::MsgType::Warning);
+}
+
+void fe::MainWindow::commit_world_gfx(std::size_t p_gfx_key, const fe::WorldTilesetGfxDef& p_gfx_def) {
+	const auto gfxres{ m_gfx.get_tilemap_import_result(p_gfx_key) };
+
+	fe::game::gfx::apply_world_tileset_gfx(*m_game, p_gfx_def, gfxres);
+
+	// the world tileset chr-tiles were updated, update the ui cache
+	generate_world_tilesets();
+
+	// redraw current metatile atlas if this import affects it
+	if (p_gfx_def.world_no == m_sel_chunk)
+		m_atlas_force_update = true;
+
+	// make life easy for ourselves and wipe all staging and undo data on commit
+	m_gfx.clear_all_tilemap_import_results();
+	m_undo->clear_metatile_history();
+
+	add_message("Imported graphics committed to ROM", fe::MsgType::Success);
+}
+
+void fe::MainWindow::draw_custom_world_gfx(SDL_Renderer* p_rnd, fe::ChrDedupMode p_dedup_mode) {
+	constexpr std::size_t l_gfx_key{ c::CHR_GFX_NUM_ID_CUSTOM_WORLD };
+	static std::size_t ls_sel_custom_gfx_world{ 0 };
+	static std::size_t ls_sel_custom_gfx_tileset{ 0 };
+	static std::size_t ls_sel_custom_gfx_palette{ 0 };
+	static std::size_t ls_sel_custom_gfx_mt_start{ 0 };
+	static std::size_t ls_sel_custom_gfx_mt_end{ 255 };
+
+	ui::imgui_slider_with_arrows("###customgfxworld",
+		std::format("World: {}",
+			m_cache.m_labels_worlds.at(ls_sel_custom_gfx_world)),
+		ls_sel_custom_gfx_world, 0, m_game->m_chunks.size() - 1);
+
+	ui::imgui_slider_with_arrows("###customgfxts",
+		std::format("Tileset: {}",
+			get_description(static_cast<byte>(ls_sel_custom_gfx_tileset),
+				m_cache.m_labels_tilesets)),
+		ls_sel_custom_gfx_tileset, 0, m_game->m_tilesets.size() - 1);
+
+	ui::imgui_slider_with_arrows("###customgfxpal",
+		std::format("Palette: {}",
+			get_description(static_cast<byte>(ls_sel_custom_gfx_palette),
+				m_cache.m_labels_palettes)),
+		ls_sel_custom_gfx_palette, 0, m_game->m_palettes.size() - 1);
+
+	const auto l_mt_count{
+		m_game->m_chunks.at(ls_sel_custom_gfx_world).m_metatiles.size()
+	};
+
+	// keep stale values in bounds when changing metatile collection
+	ls_sel_custom_gfx_mt_start = std::min(ls_sel_custom_gfx_mt_start, l_mt_count - 1);
+	ls_sel_custom_gfx_mt_end = std::min(ls_sel_custom_gfx_mt_end, l_mt_count - 1);
+
+	ui::imgui_slider_with_arrows("###customgfxmtstart",
+		std::format("Metatile start: {}", ls_sel_custom_gfx_mt_start),
+		ls_sel_custom_gfx_mt_start, 0, l_mt_count - 1);
+
+	ui::imgui_slider_with_arrows("###customgfxmtend",
+		std::format("Metatile end: {}", ls_sel_custom_gfx_mt_end),
+		ls_sel_custom_gfx_mt_end, 0, l_mt_count - 1);
+
+	auto get_gfx_def = [&](void) {
+		return fe::game::gfx::get_custom_world_tileset_gfx_def(
+			m_config, *m_game,
+			ls_sel_custom_gfx_world,
+			ls_sel_custom_gfx_tileset,
+			ls_sel_custom_gfx_palette,
+			ls_sel_custom_gfx_mt_start,
+			ls_sel_custom_gfx_mt_end + 1);
+		};
+
+	ImGui::Separator();
+
+	auto txt{ m_gfx.get_tileset_txt(l_gfx_key) };
+
+	if (txt == nullptr)
+		imgui_text("Graphics not yet extracted");
+	else
+		ImGui::Image(txt,
+			ImVec2(static_cast<float>(2 * txt->w),
+				static_cast<float>(2 * txt->h)));
+	ImGui::Separator();
+
+	if (ui::imgui_button("Refresh###cgref", 4)) try {
+		refresh_world_gfx(p_rnd, l_gfx_key, get_gfx_def());
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), fe::MsgType::Error);
+	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Save bmp##cgsf", 2)) try {
+		save_world_gfx(l_gfx_key, get_gfx_def());
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), fe::MsgType::Error);
+	}
+
+	if (ui::imgui_button("Load bmp##cglf", 2)) try {
+		load_world_gfx(p_rnd, l_gfx_key, get_gfx_def(), p_dedup_mode);
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), fe::MsgType::Error);
+	}
+
+	ImGui::SameLine();
+
+	bool l_res_pending{ m_gfx.has_tilemap_import_result(l_gfx_key) };
+
+	if (ui::imgui_button("Commit to ROM##cgcomm",
+		l_res_pending ? 2 : 4, "Commit imported graphics to ROM", !l_res_pending)) try {
+		commit_world_gfx(l_gfx_key, get_gfx_def());
+	}
+	catch (const std::exception& ex) {
+		add_message(ex.what(), fe::MsgType::Error);
+	}
 }

@@ -42,7 +42,7 @@ namespace fe {
 		ChrMetaTile(void);
 	};
 
-	// the kind of object that is exchanged by the renderer, the bmp-import and such
+	// the kind of object that is exchanged by the renderer, the gfx file-import and such
 	// constains chr-metatiles, palette and attribute table
 	struct ChrTilemap {
 		std::vector<std::vector<std::optional<ChrMetaTile>>> m_tilemap;
@@ -57,14 +57,14 @@ namespace fe {
 			const std::vector<byte>& p_flat_pal);
 	};
 
-	// Result type after importing sprite gfx from bmp, must be visible from several places
+	// Result type after importing sprite gfx from file, must be visible from several places
 	struct SpriteImportResult {
 		std::vector<fe::SpriteAnimationFrame> frames;
 		std::vector<klib::NES_tile> tiles;
 		int approximated_tile_count;
 	};
 
-	// Result type after importing background gfx from bmp, must be visible from several places
+	// Result type after importing background gfx from file, must be visible from several places
 	struct TilemapImportResult {
 		ChrTilemap tilemap;
 		klib::Image image;

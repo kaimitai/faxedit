@@ -247,13 +247,22 @@ namespace fe {
 			const std::vector<fe::Sprite>& p_sprites,
 			std::size_t p_sel_sprite_no) const;
 
-		// helper functions for the bmp import
+		// helper functions for the gfx file import
 		std::string get_bmp_path(void) const;
 		std::string get_bmp_filename(std::size_t p_gfx_key) const;
 		std::string get_bmp_filepath(std::size_t p_gfx_key) const;
 		ImVec4 SDL_Color_to_imgui(const SDL_Color& c) const;
 		bool show_palette_window(std::size_t p_pal_key, std::vector<byte>& p_palette);
 		std::vector<byte> update_pal_bg_idx(std::vector<byte>& p_palette, byte p_nes_pal_idx);
+
+		// world tileset import/export shared procedures
+		void refresh_world_gfx(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+			const fe::WorldTilesetGfxDef& p_gfx_def);
+		void save_world_gfx(std::size_t p_gfx_key, const fe::WorldTilesetGfxDef& p_gfx_def);
+		void load_world_gfx(SDL_Renderer* p_rnd, std::size_t p_gfx_key,
+			fe::WorldTilesetGfxDef p_gfx_def, fe::ChrDedupMode p_dedup_mode);
+		void commit_world_gfx(std::size_t p_gfx_key, const fe::WorldTilesetGfxDef& p_gfx_def);
+		void draw_custom_world_gfx(SDL_Renderer* p_rnd, fe::ChrDedupMode p_dedup_mode);
 
 		void initialize_hud_tilemap(void);
 		void generate_door_req_gfx(SDL_Renderer* p_rnd);
