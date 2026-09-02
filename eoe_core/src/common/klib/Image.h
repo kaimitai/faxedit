@@ -19,7 +19,8 @@ namespace klib {
 
 	public:
 		Image(void) = default;
-		Image(std::size_t p_width, std::size_t p_height);
+		Image(std::size_t p_width, std::size_t p_height,
+			klib::RGB p_init_color = {});
 
 		std::size_t width(void) const;
 		std::size_t height(void) const;

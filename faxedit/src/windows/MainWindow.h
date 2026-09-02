@@ -16,6 +16,7 @@
 #include "fe/sprite/SpriteGfxSnapshotManager.h"
 #include "fe/Config.h"
 #include "fe/Game.h"
+#include "common/klib/Image.h"
 #include "fe/WorldVisualizer.h"
 #include "fe/ROM_Manager.h"
 #include "fi/IScriptLoader.h"
@@ -54,6 +55,9 @@ namespace fe {
 		// iscripts
 		fi::ScriptOpcodeInfo iscript_opcode_info;
 		std::map<std::size_t, std::vector<fi::AsmToken>> m_iscripts;
+		std::vector<klib::RGB> m_nes_palette;
+		// world tileset cache (for all 256 ppu tiles, not only tileset tiles)
+		std::vector<std::vector<klib::NES_tile>> m_world_ppu_tilesets;
 	};
 
 	struct Viewport {
@@ -136,9 +140,6 @@ namespace fe {
 			m_scripting_window;
 
 		fe::ChrTilemap m_hud_tilemap;
-
-		// world tileset cache (for all 256 ppu tiles, not only tileset tiles)
-		std::vector<std::vector<klib::NES_tile>> world_ppu_tilesets;
 
 		fe::EditMode m_emode;
 		fe::GfxEditMode m_gfx_emode;
@@ -247,19 +248,6 @@ namespace fe {
 			std::size_t p_sel_sprite_no) const;
 
 		// helper functions for the bmp import
-		void gen_read_only_chr_idx_non_building(std::size_t p_tileset_no,
-			std::size_t p_world_no, std::set<std::size_t>& p_idxs) const;
-		void gen_read_only_chr_idx_building(std::size_t p_tileset_no,
-			std::size_t p_world_no, std::size_t p_screen_no,
-			std::set<std::size_t>& p_idxs) const;
-		std::set<std::size_t> gen_metatile_usage(std::size_t p_world_no,
-			std::size_t p_screen_no,
-			std::size_t p_total_metatile_count) const;
-		void gen_fixed_building_metatiles(std::size_t p_tileset_no,
-			std::set<std::size_t>& p_idxs) const;
-		fe::ChrTilemap get_world_mt_tilemap(
-			std::size_t p_world_no,
-			std::size_t p_screen_no = 0) const;
 		std::string get_bmp_path(void) const;
 		std::string get_bmp_filename(std::size_t p_gfx_key) const;
 		std::string get_bmp_filepath(std::size_t p_gfx_key) const;

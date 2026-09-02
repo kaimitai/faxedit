@@ -2,9 +2,11 @@
 #define FE_CHR_STRUCTURES_H
 
 #include <optional>
+#include <set>
 #include <unordered_map>
 #include <vector>
 #include "common/klib/NES_tile.h"
+#include "common/klib/Image.h"
 #include "./sprite/SpriteAnimationFrame.h"
 
 using byte = unsigned char;
@@ -65,6 +67,7 @@ namespace fe {
 	// Result type after importing background gfx from bmp, must be visible from several places
 	struct TilemapImportResult {
 		ChrTilemap tilemap;
+		klib::Image image;
 		int leftoverChrCount{ 0 };
 		int overflowChrCount{ 0 };
 	};
@@ -74,6 +77,15 @@ namespace fe {
 		PalIndex_Eq,     // strict byte equivalence: tiles equal only if raw CHR bitplanes match
 		NESPalIndex_Eq,  // NES-faithful: tiles equal if palette indexes resolve identically
 		rgb_Eq           // visual equivalence: tiles equal if resolved RGB values match
+	};
+
+	// world tileset/metatile context definition
+	struct WorldTilesetGfxDef {
+		std::size_t tileset_no{};
+		std::size_t world_no{};
+		std::set<std::size_t> writable_metatile_idxs;
+		std::vector<fe::ChrGfxTile> chr_tiles;
+		std::vector<std::vector<byte>> palette;
 	};
 
 	// candidate type used during bitmap import to bg gfx

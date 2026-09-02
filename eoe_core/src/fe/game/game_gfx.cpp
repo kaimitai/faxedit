@@ -211,6 +211,85 @@ std::set<std::size_t> fe::game::gfx::get_building_metatiles_using_tileset(const 
 	return result;
 }
 
+std::set<std::size_t> fe::game::gfx::get_chr_idxs_used_by_other_worlds(const fe::Game& p_game,
+	std::size_t p_tileset_no, std::size_t p_exclude_world) {
+	std::set<std::size_t> result;
+
+	// let us reserve chr indexes which are used by metatile
+	// definitions for other worlds using this tileset so we don't make
+	// any changes to them, while ignoring buildings
+	for (std::size_t i{ 0 }; i < p_game.m_chunks.size(); ++i) {
+		if (i == c::CHUNK_IDX_BUILDINGS ||
+			i == p_exclude_world ||
+			p_game.get_default_tileset_no(i, 0) != p_tileset_no)
+			continue;
+
+		const auto& other_mts{ p_game.m_chunks[i].m_metatiles };
+
+		for (const auto& omt : other_mts)
+			for (const auto& row : omt.m_tilemap)
+				for (byte b : row)
+					result.insert(static_cast<std::size_t>(b));
+	}
+
+	return result;
+}
+
+std::set<std::size_t> fe::game::gfx::get_chr_idxs_used_by_other_buildings(const fe::Game& p_game,
+	std::size_t p_tileset_no, std::size_t p_world_no, std::size_t p_exclude_screen) {
+	std::set<std::size_t> result;
+
+	std::set<std::size_t> l_used_mts;
+
+	for (std::size_t i{ 0 }; i < p_game.get_building_screen_count(); ++i) {
+		if ((p_world_no == c::CHUNK_IDX_BUILDINGS && i == p_exclude_screen) ||
+			p_game.get_default_tileset_no(c::CHUNK_IDX_BUILDINGS, i) != p_tileset_no)
+			continue;
+		// we have a buildings screen with the tileset we want to protect
+		const auto used{ gen_metatile_usage(p_game, c::CHUNK_IDX_BUILDINGS, i, 0) };
+		l_used_mts.insert(used.begin(), used.end());
+	}
+
+	const auto& building_mts{ p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_metatiles };
+
+	for (std::size_t mt_idx : l_used_mts)
+		for (const auto& row : building_mts.at(mt_idx).m_tilemap)
+			for (byte b : row)
+				result.insert(static_cast<std::size_t>(b));
+
+	return result;
+}
+
+std::set<std::size_t> fe::game::gfx::get_reserved_chr_idxs(const Config& p_config,
+	const Game& p_game, std::size_t p_world_no, std::size_t p_screen_no) {
+	std::set<std::size_t> result;
+
+	const std::size_t tileset_no{ p_game.get_default_tileset_no(p_world_no, p_screen_no) };
+	const auto& tileset{ p_game.m_tilesets.at(tileset_no) };
+
+	// reserve everything outside this tileset's range
+	for (std::size_t i{ 0 }; i < tileset.start_idx; ++i)
+		result.insert(i);
+	for (std::size_t i{ tileset.end_index() }; i < 256; ++i)
+		result.insert(i);
+
+	// reserve fog CHR
+	if (p_world_no == p_game.m_fog.m_world_no) {
+		const auto fogtiles{ p_config.vset_as_set(c::ID_FOG_RESERVED_CHR_IDXS) };
+		result.insert(fogtiles.begin(), fogtiles.end());
+	}
+
+	// reserve CHR used by other consumers of this tileset
+	const auto world_idxs{ get_chr_idxs_used_by_other_worlds(p_game, tileset_no, p_world_no) };
+	result.insert(world_idxs.begin(), world_idxs.end());
+	const auto building_idxs{ get_chr_idxs_used_by_other_buildings(
+		p_game, tileset_no, p_world_no, p_screen_no) };
+	result.insert(building_idxs.begin(), building_idxs.end());
+
+	return result;
+}
+
+// file IO
 std::vector<byte> fe::game::gfx::encode_png(const klib::Image& p_image) {
 	std::vector<byte> rgb;
 	rgb.reserve(p_image.width() * p_image.height() * 3);
@@ -285,6 +364,249 @@ std::vector<klib::RGB> fe::game::gfx::parse_nes_palette(const fe::Config& p_conf
 			});
 
 	return result;
+}
+
+const klib::RGB& fe::game::gfx::get_hot_pink(void) {
+	return g_hot_pink;
+}
+
+void fe::game::gfx::draw_nes_tile_on_image(klib::Image& p_image,
+	int p_dst_x, int p_dst_y, const klib::NES_tile& p_tile,
+	const std::vector<byte>& p_palette, const std::vector<klib::RGB>& p_nes_palette,
+	bool p_transparent, bool p_h_flip, bool p_v_flip) {
+
+	for (int y = 0; y < 8; ++y) {
+		for (int x = 0; x < 8; ++x) {
+			int src_x = p_h_flip ? 7 - x : x;
+			int src_y = p_v_flip ? 7 - y : y;
+
+			byte color = p_tile.get_color(src_x, src_y);
+
+			if (p_transparent && color == 0)
+				continue;
+
+			byte palette_index = p_palette.at(color);
+			p_image.at(p_dst_x + x, p_dst_y + y) = p_nes_palette.at(palette_index);
+		}
+	}
+}
+
+klib::Image fe::game::gfx::gen_tilemap_image(const fe::ChrTilemap& p_tilemap,
+	const std::vector<klib::RGB>& p_nes_palette) {
+
+	const auto& tilemap{ p_tilemap.m_tilemap };
+	const auto& chrtiles{ p_tilemap.m_tiles };
+	const auto& pals{ p_tilemap.m_palette };
+
+	int width{ static_cast<int>(tilemap.empty() ? 0 : 16 * tilemap[0].size()) };
+	int height{ 16 * static_cast<int>(tilemap.size()) };
+
+	klib::Image result(width, height, g_hot_pink);
+
+	for (std::size_t j{ 0 }; j < tilemap.size(); ++j)
+		for (std::size_t i{ 0 }; i < tilemap[j].size(); ++i) {
+			if (tilemap[j][i].has_value()) {
+
+				for (std::size_t q{ 0 }; q < 4; ++q) {
+					auto pxpos{ mt_to_pixels(i, j, q) };
+
+					draw_nes_tile_on_image(
+						result,
+						pxpos.first, pxpos.second,
+						chrtiles.at(tilemap[j][i]->m_idxs[q]),
+						pals.at(tilemap[j][i]->m_palette),
+						p_nes_palette,
+						false, false, false);
+				}
+			}
+		}
+
+	return result;
+}
+
+std::set<std::size_t> fe::game::gfx::gen_metatile_usage(const fe::Game& p_game,
+	std::size_t p_world_no, std::size_t p_screen_no,
+	std::size_t p_total_metatile_count) {
+	std::set<std::size_t> result;
+
+	// for the buildings world, look at actual metatile usage for all screens using this tileset
+	if (p_world_no == c::CHUNK_IDX_BUILDINGS) {
+		std::size_t l_tileset_no{ p_game.get_default_tileset_no(p_world_no, p_screen_no) };
+
+		for (std::size_t s{ 0 }; s < p_game.get_building_screen_count(); ++s)
+			if (p_game.get_default_tileset_no(p_world_no, s) == l_tileset_no) {
+				const auto& scr{ p_game.m_chunks.at(c::CHUNK_IDX_BUILDINGS).m_screens.at(s) };
+
+				for (std::size_t j{ 0 }; j < 13; ++j)
+					for (std::size_t i{ 0 }; i < 16; ++i)
+						result.insert(scr.get_mt_at_pos(i, j));
+			}
+	}
+	else {
+		// non-buildings world
+		for (std::size_t i{ 0 }; i < p_total_metatile_count; ++i)
+			result.insert(i);
+	}
+
+	return result;
+}
+
+std::vector<std::vector<byte>> fe::game::gfx::flat_pal_to_2d_pal(const std::vector<byte>& pal) {
+	std::vector<std::vector<byte>> result;
+
+	for (std::size_t j{ 0 }; j < 4; ++j) {
+		std::vector<byte> l_subpal;
+		for (std::size_t i{ 0 }; i < 4; ++i)
+			l_subpal.push_back(pal.at(4 * j + i));
+		result.push_back(l_subpal);
+	}
+
+	return result;
+}
+
+// 1) extract hud tiles (ppu index 0-59)
+// 2) inject empty tiles until we hit the world-specific tileset index
+// 3) inject the world-specific tileset
+// 4) inject empty tiles until we have 256 chr-tiles in total
+std::vector<klib::NES_tile> fe::game::gfx::gen_world_tileset(const fe::Game& p_game,
+	const fe::Config& p_config, std::size_t p_tileset_no) {
+
+	const auto& wtileset{ p_game.m_tilesets.at(p_tileset_no) };
+	std::vector<klib::NES_tile> result{ p_game.get_hud_chr_tiles(p_config) };
+
+	while (result.size() < wtileset.start_idx)
+		result.push_back(klib::NES_tile());
+
+	for (const auto& wtile : wtileset.tiles)
+		result.push_back(wtile);
+
+	while (result.size() < 256)
+		result.push_back(klib::NES_tile());
+
+	return result;
+}
+
+std::vector<std::vector<klib::NES_tile>> fe::game::gfx::gen_world_tilesets(const fe::Game& p_game,
+	const fe::Config& p_config) {
+	std::vector<std::vector<klib::NES_tile>> result;
+	for (std::size_t i{ 0 }; i < p_game.m_tilesets.size(); ++i)
+		result.push_back(gen_world_tileset(p_game, p_config, i));
+	return result;
+}
+
+fe::ChrTilemap fe::game::gfx::get_world_mt_tilemap(const fe::Game& p_game,
+	const fe::WorldTilesetGfxDef& p_def) {
+	fe::ChrTilemap result;
+
+	// the bmp metatile-width should match the metatile picker
+	const std::size_t lc_metatile_width{ 10 };
+	const auto& mts{ p_game.m_chunks.at(p_def.world_no).m_metatiles };
+
+	// set palette
+	result.m_palette = p_def.palette;
+
+	// generate tilemap
+	std::vector<std::optional<fe::ChrMetaTile>> resrow;
+	for (std::size_t i{ 0 }; i < mts.size(); ++i) {
+		if (!p_def.writable_metatile_idxs.contains(i))
+			continue;
+
+		fe::ChrMetaTile tile;
+		tile.m_palette = mts[i].get_palette_attribute(0, 0);
+
+		for (const auto& col : mts[i].m_tilemap)
+			for (byte b : col)
+				tile.m_idxs.push_back(static_cast<std::size_t>(b));
+
+		resrow.push_back(tile);
+
+		if (resrow.size() % lc_metatile_width == 0) {
+			result.m_tilemap.push_back(resrow);
+			resrow.clear();
+		}
+	}
+
+	if (!resrow.empty()) {
+		while (resrow.size() % 16 != 0)
+			resrow.push_back(std::nullopt);
+		result.m_tilemap.push_back(resrow);
+	}
+
+	// get raw CHR tiles from definition
+	for (const auto& chr : p_def.chr_tiles)
+		result.m_tiles.push_back(chr.m_tile);
+
+	return result;
+}
+
+// world tileset/metatile gfx definition
+fe::WorldTilesetGfxDef fe::game::gfx::get_world_tileset_gfx_def(const Config& p_config,
+	const Game& p_game, std::size_t p_world_no, std::size_t p_screen_no) {
+	WorldTilesetGfxDef result;
+
+	result.world_no = p_world_no;
+	result.tileset_no = p_game.get_default_tileset_no(p_world_no, p_screen_no);
+	result.writable_metatile_idxs = gen_metatile_usage(p_game, p_world_no, p_screen_no,
+		p_game.m_chunks.at(p_world_no).m_metatiles.size());
+	result.palette = flat_pal_to_2d_pal(p_game.m_palettes.at(
+		p_game.get_default_palette_no(p_world_no, p_screen_no)));
+
+	const auto reserved{ get_reserved_chr_idxs(p_config, p_game, p_world_no, p_screen_no) };
+	const auto chrtiles{ gen_world_tileset(p_game, p_config, result.tileset_no) };
+
+	const auto& tileset{ p_game.m_tilesets.at(result.tileset_no) };
+	const std::size_t tileset_end{ tileset.end_index() };
+
+	for (std::size_t i{ 0 }; i < chrtiles.size(); ++i)
+		result.chr_tiles.emplace_back(
+			chrtiles[i],
+			reserved.contains(i),
+			(i >= tileset.start_idx && i < tileset_end) ||
+			i < c::CHR_HUD_TILE_COUNT);
+
+	return result;
+}
+
+// commits
+void fe::game::gfx::apply_world_tileset_gfx(fe::Game& p_game, const fe::WorldTilesetGfxDef& p_def,
+	const fe::ChrTilemap& p_result) {
+
+	// update tileset CHR
+	auto& tileset{ p_game.m_tilesets.at(p_def.tileset_no) };
+
+	for (std::size_t i{ 0 }; i < tileset.tiles.size(); ++i)
+		tileset.tiles.at(i) = p_result.m_tiles.at(tileset.start_idx + i);
+
+	// update writable metatiles
+	auto& mts{ p_game.m_chunks.at(p_def.world_no).m_metatiles };
+	const auto& restm{ p_result.m_tilemap };
+	auto allowediter{ p_def.writable_metatile_idxs.begin() };
+
+	for (std::size_t j{ 0 }; j < restm.size(); ++j)
+		for (std::size_t i{ 0 }; i < restm[j].size(); ++i) {
+			if (allowediter == p_def.writable_metatile_idxs.end())
+				break;
+
+			const std::size_t mtno{ *allowediter };
+
+			if (restm[j][i].has_value() && mtno < mts.size()) {
+				auto& umt{ mts.at(mtno) };
+				auto& umt_tm{ umt.m_tilemap };
+				const auto& idxs{ restm[j][i]->m_idxs };
+
+				umt.m_attr_tl = static_cast<byte>(restm[j][i]->m_palette);
+				umt.m_attr_tr = static_cast<byte>(restm[j][i]->m_palette);
+				umt.m_attr_bl = static_cast<byte>(restm[j][i]->m_palette);
+				umt.m_attr_br = static_cast<byte>(restm[j][i]->m_palette);
+
+				umt_tm.at(0).at(0) = static_cast<byte>(idxs.at(0));
+				umt_tm.at(0).at(1) = static_cast<byte>(idxs.at(1));
+				umt_tm.at(1).at(0) = static_cast<byte>(idxs.at(2));
+				umt_tm.at(1).at(1) = static_cast<byte>(idxs.at(3));
+
+				++allowediter;
+			}
+		}
 }
 
 // bg gfx import pipeline
@@ -404,6 +726,7 @@ fe::TilemapImportResult fe::game::gfx::import_tilemap_image(
 	result.tilemap = fe::ChrTilemap(l_final_tilemap,
 		chrtiletoindex_map_to_vector(tileToIndices, 256),
 		p_palette);
+	result.image = gen_tilemap_image(result.tilemap, p_nes_palette);
 
 	return result;
 }

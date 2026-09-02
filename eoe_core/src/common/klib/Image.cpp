@@ -1,10 +1,11 @@
 #include "Image.h"
 #include <stdexcept>
 
-klib::Image::Image(std::size_t p_width, std::size_t p_height) :
+klib::Image::Image(std::size_t p_width, std::size_t p_height,
+	klib::RGB p_init_color) :
 	m_width{ p_width },
 	m_height{ p_height },
-	m_pixels(p_width* p_height) {
+	m_pixels(p_width* p_height, p_init_color) {
 }
 
 std::size_t klib::Image::width(void) const { return m_width; }

@@ -13,6 +13,7 @@
 #include "fe/ChrStructures.h"
 #include "fe/sprite/SpriteGfxManager.h"
 #include "fe/sprite/SpriteGUILoader.h"
+#include "common/klib/Image.h"
 
 using byte = unsigned char;
 using NES_Palette = std::vector<byte>;
@@ -96,12 +97,19 @@ namespace fe {
 		void put_nes_pixel(SDL_Surface* srf, int x, int y, byte p_palette_index,
 			bool p_transparent = false) const;
 		SDL_Texture* surface_to_texture(SDL_Renderer* p_rnd, SDL_Surface* p_srf,
-			bool p_destroy_surface = true);
+			bool p_destroy_surface = true) const;
 
 		std::vector<SDL_Texture*> m_icon_overlays;
 
 		SDL_Color uint24_to_SDL_Color(std::size_t l_col) const;
 		void delete_texture(SDL_Texture* p_txt);
+
+		// klib::Image adapter
+		SDL_Surface* image_to_surface(const klib::Image& p_image,
+			std::optional<klib::RGB> p_color_key) const;
+		SDL_Texture* image_to_texture(SDL_Renderer* p_rnd,
+			const klib::Image& p_image,
+			std::optional<klib::RGB> p_color_key) const;
 
 	public:
 		gfx(SDL_Renderer* p_rnd, int p_screen_txt_w, int p_screen_txt_h);
@@ -176,6 +184,7 @@ namespace fe {
 			const std::vector<klib::NES_tile>& p_tiles) const;
 
 		bool has_tilemap_import_result(std::size_t p_key) const;
+		void set_tilemap_import_result(std::size_t p_key, const fe::ChrTilemap& p_result);
 		ChrTilemap get_tilemap_import_result(std::size_t p_key) const;
 		void clear_tilemap_import_result(std::size_t p_key);
 		void clear_all_tilemap_import_results(void);
@@ -186,67 +195,9 @@ namespace fe {
 			std::size_t p_key,
 			const std::vector<byte>& p_palette);
 
-		// functions for bmp import
-		std::pair<int, int> import_tilemap_bmp(SDL_Renderer* p_rnd,
-			std::vector<ChrGfxTile>& p_tiles,
-			const std::vector<std::vector<byte>>& p_palette,
-			ChrDedupMode p_dedupmode,
-			const std::string& p_path,
-			const std::string& p_filename,
-			std::size_t p_key);
-
-		MetaTileCandidate slice_and_quantize(
-			SDL_Surface* p_srf,
-			std::size_t mt_x, std::size_t mt_y,
-			const std::vector<std::vector<byte>>& p_palette,
-			std::size_t p_sub_pal_idx,
-			fe::ChrDedupMode p_dedupmode,
-			const std::vector<fe::ChrGfxTile>& p_tiles
-		) const;
-
-		std::vector<klib::NES_tile> gen_unique_tiles(
-			const std::vector<klib::NES_tile>& p_tiles,
-			const std::vector<byte>& p_palette,
-			fe::ChrDedupMode p_dedupmode
-		) const;
-
-		int rgb_space_diff(const klib::NES_tile& p_tile,
-			const std::vector<byte>& p_palette,
-			SDL_Surface* srf, int x, int y) const;
-
-		fe::MetaTileCandidate collapse_candidates(
-			const std::vector<fe::MetaTileCandidate>& cands) const;
-
-		std::size_t allocate_or_reuse_chr(const klib::NES_tile& tile,
-			std::vector<ChrGfxTile>& p_tiles,
-			std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
-			const std::vector<byte> p_palette,
-			fe::ChrDedupMode p_dedupmode) const;
-
-		std::size_t best_substitute_chr_index(
-			SDL_Surface* srf,
-			int px, int py,
-			const std::vector<byte>& subPalette,
-			const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
-			const std::vector<ChrGfxTile>& p_tiles) const;
-
+		// functions for bmp export
 		std::pair<int, int> mt_to_pixels(std::size_t mt_x,
 			std::size_t mt_y, std::size_t quadrant) const;
-
-		std::vector<klib::NES_tile> chrtiletoindex_map_to_vector(
-			const std::map<klib::NES_tile, std::vector<std::size_t>>& tileToIndices,
-			std::size_t chr_count = 256
-		) const;
-
-		bool chr_tile_equivalence(fe::ChrDedupMode p_dedupmode,
-			const klib::NES_tile& p_tile_a,
-			const klib::NES_tile& p_tile_b,
-			const std::vector<byte>& p_palette) const;
-
-		bool rgb_equivalence(const SDL_Color a, const SDL_Color b) const;
-
-		bool is_optional_bmp_region(SDL_Surface* srf,
-			std::size_t mt_x, std::size_t mt_y) const;
 
 		// sprite data bmp import
 		bool is_transparent_chr_region(SDL_Surface* srf, int px_x, int px_y,
@@ -322,13 +273,20 @@ namespace fe {
 		void clear_sprite_selected_texture(void);
 		void clear_sprite_bank_selected_texture(void);
 
-		// functions for bmp export
+		// functions for bmp export (in the process of being deprecated)
 		SDL_Surface* gen_tilemap_surface(const fe::ChrTilemap& p_tilemap) const;
 		void gen_tilemap_texture(SDL_Renderer* p_rnd, const fe::ChrTilemap& p_tilemap,
 			std::size_t p_key);
 		void save_tilemap_bmp(const fe::ChrTilemap& p_tilemap,
 			const std::string& p_path,
 			const std::string& p_filename) const;
+		// legacy/compatibility
+		klib::Image load_image_from_bmp_file(const std::string& p_path, const std::string& p_filename) const;
+
+		void gen_tilemap_texture(SDL_Renderer* p_rnd,
+			const klib::Image& p_image,
+			std::optional<klib::RGB> p_color_key,
+			std::size_t p_key);
 
 		SDL_Surface* gen_sprite_frame_surface(const fe::SpriteAnimationFrame& p_frame,
 			const std::vector<klib::NES_tile> p_tiles, const std::vector<std::vector<byte>>& p_palette) const;

@@ -58,7 +58,7 @@ void fe::MainWindow::draw_visualization_window(SDL_Renderer* p_rnd) {
 			fe::SpriteGUILoader visual_sprites;
 			visual_sprites.load_sprites_for_gui(m_config,
 				m_game->m_sprite_gfx_manager, m_game->m_rom_data);
-			auto visualizer{ fe::WorldVisualizer(world_ppu_tilesets, script_semantics) };
+			auto visualizer{ fe::WorldVisualizer(m_cache.m_world_ppu_tilesets, script_semantics) };
 
 			if (l_shift)
 				for (std::size_t i{ 0 }; i < m_game->m_chunks.size(); ++i)
