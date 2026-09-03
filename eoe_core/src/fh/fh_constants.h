@@ -46,6 +46,9 @@ namespace fh {
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
+		constexpr word Player_PickUpPoison{ 0xc83c };
+		constexpr word Player_PickUpPoison_DamageSoundIndex{ 0xc845 };
+		constexpr word Player_PickUpItem{ 0xc8cd };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };

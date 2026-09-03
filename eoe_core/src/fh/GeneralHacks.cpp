@@ -609,6 +609,31 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	return cpu_addr;
 }
 
+// adds a configurable item to the inventory when touching poison instead of taking damage
+// can be used in conjunction with "use item" override hacks
+void fh::HackManager::install_PoisonPickup(const fe::Config& p_config, std::vector<byte>& p_rom,
+	const fh::GeneralHack& p_hack) const {
+	const byte item{ p_hack.byte_or("item", 0x11) };
+	const byte sound{ p_hack.byte_or("sound", 0x08) };
+	const bool script{ p_hack.bool_or("script", true) };
+
+	klib::Asm6502 code;
+
+	if (!script) {
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpPoison);
+	}
+
+	// keep the vanilla LDA opcode and replace its immediate operand
+	code.db(sound);
+	code.jsr(ROM::Sound_PlayEffect);
+	code.lda_imm(item);
+	code.jsr(ROM::Player_PickUpItem);
+	code.rts();
+
+	code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpPoison_DamageSoundIndex);
+}
+
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -660,6 +685,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::DynamicTilesets:
 			cpu_addr = install_DynamicTilesets(p_config, patched_rom, p_bank, cpu_addr, hack, p_game);
+			break;
+		case fh::GeneralHackLib::PoisonPickup:
+			install_PoisonPickup(p_config, patched_rom, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);

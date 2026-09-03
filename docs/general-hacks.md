@@ -31,6 +31,7 @@ This document describes the hacks in the current library and their parameters. I
   - [FlexibleItems](#flexibleitems)
   - [FogRules](#fogrules)
   - [DynamicTilesets](#dynamictilesets)
+  - [PoisonPickup](#poisonpickup)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -187,6 +188,52 @@ DynamicTilesets start_screen=false enter_building=false exit_building=false data
 ```
 
 DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature. Use the advanced **Custom Import Definition** in the GUI to import graphics into specific metatile and tileset CHR ranges.
+
+### PoisonPickup
+
+Changes poison pickups so that they add an item to the player's inventory instead of damaging the player. By default, poison becomes the normally unused black potion (`0x11`).
+
+The original "touched poison" script is still run by default. Set `script=false` to skip it entirely.
+
+| parameter | default | meaning                                             |
+| --------- | ------- | --------------------------------------------------- |
+| `item`    | `0x11`  | Item ID to add to the inventory                     |
+| `sound`   | `0x08`  | Sound effect played when the item is picked up      |
+| `script`  | `true`  | Whether to run the original "touched poison" script |
+
+Vanilla item IDs are:
+
+| ID            | item          | notes                                  |
+| ------------- | ------------- | -------------------------------------- |
+| `0x00`        | Ring of Elf   |                                        |
+| `0x01`        | Ruby Ring     |                                        |
+| `0x02`        | Ring of Dworf |                                        |
+| `0x03`        | Demon's Ring  |                                        |
+| `0x04`        | Key A         |                                        |
+| `0x05`        | Key K         |                                        |
+| `0x06`        | Key Q         |                                        |
+| `0x07`        | Key J         |                                        |
+| `0x08`        | Key Jo        |                                        |
+| `0x09`        | Mattock       |                                        |
+| `0x0a`        | Rod           |                                        |
+| `0x0b`        | Crystal       |                                        |
+| `0x0c`        | Lamp          |                                        |
+| `0x0d`        | Hour Glass    |                                        |
+| `0x0e`        | Book          |                                        |
+| `0x0f`        | Wing Boots    |                                        |
+| `0x10`        | Red Potion    |                                        |
+| `0x11`        | Black Potion  | Unused in the vanilla game             |
+| `0x12`        | Elixir        | Not a normal selectable inventory item |
+| `0x13`        | Pendant       | Not a normal selectable inventory item |
+| `0x14`        | Black Onix    | Not a normal selectable inventory item |
+| `0x15`        | Fire Crystal  | Not a normal selectable inventory item |
+| `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
+
+The black potion can be stored and displayed in the inventory, but has no effect in the vanilla game. It can be given a purpose by combining `PoisonPickup` with a hack that adds or overrides item-use behavior.
+
+```text
+PoisonPickup item=16 script=false
+```
 
 ### AtlasDevFrameScheduler
 
