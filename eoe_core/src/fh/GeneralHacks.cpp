@@ -262,6 +262,7 @@ word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::v
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) const {
 	const bool buildings{ p_hack.bool_or("buildings", true) };
+	const bool wep_indoors{ p_hack.bool_or("wep_indoors", false) };
 	const bool state{ p_hack.bool_or("state", true) };
 	const bool selling{ p_hack.bool_or("selling", true) };
 	const word price{ p_hack.word_or("price", 100) };
@@ -270,11 +271,17 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 
 	// compare against nonexistent world $ff instead of building world $04
 	if (buildings)
-		klib::Asm6502::apply_byte(p_rom, 0xff, 12, ROM::PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo);
+		klib::Asm6502::apply_byte(p_rom, 0xff, 12, cfg_word(p_config, c::ID_ROM_PLAYERMENU_HANDLEINVENTORYMENUINPUT_CMP_WORLDNO));
 
 	if (state) {
 		code.nop(2);
 		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_BNE_Return);
+	}
+
+	if (wep_indoors) {
+		code.nop(3);
+		code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterBuilding_STA_ActiveWeapon);
+		code.apply_byte(p_rom, 0xff, 15, ROM::Player_SetWeapon_CMP_BuildingsWorldNo);
 	}
 
 	if (!selling)
@@ -282,27 +289,27 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 	else {
 		// install hook
 		code.jmp(cpu_addr);
-		code.apply_hack_and_clear(p_rom, 12, ROM::ShowSellMenu_JSR_FindSellMenuEntry);
+		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY));
 
 		// preserve the original item ID in X when no sell-table entry is found
 		code.nop();
-		code.apply_hack_and_clear(p_rom, 12, ROM::FindSellMenuEntry_TAX);
+		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_FINDSELLMENUENTRY_TAX));
 
 		// the sell-any-item routine itself
-		code.jsr(ROM::FindSellMenuEntry);
+		code.jsr(cfg_word(p_config, c::ID_ROM_FINDSELLMENUENTRY));
 		code.cmp_imm(0xff);
 		code.beq("@shop_entry_missing");
 		// item has a normal sell-table entry; continue with vanilla logic
-		code.jmp(ROM::ShowSellMenu_LDX_StringCount);
+		code.jmp(cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_LDX_STRINGCOUNT));
 
 		code.label("@shop_entry_missing");
 		code.txa();
-		code.ldx_abs(RAM::UIStringCount);
-		code.sta_abs_x(RAM::UIDataArray);
+		code.ldx_abs(cfg_word(p_config, c::ID_RAM_UISTRINGCOUNT));
+		code.sta_abs_x(cfg_word(p_config, c::ID_RAM_UIDATAARRAY));
 		code.lda_imm(price % 256);
-		code.sta_abs_x(RAM::ShopItemCostsLo);
+		code.sta_abs_x(cfg_word(p_config, c::ID_RAM_SHOPITEMCOSTSLO));
 		code.lda_imm(price / 256);
-		code.jmp(ROM::ShowSellMenu_STA_CostHi);
+		code.jmp(cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_STA_COSTHI));
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}

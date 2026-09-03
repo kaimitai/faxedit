@@ -96,6 +96,9 @@
 					Comma-separated entries in the value attribute are also supported for compatibility.
 					These entries are examples rather than a recommended or required set.
 			-->
+
+		<!-- when a ROM region is given, that config item is selected when it matches the ROM region -->
+		<!-- the following example is used for 'us' and related regions -->
 		<string name="general_hacks" region="us">
 			KillSwitch
 			SameWorldTransPal2Mus
@@ -105,6 +108,8 @@
 			FastStart
 			BossLockedItems enemies=false
 		</string>
+		<!-- an entry without a ROM region acts as the fallback -->
+		<!-- the following example is used when the region does not match the entry above -->
 		<string name="general_hacks">
 			KillSwitch
 			SameWorldTransPal2Mus

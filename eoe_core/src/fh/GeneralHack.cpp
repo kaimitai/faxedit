@@ -33,7 +33,7 @@ namespace {
 	};
 
 	const std::map<fh::GeneralHackLib, std::set<std::string>> GENERAL_HACK_PARAMS{
-		{ fh::GeneralHackLib::FlexibleItems, { "buildings", "price", "selling", "state" } },
+		{ fh::GeneralHackLib::FlexibleItems, { "buildings", "price", "selling", "state", "wep_indoors" } },
 		{ fh::GeneralHackLib::KillSwitch, {} },
 		{ fh::GeneralHackLib::SameWorldTransPal2Mus, {} },
 		{ fh::GeneralHackLib::FogRules, { "rules" } },

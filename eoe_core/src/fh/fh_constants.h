@@ -18,13 +18,7 @@ namespace fh {
 		constexpr word TextBox_ClearForPortraitAndText{ 0x822b };
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
 		constexpr word Menu_WaitInput{ 0x84ed };
-		constexpr word ShowSellMenu_JSR_FindSellMenuEntry{ 0x8691 };
-		constexpr word ShowSellMenu_LDX_StringCount{ 0x8696 };
-		constexpr word ShowSellMenu_STA_CostHi{ 0x86a9 };
-		constexpr word FindSellMenuEntry{ 0x8704 };
-		constexpr word FindSellMenuEntry_TAX{ 0x8716 };
 		constexpr word Portrait_Pump{ 0x87b0 };
-		constexpr word PlayerMenu_HandleInventoryMenuInput_CMP_WorldNo{ 0x8b87 };
 		constexpr word ItemNameDraw{ 0x8c36 };
 		constexpr word IconDraw{ 0x8c58 };
 		constexpr word OpenWindowDraw{ 0x8ef1 };
@@ -80,6 +74,7 @@ namespace fh {
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_EnterBuilding_STA_ActiveWeapon{ 0xde08 };
 		constexpr word Game_EnterBuilding_JSR_Area_LoadTiles{ 0xde53 };
 		constexpr word Game_ExitBuilding_JSR_Area_LoadTiles{ 0xde92 };
 		constexpr word Game_LoadFirstLevel{ 0xdea7 };
@@ -97,6 +92,7 @@ namespace fh {
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
+		constexpr word Player_SetWeapon_CMP_BuildingsWorldNo{ 0xedf0 };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };
 		constexpr word Portrait_LoadTiles{ 0xf24d };
@@ -181,9 +177,6 @@ namespace fh {
 		// textbox. Vanilla root $1f is reserved for the death dialogue.
 		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
-		constexpr word UIStringCount{ 0x021f };
-		constexpr word UIDataArray{ 0x0220 };
-		constexpr word ShopItemCostsLo{ 0x0228 };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
 		// references in the vanilla PRG gives 72 for $02cc, 141 for $02dc and
@@ -304,6 +297,19 @@ namespace fh {
 		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };
 		constexpr char ID_ROM_VANILLA_FAR_CALL[]{ "rom_vanilla_far_call" };
 		constexpr char ID_ROM_HUD_DRAW_TIMER[]{ "rom_hud_draw_timer" };
+
+		// ram addresses differing between regions
+		constexpr char ID_RAM_UISTRINGCOUNT[]{ "ram_uistringcount" };
+		constexpr char ID_RAM_UIDATAARRAY[]{ "ram_uidataarray" };
+		constexpr char ID_RAM_SHOPITEMCOSTSLO[]{ "ram_shopitemcostslo" };
+
+		// other bank 12 cpu ROM addresses
+		constexpr char ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY[]{ "rom_showsellmenu_jsr_findsellmenuentry" };
+		constexpr char ID_ROM_SHOWSELLMENU_LDX_STRINGCOUNT[]{ "rom_showsellmenu_ldx_stringcount" };
+		constexpr char ID_ROM_SHOWSELLMENU_STA_COSTHI[]{ "rom_showsellmenu_sta_costhi" };
+		constexpr char ID_ROM_FINDSELLMENUENTRY[]{ "rom_findsellmenuentry" };
+		constexpr char ID_ROM_FINDSELLMENUENTRY_TAX[]{ "rom_findsellmenuentry_tax" };
+		constexpr char ID_ROM_PLAYERMENU_HANDLEINVENTORYMENUINPUT_CMP_WORLDNO[]{ "rom_playermenu_handleinventorymenuinput_cmp_worldno" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };

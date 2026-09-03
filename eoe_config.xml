@@ -393,6 +393,27 @@
 		<const name="rom_iscripts_invokenextaction" value="$826e" />
 		<const name="rom_iscripts_updateportraitanimation" region="us,randum,eu,us-rev-a" value="$87b0" />
 		<const name="rom_iscripts_updateportraitanimation" region="jp,en-transl" value="$8788" />
+		<!-- RAM addresses -->
+		<const name="ram_uistringcount" region="jp,en-transl" value="$021e" />
+		<const name="ram_uistringcount" value="$021f" />
+		<const name="ram_uidataarray" region="jp,en-transl" value="$021f" />
+		<const name="ram_uidataarray" value="$0220" />
+		<const name="ram_shopitemcostslo" region="jp,en-transl" value="$0227" />
+		<const name="ram_shopitemcostslo" value="$0228" />
+		<!-- other bank 12 cpu addresses -->
+		<const name="rom_showsellmenu_jsr_findsellmenuentry" region="jp,en-transl" value="$868e" />
+		<const name="rom_showsellmenu_jsr_findsellmenuentry" value="$8691" />
+		<const name="rom_showsellmenu_ldx_stringcount" region="jp,en-transl" value="$8693" />
+		<const name="rom_showsellmenu_ldx_stringcount" value="$8696" />
+		<const name="rom_showsellmenu_sta_costhi" region="jp,en-transl" value="$86a6" />
+		<const name="rom_showsellmenu_sta_costhi" value="$86a9" />
+		<const name="rom_findsellmenuentry" region="jp,en-transl" value="$8701" />
+		<const name="rom_findsellmenuentry" value="$8704" />
+		<const name="rom_findsellmenuentry_tax" region="jp,en-transl" value="$8713" />
+		<const name="rom_findsellmenuentry_tax" value="$8716" />
+		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" region="jp,en-transl" value="$8b5f" />
+		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" value="$8b87" />
+		<!-- bank 15 ROM cpu addresses -->
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />

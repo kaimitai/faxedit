@@ -16,7 +16,10 @@ std::size_t klib::Asm6502::size(void) const {
 }
 
 std::size_t klib::Asm6502::get_file_offset(byte p_bank_no, word p_cpu_addr, word p_cpu_min_addr) {
-	assert(p_cpu_addr >= p_cpu_min_addr);
+	if (p_cpu_addr < p_cpu_min_addr)
+		throw std::runtime_error(std::format(
+			"CPU address ${:04X} is below minimum CPU address ${:04X}",
+			p_cpu_addr, p_cpu_min_addr));
 
 	return INES_HEADER_SIZE +
 		PRG_BANK_SIZE * static_cast<std::size_t>(p_bank_no) +
@@ -695,7 +698,12 @@ void klib::Asm6502::dw(const std::string& p_label) {
 void klib::Asm6502::apply_hack(std::vector<byte>& p_rom, byte p_bank_no,
 	word p_cpu_addr, word p_cpu_min_addr) const {
 	const std::size_t file_offset = get_file_offset(p_bank_no, p_cpu_addr, p_cpu_min_addr);
-	assert(file_offset + m_bytes.size() <= p_rom.size());
+
+	if (file_offset > p_rom.size() || m_bytes.size() > p_rom.size() - file_offset)
+		throw std::runtime_error(std::format(
+			"Hack at bank ${:02X}, CPU address ${:04X} extends beyond ROM",
+			p_bank_no, p_cpu_addr));
+
 	std::copy(m_bytes.begin(), m_bytes.end(), p_rom.begin() + file_offset);
 }
 

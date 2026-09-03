@@ -118,19 +118,18 @@ BossLockedItems enemies=false
 
 ### FlexibleItems
 
-> FlexibleItems is currently unsupported for JP and JP-derived ROM regions
-
-Loosens the vanilla item restrictions in three independent ways: items can be used inside buildings, the player-state gate on item use is removed, and shops will buy any item — items without a sell-table entry sell for a configurable price.
+Loosens the vanilla item restrictions in four independent ways: items can be used inside buildings, the player-state gate on item use is removed, and shops will buy any item — items without a sell-table entry sell for a configurable price.
 
 | parameter | default | meaning |
 | --- | --- | --- |
 | `buildings` | `true` | allow item use inside buildings |
+| `wep_indoors` | `false` | allow weapon use inside buildings |
 | `state` | `true` | ignore the player-state gate on item use |
 | `selling` | `true` | shops buy any item |
 | `price` | `100` | sell price for items without a sell-table entry |
 
 ```text
-FlexibleItems buildings=true state=false price=250
+FlexibleItems buildings=true state=false price=250 wep_indoors=true
 ```
 
 ### FogRules
@@ -152,6 +151,8 @@ Allows individual screens to override their world's normal tileset. Overrides ar
 The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` and `addr` can place them in another PRG bank instead.
 
 The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own per-screen tileset selection mechanism via the Building Scene objects.
+
+The tileset does not change during normal scrolling transitions, since reloading CHR while the transition is visible would not be seamless.
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -185,7 +186,7 @@ Hooks can be disabled when a project does not need those transition types:
 DynamicTilesets start_screen=false enter_building=false exit_building=false data=0:1:6+2:2:5
 ```
 
-DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature.
+DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature. Use the advanced **Custom Import Definition** in the GUI to import graphics into specific metatile and tileset CHR ranges.
 
 ### AtlasDevFrameScheduler
 
