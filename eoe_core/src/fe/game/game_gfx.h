@@ -81,7 +81,8 @@ namespace fe::game::gfx {
 		const Game& p_game, std::size_t p_world_no, std::size_t p_screen_no = 0);
 	WorldTilesetGfxDef get_custom_world_tileset_gfx_def(const Config& p_config,
 		const Game& p_game, std::size_t p_world_no, std::size_t p_tileset_no,
-		std::size_t p_palette_no, std::size_t p_metatile_start, std::size_t p_metatile_end);
+		std::size_t p_palette_no, std::size_t p_metatile_start, std::size_t p_metatile_end,
+		std::size_t p_chr_tile_start, std::size_t p_chr_tile_end);
 
 	// background gfx import commit
 	void apply_world_tileset_gfx(fe::Game& p_game, const WorldTilesetGfxDef& p_def,

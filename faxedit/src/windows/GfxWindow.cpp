@@ -1118,39 +1118,54 @@ void fe::MainWindow::draw_custom_world_gfx(SDL_Renderer* p_rnd, fe::ChrDedupMode
 	static std::size_t ls_sel_custom_gfx_palette{ 0 };
 	static std::size_t ls_sel_custom_gfx_mt_start{ 0 };
 	static std::size_t ls_sel_custom_gfx_mt_end{ 255 };
+	static std::size_t ls_sel_custom_gfx_chr_start{ 0 };
+	static std::size_t ls_sel_custom_gfx_chr_end{ 255 };
 
+	// selections may have become stale due to edits elsewhere
+	ls_sel_custom_gfx_world = std::min(ls_sel_custom_gfx_world, m_game->m_chunks.size() - 1);
+	ls_sel_custom_gfx_tileset = std::min(ls_sel_custom_gfx_tileset, m_game->m_tilesets.size() - 1);
+	ls_sel_custom_gfx_palette = std::min(ls_sel_custom_gfx_palette, m_game->m_palettes.size() - 1);
+
+	// select the top level container indexes; world, tileset and palette
 	ui::imgui_slider_with_arrows("###customgfxworld",
-		std::format("World: {}",
-			m_cache.m_labels_worlds.at(ls_sel_custom_gfx_world)),
+		std::format("World: {}", m_cache.m_labels_worlds.at(ls_sel_custom_gfx_world)),
 		ls_sel_custom_gfx_world, 0, m_game->m_chunks.size() - 1);
-
 	ui::imgui_slider_with_arrows("###customgfxts",
-		std::format("Tileset: {}",
-			get_description(static_cast<byte>(ls_sel_custom_gfx_tileset),
-				m_cache.m_labels_tilesets)),
+		std::format("Tileset: {}", get_description(static_cast<byte>(ls_sel_custom_gfx_tileset),
+			m_cache.m_labels_tilesets)),
 		ls_sel_custom_gfx_tileset, 0, m_game->m_tilesets.size() - 1);
-
 	ui::imgui_slider_with_arrows("###customgfxpal",
-		std::format("Palette: {}",
-			get_description(static_cast<byte>(ls_sel_custom_gfx_palette),
-				m_cache.m_labels_palettes)),
+		std::format("Palette: {}", get_description(static_cast<byte>(ls_sel_custom_gfx_palette),
+			m_cache.m_labels_palettes)),
 		ls_sel_custom_gfx_palette, 0, m_game->m_palettes.size() - 1);
 
-	const auto l_mt_count{
-		m_game->m_chunks.at(ls_sel_custom_gfx_world).m_metatiles.size()
-	};
+	// get current bounds after the selectors, since they may have changed this frame
+	const auto& l_chunk{ m_game->m_chunks.at(ls_sel_custom_gfx_world) };
+	const auto& l_tileset{ m_game->m_tilesets.at(ls_sel_custom_gfx_tileset) };
 
-	// keep stale values in bounds when changing metatile collection
-	ls_sel_custom_gfx_mt_start = std::min(ls_sel_custom_gfx_mt_start, l_mt_count - 1);
-	ls_sel_custom_gfx_mt_end = std::min(ls_sel_custom_gfx_mt_end, l_mt_count - 1);
+	const std::size_t l_mt_end{ l_chunk.m_metatiles.size() - 1 };
+	const std::size_t l_chr_start{ l_tileset.start_idx };
+	const std::size_t l_chr_end{ l_tileset.end_index() - 1 };
 
+	// keep stale ranges in bounds
+	ls_sel_custom_gfx_mt_start = std::min(ls_sel_custom_gfx_mt_start, l_mt_end);
+	ls_sel_custom_gfx_mt_end = std::min(ls_sel_custom_gfx_mt_end, l_mt_end);
+	ls_sel_custom_gfx_chr_start = std::clamp(ls_sel_custom_gfx_chr_start, l_chr_start, l_chr_end);
+	ls_sel_custom_gfx_chr_end = std::clamp(ls_sel_custom_gfx_chr_end, l_chr_start, l_chr_end);
+
+
+	ui::imgui_slider_with_arrows("###customgfxchrstart",
+		std::format("Writable CHR start: ${:02X}", ls_sel_custom_gfx_chr_start),
+		ls_sel_custom_gfx_chr_start, l_chr_start, l_chr_end);
+	ui::imgui_slider_with_arrows("###customgfxchrend",
+		std::format("Writable CHR end: ${:02X}", ls_sel_custom_gfx_chr_end),
+		ls_sel_custom_gfx_chr_end, l_chr_start, l_chr_end);
 	ui::imgui_slider_with_arrows("###customgfxmtstart",
 		std::format("Metatile start: {}", ls_sel_custom_gfx_mt_start),
-		ls_sel_custom_gfx_mt_start, 0, l_mt_count - 1);
-
+		ls_sel_custom_gfx_mt_start, 0, l_mt_end);
 	ui::imgui_slider_with_arrows("###customgfxmtend",
 		std::format("Metatile end: {}", ls_sel_custom_gfx_mt_end),
-		ls_sel_custom_gfx_mt_end, 0, l_mt_count - 1);
+		ls_sel_custom_gfx_mt_end, 0, l_mt_end);
 
 	auto get_gfx_def = [&](void) {
 		return fe::game::gfx::get_custom_world_tileset_gfx_def(
@@ -1159,7 +1174,9 @@ void fe::MainWindow::draw_custom_world_gfx(SDL_Renderer* p_rnd, fe::ChrDedupMode
 			ls_sel_custom_gfx_tileset,
 			ls_sel_custom_gfx_palette,
 			ls_sel_custom_gfx_mt_start,
-			ls_sel_custom_gfx_mt_end + 1);
+			ls_sel_custom_gfx_mt_end + 1,
+			ls_sel_custom_gfx_chr_start,
+			ls_sel_custom_gfx_chr_end + 1);
 		};
 
 	ImGui::Separator();

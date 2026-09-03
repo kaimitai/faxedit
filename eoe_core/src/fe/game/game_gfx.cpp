@@ -569,7 +569,8 @@ fe::WorldTilesetGfxDef fe::game::gfx::get_world_tileset_gfx_def(const Config& p_
 
 fe::WorldTilesetGfxDef fe::game::gfx::get_custom_world_tileset_gfx_def(const Config& p_config,
 	const Game& p_game, std::size_t p_world_no, std::size_t p_tileset_no,
-	std::size_t p_palette_no, std::size_t p_metatile_start, std::size_t p_metatile_end) {
+	std::size_t p_palette_no, std::size_t p_metatile_start, std::size_t p_metatile_end,
+	std::size_t p_chr_start, std::size_t p_chr_end) {
 	WorldTilesetGfxDef result;
 
 	result.world_no = p_world_no;
@@ -584,16 +585,18 @@ fe::WorldTilesetGfxDef fe::game::gfx::get_custom_world_tileset_gfx_def(const Con
 
 	const auto chrtiles{ gen_world_tileset(p_game, p_config, p_tileset_no) };
 	const auto& tileset{ p_game.m_tilesets.at(p_tileset_no) };
-	
+
+	if (p_chr_start >= p_chr_end || p_chr_start < tileset.start_idx || p_chr_end > tileset.end_index())
+		throw std::runtime_error("invalid CHR index range");
+
 	for (std::size_t i{ 0 }; i < chrtiles.size(); ++i) {
 		const bool in_hud{ i < c::CHR_HUD_TILE_COUNT };
-		const bool in_tileset{
-			i >= tileset.start_idx && i < tileset.end_index()
-		};
+		const bool in_tileset{ i >= tileset.start_idx && i < tileset.end_index() };
+		const bool in_writable_range{ i >= p_chr_start && i < p_chr_end };
 
 		result.chr_tiles.emplace_back(
 			chrtiles[i],
-			in_hud,
+			in_hud || (in_tileset && !in_writable_range), // read-only
 			in_hud || in_tileset);
 	}
 
