@@ -113,12 +113,12 @@ namespace fh {
 			word helper_load_word_addr, word helper_if_a_between_addr) const;
 		word apply_SetAddr(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, word helper_load_word_addr) const;
-		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevSubVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevIfVarEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevIfVarLess(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevSubVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevIfVarEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevIfVarLess(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 
 		word apply_AtlasDevShakeScreen(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevFadeOut(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -268,6 +268,8 @@ namespace fh {
 		word install_hack_tm_event_handler(const fe::Config& p_config, std::vector<byte>& p_rom,
 			byte tm_lookup_bank, word tm_lookup_cpu_addr) const;
 		word install_script_variable_reset(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr) const;
+		word apply_helper_LoadVarOperands(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr) const;
 
 		// general hack library implementations

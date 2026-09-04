@@ -575,17 +575,14 @@ word fh::HackManager::apply_SetAddr(const fe::Config& p_config, std::vector<byte
 }
 
 word fh::HackManager::apply_AtlasDevSetVar(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
-	code.tay(); code.lda_abs_x(0x0101); code.db(0x99); code.dw(Vars);
-	code.label("@done"); code.pla(); code.pla();
+	code.jsr(p_var_operand_helper_addr); // X = register, A = value, C = invalid
+	code.bcs("@done");
+	code.sta_abs_x(Vars);
+	code.label("@done");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -593,19 +590,16 @@ word fh::HackManager::apply_AtlasDevSetVar(const fe::Config& p_config,
 }
 
 word fh::HackManager::apply_AtlasDevAddVar(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
-	code.tay(); code.lda_abs_x(0x0101); code.clc();
-	code.db(0x79); code.dw(Vars); // ADC Vars,Y
-	code.db(0x99); code.dw(Vars); // STA Vars,Y
-	code.label("@done"); code.pla(); code.pla();
+	code.jsr(p_var_operand_helper_addr);
+	code.bcs("@done");
+	code.clc();
+	code.adc_abs_x(Vars);
+	code.sta_abs_x(Vars);
+	code.label("@done");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -613,19 +607,18 @@ word fh::HackManager::apply_AtlasDevAddVar(const fe::Config& p_config,
 }
 
 word fh::HackManager::apply_AtlasDevSubVar(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@done");
-	code.tay(); code.lda_abs_y(Vars); code.sec();
-	code.db(0xfd); code.dw(0x0101); // SBC $0101,X
-	code.db(0x99); code.dw(Vars);   // STA Vars,Y
-	code.label("@done"); code.pla(); code.pla();
+	code.jsr(p_var_operand_helper_addr);
+	code.bcs("@done");
+	// register minus value with the value in A: complement and add
+	code.eor_imm(0xff);
+	code.sec();
+	code.adc_abs_x(Vars);
+	code.sta_abs_x(Vars);
+	code.label("@done");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -633,19 +626,16 @@ word fh::HackManager::apply_AtlasDevSubVar(const fe::Config& p_config,
 }
 
 word fh::HackManager::apply_AtlasDevIfVarEqual(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
-	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bne("@false");
-	code.pla(); code.pla();
+	code.jsr(p_var_operand_helper_addr);
+	code.bcs("@false");
+	code.cmp_abs_x(Vars);
+	code.bne("@false");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
-	code.label("@false"); code.pla(); code.pla();
+	code.label("@false");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -653,19 +643,19 @@ word fh::HackManager::apply_AtlasDevIfVarEqual(const fe::Config& p_config,
 }
 
 word fh::HackManager::apply_AtlasDevIfVarLess(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
-	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bcs("@false");
-	code.pla(); code.pla();
+	// true when register < value; A holds the value, so the test is
+	// value > register: carry set without equality
+	code.jsr(p_var_operand_helper_addr);
+	code.bcs("@false");
+	code.cmp_abs_x(Vars);
+	code.bcc("@false");
+	code.beq("@false");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
-	code.label("@false"); code.pla(); code.pla();
+	code.label("@false");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -673,19 +663,20 @@ word fh::HackManager::apply_AtlasDevIfVarLess(const fe::Config& p_config,
 }
 
 word fh::HackManager::apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
-	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); code.pha();
-	code.tsx();
-	code.lda_abs_x(0x0102); code.cmp_imm(Count); code.bcs("@false");
-	code.tay(); code.lda_abs_y(Vars); code.cmp_abs_x(0x0101); code.bcc("@false");
-	code.pla(); code.pla();
+	// true when register >= value; with A = value that is value <= register:
+	// equality, or carry clear
+	code.jsr(p_var_operand_helper_addr);
+	code.bcs("@false");
+	code.cmp_abs_x(Vars);
+	code.beq("@true");
+	code.bcs("@false");
+	code.label("@true");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
-	code.label("@false"); code.pla(); code.pla();
+	code.label("@false");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
 
 	return get_next_cpu_addr(cpu_addr,
@@ -4634,6 +4625,32 @@ word fh::HackManager::apply_AtlasDevSetMagicFacing(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// Shared operand frame for the two-operand var opcodes: reads the register
+// and value operands, validates the register, and returns X = register
+// index, A = value, carry set on an out-of-range register. Both operands
+// are always consumed so the script pointer stays aligned either way. The
+// engine's LoadByte preserves X and the carry, which is what makes the
+// tail JMP work: on the good path CMP has already cleared the carry.
+word fh::HackManager::apply_helper_LoadVarOperands(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word LoadByte{ cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(LoadByte);      // A = register
+	code.cmp_imm(Count);
+	code.bcs("@bad");
+	code.tax();
+	code.jmp(LoadByte);      // A = value, X and clear carry preserved
+	code.label("@bad");
+	code.jsr(LoadByte);      // consume the value
+	code.sec();
+	code.rts();
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -4763,6 +4780,10 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	const std::set<HackLib> LOAD_WORD_REQUIRED{ HackLib::IfAddrEquals, HackLib::IfAddrBetween, HackLib::SetAddr };
 	const std::set<HackLib> BLOCK_POS_REQUIRED{
 		HackLib::IfYX, HackLib::AtlasDevGetPlayerPositionToVars };
+	const std::set<HackLib> VAR_OPERAND_REQUIRED{
+	HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
+	HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
+	HackLib::AtlasDevIfVarGreaterEqual };
 	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
 		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
@@ -4791,7 +4812,8 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		compare_equals_helper_addr,
 		compare_between_helper_addr,
 		load_word_helper_addr,
-		block_pos_helper_addr;
+		block_pos_helper_addr,
+		var_operand_helper_addr;
 
 	// check if the bitmask lookup table needs to be installed
 	if (requires_any(p_lib, BITMASK_TABLE_REQUIRED)) {
@@ -4844,6 +4866,12 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 	if (requires_any(p_lib, SCRIPT_VARIABLE_REQUIRED))
 		cpu_addr = install_script_variable_reset(p_config, p_rom, cpu_addr);
+
+	// operand frame shared by the two-operand var opcodes
+	if (requires_any(p_lib, VAR_OPERAND_REQUIRED)) {
+		var_operand_helper_addr = cpu_addr;
+		cpu_addr = apply_helper_LoadVarOperands(p_config, p_rom, cpu_addr);
+	}
 
 	for (HackLib llib : p_lib) {
 		script_impl_addresses.push_back(cpu_addr - 1);
@@ -4947,22 +4975,22 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 
 		case HackLib::AtlasDevSetVar:
-			cpu_addr = apply_AtlasDevSetVar(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevSetVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 		case HackLib::AtlasDevAddVar:
-			cpu_addr = apply_AtlasDevAddVar(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevAddVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 		case HackLib::AtlasDevSubVar:
-			cpu_addr = apply_AtlasDevSubVar(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevSubVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 		case HackLib::AtlasDevIfVarEqual:
-			cpu_addr = apply_AtlasDevIfVarEqual(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevIfVarEqual(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 		case HackLib::AtlasDevIfVarLess:
-			cpu_addr = apply_AtlasDevIfVarLess(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevIfVarLess(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 		case HackLib::AtlasDevIfVarGreaterEqual:
-			cpu_addr = apply_AtlasDevIfVarGreaterEqual(p_config, p_rom, cpu_addr);
+			cpu_addr = apply_AtlasDevIfVarGreaterEqual(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 
 		case HackLib::AtlasDevShakeScreen: {
