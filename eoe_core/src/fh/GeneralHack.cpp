@@ -26,7 +26,7 @@ namespace {
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
-		fh::GeneralHackLib::PoisonPickup,
+		fh::GeneralHackLib::PoisonPickup, fh::GeneralHackLib::TextSpeed,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay,
@@ -39,6 +39,7 @@ namespace {
 		{ fh::GeneralHackLib::SameWorldTransPal2Mus, {} },
 		{ fh::GeneralHackLib::FogRules, { "rules" } },
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
+		{ fh::GeneralHackLib::TextSpeed, { "mask" }},
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },

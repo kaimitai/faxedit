@@ -32,6 +32,7 @@ This document describes the hacks in the current library and their parameters. I
   - [FogRules](#fogrules)
   - [DynamicTilesets](#dynamictilesets)
   - [PoisonPickup](#poisonpickup)
+  - [TextSpeed](#textspeed)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -233,6 +234,20 @@ The black potion can be stored and displayed in the inventory, but has no effect
 
 ```text
 PoisonPickup item=16 script=false
+```
+
+### TextSpeed
+
+Changes the text display speed. Lower masks make text display faster. For regular timing, use `%0` or binary masks consisting only of consecutive `1` bits, such as `%1`, `%11`, `%111`, etc. Other values are valid but may produce uneven text timing.
+
+> Note: Only supported for US, US Rev A and EU ROMs.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mask` | `%0` | Text speed mask. `%0` is fastest; `%11` is vanilla speed. Higher masks such as `%111` and `%1111` are progressively slower |
+
+```text
+TextSpeed mask=%1
 ```
 
 ### AtlasDevFrameScheduler
