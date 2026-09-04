@@ -3152,27 +3152,6 @@ word fh::HackManager::apply_AtlasDevIfManaAtLeast(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// AtlasDevAddExperience Amount: adds a 16-bit amount of experience through
-// the enemy-kill award path. The vanilla adder saturates, runs the
-// promotion check and redraws the HUD digits, and the promotion check has
-// exactly one caller in the ROM, so nothing caches experience behind our
-// back. Rank can advance at most once per call, same as for a kill.
-word fh::HackManager::apply_AtlasDevAddExperience(const fe::Config& p_config,
-	std::vector<byte>& p_rom, word cpu_addr) const {
-	klib::Asm6502 code;
-
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = amount lo
-	code.sta_zp(RAM::ZP_Temp_Int24_L);
-	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = amount hi
-	code.sta_zp(RAM::ZP_Temp_Int24_M);
-	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_UPDATEEXPERIENCE));
-
-	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
-
-	return get_next_cpu_addr(cpu_addr,
-		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
-}
-
 // AtlasDevSetExperience Value: replaces the 16-bit XP counter, recomputes
 // both title cells from rank zero through the vanilla threshold checker, and
 // redraws the five-digit experience HUD.  The threshold helper advances by at
@@ -5282,9 +5261,6 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevIfManaAtLeast:
 			cpu_addr = apply_AtlasDevIfManaAtLeast(p_config, p_rom, cpu_addr);
-			break;
-		case HackLib::AtlasDevAddExperience:
-			cpu_addr = apply_AtlasDevAddExperience(p_config, p_rom, cpu_addr);
 			break;
 		case HackLib::AtlasDevSetExperience:
 			cpu_addr = apply_AtlasDevSetExperience(p_config, p_rom, cpu_addr);

@@ -1919,7 +1919,6 @@
 			<entry key="AtlasDevIfHealthBelow" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfHealthAtLeast" value="Args=Byte,Flow=Jump" />
 			<entry key="AtlasDevIfManaAtLeast" value="Args=Byte,Flow=Jump" />
-			<entry key="AtlasDevAddExperience" value="Args=Short" />
 			<entry key="AtlasDevSetExperience" value="Args=Short" />
 			<entry key="AtlasDevSetGold" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevIfGoldAtLeast" value="Args=Byte+Byte+Byte,Flow=Jump" />
