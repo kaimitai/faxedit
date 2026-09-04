@@ -634,6 +634,30 @@ void fh::HackManager::install_PoisonPickup(const fe::Config& p_config, std::vect
 	code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpPoison_DamageSoundIndex);
 }
 
+word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	const byte mask{ p_hack.byte_or("mask", 0x00) };
+
+	klib::Asm6502 code;
+	code.apply_byte(p_rom, mask, 15, cfg_word(p_config, c::ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST));
+
+	// hook
+	code.jsr(cpu_addr);
+	code.nop(2);
+	code.apply_hack_and_clear(p_rom, 15, cfg_word(p_config, c::ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01));
+
+	// new routine
+	code.lda_abs(RAM::TextBox_Timer);
+	code.and_imm(0x02);
+	code.lsr_a();
+	code.eor_imm(0x01);
+	code.sta_abs(RAM::TextBox_PlayTextSound);
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+}
+
+// orchestrator for per-bank hack injection
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) const {
@@ -688,6 +712,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::PoisonPickup:
 			install_PoisonPickup(p_config, patched_rom, hack);
+			break;
+		case fh::GeneralHackLib::TextSpeed:
+			cpu_addr = install_TextSpeed(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);

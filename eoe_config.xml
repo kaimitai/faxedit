@@ -414,6 +414,8 @@
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" region="jp,en-transl" value="$8b5f" />
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" value="$8b87" />
 		<!-- bank 15 ROM cpu addresses -->
+		<const name="textbox_show_next_char_lda_01" region="eu,us,us-rev-a" value="0xf472" />
+		<const name="textbox_show_next_char_if_ready_timer_const" region="eu,us,us-rev-a" value="0xf49f" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />
 		<const name="rom_mmc1_updaterombank" value="$cc1a" />
 		<const name="rom_player_updateexperience" region="jp,en-transl" value="$fa1f" />

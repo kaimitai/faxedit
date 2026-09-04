@@ -213,6 +213,8 @@ namespace fh {
 		constexpr word DestBuildingScreen{ 0x03da };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
+		constexpr word TextBox_PlayTextSound{ 0x0212 };
+		constexpr word TextBox_Timer{ 0x021d };
 		constexpr word VisibleMagicState{ 0x02b3 };
 		constexpr word VisibleMagicFlags{ 0x02b4 };
 		constexpr word VisibleMagicXFraction{ 0x02b5 };
@@ -306,13 +308,17 @@ namespace fh {
 		constexpr char ID_RAM_UIDATAARRAY[]{ "ram_uidataarray" };
 		constexpr char ID_RAM_SHOPITEMCOSTSLO[]{ "ram_shopitemcostslo" };
 
-		// other bank 12 cpu ROM addresses
+		// other bank 12 cpu addresses
 		constexpr char ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY[]{ "rom_showsellmenu_jsr_findsellmenuentry" };
 		constexpr char ID_ROM_SHOWSELLMENU_LDX_STRINGCOUNT[]{ "rom_showsellmenu_ldx_stringcount" };
 		constexpr char ID_ROM_SHOWSELLMENU_STA_COSTHI[]{ "rom_showsellmenu_sta_costhi" };
 		constexpr char ID_ROM_FINDSELLMENUENTRY[]{ "rom_findsellmenuentry" };
 		constexpr char ID_ROM_FINDSELLMENUENTRY_TAX[]{ "rom_findsellmenuentry_tax" };
 		constexpr char ID_ROM_PLAYERMENU_HANDLEINVENTORYMENUINPUT_CMP_WORLDNO[]{ "rom_playermenu_handleinventorymenuinput_cmp_worldno" };
+
+		// bank 15 cpu addresses
+		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01[]{ "textbox_show_next_char_lda_01" };
+		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST[]{ "textbox_show_next_char_if_ready_timer_const" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
