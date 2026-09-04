@@ -626,7 +626,7 @@ define LEVER_RIGHT 119
 
 The reward mirror of the veterans' door: gold in, experience out, and the engine's own level thresholds do the rest.
 
-Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevAddExperience`, `AtlasDevPlaySFX`
+Needs: `AtlasDevIfGoldAtLeast`, `GetXP`, `AtlasDevPlaySFX`
 
 ```asm
 .textbox GENERIC
@@ -639,7 +639,7 @@ Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevAddExperience`, `AtlasDevPlaySFX`
     End
 @train:
     LoseGold 200
-    AtlasDevAddExperience 500
+    GetXP 500
     AtlasDevPlaySFX 9
     Msg "You feel<n>seasoned."
     End
