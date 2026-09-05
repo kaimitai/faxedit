@@ -16,6 +16,7 @@ namespace fh {
 	enum class GeneralHackLib {
 		FlexibleItems, DynamicTilesets,
 		KillSwitch, SameWorldTransPal2Mus, FogRules, PoisonPickup, TextSpeed,
+		SRAM,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay,
 		FastStart, QuestFlagItemDrops, BossLockedItems
@@ -44,6 +45,7 @@ namespace fh {
 			char p_delim_outer = '+', char p_delim_inner = ':') const;
 		std::vector<std::pair<byte, std::optional<byte>>> split_byte_optional_byte(
 			const std::string& p_id) const;
+		std::vector<std::pair<word, byte>> split_word_byte(const std::string& p_id) const;
 		std::vector<std::vector<byte>> split_twice_bytes(const std::string& p_id,
 			std::size_t inner_size = 0) const;
 

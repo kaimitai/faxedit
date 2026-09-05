@@ -27,6 +27,7 @@ namespace {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
 		fh::GeneralHackLib::PoisonPickup, fh::GeneralHackLib::TextSpeed,
+		fh::GeneralHackLib::SRAM,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay,
@@ -48,6 +49,7 @@ namespace {
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
+		{ fh::GeneralHackLib::SRAM, { "ranges" } },
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
@@ -163,6 +165,24 @@ std::vector<std::pair<byte, std::optional<byte>>> fh::GeneralHack::split_byte_op
 		}
 
 		result.emplace_back(static_cast<byte>(first), second);
+	}
+
+	return result;
+}
+
+std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::string& p_id) const {
+	std::vector<std::pair<word, byte>> result;
+
+	for (const auto& vec : split_twice(p_id)) {
+		if (vec.empty() || vec.size() > 2)
+			throw std::runtime_error("invalid parameter format for " + p_id);
+
+		const int first{ klib::str::parse_numeric(vec[0]) };
+		if(first < 0 || first > 0xffff)
+			throw std::runtime_error(std::format(
+				"General hack parameter '{}' element '{}' is not a valid word", p_id, vec[0]));
+
+		result.push_back(std::make_pair(first, klib::str::parse_byte(vec[1])));
 	}
 
 	return result;

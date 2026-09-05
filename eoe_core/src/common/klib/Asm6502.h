@@ -25,11 +25,14 @@ namespace klib {
 			std::string label;
 		};
 
+		enum class LabelRefType { Absolute, LoByte, HiByte };
+
 		// A JMP whose target is a label rather than a literal address; the
 		// operand is patched once every label position is known.
 		struct LabelRef {
 			std::size_t offset;
 			std::string label;
+			LabelRefType type{ LabelRefType::Absolute };
 		};
 
 		std::vector<byte> m_bytes;
@@ -113,6 +116,8 @@ namespace klib {
 		void lda_abs_y(word p_addr);
 		void lda_abs_y(const std::string& p_label);
 		void lda_ind_y(byte p_addr);
+		void lda_imm_lo(const std::string& p_label);
+		void lda_imm_hi(const std::string& p_label);
 		void ldx_zp(byte p_addr);
 		void ldx_imm(byte p_value);
 		void ldx_abs(word p_addr);
@@ -180,12 +185,14 @@ namespace klib {
 		void asl_a(void);
 
 		// math
+		void inc_zp(byte p_addr);
 		void inx(void);
 		void dec_zp(byte p_addr);
 		void dec_abs_x(word p_addr);
 		void adc_imm(byte p_value);
 		void adc_zp(byte p_addr);
 		void adc_abs_x(word p_addr);
+		void adc_ind_y(byte p_addr);
 		void sbc_imm(byte p_value);
 		void sbc_abs(word p_addr);
 		void sbc_abs_x(word p_addr);

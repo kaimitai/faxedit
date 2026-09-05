@@ -176,6 +176,7 @@
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
+    <ClCompile Include="src\fh\SramHack.cpp" />
     <ClCompile Include="src\fh\TilemapChanges.cpp" />
     <ClCompile Include="src\fi\AsmReader.cpp" />
     <ClCompile Include="src\fi\AsmReaderStaticLinker.cpp" />

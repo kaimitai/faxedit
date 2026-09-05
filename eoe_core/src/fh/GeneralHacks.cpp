@@ -716,6 +716,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::TextSpeed:
 			cpu_addr = install_TextSpeed(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::SRAM:
+			install_SRAM(p_config, patched_rom, hack);
+			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);
 			break;

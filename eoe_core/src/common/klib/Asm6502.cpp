@@ -95,6 +95,8 @@ void klib::Asm6502::resolve_labels(word p_base_cpu_addr) {
 	// Label-targeted JMPs carry a full 16-bit operand, so unlike branches they
 	// have no range limit; the absolute address is the hack's base plus the
 	// label's offset, which apply_hack supplies when the code is placed.
+
+	// we also support #<label for lo bytes and and #>label for hi bytes
 	for (const auto& jump : m_jump_refs) {
 
 		auto it{ m_labels.find(jump.label) };
@@ -102,8 +104,21 @@ void klib::Asm6502::resolve_labels(word p_base_cpu_addr) {
 			throw std::runtime_error(std::format("Undefined label: {}", jump.label));
 
 		const auto target = static_cast<word>(p_base_cpu_addr + it->second);
-		m_bytes[jump.offset] = static_cast<byte>(target & 0xff);
-		m_bytes[jump.offset + 1] = static_cast<byte>((target >> 8) & 0xff);
+
+		switch (jump.type) {
+		case LabelRefType::Absolute:
+			m_bytes[jump.offset] = static_cast<byte>(target & 0xff);
+			m_bytes[jump.offset + 1] = static_cast<byte>((target >> 8) & 0xff);
+			break;
+
+		case LabelRefType::LoByte:
+			m_bytes[jump.offset] = static_cast<byte>(target & 0xff);
+			break;
+
+		case LabelRefType::HiByte:
+			m_bytes[jump.offset] = static_cast<byte>(target >> 8);
+			break;
+		}
 	}
 }
 
@@ -145,6 +160,7 @@ namespace {
 	constexpr byte OP_PLA{ 0x68 };
 	constexpr byte OP_ADC_IMM{ 0x69 };
 	constexpr byte OP_JMP_IND{ 0x6c };
+	constexpr byte OP_ADC_IND_Y{ 0x71 };
 	constexpr byte OP_ADC_ABS_X{ 0x7d };
 	constexpr byte OP_STY_ZP{ 0x84 };
 	constexpr byte OP_STA_ZP{ 0x85 };
@@ -185,6 +201,7 @@ namespace {
 	constexpr byte OP_CMP_ABS_X{ 0xdd };
 	constexpr byte OP_DEC_ABS_X{ 0xde };
 	constexpr byte OP_CPX_IMM{ 0xe0 };
+	constexpr byte OP_INC_ZP{ 0xe6 };
 	constexpr byte OP_INX{ 0xe8 };
 	constexpr byte OP_SBC_IMM{ 0xe9 };
 	constexpr byte OP_SBC_ABS{ 0xed };
@@ -339,6 +356,18 @@ void klib::Asm6502::lda_abs_y(const std::string& p_label) {
 void klib::Asm6502::lda_ind_y(byte p_addr) {
 	emit(OP_LDA_IND_Y);
 	emit(p_addr);
+}
+
+void klib::Asm6502::lda_imm_lo(const std::string& p_label) {
+	emit(OP_LDA_IMM);
+	m_jump_refs.push_back({ m_bytes.size(), p_label, LabelRefType::LoByte });
+	emit(byte{ 0 }); // patched later
+}
+
+void klib::Asm6502::lda_imm_hi(const std::string& p_label) {
+	emit(OP_LDA_IMM);
+	m_jump_refs.push_back({ m_bytes.size(), p_label, LabelRefType::HiByte });
+	emit(byte{ 0 }); // patched later
 }
 
 void klib::Asm6502::ldx_zp(byte p_addr) {
@@ -587,6 +616,11 @@ void klib::Asm6502::asl_a(void) {
 }
 
 // math
+void klib::Asm6502::inc_zp(byte p_addr) {
+	emit(OP_INC_ZP);
+	emit(p_addr);
+}
+
 void klib::Asm6502::inx(void) {
 	emit(OP_INX);
 }
@@ -614,6 +648,11 @@ void klib::Asm6502::adc_zp(byte p_addr) {
 void klib::Asm6502::adc_abs_x(word p_addr) {
 	emit(OP_ADC_ABS_X);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::adc_ind_y(byte p_addr) {
+	emit(OP_ADC_IND_Y);
+	emit(p_addr);
 }
 
 void klib::Asm6502::sbc_imm(byte p_value) {

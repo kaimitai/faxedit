@@ -647,5 +647,8 @@
     <ClCompile Include="src\common\klib\Image.cpp">
       <Filter>Source Files\common\klib</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\SramHack.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

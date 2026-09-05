@@ -145,6 +145,14 @@ namespace fh {
 		// consumer compares it against the read cursor $1f.
 		constexpr byte ZP_PPUBufferWriteCursor{ 0x20 };
 		constexpr byte ZP_CurrentWorld{ 0x24 };
+		// 7 unused bytes of zeropage (at least on US)
+		constexpr byte ZP_2c{ 0x2c };
+		constexpr byte ZP_2d{ 0x2d };
+		constexpr byte ZP_2e{ 0x2e };
+		constexpr byte ZP_2f{ 0x2f };
+		constexpr byte ZP_30{ 0x30 };
+		constexpr byte ZP_31{ 0x31 };
+		constexpr byte ZP_32{ 0x32 };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
 		constexpr byte ZP_TilesIndex = 0x95;
