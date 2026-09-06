@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fh_constants.h"
 #include "common/klib/Asm6502.h"
+#include "common/klib/Kstring.h"
 #include <algorithm>
 #include <array>
 #include <stdexcept>
@@ -8,6 +9,7 @@
 using byte = unsigned char;
 
 namespace {
+	constexpr char ID_SRAM_START_SCREEN_ATTRS[]{ "sram_start_screen_attrs" };
 
 	// move to constants file (and config when needed)
 	constexpr word Mantra_Load{ 0x95e9 }; // at least 807 bytes free (US)
@@ -371,6 +373,56 @@ namespace {
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
+
+	word install_SRAM_WriteStartScreenAttributes(const fe::Config& p_config,
+		std::vector<byte>& p_rom, word cpu_addr) {
+		const auto attrs{ p_config.string_or_empty(ID_SRAM_START_SCREEN_ATTRS) };
+		if (attrs.empty())
+			return cpu_addr;
+
+		std::map<std::string, std::string> attr_map;
+		for (const auto& kv_str : klib::str::split_string(attrs, ',')) {
+			const auto kv{ klib::str::split_string(kv_str, '=') };
+			if (kv.size() != 2)
+				throw std::runtime_error(std::format("Invalid key-value pair: {}", kv_str));
+			attr_map.insert(std::make_pair(klib::str::trim(kv[0]), klib::str::trim(kv[1])));
+		}
+
+		const word ppu_start{ static_cast<word>(klib::str::parse_numeric(attr_map.at("addr"))) };
+		const std::vector<byte> attrs_valid{ klib::str::parse_byte_list(attr_map.at("valid"),'+') };
+		const std::vector<byte> attrs_invalid{ klib::str::parse_byte_list(attr_map.at("invalid"),'+') };
+
+		klib::Asm6502 code;
+
+		// hook
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 12, fh::ROM::StartScreen_DrawAttributes);
+
+		// new routine
+		code.jsr(fh::ROM::PPU_WriteTilesFromCHRRAM); // overwritten at call site
+
+		code.lda_imm(ppu_start / 256);
+		code.sta_abs(fh::PPU::PPU_ADDR);
+		code.lda_imm(ppu_start % 256);
+		code.sta_abs(fh::PPU::PPU_ADDR);
+
+		code.lda_mem(SRAM_VALID);
+		code.bne("@valid");
+		for (byte b : attrs_invalid) {
+			code.lda_imm(b);
+			code.sta_abs(fh::PPU::PPU_DATA);
+		}
+		code.rts();
+
+		code.label("@valid");
+		for (byte b : attrs_valid) {
+			code.lda_imm(b);
+			code.sta_abs(fh::PPU::PPU_DATA);
+		}
+		code.rts();
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+	}
 }
 
 // installs SRAM save support
@@ -391,7 +443,6 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	const word calc_checksum_addr{ cpu_addr };
 	cpu_addr = install_SRAM_CalcCheckSum(p_rom, cpu_addr, table_addr);
 
-	// only the following three functions will be called from the outside
 	const word validate_addr{ cpu_addr };
 	cpu_addr = install_SRAM_Validate(p_rom, cpu_addr, calc_checksum_addr);
 
@@ -406,6 +457,9 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 
 	const word start_screen_select_guard_addr{ cpu_addr };
 	cpu_addr = install_SRAM_DisableContinueOnInvalidSave(p_rom, start_screen_select_guard_addr);
+
+	const word start_screen_attribute_addr{ cpu_addr };
+	cpu_addr = install_SRAM_WriteStartScreenAttributes(p_config, p_rom, start_screen_attribute_addr);
 
 	install_SRAM_ShowMantra(p_config, p_rom, save_addr);
 	install_SRAM_ChooseContinue(p_rom, load_addr);

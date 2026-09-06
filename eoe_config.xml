@@ -1812,6 +1812,9 @@
 			<entry byte="68" str="add_x_offset:8" />
 		</byte_to_string_map>
 	</byte_to_string_maps>
+	<strings>
+		<string name="sram_start_screen_attrs" region="us" value="addr=$23ec,valid=$50+$50,invalid=$5f+$5f" />
+	</strings>
 	<string_to_string_maps>
 		<!-- built-in extended script opcode signatures - do not modify! -->
 		<string_to_string_map name="iscript_opcode_impls">

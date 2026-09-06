@@ -71,10 +71,10 @@ byte klib::str::parse_byte(const std::string& token) {
 		throw std::runtime_error(std::format("Invalid byte value: '{}'", val));
 }
 
-std::vector<byte> klib::str::parse_byte_list(const std::string& p_str) {
+std::vector<byte> klib::str::parse_byte_list(const std::string& p_str, char p_delim) {
 	std::vector<byte> result;
 
-	for (const auto& elem : split_string(p_str, ',')) {
+	for (const auto& elem : split_string(p_str, p_delim)) {
 		const auto value{ parse_numeric(trim(elem)) };
 
 		if (value > 0xff || value < 0)

@@ -25,6 +25,7 @@ namespace fh {
 		constexpr word WindowClose{ 0x9002 };
 		constexpr word Text_ContinueGate{ 0x9956 };
 		constexpr word TextGridLay{ 0x9910 };
+		constexpr word StartScreen_DrawAttributes{ 0x9e80 };
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
@@ -107,6 +108,7 @@ namespace fh {
 		constexpr word PPUAddressFromPos{ 0xf804 };
 		constexpr word PPUAdvanceRow{ 0xf826 };
 		constexpr word PPUQueuePayload{ 0xf845 };
+		constexpr word PPU_WriteTilesFromCHRRAM{ 0xf89e };
 		// One vanilla caller; inputs $ea/$eb tile position, $ec/$ed/$ee value,
 		// Y digit count 1..7.  Emits through the buffered PPU queue.
 		constexpr word Number_DrawAtPos{ 0xfa03 };
@@ -291,6 +293,11 @@ namespace fh {
 		// RAM used by the sameworld to stage-door hack
 		constexpr word Hack_StageChangePending{ 0x1fff };
 		constexpr word Hack_PendingStage{ 0x1ffe };
+	}
+
+	namespace PPU {
+		constexpr word PPU_ADDR{ 0x2006 };
+		constexpr word PPU_DATA{ 0x2007 };
 	}
 
 	namespace c {

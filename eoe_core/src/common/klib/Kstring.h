@@ -33,7 +33,7 @@ namespace klib {
 
 		int parse_numeric(const std::string& token);
 		byte parse_byte(const std::string& token);
-		std::vector<byte> parse_byte_list(const std::string& p_str);
+		std::vector<byte> parse_byte_list(const std::string& p_str, char p_delim = ',');
 
 		template<class T, class U>
 		std::map<U, T> invert_map(const std::map<T, U>& p_map) {
