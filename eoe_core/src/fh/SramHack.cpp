@@ -17,7 +17,9 @@ namespace {
 	constexpr word iScriptActionShowMantra{ 0x8737 };
 
 	constexpr word StartScreen_Draw{ 0x9e21 };
+	constexpr word StartScreen_DefaultSelection{ 0x9ebc };
 	constexpr word ChooseContinue_TargetAddr{ 0xfc8d };
+	constexpr word StartScreen_InputSelect{ 0x9f4a };
 
 	// savefile header, used for validation along with a 16-bit additive checksum
 	constexpr std::array<byte, 4> HEADER{ 'E', 'o', 'E', 0x00 };
@@ -325,18 +327,48 @@ namespace {
 		code.jsr(cpu_addr);
 		code.apply_hack_and_clear(p_rom, 12, StartScreen_Draw);
 
-		// new routine - returns 0 in SRAM_VALID if a valid savefile exists
+		// new routine - returns 1 in SRAM_VALID if a valid savefile exists, otherwise 0
 		code.jsr(p_validate_addr);
 		code.beq("@valid");
-		code.lda_imm(0x01);
-		code.bne("@return");
+		code.lda_imm(0x00);
+		code.beq("@return");
 
 		code.label("@valid");
-		code.lda_imm(0x00);
+		code.lda_imm(0x01);
 
 		code.label("@return");
 		code.sta_zp(SRAM_VALID);
 		code.jmp(fh::ROM::PPU_WaitUntilFlushed);
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+	}
+
+	word install_SRAM_DisableContinueOnInvalidSave(std::vector<byte>& p_rom, word cpu_addr) {
+		klib::Asm6502 code;
+
+		// hook - verify sram before going through with selection
+		code.jsr(cpu_addr);
+		code.nop(10);
+		code.apply_hack_and_clear(p_rom, 12, StartScreen_InputSelect);
+
+		// set default selection to CONTINUE if a valid save exists
+		code.lda_zp(SRAM_VALID);
+		code.apply_hack_and_clear(p_rom, 12, StartScreen_DefaultSelection);
+
+		// new routine - allow selection switch if sram save is valid
+		code.lda_mem(SRAM_VALID);
+		code.bne("@valid");
+		code.lda_imm(0x0d);
+		code.jsr(fh::ROM::Sound_PlayEffect);
+		code.rts();
+
+		code.label("@valid");
+		code.lda_abs(fh::RAM::StartScreenSelection);
+		code.eor_imm(0x01);
+		code.sta_abs(fh::RAM::StartScreenSelection);
+		code.lda_imm(0x0b);
+		code.jsr(fh::ROM::Sound_PlayEffect);
+		code.rts();
+
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
 }
@@ -371,6 +403,9 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 
 	const word startup_validate_addr{ cpu_addr };
 	cpu_addr = install_SRAM_ValidateOnStartup(p_rom, startup_validate_addr, validate_addr);
+
+	const word start_screen_select_guard_addr{ cpu_addr };
+	cpu_addr = install_SRAM_DisableContinueOnInvalidSave(p_rom, start_screen_select_guard_addr);
 
 	install_SRAM_ShowMantra(p_config, p_rom, save_addr);
 	install_SRAM_ChooseContinue(p_rom, load_addr);

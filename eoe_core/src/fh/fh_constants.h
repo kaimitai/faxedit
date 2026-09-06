@@ -286,6 +286,7 @@ namespace fh {
 		// clear.  Region-invariant: all four retail images reference
 		// $0427-$042a the same number of times.
 		constexpr word TimedEffectTimers{ 0x0427 };
+		constexpr word StartScreenSelection{ 0x0687 }; // 0=START, 1=CONTINUE
 
 		// RAM used by the sameworld to stage-door hack
 		constexpr word Hack_StageChangePending{ 0x1fff };
