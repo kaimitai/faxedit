@@ -140,6 +140,11 @@ namespace fh {
 		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
 		constexpr byte ZP_CameraNametableParity{ 0x0d };
 		constexpr byte ZP_Joy1_ChangedButtonMask{ 0x19 };
+		// Free-running frame counter, incremented by the NMI.
+		constexpr byte ZP_FrameCounter{ 0x1a };
+		// Offset the vanilla GetRandom ($ca6e) reads its next table byte at; any
+		// value is a valid offset. Same byte in the US, US rev A, EU and JP ROMs.
+		constexpr byte ZP_RandomOffset{ 0xda };
 		// Producer cursor of the $0500 PPU command ring.  Producers seed X
 		// from it, write payload bytes, and publish with one STX; the NMI
 		// consumer compares it against the read cursor $1f.

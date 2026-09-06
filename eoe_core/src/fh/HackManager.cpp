@@ -683,6 +683,64 @@ word fh::HackManager::apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevRandomVar Register Maximum: stores a value from 0 through Maximum
+// in a script register. The game's own random offset $da is stepped with a
+// maximal-length LFSR so successive rolls in one frame differ, the frame
+// counter is mixed in so the roll is as random as the frame the player
+// acted on, and an 8x8 multiply keeping the high byte scales the byte to
+// the range with every value equally likely to within one part in 256.
+// Vanilla only ever uses $da as a table index, so any value left in it is
+// valid there.
+word fh::HackManager::apply_AtlasDevRandomVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+
+	code.jsr(p_var_operand_helper_addr); // X = register, A = maximum, C = invalid
+	code.bcs("@done");
+	code.sta_zp(RAM::ZP_e3);
+
+	// step the offset; a zero offset, which the LFSR could never leave, is
+	// seeded from the frame counter first
+	code.lda_zp(RAM::ZP_RandomOffset);
+	code.bne("@step");
+	code.lda_zp(RAM::ZP_FrameCounter);
+	code.ora_imm(0x01);
+	code.label("@step");
+	code.asl_a();
+	code.bcc("@stepped");
+	code.eor_imm(0x1d); // x^8 + x^4 + x^3 + x^2 + 1, period 255
+	code.label("@stepped");
+	code.sta_zp(RAM::ZP_RandomOffset);
+	code.eor_zp(RAM::ZP_FrameCounter);
+
+	// range = maximum + 1; a wrap to 0 means 256, and the byte is the answer
+	code.db(0xe6); code.db(RAM::ZP_e3); // INC $e3
+	code.beq("@store");
+	code.sta_zp(RAM::ZP_e2);
+
+	// A = high byte of byte * range, one range bit per pass
+	code.lda_imm(0x00);
+	code.ldy_imm(0x08);
+	code.label("@multiply");
+	code.db(0x46); code.db(RAM::ZP_e3); // LSR $e3
+	code.bcc("@shift");
+	code.clc();
+	code.adc_zp(RAM::ZP_e2);
+	code.label("@shift");
+	code.db(0x6a); // ROR A
+	code.dey();
+	code.bne("@multiply");
+
+	code.label("@store");
+	code.sta_abs_x(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 namespace {
 
 	// The AtlasDev visual effects declare their signature by name in the
@@ -4783,11 +4841,11 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	const std::set<HackLib> VAR_OPERAND_REQUIRED{
 	HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 	HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
-	HackLib::AtlasDevIfVarGreaterEqual };
+	HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar };
 	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
 		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
-		HackLib::AtlasDevIfVarGreaterEqual,
+		HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar,
 		HackLib::AtlasDevShowNumberInMessage, HackLib::AtlasDevShowChoiceToVar,
 		HackLib::AtlasDevShowMessageFromVar, HackLib::AtlasDevCountActiveEntities,
 		HackLib::AtlasDevFindEntity, HackLib::AtlasDevEntityFieldToVar,
@@ -4991,6 +5049,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevIfVarGreaterEqual:
 			cpu_addr = apply_AtlasDevIfVarGreaterEqual(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
+			break;
+		case HackLib::AtlasDevRandomVar:
+			cpu_addr = apply_AtlasDevRandomVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 
 		case HackLib::AtlasDevShakeScreen: {
