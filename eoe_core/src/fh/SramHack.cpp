@@ -133,22 +133,51 @@ namespace {
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
 
-	// calculate 16-bit additive checksum of $6000-$67ff
-	// result in CHECKSUM_LO:CHECKSUM_HI
-	word install_SRAM_CalcCheckSum(std::vector<byte>& p_rom, word cpu_addr) {
+	// calculates additive 16-bit checksum across the saved ranges
+	word install_SRAM_CalcCheckSum(std::vector<byte>& p_rom, word cpu_addr,
+		word p_range_table_addr) {
 		klib::Asm6502 code;
 
+		// table pointer
+		code.lda_imm(static_cast<byte>(p_range_table_addr % 256));
+		code.sta_zp(TABLE_PTR_LO);
+		code.lda_imm(static_cast<byte>(p_range_table_addr / 256));
+		code.sta_zp(TABLE_PTR_HI);
+
+		// clear checksum
 		code.lda_imm(0x00);
 		code.sta_zp(CHECKSUM_LO);
 		code.sta_zp(CHECKSUM_HI);
+
+		// get range count
+		code.ldy_imm(0x00);
+		code.lda_ind_y(TABLE_PTR_LO);
+		code.sta_zp(RANGES_LEFT);
+
+		code.label("@checksum_ranges_loop");
+
+		// SRAM pointer = RAM address + $6000
+		code.iny();
+		code.lda_ind_y(TABLE_PTR_LO);
 		code.sta_zp(SOURCE_PTR_LO);
 
-		code.lda_imm(0x60);
+		code.iny();
+		code.lda_ind_y(TABLE_PTR_LO);
+		code.clc();
+		code.adc_imm(0x60);
 		code.sta_zp(SOURCE_PTR_HI);
 
-		code.ldy_imm(0x00);
+		// byte count
+		code.iny();
+		code.lda_ind_y(TABLE_PTR_LO);
+		code.tax();
 
-		code.label("@checksum_sram_loop");
+		// preserve table position
+		code.tya();
+		code.pha();
+
+		code.ldy_imm(0x00);
+		code.label("@checksum_range_loop");
 
 		code.lda_zp(CHECKSUM_LO);
 		code.clc();
@@ -160,13 +189,15 @@ namespace {
 		code.sta_zp(CHECKSUM_HI);
 
 		code.iny();
-		code.bne("@checksum_sram_loop");
+		code.dex();
+		code.bne("@checksum_range_loop");
 
-		code.inc_zp(SOURCE_PTR_HI);
-		code.lda_zp(SOURCE_PTR_HI);
-		code.cmp_imm(0x68);
-		code.bne("@checksum_sram_loop");
+		// restore table position
+		code.pla();
+		code.tay();
 
+		code.dec_zp(RANGES_LEFT);
+		code.bne("@checksum_ranges_loop");
 		code.rts();
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
@@ -210,11 +241,10 @@ namespace {
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
 
-	word install_SRAM_Save(std::vector<byte>& p_rom, word cpu_addr, word p_init_addr,
+	word install_SRAM_Save(std::vector<byte>& p_rom, word cpu_addr,
 		word p_copy_ranges_addr, word p_calc_checksum_addr) {
 		klib::Asm6502 code;
 
-		code.jsr(p_init_addr);
 		code.jsr("@save_ranges");
 		code.jsr(p_calc_checksum_addr);
 
@@ -265,6 +295,10 @@ namespace {
 // installs SRAM save support
 void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
+	
+	constexpr word ShowMantraInputScreen{ 0x909d };
+	constexpr word iScriptActionShowMantra{ 0x8737 };
+	
 	word cpu_addr{ 0x909d };
 
 	const word table_addr{ cpu_addr };
@@ -274,22 +308,25 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	cpu_addr = install_SRAM_CopyRange(p_rom, cpu_addr);
 
 	const word copy_ranges_addr{ cpu_addr };
-	cpu_addr = install_SRAM_CopyRanges(
-		p_rom, cpu_addr, copy_range_addr, table_addr);
-
-	const word init_addr{ cpu_addr };
-	cpu_addr = install_SRAM_Init(p_rom, cpu_addr);
+	cpu_addr = install_SRAM_CopyRanges(p_rom, cpu_addr, copy_range_addr, table_addr);
 
 	const word calc_checksum_addr{ cpu_addr };
-	cpu_addr = install_SRAM_CalcCheckSum(p_rom, cpu_addr);
+	cpu_addr = install_SRAM_CalcCheckSum(p_rom, cpu_addr, table_addr);
 
 	// only the following three functions will be called from the outside
 	const word validate_addr{ cpu_addr };
 	cpu_addr = install_SRAM_Validate(p_rom, cpu_addr, calc_checksum_addr);
 
 	const word save_addr{ cpu_addr };
-	cpu_addr = install_SRAM_Save(p_rom, cpu_addr, init_addr, copy_ranges_addr, calc_checksum_addr);
+	cpu_addr = install_SRAM_Save(p_rom, cpu_addr, copy_ranges_addr, calc_checksum_addr);
 
 	const word load_addr{ cpu_addr };
 	cpu_addr = install_SRAM_Load(p_rom, cpu_addr, copy_ranges_addr);
+
+	klib::Asm6502 code;
+	code.jsr(save_addr);
+	code.nop(26);
+	code.apply_hack_and_clear(p_rom, 12, iScriptActionShowMantra);
+
+	p_rom[6] |= 0x02;
 }
