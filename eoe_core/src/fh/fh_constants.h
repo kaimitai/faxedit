@@ -52,6 +52,7 @@ namespace fh {
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };
+		constexpr word PPU_WaitUntilFlushed{ 0xcaf7 };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
 		// Waits until the PPU queue has room for up to $24 bytes.
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };

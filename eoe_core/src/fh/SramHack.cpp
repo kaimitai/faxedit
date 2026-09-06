@@ -9,9 +9,21 @@ using byte = unsigned char;
 
 namespace {
 
+	// move to constants file (and config when needed)
+	constexpr word Mantra_Load{ 0x95e9 }; // at least 807 bytes free (US)
+	constexpr word ShowMantraInputScreen{ 0x909d }; // at least 328 bytes free - might not be needed
+
+	// entrypoint of the script handler for ShowMantra - which will be used to run the save routine
+	constexpr word iScriptActionShowMantra{ 0x8737 };
+
+	constexpr word StartScreen_Draw{ 0x9e21 };
+	constexpr word ChooseContinue_TargetAddr{ 0xfc8d };
+
 	// savefile header, used for validation along with a 16-bit additive checksum
 	constexpr std::array<byte, 4> HEADER{ 'E', 'o', 'E', 0x00 };
 	// SRAM zeropage scratch variables
+	constexpr byte SRAM_VALID{ fh::RAM::ZP_e2 };
+
 	constexpr byte CHECKSUM_LO{ fh::RAM::ZP_2c };
 	constexpr byte CHECKSUM_HI{ fh::RAM::ZP_2d };
 
@@ -290,16 +302,50 @@ namespace {
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
+
+	void install_SRAM_ShowMantra(const fe::Config& p_config, std::vector<byte>& p_rom, word p_save_addr) {
+		klib::Asm6502 code;
+		code.jsr(p_save_addr);
+		code.jmp(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+		code.apply_hack_and_clear(p_rom, 12, iScriptActionShowMantra);
+	}
+
+	void install_SRAM_ChooseContinue(std::vector<byte>& p_rom, word p_load_addr) {
+		klib::Asm6502 code;
+
+		// update the jump target of the routine called when player chooses CONTINUE
+		code.dw(p_load_addr - 1);
+		code.apply_hack_and_clear(p_rom, 15, ChooseContinue_TargetAddr);
+	}
+
+	word install_SRAM_ValidateOnStartup(std::vector<byte>& p_rom, word cpu_addr, word p_validate_addr) {
+		klib::Asm6502 code;
+
+		// install hook
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 12, StartScreen_Draw);
+
+		// new routine - returns 0 in SRAM_VALID if a valid savefile exists
+		code.jsr(p_validate_addr);
+		code.beq("@valid");
+		code.lda_imm(0x01);
+		code.bne("@return");
+
+		code.label("@valid");
+		code.lda_imm(0x00);
+
+		code.label("@return");
+		code.sta_zp(SRAM_VALID);
+		code.jmp(fh::ROM::PPU_WaitUntilFlushed);
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+	}
 }
 
 // installs SRAM save support
 void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
-	
-	constexpr word ShowMantraInputScreen{ 0x909d };
-	constexpr word iScriptActionShowMantra{ 0x8737 };
-	
-	word cpu_addr{ 0x909d };
+
+	word cpu_addr{ Mantra_Load };
 
 	const word table_addr{ cpu_addr };
 	cpu_addr = install_SRAM_Ranges_table(p_rom, cpu_addr, p_hack);
@@ -323,10 +369,12 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	const word load_addr{ cpu_addr };
 	cpu_addr = install_SRAM_Load(p_rom, cpu_addr, copy_ranges_addr);
 
-	klib::Asm6502 code;
-	code.jsr(save_addr);
-	code.nop(26);
-	code.apply_hack_and_clear(p_rom, 12, iScriptActionShowMantra);
+	const word startup_validate_addr{ cpu_addr };
+	cpu_addr = install_SRAM_ValidateOnStartup(p_rom, startup_validate_addr, validate_addr);
 
+	install_SRAM_ShowMantra(p_config, p_rom, save_addr);
+	install_SRAM_ChooseContinue(p_rom, load_addr);
+
+	// update SRAM-bit in the ROM header
 	p_rom[6] |= 0x02;
 }
