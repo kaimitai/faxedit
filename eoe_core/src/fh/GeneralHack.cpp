@@ -63,6 +63,100 @@ namespace {
 					name, klib::str::enum_to_string(p_type)));
 		}
 	}
+
+	std::vector<std::string> split_value(const std::string& p_value, char p_delim) {
+		std::vector<std::string> result;
+
+		for (const auto& elem : klib::str::split_string(p_value, p_delim))
+			result.push_back(klib::str::trim(elem));
+
+		return result;
+	}
+
+	std::vector<std::vector<std::string>> split_twice_value(
+		const std::string& p_value, char p_delim_outer, char p_delim_inner) {
+
+		std::vector<std::vector<std::string>> result;
+
+		for (const auto& elem : split_value(p_value, p_delim_outer))
+			result.push_back(split_value(elem, p_delim_inner));
+
+		return result;
+	}
+
+	std::vector<std::pair<byte, std::optional<byte>>> parse_byte_optional_byte(
+		const std::string& p_value, const std::string& p_id) {
+
+		std::vector<std::pair<byte, std::optional<byte>>> result;
+
+		for (const auto& vec : split_twice_value(p_value, '+', ':')) {
+			if (vec.empty() || vec.size() > 2)
+				throw std::runtime_error("invalid parameter format for " + p_id);
+
+			const int first{ klib::str::parse_numeric(vec[0]) };
+			if (first < 0 || first > 0xff)
+				throw std::runtime_error(std::format(
+					"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[0]));
+
+			std::optional<byte> second;
+			if (vec.size() == 2) {
+				const int value{ klib::str::parse_numeric(vec[1]) };
+				if (value < 0 || value > 0xff)
+					throw std::runtime_error(std::format(
+						"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[1]));
+
+				second = static_cast<byte>(value);
+			}
+
+			result.emplace_back(static_cast<byte>(first), second);
+		}
+
+		return result;
+	}
+
+	std::vector<std::pair<word, byte>> parse_word_byte(
+		const std::string& p_value, const std::string& p_id) {
+
+		std::vector<std::pair<word, byte>> result;
+
+		for (const auto& vec : split_twice_value(p_value, '+', ':')) {
+			if (vec.size() != 2)
+				throw std::runtime_error("invalid parameter format for " + p_id);
+
+			const int first{ klib::str::parse_numeric(vec[0]) };
+			if (first < 0 || first > 0xffff)
+				throw std::runtime_error(std::format(
+					"General hack parameter '{}' element '{}' is not a valid word", p_id, vec[0]));
+
+			result.emplace_back(
+				static_cast<word>(first),
+				klib::str::parse_byte(vec[1]));
+		}
+
+		return result;
+	}
+
+	std::vector<std::vector<byte>> parse_twice_bytes(
+		const std::string& p_value, const std::string& p_id, std::size_t p_inner_size) {
+
+		std::vector<std::vector<byte>> result;
+
+		for (const auto& vec : split_twice_value(p_value, '+', ':')) {
+			std::vector<byte> inner_bytes;
+
+			for (const auto& str : vec)
+				inner_bytes.push_back(klib::str::parse_byte(str));
+
+			if (p_inner_size != 0 && inner_bytes.size() != p_inner_size)
+				throw std::runtime_error(std::format(
+					"Hack parameter '{}' expected list with {} elements, but got {}",
+					p_id, p_inner_size, inner_bytes.size()));
+
+			result.push_back(std::move(inner_bytes));
+		}
+
+		return result;
+	}
 }
 
 fh::GeneralHack::GeneralHack(const std::string& p_type) :
@@ -115,103 +209,31 @@ const std::string& fh::GeneralHack::get_string(const std::string& p_id) const {
 }
 
 std::vector<std::string> fh::GeneralHack::split(const std::string& p_id, char p_delim) const {
-	std::vector<std::string> result;
-
-	for (const auto& elem : klib::str::split_string(get_string(p_id), p_delim))
-		result.push_back(klib::str::trim(elem));
-
-	return result;
+	return split_value(get_string(p_id), p_delim);
 }
 
 std::vector<std::vector<std::string>> fh::GeneralHack::split_twice(const std::string& p_id,
 	char p_delim_outer, char p_delim_inner) const {
-	std::vector<std::vector<std::string>> result;
-
-	const auto outer{ split(p_id, p_delim_outer) };
-
-	for (const auto& elem : outer) {
-		const auto inner_raw{ klib::str::split_string(elem, p_delim_inner) };
-		std::vector<std::string> inner;
-
-		for (const auto& inner_elem : inner_raw)
-			inner.push_back(klib::str::trim(inner_elem));
-
-		result.push_back(inner);
-	}
-
-	return result;
+	return split_twice_value(get_string(p_id), p_delim_outer, p_delim_inner);
 }
 
 std::vector<std::pair<byte, std::optional<byte>>> fh::GeneralHack::split_byte_optional_byte(
 	const std::string& p_id) const {
-	std::vector<std::pair<byte, std::optional<byte>>> result;
-
-	for (const auto& vec : split_twice(p_id)) {
-		if (vec.empty() || vec.size() > 2)
-			throw std::runtime_error("invalid parameter format for " + p_id);
-
-		const int first{ klib::str::parse_numeric(vec[0]) };
-		if (first < 0 || first > 0xff)
-			throw std::runtime_error(std::format(
-				"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[0]));
-
-		std::optional<byte> second;
-		if (vec.size() == 2) {
-			const int value{ klib::str::parse_numeric(vec[1]) };
-			if (value < 0 || value > 0xff)
-				throw std::runtime_error(std::format(
-					"General hack parameter '{}' element '{}' is not a valid byte", p_id, vec[1]));
-			second = static_cast<byte>(value);
-		}
-
-		result.emplace_back(static_cast<byte>(first), second);
-	}
-
-	return result;
+	return parse_byte_optional_byte(get_string(p_id), p_id);
 }
 
 std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::string& p_id) const {
-	std::vector<std::pair<word, byte>> result;
-
-	for (const auto& vec : split_twice(p_id)) {
-		if (vec.size() != 2)
-			throw std::runtime_error("invalid parameter format for " + p_id);
-
-		const int first{ klib::str::parse_numeric(vec[0]) };
-		if (first < 0 || first > 0xffff)
-			throw std::runtime_error(std::format(
-				"General hack parameter '{}' element '{}' is not a valid word", p_id, vec[0]));
-
-		result.push_back(std::make_pair(first, klib::str::parse_byte(vec[1])));
-	}
-
-	return result;
+	return parse_word_byte(get_string(p_id), p_id);
 }
 
 std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::string& p_id,
 	const std::string& p_default) const {
-	return split_word_byte(has_param(p_id) ? get_string(p_id) : p_default);
+	return parse_word_byte(string_or(p_id, p_default), p_id);
 }
 
 std::vector<std::vector<byte>> fh::GeneralHack::split_twice_bytes(const std::string& p_id,
-	std::size_t inner_size) const {
-	const auto vec2d{ split_twice(p_id) };
-
-	std::vector<std::vector<byte>> result;
-
-	for (const auto& vec : vec2d) {
-		std::vector<byte> inner_bytes;
-		for (const auto& str : vec)
-			inner_bytes.push_back(klib::str::parse_byte(str));
-
-		if (inner_size != 0 && inner_bytes.size() != inner_size)
-			throw std::runtime_error(std::format("Hack parameter '{}' expected list with {} elements, but got {}",
-				p_id, inner_size, inner_bytes.size()));
-		else
-			result.push_back(inner_bytes);
-	}
-
-	return result;
+	std::size_t p_inner_size) const {
+	return parse_twice_bytes(get_string(p_id), p_id, p_inner_size);
 }
 
 // default value helpers

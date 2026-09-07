@@ -1834,7 +1834,7 @@
 	</byte_to_string_maps>
 	<strings>
 		<string name="sram_start_screen_attrs" region="us,eu,us-rev-a" value="addr=$23ec,valid=$50+$50,invalid=$5f+$5f" />
-		<string name="sram_start_screen_attrs" region="jp,en-transl" value="addr=$23eb,valid=$$50+$50+$10,invalid=$d5+$f5+$5f" />
+		<string name="sram_start_screen_attrs" region="jp,en-transl" value="addr=$23eb,valid=$05+$05+$40,invalid=$f5+$f5+$75" />
 	</strings>
 	<string_to_string_maps>
 		<!-- built-in extended script opcode signatures - do not modify! -->
