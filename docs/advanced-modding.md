@@ -210,6 +210,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | IfAddrBetween | Short, Byte, Byte, Label | Jumps to label if value at cpu-address lies between the byte operands | IfAddrBetween $03d1 2 5 @music_no_is_between_2_and_5 |
 | SetAddr | Short, Byte | Sets value at given cpu-address (must be RAM) to the byte value given | SetAddr $03d1 5 ; set music to 5 |
 | AtlasDevRandomVar | Byte, Byte | Stores a value from 0 through Maximum in a script register, every value equally likely to within one part in 256; the roll steps the game's own random offset and mixes in the frame counter, so repeated rolls differ and a roll is as random as the frame the player acted on | AtlasDevRandomVar 0 5 ; register 0 becomes 0, 1, 2, 3, 4 or 5 |
+| AtlasDevCopyVar | Byte, Byte | Copies one script register into another; an invalid register on either side does nothing | AtlasDevCopyVar 0 3 ; register 3 becomes a copy of register 0 |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
 | AtlasDevFadeIn | Byte, Byte | Fades the background/UI palette back in over the given number of NMI frames, reversing the given stage depth (1-4) | AtlasDevFadeIn 60 4 ; fades back in over 60 frames |
@@ -377,6 +378,9 @@ maximum, every value equally likely to within one part in 256; a chance in 256
 is one roll to 255 followed by
 ```AtlasDevIfVarLess```, so ```AtlasDevRandomVar 0 255``` and
 ```AtlasDevIfVarLess 0 64 @lucky``` branch one time in four.
+```AtlasDevCopyVar``` copies one register into another, so a value can be kept
+before ```AtlasDevAddVar``` changes it; swapping two registers is three copies
+through a spare one.
 
 #### AtlasDev dialogue opcodes
 

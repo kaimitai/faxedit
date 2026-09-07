@@ -741,6 +741,29 @@ word fh::HackManager::apply_AtlasDevRandomVar(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevCopyVar Source Destination: copies one script register into
+// another. An invalid register on either side consumes both operands and
+// does nothing.
+word fh::HackManager::apply_AtlasDevCopyVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(p_var_operand_helper_addr); // X = source, A = destination, C = invalid source
+	code.bcs("@done");
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(Vars);
+	code.sta_abs_y(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 namespace {
 
 	// The AtlasDev visual effects declare their signature by name in the
@@ -4858,13 +4881,13 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	const std::set<HackLib> VAR_OPERAND_REQUIRED{
 	HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 	HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
-	HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar,
+	HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar, HackLib::AtlasDevCopyVar,
 	HackLib::AtlasDevVarBitOp, HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
 	HackLib::AtlasDevIfVarMask };
 	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
 		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
-		HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar,
+		HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar, HackLib::AtlasDevCopyVar,
 		HackLib::AtlasDevShowNumberInMessage, HackLib::AtlasDevShowChoiceToVar,
 		HackLib::AtlasDevShowMessageFromVar, HackLib::AtlasDevCountActiveEntities,
 		HackLib::AtlasDevFindEntity, HackLib::AtlasDevEntityFieldToVar,
@@ -5071,6 +5094,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevRandomVar:
 			cpu_addr = apply_AtlasDevRandomVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
+			break;
+		case HackLib::AtlasDevCopyVar:
+			cpu_addr = apply_AtlasDevCopyVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
 			break;
 
 		case HackLib::AtlasDevShakeScreen: {
