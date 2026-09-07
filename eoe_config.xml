@@ -1869,6 +1869,8 @@
 			<entry key="AtlasDevIfVarEqual" value="Args=Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfVarLess" value="Args=Byte+Byte,Flow=Jump" />
 			<entry key="AtlasDevIfVarGreaterEqual" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="AtlasDevRandomVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevCopyVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevShakeScreen" value="Args=Byte+Byte+Byte" />
 			<entry key="AtlasDevFadeOut" value="Args=Byte+Byte" />
 			<entry key="AtlasDevFadeIn" value="Args=Byte+Byte" />

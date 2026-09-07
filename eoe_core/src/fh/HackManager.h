@@ -29,7 +29,7 @@ namespace fh {
 		JSR, Return, ForceDoor, IfYX, IfDoorYX,
 		IfAddrEquals, IfAddrBetween, SetAddr,
 		AtlasDevSetVar, AtlasDevAddVar, AtlasDevSubVar,
-		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual,
+		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual, AtlasDevRandomVar, AtlasDevCopyVar,
 		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
 		AtlasDevSetMusic, AtlasDevPlaySFX, AtlasDevIfMusic,
 		AtlasDevShowSequentialMessages, AtlasDevShowNumberInMessage, AtlasDevShowChoiceToVar, AtlasDevClearPortrait, AtlasDevEntitySayMessage, AtlasDevShowMessageFromVar, AtlasDevHideTextbox, AtlasDevSetPortrait,
@@ -119,6 +119,8 @@ namespace fh {
 		word apply_AtlasDevIfVarEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevIfVarLess(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevIfVarGreaterEqual(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevRandomVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevCopyVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 
 		word apply_AtlasDevShakeScreen(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevFadeOut(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -161,10 +163,10 @@ namespace fh {
 		word apply_AtlasDevGetLocationToVars(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevGetPlayerPositionToVars(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, word helper_get_player_block_pos_addr) const;
-		word apply_AtlasDevVarBitOp(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevVarShift(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevClampVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
-		word apply_AtlasDevIfVarMask(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevVarBitOp(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevVarShift(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevClampVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevIfVarMask(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevIfPlayerFacing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfPlayerClimbing(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfPlayerGrounded(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
