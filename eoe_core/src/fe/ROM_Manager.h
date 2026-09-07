@@ -124,6 +124,7 @@ namespace fe {
 			const std::pair<std::size_t, std::size_t>& p_range,
 			byte p_free_value = 0xff, std::size_t p_cushion = 1);
 		static std::vector<std::pair<std::size_t, std::size_t>> parse_bank_15_free_ranges(const fe::Config& p_config);
+		static bool is_sram_enabled(const std::vector<byte>& p_rom);
 
 		// caching utils
 		std::size_t get_music_count(const fe::Config& p_config, const std::vector<byte>& p_rom) const;

@@ -174,11 +174,11 @@ std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::s
 	std::vector<std::pair<word, byte>> result;
 
 	for (const auto& vec : split_twice(p_id)) {
-		if (vec.empty() || vec.size() > 2)
+		if (vec.size() != 2)
 			throw std::runtime_error("invalid parameter format for " + p_id);
 
 		const int first{ klib::str::parse_numeric(vec[0]) };
-		if(first < 0 || first > 0xffff)
+		if (first < 0 || first > 0xffff)
 			throw std::runtime_error(std::format(
 				"General hack parameter '{}' element '{}' is not a valid word", p_id, vec[0]));
 
@@ -186,6 +186,11 @@ std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::s
 	}
 
 	return result;
+}
+
+std::vector<std::pair<word, byte>> fh::GeneralHack::split_word_byte(const std::string& p_id,
+	const std::string& p_default) const {
+	return split_word_byte(has_param(p_id) ? get_string(p_id) : p_default);
 }
 
 std::vector<std::vector<byte>> fh::GeneralHack::split_twice_bytes(const std::string& p_id,

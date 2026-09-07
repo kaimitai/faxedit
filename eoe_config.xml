@@ -411,8 +411,24 @@
 		<const name="rom_findsellmenuentry" value="$8704" />
 		<const name="rom_findsellmenuentry_tax" region="jp,en-transl" value="$8713" />
 		<const name="rom_findsellmenuentry_tax" value="$8716" />
+		<const name="rom_iscriptactionshowmantra" region="jp,en-transl" value="$8734" />
+		<const name="rom_iscriptactionshowmantra" value="$8737" />
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" region="jp,en-transl" value="$8b5f" />
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" value="$8b87" />
+		<const name="rom_mantraload" region="jp,en-transl" value="$99cd" />
+		<const name="rom_mantraload" value="$95e9" />
+		<const name="rom_startscreen_draw" region="jp,en-transl" value="$a236" />
+		<const name="rom_startscreen_draw" region="us-rev-a,eu" value="$9e6c" />
+		<const name="rom_startscreen_draw" value="$9e21" />
+		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="us" value="$9e80" />
+		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="us-rev-a,eu" value="$9ecb" />
+		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="jp,en-transl" value="$a295" />
+		<const name="rom_startscreen_defaultselection" region="jp,en-transl" value="$a2d1" />
+		<const name="rom_startscreen_defaultselection" region="us-rev-a,eu" value="$9f07" />
+		<const name="rom_startscreen_defaultselection" value="$9ebc" />
+		<const name="rom_startscreen_inputselect" region="jp,en-transl" value="$a34a" />
+		<const name="rom_startscreen_inputselect" region="us-rev-a,eu" value="$9f95" />
+		<const name="rom_startscreen_inputselect" value="$9f4a" />
 		<!-- bank 15 ROM cpu addresses -->
 		<const name="textbox_show_next_char_lda_01" region="eu,us,us-rev-a" value="0xf472" />
 		<const name="textbox_show_next_char_if_ready_timer_const" region="eu,us,us-rev-a" value="0xf49f" />
@@ -425,6 +441,10 @@
 		<const name="rom_player_exphudredraw" region="jp,en-transl" value="$fa3d" />
 		<const name="rom_player_exphudredraw" value="$f975" />
 		<const name="rom_player_isclimbing" value="$ecf6" />
+		<const name="rom_ppu_writetilesfromchrram" region="jp,en-transl" value="$f966" />
+		<const name="rom_ppu_writetilesfromchrram" value="$f89e" />
+		<const name="rom_choosecontinue_targetaddr" region="jp,en-transl" value="$fd55" />
+		<const name="rom_choosecontinue_targetaddr" value="$fc8d" />
 		<!-- These PPU helpers move in the Japanese fixed bank. -->
 		<const name="rom_ppu_address_from_pos" region="jp,en-transl" value="$f8cc" />
 		<const name="rom_ppu_address_from_pos" value="$f804" />
@@ -1813,7 +1833,8 @@
 		</byte_to_string_map>
 	</byte_to_string_maps>
 	<strings>
-		<string name="sram_start_screen_attrs" region="us" value="addr=$23ec,valid=$50+$50,invalid=$5f+$5f" />
+		<string name="sram_start_screen_attrs" region="us,eu,us-rev-a" value="addr=$23ec,valid=$50+$50,invalid=$5f+$5f" />
+		<string name="sram_start_screen_attrs" region="jp,en-transl" value="addr=$23eb,valid=$$50+$50+$10,invalid=$d5+$f5+$5f" />
 	</strings>
 	<string_to_string_maps>
 		<!-- built-in extended script opcode signatures - do not modify! -->

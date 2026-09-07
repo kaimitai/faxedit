@@ -515,12 +515,14 @@ fe::Bank15PatchResult fe::ROM_Manager::encode_bank_15_data(const fe::Config& p_c
 	ptrs.push_back(p_config.pointer(c::ID_SPAWN_SPRITE_SET_PTR));
 
 	// patch the bit count part of the mantra - it needs to be wide enough to encode/decode all spawns
-	byte l_bits{ bits_needed(p_game.m_spawn_locations.size()) };
+	if (!is_sram_enabled(p_rom)) {
+		byte l_bits{ bits_needed(p_game.m_spawn_locations.size()) };
 
-	if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET))
-		p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET)) = l_bits;
-	if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET))
-		p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
+		if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET))
+			p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_DECODE_OFFSET)) = l_bits;
+		if (p_config.has_constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET))
+			p_rom.at(p_config.constant(c::ID_SPAWN_BIT_COUNT_ENCODE_OFFSET)) = l_bits;
+	}
 
 	// pack all building scene data
 	std::vector<byte> bld_scene_pal, bld_scene_tileset, bld_scene_pos, bld_scene_mus;
@@ -628,7 +630,7 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 		if (p_game.m_tileset_type == TilesetType::Doubled) {
 			const auto& secondary{ p_game.m_tilesets.at(i + tileset_count) };
 
-			if (secondary.start_idx != primary.start_idx ||	secondary.tiles.size() != primary.tiles.size()) {
+			if (secondary.start_idx != primary.start_idx || secondary.tiles.size() != primary.tiles.size()) {
 				throw std::runtime_error(std::format("Tileset {} and doubled tileset {} must have identical metadata",
 					i, i + tileset_count));
 			}
@@ -1011,4 +1013,8 @@ std::vector<std::pair<std::size_t, std::size_t>> fe::ROM_Manager::parse_bank_15_
 	}
 
 	return free_ranges;
+}
+
+bool fe::ROM_Manager::is_sram_enabled(const std::vector<byte>& p_rom) {
+	return p_rom.at(6) & 0x02;
 }

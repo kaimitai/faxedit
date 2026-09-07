@@ -25,7 +25,6 @@ namespace fh {
 		constexpr word WindowClose{ 0x9002 };
 		constexpr word Text_ContinueGate{ 0x9956 };
 		constexpr word TextGridLay{ 0x9910 };
-		constexpr word StartScreen_DrawAttributes{ 0x9e80 };
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
@@ -108,7 +107,6 @@ namespace fh {
 		constexpr word PPUAddressFromPos{ 0xf804 };
 		constexpr word PPUAdvanceRow{ 0xf826 };
 		constexpr word PPUQueuePayload{ 0xf845 };
-		constexpr word PPU_WriteTilesFromCHRRAM{ 0xf89e };
 		// One vanilla caller; inputs $ea/$eb tile position, $ec/$ed/$ee value,
 		// Y digit count 1..7.  Emits through the buffered PPU queue.
 		constexpr word Number_DrawAtPos{ 0xfa03 };
@@ -332,10 +330,18 @@ namespace fh {
 		constexpr char ID_ROM_FINDSELLMENUENTRY[]{ "rom_findsellmenuentry" };
 		constexpr char ID_ROM_FINDSELLMENUENTRY_TAX[]{ "rom_findsellmenuentry_tax" };
 		constexpr char ID_ROM_PLAYERMENU_HANDLEINVENTORYMENUINPUT_CMP_WORLDNO[]{ "rom_playermenu_handleinventorymenuinput_cmp_worldno" };
+		constexpr char ID_ISCRIPTACTIONSHOWMANTRA[]{ "rom_iscriptactionshowmantra" };
+		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
+		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };
+		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
+		constexpr char ID_STARTSCREEN_DEFAULTSELECTION[]{ "rom_startscreen_defaultselection" };
+		constexpr char ID_STARTSCREEN_INPUTSELECT[]{ "rom_startscreen_inputselect" };
 
 		// bank 15 cpu addresses
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01[]{ "textbox_show_next_char_lda_01" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST[]{ "textbox_show_next_char_if_ready_timer_const" };
+		constexpr char ID_CHOOSECONTINUE_TARGETADDR[]{ "rom_choosecontinue_targetaddr" };
+		constexpr char ID_PPU_WRITETILESFROMCHRRAM[]{ "rom_ppu_writetilesfromchrram" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
