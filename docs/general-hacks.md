@@ -38,6 +38,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
   - [AtlasDevTimeOfDay](#atlasdevtimeofday)
+  - [AtlasDevJumpControl](#atlasdevjumpcontrol)
 
 <hr>
 
@@ -334,4 +335,50 @@ clock, so re-arming starts the day at the start hour again.
 
 ```text
 AtlasDevTimeOfDay hourlength=600 start=6 cell=$2038
+```
+
+
+### AtlasDevJumpControl
+
+Coyote time, a jump buffer, a short hop on early release and optional
+extra jumps in the air, for the hero's jump. Step off a ledge and A still
+jumps for `coyote` frames. Press A up to `buffer` frames before landing
+and the jump fires on the first grounded frame. Release A after
+`shorthop` ascent phases and the arc comes down along the same curve it
+went up, so a tap is a one-tile hop and a hold is the full jump.
+`airjumps` extra jumps are allowed in the air, reloaded on landing and
+never while the Wing Boots are flying. Each parameter is 0 to 15 and 0
+turns that feature off; with all four at 0 nothing is installed.
+
+Three vanilla instructions in the bank 15 jump code are retargeted to
+stubs placed with the other general hacks, 152 bytes with the defaults
+and 214 with every feature on. The stubs run in the main loop and cost
+nothing in vblank. One RAM byte at $04df holds the buffer countdown and
+the air jumps left; the fall grace counter at $b1 and bit 1 of $a4 are
+used with their vanilla meaning. The sites are identical in the US, US
+rev A, EU and JP ROMs; the installer verifies them and refuses a ROM
+where they differ. Jumps made with A held are unchanged frame for frame.
+Does not require AtlasDevFrameScheduler unless `switchable` is set.
+
+With `switchable=1` the hack becomes a script controlled client of
+AtlasDevFrameScheduler, which must then appear earlier in the list. It
+claims kind 6 in the next free boot slot, every stub runs only while some
+slot holds that kind, and `AtlasDevArmRole 6, 0` switches jump control off
+mid game while `AtlasDevArmRole 6, 1` switches it back on; switching off
+also clears its RAM byte. `armed=0` installs it off until a script arms it.
+This costs 82 bytes of gates and, while armed, the tick's call into the
+slot's stub vector every frame.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `coyote` | `5` | frames after leaving a ledge during which A still jumps, 0 to 15 |
+| `buffer` | `5` | frames before landing during which an A press is remembered, 0 to 15 |
+| `shorthop` | `3` | ascent phases before releasing A shortens the jump, 0 to 15; 3 is 16 pixels, one tile |
+| `airjumps` | `0` | extra jumps allowed in the air, 0 to 15 |
+| `switchable` | `0` | `1` gates the hack on scheduler kind 6 so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
+| `armed` | `1` | with `switchable=1`, whether the hack is on at boot |
+
+```text
+AtlasDevJumpControl coyote=5 buffer=5 shorthop=3 airjumps=1
+AtlasDevJumpControl switchable=1 armed=0
 ```

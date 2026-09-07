@@ -195,6 +195,7 @@ namespace klib {
 		void adc_ind_y(byte p_addr);
 		void sbc_imm(byte p_value);
 		void sbc_abs(word p_addr);
+		void sbc_zp(byte p_addr);
 		void sbc_abs_x(word p_addr);
 		void sta_abs_y(word p_addr);
 		void ldy_abs_x(word p_addr);
