@@ -256,6 +256,13 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevIfPlayerDead | Label | Jumps while Faxanadu's reserved death-dialogue script (root 31) is executing | AtlasDevIfPlayerDead @dead |
 | AtlasDevIfSelectedWeapon | Byte, Label | Jumps when the selected weapon's category-local id equals the operand | AtlasDevIfSelectedWeapon 2 @giant_blade |
 | AtlasDevIfSelectedMagic | Byte, Label | Jumps when the selected magic's category-local id equals the operand | AtlasDevIfSelectedMagic 2 @fire |
+| AtlasDevIfSelectedItem | Item, Label | Jumps when the selected usable item is this one; takes the item define | AtlasDevIfSelectedItem ITEM_RED_POTION @potion_ready |
+| AtlasDevIfEquippedItem | Item, Label | Jumps when the item is the selected one in its own category, weapon through usable item | AtlasDevIfEquippedItem WEAPON_GIANT_BLADE @blade |
+| AtlasDevEquipItem | Item | Equips an owned item through the game's equip routine; special, unowned or already selected items do nothing | AtlasDevEquipItem WEAPON_LONG_SWORD |
+| AtlasDevRemoveAllItems | Item | Takes every carried copy of an item through the game's removal routine; special items are left alone | AtlasDevRemoveAllItems ITEM_RED_POTION ; the collector takes your potions |
+| AtlasDevUseSelectedItem | None | Applies the selected usable item's effect (red potion, wing boots, hourglass) like the menu does; anything else does nothing | AtlasDevUseSelectedItem |
+| AtlasDevIfInventoryFull | Label | Jumps when every ordinary category is at capacity (4/4/4/4/8); equipment and special items do not count | AtlasDevIfInventoryFull @no_room |
+| AtlasDevClearCarriedInventory | None | Empties the five ordinary lists; equipment, selections and special items survive | AtlasDevClearCarriedInventory |
 | AtlasDevWaitFrames | Byte | Waits for 0-255 NMI frames; zero is a no-op | AtlasDevWaitFrames 30 |
 | AtlasDevWaitForButtonPress | Byte | Waits for every requested button to be released, then for any requested button's next press edge | AtlasDevWaitForButtonPress $80 |
 | AtlasDevIfButtonHeld | Byte, Label | Jumps when any requested button is held in the latest complete controller sample | AtlasDevIfButtonHeld $40 @holding_b |
@@ -467,6 +474,18 @@ the number or slot index is itself wanted.
 above without reading the table. Bit 7 set is the engine's own free marker, so
 no live entity can carry such an identity, and searching for one would
 otherwise match an empty slot and report it as a find.
+
+#### AtlasDev inventory opcodes
+
+```AtlasDevRemoveAllItems``` is the missing half of ```GetItem```: a fetch quest
+can take what it asked for. It calls the game's removal routine up to eight
+times so stacked copies go too, and refuses special items like the routine
+does. ```AtlasDevEquipItem``` equips through the game's equip routine,
+```AtlasDevIfEquippedItem``` and ```AtlasDevIfSelectedItem``` read the selection
+cells, ```AtlasDevUseSelectedItem``` applies the selected item's effect like
+the menu. ```AtlasDevIfInventoryFull``` and ```AtlasDevClearCarriedInventory```
+only touch the five ordinary lists. Item operands are the item defines
+(```ITEM_RED_POTION```, ```WEAPON_LONG_SWORD```), not category-local ids.
 
 #### AtlasDev player-state conditionals
 

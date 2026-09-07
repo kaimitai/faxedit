@@ -47,6 +47,8 @@ namespace fh {
 		AtlasDevIfPlayerFacing, AtlasDevIfPlayerClimbing, AtlasDevIfPlayerGrounded,
 		AtlasDevIfPlayerAttacking, AtlasDevIfPlayerInvincible, AtlasDevIfPlayerDead,
 		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
+		AtlasDevIfSelectedItem, AtlasDevIfEquippedItem, AtlasDevEquipItem, AtlasDevRemoveAllItems,
+		AtlasDevUseSelectedItem, AtlasDevIfInventoryFull, AtlasDevClearCarriedInventory,
 		AtlasDevWaitFrames, AtlasDevWaitForButtonPress,
 		AtlasDevIfButtonHeld, AtlasDevIfButtonPressed,
 		AtlasDevSetFacing, AtlasDevSetPlayerPosition,
@@ -175,6 +177,13 @@ namespace fh {
 		word apply_AtlasDevIfPlayerDead(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfSelectedWeapon(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfSelectedMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfSelectedItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEquippedItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevEquipItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevRemoveAllItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevUseSelectedItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfInventoryFull(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearCarriedInventory(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevWaitFrames(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevWaitForButtonPress(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfButtonHeld(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
