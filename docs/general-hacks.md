@@ -32,6 +32,7 @@ This document describes the hacks in the current library and their parameters. I
   - [FogRules](#fogrules)
   - [DynamicTilesets](#dynamictilesets)
   - [PoisonPickup](#poisonpickup)
+  - [SRAM](#sram)
   - [TextSpeed](#textspeed)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
@@ -235,6 +236,24 @@ The black potion can be stored and displayed in the inventory, but has no effect
 ```text
 PoisonPickup item=16 script=false
 ```
+
+### SRAM
+
+Adds battery-backed SRAM saving. Progress is saved via iScript opcode `ShowMantra`, replacing the original password-based save system. On the start screen, `CONTINUE` is only available when a valid SRAM save is present.
+
+By default, the saved state matches the progress preserved by the vanilla password system, with additional state needed for a complete SRAM save. The saved RAM ranges can be overridden to preserve additional game state if modders want to preserve other RAM ranges.
+
+| parameter | default                                                     | meaning                                                                                             |
+| --------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `ranges`  | `$039d:42+$042c:2+$0437:1+$0439:1+$04c2:4+$0101:31+$0390:5` | RAM ranges copied to SRAM. Each entry is written as `address:length`, with entries separated by `+` |
+
+Custom save ranges can be supplied if needed, but the default value should be a sensible choice for most:
+
+```text
+SRAM
+```
+
+The text `CONTINUE` on the start screen is colored gray when no valid save is present, otherwise green-ish, at least with the default start screen palette. See config item `sram_start_screen_attrs` in `eoe_config.xml`. Make an override if you want to change this presentation. A PPU-address is given, followed by attribute bytes to push from that address onward. If you want no coloring, you can make this item an empty string in your config override.
 
 ### TextSpeed
 
