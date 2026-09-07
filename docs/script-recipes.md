@@ -44,6 +44,11 @@ mantra load.
 - [A collector - bring me three](#potion-collector)
 - [A merchant who only trades at night](#nocturnal-merchant)
 - [A gambling den - double or nothing](#gambling-den)
+- [A shy witness - one time in four](#shy-witness)
+- [A loot chest with four outcomes](#loot-chest)
+- [Weighted odds - common, uncommon, rare](#weighted-odds)
+- [A gambling den with a random payout](#random-payout)
+- [A chest that is sometimes a mimic](#mimic-chest)
 
 <a name="give-item-once"></a>
 ### An NPC who gives an item once
@@ -785,3 +790,154 @@ Needs: `AtlasDevIfGoldAtLeast`, `IfAddrBetween`
 | --- | --- | --- |
 | `(stake)` | `100` | in the gold check and LoseGold lines |
 | `0 / 127` | `odds` | the frame-counter band that wins |
+
+<a name="shy-witness"></a>
+### A shy witness - one time in four
+
+A roll to 255 and one compare is a chance in 256: below 64 is one time in four. The frame-counter band in Random loot does the same for a coin flip; this form takes any odds, and a second roll in the same script is a different roll.
+
+Needs: `AtlasDevRandomVar`, `AtlasDevIfVarLess`
+
+```asm
+.textbox GENERIC
+    AtlasDevRandomVar 0 255
+    AtlasDevIfVarLess 0 64 @talks
+    Msg "..."
+    End
+@talks:
+    Msg "I saw it.<n>It went<n>north."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `64` | `chance` | out of 256: 64 is one in four, 128 a coin flip, 26 about one in ten |
+
+<a name="loot-chest"></a>
+### A loot chest with four outcomes
+
+One roll, four branches. The register keeps the roll, so the checks can fall through in any order; each talk is as random as the frame the player pressed A on. Swap the GetItem lines for Msg lines and it is a fortune teller who does not repeat herself.
+
+Needs: `AtlasDevRandomVar`, `AtlasDevIfVarEqual`
+
+```asm
+.textbox GENERIC
+    AtlasDevRandomVar 0 3
+    AtlasDevIfVarEqual 0 1 @potion
+    AtlasDevIfVarEqual 0 2 @gold
+    AtlasDevIfVarEqual 0 3 @rare
+    Msg "Dust and<n>cobwebs."
+    End
+@potion:
+    GetItem ITEM_RED_POTION
+    Msg "A red potion."
+    End
+@gold:
+    GetGold 50
+    Msg "Fifty golds."
+    End
+@rare:
+    GetItem ITEM_WING_BOOTS
+    Msg "Wing boots!"
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `3` | `maximum` | outcomes minus one; every value 0..3 is equally likely |
+| `ITEM_RED_POTION / ITEM_WING_BOOTS` | `prizes` | what the good rolls give |
+
+<a name="weighted-odds"></a>
+### Weighted odds - common, uncommon, rare
+
+A roll to 9 split by two thresholds: six values common, three uncommon, one rare. Rolls made in the same script still differ from each other, so a second table can follow this one.
+
+Needs: `AtlasDevRandomVar`, `AtlasDevIfVarLess`
+
+```asm
+.textbox GENERIC
+    AtlasDevRandomVar 0 9
+    AtlasDevIfVarLess 0 6 @common
+    AtlasDevIfVarLess 0 9 @uncommon
+    GetItem ITEM_WING_BOOTS
+    Msg "Rare!"
+    End
+@common:
+    GetItem ITEM_RED_POTION
+    Msg "A potion."
+    End
+@uncommon:
+    GetGold 100
+    Msg "A purse of<n>gold."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `9` | `maximum` | ten equally likely values |
+| `6 / 9` | `thresholds` | below 6 common (60%), below 9 uncommon (30%), the rest rare (10%) |
+
+<a name="random-payout"></a>
+### A gambling den with a random payout
+
+The double-or-nothing den with a fair four-way roll: half the rolls lose the stake, a quarter return it, a quarter triple it.
+
+Needs: `AtlasDevIfGoldAtLeast`, `AtlasDevRandomVar`, `AtlasDevIfVarEqual`
+
+```asm
+.textbox GENERIC
+    AtlasDevIfGoldAtLeast 100 0 0 @stake
+    Msg "Stakes are<n>100. You<n>lack them."
+    End
+@stake:
+    IfMsgPrompt "Roll for<n>100 golds?" @roll
+    Msg "Another<n>time."
+    End
+@roll:
+    LoseGold 100
+    AtlasDevRandomVar 0 3
+    AtlasDevIfVarEqual 0 2 @even
+    AtlasDevIfVarEqual 0 3 @triple
+    Msg "Nothing.<n>The house<n>smiles."
+    End
+@even:
+    GetGold 100
+    Msg "Your stake<n>returns."
+    End
+@triple:
+    GetGold 300
+    Msg "Tripled!<p>Leave now."
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `(stake)` | `100` | in the gold check, LoseGold and the payouts |
+| `2 / 3` | `winning rolls` | of 0..3; add a line for 1 to make it kinder |
+
+<a name="mimic-chest"></a>
+### A chest that is sometimes a mimic
+
+Two chests in three hold a potion; the third bites. The roll decides before anything is given, so the player never gets both.
+
+Needs: `AtlasDevRandomVar`, `AtlasDevIfVarEqual`, `AtlasDevSpawnEntity`, `AtlasDevPlaySFX`
+
+```asm
+.textbox GENERIC
+    AtlasDevRandomVar 0 2
+    AtlasDevIfVarEqual 0 0 @mimic
+    GetItem ITEM_RED_POTION
+    Msg "A red potion."
+    End
+@mimic:
+    AtlasDevPlaySFX 4
+    AtlasDevSpawnEntity $21 $84
+    Msg "The chest<n>bites!"
+    End
+```
+
+| change this | default | meaning |
+| --- | --- | --- |
+| `2` | `maximum` | one mimic in three |
+| `$21` | `monster id` | who bites (SpawnEntity id) |
+| `$84` | `position` | packed YX spawn spot |
