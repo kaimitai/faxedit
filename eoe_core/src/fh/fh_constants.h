@@ -69,6 +69,11 @@ namespace fh {
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
+		// item menu effect tails: clear the selection, use sound, effect, return.
+		// same address in us, us rev a, eu and jp
+		constexpr word UseRedPotionEffect{ 0xc53b };
+		constexpr word UseWingBootsEffect{ 0xc581 };
+		constexpr word UseHourGlassEffect{ 0xc5d0 };
 		constexpr word Area_SetBlocks{ 0xd7c5 };
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };
@@ -317,6 +322,12 @@ namespace fh {
 		constexpr char ID_ROM_PLAYER_RANKREFRESH[]{ "rom_player_rankrefresh" };
 		constexpr char ID_ROM_PLAYER_EXPHUDREDRAW[]{ "rom_player_exphudredraw" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
+		constexpr char ID_ROM_ITEM_DECODECATEGORY[]{ "rom_item_decodecategory" };
+		constexpr char ID_ROM_ITEM_SPECIALIDTABLE[]{ "rom_item_specialidtable" };
+		constexpr char ID_ROM_PLAYER_EQUIP[]{ "rom_player_equip" };
+		constexpr char ID_ROM_PLAYER_LACKSITEM[]{ "rom_player_lacksitem" };
+		constexpr char ID_ROM_PLAYER_REMOVEITEM[]{ "rom_player_removeitem" };
+		constexpr char ID_ROM_INVENTORY_CAPACITIES[]{ "rom_inventory_capacities" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
 		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };

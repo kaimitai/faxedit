@@ -2638,6 +2638,188 @@ word fh::HackManager::apply_AtlasDevIfSelectedMagic(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevIfSelectedItem Item Label: true when the selected usable item is
+// this one. takes the item define, so nothing outside the usable item
+// category matches
+word fh::HackManager::apply_AtlasDevIfSelectedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x80); // usable items are $80..$9f
+	code.bcc("@false");
+	code.cmp_imm(0xa0);
+	code.bcs("@false");
+	code.and_imm(0x1f);
+	code.cmp_abs(RAM::SelectedItem);
+	code.beq("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfEquippedItem Item Label: true when the item is the selected one
+// in its own category (weapon, armour, shield, magic, usable item). the
+// category comes from the item define through the game's decoder, so one
+// opcode covers all five selection cells
+word fh::HackManager::apply_AtlasDevIfEquippedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0); // no selection cell above category 4
+	code.bcs("@false");
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ITEM_DECODECATEGORY)); // A = category
+	code.tay();
+	code.lda_zp(RAM::ZP_e2);
+	code.and_imm(0x1f);
+	code.cmp_abs_y(RAM::SelectedWeapon); // $03bd + category
+	code.beq("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevEquipItem Item: equip an owned item through the game's equip
+// routine. special items, items the player lacks and an already selected
+// item do nothing
+word fh::HackManager::apply_AtlasDevEquipItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0);
+	code.bcs("@done");
+	code.ldx_imm(0x07);
+	code.label("@special");
+	code.cmp_abs_x(cfg_word(p_config, c::ID_ROM_ITEM_SPECIALIDTABLE));
+	code.beq("@done");
+	code.dex();
+	code.bpl("@special");
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ITEM_DECODECATEGORY));
+	code.tay();
+	code.lda_zp(RAM::ZP_e2);
+	code.and_imm(0x1f);
+	code.cmp_abs_y(RAM::SelectedWeapon); // already selected in its category
+	code.beq("@done");
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_LACKSITEM)); // carry set when not owned
+	code.bcs("@done");
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_EQUIP));
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevRemoveAllItems Item: take every carried copy of an item with
+// eight calls of the game's removal routine (eight is the largest category
+// capacity). the routine refuses special items itself
+word fh::HackManager::apply_AtlasDevRemoveAllItems(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0);
+	code.bcs("@done");
+	code.sta_zp(RAM::ZP_e2);
+	code.ldx_imm(0x08);
+	code.label("@remove");
+	code.txa();
+	code.pha();
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_REMOVEITEM));
+	code.pla();
+	code.tax();
+	code.dex();
+	code.bne("@remove");
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevUseSelectedItem: apply the selected usable item's effect like the
+// menu does, entered at the effect tails so the interpreter's pointers are
+// not reloaded mid-script. red potion, wing boots and hourglass; anything
+// else selected does nothing
+word fh::HackManager::apply_AtlasDevUseSelectedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::SelectedItem);
+	code.cmp_imm(0x10); // red potion
+	code.beq("@potion");
+	code.cmp_imm(0x0f); // wing boots
+	code.beq("@boots");
+	code.cmp_imm(0x0d); // hourglass
+	code.bne("@done");
+	code.jsr(ROM::UseHourGlassEffect);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@potion");
+	code.jsr(ROM::UseRedPotionEffect);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@boots");
+	code.jsr(ROM::UseWingBootsEffect);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfInventoryFull Label: true when every ordinary category is at
+// capacity (4/4/4/4/8). equipment cells and special items do not count
+word fh::HackManager::apply_AtlasDevIfInventoryFull(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.ldx_imm(0x04); // items down to weapons
+	code.label("@check");
+	code.lda_abs_x(RAM::InventoryCounts);
+	code.cmp_abs_x(cfg_word(p_config, c::ID_ROM_INVENTORY_CAPACITIES));
+	code.bcc("@not_full"); // one count below capacity is enough
+	code.dex();
+	code.bpl("@check");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@not_full");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevClearCarriedInventory: zero the five ordinary counts, the live
+// lengths the game reads. equipment, selections and special items survive
+word fh::HackManager::apply_AtlasDevClearCarriedInventory(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::Inventory_WeaponsCount);
+	code.sta_abs(RAM::Inventory_ArmorsCount);
+	code.sta_abs(RAM::Inventory_ShieldsCount);
+	code.sta_abs(RAM::Inventory_MagicsCount);
+	code.sta_abs(RAM::Inventory_ItemsCount);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevCountActiveEntities Register
 //
 // Stores how many of the eight entity slots are live, 0..8, into a script
@@ -5302,6 +5484,27 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevIfSelectedMagic:
 			cpu_addr = apply_AtlasDevIfSelectedMagic(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfSelectedItem:
+			cpu_addr = apply_AtlasDevIfSelectedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfEquippedItem:
+			cpu_addr = apply_AtlasDevIfEquippedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevEquipItem:
+			cpu_addr = apply_AtlasDevEquipItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevRemoveAllItems:
+			cpu_addr = apply_AtlasDevRemoveAllItems(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevUseSelectedItem:
+			cpu_addr = apply_AtlasDevUseSelectedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfInventoryFull:
+			cpu_addr = apply_AtlasDevIfInventoryFull(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearCarriedInventory:
+			cpu_addr = apply_AtlasDevClearCarriedInventory(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevWaitFrames:
