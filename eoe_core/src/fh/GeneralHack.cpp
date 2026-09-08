@@ -27,7 +27,7 @@ namespace {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
 		fh::GeneralHackLib::PoisonPickup, fh::GeneralHackLib::TextSpeed,
-		fh::GeneralHackLib::SRAM,
+		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
@@ -53,6 +53,7 @@ namespace {
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold" }},
+		{ fh::GeneralHackLib::BugFixes, {} },
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

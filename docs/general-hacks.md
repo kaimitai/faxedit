@@ -34,6 +34,7 @@ This document describes the hacks in the current library and their parameters. I
   - [PoisonPickup](#poisonpickup)
   - [SRAM](#sram)
   - [TextSpeed](#textspeed)
+  - [BugFixes](#bugfixes)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -197,13 +198,13 @@ DynamicTilesets changes which CHR tileset is loaded; it does not change a world'
 
 ### PoisonPickup
 
-Changes poison pickups so that they add an item to the player's inventory instead of damaging the player. By default, poison becomes the normally unused black potion (`0x11`).
+Changes poison pickups so that they add an item to the player's inventory instead of damaging the player. By default, poison becomes the Red Potion (`0x10`).
 
 The original "touched poison" script is still run by default. Set `script=false` to skip it entirely.
 
 | parameter | default | meaning                                             |
 | --------- | ------- | --------------------------------------------------- |
-| `item`    | `0x11`  | Item ID to add to the inventory                     |
+| `item`    | `0x10`  | Item ID to add to the inventory                     |
 | `sound`   | `0x08`  | Sound effect played when the item is picked up      |
 | `script`  | `true`  | Whether to run the original "touched poison" script |
 
@@ -235,7 +236,7 @@ Vanilla item IDs are:
 | `0x15`        | Fire Crystal  | Not a normal selectable inventory item |
 | `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
 
-The black potion can be stored and displayed in the inventory, but has no effect in the vanilla game. It can be given a purpose by combining `PoisonPickup` with a hack that adds or overrides item-use behavior.
+Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
 
 ```text
 PoisonPickup item=16 script=false
@@ -273,6 +274,20 @@ Changes the text display speed. Lower masks make text display faster. For regula
 
 ```text
 TextSpeed mask=%1
+```
+
+### BugFixes
+
+Fixes several known bugs in the original game:
+
+* The Pendant increases weapon strength by 25% when equipped, instead of when it is not equipped.
+* Picking up the Battle Suit uses the armor inventory count instead of the weapon inventory count.
+* Picking up the Dragon Slayer uses the weapon inventory count instead of the armor inventory count.
+
+This hack has no parameters.
+
+```text
+BugFixes
 ```
 
 ### AtlasDevFrameScheduler

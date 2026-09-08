@@ -31,6 +31,7 @@ namespace fh {
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
 		// bank 14 addresses
+		constexpr word PendantBugBNE{ 0x8879 };
 		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
 		constexpr word SpriteBehavior_BattleSuit_CheckForBosses{ 0xa379 };
 		constexpr word SpriteBehavior_BattleHelmet_CheckForBosses{ 0xa3a9 };
@@ -45,6 +46,8 @@ namespace fh {
 		// bank 15 addresses
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
+		constexpr word Player_PickUpBattleSuit_WeaponsCountBug{ 0xc6f8 };
+		constexpr word Player_PickUpDragonSlayer_ArmoursCountBug{ 0xc738 };
 		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
 		constexpr word Player_PickUpPoison{ 0xc83c };
 		constexpr word Player_PickUpPoison_DamageSoundIndex{ 0xc845 };

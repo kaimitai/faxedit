@@ -16,7 +16,7 @@ namespace fh {
 	enum class GeneralHackLib {
 		FlexibleItems, DynamicTilesets,
 		KillSwitch, SameWorldTransPal2Mus, FogRules, PoisonPickup, TextSpeed,
-		SRAM,
+		SRAM, BugFixes,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems

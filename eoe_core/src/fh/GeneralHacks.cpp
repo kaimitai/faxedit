@@ -619,7 +619,7 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 // can be used in conjunction with "use item" override hacks
 void fh::HackManager::install_PoisonPickup(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
-	const byte item{ p_hack.byte_or("item", 0x11) };
+	const byte item{ p_hack.byte_or("item", 0x10) };
 	const byte sound{ p_hack.byte_or("sound", 0x08) };
 	const bool script{ p_hack.bool_or("script", true) };
 
@@ -661,6 +661,13 @@ word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<
 	code.rts();
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+}
+
+void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
+	klib::Asm6502::apply_word(p_rom, RAM::Inventory_ArmorsCount, 15, ROM::Player_PickUpBattleSuit_WeaponsCountBug);
+	klib::Asm6502::apply_word(p_rom, RAM::Inventory_WeaponsCount, 15, ROM::Player_PickUpDragonSlayer_ArmoursCountBug);
+	constexpr byte OP_BEQ{ 0xf0 };
+	klib::Asm6502::apply_byte(p_rom, OP_BEQ, 14, ROM::PendantBugBNE);
 }
 
 namespace {
@@ -927,6 +934,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::SRAM:
 			install_SRAM(p_config, patched_rom, hack);
+			break;
+		case fh::GeneralHackLib::BugFixes:
+			install_BugFixes(patched_rom);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);
