@@ -276,6 +276,8 @@ A neutral frame scheduler other hacks build on: an NMI tick with three role slot
 
 The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes. At build time, a boot slot is unclaimed only when its arm byte is zero and its PRE vector still points to the scheduler's default stub. A role installer reuses only a compatible existing kind or claims the first unclaimed slot, refusing without modifying the ROM when none is available. The single POST lane similarly refuses a second claimant.
 
+Kinds `$80` to `$ff` are gate only: a slot holding one is armed, cleared and tested exactly like any other kind, but the tick never calls its vector, so a hack that only needs a runtime switch costs the tick nothing beyond the slot test. AtlasDevJumpControl with `switchable=1` is such a client, on kind `$86`.
+
 The current runtime opcodes do not retain persistent kind-to-slot affinity: when arming an inactive kind, they select the first zero RAM slot. Runtime composition is therefore safe only while candidate slots use stub PRE vectors. A future scheduler ABI extension is required before boot-off non-stub PRE roles can reserve a lane across runtime disarm/rearm operations.
 
 No parameters.
@@ -362,12 +364,12 @@ Does not require AtlasDevFrameScheduler unless `switchable` is set.
 
 With `switchable=1` the hack becomes a script controlled client of
 AtlasDevFrameScheduler, which must then appear earlier in the list. It
-claims kind 6 in the next free boot slot, every stub runs only while some
-slot holds that kind, and `AtlasDevArmRole 6, 0` switches jump control off
-mid game while `AtlasDevArmRole 6, 1` switches it back on; switching off
-also clears its RAM byte. `armed=0` installs it off until a script arms it.
-This costs 82 bytes of gates and, while armed, the tick's call into the
-slot's stub vector every frame.
+claims kind `$86` in the next free boot slot, every stub runs only while
+some slot holds that kind, and `AtlasDevArmRole $86, 0` switches jump
+control off mid game while `AtlasDevArmRole $86, 1` switches it back on;
+switching off also clears its RAM byte. `armed=0` installs it off until a
+script arms it. The kind is gate only, so the tick never calls the slot;
+the cost is 82 bytes of gates in the stubs.
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -375,7 +377,7 @@ slot's stub vector every frame.
 | `buffer` | `5` | frames before landing during which an A press is remembered, 0 to 15 |
 | `shorthop` | `3` | ascent phases before releasing A shortens the jump, 0 to 15; 3 is 16 pixels, one tile |
 | `airjumps` | `0` | extra jumps allowed in the air, 0 to 15 |
-| `switchable` | `0` | `1` gates the hack on scheduler kind 6 so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
+| `switchable` | `0` | `1` gates the hack on scheduler kind `$86` so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
 | `armed` | `1` | with `switchable=1`, whether the hack is on at boot |
 
 ```text

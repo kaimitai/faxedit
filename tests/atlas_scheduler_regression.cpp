@@ -344,6 +344,42 @@ namespace {
 		require_jump_control_refusal("Unknown parameter", "cayote=5", [](auto&) {});
 	}
 
+	void test_scheduler_skips_gate_only_kinds() {
+		auto rom{ vanilla_rom() };
+		require(install_scheduler(rom) == 156, "the gate-only revision is not 156 bytes");
+		const auto off{ scheduler_file_offset(rom) };
+		// every slot test is LDA slot / BEQ +5 / BMI +3 / JSR vector, so an
+		// empty slot and a gate-only kind both skip the call
+		for (word slot : { fh::afs::RAM_SLOT0, fh::afs::RAM_SLOT1, fh::afs::RAM_SLOT2 }) {
+			const std::array<byte, 8> dispatch{ 0xad, static_cast<byte>(slot & 0xff), static_cast<byte>(slot >> 8),
+				0xf0, 0x05, 0x30, 0x03, 0x20 };
+			bool found{ false };
+			for (std::size_t i{ 0 }; i + dispatch.size() <= fh::afs::CORE_SIZE && !found; ++i) {
+				bool match{ true };
+				for (std::size_t j{ 0 }; j < dispatch.size(); ++j)
+					if (rom[off + i + j] != dispatch[j]) { match = false; break; }
+				found = match;
+			}
+			require(found, "a slot test lacks the gate-only BMI");
+		}
+		require(read_word(rom, off + fh::afs::OFF_PRE0) == SCHEDULER_ORG + fh::afs::OFF_STUB
+			&& read_word(rom, off + fh::afs::OFF_PRE2) == SCHEDULER_ORG + fh::afs::OFF_STUB,
+			"PRE operands do not sit at the published offsets");
+		require(fh::afs::GATE_ONLY_KIND == 0x80, "gate-only kinds start at $80");
+		// an earlier revision's hook is refused by name, not as a foreign byte
+		auto old{ vanilla_rom() };
+		const auto h1{ klib::Asm6502::get_file_offset(15, 0xc9af) };
+		old[h1] = 0x20; old[h1 + 1] = 0xd4; old[h1 + 2] = 0xfc; old[h1 + 3] = 0xea; old[h1 + 4] = 0xea;
+		bool threw{ false };
+		try {
+			install_scheduler(old);
+		}
+		catch (const std::runtime_error& e) {
+			threw = std::string(e.what()).find("earlier revision") != std::string::npos;
+		}
+		require(threw, "an installed hook was not reported as an earlier revision");
+	}
+
 	void test_jump_control_switchable_is_a_scheduler_client() {
 		// without the scheduler: refused, untouched
 		require_jump_control_refusal("requires the AtlasDevFrameScheduler", "switchable=1", [](auto&) {});
@@ -354,7 +390,7 @@ namespace {
 		const auto before{ rom };
 		const auto size{ install_jump_control(rom, "switchable=1", SCHEDULER_ORG + fh::afs::CORE_SIZE) };
 		require(size == 152 + 82, "switchable default body is not 234 bytes");
-		require(rom[scheduler + fh::afs::OFF_ARM0] == 0x06, "switchable did not arm kind 6 in slot 0");
+		require(rom[scheduler + fh::afs::OFF_ARM0] == 0x86, "switchable did not arm kind $86 in slot 0");
 		require(rom[scheduler + fh::afs::OFF_ARM0 + 1] == 0x00, "switchable armed more than one slot");
 		// armed=0 installs the gates but claims no slot
 		auto dormant{ jump_rom() };
@@ -419,6 +455,7 @@ int main(int argc, char** argv) {
 		test_jump_control_installs_three_hooks_and_advances_the_cursor();
 		test_jump_control_refuses_atomically();
 		test_jump_control_switchable_is_a_scheduler_client();
+		test_scheduler_skips_gate_only_kinds();
 		std::cout << "atlas scheduler regressions: ok\n";
 		return 0;
 	}

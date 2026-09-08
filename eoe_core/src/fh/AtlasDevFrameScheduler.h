@@ -37,15 +37,21 @@ namespace fh::afs {
 	// kind-to-slot affinity and are composition-safe only while candidate
 	// zero RAM slots have stub PRE vectors. persistent affinity for boot-off
 	// non-stub PRE roles requires a future ABI extension.
-	constexpr std::size_t CORE_SIZE{ 150 };
-	constexpr std::size_t OFF_TRAMP{ 0x6d };       // trampoline entry (hook 2 target)
-	constexpr std::size_t OFF_PRE0{ 0x55 };        // jsr operand, slot 0
-	constexpr std::size_t OFF_PRE1{ 0x5d };        // jsr operand, slot 1
-	constexpr std::size_t OFF_PRE2{ 0x65 };        // jsr operand, slot 2
-	constexpr std::size_t OFF_POST{ 0x87 };        // jsr operand, POST lane
-	constexpr std::size_t OFF_STUB{ 0x91 };        // default RTS target
-	constexpr std::size_t OFF_POSTARMED{ 0x92 };   // 0 = POST disabled
-	constexpr std::size_t OFF_ARM0{ 0x93 };        // three arm table bytes
+	//
+	// kinds $80 to $ff are gate only: a slot holding one is armed, cleared
+	// and tested exactly like any other kind, but the tick never calls its
+	// PRE vector, so a hack that only needs a runtime switch costs the tick
+	// nothing beyond the slot test. kinds $01 to $7f are called as before.
+	constexpr byte GATE_ONLY_KIND{ 0x80 };
+	constexpr std::size_t CORE_SIZE{ 156 };
+	constexpr std::size_t OFF_TRAMP{ 0x73 };       // trampoline entry (hook 2 target)
+	constexpr std::size_t OFF_PRE0{ 0x57 };        // jsr operand, slot 0
+	constexpr std::size_t OFF_PRE1{ 0x61 };        // jsr operand, slot 1
+	constexpr std::size_t OFF_PRE2{ 0x6b };        // jsr operand, slot 2
+	constexpr std::size_t OFF_POST{ 0x8d };        // jsr operand, POST lane
+	constexpr std::size_t OFF_STUB{ 0x97 };        // default RTS target
+	constexpr std::size_t OFF_POSTARMED{ 0x98 };   // 0 = POST disabled
+	constexpr std::size_t OFF_ARM0{ 0x99 };        // three arm table bytes
 
 	// returns the core's base cpu address, or 0 if the scheduler is not
 	// installed. fails closed: both hooks must carry jsr/nop/nop with the

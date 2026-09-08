@@ -29,12 +29,12 @@
 // rev a, eu and jp roms; the installer verifies them and refuses otherwise.
 //
 // switchable=1 makes the hack a script controlled client of the
-// AtlasDevFrameScheduler, which must then be installed earlier: kind 6 is
+// AtlasDevFrameScheduler, which must then be installed earlier: kind $86 is
 // claimed in the next free boot slot (or none with armed=0), every stub
-// runs only while some slot holds that kind, and AtlasDevArmRole 6, state
+// runs only while some slot holds that kind, and AtlasDevArmRole $86, state
 // switches it. switched off, the stubs do exactly what the replaced
-// instructions did and clear the state byte. the price is the slot gate in
-// each stub and the tick's call into the slot's stub vector while armed.
+// instructions did and clear the state byte. the kind is gate only, so the
+// tick never calls the slot; the price is the slot gate in each stub.
 
 namespace {
 	constexpr word STATE{ 0x04df };
@@ -51,7 +51,7 @@ namespace {
 	constexpr byte INIT_ORIG[5]{ 0xa5, 0xa4, 0x4a, 0xb0, 0x1a };
 	constexpr byte ARC_ORIG[4]{ 0xa6, 0xa6, 0xe0, 0x10 };
 	constexpr word INIT_VANILLA{ 0xe449 };
-	constexpr byte KIND_JUMP{ 0x06 };
+	constexpr byte KIND_JUMP{ 0x86 };            // gate only: the tick never calls it
 
 	struct Settings {
 		byte coyote, buffer, shorthop, airjumps, switchable;

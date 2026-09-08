@@ -52,17 +52,22 @@ namespace {
 		code.bne("nohi");
 		code.inc_abs(RAM_CNT_HI);
 		code.label("nohi");
-		// one PRE vector per slot, kind byte in A
+		// one PRE vector per slot, kind byte in A. a kind with bit 7 set is
+		// gate only: it holds the slot for the role opcodes and for clients
+		// that test the slot bytes, and the tick never calls its vector
 		code.lda_abs(RAM_SLOT0);
 		code.beq("s1");
+		code.bmi("s1");
 		code.label("pre0"); code.jsr("stub");
 		code.label("s1");
 		code.lda_abs(RAM_SLOT1);
 		code.beq("s2");
+		code.bmi("s2");
 		code.label("pre1"); code.jsr("stub");
 		code.label("s2");
 		code.lda_abs(RAM_SLOT2);
 		code.beq("dma");
+		code.bmi("dma");
 		code.label("pre2"); code.jsr("stub");
 		code.label("dma");
 		code.lda_imm(0x07);           // the displaced OAM DMA
@@ -166,8 +171,12 @@ word fh::HackManager::install_AtlasDevFrameScheduler(const fe::Config&, std::vec
 	const auto h1{ klib::Asm6502::get_file_offset(15, 0xc9af) };
 	const auto h2{ klib::Asm6502::get_file_offset(15, 0xc9de) };
 	for (std::size_t i{ 0 }; i < 5; ++i)
-		if (p_rom[h1 + i] != HOOK1_ORIG[i] || p_rom[h2 + i] != HOOK2_ORIG[i])
+		if (p_rom[h1 + i] != HOOK1_ORIG[i] || p_rom[h2 + i] != HOOK2_ORIG[i]) {
+			if (p_rom[h1] == 0x20 && p_rom[h1 + 3] == 0xea && p_rom[h1 + 4] == 0xea)
+				throw std::runtime_error("AtlasDevFrameScheduler: a scheduler hook is already installed at $c9af, "
+					"from an earlier revision or another build; rebuild from a clean base rom");
 			throw std::runtime_error("AtlasDevFrameScheduler: nmi hook sites are not vanilla");
+		}
 
 	code.apply_hack_and_clear(p_rom, 15, cpu_addr);
 	code.jsr(cpu_addr);
