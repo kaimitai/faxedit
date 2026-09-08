@@ -109,6 +109,8 @@ The wyvern's mattock and the stone dropper's wing boots normally depend on quest
 QuestFlagItemDrops type=mattock
 ```
 
+When either of these hacks is installed, the corresponding quest flag can be reused for other things.
+
 ### BossLockedItems
 
 Boss-locked item sprites appear regardless of which boss guards the screen, so custom screens can combine any boss with any locked item. Optionally the item stays hidden until every enemy sprite on the screen has been removed.
@@ -248,6 +250,8 @@ By default, the saved state matches the progress preserved by the vanilla passwo
 | parameter | default                                                     | meaning                                                                                             |
 | --------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | `ranges`  | `$039d:42+$042c:2+$0437:1+$0439:1+$04c2:4+$0101:31+$0390:5` | RAM ranges copied to SRAM. Each entry is written as `address:length`, with entries separated by `+` |
+| `save_gold` | `true` | Restore Gold and XP when loading from SRAM |
+| `keep_gold` | `false` | Keep Gold and XP on death |
 
 Custom save ranges can be supplied if needed, but the default value should be a sensible choice for most:
 

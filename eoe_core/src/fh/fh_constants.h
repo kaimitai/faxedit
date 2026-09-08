@@ -81,6 +81,7 @@ namespace fh {
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
+		constexpr word Player_HandleDeath_InitGoldXP{ 0xd99a };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
 		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
@@ -382,6 +383,7 @@ namespace fh {
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01[]{ "textbox_show_next_char_lda_01" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST[]{ "textbox_show_next_char_if_ready_timer_const" };
 		constexpr char ID_CHOOSECONTINUE_TARGETADDR[]{ "rom_choosecontinue_targetaddr" };
+		constexpr char ID_CONTINUE_INIT_XP_GOLD[]{ "rom_continue_init_xp_gold" };
 		constexpr char ID_PPU_WRITETILESFROMCHRRAM[]{ "rom_ppu_writetilesfromchrram" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };

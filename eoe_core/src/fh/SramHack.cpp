@@ -412,12 +412,30 @@ namespace {
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 	}
+
+	// overwrite six bytes for far call that initializes gold and xp from title
+	// with the only invariant we need to preserve (perfect byte fit!)
+	void install_static_NoGoldXPReload(std::vector<byte>& p_rom, word cpu_addr) {
+		klib::Asm6502 code;
+		code.lda_abs(fh::RAM::PlayerTitle);
+		code.sta_abs(fh::RAM::PendingTitle);
+		code.apply_hack_and_clear(p_rom, 15, cpu_addr);
+	}
 }
 
 // installs SRAM save support
 void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
 
+	const bool keep_gold_xp_on_sram_load{ p_hack.bool_or("save_gold", true) };
+	const bool keep_gold_xp_on_death{ p_hack.bool_or("keep_gold", false) };
+
+	if (keep_gold_xp_on_sram_load)
+		install_static_NoGoldXPReload(p_rom, cfg_word(p_config, c::ID_CONTINUE_INIT_XP_GOLD));
+	if (keep_gold_xp_on_death)
+		install_static_NoGoldXPReload(p_rom, ROM::Player_HandleDeath_InitGoldXP);
+
+	// dynamic block
 	word cpu_addr{ cfg_word(p_config, c::ID_MANTRALOAD) };
 
 	const word table_addr{ cpu_addr };

@@ -445,6 +445,8 @@
 		<const name="rom_ppu_writetilesfromchrram" value="$f89e" />
 		<const name="rom_choosecontinue_targetaddr" region="jp,en-transl" value="$fd55" />
 		<const name="rom_choosecontinue_targetaddr" value="$fc8d" />
+		<const name="rom_continue_init_xp_gold" region="jp,en-transl" value="$fd57" />
+		<const name="rom_continue_init_xp_gold" value="$fc8f" />
 		<!-- inventory routines and tables for the AtlasDev inventory opcodes -->
 		<const name="rom_item_decodecategory" region="us,randum,eu,us-rev-a" value="$f785" />
 		<const name="rom_item_decodecategory" region="jp,en-transl" value="$f84d" />
