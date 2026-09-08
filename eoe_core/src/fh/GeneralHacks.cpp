@@ -2,9 +2,15 @@
 #include "fe/Config.h"
 #include "fe/Game.h"
 #include "common/klib/Asm6502.h"
+#include "common/klib/Kstring.h"
+#include "AtlasDevFrameScheduler.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"
+#include <algorithm>
+#include <cctype>
 #include <format>
+#include <initializer_list>
+#include <map>
 #include <stdexcept>
 #include <utility>
 
@@ -657,6 +663,209 @@ word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
 }
 
+namespace {
+	struct FallProfile { std::vector<byte> curve; byte steer; };
+	const std::map<std::string, FallProfile> FALL_PROFILES{
+		{ "vanilla", { {}, 0 } },
+		{ "arc",     { { 1, 1, 1, 1, 2, 2, 4, 4, 4, 4, 8 }, 1 } },
+		{ "zelda2",  { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
+		{ "floaty",  { { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 }, 2 } },
+		{ "moon",    { { 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4 }, 2 } },
+	};
+	constexpr std::size_t FALL_MAX_ENTRIES{ 16 };
+	constexpr int FALL_MAX_STEP{ 8 };
+	constexpr std::size_t FALL_SIZE_MARK{ 25 };
+	constexpr std::size_t FALL_SIZE_STEP{ 27 };
+	constexpr std::size_t FALL_SIZE_ARMED{ 20 };
+	constexpr std::size_t FALL_SIZE_MARK_G{ 30 };
+	constexpr std::size_t FALL_SIZE_STEP_G{ 42 };
+
+	void require_vanilla(const std::vector<byte>& p_rom, word p_cpu, std::initializer_list<byte> p_bytes,
+		const char* p_what) {
+		const auto off{ klib::Asm6502::get_file_offset(15, p_cpu) };
+		std::size_t i{ 0 };
+		for (byte b : p_bytes) {
+			if (p_rom.at(off + i) != b)
+				throw std::runtime_error(std::format(
+					"AtlasDevFallControl: {} at ${:04x} is not vanilla (byte {} is {:02x}, expected {:02x})",
+					p_what, p_cpu, i, p_rom.at(off + i), b));
+			++i;
+		}
+	}
+}
+
+// AtlasDevFallControl: an accelerating fall curve walked by the jump phase
+// byte $A6 (idle during free fall), and Left/Right steering in the air.
+// Three main line splices, no RAM of its own. With kind=N every stub first
+// scans the AtlasDevFrameScheduler slot bytes for N and runs the vanilla
+// bytes when no slot holds it, so scripts switch the hack with
+// AtlasDevArmRole N; the installer seeds a boot slot unless boot=false.
+// The regression test pins the emitted bytes for both shapes.
+word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	using namespace fh::afs;
+	std::string profile{ p_hack.string_or("profile", "arc") };
+	std::transform(profile.begin(), profile.end(), profile.begin(),
+		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	const auto it{ FALL_PROFILES.find(profile) };
+	if (it == FALL_PROFILES.end())
+		throw std::runtime_error(std::format("AtlasDevFallControl: unknown profile '{}'", profile));
+	std::vector<byte> curve{ it->second.curve };
+	byte steer{ it->second.steer };
+
+	if (p_hack.has_param("curve")) {
+		curve.clear();
+		for (const auto& s : p_hack.split("curve")) {
+			const int v{ klib::str::parse_numeric(s) };
+			if (v < 0 || v > FALL_MAX_STEP)
+				throw std::runtime_error(std::format(
+					"AtlasDevFallControl: curve entry {} is outside 0..{} px", v, FALL_MAX_STEP));
+			curve.push_back(static_cast<byte>(v));
+		}
+	}
+	if (p_hack.has_param("steer")) {
+		steer = p_hack.get_byte("steer");
+		if (steer > 2)
+			throw std::runtime_error("AtlasDevFallControl: steer must be 0, 1 or 2");
+	}
+	if (curve.size() > FALL_MAX_ENTRIES)
+		throw std::runtime_error(std::format("AtlasDevFallControl: curve has {} entries, at most {}",
+			curve.size(), FALL_MAX_ENTRIES));
+	if (!curve.empty() && std::all_of(curve.begin(), curve.end(), [](byte b) { return b == 0; }))
+		throw std::runtime_error("AtlasDevFallControl: every curve entry is zero, the player would never fall");
+	const byte kind{ p_hack.byte_or("kind", 0) };
+	const bool boot{ p_hack.bool_or("boot", true) };
+
+	if (curve.empty() && steer == 0)
+		return cpu_addr;
+
+	const bool gated{ kind != 0 };
+	const word armed_addr{ cpu_addr };
+	const word mark_addr{ static_cast<word>(cpu_addr + (gated ? FALL_SIZE_ARMED : 0)) };
+	const word step_addr{ static_cast<word>(mark_addr + (gated ? FALL_SIZE_MARK_G : FALL_SIZE_MARK)) };
+	const word curve_addr{ static_cast<word>(step_addr + (gated ? FALL_SIZE_STEP_G : FALL_SIZE_STEP)) };
+	const word steer_addr{ static_cast<word>(curve.empty()
+		? (gated ? cpu_addr + FALL_SIZE_ARMED : cpu_addr)
+		: curve_addr + curve.size()) };
+
+	// ownership checks first, so a refused install leaves the ROM byte identical
+	std::size_t scheduler{ 0 };
+	std::size_t arm_site{ OFF_ARM0 + 3 };
+	if (gated) {
+		const word base{ find_base(p_rom) };
+		if (base == 0)
+			throw std::runtime_error("AtlasDevFallControl: kind needs the AtlasDevFrameScheduler hack installed first");
+		scheduler = klib::Asm6502::get_file_offset(15, base);
+		if (boot) {
+			const auto read_operand{ [&p_rom, scheduler](std::size_t site) {
+				return static_cast<word>(p_rom[scheduler + site] | (p_rom[scheduler + site + 1] << 8));
+			} };
+			const word stub_target{ static_cast<word>(base + OFF_STUB) };
+			constexpr std::size_t pre_sites[3]{ OFF_PRE0, OFF_PRE1, OFF_PRE2 };
+			for (std::size_t i{ 0 }; i < 3; ++i)
+				if (p_rom[scheduler + OFF_ARM0 + i] == kind) {
+					if (read_operand(pre_sites[i]) != stub_target)
+						throw std::runtime_error(std::format(
+							"AtlasDevFallControl: scheduler kind {} slot has a PRE claimant", kind));
+					arm_site = OFF_ARM0 + i;
+					break;
+				}
+			if (arm_site == OFF_ARM0 + 3)
+				for (std::size_t i{ 0 }; i < 3; ++i)
+					if (p_rom[scheduler + OFF_ARM0 + i] == 0x00
+						&& read_operand(pre_sites[i]) == stub_target) {
+						arm_site = OFF_ARM0 + i;
+						break;
+					}
+			if (arm_site == OFF_ARM0 + 3)
+				throw std::runtime_error("AtlasDevFallControl: scheduler arm table has no unclaimed slot");
+		}
+	}
+	if (!curve.empty()) {
+		require_vanilla(p_rom, ROM::Player_Fall_MarkDescending, { 0xa5, 0xa4, 0x09, 0x04, 0x85, 0xa4 }, "mark site");
+		require_vanilla(p_rom, ROM::Player_Fall_Step, { 0xa5, 0xa1, 0x18, 0x69, 0x08, 0x85, 0xa1 }, "step site");
+	}
+	if (steer != 0)
+		require_vanilla(p_rom, ROM::Player_Input_AirborneGate, { 0xa5, 0xa4, 0x29, 0x05, 0xf0, 0x0f }, "airborne gate");
+
+	klib::Asm6502 code;
+	if (gated) {
+		// armed: Z set when some slot holds our kind; JSR and RTS keep the flags
+		code.label("@armed");
+		code.lda_abs(RAM_SLOT0); code.cmp_imm(kind); code.beq("@armed_yes");
+		code.lda_abs(RAM_SLOT1); code.cmp_imm(kind); code.beq("@armed_yes");
+		code.lda_abs(RAM_SLOT2); code.cmp_imm(kind);
+		code.label("@armed_yes"); code.rts();
+	}
+	if (!curve.empty()) {
+		const byte last{ static_cast<byte>(curve.size() - 1) };
+		// mark: the first fall frame initialises the phase; 32 means an arc ran out mid air
+		if (gated) { code.jsr("@armed"); code.bne("@marked"); }
+		code.lda_zp(0xa4); code.and_imm(0x04); code.bne("@marked");
+		code.ldx_imm(0x00);
+		code.lda_zp(0xa6); code.cmp_imm(0x20); code.bne("@reset");
+		code.ldx_imm(last);
+		code.label("@reset"); code.stx_zp(0xa6);
+		code.label("@marked"); code.lda_zp(0xa4); code.ora_imm(0x04); code.sta_zp(0xa4); code.rts();
+		// step: clamp the phase to the curve, add the entry, saturate on the last one
+		if (gated) { code.jsr("@armed"); code.bne("@vanilla8"); }
+		code.ldx_zp(0xa6);
+		code.cpx_imm(last); code.bcc("@inrange");
+		code.ldx_imm(last); code.stx_zp(0xa6);
+		code.label("@inrange");
+		code.lda_zp(0xa1); code.clc(); code.adc_abs_x(curve_addr); code.sta_zp(0xa1);
+		code.cpx_imm(last); code.bcs("@nostep");
+		code.db(0xe6); code.db(0xa6);                       // INC $A6 (no inc_zp in Asm6502)
+		code.label("@nostep"); code.jmp(ROM::Player_Fall_AfterStep);
+		if (gated) {
+			code.label("@vanilla8");                        // the displaced vanilla bytes
+			code.lda_zp(0xa1); code.clc(); code.adc_imm(0x08); code.sta_zp(0xa1);
+			code.jmp(ROM::Player_Fall_AfterStep);
+		}
+		for (byte b : curve) code.db(b);
+	}
+	if (steer == 1 || (gated && steer == 2)) {
+		if (gated) { code.jsr("@armed"); code.bne("@vgate"); }
+		if (steer == 2) {
+			code.label("@normal"); code.jmp(ROM::Player_Input_Normal);
+		}
+		else {
+			code.lda_zp(0xa4); code.and_imm(0x05); code.beq("@normal");
+			code.lda_zp(0xa4); code.bmi("@momentum");
+			code.lda_zp(0x16); code.and_imm(0x03); code.bne("@normal");
+			code.label("@momentum"); code.jmp(ROM::Player_Input_AirborneContinue);
+			code.label("@normal"); code.jmp(ROM::Player_Input_Normal);
+		}
+		if (gated) {
+			code.label("@vgate");                           // the vanilla gate, replicated
+			code.lda_zp(0xa4); code.and_imm(0x05); code.beq("@normal");
+			code.jmp(ROM::Player_Input_AirborneContinue);
+		}
+	}
+
+	const word next{ code.size() == 0 ? cpu_addr
+		: code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+
+	klib::Asm6502 hook;
+	if (!curve.empty()) {
+		hook.jsr(mark_addr); hook.nop(3);
+		hook.apply_hack_and_clear(p_rom, 15, ROM::Player_Fall_MarkDescending);
+		hook.jmp(step_addr); hook.nop(4);
+		hook.apply_hack_and_clear(p_rom, 15, ROM::Player_Fall_Step);
+	}
+	if (steer == 1 || (gated && steer == 2)) {
+		hook.jmp(steer_addr); hook.nop(3);
+		hook.apply_hack_and_clear(p_rom, 15, ROM::Player_Input_AirborneGate);
+	}
+	else if (steer == 2) {
+		hook.jmp(ROM::Player_Input_Normal); hook.nop(3);
+		hook.apply_hack_and_clear(p_rom, 15, ROM::Player_Input_AirborneGate);
+	}
+	if (gated && boot)
+		p_rom[scheduler + arm_site] = kind;
+	return next;
+}
+
 // orchestrator for per-bank hack injection
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
@@ -745,6 +954,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::AtlasDevJumpControl:
 			cpu_addr = install_AtlasDevJumpControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevFallControl:
+			cpu_addr = install_AtlasDevFallControl(p_config, patched_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

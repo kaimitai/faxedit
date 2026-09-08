@@ -2638,6 +2638,338 @@ word fh::HackManager::apply_AtlasDevIfSelectedMagic(
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevIfSelectedItem Item Label: true when the selected usable item is
+// this one. takes the item define, so nothing outside the usable item
+// category matches
+word fh::HackManager::apply_AtlasDevIfSelectedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0x80); // usable items are $80..$9f
+	code.bcc("@false");
+	code.cmp_imm(0xa0);
+	code.bcs("@false");
+	code.and_imm(0x1f);
+	code.cmp_abs(RAM::SelectedItem);
+	code.beq("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfEquippedItem Item Label: true when the item is the selected one
+// in its own category (weapon, armour, shield, magic, usable item). the
+// category comes from the item define through the game's decoder, so one
+// opcode covers all five selection cells
+word fh::HackManager::apply_AtlasDevIfEquippedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0); // no selection cell above category 4
+	code.bcs("@false");
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ITEM_DECODECATEGORY)); // A = category
+	code.tay();
+	code.lda_zp(RAM::ZP_e2);
+	code.and_imm(0x1f);
+	code.cmp_abs_y(RAM::SelectedWeapon); // $03bd + category
+	code.beq("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevEquipItem Item: equip an owned item through the game's equip
+// routine. special items, items the player lacks and an already selected
+// item do nothing
+word fh::HackManager::apply_AtlasDevEquipItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0);
+	code.bcs("@done");
+	code.ldx_imm(0x07);
+	code.label("@special");
+	code.cmp_abs_x(cfg_word(p_config, c::ID_ROM_ITEM_SPECIALIDTABLE));
+	code.beq("@done");
+	code.dex();
+	code.bpl("@special");
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ITEM_DECODECATEGORY));
+	code.tay();
+	code.lda_zp(RAM::ZP_e2);
+	code.and_imm(0x1f);
+	code.cmp_abs_y(RAM::SelectedWeapon); // already selected in its category
+	code.beq("@done");
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_LACKSITEM)); // carry set when not owned
+	code.bcs("@done");
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_EQUIP));
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevRemoveAllItems Item: take every carried copy of an item with
+// eight calls of the game's removal routine (eight is the largest category
+// capacity). the routine refuses special items itself
+word fh::HackManager::apply_AtlasDevRemoveAllItems(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(0xa0);
+	code.bcs("@done");
+	code.sta_zp(RAM::ZP_e2);
+	code.ldx_imm(0x08);
+	code.label("@remove");
+	code.txa();
+	code.pha();
+	code.lda_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_REMOVEITEM));
+	code.pla();
+	code.tax();
+	code.dex();
+	code.bne("@remove");
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevUseSelectedItem: apply the selected usable item's effect like the
+// menu does, entered at the effect tails so the interpreter's pointers are
+// not reloaded mid-script. red potion, wing boots and hourglass; anything
+// else selected does nothing
+word fh::HackManager::apply_AtlasDevUseSelectedItem(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::SelectedItem);
+	code.cmp_imm(0x10); // red potion
+	code.beq("@potion");
+	code.cmp_imm(0x0f); // wing boots
+	code.beq("@boots");
+	code.cmp_imm(0x0d); // hourglass
+	code.bne("@done");
+	code.jsr(ROM::UseHourGlassEffect);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@potion");
+	code.jsr(ROM::UseRedPotionEffect);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@boots");
+	code.jsr(ROM::UseWingBootsEffect);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfInventoryFull Label: true when every ordinary category is at
+// capacity (4/4/4/4/8). equipment cells and special items do not count
+word fh::HackManager::apply_AtlasDevIfInventoryFull(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.ldx_imm(0x04); // items down to weapons
+	code.label("@check");
+	code.lda_abs_x(RAM::InventoryCounts);
+	code.cmp_abs_x(cfg_word(p_config, c::ID_ROM_INVENTORY_CAPACITIES));
+	code.bcc("@not_full"); // one count below capacity is enough
+	code.dex();
+	code.bpl("@check");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@not_full");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevClearCarriedInventory: zero the five ordinary counts, the live
+// lengths the game reads. equipment, selections and special items survive
+word fh::HackManager::apply_AtlasDevClearCarriedInventory(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::Inventory_WeaponsCount);
+	code.sta_abs(RAM::Inventory_ArmorsCount);
+	code.sta_abs(RAM::Inventory_ShieldsCount);
+	code.sta_abs(RAM::Inventory_MagicsCount);
+	code.sta_abs(RAM::Inventory_ItemsCount);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevDamagePlayer Amount: hurt the player through the game's own hurt
+// pipeline, not an hp poke: stage the amount, hurt sound, the touch
+// handler's invincibility window, the knockback bit, then Player_ReduceHP
+// (16-bit subtract, clamp, hud bar, Elixir or death latch). a strictly
+// fatal hit with the Elixir bit set makes Player_ReduceHP run the Elixir
+// script synchronously, which replaces the interpreter's pointers; that one
+// path is predicted and ends with RTS instead of continuing a script that
+// is gone
+word fh::HackManager::apply_AtlasDevDamagePlayer(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // amount
+	code.sta_abs(RAM::DamageAmount);
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::DamageAmountFraction);
+	code.lda_imm(0x04); // hurt sound
+	code.jsr(ROM::Sound_PlayEffect);
+	code.lda_imm(0x3c);
+	code.sta_zp(RAM::ZP_PlayerInvincibilityTimer);
+	code.lda_zp(RAM::ZP_PlayerStatus);
+	code.ora_imm(0x02);
+	code.sta_zp(RAM::ZP_PlayerStatus);
+	code.lda_abs(RAM::PlayerHP);
+	code.cmp_abs(RAM::DamageAmount);
+	code.bcs("@continue"); // not strictly fatal
+	code.lda_abs(RAM::SpecialItemBitfield);
+	code.and_imm(0x08); // Elixir
+	code.beq("@continue");
+	code.jsr(ROM::Player_ReduceHP);
+	code.rts(); // the Elixir script ran; the outer script is gone
+	code.label("@continue");
+	code.jsr(ROM::Player_ReduceHP);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetInvincibilityFrames Frames: set the hurt/invincibility timer
+// the damage gate reads. 0 cancels it; values above $39 also shove, by the
+// per-frame tick's own design
+word fh::HackManager::apply_AtlasDevSetInvincibilityFrames(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // frames
+	code.sta_zp(RAM::ZP_PlayerInvincibilityTimer);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevKnockbackPlayer Direction Strength: shove the player left (0) or
+// right (1) the way a hit does: $39 + strength shove frames at 8 px/frame
+// (the leftover $39 ticks are the usual invincibility), facing toward the
+// shove, knockback bit, hurt sound. the shove plays out after the script
+// ends, since the world is frozen while it runs
+word fh::HackManager::apply_AtlasDevKnockbackPlayer(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // direction
+	code.and_imm(0x01);
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // strength
+	code.cmp_imm(0xc7);
+	code.bcc("@strength_ok");
+	code.lda_imm(0xc6); // the timer must not wrap
+	code.label("@strength_ok");
+	code.clc();
+	code.adc_imm(0x39);
+	code.sta_zp(RAM::ZP_PlayerInvincibilityTimer);
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0xbf); // face left
+	code.ldx_zp(RAM::ZP_e2);
+	code.bne("@facing_set");
+	code.ora_imm(0x40); // shoved left: face right, toward the source
+	code.label("@facing_set");
+	code.sta_zp(RAM::ZP_PlayerState);
+	code.lda_zp(RAM::ZP_PlayerStatus);
+	code.ora_imm(0x02);
+	code.sta_zp(RAM::ZP_PlayerStatus);
+	code.lda_imm(0x04);
+	code.jsr(ROM::Sound_PlayEffect);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevForceJump Curve: start a jump from the given point of the 32-step
+// jump curve on the first frame after the script (0 = a full jump, $10-$1f
+// start mid-fall). the curve updater does the rest, ceiling and landing
+// included, without the button and can-act gates that guard natural jumps
+word fh::HackManager::apply_AtlasDevForceJump(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // curve
+	code.and_imm(0x1f);
+	code.sta_zp(RAM::ZP_PlayerJumpIndex);
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.ora_imm(0x03); // jumping
+	code.sta_zp(RAM::ZP_PlayerState);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSetPlayerVelocity Fraction Whole: set the horizontal speed pair
+// the mover applies each walking frame, fraction then whole pixels like
+// SetEntitySpeed. transient by nature: the acceleration ramp, a knockback
+// or a turn overwrite it
+word fh::HackManager::apply_AtlasDevSetPlayerVelocity(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // fraction
+	code.sta_zp(RAM::ZP_PlayerSpeedFraction);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // whole
+	code.sta_zp(RAM::ZP_PlayerSpeed);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevAttack: start a weapon swing exactly like the engine's own start
+// path (attack bit, both timers zeroed); the state machine runs it on the
+// first frame after the script, no button or climb gates. a harmless
+// 19-frame pose with no weapon equipped
+word fh::HackManager::apply_AtlasDevAttack(
+	const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.ora_imm(0x80);
+	code.sta_zp(RAM::ZP_PlayerState);
+	code.lda_imm(0x00);
+	code.sta_zp(RAM::ZP_PlayerAttackTimer);
+	code.sta_zp(RAM::ZP_PlayerAttackPhase);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 // AtlasDevCountActiveEntities Register
 //
 // Stores how many of the eight entity slots are live, 0..8, into a script
@@ -5302,6 +5634,45 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 
 		case HackLib::AtlasDevIfSelectedMagic:
 			cpu_addr = apply_AtlasDevIfSelectedMagic(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfSelectedItem:
+			cpu_addr = apply_AtlasDevIfSelectedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfEquippedItem:
+			cpu_addr = apply_AtlasDevIfEquippedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevEquipItem:
+			cpu_addr = apply_AtlasDevEquipItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevRemoveAllItems:
+			cpu_addr = apply_AtlasDevRemoveAllItems(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevUseSelectedItem:
+			cpu_addr = apply_AtlasDevUseSelectedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfInventoryFull:
+			cpu_addr = apply_AtlasDevIfInventoryFull(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearCarriedInventory:
+			cpu_addr = apply_AtlasDevClearCarriedInventory(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevDamagePlayer:
+			cpu_addr = apply_AtlasDevDamagePlayer(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetInvincibilityFrames:
+			cpu_addr = apply_AtlasDevSetInvincibilityFrames(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevKnockbackPlayer:
+			cpu_addr = apply_AtlasDevKnockbackPlayer(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevForceJump:
+			cpu_addr = apply_AtlasDevForceJump(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevSetPlayerVelocity:
+			cpu_addr = apply_AtlasDevSetPlayerVelocity(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevAttack:
+			cpu_addr = apply_AtlasDevAttack(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevWaitFrames:

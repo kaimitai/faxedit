@@ -39,6 +39,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
   - [AtlasDevTimeOfDay](#atlasdevtimeofday)
   - [AtlasDevJumpControl](#atlasdevjumpcontrol)
+  - [AtlasDevFallControl](#atlasdevfallcontrol)
 
 <hr>
 
@@ -383,4 +384,33 @@ the cost is 82 bytes of gates in the stubs.
 ```text
 AtlasDevJumpControl coyote=5 buffer=5 shorthop=3 airjumps=1
 AtlasDevJumpControl switchable=1 armed=0
+```
+
+### AtlasDevFallControl
+
+Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Right while the hero is in the air. Profiles expand to both knobs; an explicit `curve=` or `steer=` overrides one of them. `profile=vanilla` installs nothing. No RAM is used: the fall phase lives in the jump-phase byte, which is idle during free fall.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `profile` | `arc` | `vanilla`, `arc`, `zelda2`, `floaty` or `moon` |
+| `curve` | from the profile | px per fall frame, `+`-separated, 1 to 16 entries of 0 to 8; the last entry repeats as the terminal speed |
+| `steer` | from the profile | `0` vanilla, `1` steer only while a direction is held (momentum kept otherwise), `2` full air control |
+| `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `6` is the registered number for this hack |
+| `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
+
+| profile | curve | steer |
+| --- | --- | --- |
+| `vanilla` | none | 0 |
+| `arc` | `1+1+1+1+2+2+4+4+4+4+8` | 1 |
+| `zelda2` | `1+2+3+4+5+6+7+8` | 2 |
+| `floaty` | `1+1+2+2+3+3+4+4+5+5+6` | 2 |
+| `moon` | `0+0+1+1+1+2+2+2+3+3+4` | 2 |
+
+Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the scheduler must be installed first; the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available.
+
+```text
+AtlasDevFallControl profile=zelda2
+AtlasDevFallControl curve=1+1+2+2+4+8 steer=1
+AtlasDevFrameScheduler
+AtlasDevFallControl profile=arc kind=6
 ```
