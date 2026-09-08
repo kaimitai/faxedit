@@ -5,3 +5,11 @@ add_executable(atlas_scheduler_regression
 target_link_libraries(atlas_scheduler_regression PRIVATE eoe_core)
 
 add_test(NAME atlas_scheduler_regression COMMAND atlas_scheduler_regression)
+
+add_executable(atlas_fall_control_regression
+    atlas_fall_control_regression.cpp
+)
+
+target_link_libraries(atlas_fall_control_regression PRIVATE eoe_core)
+
+add_test(NAME atlas_fall_control_regression COMMAND atlas_fall_control_regression)

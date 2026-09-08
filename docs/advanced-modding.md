@@ -1200,6 +1200,7 @@ Runtime extensions also reserve some RAM locations.
 | Tilemap Change subsystem | $e2-$e5 | Used as temporary variables when drawing the tilemap changes | - |
 | Custom script opcodes JSR and Return | $0182-$0183 | Used to store the return address | hack_script_jsr_ram_addr_lo, hack_script_jsr_ram_addr_hi |
 | Stage Door Hack | $07fe-$07ff | Stores the pending destination stage during cross-stage door transitions | - |
+| AtlasDevJumpControl | $04df | Jump buffer countdown in the low nibble and air jumps left in the high nibble | - |
 
 The extended flags are cleared on game initialization (reset and power cycles), but will not be stored in mantras. They will only persist across sessions if stored in SRAM.
 

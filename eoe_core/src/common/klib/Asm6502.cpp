@@ -204,6 +204,7 @@ namespace {
 	constexpr byte OP_INC_ZP{ 0xe6 };
 	constexpr byte OP_INX{ 0xe8 };
 	constexpr byte OP_SBC_IMM{ 0xe9 };
+	constexpr byte OP_SBC_ZP{ 0xe5 };
 	constexpr byte OP_SBC_ABS{ 0xed };
 	constexpr byte OP_NOP{ 0xea };
 	constexpr byte OP_BEQ{ 0xf0 };
@@ -663,6 +664,11 @@ void klib::Asm6502::sbc_imm(byte p_value) {
 void klib::Asm6502::sbc_abs(word p_addr) {
 	emit(OP_SBC_ABS);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::sbc_zp(byte p_addr) {
+	emit(OP_SBC_ZP);
+	emit(p_addr);
 }
 
 void klib::Asm6502::sbc_abs_x(word p_addr) {
