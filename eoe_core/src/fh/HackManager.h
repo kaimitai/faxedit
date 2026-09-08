@@ -324,6 +324,8 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevJumpControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
+		word install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevFallControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		// bank 12 general hacks

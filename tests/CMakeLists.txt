@@ -13,3 +13,11 @@ add_executable(atlas_fall_control_regression
 target_link_libraries(atlas_fall_control_regression PRIVATE eoe_core)
 
 add_test(NAME atlas_fall_control_regression COMMAND atlas_fall_control_regression)
+
+add_executable(atlas_ladder_control_regression
+    atlas_ladder_control_regression.cpp
+)
+
+target_link_libraries(atlas_ladder_control_regression PRIVATE eoe_core)
+
+add_test(NAME atlas_ladder_control_regression COMMAND atlas_ladder_control_regression)
