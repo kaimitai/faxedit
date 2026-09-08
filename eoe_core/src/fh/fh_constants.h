@@ -69,6 +69,11 @@ namespace fh {
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
+		// item menu effect tails: clear the selection, use sound, effect, return.
+		// same address in us, us rev a, eu and jp
+		constexpr word UseRedPotionEffect{ 0xc53b };
+		constexpr word UseWingBootsEffect{ 0xc581 };
+		constexpr word UseHourGlassEffect{ 0xc5d0 };
 		constexpr word Area_SetBlocks{ 0xd7c5 };
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };
@@ -131,6 +136,15 @@ namespace fh {
 		constexpr word SameWorldDoor_JMP_Game_SetupEnterScreen{ 0xe565 };
 		constexpr word SameWorldTransition_JMP_Game_SetupEnterScreen{ 0xea2c };
 		constexpr word Game_SetupEnterScreen_JSR_Screen_Load{ 0xdaa3 };
+
+		// AtlasDevFallControl: the fall block and the airborne input gate in
+		// the bank-15 player handler (docs/fall-control.md in the Atlas repo).
+		constexpr word Player_Fall_MarkDescending{ 0xe3d1 };      // LDA $A4 / ORA #$04 / STA $A4
+		constexpr word Player_Fall_Step{ 0xe3f5 };                // LDA $A1 / CLC / ADC #$08 / STA $A1
+		constexpr word Player_Fall_AfterStep{ 0xe3fc };           // CMP #$C1 on the new $A1
+		constexpr word Player_Input_AirborneGate{ 0xe182 };       // LDA $A4 / AND #$05 / BEQ $E197
+		constexpr word Player_Input_Normal{ 0xe197 };             // the normal (and flight) input path
+		constexpr word Player_Input_AirborneContinue{ 0xe188 };   // vanilla airborne continuation
 	}
 
 	namespace RAM {
@@ -317,6 +331,12 @@ namespace fh {
 		constexpr char ID_ROM_PLAYER_RANKREFRESH[]{ "rom_player_rankrefresh" };
 		constexpr char ID_ROM_PLAYER_EXPHUDREDRAW[]{ "rom_player_exphudredraw" };
 		constexpr char ID_ROM_PLAYER_ISCLIMBING[]{ "rom_player_isclimbing" };
+		constexpr char ID_ROM_ITEM_DECODECATEGORY[]{ "rom_item_decodecategory" };
+		constexpr char ID_ROM_ITEM_SPECIALIDTABLE[]{ "rom_item_specialidtable" };
+		constexpr char ID_ROM_PLAYER_EQUIP[]{ "rom_player_equip" };
+		constexpr char ID_ROM_PLAYER_LACKSITEM[]{ "rom_player_lacksitem" };
+		constexpr char ID_ROM_PLAYER_REMOVEITEM[]{ "rom_player_removeitem" };
+		constexpr char ID_ROM_INVENTORY_CAPACITIES[]{ "rom_inventory_capacities" };
 		constexpr char ID_ROM_PPU_ADDRESS_FROM_POS[]{ "rom_ppu_address_from_pos" };
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
 		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };
