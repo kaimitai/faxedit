@@ -30,7 +30,7 @@ namespace {
 		fh::GeneralHackLib::SRAM,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
-		fh::GeneralHackLib::AtlasDevTimeOfDay,
+		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
 	}},
 	};
 
@@ -45,6 +45,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },
+		{ fh::GeneralHackLib::AtlasDevFallControl, { "profile", "curve", "steer", "kind", "boot" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

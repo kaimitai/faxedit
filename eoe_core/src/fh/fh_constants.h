@@ -136,6 +136,15 @@ namespace fh {
 		constexpr word SameWorldDoor_JMP_Game_SetupEnterScreen{ 0xe565 };
 		constexpr word SameWorldTransition_JMP_Game_SetupEnterScreen{ 0xea2c };
 		constexpr word Game_SetupEnterScreen_JSR_Screen_Load{ 0xdaa3 };
+
+		// AtlasDevFallControl: the fall block and the airborne input gate in
+		// the bank-15 player handler (docs/fall-control.md in the Atlas repo).
+		constexpr word Player_Fall_MarkDescending{ 0xe3d1 };      // LDA $A4 / ORA #$04 / STA $A4
+		constexpr word Player_Fall_Step{ 0xe3f5 };                // LDA $A1 / CLC / ADC #$08 / STA $A1
+		constexpr word Player_Fall_AfterStep{ 0xe3fc };           // CMP #$C1 on the new $A1
+		constexpr word Player_Input_AirborneGate{ 0xe182 };       // LDA $A4 / AND #$05 / BEQ $E197
+		constexpr word Player_Input_Normal{ 0xe197 };             // the normal (and flight) input path
+		constexpr word Player_Input_AirborneContinue{ 0xe188 };   // vanilla airborne continuation
 	}
 
 	namespace RAM {
