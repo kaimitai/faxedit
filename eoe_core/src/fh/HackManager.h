@@ -49,6 +49,8 @@ namespace fh {
 		AtlasDevIfSelectedWeapon, AtlasDevIfSelectedMagic,
 		AtlasDevIfSelectedItem, AtlasDevIfEquippedItem, AtlasDevEquipItem, AtlasDevRemoveAllItems,
 		AtlasDevUseSelectedItem, AtlasDevIfInventoryFull, AtlasDevClearCarriedInventory,
+		AtlasDevDamagePlayer, AtlasDevSetInvincibilityFrames, AtlasDevKnockbackPlayer,
+		AtlasDevForceJump, AtlasDevSetPlayerVelocity, AtlasDevAttack,
 		AtlasDevWaitFrames, AtlasDevWaitForButtonPress,
 		AtlasDevIfButtonHeld, AtlasDevIfButtonPressed,
 		AtlasDevSetFacing, AtlasDevSetPlayerPosition,
@@ -184,6 +186,12 @@ namespace fh {
 		word apply_AtlasDevUseSelectedItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfInventoryFull(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearCarriedInventory(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevDamagePlayer(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetInvincibilityFrames(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevKnockbackPlayer(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevForceJump(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevSetPlayerVelocity(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevAttack(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevWaitFrames(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevWaitForButtonPress(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfButtonHeld(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;

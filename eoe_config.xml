@@ -1944,6 +1944,12 @@
 			<entry key="AtlasDevUseSelectedItem" />
 			<entry key="AtlasDevIfInventoryFull" value="Flow=Jump" />
 			<entry key="AtlasDevClearCarriedInventory" />
+			<entry key="AtlasDevDamagePlayer" value="Args=Byte" />
+			<entry key="AtlasDevSetInvincibilityFrames" value="Args=Byte" />
+			<entry key="AtlasDevKnockbackPlayer" value="Args=Byte+Byte" />
+			<entry key="AtlasDevForceJump" value="Args=Byte" />
+			<entry key="AtlasDevSetPlayerVelocity" value="Args=Byte+Byte" />
+			<entry key="AtlasDevAttack" />
 			<entry key="AtlasDevWaitFrames" value="Args=Byte" />
 			<entry key="AtlasDevWaitForButtonPress" value="Args=Byte:ButtonMask" />
 			<entry key="AtlasDevIfButtonHeld" value="Args=Byte:ButtonMask,Flow=Jump" />

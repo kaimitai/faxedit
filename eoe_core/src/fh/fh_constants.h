@@ -74,6 +74,9 @@ namespace fh {
 		constexpr word UseRedPotionEffect{ 0xc53b };
 		constexpr word UseWingBootsEffect{ 0xc581 };
 		constexpr word UseHourGlassEffect{ 0xc5d0 };
+		// the hurt pipeline's HP step: 16-bit subtract from the damage cells,
+		// clamp, HUD bar, Elixir or death latch. same address in every region
+		constexpr word Player_ReduceHP{ 0xc08e };
 		constexpr word Area_SetBlocks{ 0xd7c5 };
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };
@@ -193,6 +196,16 @@ namespace fh {
 		constexpr byte ZP_MusicCurrent{ 0xfa };
 		constexpr byte ZP_PlayerState{ 0xa4 };
 		constexpr byte ZP_PlayerInvincibilityTimer{ 0xad };
+		// player status bits: bit 1 = hurt/knockback
+		constexpr byte ZP_PlayerStatus{ 0xa5 };
+		// index into the 32-step jump curve
+		constexpr byte ZP_PlayerJumpIndex{ 0xa6 };
+		// horizontal speed, fraction then whole pixels per frame
+		constexpr byte ZP_PlayerSpeedFraction{ 0xa9 };
+		constexpr byte ZP_PlayerSpeed{ 0xaa };
+		// the swing's two timers, zeroed when a swing starts
+		constexpr byte ZP_PlayerAttackTimer{ 0xac };
+		constexpr byte ZP_PlayerAttackPhase{ 0xae };
 
 		constexpr word CurrentROMBank{ 0x0100 };
 		// IScripts_Begin stores the active root index here before opening the
@@ -252,6 +265,9 @@ namespace fh {
 		constexpr word ScreenBuffer{ 0x0600 };
 		constexpr word PlayerHPFraction{ 0x0432 };
 		constexpr word PlayerHP{ 0x0431 };
+		// damage staged for Player_ReduceHP, fraction then whole
+		constexpr word DamageAmountFraction{ 0x04bc };
+		constexpr word DamageAmount{ 0x04bd };
 		constexpr word PlayerGold_L{ 0x0392 };
 		constexpr word PlayerGold_M{ 0x0393 };
 		constexpr word PlayerGold_U{ 0x0394 };

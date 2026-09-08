@@ -263,6 +263,12 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevUseSelectedItem | None | Applies the selected usable item's effect (red potion, wing boots, hourglass) like the menu does; anything else does nothing | AtlasDevUseSelectedItem |
 | AtlasDevIfInventoryFull | Label | Jumps when every ordinary category is at capacity (4/4/4/4/8); equipment and special items do not count | AtlasDevIfInventoryFull @no_room |
 | AtlasDevClearCarriedInventory | None | Empties the five ordinary lists; equipment, selections and special items survive | AtlasDevClearCarriedInventory |
+| AtlasDevDamagePlayer | Byte | Hurts the player through the game's hurt pipeline: sound, invincibility window, knockback, HP bar; a fatal hit with an Elixir runs the Elixir script and ends the current one | AtlasDevDamagePlayer 10 ; a trap |
+| AtlasDevSetInvincibilityFrames | Byte | Sets the hurt/invincibility timer; 0 cancels, values above $39 also shove | AtlasDevSetInvincibilityFrames 60 |
+| AtlasDevKnockbackPlayer | Byte, Byte | Shoves the player left (0) or right (1) with the given strength the way a hit does; plays out after the script | AtlasDevKnockbackPlayer 1 8 |
+| AtlasDevForceJump | Byte | Starts a jump from the given point of the 32-step curve on the first frame after the script; 0 is a full jump | AtlasDevForceJump 0 |
+| AtlasDevSetPlayerVelocity | Byte, Byte | Sets the horizontal speed, fraction then whole pixels, until the next walking frame overwrites it | AtlasDevSetPlayerVelocity 0 2 |
+| AtlasDevAttack | None | Starts a weapon swing on the first frame after the script, like pressing B | AtlasDevAttack |
 | AtlasDevWaitFrames | Byte | Waits for 0-255 NMI frames; zero is a no-op | AtlasDevWaitFrames 30 |
 | AtlasDevWaitForButtonPress | Byte | Waits for every requested button to be released, then for any requested button's next press edge | AtlasDevWaitForButtonPress $80 |
 | AtlasDevIfButtonHeld | Byte, Label | Jumps when any requested button is held in the latest complete controller sample | AtlasDevIfButtonHeld $40 @holding_b |
@@ -486,6 +492,20 @@ cells, ```AtlasDevUseSelectedItem``` applies the selected item's effect like
 the menu. ```AtlasDevIfInventoryFull``` and ```AtlasDevClearCarriedInventory```
 only touch the five ordinary lists. Item operands are the item defines
 (```ITEM_RED_POTION```, ```WEAPON_LONG_SWORD```), not category-local ids.
+
+#### AtlasDev player opcodes
+
+These write the player's own state cells and let the normal per-frame
+update carry it out once the script ends, since the world is frozen while
+a script runs. ```AtlasDevDamagePlayer``` goes through the real hurt
+pipeline (sound, invincibility window, knockback bit, ```Player_ReduceHP```
+with its HUD redraw, Elixir and death handling) rather than poking HP; a
+fatal hit while the player holds an Elixir runs the Elixir script and ends
+the current one, exactly as a monster hit would. ```AtlasDevKnockbackPlayer```
+and ```AtlasDevSetInvincibilityFrames``` use the same hurt timer the touch
+handler does, ```AtlasDevForceJump``` and ```AtlasDevAttack``` plant a jump or a
+swing the way the engine's own start paths do, and
+```AtlasDevSetPlayerVelocity``` writes the speed pair the mover applies.
 
 #### AtlasDev player-state conditionals
 
