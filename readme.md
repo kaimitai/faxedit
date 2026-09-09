@@ -17,6 +17,7 @@ See the [documentation](./docs/user-guide.md) for a detailed overview of the edi
 ## Quick Links
 
 - [Main User Documentation](./docs/user-guide.md)
+  - [Tileset Graphics and Metatiles](./docs/tileset-gfx.md)
 - [Command-Line Documentation](./docs/cli-guide.md)
 - [Scripting Documentation](./docs/scripting-guide.md)
   - [Script Recipes](./docs/script-recipes.md)

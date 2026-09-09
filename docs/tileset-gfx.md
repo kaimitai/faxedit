@@ -22,6 +22,43 @@ The following sections explain each of these components and how they are represe
 
 # Table of Contents
 
+- [Tileset Graphics and Metatiles](#tileset-graphics-and-metatiles)
+- [CHR Graphics](#chr-graphics)
+- [Tilesets](#tilesets)
+    - [PPU Placement](#ppu-placement)
+- [Metatile Definitions](#metatile-definitions)
+  - [Per-World Definitions](#per-world-definitions)
+- [Palettes](#palettes)
+  - [Adding Color](#adding-color)
+- [Scene Data](#scene-data)
+  - [Overview](#overview)
+  - [Regular Worlds](#regular-worlds)
+  - [Buildings World](#buildings-world)
+- [Palette Overrides](#palette-overrides)
+  - [Same Graphics, Different Appearance](#same-graphics-different-appearance)
+- [Putting It All Together](#putting-it-all-together)
+- [BMP Import](#bmp-import)
+  - [Overview](#overview-1)
+  - [Conversion Process](#conversion-process)
+  - [Shared Tilesets](#shared-tilesets)
+  - [Buildings World Importing](#buildings-world-importing)
+    - [Import Partitioning](#import-partitioning)
+  - [Import Report](#import-report)
+    - [Approximations](#approximations)
+- [DynamicTilesets Hack](#dynamictilesets-hack)
+  - [How It Works](#how-it-works)
+- [Custom Import Definition](#custom-import-definition)
+  - [Overview](#overview-2)
+  - [Parameters](#parameters)
+    - [World Number](#world-number)
+    - [Tileset Number](#tileset-number)
+    - [Palette Number](#palette-number)
+    - [Metatile Range](#metatile-range)
+    - [CHR Range](#chr-range)
+  - [DynamicTileset Example](#dynamictileset-example)
+    - [Preparation](#preparation)
+    - [Import](#import)
+    - [Patching](#patching)
 
 ---
 
@@ -120,7 +157,9 @@ Palette = 2
 
 When the game needs to draw a metatile, it retrieves the four CHR tiles specified by the definition and renders them using the assigned palette.
 
-[Insert metatile editor screenshot]
+Metatile definitions do not reference a tileset directly. They reference CHR tile indexes in the PPU pattern table. The active tileset determines which graphics are loaded at those indexes.
+
+This means the same metatile definition can produce completely different graphics when used with a different tileset.
 
 ## Per-World Definitions
 
@@ -190,8 +229,6 @@ to produce the final background graphics shown to the player.
 Throughout this document, the term *Scene Data* refers specifically to the tileset and palette selection used by a world, or a building screen.
 
 ---
-
-# Scene Data
 
 ## Regular Worlds
 
@@ -592,13 +629,13 @@ This will create a new ROM file `us-512.nes` which we can use as a new base for 
 
 By default tilesets cannot be doubled in vanilla ROMs as the feature consumes an entire 16k bank.
 
-It is possible to enable double tilesets for a vanilla ROM, but then you will not be able to put **anything** else in bank 9, like dynamic tilesets or screen tilemaps. To enable this feature anyway, add the following under `consts` in your `eoe_config_override.xml`:
-
-```xml
-  <const name="tileset_secondary_bank" value="9" />
-```
-
-This tells the editor to use bank 9 for this feature.
+> ℹ️ **Advanced note**: It is possible to enable double tilesets for a vanilla ROM, but then you will not be able to put **anything** else in the only free bank (bank 9) like dynamic tilesets or screen tilemaps. To enable this feature anyway, add the following under `consts` in your `eoe_config_override.xml`:
+> 
+> ```xml
+>   <const name="tileset_secondary_bank" value="9" />
+> ```
+> 
+> This tells the editor to use bank 9 for this feature.
 
 We have also prepared a bmp-file with 14 new metatiles. (the last two are copies of the empty tile and can be disregarded for this example)
 
@@ -660,7 +697,7 @@ which means we were well within our chr-budget. We allowed the importer to use t
 
 Any unused chr-tile during bmp-import will be made "empty" to indicate free space. If we want to preserve the rest of the chr-tiles, we can slide the end-index back and import again. (the import will not make any changes to our data before we commit)
 
-When `Writable CHR start` is 128 and `Writable CHR end` is 162, if we Load bmp, the output will say:
+When `Writable CHR start` is 128 and `Writable CHR end` is 162, and we `Load bmp`, the output will say:
 
 ```text
 0 chr-tiles to spare, 0 chr-tiles approximated
@@ -676,17 +713,17 @@ Going back to the Tilemap Editor, we will see 14 new strange-looking metatiles f
 
 We want screen 1 to render under our new palette 1, so go to the door data for Eolis screen 0, and change "Destination palette/music" to 1.
 
-In the tilemap editor let us go to Eolis screen 1 via "Enter door" so that palette 1 takes effect. We now want to make screen 1 using our new Mega Man metatiles. Go to `World 0 (Eolis) Metadata > Scene` and set tileset to 9 - which is the tileset we imported chr-tiles to.
+In the tilemap editor let us go to Eolis screen 1 via "Enter door" so that palette 1 takes effect. We now want to make screen 1 using our new Mega Man metatiles. Go to `World 0 (Eolis) Metadata > Scene` and set tileset to 9 - which is the tileset we imported chr-tiles to. We will then see the screen as it will look during runtime, after the dynamic tileset switch has taken place.
 
 ![update Scene data](./img/examples/dynamic_tileset/temporary-scene-data.png)
 
 The tilemap for screen one will now look like this:
 
-![update Scene data](./img/examples/dynamic_tileset/w0s1-undrawn.png)
+![Screen 1 with new tileset](./img/examples/dynamic_tileset/w0s1-undrawn.png)
 
-Screen one is now drawn with the wrong tileset, but the last 14 metatiles now make sense. We can update these metatiles with new properties (they might all have property "Air" right now), and draw the screen.
+Screen one is now drawn with the wrong tileset, but the last 14 metatiles now make sense. We can update these metatiles with new properties (they might all have property "Air" right now), and draw a screen using these 14 metatiles.
 
-Once the screen is drawn **remember to set Eolis default tileset back to 0** in the Scene data.
+⚠️ Once the screen is drawn **remember to set Eolis default tileset back to 0** in the Scene data.
 
 ### Patching
 
@@ -700,7 +737,11 @@ In `eoe_config_override.xml` it will look like this:
  </string>
  ```
 
- This tells the `DynamicTilesets` hack that for world `0`, screen `1` - use tileset 9 instead of the world default.
+ This says we will install general hack `DynamicTilesets`, and that for world `0`, screen `1` - it will use tileset `9` instead of the world default.
+
+ To add more dynamic tileset screens, combine entries with `+`, for example `DynamicTilesets data=0:1:9+2:3:12` etc.
+
+ Tilesets do not change on regular scrolling connections as mentioned, so make sure to partition a world using multiple tilesets using sameworld doors and sameworld transitions. These can both take palette overrides.
 
  Patch ROM and start the game in an emulator. The very first screen should look normal, but when entering the door to screen 1, you should now see the screen you created with new tiles. 
 

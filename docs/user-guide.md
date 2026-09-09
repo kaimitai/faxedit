@@ -601,7 +601,7 @@ The number of chr-tiles the picture processing unit (ppu) of the nes can access 
 
 In this edit mode, you can extract a world's (or building screen's) metatiles as a bmp - and import one back in.
 
-* Extract from ROM: Make a texture out of your current metatile definitions and show them as an image.
+* Refresh: Make a texture out of your current metatile definitions and show them as an image.
 * Save bmp: Save the tilemap as a bmp. The output messages will tell you where it was stored.
 * Load bmp: Import a bmp as a metatile tilemap, and render it here. The rendering will show you what your import will look like in the game.
 
@@ -621,6 +621,8 @@ The importer will not generate any new metatiles, it will only update the graphi
   * Sub-Palette: chr-tiles are considered equal only if they have the same byte output (strict)
   * NES-palette: chr-tiles are considered equal if their palette indexes resolve to the same NES-palette colors. If you only need your metatiles to show in the context of one single palette, this is a good option.
   * RGB: chr-tiles are considered equal if they resolve to the same RGB-colors after applying the NES palette and resolving its rgb-values defined in the config xml. (loose)
+
+  The dropdown `Advanced: Custom Import Definition` contains an advanced import feature described in the document [Tileset Graphics and Metatiles](./tileset-gfx.md)
 
 ## World palettes
 

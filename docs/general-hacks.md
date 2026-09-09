@@ -198,6 +198,8 @@ DynamicTilesets start_screen=false enter_building=false exit_building=false data
 
 DynamicTilesets changes which CHR tileset is loaded; it does not change a world's metatile definitions. Alternate tilesets should therefore use a compatible tile layout for the screens and metatiles that use them. In the vanilla game, the buildings world uses a shared set of metatile definitions, but 3 different tilesets. They partitioned 256 metatiles across the tilesets, and such an approach can be taken when using this feature. Use the advanced **Custom Import Definition** in the GUI to import graphics into specific metatile and tileset CHR ranges.
 
+See the document [Tileset Graphics and Metatiles](./tileset-gfx.md) for an example of how to use this hack in practice.
+
 ### PoisonPickup
 
 Changes poison pickups so that they add an item to the player's inventory instead of damaging the player. By default, poison becomes the Red Potion (`0x10`).
