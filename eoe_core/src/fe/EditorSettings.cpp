@@ -84,7 +84,7 @@ void fe::EditorSettings::set_rendering_defaults(void) {
 void fe::EditorSettings::set_advanced_defaults(void) {
 	m_door_pad_byte = false;
 	m_enable_config_dump = false;
-	m_enable_ips_button = true;
+	m_enable_ips_button = false;
 	m_warn_tilemap_95_pct = true;
 	m_warn_00_doors = true;
 }

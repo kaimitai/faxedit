@@ -77,20 +77,24 @@ This is the screen used for file operations and data analysis.
 
 ![Project control](./img/win_project_control.png)
 
-* Save xml: Saves the project as an xml-file, the recommended master data format
-* Patch nes ROM: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes (hold shift to patch the ROM in-place)
-* Save ips: Generates an ips patch file
-* Data Integrity Analysis: Does some checking on whether there is problems in your data
-* BG gfx editor: Opens or closes the Background Graphics Editor window
-* Sprite gfx editor: Opens or closes the Sprite Graphics Editor window
-* Cinematic editor: Opens or closes the Cinematic Editor window
-* World Visualizer: Opens a window which lets you export an entire world to a png-image, with certain parameters
-* Load xml: Reloads xml from file and re-populates your data. Hold Shift to use.
-* Apply External ROM Changes: Re-reads the loaded rom from disk, and regenerates iScripts and music track counts. Should be used if the ROM undergoes external changes.
-* Output Messages: The messages from the editor
-* Settings: Opens the [settings window](#settings)
+- Top row buttons
+  - `BG Gfx`: Opens or closes the Background Graphics Editor window
+  - `Sprite Gfx`: Opens or closes the Sprite Graphics Editor window
+  - `Cinematics`: Opens or closes the Cinematic Editor window
+  - `World Visualizer`: Opens a window which lets you export an entire world to a png-image, with certain parameters
+  - `Scripting`: Opens the [Scripting](#scripting) window, from which you can deploy various script types, music and misc. data
 
-The tilemaps are stored in four different banks in ROM, but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
+- Bottom row buttons
+  - `Load xml`: Reloads project xml from file and re-populates your data. Hold Shift to use.
+  - `Save xml`: Saves the project as an xml-file, the recommended master data format
+  - `Patch ROM`: Writes the ROM file, appends -out to the filename so your loaded file is not overwritten. Will show output messages regarding the used data sizes (hold shift to patch the ROM in-place, not recommended)
+  - `Save ips`: Generates an ips patch file (when enabled, via `Settings > Advanced`)
+  - `Data Analysis`: Reports on potential problems in the game data
+  - `Settings`: Opens the [settings window](#settings)
+
+- Output Messages: The messages from the editor
+
+The tilemaps are stored in four different banks in ROM (or more for expanded ROMs), but the tilemaps for all screens for any world need to be fully contained within one bank. The editor will tell you which banks it used for which worlds, and report on used and available space.
 
 Some Keyboard shortcuts are always availabe when a ROM is loaded:
 * Ctrl + S: Save xml

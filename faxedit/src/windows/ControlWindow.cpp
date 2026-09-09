@@ -62,64 +62,24 @@ void fe::MainWindow::patch_nes_rom(bool p_in_place) {
 }
 
 void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
+	const bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 	ui::imgui_screen("Project Control###pcw", c::WIN_CONTROLS_X, c::WIN_CONTROLS_Y,
 		c::WIN_CONTROLS_W, c::WIN_CONTROLS_H, 4);
 
-	if (ui::imgui_button("Save xml", 2))
-		save_xml();
-
-	ImGui::SameLine();
-
-	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
-
-	if (ui::imgui_button("Patch nes ROM",
-		l_shift ? 4 : 2,
-		"Patch loaded ROM file"))
-		patch_nes_rom(l_shift);
-
-	if (m_settings.m_enable_ips_button) {
-
-		ImGui::SameLine();
-
-		if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
-
-			try {
-				const auto tmp_config{ hot_reload_config() };
-				fe::game::generate_ips_to_file(tmp_config, m_game.value(), get_ips_path(),
-					get_rom_patch_options(m_settings), m_msg_callback);
-			}
-			catch (const std::exception& ex) {
-				add_message(ex.what(), fe::MsgType::Error);
-			}
-		}
-	}
-
-	ImGui::SameLine();
-
-	if (ui::imgui_button("Data Integrity Analysis", 4)) try {
-		fe::game::analyze_game_data(m_game.value(), m_config,
-			m_settings.m_warn_tilemap_95_pct, m_settings.m_warn_00_doors, m_msg_callback);
-	}
-	catch (const std::exception& ex) {
-		add_message(std::format("Data Integrity Analysis failed: {}", ex.what()), fe::MsgType::Error);
-	}
-
-	ImGui::SameLine();
-
-	if (ui::imgui_button("BG gfx editor",
+	if (ui::imgui_button("BG Gfx",
 		m_gfx_window ? 4 : 2))
 		m_gfx_window = !m_gfx_window;
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Sprite gfx editor",
+	if (ui::imgui_button("Sprite Gfx",
 		m_sprite_gfx_window ? 4 : 2))
 		m_sprite_gfx_window = !m_sprite_gfx_window;
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Cinematic editor",
+	if (ui::imgui_button("Cinematics",
 		m_cinematic_window ? 4 : 2))
 		m_cinematic_window = !m_cinematic_window;
 
@@ -147,18 +107,46 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		}
 	}
 
-	if (ui::imgui_button("Load xml", 2, "", !ImGui::IsKeyDown(ImGuiMod_Shift)))
+	if (ui::imgui_button("Load xml", 2, "", !l_shift))
 		load_xml(p_rnd);
 
 	ImGui::SameLine();
 
-	if (ui::imgui_button("Apply External ROM Changes", 4,
-		"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
-		int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path)) };
-		add_message(std::format("Applied external changes from {} ({} bytes different)", m_loaded_rom_path, byte_diffs), fe::MsgType::Success);
+	if (ui::imgui_button("Save xml", 2))
+		save_xml();
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Patch ROM",
+		l_shift ? 4 : 2,
+		"Patch loaded ROM file"))
+		patch_nes_rom(l_shift);
+
+	if (m_settings.m_enable_ips_button) {
+
+		ImGui::SameLine();
+
+		if (ui::imgui_button("Save ips", 2, "Generate ips patch file")) {
+
+			try {
+				const auto tmp_config{ hot_reload_config() };
+				fe::game::generate_ips_to_file(tmp_config, m_game.value(), get_ips_path(),
+					get_rom_patch_options(m_settings), m_msg_callback);
+			}
+			catch (const std::exception& ex) {
+				add_message(ex.what(), fe::MsgType::Error);
+			}
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ui::imgui_button("Data Analysis", 4)) try {
+		fe::game::analyze_game_data(m_game.value(), m_config,
+			m_settings.m_warn_tilemap_95_pct, m_settings.m_warn_00_doors, m_msg_callback);
 	}
 	catch (const std::exception& ex) {
-		add_message(ex.what(), fe::MsgType::Error);
+		add_message(std::format("Data Integrity Analysis failed: {}", ex.what()), fe::MsgType::Error);
 	}
 
 	ImGui::SameLine();
