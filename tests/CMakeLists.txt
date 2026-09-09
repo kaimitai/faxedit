@@ -21,3 +21,12 @@ add_executable(atlas_ladder_control_regression
 target_link_libraries(atlas_ladder_control_regression PRIVATE eoe_core)
 
 add_test(NAME atlas_ladder_control_regression COMMAND atlas_ladder_control_regression)
+
+add_executable(atlas_ladder_crown_regression
+    atlas_ladder_crown_regression.cpp
+)
+
+target_link_libraries(atlas_ladder_crown_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_ladder_crown_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+
+add_test(NAME atlas_ladder_crown_regression COMMAND atlas_ladder_crown_regression)

@@ -42,6 +42,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevJumpControl](#atlasdevjumpcontrol)
   - [AtlasDevFallControl](#atlasdevfallcontrol)
   - [AtlasDevLadderControl](#atlasdevladdercontrol)
+  - [AtlasDevLadderCrown](#atlasdevladdercrown)
 
 <hr>
 
@@ -491,3 +492,87 @@ Does not require AtlasDevFrameScheduler.
 AtlasDevLadderControl up=384 down=448 attack=1 attackpose=1
 AtlasDevLadderControl up=320 attackflag=4 attackpose=1
 ```
+
+### AtlasDevLadderCrown
+
+Gives ordinary ladder tops a stable exit. In `crown` mode, climbing onto a
+supported top rung lets the hero stand with their feet on it, walk away,
+jump, or press Down to climb back. Support is earned by climbing Up; falling
+past a ladder or jumping back onto it does not create a platform. Wing Boots
+flight and ordinary falls keep their usual behavior.
+
+`floor` mode stops ascent at the adjacent floor height without adding a
+standing surface. `vanilla` installs nothing. Omitting the hack entirely also
+leaves the original behavior unchanged. Neither option removes patches from
+an already modified input ROM; always rebuild from your clean source ROM.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mode` | `crown` | `crown`, `floor` or `vanilla` |
+| `downhold` | `0` | eligible Down movement ticks to wait before leaving an earned crown, 0 to 8 |
+| `align` | `0` | maximum horizontal correction toward the saved rung when descending from an earned crown, 0 to 2 pixels |
+| `roompolicy` | `all` | `all` rooms, only an `allow` list, or every room except a `deny` list |
+| `rooms` | none | up to eight distinct `area:screen` byte pairs, separated by `+` |
+
+Room policies apply to the ladder exit behavior, not to climb speed or
+attacking. `allow` and `deny` require a nonempty list. `all` rejects a room
+list. Mode and policy names are lowercase. Numeric values accept decimal,
+`$` or `0x` hexadecimal, and `%` binary.
+
+`downhold=3` waits three eligible Down ticks and begins descent on the fourth.
+Releasing Down or pressing Up resets the wait. Alignment is limited to the
+saved rung; it does not pull the hero toward other ladders. Both options are
+exclusive to `crown` mode. `vanilla` rejects nondefault options that would
+otherwise have no effect.
+
+```text
+AtlasDevLadderCrown
+```
+
+For a short pause before descending and a small alignment assist:
+
+```text
+AtlasDevLadderCrown downhold=3 align=2
+```
+
+To restrict the change to selected rooms:
+
+```text
+AtlasDevLadderCrown roompolicy=allow rooms=6:3+3:12
+AtlasDevLadderCrown mode=floor roompolicy=deny rooms=1:2
+```
+
+These are alternatives; only one AtlasDevLadderCrown entry is allowed.
+
+The ladder top must have clear body space above it and an adjacent solid
+floor beneath the top rung. Walking off, taking damage, starting a jump or
+changing that geometry releases crown support. This is not a general
+invisible floor over every ladder.
+
+Supported input is an unexpanded MMC1 iNES or NES2 ROM with compatible movement
+code. Compatibility is checked against the instructions and routines used by
+the hack, not the region name. Mirroring and battery-backed RAM header flags
+are accepted, as is unused iNES padding; the original header is preserved.
+Trainer, CHR-ROM and expanded layouts are not supported. The default uses 605
+bytes of bank 15 space. Crown reserves `$04e0` for support and `$04e1` for
+the optional down-hold timer, separate from the scheduler, jump buffer and
+palette roles. Script storage configured over either cell is rejected,
+including mirrored addresses. Floor mode uses 315 bytes and no persistent RAM.
+Room gates add code and tables; the largest crown configuration uses 713 bytes.
+Code uses the bank 15 space assigned by FaxEdit's general-hack allocator,
+including reclaimed space. Its location and capacity depend on the project.
+
+AtlasDevJumpControl, AtlasDevFallControl and the native scheduler's palette
+roles can be listed together with this hack when their combined code fits.
+Crown is installed first; other hacks keep their relative order, so place
+AtlasDevFrameScheduler before its roles. A jump buffer adds ladder timer
+handling: default crown plus default jump control uses 785 bytes;
+default crown plus the scheduler uses 761. Larger combinations can
+exceed the available space and are rejected. No other hack is relocated or
+given extra space by this feature.
+
+Build these combinations from a compatible base ROM. Crown accepts an existing
+native scheduler only with unclaimed PRE and POST vectors; preinstalled
+handlers and unknown NMI hooks are rejected. Hook checks also reject
+incompatible movement patches. Script activation, climb speeds and ladder
+attack settings are not part of this hack.

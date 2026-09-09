@@ -33,6 +33,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
 		fh::GeneralHackLib::AtlasDevJumpControl,
 		fh::GeneralHackLib::AtlasDevLadderControl,
+		fh::GeneralHackLib::AtlasDevLadderCrown,
 	}},
 	};
 
@@ -50,6 +51,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevJumpControl, { "coyote", "buffer", "shorthop", "airjumps", "switchable", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevLadderControl, { "up", "down", "wingup", "wingdown", "attack", "attackpose", "attackflag" } },
 		{ fh::GeneralHackLib::AtlasDevFallControl, { "profile", "curve", "steer", "kind", "boot" } },
+		{ fh::GeneralHackLib::AtlasDevLadderCrown, { "mode", "downhold", "align", "roompolicy", "rooms" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
