@@ -175,6 +175,7 @@
     <ClCompile Include="src\fh\AtlasDevTimeOfDay.cpp" />
     <ClCompile Include="src\fh\AtlasDevJumpControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevLadderControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevLadderCrown.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
