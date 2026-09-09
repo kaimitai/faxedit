@@ -66,7 +66,7 @@ The following sections explain each of these components and how they are represe
 
 All tileset graphics in vanilla Faxanadu are stored in **Bank 4**. If you enable the `Double Tileset` hack, available for 32-bank ROMs, **Bank 28** will be used to hold a second collection of tilesets.
 
-Banks are 16kb in size, and each CHR tile is 16 bytes, meaing a bank can contain a total of **1024 CHR tiles**. Each CHR tile is an 8×8 pixel graphic used as a building block for larger background graphics.
+Banks are 16kb in size, and each CHR tile is 16 bytes, meaning a bank can contain a total of **1024 CHR tiles**. Each CHR tile is an 8×8 pixel graphic used as a building block for larger background graphics.
 
 ```text
 Bank 4 (16 KB)
@@ -247,8 +247,8 @@ For example:
 ```text
 World 2
 
-Tileset = 5
-Palette = 1
+Tileset = 3
+Palette = 10
 ```
 
 Every screen in World 2 will use those settings unless a palette override is applied.
@@ -262,17 +262,17 @@ World 4 is a special case.
 Instead of defining scene data per world, it defines scene data per screen.
 
 ```text
-Screen 00
+Screen 0
+├─ Tileset 6
+└─ Palette 17
+
+Screen 4
 ├─ Tileset 7
-└─ Palette 0
+└─ Palette 20
 
-Screen 01
-├─ Tileset 3
-└─ Palette 2
-
-Screen 02
-├─ Tileset 5
-└─ Palette 1
+Screen 8
+├─ Tileset 8
+└─ Palette 25
 ```
 
 This allows individual interiors to use different graphics and color schemes.
@@ -733,11 +733,13 @@ In `eoe_config_override.xml` it will look like this:
 
 ```
  <string name="general_hacks">
-    DynamicTilesets data=0:1:9
+    DynamicTilesets bank=28 addr=$8000 data=0:1:9
  </string>
  ```
 
- This says we will install general hack `DynamicTilesets`, and that for world `0`, screen `1` - it will use tileset `9` instead of the world default.
+ This says we will install general hack `DynamicTilesets`, and that for world `0`, screen `1` - it will use tileset `9` instead of the world default. The loader routine and lookup data will be installed in empty bank `28` at cpu address `$8000`, which is the start of the bank.
+ 
+⚠️ If bank is not given, the loader and data will be put into bank 15 where free space is precious. For non-expanded ROMs this might be necessary.
 
  To add more dynamic tileset screens, combine entries with `+`, for example `DynamicTilesets data=0:1:9+2:3:12` etc.
 
