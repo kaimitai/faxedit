@@ -4789,6 +4789,119 @@ word fh::HackManager::apply_AtlasDevApplyEffect(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// bit 7 clear marks an active effect, including a counter of zero.
+word fh::HackManager::apply_AtlasDevIfEffectActive(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0x03);
+	code.tax();
+	code.lda_abs_x(RAM::TimedEffectTimers);
+	code.bpl("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@active");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// inactive effects report zero. invalid registers consume both operands
+// without writing to the configured script register block.
+word fh::HackManager::apply_AtlasDevGetEffectTime(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // effect
+	code.and_imm(0x03);
+	code.tax();
+	code.lda_abs_x(RAM::TimedEffectTimers);
+	code.bpl("@value");
+	code.lda_imm(0x00);
+	code.label("@value");
+	code.pha(); // retain the value across the register operand fetch
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.cmp_imm(Count);
+	code.bcs("@drop");
+	code.tax();
+	code.pla();
+	code.sta_abs_x(Vars);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@drop");
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// cancellation skips expiry scripts. hour glass restores area music only
+// while its counter is active and its music is still selected.
+word fh::HackManager::apply_AtlasDevClearTimedEffect(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.and_imm(0x03);
+	code.tax();
+	code.cpx_imm(0x03);
+	code.bne("@clear");
+	code.lda_abs_x(RAM::TimedEffectTimers);
+	code.bmi("@clear");
+	code.lda_zp(RAM::ZP_MusicCurrent);
+	code.and_imm(0x7f);
+	code.cmp_imm(0x0b);
+	code.bne("@clear");
+	code.lda_abs(RAM::World_DefaultMusic);
+	code.sta_zp(RAM::ZP_MusicCurrent);
+	code.label("@clear");
+	code.lda_imm(0xff);
+	code.sta_abs_x(RAM::TimedEffectTimers);
+	code.cpx_imm(0x02);
+	code.bne("@done");
+	code.lda_zp(RAM::ZP_PlayerStatus);
+	code.and_imm(0x7f);
+	code.sta_zp(RAM::ZP_PlayerStatus);
+	code.lda_imm(0x00); // the hud routine takes the number in a
+	code.jsr(cfg_word(p_config, c::ID_ROM_HUD_DRAW_TIMER));
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// clear every counter and the flight bit, then redraw the timer as zero.
+word fh::HackManager::apply_AtlasDevClearTimedEffects(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.lda_abs(RAM::TimedEffectTimers + 3);
+	code.bmi("@clear");
+	code.lda_zp(RAM::ZP_MusicCurrent);
+	code.and_imm(0x7f);
+	code.cmp_imm(0x0b);
+	code.bne("@clear");
+	code.lda_abs(RAM::World_DefaultMusic);
+	code.sta_zp(RAM::ZP_MusicCurrent);
+	code.label("@clear");
+	code.lda_imm(0xff);
+	for (byte effect{ 0 }; effect < 4; ++effect)
+		code.sta_abs(static_cast<word>(RAM::TimedEffectTimers + effect));
+	code.lda_zp(RAM::ZP_PlayerStatus);
+	code.and_imm(0x7f);
+	code.sta_zp(RAM::ZP_PlayerStatus);
+	code.lda_imm(0x00);
+	code.jsr(cfg_word(p_config, c::ID_ROM_HUD_DRAW_TIMER));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::apply_AtlasDevCastSpell(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -5226,7 +5339,7 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		HackLib::AtlasDevDrawVarNumber, HackLib::AtlasDevGetLocationToVars,
 		HackLib::AtlasDevGetPlayerPositionToVars, HackLib::AtlasDevVarBitOp,
 		HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
-		HackLib::AtlasDevIfVarMask };
+		HackLib::AtlasDevIfVarMask, HackLib::AtlasDevGetEffectTime };
 	// flag functions need access to the bitmask lookup table
 	std::set<HackLib> BITMASK_TABLE_REQUIRED{ FLAG_REQUIRED };
 	BITMASK_TABLE_REQUIRED.insert(begin(QUEST_FLAG_REQUIRED), end(QUEST_FLAG_REQUIRED));
@@ -5886,6 +5999,18 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevDayNight:
 			cpu_addr = apply_AtlasDevDayNight(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevIfEffectActive:
+			cpu_addr = apply_AtlasDevIfEffectActive(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevGetEffectTime:
+			cpu_addr = apply_AtlasDevGetEffectTime(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearTimedEffect:
+			cpu_addr = apply_AtlasDevClearTimedEffect(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevClearTimedEffects:
+			cpu_addr = apply_AtlasDevClearTimedEffects(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:
