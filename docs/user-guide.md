@@ -100,9 +100,7 @@ Some Keyboard shortcuts are always availabe when a ROM is loaded:
 * Ctrl + S: Save xml
 * Ctrl + Shift + L: Load xml
 * Ctrl + P: Patch ROM
-* Ctrl + Shift + P: Patch ROM in-place (patch the loaded ROM directly)
-
-Holding Alt when patching a ROM will enable semi-static patching mode - which generates ROMs that are compatible with the [Faxanadu Randomizer](https://github.com/Notlobb/Randumizer/), with the limitation that sprites, screen connections and metadata will remain unpatched.
+* Ctrl + Shift + P: Patch ROM in-place (patch the loaded ROM directly, not recommended)
 
 <hr>
 
