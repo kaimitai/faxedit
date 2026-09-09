@@ -41,6 +41,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevTimeOfDay](#atlasdevtimeofday)
   - [AtlasDevJumpControl](#atlasdevjumpcontrol)
   - [AtlasDevFallControl](#atlasdevfallcontrol)
+  - [AtlasDevLadderControl](#atlasdevladdercontrol)
 
 <hr>
 
@@ -432,4 +433,61 @@ AtlasDevFallControl profile=zelda2
 AtlasDevFallControl curve=1+1+2+2+4+8 steer=1
 AtlasDevFrameScheduler
 AtlasDevFallControl profile=arc kind=6
+```
+
+### AtlasDevLadderControl
+
+How fast the hero climbs, and whether he may attack while on a ladder.
+Climb speed is four numbers the vanilla ROM already holds as constants, so
+with default parameters this hack writes nothing at all and the patched ROM
+is byte identical to the source.
+
+Stock climbs up at 160 subpixels per frame and down at 192, so descent is a
+fifth faster than ascent, and the two are separate numbers rather than one
+speed with a sign. `up` and `down` set them, and `wingdown` sets the Wing
+Boots descent, all in subpixels per frame where 256 is one pixel. `wingup`
+is the odd one out and is whole pixels per frame, because vanilla subtracts
+only from the whole pixel byte there and widening it would need more space
+than the instruction has.
+
+`attack=1` lets the hero swing while on a ladder, which vanilla refuses with
+a single branch. The refusal outlasts the input: the game counts the hero as
+climbing until his body leaves the rung, not only while he is moving, so one
+tap of Up keeps it in force.
+
+`attackpose=1` fixes the animation that goes with it. Two frame selectors
+choose the hero's appearance, one for the weapon and shield overlays and one
+for the body, and both ask whether he is climbing before they ask whether he
+is attacking, because vanilla never needed the second question. Fixing only
+one gives the hero three arms, the overlays drawing the swing while the body
+still holds the rungs. Both are reordered to test the attack bit first, in
+place, and the result is smaller than what it replaces.
+
+`attackflag=n` gates the attack on extended flag `n` at runtime instead of
+enabling it outright, so a script can allow ladder attacks after an item or
+an event with `SetFlag` and take them away again with `ClearFlag`. Only the
+operand of the existing call is retargeted, into a 14 byte stub, so the
+the other users of the same climbing test keep vanilla behavior: jumping off
+a ladder, casting magic and the body's own climb pose are untouched. A
+clear flag is indistinguishable from stock, and the flag page is cleared at
+reset, so a runtime build plays exactly like the original game until the
+script sets the flag. `attackflag` and `attack=1` are mutually exclusive.
+
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `up` | `160` | climb up speed in subpixels per frame, 1 to 2048 |
+| `down` | `192` | climb down speed in subpixels per frame, 1 to 2048 |
+| `wingup` | `1` | Wing Boots ascent in whole pixels per frame, 1 to 8 |
+| `wingdown` | `384` | Wing Boots descent in subpixels per frame, 1 to 2048 |
+| `attack` | `0` | 1 allows attacking while on a ladder |
+| `attackpose` | `0` | 1 draws the attack frames while climbing instead of the climb pose |
+| `attackflag` | none | extended flag 0 to 247 that allows the attack at runtime |
+
+```text
+AtlasDevLadderControl up=384 down=448 attack=1 attackpose=1
+AtlasDevLadderControl up=320 attackflag=4 attackpose=1
 ```
