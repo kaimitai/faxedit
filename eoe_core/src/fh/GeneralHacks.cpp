@@ -1100,6 +1100,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 				throw std::runtime_error("AtlasDevLadderCrown: requires PRG bank 15");
 			cpu_addr = install_AtlasDevLadderCrown(p_config, patched_rom, cpu_addr, hack, jump_buffer);
 			break;
+		case fh::GeneralHackLib::AtlasDevRunControl:
+			cpu_addr = install_AtlasDevRunControl(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
