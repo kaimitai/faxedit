@@ -56,7 +56,7 @@ namespace {
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
-		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold" }},
+		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
 	};
 

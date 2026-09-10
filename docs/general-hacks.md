@@ -257,6 +257,7 @@ By default, the saved state matches the progress preserved by the vanilla passwo
 | `ranges`  | `$039d:42+$042c:2+$0437:1+$0439:1+$04c2:4+$0101:31+$0390:5` | RAM ranges copied to SRAM. Each entry is written as `address:length`, with entries separated by `+` |
 | `save_gold` | `true` | Restore Gold and XP when loading from SRAM |
 | `keep_gold` | `false` | Keep Gold and XP on death |
+| `color` | `true` | Color `CONTINUE` according to whether a valid save is available |
 
 Custom save ranges can be supplied if needed, but the default value should be a sensible choice for most:
 
@@ -264,7 +265,11 @@ Custom save ranges can be supplied if needed, but the default value should be a 
 SRAM
 ```
 
-The text `CONTINUE` on the start screen is colored gray when no valid save is present, otherwise green-ish, at least with the default start screen palette. See config item `sram_start_screen_attrs` in `eoe_config.xml`. Make an override if you want to change this presentation. A PPU-address is given, followed by attribute bytes to push from that address onward. If you want no coloring, you can make this item an empty string in your config override.
+With `color=true`, `CONTINUE` on the start screen is colored gray when no valid save is present and green-ish when a save is available, at least with the default start screen palette.
+
+The attribute data is configured by `sram_start_screen_attrs` in `eoe_config.xml`. Override this config item if you want to change the presentation. It specifies a PPU address followed by the attribute bytes written from that address onward for the valid and invalid save states.
+
+Use `color=false` to disable the attribute changes entirely.
 
 ### TextSpeed
 

@@ -365,9 +365,7 @@ namespace {
 
 	word install_SRAM_WriteStartScreenAttributes(const fe::Config& p_config,
 		std::vector<byte>& p_rom, word cpu_addr) {
-		const auto attrs{ p_config.string_or_empty(ID_SRAM_START_SCREEN_ATTRS) };
-		if (attrs.empty())
-			return cpu_addr;
+		const auto attrs{ p_config.string(ID_SRAM_START_SCREEN_ATTRS) };
 
 		std::map<std::string, std::string> attr_map;
 		for (const auto& kv_str : klib::str::split_string(attrs, ',')) {
@@ -429,6 +427,7 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 
 	const bool keep_gold_xp_on_sram_load{ p_hack.bool_or("save_gold", true) };
 	const bool keep_gold_xp_on_death{ p_hack.bool_or("keep_gold", false) };
+	const bool color_text{ p_hack.bool_or("color", true) };
 
 	if (keep_gold_xp_on_sram_load)
 		install_static_NoGoldXPReload(p_rom, cfg_word(p_config, c::ID_CONTINUE_INIT_XP_GOLD));
@@ -465,8 +464,10 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	const word start_screen_select_guard_addr{ cpu_addr };
 	cpu_addr = install_SRAM_DisableContinueOnInvalidSave(p_config, p_rom, start_screen_select_guard_addr);
 
-	const word start_screen_attribute_addr{ cpu_addr };
-	cpu_addr = install_SRAM_WriteStartScreenAttributes(p_config, p_rom, start_screen_attribute_addr);
+	if (color_text) {
+		const word start_screen_attribute_addr{ cpu_addr };
+		cpu_addr = install_SRAM_WriteStartScreenAttributes(p_config, p_rom, start_screen_attribute_addr);
+	}
 
 	install_SRAM_ShowMantra(p_config, p_rom, save_addr);
 	install_SRAM_ChooseContinue(p_config, p_rom, load_addr);

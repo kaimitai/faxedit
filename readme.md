@@ -8,6 +8,8 @@ Precompiled Windows x64 builds are available on the [repository releases](https:
 
 The editor supports all major Faxanadu ROM regions, including US, US Revision A, EU, JP, and the [English Translation Hack](https://www.romhacking.net/translations/4281/).
 
+Supported ROMs can also be expanded to 32-bank SUROM, providing nearly twice the available ROM space for larger hacks. A configurable SRAM hack is built in as well, replacing the original mantra/password save system with battery-backed saves.
+
 Scripting and music tools are available both through the GUI editor and through a command-line application, `eoe-cli`.
 
 See the [documentation](./docs/user-guide.md) for a detailed overview of the editor and the [changelog](./docs/user-guide.md#changelog) for version history.
