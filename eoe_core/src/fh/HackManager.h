@@ -71,6 +71,8 @@ namespace fh {
 		AtlasDevCastSpellFromEntity, AtlasDevSetMagicPosition,
 		AtlasDevSetMagicFacing,
 		AtlasDevArmRole, AtlasDevDayNight,
+		AtlasDevIfEffectActive, AtlasDevGetEffectTime,
+		AtlasDevClearTimedEffect, AtlasDevClearTimedEffects,
 		// Keep Count last.
 		Count
 	};
@@ -248,6 +250,10 @@ namespace fh {
 		word apply_AtlasDevSetMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevSetScreenEvent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevApplyEffect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevIfEffectActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevGetEffectTime(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearTimedEffect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevClearTimedEffects(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;

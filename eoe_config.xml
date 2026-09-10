@@ -2017,6 +2017,10 @@
 			<entry key="AtlasDevSetMagicFacing" value="Args=Byte" />
 			<entry key="AtlasDevArmRole" value="Args=Byte+Byte" />
 			<entry key="AtlasDevDayNight" value="Args=Byte" />
+			<entry key="AtlasDevIfEffectActive" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevGetEffectTime" value="Args=Byte+Byte" />
+			<entry key="AtlasDevClearTimedEffect" value="Args=Byte" />
+			<entry key="AtlasDevClearTimedEffects" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

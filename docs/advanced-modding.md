@@ -325,6 +325,10 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
 | AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
 | AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
+| AtlasDevIfEffectActive | Byte, Label | Branches while the selected timed effect is active, including a counter of zero | AtlasDevIfEffectActive 2 @flying |
+| AtlasDevGetEffectTime | Byte, Byte | Stores the remaining effect counter in a script register, or zero when inactive; an invalid register does nothing | AtlasDevGetEffectTime 2 0 |
+| AtlasDevClearTimedEffect | Byte | Cancels one timed effect without running its expiry script | AtlasDevClearTimedEffect 3 |
+| AtlasDevClearTimedEffects | None | Cancels all four timed effects without running their expiry scripts | AtlasDevClearTimedEffects |
 | AtlasDevCastSpell | Byte | Initializes spell 0-4 at the player without using MP or checking input. It is silent and starts moving after the script returns to gameplay. Other values do nothing | AtlasDevCastSpell 2 |
 | AtlasDevIfMagicActive | Label | Uses the game's visible-magic sign test. Valid active states are 0-11, including dormant state 9 | AtlasDevIfMagicActive @spell_active |
 | AtlasDevClearVisibleMagic | None | Ends the current visible-magic state. Its auxiliary bytes are left unchanged, matching the vanilla clear | AtlasDevClearVisibleMagic |
@@ -356,6 +360,36 @@ finish handler and stays active until cleared or replaced. Values 12-127 are
 invalid magic states and should not be written directly.
 
 **Note**: Runtime implementations are intended for use with custom opcodes. Vanilla opcodes (0-23) continue to use the game's original implementations unless explicitly remapped. This preserves compatibility with existing scripts while allowing projects to extend the scripting language with new functionality.
+
+#### AtlasDev timed effects
+
+The effect operand selects ointment (0), glove (1), wing boots (2), or hour
+glass (3). Only its low two bits are used, matching ```AtlasDevApplyEffect```.
+```AtlasDevIfEffectActive``` tests whether the timer's high bit is clear. It is
+the same test as ```IfAddrBetween``` on the effect's timer byte, ```$0427``` plus
+the effect number, with the range 0 to 127, packed into one handler that needs
+no shared helper; a script that already installs ```IfAddrBetween``` can use
+that form instead. ```AtlasDevGetEffectTime``` returns the remaining counter
+from 0 through 127, not a frame count. Both an inactive effect and an active
+effect at zero report zero, so use the conditional when that distinction
+matters.
+
+```AtlasDevGetEffectTime``` uses ```hack_script_var_ram_addr``` and
+```hack_script_var_count```. A register at or above the configured count
+consumes both operands without writing a register. Selecting this
+implementation also enables the normal register reset at script start. The
+other three operations need no script registers or additional hooks.
+
+Cancellation writes the inactive timer value without an expiry message or
+sound effect. Clearing wing boots also stops flight, preserves the other
+player status bits, and redraws the HUD timer as zero. Clearing an already
+inactive effect is safe; clearing wing boots again still refreshes the HUD.
+
+Clearing an active hour glass restores the area's default music only when
+the current music is still the hour glass track (11). A different selected
+track is left alone. Explicitly selecting track 11 while hour glass is
+active is indistinguishable from the effect's own music and is also restored.
+Clearing all effects applies the same music rule and wing boots cleanup.
 
 #### AtlasDev screen events
 
