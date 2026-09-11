@@ -263,6 +263,47 @@ word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::v
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
 
+// invisible trigger iScript N is skipped when extended flag N is set
+// returns A = iScript index, C set if the trigger should be skipped
+word fh::HackManager::install_ConditionalTrigger(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr) const {
+	constexpr byte OP_BCS{ 0xb0 };
+	klib::Asm6502 code;
+
+	code.jsr(cpu_addr);
+	code.nop(2);
+	code.db(OP_BCS);
+	code.apply_hack_and_clear(p_rom, 14, ROM::Player_HandleTouchNPC_STA_CurrentSprite_Value);
+
+	// new routine
+	code.sta_abs(RAM::CurrentSprite_iScriptIndex);
+	code.cmp_imm(0xff);
+	code.bne("@flag_check");
+	code.sec();
+	code.rts();
+
+	// A = iScript index; extended flag index is identical
+	// returns A unchanged, C = corresponding extended flag value
+	code.label("@flag_check");
+	code.tax();
+	code.and_imm(0x07);
+	code.tay();
+	code.txa();
+	code.lsr_a(3);
+	code.tax();
+	code.lda_abs_x(RAM::Flags);
+
+	code.label("@shift");
+	code.lsr_a();
+	code.dey();
+	code.bpl("@shift");
+	// restore script/flag index; LDA does not affect C
+	code.lda_abs(RAM::CurrentSprite_iScriptIndex);
+	code.rts();
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+}
+
 // supports using items inside buildings, disregarding player state flags
 // and selling items to shops which do not sell those items for a given price
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -893,14 +934,14 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		throw std::runtime_error("AtlasDevLadderCrown: only one entry is allowed");
 	// Crown checks retail continuations before companions install their hooks.
 	// Move only Crown; all existing hacks retain their own relative order.
-	auto ordered{p_hacks};
+	auto ordered{ p_hacks };
 	if (ladder_exit) {
 		for (const auto& hack : p_hacks)
 			if (hack.get_type() == GeneralHackLib::AtlasDevJumpControl)
 				jump_buffer = jump_buffer || hack.byte_or("buffer", 5) != 0;
-		const auto crown{std::find_if(ordered.begin(), ordered.end(), [](const auto& hack) {
+		const auto crown{ std::find_if(ordered.begin(), ordered.end(), [](const auto& hack) {
 			return hack.get_type() == GeneralHackLib::AtlasDevLadderCrown;
-		})};
+		}) };
 		std::rotate(ordered.begin(), crown, std::next(crown));
 	}
 
@@ -937,11 +978,11 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 	// assembler's bounds check. Crown can leave less than one body available;
 	// reject that case before the scan, without changing their legacy path.
 	const auto crown_companion_capacity = [&](std::size_t bytes) {
-		const auto offset{klib::Asm6502::get_file_offset(p_bank, cpu_addr)};
+		const auto offset{ klib::Asm6502::get_file_offset(p_bank, cpu_addr) };
 		if (cpu_addr > p_cpu_addr_end || bytes > p_cpu_addr_end - cpu_addr
 			|| offset > patched_rom.size() || bytes > patched_rom.size() - offset)
 			throw std::runtime_error("AtlasDevLadderCrown: fixed-bank companion overflow");
-	};
+		};
 
 	for (const auto& hack : ordered) {
 		const word previous_cpu_addr{ cpu_addr };
@@ -983,6 +1024,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::BossLockedItems:
 			cpu_addr = install_BossLockedItems(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::ConditionalTrigger:
+			cpu_addr = install_ConditionalTrigger(p_config, patched_rom, cpu_addr);
+			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			if (ladder_exit) crown_companion_capacity(afs::CORE_SIZE);
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
@@ -1001,22 +1045,22 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::AtlasDevJumpControl: {
 			if (ladder_exit) {
-				const bool coyote{hack.byte_or("coyote", 5) != 0};
-				const bool buffer{hack.byte_or("buffer", 5) != 0};
-				const bool hop{hack.byte_or("shorthop", 3) != 0};
-				const bool air{hack.byte_or("airjumps", 0) != 0};
-				const bool switched{hack.byte_or("switchable", 0) != 0};
-				const bool trying{coyote || air};
+				const bool coyote{ hack.byte_or("coyote", 5) != 0 };
+				const bool buffer{ hack.byte_or("buffer", 5) != 0 };
+				const bool hop{ hack.byte_or("shorthop", 3) != 0 };
+				const bool air{ hack.byte_or("airjumps", 0) != 0 };
+				const bool switched{ hack.byte_or("switchable", 0) != 0 };
+				const bool trying{ coyote || air };
 				// Native Jump's fall/init/hop/buffer emitter sizes depend only
 				// on these five booleans. Crown's regression pins all 32 shapes.
 				std::size_t bytes{};
 				if (coyote || buffer || air)
 					bytes += 3 + (switched ? 24 : 0) + (coyote ? 18 : 0)
-						+ (buffer ? 3 + (trying ? 2 : 0) : 4)
-						+ (trying ? 25 + (buffer ? 8 : 0) : 0) + (air ? 17 : 0);
+					+ (buffer ? 3 + (trying ? 2 : 0) : 4)
+					+ (trying ? 25 + (buffer ? 8 : 0) : 0) + (air ? 17 : 0);
 				if (buffer || air)
 					bytes += 22 + (switched ? 34 : 0) + (buffer ? 3 + (air ? 2 : 0) : 4)
-						+ (air ? 43 : 0) + (buffer ? 15 : 3);
+					+ (air ? 43 : 0) + (buffer ? 15 : 3);
 				if (hop) bytes += 25 + (switched ? 24 : 0);
 				if (buffer) bytes += 28;
 				crown_companion_capacity(bytes);

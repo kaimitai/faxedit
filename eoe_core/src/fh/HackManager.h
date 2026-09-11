@@ -320,6 +320,7 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		word install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_ConditionalTrigger(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		// bank 15
 		word install_AtlasDevFrameScheduler(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;

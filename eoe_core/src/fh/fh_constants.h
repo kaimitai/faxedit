@@ -32,6 +32,7 @@ namespace fh {
 
 		// bank 14 addresses
 		constexpr word PendantBugBNE{ 0x8879 };
+		constexpr word Player_HandleTouchNPC_STA_CurrentSprite_Value{ 0x89f2 };
 		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
 		constexpr word SpriteBehavior_BattleSuit_CheckForBosses{ 0xa379 };
 		constexpr word SpriteBehavior_BattleHelmet_CheckForBosses{ 0xa3a9 };
@@ -308,6 +309,7 @@ namespace fh {
 		constexpr word PaletteShadow{ 0x0293 };
 		// The sub-palette the engine caches for textbox glyphs (single
 		// vanilla writer, $d048); glyphs render in that sub's colour 3.
+		constexpr word CurrentSprite_iScriptIndex{ 0x038c };
 		constexpr word TextBoxSubPalette{ 0x038d };
 		// Selector for the ROM background palette set; area transitions
 		// overwrite it, RestorePalette re-stages from it.

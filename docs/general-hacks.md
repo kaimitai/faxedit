@@ -35,6 +35,7 @@ This document describes the hacks in the current library and their parameters. I
   - [SRAM](#sram)
   - [TextSpeed](#textspeed)
   - [BugFixes](#bugfixes)
+  - [ConditionalTrigger](#conditionaltrigger)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -301,6 +302,30 @@ This hack has no parameters.
 
 ```text
 BugFixes
+```
+
+### ConditionalTrigger
+
+Makes sprite #79 - The invisible dialogue trigger - conditional, based on extended flags.
+
+When an invisible trigger is activated, its iScript index is also used as an extended flag index. If the corresponding extended flag is set, the iScript is not executed. For example, a trigger using iScript 10 will be disabled while extended flag 10 is set.
+
+This can be used to create one-time or conditional events using invisible triggers. Scripts can set or clear their corresponding extended flag as needed.
+
+A script might look like this, if extended opcode `SetFlag` is available:
+
+```asm
+.entrypoint 10
+.textbox GENERIC
+  Msg "one time text"
+  SetFlag 10 ; makes sure this trigger can't fire again
+  End
+```
+
+This hack has no parameters.
+
+```text
+ConditionalTrigger
 ```
 
 ### AtlasDevFrameScheduler
