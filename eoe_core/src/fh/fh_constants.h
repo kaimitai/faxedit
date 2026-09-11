@@ -32,7 +32,8 @@ namespace fh {
 
 		// bank 14 addresses
 		constexpr word PendantBugBNE{ 0x8879 };
-		constexpr word Player_HandleTouchNPC_STA_CurrentSprite_Value{ 0x89f2 };
+		constexpr word Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value{ 0x8988 };
+		constexpr word Player_HandleTouchTrigger_STA_CurrentSprite_Value{ 0x89f2 };
 		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
 		constexpr word SpriteBehavior_BattleSuit_CheckForBosses{ 0xa379 };
 		constexpr word SpriteBehavior_BattleHelmet_CheckForBosses{ 0xa3a9 };

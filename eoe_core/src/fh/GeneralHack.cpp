@@ -21,7 +21,7 @@ namespace {
 	}},
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
-		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalTrigger,
+		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalScript,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -60,7 +60,7 @@ namespace {
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
-		{ fh::GeneralHackLib::ConditionalTrigger, {} },
+		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

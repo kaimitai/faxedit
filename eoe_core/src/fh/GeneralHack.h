@@ -20,7 +20,7 @@ namespace fh {
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		AtlasDevLadderControl, AtlasDevLadderCrown, AtlasDevSmartKeys,
-		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalTrigger
+		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 
 	class GeneralHack {

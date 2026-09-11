@@ -263,17 +263,31 @@ word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::v
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
 
-// invisible trigger iScript N is skipped when extended flag N is set
-// returns A = iScript index, C set if the trigger should be skipped
-word fh::HackManager::install_ConditionalTrigger(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr) const {
+// iScript N is skipped when extended flag N is set, for triggers and/or NPCs
+// returns A = iScript index, C set if the script should be skipped
+word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	const bool trigger{ p_hack.bool_or("trigger", true) };
+	const bool npc{ p_hack.bool_or("npc", false) };
+
+	if (!trigger && !npc)
+		return cpu_addr;
+
 	constexpr byte OP_BCS{ 0xb0 };
 	klib::Asm6502 code;
 
-	code.jsr(cpu_addr);
-	code.nop(2);
-	code.db(OP_BCS);
-	code.apply_hack_and_clear(p_rom, 14, ROM::Player_HandleTouchNPC_STA_CurrentSprite_Value);
+	if (trigger) {
+		code.jsr(cpu_addr);
+		code.nop(2);
+		code.db(OP_BCS);
+		code.apply_hack_and_clear(p_rom, 14, ROM::Player_HandleTouchTrigger_STA_CurrentSprite_Value);
+	}
+	if (npc) {
+		code.jsr(cpu_addr);
+		code.nop(2);
+		code.db(OP_BCS);
+		code.apply_hack_and_clear(p_rom, 14, ROM::Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value);
+	}
 
 	// new routine
 	code.sta_abs(RAM::CurrentSprite_iScriptIndex);
@@ -1024,8 +1038,8 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::BossLockedItems:
 			cpu_addr = install_BossLockedItems(p_config, patched_rom, cpu_addr, hack);
 			break;
-		case fh::GeneralHackLib::ConditionalTrigger:
-			cpu_addr = install_ConditionalTrigger(p_config, patched_rom, cpu_addr);
+		case fh::GeneralHackLib::ConditionalScript:
+			cpu_addr = install_ConditionalScript(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			if (ladder_exit) crown_companion_capacity(afs::CORE_SIZE);

@@ -268,7 +268,7 @@ Custom save ranges can be supplied if needed, but the default value should be a 
 SRAM
 ```
 
-In the original game, iScript opcode `SetSpawn` only updates the spawn point if it is higher than your current spawn point. That means you can potwntially save in one location, but spawn in another. When `absolute_spawn=true` your spawn point is always updated via `SetSpawn`.
+In the original game, iScript opcode `SetSpawn` only updates the spawn point if it is higher than your current spawn point. That means you can potentially save in one location, but spawn in another. When `absolute_spawn=true` your spawn point is always updated via `SetSpawn`.
 
 With `color=true`, `CONTINUE` on the start screen is colored gray when no valid save is present and green-ish when a save is available, at least with the default start screen palette.
 
@@ -304,13 +304,20 @@ This hack has no parameters.
 BugFixes
 ```
 
-### ConditionalTrigger
+### ConditionalScript
 
-Makes sprite #79 - The invisible dialogue trigger - conditional, based on extended flags.
+Makes sprite iScripts conditional based on extended flags.
 
-When an invisible trigger is activated, its iScript index is also used as an extended flag index. If the corresponding extended flag is set, the iScript is not executed. For example, a trigger using iScript 10 will be disabled while extended flag 10 is set.
+When a configured sprite interaction is activated, its iScript index is also used as an extended flag index. If the corresponding extended flag is set, the iScript is not executed. For example, an interaction using iScript 10 will be disabled while extended flag 10 is set.
 
-This can be used to create one-time or conditional events using invisible triggers. Scripts can set or clear their corresponding extended flag as needed.
+By default, this applies to sprite #79 - The invisible dialogue trigger. It can also be enabled for NPC interactions, preventing an NPC's iScript from running when pressing UP if its corresponding extended flag is set.
+
+This can be used to create one-time or conditional events and NPC interactions. Scripts can set or clear their corresponding extended flag as needed.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `trigger` | `true` | Enables conditional scripts for invisible triggers |
+| `npc` | `false` | Enables conditional scripts for NPC interactions |
 
 A script might look like this, if extended opcode `SetFlag` is available:
 
@@ -318,14 +325,14 @@ A script might look like this, if extended opcode `SetFlag` is available:
 .entrypoint 10
 .textbox GENERIC
   Msg "one time text"
-  SetFlag 10 ; makes sure this trigger can't fire again
+  SetFlag 10 ; makes sure this script can't fire again
   End
 ```
 
-This hack has no parameters.
+By default the behavior is applied to triggers, but not NPCs.
 
 ```text
-ConditionalTrigger
+ConditionalScript
 ```
 
 ### AtlasDevFrameScheduler
