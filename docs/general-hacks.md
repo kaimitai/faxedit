@@ -43,6 +43,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevFallControl](#atlasdevfallcontrol)
   - [AtlasDevLadderControl](#atlasdevladdercontrol)
   - [AtlasDevLadderCrown](#atlasdevladdercrown)
+  - [AtlasDevSmartKeys](#atlasdevsmartkeys)
 
 <hr>
 
@@ -583,3 +584,34 @@ native scheduler only with unclaimed PRE and POST vectors; preinstalled
 handlers and unknown NMI hooks are rejected. Hook checks also reject
 incompatible movement patches. Script activation, climb speeds and ladder
 attack settings are not part of this hack.
+
+
+### AtlasDevSmartKeys
+
+Opens a locked door with a matching key the hero is carrying, without
+making the player select it first, and without disturbing whatever item is
+currently selected. Keys are still spent one per door, still counted and
+still bought in shops; only the trip to the item menu goes away.
+
+The door gate checks a ring by asking whether the hero owns it, and a key
+by asking whether it is the selected item. With this hack a carried key is
+accepted the way a ring is, and it is still spent.
+
+When the selected item is the right key, the door behaves exactly as it
+always did and that key is the one spent. When it is not, one matching key
+is taken from the item list instead, the list closes up around the gap, and
+the selected item is left alone. A door the hero has no key for refuses with
+its usual message.
+
+The five key checks in vanilla are replaced by one shared check that lives in
+the same bytes they occupied, so this hack uses no general hack space at all.
+The unlocked case and the three ring checks are not touched. Every site is
+verified against its exact vanilla bytes before anything is written; the gate
+is identical in the US, US rev A and EU ROMs, and the JP ROM, where it
+differs, is refused.
+
+`mode=vanilla` installs nothing. The default is `mode=carried`.
+
+```
+AtlasDevSmartKeys
+```

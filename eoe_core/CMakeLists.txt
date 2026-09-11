@@ -93,6 +93,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevJumpControl.cpp
     src/fh/AtlasDevLadderControl.cpp
     src/fh/AtlasDevLadderCrown.cpp
+    src/fh/AtlasDevSmartKeys.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

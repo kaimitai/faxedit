@@ -19,7 +19,7 @@ namespace fh {
 		SRAM, BugFixes,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
-		AtlasDevLadderControl, AtlasDevLadderCrown,
+		AtlasDevLadderControl, AtlasDevLadderCrown, AtlasDevSmartKeys,
 		FastStart, QuestFlagItemDrops, BossLockedItems
 	};
 

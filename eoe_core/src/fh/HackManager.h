@@ -333,6 +333,8 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_AtlasDevSmartKeys(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevFallControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevLadderCrown(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
