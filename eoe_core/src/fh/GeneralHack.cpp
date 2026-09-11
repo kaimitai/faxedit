@@ -34,6 +34,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevJumpControl,
 		fh::GeneralHackLib::AtlasDevLadderControl,
 		fh::GeneralHackLib::AtlasDevLadderCrown,
+		fh::GeneralHackLib::AtlasDevSmartKeys,
 	}},
 	};
 
@@ -52,6 +53,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevLadderControl, { "up", "down", "wingup", "wingdown", "attack", "attackpose", "attackflag" } },
 		{ fh::GeneralHackLib::AtlasDevFallControl, { "profile", "curve", "steer", "kind", "boot" } },
 		{ fh::GeneralHackLib::AtlasDevLadderCrown, { "mode", "downhold", "align", "roompolicy", "rooms" } },
+		{ fh::GeneralHackLib::AtlasDevSmartKeys, { "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
