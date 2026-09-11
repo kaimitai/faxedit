@@ -30,6 +30,14 @@ target_link_libraries(atlas_smart_keys_regression PRIVATE eoe_core)
 
 add_test(NAME atlas_smart_keys_regression COMMAND atlas_smart_keys_regression)
 
+add_executable(atlas_enemy_stats_regression
+    atlas_enemy_stats_regression.cpp
+)
+
+target_link_libraries(atlas_enemy_stats_regression PRIVATE eoe_core)
+
+add_test(NAME atlas_enemy_stats_regression COMMAND atlas_enemy_stats_regression)
+
 add_executable(atlas_ladder_crown_regression
     atlas_ladder_crown_regression.cpp
 )

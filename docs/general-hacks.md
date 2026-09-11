@@ -45,6 +45,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevLadderControl](#atlasdevladdercontrol)
   - [AtlasDevLadderCrown](#atlasdevladdercrown)
   - [AtlasDevSmartKeys](#atlasdevsmartkeys)
+  - [AtlasDevEnemyStats](#atlasdevenemystats)
 
 <hr>
 
@@ -697,4 +698,40 @@ differs, is refused.
 
 ```
 AtlasDevSmartKeys
+```
+
+### AtlasDevEnemyStats
+
+Scales the enemy tables at build time. Every enemy's hit points, contact
+damage, experience reward and coin drop are byte tables in the ROM, one entry
+per enemy type, and this hack multiplies each table by a percent. The stun an
+enemy takes when hit is a single byte and can be set directly.
+
+`hp`, `damage`, `xp` and `gold` are percents of vanilla, 1 to 400, applied to
+every entry of the table named. Entries that are zero stay zero, since those
+are the ids that are not monsters; everything else rounds to nearest, never
+drops below one, and saturates at 255, so a boss already at 250 hit points
+does not grow past that. `gold` scales the coin drops only; bread is left
+alone. `stagger` is the stun in frames, vanilla 8, and it is also the length
+of the hit flash, since one counter drives both.
+
+`profile` sets all five at once, and any knob given explicitly overrides it:
+
+| profile | hp | damage | xp | gold | stagger |
+|---|---|---|---|---|---|
+| `normal` | 100 | 100 | 100 | 100 | 8 |
+| `easy` | 75 | 75 | 150 | 150 | 12 |
+| `hard` | 150 | 150 | 100 | 100 | 6 |
+| `nightmare` | 200 | 200 | 75 | 75 | 4 |
+| `grind` | 100 | 100 | 200 | 200 | 8 |
+
+The default is `normal` and writes nothing. No code, RAM or general hack
+space is used. Every table is verified against its vanilla bytes before
+anything is written, and the tables are identical in the US, US rev A, EU and
+JP ROMs.
+
+```
+AtlasDevEnemyStats profile=hard
+AtlasDevEnemyStats profile=nightmare xp=150
+AtlasDevEnemyStats hp=150 damage=150 xp=75
 ```
