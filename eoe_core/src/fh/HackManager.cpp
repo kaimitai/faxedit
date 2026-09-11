@@ -4902,6 +4902,274 @@ word fh::HackManager::apply_AtlasDevClearTimedEffects(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevRepeat Register Count closes a loop body.  The register holds the
+// remaining passes: the first execution finds it zero, stores Count and jumps
+// back; every later pass decrements it and jumps while it is nonzero, so the
+// body runs Count + 1 times in total.  Count 0 falls through immediately.
+// The register file is cleared when a script begins and ends, so a script
+// that ends mid-loop cannot leak its counter into the next conversation.
+word fh::HackManager::apply_AtlasDevRepeat(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+
+	code.jsr(p_var_operand_helper_addr); // X = register, A = count, C = invalid
+	code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(Vars);
+	code.bne("@running");
+	code.db(0x98); // TYA, a fresh loop stores the count
+	code.beq("@exhaust"); // count 0: the body already ran once, fall through
+	code.sta_abs_x(Vars);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@running");
+	code.sec();
+	code.sbc_imm(0x01);
+	code.sta_abs_x(Vars);
+	code.bne("@take");
+	code.label("@exhaust");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@take");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSwitch Register RowCount dispatches over a jump ladder: the rows
+// immediately following the opcode must be RowCount vanilla Jump rows, three
+// bytes each.  The handler skips three stream bytes per remaining row and
+// returns, so the selected Jump row then executes natively.  A value at or
+// above RowCount skips the whole ladder, which is the default case, and the
+// selection is 0-based.  The ladder must stay byte-adjacent to the opcode:
+// keep ladders short and early in an entrypoint so the linker cannot split
+// the compiled stream inside one.
+word fh::HackManager::apply_AtlasDevSwitch(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+
+	code.jsr(p_var_operand_helper_addr); // X = register, A = row count, C = invalid
+	code.bcs("@done");
+	code.pha(); // rows still unread live on the stack
+	code.lda_abs_x(Vars);
+	code.tax(); // X = selector value
+	code.label("@skip");
+	code.db(0x8a); // TXA
+	code.beq("@selected");
+	code.db(0x68); // PLA, one row consumed
+	code.beq("@invoke"); // ladder exhausted: the default case falls through
+	code.sec();
+	code.sbc_imm(0x01);
+	code.db(0x48); // PHA
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // skip one
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); //   Jump row,
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); //   three bytes
+	code.db(0xca); // DEX
+	code.bne("@skip");
+	code.label("@selected");
+	code.db(0x68); // PLA, balance the stack
+	code.label("@invoke");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevSwapVar First Second exchanges two script registers in place.
+word fh::HackManager::apply_AtlasDevSwapVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(p_var_operand_helper_addr); // X = first register, A = second, C = invalid
+	code.bcs("@done");
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tay();
+	code.lda_abs_x(Vars);
+	code.sta_zp(RAM::ZP_e2);
+	code.lda_abs_y(Vars);
+	code.sta_abs_x(Vars);
+	code.lda_zp(RAM::ZP_e2);
+	code.sta_abs_y(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevIfRandomChance Probability branches with the same odds
+// AtlasDevRandomVar draws below its maximum: it steps the shared generator
+// exactly the same way and jumps when the resulting byte is below the
+// operand.  Probability 0 never branches and does not step the generator.
+word fh::HackManager::apply_AtlasDevIfRandomChance(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = probability
+	code.tay(); // loadbyte returns pointer flags, so refresh them from A
+	code.beq("@false");
+	code.sta_zp(RAM::ZP_e3);
+
+	// step the shared generator the way AtlasDevRandomVar does
+	code.lda_zp(RAM::ZP_RandomOffset);
+	code.bne("@step");
+	code.lda_zp(RAM::ZP_FrameCounter);
+	code.ora_imm(0x01);
+	code.label("@step");
+	code.asl_a();
+	code.bcc("@stepped");
+	code.eor_imm(0x1d);
+	code.label("@stepped");
+	code.sta_zp(RAM::ZP_RandomOffset);
+	code.eor_zp(RAM::ZP_FrameCounter);
+
+	code.cmp_zp(RAM::ZP_e3);
+	code.bcc("@true");
+	code.label("@false");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+	code.label("@true");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevPeekToVar AddrLo AddrHi Register reads one byte of RAM into a
+// script register, the read-only memory inspector.  Scripts can show the
+// byte live through AtlasDevShowNumberInMessage.
+word fh::HackManager::apply_AtlasDevPeekToVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // address low
+	code.sta_zp(RAM::ZP_Temp_Int24_U);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // address high
+	code.sta_zp(RAM::ZP_ef);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // register
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tax();
+	code.ldy_imm(0x00);
+	code.db(0xb1); code.db(RAM::ZP_Temp_Int24_U); // LDA ($ee),Y
+	code.sta_abs_x(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevFrameCountToVar Register copies the free-running dialogue timer at
+// $021d into a script register; it advances one frame at a time while the
+// text machinery runs, which makes it a timestamp source for on-screen
+// timers drawn with AtlasDevShowNumberInMessage.
+word fh::HackManager::apply_AtlasDevFrameCountToVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // register
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tax();
+	code.lda_abs(RAM::TextBox_Timer);
+	code.sta_abs_x(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevReadFlagToVar Flag Register stores persistent flag 0..247 as a
+// canonical 0 or 1 in a script register.  An out-of-range flag consumes both
+// operands and does nothing rather than reading beyond the 31-byte flag
+// block.
+word fh::HackManager::apply_AtlasDevReadFlagToVar(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(flag_decode_helper_addr); // X = byte index, Y = bit number
+	code.cpx_imm(0x1f);
+	code.bcc("@read");
+	code.lda_imm(0x00); // out of range: canonical 0, operands still consumed
+	code.jmp("@store");
+	code.label("@read");
+	code.lda_abs_x(RAM::Flags);
+	code.and_abs_y(bitmask_table_addr);
+	code.beq("@zero");
+	code.lda_imm(0x01);
+	code.label("@zero");
+	code.label("@store");
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // register
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tax();
+	code.lda_zp(RAM::ZP_e2);
+	code.sta_abs_x(Vars);
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
+// AtlasDevWriteVarToMetatile PackedYX Register is AtlasDevSetMetatile with
+// the tile id taken from a script register instead of an operand, so
+// computed conditions can place tiles.  The same packed-position and world
+// checks apply; the tile id itself is the modder's responsibility, exactly
+// as with AtlasDevSetMetatile.
+word fh::HackManager::apply_AtlasDevWriteVarToMetatile(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
+	const byte VarCount{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // packed YX
+	code.sta_zp(RAM::ZP_e2);
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // register
+	code.cmp_imm(VarCount);
+	code.bcs("@done");
+	code.tax();
+	code.lda_abs_x(Vars); // the tile id from the register
+	code.pha();
+	code.lda_zp(RAM::ZP_e2);
+	code.and_imm(0xf0);
+	code.cmp_imm(0xd0);
+	code.bcs("@reject");
+	code.ldx_zp(RAM::ZP_CurrentWorld);
+	code.cpx_imm(0x08);
+	code.bcc("@apply");
+	code.label("@reject");
+	code.pla(); // drop the staged tile
+	code.label("@done");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	code.label("@apply");
+	code.pla(); // tile id
+	code.sta_abs(0x03ce);
+	code.lda_zp(RAM::ZP_e2); // packed position
+	code.sta_abs(0x03cf);
+	code.jsr(ROM::Area_SetBlockAtPosition);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::apply_AtlasDevCastSpell(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -5315,7 +5583,8 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const {
 
 	const std::set<HackLib> FLAG_REQUIRED{ HackLib::SetFlag, HackLib::ClearFlag, HackLib::IfFlag,
-	HackLib::SelectFlag, HackLib::SetSelectedFlag, HackLib::ClearSelectedFlag, HackLib::IfSelectedFlag };
+	HackLib::SelectFlag, HackLib::SetSelectedFlag, HackLib::ClearSelectedFlag, HackLib::IfSelectedFlag,
+	HackLib::AtlasDevReadFlagToVar };
 	const std::set<HackLib> QUEST_FLAG_REQUIRED{ HackLib::SetQuestFlag, HackLib::ClearQuestFlag, HackLib::IfQuestFlag };
 	const std::set<HackLib> COMPARE_EQUALS_REQUIRED{ HackLib::IfWorld, HackLib::IfScreen, HackLib::IfStage, HackLib::IfYX, HackLib::IfDoorYX,
 	HackLib::IfAddrEquals };
@@ -5328,7 +5597,8 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 	HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
 	HackLib::AtlasDevIfVarGreaterEqual, HackLib::AtlasDevRandomVar, HackLib::AtlasDevCopyVar,
 	HackLib::AtlasDevVarBitOp, HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
-	HackLib::AtlasDevIfVarMask };
+	HackLib::AtlasDevIfVarMask, HackLib::AtlasDevRepeat, HackLib::AtlasDevSwitch,
+	HackLib::AtlasDevSwapVar };
 	const std::set<HackLib> SCRIPT_VARIABLE_REQUIRED{
 		HackLib::AtlasDevSetVar, HackLib::AtlasDevAddVar, HackLib::AtlasDevSubVar,
 		HackLib::AtlasDevIfVarEqual, HackLib::AtlasDevIfVarLess,
@@ -5339,7 +5609,10 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		HackLib::AtlasDevDrawVarNumber, HackLib::AtlasDevGetLocationToVars,
 		HackLib::AtlasDevGetPlayerPositionToVars, HackLib::AtlasDevVarBitOp,
 		HackLib::AtlasDevVarShift, HackLib::AtlasDevClampVar,
-		HackLib::AtlasDevIfVarMask, HackLib::AtlasDevGetEffectTime };
+		HackLib::AtlasDevIfVarMask, HackLib::AtlasDevGetEffectTime,
+	HackLib::AtlasDevRepeat, HackLib::AtlasDevSwitch, HackLib::AtlasDevSwapVar,
+	HackLib::AtlasDevPeekToVar, HackLib::AtlasDevFrameCountToVar,
+	HackLib::AtlasDevReadFlagToVar, HackLib::AtlasDevWriteVarToMetatile };
 	// flag functions need access to the bitmask lookup table
 	std::set<HackLib> BITMASK_TABLE_REQUIRED{ FLAG_REQUIRED };
 	BITMASK_TABLE_REQUIRED.insert(begin(QUEST_FLAG_REQUIRED), end(QUEST_FLAG_REQUIRED));
@@ -6011,6 +6284,32 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevClearTimedEffects:
 			cpu_addr = apply_AtlasDevClearTimedEffects(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevRepeat:
+			cpu_addr = apply_AtlasDevRepeat(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
+			break;
+		case HackLib::AtlasDevSwitch:
+			cpu_addr = apply_AtlasDevSwitch(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
+			break;
+		case HackLib::AtlasDevSwapVar:
+			cpu_addr = apply_AtlasDevSwapVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());
+			break;
+		case HackLib::AtlasDevIfRandomChance:
+			cpu_addr = apply_AtlasDevIfRandomChance(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevPeekToVar:
+			cpu_addr = apply_AtlasDevPeekToVar(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevFrameCountToVar:
+			cpu_addr = apply_AtlasDevFrameCountToVar(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevReadFlagToVar: {
+			cpu_addr = apply_AtlasDevReadFlagToVar(p_config, p_rom, cpu_addr,
+				flag_decode_helper_addr.value(), bitmask_table_addr.value());
+			break;
+		}
+		case HackLib::AtlasDevWriteVarToMetatile:
+			cpu_addr = apply_AtlasDevWriteVarToMetatile(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:
