@@ -43,3 +43,8 @@ add_executable(atlas_timed_effects_regression atlas_timed_effects_regression.cpp
 target_link_libraries(atlas_timed_effects_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_timed_effects_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_timed_effects_regression COMMAND atlas_timed_effects_regression)
+
+add_executable(atlas_script_flow_regression atlas_script_flow_regression.cpp)
+target_link_libraries(atlas_script_flow_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_script_flow_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_script_flow_regression COMMAND atlas_script_flow_regression)

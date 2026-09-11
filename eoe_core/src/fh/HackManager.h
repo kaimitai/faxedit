@@ -73,6 +73,9 @@ namespace fh {
 		AtlasDevArmRole, AtlasDevDayNight,
 		AtlasDevIfEffectActive, AtlasDevGetEffectTime,
 		AtlasDevClearTimedEffect, AtlasDevClearTimedEffects,
+		AtlasDevRepeat, AtlasDevSwitch, AtlasDevSwapVar, AtlasDevIfRandomChance,
+		AtlasDevPeekToVar, AtlasDevFrameCountToVar, AtlasDevReadFlagToVar,
+		AtlasDevWriteVarToMetatile,
 		// Keep Count last.
 		Count
 	};
@@ -254,6 +257,14 @@ namespace fh {
 		word apply_AtlasDevGetEffectTime(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearTimedEffect(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearTimedEffects(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevRepeat(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevSwapVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
+		word apply_AtlasDevIfRandomChance(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevPeekToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevFrameCountToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevReadFlagToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
+		word apply_AtlasDevWriteVarToMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;

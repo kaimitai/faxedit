@@ -2023,6 +2023,14 @@
 			<entry key="AtlasDevGetEffectTime" value="Args=Byte+Byte" />
 			<entry key="AtlasDevClearTimedEffect" value="Args=Byte" />
 			<entry key="AtlasDevClearTimedEffects" />
+			<entry key="AtlasDevRepeat" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSwitch" value="Args=Byte+Byte" />
+			<entry key="AtlasDevSwapVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevIfRandomChance" value="Args=Byte,Flow=Jump" />
+			<entry key="AtlasDevPeekToVar" value="Args=Byte+Byte+Byte" />
+			<entry key="AtlasDevFrameCountToVar" value="Args=Byte" />
+			<entry key="AtlasDevReadFlagToVar" value="Args=Byte+Byte" />
+			<entry key="AtlasDevWriteVarToMetatile" value="Args=Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>
