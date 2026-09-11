@@ -988,6 +988,17 @@ verified against its exact vanilla bytes before anything is written; the gate
 is identical in the US, US rev A and EU ROMs, and the JP ROM, where it
 differs, is refused.
 
+`flag=n` gates the carried key on extended flag `n` at runtime, so a script
+can switch the hack on with `SetFlag` and off with `ClearFlag`. A clear flag
+is indistinguishable from stock, the flag page is cleared at reset, and
+selecting the key still opens the door either way. The test runs in the five
+spare bytes of the replaced checks, which fit one bit test, so `n` must be 6
+or 7 modulo 8: 6, 7, 14, 15 and so on up to 247. Other flags are refused.
+
+```
+AtlasDevSmartKeys flag=7
+```
+
 `mode=vanilla` installs nothing. The default is `mode=carried`.
 
 With [PermaDoors](#permadoors) listed before it, a door opened with a

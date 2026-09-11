@@ -41,6 +41,11 @@ namespace {
 	const std::string STUB{ "adc1034820785668" "8dc1034ce1eb" };
 	// the jump flagdoorrequirements leaves over the branch at $eb32
 	constexpr std::array<byte, 3> FDR_JUMP{ 0x4c, 0xbc, 0x9a };
+	// the gated body, 80 bytes: bit $0101 / bpl for flag 7, bvc for flag 6,
+	// and the byte at $011f for flag 247
+	const std::string BODY_FLAG7{ "984aa8186903cdc103d0034cd1eb2c0101102eaec603e009b027ca3024ddad03d0f8e8ecc603b00bbdad03ca9dad03e8e8d0f0cec603a9842059f80c41824ce1ebb99beb2059f80c4182607d7c7b027e" };
+	const std::string BODY_FLAG6{ "984aa8186903cdc103d0034cd1eb2c0101502eaec603e009b027ca3024ddad03d0f8e8ecc603b00bbdad03ca9dad03e8e8d0f0cec603a9842059f80c41824ce1ebb99beb2059f80c4182607d7c7b027e" };
+	const std::string BODY_FLAG247{ "984aa8186903cdc103d0034cd1eb2c1f01102eaec603e009b027ca3024ddad03d0f8e8ecc603b00bbdad03ca9dad03e8e8d0f0cec603a9842059f80c41824ce1ebb99beb2059f80c4182607d7c7b027e" };
 
 	void require(bool c, const std::string& m) { if (!c) throw std::runtime_error(m); }
 
@@ -57,6 +62,8 @@ namespace {
 				static_cast<byte>(0x04 + i) });
 		put(0xebd1, VANILLA_TAIL);
 		put(0xebe1, UNLOCK_TAIL);
+		// the first ring handler, so an overrun of the reclaimed span shows
+		put(0xeba1, std::array<byte, 5>{ 0xad, 0x2c, 0x04, 0x29, 0x80 });
 		return rom;
 	}
 
@@ -141,6 +148,20 @@ namespace {
 		require(hex_at(rom, 0xebd9, 5) == "207856eaea", "permadoors' set call was disturbed");
 	}
 
+	// with permadoors first and a flag, the gated body jumps to the same stub
+	void test_flag_composes_with_permadoors() {
+		auto rom{ permadoors_rom() };
+		const auto used{ install(rom, "AtlasDevSmartKeys flag=7") };
+		require(used == 14, "the remember stub is 14 bytes with a flag too");
+		require(hex_at(rom, ORG, 14) == STUB, "the remember stub with a flag");
+		std::string body{ BODY_FLAG7 };
+		const auto at{ body.find("4ce1eb") };
+		require(at != std::string::npos, "the gated body's unlock jump");
+		body.replace(at, 6, "4ccefc");
+		require(hex_at(rom, 0xeb51, 80) == body, "gated body jumps to the stub");
+		require(hex_at(rom, 0xeba1, 5) == "ad2c042980", "the gated body overran into the rings");
+	}
+
 	// a call at $eb2f that is not permadoors' pair is refused, naming the hack
 	void test_refuses_a_foreign_hook() {
 		auto rom{ vanilla_rom() };
@@ -189,12 +210,37 @@ namespace {
 		require(threw, "a jump at $eb32 without the tay was accepted");
 	}
 
+	// the gate is a bit and a branch in the five spare bytes; the body still
+	// stops short of the first ring handler and nothing else moves
+	void test_flag_fills_the_span_exactly() {
+		for (const auto& c : std::vector<std::pair<std::string, std::string>>{
+			{ "flag=7", BODY_FLAG7 }, { "flag=6", BODY_FLAG6 }, { "flag=247", BODY_FLAG247 } }) {
+			auto rom{ vanilla_rom() };
+			const auto used{ install(rom, "AtlasDevSmartKeys " + c.first) };
+			require(used == 0, "a gated install consumed cursor space");
+			require(hex_at(rom, 0xeb51, 80) == c.second, "gated body for " + c.first);
+			require(hex_at(rom, 0xeba1, 5) == "ad2c042980", "the gated body overran into the rings");
+			require(hex_at(rom, 0xeb41, 10) == "50eb50eb50eb50eb50eb", "key entries");
+		}
+	}
+
 	void test_refusals() {
-		auto rom{ vanilla_rom() };
-		bool threw{ false };
-		try { install(rom, "AtlasDevSmartKeys mode=sometimes"); }
-		catch (const std::runtime_error&) { threw = true; }
-		require(threw, "accepted an unknown mode");
+		for (const auto& spec : { "AtlasDevSmartKeys mode=sometimes",
+			"AtlasDevSmartKeys flag=0", "AtlasDevSmartKeys flag=1", "AtlasDevSmartKeys flag=5",
+			"AtlasDevSmartKeys flag=8", "AtlasDevSmartKeys flag=13", "AtlasDevSmartKeys flag=248",
+			"AtlasDevSmartKeys flag=255" }) {
+			auto rom{ vanilla_rom() };
+			const auto before{ rom };
+			bool threw{ false };
+			try { install(rom, spec); }
+			catch (const std::runtime_error& e) {
+				threw = true;
+				require(std::string{ e.what() }.find("AtlasDevSmartKeys") != std::string::npos,
+					"the refusal does not name the hack");
+			}
+			require(threw, std::string{ "accepted " } + spec);
+			require(rom == before, std::string{ "a refused install wrote bytes: " } + spec);
+		}
 	}
 
 	// a rom whose gate is not vanilla is refused, naming the hack
@@ -221,9 +267,11 @@ int main() {
 		test_consumes_no_cursor();
 		test_body_replaces_the_key_handlers();
 		test_only_the_key_entries_move();
+		test_flag_fills_the_span_exactly();
 		test_refusals();
 		test_refuses_a_disturbed_gate();
 		test_composes_with_permadoors();
+		test_flag_composes_with_permadoors();
 		test_refuses_a_foreign_hook();
 		test_composes_with_flag_door_requirements();
 		test_refuses_a_jump_without_the_tay();

@@ -33,6 +33,13 @@
 // shared handler serves all five entries and derives the key from y. entry 0
 // and the three ring handlers are not touched.
 //
+// flag=n gates the carried key on extended flag n at runtime, so a script can
+// switch the hack on with SetFlag and off with ClearFlag; a clear flag is
+// indistinguishable from stock, and selecting the key still opens the door
+// either way. the test runs with the key id live in a, and the five spare
+// bytes hold exactly a bit and a branch, which test bit 7 or bit 6 of the
+// flag byte and nothing else, so n must be 6 or 7 modulo 8.
+//
 // every site is verified against its exact vanilla bytes before anything is
 // written, and a rom that differs is refused.
 //
@@ -68,6 +75,9 @@ namespace {
 	constexpr std::size_t ROM_SIZE{ 0x40010 };
 
 	constexpr std::array<word, 5> HANDLERS{ 0xeb51, 0xeb61, 0xeb71, 0xeb81, 0xeb91 };
+	// extended flags: flag n lives at $0101 + (n >> 3), bit n & 7
+	constexpr word FLAG_PAGE{ 0x0101 };
+	constexpr int MAX_FLAG{ 247 }, NO_FLAG{ -1 };
 	constexpr std::array<byte, 5> REFUSALS{ 0x7d, 0x7c, 0x7b, 0x02, 0x7e };
 
 	[[noreturn]] void fail(const std::string& message) {
@@ -132,7 +142,7 @@ namespace {
 		code.dw(address);
 	}
 
-	void emit_body(klib::Asm6502& code, word unlock) {
+	void emit_body(klib::Asm6502& code, word unlock, int flag) {
 		// y holds twice the requirement. lsr leaves the requirement in both a
 		// and y, and the key id is the requirement plus 3, $04 to $08.
 		code.tya(); code.lsr_a(); code.tay(); code.clc(); code.adc_imm(3);
@@ -142,6 +152,15 @@ namespace {
 
 		// refuse a count above eight rather than read past the list
 		code.label("carried");
+		if (flag != NO_FLAG) {
+			// bit leaves a alone and copies bit 7 to n and bit 6 to v
+			code.db(0x2c); code.dw(static_cast<word>(FLAG_PAGE + (flag >> 3)));
+			// bvc has no wrapper in the assembler. the distance from here to
+			// absent is fixed by the body, $2e, the same operand the bpl
+			// resolves to, and the regression pins the whole gated body.
+			if ((flag & 7) == 7) code.bpl("absent");
+			else { code.db(0x50); code.db(0x2e); }
+		}
 		code.ldx_abs(ITEM_COUNT); code.cpx_imm(9);
 		code.bcs("absent");
 
@@ -196,6 +215,12 @@ word fh::HackManager::install_AtlasDevSmartKeys(const fe::Config& config,
 		else if (seen_self && listed.get_type() == fh::GeneralHackLib::PermaDoors)
 			fail("list PermaDoors before AtlasDevSmartKeys, so doors opened with a carried key are remembered");
 	}
+	const int flag{ hack.has_param("flag") ? hack.byte_or("flag", 0) : NO_FLAG };
+	if (flag != NO_FLAG && flag > MAX_FLAG)
+		fail(std::format("flag must be 0 to {}", MAX_FLAG));
+	if (flag != NO_FLAG && (flag & 7) != 6 && (flag & 7) != 7)
+		fail(std::format("flag {} is bit {} of its byte; only bits 6 and 7 can be "
+			"tested in the space available, so use 6, 7, 14, 15 and so on", flag, flag & 7));
 	require_gate(rom);
 	const PermaDoors permadoors{ detect_permadoors(rom) };
 	// keep every write private until the whole install succeeds
@@ -215,7 +240,7 @@ word fh::HackManager::install_AtlasDevSmartKeys(const fe::Config& config,
 	}
 
 	klib::Asm6502 code;
-	emit_body(code, unlock);
+	emit_body(code, unlock, flag);
 	if (code.size() > END - ORG)
 		fail(std::format("body is {} bytes and only {} fit in place of the key handlers",
 			code.size(), END - ORG));
