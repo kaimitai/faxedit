@@ -37,6 +37,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevSmartKeys,
 		fh::GeneralHackLib::AtlasDevEnemyStats,
 		fh::GeneralHackLib::AtlasDevCombatFeel,
+		fh::GeneralHackLib::AtlasDevSmartMattock,
 	}},
 	};
 
@@ -58,6 +59,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevSmartKeys, { "mode" } },
 		{ fh::GeneralHackLib::AtlasDevEnemyStats, { "profile", "hp", "damage", "xp", "gold", "stagger" } },
 		{ fh::GeneralHackLib::AtlasDevCombatFeel, { "profile", "walk", "walkmax", "ramp", "iframes", "knockbackframes", "knockback", "attack", "moveattack" } },
+		{ fh::GeneralHackLib::AtlasDevSmartMattock, { "mode", "push", "flag" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

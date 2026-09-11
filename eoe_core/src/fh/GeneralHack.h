@@ -20,6 +20,7 @@ namespace fh {
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		AtlasDevLadderControl, AtlasDevLadderCrown, AtlasDevSmartKeys, AtlasDevEnemyStats, AtlasDevCombatFeel,
+		AtlasDevSmartMattock,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

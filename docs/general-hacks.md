@@ -47,6 +47,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSmartKeys](#atlasdevsmartkeys)
   - [AtlasDevEnemyStats](#atlasdevenemystats)
   - [AtlasDevCombatFeel](#atlasdevcombatfeel)
+  - [AtlasDevSmartMattock](#atlasdevsmartmattock)
 
 <hr>
 
@@ -817,4 +818,47 @@ written, and all of them are identical in the US, US rev A, EU and JP ROMs.
 AtlasDevCombatFeel profile=zelda2
 AtlasDevCombatFeel profile=castlevania iframes=60
 AtlasDevCombatFeel walk=256 walkmax=512 ramp=4+4+4+4
+```
+
+### AtlasDevSmartMattock
+
+Digs a rock with a mattock the hero is carrying, without making the player
+select it first, and without disturbing whatever item is selected. One
+mattock is still spent per rock, and the dig is the vanilla dig: the same
+message, sound and crumble.
+
+`mode=press` digs on Down and B facing the rock. `mode=push` digs after the
+hero has walked into the rock for `push` frames, and lets go of it the moment
+he releases the direction, leaves the ground or turns. `mode=both`, the
+default, does either. `mode=vanilla` installs nothing.
+
+`push=n` is the number of frames the hero walks into the rock before it
+gives, 1 to 255; the default is 48, about eight tenths of a second. The
+Mascon fountain takes 96 with the same counter.
+
+When the selected item is the mattock it is spent as it always was. When it
+is not, one mattock is taken from the item list, the list closes up around
+the gap, and the selected item is left alone.
+
+A rock is the area's rock id from the table the vanilla dig already reads, so
+rocks placed by the mattock animation option work as they are. A zero id is
+refused, which vanilla does not do: outside Trunk the stock game lets a
+selected mattock dig an empty tile and spends it. While this hack is on that
+cannot happen; with `mode=vanilla` or a clear `flag` the stock behavior is
+kept.
+
+`flag=n` gates the hack on extended flag `n` at runtime, so a script can
+grant the ability with `SetFlag` and take it away with `ClearFlag`. A clear
+flag is indistinguishable from stock.
+
+Three vanilla instructions in bank 15 are retargeted, at the Down and B
+check, at the push check every non fountain frame reaches, and at the spend
+inside the dig. No RAM is claimed. Every site is verified against its exact
+vanilla bytes before anything is written, and all of them are identical in
+the US, US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevSmartMattock
+AtlasDevSmartMattock mode=push push=30
+AtlasDevSmartMattock flag=12
 ```
