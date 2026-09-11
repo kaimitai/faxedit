@@ -419,6 +419,17 @@ namespace {
 		code.sta_abs(fh::RAM::PendingTitle);
 		code.apply_hack_and_clear(p_rom, 15, cpu_addr);
 	}
+
+	// update handler for SetSpawn to always set the given spawn point no
+	void install_static_AbsoluteSpawn(const fe::Config& p_config,
+		std::vector<byte>& p_rom) {
+		klib::Asm6502 code;
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_ISCRIPTS_LOADBYTE));
+		code.sta_abs(fh::RAM::PlayerSpawn);
+		code.jmp(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+		code.apply_hack_and_clear(p_rom, 12,
+			fh::HackManager::cfg_word(p_config, fh::c::ID_ISCRIPTACTIONSETSPAWN));
+	}
 }
 
 // installs SRAM save support
@@ -428,11 +439,14 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	const bool keep_gold_xp_on_sram_load{ p_hack.bool_or("save_gold", true) };
 	const bool keep_gold_xp_on_death{ p_hack.bool_or("keep_gold", false) };
 	const bool color_text{ p_hack.bool_or("color", true) };
+	const bool abs_spawn{ p_hack.bool_or("absolute_spawn", true) };
 
 	if (keep_gold_xp_on_sram_load)
 		install_static_NoGoldXPReload(p_rom, cfg_word(p_config, c::ID_CONTINUE_INIT_XP_GOLD));
 	if (keep_gold_xp_on_death)
 		install_static_NoGoldXPReload(p_rom, ROM::Player_HandleDeath_InitGoldXP);
+	if (abs_spawn)
+		install_static_AbsoluteSpawn(p_config, p_rom);
 
 	// dynamic block
 	word cpu_addr{ cfg_word(p_config, c::ID_MANTRALOAD) };

@@ -401,6 +401,8 @@
 		<const name="ram_shopitemcostslo" region="jp,en-transl" value="$0227" />
 		<const name="ram_shopitemcostslo" value="$0228" />
 		<!-- other bank 12 cpu addresses -->
+		<const name="rom_iscriptactionsetspawn" region="jp,en-transl" value="$838e" />
+		<const name="rom_iscriptactionsetspawn" value="$8391" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" region="jp,en-transl" value="$868e" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" value="$8691" />
 		<const name="rom_showsellmenu_ldx_stringcount" region="jp,en-transl" value="$8693" />

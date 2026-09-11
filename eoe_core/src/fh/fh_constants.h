@@ -275,6 +275,7 @@ namespace fh {
 		constexpr word CurrentScreen_SpecialEventID{ 0x042e };
 		constexpr word CurrentStage{ 0x0435 };
 		constexpr word PlayerIsDead{ 0x0438 };
+		constexpr word PlayerSpawn{ 0x0439 };
 		constexpr word ScreenBuffer{ 0x0600 };
 		constexpr word PlayerHPFraction{ 0x0432 };
 		constexpr word PlayerHP{ 0x0431 };
@@ -369,6 +370,7 @@ namespace fh {
 		constexpr char ID_RAM_SHOPITEMCOSTSLO[]{ "ram_shopitemcostslo" };
 
 		// other bank 12 cpu addresses
+		constexpr char ID_ISCRIPTACTIONSETSPAWN[]{ "rom_iscriptactionsetspawn" };
 		constexpr char ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY[]{ "rom_showsellmenu_jsr_findsellmenuentry" };
 		constexpr char ID_ROM_SHOWSELLMENU_LDX_STRINGCOUNT[]{ "rom_showsellmenu_ldx_stringcount" };
 		constexpr char ID_ROM_SHOWSELLMENU_STA_COSTHI[]{ "rom_showsellmenu_sta_costhi" };

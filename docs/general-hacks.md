@@ -258,6 +258,7 @@ By default, the saved state matches the progress preserved by the vanilla passwo
 | `ranges`  | `$039d:42+$042c:2+$0437:1+$0439:1+$04c2:4+$0101:31+$0390:5` | RAM ranges copied to SRAM. Each entry is written as `address:length`, with entries separated by `+` |
 | `save_gold` | `true` | Restore Gold and XP when loading from SRAM |
 | `keep_gold` | `false` | Keep Gold and XP on death |
+| `absolute_spawn` | `true` | iScript opcode `SetSpawn` always updates your spawn point |
 | `color` | `true` | Color `CONTINUE` according to whether a valid save is available |
 
 Custom save ranges can be supplied if needed, but the default value should be a sensible choice for most:
@@ -265,6 +266,8 @@ Custom save ranges can be supplied if needed, but the default value should be a 
 ```text
 SRAM
 ```
+
+In the original game, iScript opcode `SetSpawn` only updates the spawn point if it is higher than your current spawn point. That means you can potwntially save in one location, but spawn in another. When `absolute_spawn=true` your spawn point is always updated via `SetSpawn`.
 
 With `color=true`, `CONTINUE` on the start screen is colored gray when no valid save is present and green-ish when a save is available, at least with the default start screen palette.
 
