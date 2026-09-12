@@ -20,6 +20,14 @@
 // subtracts from the whole pixel byte only, and widening it needs 14 bytes
 // where 7 are available.
 //
+// flag=n makes the climb speeds a runtime choice: each changed block of
+// speed code (the whole add or subtract pair, 13 bytes, or the 7 byte wing
+// boots ascent) becomes a jsr into a stub that tests extended flag n and
+// runs either the new constants or the displaced vanilla bytes. carry and
+// the accumulator leave the stub as they leave the vanilla block, since the
+// code after each block reads them (bcs at $e32b, cmp at $e379). blocks left
+// at their vanilla speed are not touched, and no jump lands inside a block.
+//
 // attacking while climbing is refused by one branch, the bcs at $e10a, whose
 // target clears the attack request; attack=1 turns it into a two byte no op.
 // the refusal outlasts the input, because $e2e5 is the only place that sets
@@ -93,6 +101,21 @@ namespace {
 	};
 	constexpr std::size_t SPEED_LEN[7]{ 7, 6, 7, 6, 7, 7, 6 };
 
+	// the four speed blocks a flag install replaces whole: the wing boots
+	// ascent is one 8 bit subtract from $a1, the others a 16 bit pair on $a0/$a1
+	struct Block {
+		const char* label;
+		word addr;
+		std::size_t len;
+		bool subtract;
+		bool wide;
+		word vanilla;
+	};
+	constexpr Block BLOCK_UP{ "@up", 0xe31e, 13, true, true, VANILLA_UP };
+	constexpr Block BLOCK_DOWN{ "@down", 0xe36c, 13, false, true, VANILLA_DOWN };
+	constexpr Block BLOCK_WING_UP{ "@wingup", 0xe314, 7, true, false, VANILLA_WING_UP };
+	constexpr Block BLOCK_WING_DOWN{ "@wingdown", 0xe35c, 13, false, true, VANILLA_WING_DOWN };
+
 	// the two frame selectors, near clones differing only in a branch target
 	struct Pose {
 		byte bank;
@@ -136,8 +159,16 @@ namespace {
 
 	struct Settings {
 		word up, down, wing_down;
-		byte wing_up, attack, attack_pose, attack_flag;
+		byte wing_up, attack, attack_pose, attack_flag, speed_flag;
 		bool want_runtime(void) const { return attack_flag != NO_FLAG; }
+		bool want_speed_gate(void) const { return speed_flag != NO_FLAG; }
+		word value_of(const Block& b) const {
+			if (b.addr == BLOCK_UP.addr) return up;
+			if (b.addr == BLOCK_DOWN.addr) return down;
+			if (b.addr == BLOCK_WING_UP.addr) return wing_up;
+			return wing_down;
+		}
+		bool changed(const Block& b) const { return value_of(b) != b.vanilla; }
 	};
 
 	void require_site(const std::vector<byte>& p_rom, byte p_bank, word p_addr,
@@ -195,6 +226,46 @@ namespace {
 		p_code.label("@out");
 		p_code.rts();
 	}
+
+	// the arithmetic of one block with a given constant, exactly as vanilla
+	// orders it, so the vanilla branch of a stub is the displaced code itself
+	void emit_step(klib::Asm6502& p_code, const Block& p_block, word p_value) {
+		if (p_block.wide) {
+			p_code.lda_zp(0xa0);
+			if (p_block.subtract) { p_code.sec(); p_code.sbc_imm(static_cast<byte>(p_value & 0xff)); }
+			else { p_code.clc(); p_code.adc_imm(static_cast<byte>(p_value & 0xff)); }
+			p_code.sta_zp(0xa0);
+			p_code.lda_zp(0xa1);
+			if (p_block.subtract) p_code.sbc_imm(static_cast<byte>(p_value >> 8));
+			else p_code.adc_imm(static_cast<byte>(p_value >> 8));
+			p_code.sta_zp(0xa1);
+		}
+		else {
+			p_code.lda_zp(0xa1);
+			p_code.sec();
+			p_code.sbc_imm(static_cast<byte>(p_value));
+			p_code.sta_zp(0xa1);
+		}
+	}
+
+	// one stub per changed block: flag set runs the new constants, clear runs
+	// the vanilla ones; both paths end in rts with carry and A as vanilla left them
+	void emit_speed_stubs(klib::Asm6502& p_code, const Settings& s) {
+		for (const Block& block : { BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN }) {
+			if (!s.changed(block))
+				continue;
+			const std::string vanilla{ std::string{ block.label } + "_v" };
+			p_code.label(block.label);
+			p_code.lda_abs(static_cast<word>(FLAG_BASE + (s.speed_flag >> 3)));
+			p_code.and_imm(static_cast<byte>(1 << (s.speed_flag & 7)));
+			p_code.beq(vanilla);
+			emit_step(p_code, block, s.value_of(block));
+			p_code.rts();
+			p_code.label(vanilla);
+			emit_step(p_code, block, block.vanilla);
+			p_code.rts();
+		}
+	}
 }
 
 word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom,
@@ -208,6 +279,7 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 		p_hack.byte_or("attack", base.attack),
 		p_hack.byte_or("attackpose", base.attack_pose),
 		p_hack.has_param("attackflag") ? p_hack.byte_or("attackflag", 0) : NO_FLAG,
+		p_hack.has_param("flag") ? p_hack.byte_or("flag", 0) : NO_FLAG,
 	};
 
 	if (s.up < 1 || s.up > MAX_SUBPIXEL)
@@ -234,10 +306,23 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 			"AtlasDevLadderControl: attack=1 is the always on form; use attackflag alone "
 			"for the runtime gate");
 
+	if (s.want_speed_gate() && s.speed_flag > MAX_FLAG)
+		throw std::runtime_error(std::format(
+			"AtlasDevLadderControl: flag must be 0 to {}", MAX_FLAG));
+	if (s.want_speed_gate() && !(s.changed(BLOCK_UP) || s.changed(BLOCK_DOWN)
+		|| s.changed(BLOCK_WING_UP) || s.changed(BLOCK_WING_DOWN)))
+		throw std::runtime_error(
+			"AtlasDevLadderControl: flag gates the climb speeds; give at least one of up, down, "
+			"wingup, wingdown a value other than vanilla");
+
 	klib::Asm6502 runtime;
 	if (s.want_runtime())
 		emit_runtime(runtime, s.attack_flag);
-	const auto size{ s.want_runtime() ? runtime.size() : 0 };
+	klib::Asm6502 speeds;
+	if (s.want_speed_gate())
+		emit_speed_stubs(speeds, s);
+	const auto runtime_size{ s.want_runtime() ? runtime.size() : 0 };
+	const auto size{ runtime_size + (s.want_speed_gate() ? speeds.size() : 0) };
 
 	// every ownership and capacity check is complete before any mutation
 	for (std::size_t i{ 0 }; i < 7; ++i)
@@ -249,7 +334,7 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	if (s.attack_pose)
 		for (const Pose& pose : POSE)
 			require_site(p_rom, pose.bank, pose.org, pose.orig, sizeof(pose.orig));
-	if (s.want_runtime()) {
+	if (size > 0) {
 		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
 		for (std::size_t i{ 0 }; i < size; ++i)
 			if (p_rom[off + i] != 0xff)
@@ -257,13 +342,36 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 					"AtlasDevLadderControl: no free space for {} bytes at ${:04x}", size, cpu_addr));
 	}
 
-	put(p_rom, UP_LO.addr, static_cast<byte>(s.up & 0xff));
-	put(p_rom, UP_HI.addr, static_cast<byte>(s.up >> 8));
-	put(p_rom, DOWN_LO.addr, static_cast<byte>(s.down & 0xff));
-	put(p_rom, DOWN_HI.addr, static_cast<byte>(s.down >> 8));
-	put(p_rom, WING_UP.addr, s.wing_up);
-	put(p_rom, WING_DOWN_LO.addr, static_cast<byte>(s.wing_down & 0xff));
-	put(p_rom, WING_DOWN_HI.addr, static_cast<byte>(s.wing_down >> 8));
+	if (!s.want_speed_gate()) {
+		put(p_rom, UP_LO.addr, static_cast<byte>(s.up & 0xff));
+		put(p_rom, UP_HI.addr, static_cast<byte>(s.up >> 8));
+		put(p_rom, DOWN_LO.addr, static_cast<byte>(s.down & 0xff));
+		put(p_rom, DOWN_HI.addr, static_cast<byte>(s.down >> 8));
+		put(p_rom, WING_UP.addr, s.wing_up);
+		put(p_rom, WING_DOWN_LO.addr, static_cast<byte>(s.wing_down & 0xff));
+		put(p_rom, WING_DOWN_HI.addr, static_cast<byte>(s.wing_down >> 8));
+	}
+	else {
+		// label positions are read before the apply clears them
+		const word base{ static_cast<word>(cpu_addr + runtime_size) };
+		word stubs[4]{};
+		const Block blocks[4]{ BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN };
+		for (std::size_t i{ 0 }; i < 4; ++i)
+			if (s.changed(blocks[i]))
+				stubs[i] = static_cast<word>(base + speeds.label_position(blocks[i].label));
+		speeds.apply_hack_and_clear(p_rom, 15, base);
+		for (std::size_t i{ 0 }; i < 4; ++i) {
+			const Block& block{ blocks[i] };
+			if (!s.changed(block))
+				continue;
+			const word stub{ stubs[i] };
+			put(p_rom, block.addr, 0x20);
+			put(p_rom, static_cast<word>(block.addr + 1), static_cast<byte>(stub & 0xff));
+			put(p_rom, static_cast<word>(block.addr + 2), static_cast<byte>(stub >> 8));
+			for (std::size_t i{ 3 }; i < block.len; ++i)
+				put(p_rom, static_cast<word>(block.addr + i), 0xea);
+		}
+	}
 	if (s.attack)
 		put(p_rom, ATTACK_BRANCH, 0x00);
 

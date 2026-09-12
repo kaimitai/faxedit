@@ -27,6 +27,10 @@ namespace {
 	constexpr std::array<byte, 7> WING_DOWN_ORIG{ 0xa5, 0xa0, 0x18, 0x69, 0x80, 0x85, 0xa0 };
 	constexpr std::array<byte, 6> WING_DOWN_HI_ORIG{ 0xa5, 0xa1, 0x69, 0x01, 0x85, 0xa1 };
 	constexpr std::array<byte, 5> ATTACK_ORIG{ 0x20, 0xf6, 0xec, 0xb0, 0x0d };
+	constexpr std::array<byte, 3> JMP_AFTER_WING_UP{ 0x4c, 0x2b, 0xe3 };
+	constexpr std::array<byte, 2> BCS_AFTER_UP{ 0xb0, 0x16 };
+	constexpr std::array<byte, 3> JMP_AFTER_WING_DOWN{ 0x4c, 0x79, 0xe3 };
+	constexpr std::array<byte, 2> CMP_AFTER_DOWN{ 0xc9, 0xc1 };
 	constexpr std::array<byte, 12> POSE_WEAPON_ORIG{
 		0xa5, 0xa4, 0x4a, 0x90, 0x07, 0xa5, 0xa4, 0x30, 0x28, 0xa9, 0x03, 0x60 };
 	constexpr std::array<byte, 12> POSE_BODY_ORIG{
@@ -51,6 +55,9 @@ namespace {
 		put(15, 0xe314, WING_UP_ORIG);
 		put(15, 0xe35c, WING_DOWN_ORIG); put(15, 0xe363, WING_DOWN_HI_ORIG);
 		put(15, 0xe107, ATTACK_ORIG);
+		// the instructions after each speed block, which read carry or A
+		put(15, 0xe31b, JMP_AFTER_WING_UP); put(15, 0xe32b, BCS_AFTER_UP);
+		put(15, 0xe369, JMP_AFTER_WING_DOWN); put(15, 0xe379, CMP_AFTER_DOWN);
 		put(15, 0xecac, POSE_BODY_ORIG);
 		put(14, 0xb927, POSE_WEAPON_ORIG);
 		return rom;
@@ -218,8 +225,68 @@ namespace {
 	}
 }
 
+	// flag=n turns each changed speed block into a call: the stub tests the
+	// flag, then runs either the new constants or the displaced vanilla bytes
+	void test_flag_gates_the_speeds() {
+		// up=384 (subtract $0180) gated on flag 4: $0101 bit 4
+		const std::string UP_STUB{ "ad01012910f00e" "a5a038e98085a0a5a1e90185a160" "a5a038e9a085a0a5a1e90085a160" };
+		auto rom{ vanilla_rom() };
+		const auto used{ install(rom, "AtlasDevLadderControl up=384 flag=4") };
+		require(used == 35, "one 16 bit speed stub is not 35 bytes: " + std::to_string(used));
+		require(hex_at(rom, 15, ORG, 35) == UP_STUB, "up stub body: " + hex_at(rom, 15, ORG, 35));
+		require(hex_at(rom, 15, 0xe31e, 13) == "20cefceaeaeaeaeaeaeaeaeaea", "up block is a call plus nops: " + hex_at(rom, 15, 0xe31e, 13));
+		require(hex_at(rom, 15, 0xe32b, 2) == "b016", "the bcs after the up block moved");
+		require(hex_at(rom, 15, 0xe36c, 13) == "a5a01869c085a0a5a1690085a1", "an unchanged block was touched");
+		require(hex_at(rom, 15, 0xe314, 7) == "a5a138e90185a1", "the wing up block was touched");
+		require(hex_at(rom, 15, 0xe35c, 13) == "a5a018698085a0a5a1690185a1", "the wing down block was touched");
+
+		// the 8 bit wing boots ascent: 23 bytes, a 7 byte call site
+		const std::string WING_STUB{ "ad01012910f008" "a5a138e90285a160" "a5a138e90185a160" };
+		auto wing{ vanilla_rom() };
+		require(install(wing, "AtlasDevLadderControl wingup=2 flag=4") == 23, "the wing up stub is not 23 bytes");
+		require(hex_at(wing, 15, ORG, 23) == WING_STUB, "wing up stub body: " + hex_at(wing, 15, ORG, 23));
+		require(hex_at(wing, 15, 0xe314, 7) == "20cefceaeaeaea", "wing up block: " + hex_at(wing, 15, 0xe314, 7));
+		require(hex_at(wing, 15, 0xe31b, 3) == "4c2be3", "the jmp after the wing up block moved");
+
+		// all four blocks, in emission order up, down, wing up, wing down
+		auto all{ vanilla_rom() };
+		require(install(all, "AtlasDevLadderControl up=384 down=448 wingup=2 wingdown=512 flag=4") == 35 + 35 + 23 + 35,
+			"four stubs size");
+		require(hex_at(all, 15, 0xe31e, 3) == "20cefc", "up call");
+		require(hex_at(all, 15, 0xe36c, 3) == "20f1fc", "down call at stub 35");
+		require(hex_at(all, 15, 0xe314, 3) == "2014fd", "wing up call at stub 70");
+		require(hex_at(all, 15, 0xe35c, 3) == "202bfd", "wing down call at stub 93");
+		require(hex_at(all, 15, 0xe369, 3) == "4c79e3", "the jmp after the wing down block moved");
+		require(hex_at(all, 15, 0xe379, 2) == "c9c1", "the cmp after the down block moved");
+
+		// with attackflag as well, the runtime stub comes first and the speeds follow it
+		auto both{ vanilla_rom() };
+		require(install(both, "AtlasDevLadderControl up=384 attackflag=4 flag=4") == 14 + 35, "runtime plus speed stub size");
+		require(hex_at(both, 15, ORG, 14) == RUNTIME_STUB, "runtime stub first");
+		require(hex_at(both, 15, 0xe31e, 3) == "20dcfc", "up call past the runtime stub");
+		require(hex_at(both, 15, 0xe107, 3) == "20cefc", "the attack call was not retargeted");
+
+		for (const std::string spec : {
+			"AtlasDevLadderControl up=384 flag=248",
+			"AtlasDevLadderControl flag=4",
+			"AtlasDevLadderControl attackflag=4 flag=4" }) {
+			auto r{ vanilla_rom() };
+			const auto before{ r };
+			bool threw{ false };
+			try { install(r, spec); }
+			catch (const std::exception& e) {
+				threw = true;
+				require(std::string{ e.what() }.find("AtlasDevLadderControl") != std::string::npos, "rejection names the hack: " + spec);
+			}
+			require(threw, "accepted " + spec);
+			require(r == before, "a refused flag install changed the ROM: " + spec);
+		}
+		std::cout << "flag gates the speeds: ok\n";
+	}
+
 int main() {
 	try {
+		test_flag_gates_the_speeds();
 		test_defaults_write_nothing();
 		test_speeds_are_operand_bytes();
 		test_attack_is_one_branch_byte();
