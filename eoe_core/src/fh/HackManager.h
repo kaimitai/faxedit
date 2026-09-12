@@ -362,6 +362,8 @@ namespace fh {
 			const fh::GeneralHack&, bool jump_buffer) const;
 		word install_AtlasDevRunControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
+		word install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&, bool p_wolfman) const;
 		// bank 12 general hacks
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

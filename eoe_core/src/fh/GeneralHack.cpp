@@ -22,6 +22,7 @@ namespace {
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
 		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalScript,
+		fh::GeneralHackLib::AtlasDevSirGawaineControl, fh::GeneralHackLib::AtlasDevWolfmanControl,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -62,6 +63,8 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevCombatFeel, { "profile", "walk", "walkmax", "ramp", "iframes", "knockbackframes", "knockback", "attack", "moveattack" } },
 		{ fh::GeneralHackLib::AtlasDevRunControl, { "speed", "accel", "window", "mode", "walk_cycle", "kind", "boot" } },
 		{ fh::GeneralHackLib::AtlasDevSmartMattock, { "mode", "push", "flag" } },
+		{ fh::GeneralHackLib::AtlasDevSirGawaineControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevWolfmanControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

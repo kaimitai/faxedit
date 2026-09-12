@@ -51,6 +51,8 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevCombatFeel](#atlasdevcombatfeel)
   - [AtlasDevRunControl](#atlasdevruncontrol)
   - [AtlasDevSmartMattock](#atlasdevsmartmattock)
+  - [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol)
+  - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
 
 <hr>
 
@@ -931,4 +933,68 @@ the US, US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevSmartMattock
 AtlasDevSmartMattock mode=push push=30
 AtlasDevSmartMattock flag=12
+```
+
+### AtlasDevSirGawaineControl
+
+Makes Sir Gawaine announce his sword attack. In the stock game a sword dwarf
+strikes without warning: its thrust pose uses a hitbox that covers almost
+its whole row, so the hero is hurt well past the tip of the sword. With this
+hack, inside its reach the dwarf holds its guard, steps back,
+lunges with the sword out, then recovers. Only the thrust hurts, and only
+within `sword` pixels, so stepping back when it steps back makes the lunge
+miss, and the recovery is the moment to strike. Hitting it restarts its wind
+up. While the hero swings it may still rush in, but a rush never hurts.
+
+`AtlasDevWolfmanControl` takes the same parameters for Wolfman. Either name
+alone changes one monster and leaves the other with the vanilla timing and
+reach. The two names can be listed in any order, each with its own flag.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `windup` | `24` | frames of guard before the thrust, the tell included, 1 to 255 |
+| `tell` | `12` | the last frames of the wind up, stepping back, 0 to `windup` (at most `windup` by default) |
+| `back` | `1` | backstep speed in pixels per frame, 0 to 3; 0 stands still |
+| `swing` | `12` | frames of thrust, 1 to 255 |
+| `lunge` | `2` | pixels per frame toward the hero during the thrust, 0 to 3; 0 stands still |
+| `sword` | `16` | the thrust hurts only this many pixels past the dwarf's body, 0 to 255; 0 keeps the vanilla row wide hitbox |
+| `recover` | `24` | frames of guard after the thrust, 0 to 255 |
+| `reach` | `24` | distance in pixels at which the dwarf stops and fights, 1 to 255 |
+| `approach` | `1` | walking speed in pixels per frame, 0 to 3 |
+| `chase` | `2` | rush speed while the hero swings, 0 to 3; 0 never rushes |
+| `bodyhurt` | `0` | 1 makes contact hurt in every pose, as in vanilla |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`windup`, `swing` and `recover` add up to at most 255 frames. The defaults
+make a one second cycle.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Two vanilla instructions in bank 14 are retargeted: the distance call in the
+behavior both dwarves share, and the start of the touch handler. The code and
+one 14 byte row per monster take 360 bytes of bank 14 free space; the code is
+installed once, whichever name comes first. No RAM is claimed: the attack
+timer is a per sprite behavior byte these two monsters never use. Every site
+is verified against its exact vanilla bytes before anything is written, and
+all of them are identical in the US, US rev A, EU and JP ROMs. Does not
+require AtlasDevFrameScheduler.
+
+```
+AtlasDevSirGawaineControl
+AtlasDevSirGawaineControl windup=40 tell=20 sword=12
+AtlasDevSirGawaineControl flag=12
+```
+
+### AtlasDevWolfmanControl
+
+The same as [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol), for
+Wolfman: the same parameters, defaults and behavior. List both names to
+change both dwarves.
+
+```
+AtlasDevWolfmanControl
+AtlasDevSirGawaineControl
+AtlasDevWolfmanControl lunge=3 recover=12 flag=13
 ```
