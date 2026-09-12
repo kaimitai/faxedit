@@ -49,6 +49,8 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSmartKeys](#atlasdevsmartkeys)
   - [AtlasDevEnemyStats](#atlasdevenemystats)
   - [AtlasDevCombatFeel](#atlasdevcombatfeel)
+  - [AtlasDevRunControl](#atlasdevruncontrol)
+  - [AtlasDevSmartMattock](#atlasdevsmartmattock)
 
 <hr>
 
@@ -865,4 +867,68 @@ written, and all of them are identical in the US, US rev A, EU and JP ROMs.
 AtlasDevCombatFeel profile=zelda2
 AtlasDevCombatFeel profile=castlevania iframes=60
 AtlasDevCombatFeel walk=256 walkmax=512 ramp=4+4+4+4
+```
+
+### AtlasDevRunControl
+
+Double tap a direction to run. The second tap inside the window raises the walk speed cap from 1.5 px per frame to ```speed``` eighths and adds ```accel``` each running frame; letting go, turning on the ground, a hit or a ladder drop back to walking. A running jump keeps its speed in the air. One RAM byte at ```$04f6``` holds the state.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `speed` | `20` | run cap in eighths of a pixel per frame, 13 to 64 (20 is 2.5 px per frame; the walk cap is 12; 64 is the 8 px per frame the game's own knockback already moves) |
+| `accel` | `16` | extra speed per running frame in 1/256 px, 0 to 255; 0 keeps the vanilla ramp only |
+| `window` | `12` | frames after a release in which a second tap starts the run, 1 to 63 |
+| `mode` | `ramp` | `ramp` starts the run from the vanilla 0.75 px per frame and ramps; `instant` starts at ```speed``` |
+| `walk_cycle` | `1` | walk animation steps per running frame, 1 to 4; 1 keeps the vanilla cadence |
+| `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `$87` is the registered number for this hack |
+| `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
+
+```text
+AtlasDevRunControl
+AtlasDevRunControl speed=24 mode=instant walk_cycle=2
+AtlasDevFrameScheduler
+AtlasDevRunControl kind=135
+```
+
+### AtlasDevSmartMattock
+
+Digs a rock with a mattock the hero is carrying, without making the player
+select it first, and without disturbing whatever item is selected. One
+mattock is still spent per rock, and the dig is the vanilla dig: the same
+message, sound and crumble.
+
+`mode=press` digs on Down and B facing the rock. `mode=push` digs after the
+hero has walked into the rock for `push` frames, and lets go of it the moment
+he releases the direction, leaves the ground or turns. `mode=both`, the
+default, does either. `mode=vanilla` installs nothing.
+
+`push=n` is the number of frames the hero walks into the rock before it
+gives, 1 to 255; the default is 48, about eight tenths of a second. The
+Mascon fountain takes 96 with the same counter.
+
+When the selected item is the mattock it is spent as it always was. When it
+is not, one mattock is taken from the item list, the list closes up around
+the gap, and the selected item is left alone.
+
+A rock is the area's rock id from the table the vanilla dig already reads, so
+rocks placed by the mattock animation option work as they are. A zero id is
+refused, which vanilla does not do: outside Trunk the stock game lets a
+selected mattock dig an empty tile and spends it. While this hack is on that
+cannot happen; with `mode=vanilla` or a clear `flag` the stock behavior is
+kept.
+
+`flag=n` gates the hack on extended flag `n` at runtime, so a script can
+grant the ability with `SetFlag` and take it away with `ClearFlag`. A clear
+flag is indistinguishable from stock.
+
+Three vanilla instructions in bank 15 are retargeted, at the Down and B
+check, at the push check every non fountain frame reaches, and at the spend
+inside the dig. No RAM is claimed. Every site is verified against its exact
+vanilla bytes before anything is written, and all of them are identical in
+the US, US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevSmartMattock
+AtlasDevSmartMattock mode=push push=30
+AtlasDevSmartMattock flag=12
 ```
