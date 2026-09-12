@@ -144,6 +144,44 @@ namespace {
 		}
 	}
 
+	// a profile sets up, down, attack and attackpose; games with no ladders
+	// are refused by name; an explicit knob overrides the profile
+	void test_profiles() {
+		struct P { const char* name; byte up_lo, up_hi, down_lo, down_hi, attack, pose; };
+		for (const P& p : { P{ "zelda2", 0xe0, 0x00, 0xe0, 0x00, 1, 1 }, P{ "megaman", 0xff, 0x00, 0xff, 0x00, 0, 0 },
+			P{ "castlevania", 0xa0, 0x00, 0xa0, 0x00, 0, 0 }, P{ "ninjagaiden", 0xff, 0x00, 0xff, 0x00, 1, 1 },
+			P{ "ghostsngoblins", 0xa0, 0x00, 0xc0, 0x00, 0, 0 }, P{ "kidicarus", 0xe0, 0x00, 0xe0, 0x00, 1, 1 },
+			P{ "arcade", 0xff, 0x00, 0xff, 0x00, 1, 1 } }) {
+			auto rom{ vanilla_rom() };
+			install(rom, std::string{ "AtlasDevLadderControl profile=" } + p.name);
+			const std::string tag{ std::string{ "profile " } + p.name };
+			require(byte_at(rom, 15, 0xe322) == p.up_lo && byte_at(rom, 15, 0xe328) == p.up_hi, tag + " up");
+			require(byte_at(rom, 15, 0xe370) == p.down_lo && byte_at(rom, 15, 0xe376) == p.down_hi, tag + " down");
+			require(byte_at(rom, 15, 0xe10b) == (p.attack ? 0x00 : 0x0d), tag + " attack");
+			require((hex_at(rom, 14, 0xb927, 12) == POSE_WEAPON_FIXED) == (p.pose == 1), tag + " attackpose");
+		}
+		auto rom{ vanilla_rom() };
+		const auto before{ rom };
+		install(rom, "AtlasDevLadderControl profile=vanilla");
+		require(rom == before, "profile vanilla wrote bytes");
+		auto over{ vanilla_rom() };
+		install(over, "AtlasDevLadderControl profile=megaman up=384");
+		require(byte_at(over, 15, 0xe322) == 0x80 && byte_at(over, 15, 0xe328) == 0x01, "explicit up did not override");
+		require(byte_at(over, 15, 0xe370) == 0xff, "profile down lost under an override");
+		for (const auto& spec : { "AtlasDevLadderControl profile=metroid", "AtlasDevLadderControl profile=contra",
+			"AtlasDevLadderControl profile=doom" }) {
+			auto r{ vanilla_rom() };
+			const auto b{ r };
+			bool threw{ false };
+			try { install(r, spec); }
+			catch (const std::runtime_error& e) {
+				threw = true;
+				require(std::string{ e.what() }.find("AtlasDevLadderControl") != std::string::npos, "refusal does not name the hack");
+			}
+			require(threw && r == b, std::string{ "accepted " } + spec);
+		}
+	}
+
 	void test_refusals() {
 		for (const auto& spec : { "AtlasDevLadderControl up=0",
 			"AtlasDevLadderControl up=2049", "AtlasDevLadderControl down=0",
@@ -188,6 +226,7 @@ int main() {
 		test_pose_moves_both_selectors();
 		test_runtime_flag_redirects_only_the_call();
 		test_flag_arithmetic();
+		test_profiles();
 		test_refusals();
 		test_refuses_a_disturbed_site();
 	}

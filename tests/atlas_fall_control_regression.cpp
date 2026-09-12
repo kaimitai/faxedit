@@ -137,6 +137,26 @@ namespace {
 		require(vanilla == before, "vanilla profile with kind changed the ROM");
 	}
 
+	// every shared name resolves; each equals the explicit curve and steer it
+	// stands for; unknown names are refused
+	void test_shared_profiles() {
+		struct P { const char* name; const char* explicit_; };
+		for (const P& p : { P{ "metroid", "curve=1+1+2+2+3+3+4+4+5+5+6 steer=2" }, P{ "megaman", "curve=1+2+3+4+5+6+7+8 steer=2" },
+			P{ "castlevania", "profile=vanilla" }, P{ "ninjagaiden", "curve=1+2+3+4+5+6+7+8 steer=2" },
+			P{ "ghostsngoblins", "profile=vanilla" }, P{ "kidicarus", "curve=1+1+2+2+3+3+4+4+5+5+6 steer=1" },
+			P{ "contra", "curve=1+2+3+4+5+6+7+8 steer=2" }, P{ "arcade", "curve=1+2+3+4+5+6+7+8 steer=2" } }) {
+			auto a{ vanilla_rom() }, b{ vanilla_rom() };
+			install(a, std::string{ "AtlasDevFallControl profile=" } + p.name);
+			install(b, std::string{ "AtlasDevFallControl " } + p.explicit_);
+			require(a == b, std::string{ "profile " } + p.name + " differs from its explicit knobs");
+		}
+		auto rom{ vanilla_rom() };
+		bool threw{ false };
+		try { install(rom, "AtlasDevFallControl profile=doom"); }
+		catch (const std::runtime_error&) { threw = true; }
+		require(threw, "accepted an unknown profile");
+	}
+
 	void test_vanilla_profile_is_byte_identical() {
 		auto rom{ vanilla_rom() };
 		const auto before{ rom };
@@ -167,6 +187,7 @@ namespace {
 
 int main() {
 	try {
+		test_shared_profiles();
 		test_zelda2_matches_the_python_golden();
 		test_arc_matches_the_python_golden_and_steer_body();
 		test_vanilla_profile_is_byte_identical();

@@ -733,6 +733,16 @@ namespace {
 		{ "zelda2",  { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
 		{ "floaty",  { { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 }, 2 } },
 		{ "moon",    { { 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4 }, 2 } },
+		// the shared feel names. first picks, in the spirit of each game rather
+		// than its numbers; several share a curve for now and want tuning by play
+		{ "metroid",        { { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 }, 2 } },
+		{ "megaman",        { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
+		{ "castlevania",    { {}, 0 } },
+		{ "ninjagaiden",    { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
+		{ "ghostsngoblins", { {}, 0 } },
+		{ "kidicarus",      { { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6 }, 1 } },
+		{ "contra",         { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
+		{ "arcade",         { { 1, 2, 3, 4, 5, 6, 7, 8 }, 2 } },
 	};
 	constexpr std::size_t FALL_MAX_ENTRIES{ 16 };
 	constexpr int FALL_MAX_STEP{ 8 };

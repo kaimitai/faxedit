@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include <array>
 #include <format>
 #include <stdexcept>
 
@@ -108,6 +109,31 @@ namespace {
 			{ 0xa5, 0xa4, 0x4a, 0x90, 0x07, 0xa5, 0xa4, 0x30, 0x17, 0xa9, 0x03, 0x60 } },
 	};
 
+	// profile=name sets up, down, attack and attackpose at once, in the spirit
+	// of the game named; wing boots are left as given. metroid and contra
+	// have no ladders and are refused rather than invented. an explicit knob
+	// overrides the profile.
+	struct LadderProfile { const char* name; word up, down; byte attack, attack_pose; };
+	constexpr std::array<LadderProfile, 8> LADDER_PROFILES{ {
+		{ "vanilla",        0x00a0, 0x00c0, 0, 0 },
+		{ "zelda2",         224, 224, 1, 1 },
+		{ "megaman",        255, 255, 0, 0 },
+		{ "castlevania",    160, 160, 0, 0 },
+		{ "ninjagaiden",    255, 255, 1, 1 },
+		{ "ghostsngoblins", 160, 192, 0, 0 },
+		{ "kidicarus",      224, 224, 1, 1 },
+		{ "arcade",         255, 255, 1, 1 },
+	} };
+
+	const LadderProfile& ladder_profile(const fh::GeneralHack& p_hack) {
+		const std::string name{ p_hack.string_or("profile", "vanilla") };
+		for (const LadderProfile& p : LADDER_PROFILES) if (name == p.name) return p;
+		if (name == "metroid" || name == "contra")
+			throw std::runtime_error(std::format(
+				"AtlasDevLadderControl: {} has no ladders, so there is no {} profile here; leave the hack out or set the knobs", name, name));
+		throw std::runtime_error(std::format("AtlasDevLadderControl: unknown profile '{}'", name));
+	}
+
 	struct Settings {
 		word up, down, wing_down;
 		byte wing_up, attack, attack_pose, attack_flag;
@@ -173,13 +199,14 @@ namespace {
 
 word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	const LadderProfile& base{ ladder_profile(p_hack) };
 	const Settings s{
-		p_hack.word_or("up", VANILLA_UP),
-		p_hack.word_or("down", VANILLA_DOWN),
+		p_hack.word_or("up", base.up),
+		p_hack.word_or("down", base.down),
 		p_hack.word_or("wingdown", VANILLA_WING_DOWN),
 		p_hack.byte_or("wingup", VANILLA_WING_UP),
-		p_hack.byte_or("attack", 0),
-		p_hack.byte_or("attackpose", 0),
+		p_hack.byte_or("attack", base.attack),
+		p_hack.byte_or("attackpose", base.attack_pose),
 		p_hack.has_param("attackflag") ? p_hack.byte_or("attackflag", 0) : NO_FLAG,
 	};
 
