@@ -46,6 +46,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevLadderCrown](#atlasdevladdercrown)
   - [AtlasDevSmartKeys](#atlasdevsmartkeys)
   - [AtlasDevEnemyStats](#atlasdevenemystats)
+  - [AtlasDevCombatFeel](#atlasdevcombatfeel)
 
 <hr>
 
@@ -734,4 +735,62 @@ JP ROMs.
 AtlasDevEnemyStats profile=hard
 AtlasDevEnemyStats profile=nightmare xp=150
 AtlasDevEnemyStats hp=150 damage=150 xp=75
+```
+
+### AtlasDevCombatFeel
+
+How the hero walks, how long he is safe after a hit, how far he is shoved,
+and how fast he swings. Every knob is an operand byte the vanilla ROM already
+holds, so with default parameters this hack writes nothing at all and the
+patched ROM is byte identical to the source.
+
+The walk is not one speed. The hero starts every walk at 192 subpixels per
+frame, three quarters of a pixel, and accelerates every frame by an amount
+that depends on his title until he reaches 384, a pixel and a half. `walk`
+and `walkmax` set those two speeds in subpixels per frame, where 256 is one
+pixel, and `ramp` is the four per frame increments by title tier, vanilla
+`2+4+6+8`; `ramp=0+0+0+0` gives a flat walk at the base speed. `walkmax` is
+capped at 2048, eight pixels per frame, which is the speed the engine already
+uses for the shove.
+
+`iframes` is the mercy time after a hit in frames, vanilla 60, written to all
+three places the game sets it. The shove after a hit lasts while that counter
+is above a threshold, so in vanilla it lasts three frames, and the threshold
+is always written as `iframes` minus `knockbackframes`: raising the mercy
+time never lengthens the shove by accident, and `knockbackframes=0` removes
+the shove while keeping the mercy time. `knockback` is the shove speed in
+subpixels per frame, vanilla 2048.
+
+`attack` is the three phase lengths of a swing in frames, vanilla `8+3+8`,
+of which the middle phase and the one after it are the frames the blade can
+hit. `moveattack=1` lets the hero keep walking during a swing, which vanilla
+refuses with a single branch; the pose is not changed, so he slides in the
+swing pose, which is the honest cost of the option.
+
+`profile` sets every knob at once. Each profile is a pick of numbers in this
+game's units that plays in the spirit of the game it is named after, the way
+`AtlasDevFallControl`'s `zelda2` is a curve shaped like that descent rather
+than its bytes; none is a port of another engine's constants. A knob given
+explicitly overrides the profile.
+
+| profile | walk to walkmax | ramp | iframes | knockbackframes | knockback | attack | moveattack |
+|---|---|---|---|---|---|---|---|
+| `vanilla` | 192 to 384 | 2+4+6+8 | 60 | 3 | 2048 | 8+3+8 | 0 |
+| `zelda2` | 320 flat | 0 | 60 | 4 | 1536 | 6+3+5 | 1 |
+| `metroid` | 256 to 384 | 4+4+4+4 | 90 | 6 | 2048 | 8+3+8 | 1 |
+| `megaman` | 352 flat | 0 | 60 | 2 | 1024 | 5+3+4 | 1 |
+| `castlevania` | 192 flat | 0 | 45 | 8 | 2048 | 10+6+10 | 0 |
+| `ninjagaiden` | 384 flat | 0 | 40 | 10 | 2048 | 4+3+4 | 1 |
+| `ghostsngoblins` | 160 flat | 0 | 75 | 6 | 1536 | 7+4+7 | 1 |
+| `kidicarus` | 288 flat | 0 | 60 | 3 | 1280 | 5+3+5 | 1 |
+| `contra` | 384 to 448 | 8+8+8+8 | 30 | 2 | 1024 | 4+3+4 | 1 |
+| `arcade` | 320 to 512 | 8+8+8+8 | 30 | 2 | 1024 | 6+3+6 | 1 |
+
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+
+```
+AtlasDevCombatFeel profile=zelda2
+AtlasDevCombatFeel profile=castlevania iframes=60
+AtlasDevCombatFeel walk=256 walkmax=512 ramp=4+4+4+4
 ```

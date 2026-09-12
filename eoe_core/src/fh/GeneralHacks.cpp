@@ -1070,6 +1070,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevEnemyStats:
 			cpu_addr = install_AtlasDevEnemyStats(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevCombatFeel:
+			cpu_addr = install_AtlasDevCombatFeel(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevJumpControl: {
 			if (ladder_exit) {
 				const bool coyote{ hack.byte_or("coyote", 5) != 0 };
