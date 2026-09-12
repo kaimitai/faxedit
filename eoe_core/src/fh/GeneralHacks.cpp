@@ -749,6 +749,11 @@ namespace {
 	constexpr std::size_t FALL_SIZE_MARK{ 25 };
 	constexpr std::size_t FALL_SIZE_STEP{ 27 };
 	constexpr std::size_t FALL_SIZE_ARMED{ 20 };
+	constexpr std::size_t FALL_SIZE_ARMED_FLAG{ 8 };
+	// extended flags: flag n lives at $0101 + (n >> 3), mask 1 << (n & 7)
+	constexpr word FALL_FLAG_BASE{ 0x0101 };
+	constexpr byte FALL_MAX_FLAG{ 247 };
+	constexpr byte FALL_NO_FLAG{ 0xff };
 	constexpr std::size_t FALL_SIZE_MARK_G{ 30 };
 	constexpr std::size_t FALL_SIZE_STEP_G{ 42 };
 
@@ -772,7 +777,9 @@ namespace {
 // scans the AtlasDevFrameScheduler slot bytes for N and runs the vanilla
 // bytes when no slot holds it, so scripts switch the hack with
 // AtlasDevArmRole N; the installer seeds a boot slot unless boot=false.
-// The regression test pins the emitted bytes for both shapes.
+// With flag=N the same gated layout tests extended flag N instead, so
+// SetFlag N and ClearFlag N switch the hack with no scheduler at all.
+// The regression test pins the emitted bytes for all three shapes.
 word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) const {
 	using namespace fh::afs;
@@ -807,23 +814,32 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 		throw std::runtime_error("AtlasDevFallControl: every curve entry is zero, the player would never fall");
 	const byte kind{ p_hack.byte_or("kind", 0) };
 	const bool boot{ p_hack.bool_or("boot", true) };
+	const byte flag{ p_hack.has_param("flag") ? p_hack.byte_or("flag", 0) : FALL_NO_FLAG };
+	if (flag != FALL_NO_FLAG && flag > FALL_MAX_FLAG)
+		throw std::runtime_error(std::format("AtlasDevFallControl: flag must be 0 to {}", FALL_MAX_FLAG));
+	if (flag != FALL_NO_FLAG && kind != 0)
+		throw std::runtime_error("AtlasDevFallControl: flag and kind are two runtime switches; use one");
+	if (flag != FALL_NO_FLAG && p_hack.has_param("boot"))
+		throw std::runtime_error("AtlasDevFallControl: boot belongs to kind; a flag install is armed by the flag");
 
 	if (curve.empty() && steer == 0)
 		return cpu_addr;
 
-	const bool gated{ kind != 0 };
+	const bool by_flag{ flag != FALL_NO_FLAG };
+	const bool gated{ kind != 0 || by_flag };
+	const std::size_t armed_size{ by_flag ? FALL_SIZE_ARMED_FLAG : FALL_SIZE_ARMED };
 	const word armed_addr{ cpu_addr };
-	const word mark_addr{ static_cast<word>(cpu_addr + (gated ? FALL_SIZE_ARMED : 0)) };
+	const word mark_addr{ static_cast<word>(cpu_addr + (gated ? armed_size : 0)) };
 	const word step_addr{ static_cast<word>(mark_addr + (gated ? FALL_SIZE_MARK_G : FALL_SIZE_MARK)) };
 	const word curve_addr{ static_cast<word>(step_addr + (gated ? FALL_SIZE_STEP_G : FALL_SIZE_STEP)) };
 	const word steer_addr{ static_cast<word>(curve.empty()
-		? (gated ? cpu_addr + FALL_SIZE_ARMED : cpu_addr)
+		? (gated ? cpu_addr + armed_size : cpu_addr)
 		: curve_addr + curve.size()) };
 
 	// ownership checks first, so a refused install leaves the ROM byte identical
 	std::size_t scheduler{ 0 };
 	std::size_t arm_site{ OFF_ARM0 + 3 };
-	if (gated) {
+	if (gated && !by_flag) {
 		const word base{ find_base(p_rom) };
 		if (base == 0)
 			throw std::runtime_error("AtlasDevFallControl: kind needs the AtlasDevFrameScheduler hack installed first");
@@ -861,7 +877,15 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 		require_vanilla(p_rom, ROM::Player_Input_AirborneGate, { 0xa5, 0xa4, 0x29, 0x05, 0xf0, 0x0f }, "airborne gate");
 
 	klib::Asm6502 code;
-	if (gated) {
+	if (by_flag) {
+		// armed: Z set when the flag is set (and leaves mask or 0, eor mask inverts)
+		code.label("@armed");
+		code.lda_abs(static_cast<word>(FALL_FLAG_BASE + (flag >> 3)));
+		code.and_imm(static_cast<byte>(1 << (flag & 7)));
+		code.eor_imm(static_cast<byte>(1 << (flag & 7)));
+		code.rts();
+	}
+	else if (gated) {
 		// armed: Z set when some slot holds our kind; JSR and RTS keep the flags
 		code.label("@armed");
 		code.lda_abs(RAM_SLOT0); code.cmp_imm(kind); code.beq("@armed_yes");
