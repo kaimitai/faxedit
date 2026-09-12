@@ -2,6 +2,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include <array>
 #include <format>
 #include <stdexcept>
 
@@ -268,6 +269,31 @@ namespace {
 		code.rts();
 	}
 
+	// profile=name sets coyote, buffer, shorthop and airjumps at once, in the
+	// spirit of the game named; an explicit knob overrides it. no profile
+	// keeps the defaults below.
+	struct JumpProfile { const char* name; byte coyote, buffer, shorthop, airjumps; };
+	constexpr std::array<JumpProfile, 10> JUMP_PROFILES{ {
+		{ "vanilla",        0, 0, 0, 0 },
+		{ "zelda2",         3, 3, 1, 0 },
+		{ "metroid",        5, 5, 3, 0 },
+		{ "megaman",        0, 2, 1, 0 },
+		{ "castlevania",    0, 0, 0, 0 },
+		{ "ninjagaiden",    2, 3, 0, 0 },
+		{ "ghostsngoblins", 0, 0, 0, 0 },
+		{ "kidicarus",      4, 4, 2, 0 },
+		{ "contra",         2, 3, 0, 0 },
+		{ "arcade",         5, 5, 3, 1 },
+	} };
+
+	const JumpProfile& jump_profile(const fh::GeneralHack& p_hack) {
+		static constexpr JumpProfile DEFAULT{ "", 5, 5, 3, 0 };
+		if (!p_hack.has_param("profile")) return DEFAULT;
+		const std::string name{ p_hack.get_string("profile") };
+		for (const JumpProfile& p : JUMP_PROFILES) if (name == p.name) return p;
+		throw std::runtime_error(std::format("AtlasDevJumpControl: unknown profile '{}'", name));
+	}
+
 	byte setting(const fh::GeneralHack& p_hack, const std::string& p_id, byte p_default) {
 		const byte value{ p_hack.byte_or(p_id, p_default) };
 		if (value > 15)
@@ -293,8 +319,9 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 	const byte armed{ p_hack.byte_or("armed", 1) };
 	if (armed > 1)
 		throw std::runtime_error("AtlasDevJumpControl: armed must be 0 or 1");
-	const Settings s{ setting(p_hack, "coyote", 5), setting(p_hack, "buffer", 5),
-		setting(p_hack, "shorthop", 3), setting(p_hack, "airjumps", 0), switchable };
+	const JumpProfile& base{ jump_profile(p_hack) };
+	const Settings s{ setting(p_hack, "coyote", base.coyote), setting(p_hack, "buffer", base.buffer),
+		setting(p_hack, "shorthop", base.shorthop), setting(p_hack, "airjumps", base.airjumps), switchable };
 	if (!s.any())
 		return cpu_addr;
 

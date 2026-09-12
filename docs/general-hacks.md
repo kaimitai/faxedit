@@ -445,6 +445,23 @@ the cost is 82 bytes of gates in the stubs.
 | `switchable` | `0` | `1` gates the hack on scheduler kind `$86` so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
 | `armed` | `1` | with `switchable=1`, whether the hack is on at boot |
 
+
+`profile` sets all four at once, in the spirit of the game named, and any
+knob given explicitly overrides it. With no profile the defaults above apply.
+
+| profile | coyote | buffer | shorthop | airjumps |
+|---|---|---|---|---|
+| `vanilla` | 0 | 0 | 0 | 0 |
+| `zelda2` | 3 | 3 | 1 | 0 |
+| `metroid` | 5 | 5 | 3 | 0 |
+| `megaman` | 0 | 2 | 1 | 0 |
+| `castlevania` | 0 | 0 | 0 | 0 |
+| `ninjagaiden` | 2 | 3 | 0 | 0 |
+| `ghostsngoblins` | 0 | 0 | 0 | 0 |
+| `kidicarus` | 4 | 4 | 2 | 0 |
+| `contra` | 2 | 3 | 0 | 0 |
+| `arcade` | 5 | 5 | 3 | 1 |
+
 ```text
 AtlasDevJumpControl coyote=5 buffer=5 shorthop=3 airjumps=1
 AtlasDevJumpControl switchable=1 armed=0
@@ -456,7 +473,7 @@ Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Righ
 
 | parameter | default | meaning |
 | --- | --- | --- |
-| `profile` | `arc` | `vanilla`, `arc`, `zelda2`, `floaty` or `moon` |
+| `profile` | `arc` | `vanilla`, `arc`, `zelda2`, `floaty`, `moon`, or a shared feel name from the table below |
 | `curve` | from the profile | px per fall frame, `+`-separated, 1 to 16 entries of 0 to 8; the last entry repeats as the terminal speed |
 | `steer` | from the profile | `0` vanilla, `1` steer only while a direction is held (momentum kept otherwise), `2` full air control |
 | `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `6` is the registered number for this hack |
@@ -469,6 +486,20 @@ Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Righ
 | `zelda2` | `1+2+3+4+5+6+7+8` | 2 |
 | `floaty` | `1+1+2+2+3+3+4+4+5+5+6` | 2 |
 | `moon` | `0+0+1+1+1+2+2+2+3+3+4` | 2 |
+| `metroid` | `1+1+2+2+3+3+4+4+5+5+6` | 2 |
+| `megaman` | `1+2+3+4+5+6+7+8` | 2 |
+| `castlevania` | vanilla | 0 |
+| `ninjagaiden` | `1+2+3+4+5+6+7+8` | 2 |
+| `ghostsngoblins` | vanilla | 0 |
+| `kidicarus` | `1+1+2+2+3+3+4+4+5+5+6` | 1 |
+| `contra` | `1+2+3+4+5+6+7+8` | 2 |
+| `arcade` | `1+2+3+4+5+6+7+8` | 2 |
+
+The names from `metroid` down are shared with `AtlasDevJumpControl`,
+`AtlasDevLadderControl` and `AtlasDevCombatFeel`, so the same profile on
+each composes into one feel. Each is a first pick in the spirit of the game
+named, not a port of its numbers; several share a curve for now, and the
+values will be tuned by play.
 
 Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the scheduler must be installed first; the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available.
 
@@ -530,6 +561,23 @@ Does not require AtlasDevFrameScheduler.
 | `attack` | `0` | 1 allows attacking while on a ladder |
 | `attackpose` | `0` | 1 draws the attack frames while climbing instead of the climb pose |
 | `attackflag` | none | extended flag 0 to 247 that allows the attack at runtime |
+
+
+`profile` sets `up`, `down`, `attack` and `attackpose` at once, in the spirit
+of the game named; Wing Boots are left as given, and any knob given
+explicitly overrides the profile. `metroid` and `contra` have no ladders and
+are refused here rather than invented: leave this hack out for those feels.
+
+| profile | up | down | attack | attackpose |
+|---|---|---|---|---|
+| `vanilla` | 160 | 192 | 0 | 0 |
+| `zelda2` | 224 | 224 | 1 | 1 |
+| `megaman` | 255 | 255 | 0 | 0 |
+| `castlevania` | 160 | 160 | 0 | 0 |
+| `ninjagaiden` | 255 | 255 | 1 | 1 |
+| `ghostsngoblins` | 160 | 192 | 0 | 0 |
+| `kidicarus` | 224 | 224 | 1 | 1 |
+| `arcade` | 255 | 255 | 1 | 1 |
 
 ```text
 AtlasDevLadderControl up=384 down=448 attack=1 attackpose=1
