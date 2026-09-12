@@ -644,6 +644,9 @@
     <ClCompile Include="src\fh\AtlasDevSmartKeys.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevEnemyStats.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
