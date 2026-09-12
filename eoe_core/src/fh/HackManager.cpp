@@ -5465,7 +5465,7 @@ word fh::HackManager::apply_helper_LoadVarOperands(const fe::Config& p_config,
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
-	const word Begin{ cfg_word(p_config, c::ID_ROM_ISCRIPTS_BEGIN) };
+	const word Begin{ ROM::IScripts_Begin };
 	const word Vars{ cfg_word(p_config, c::ID_HACK_SCRIPT_VAR_RAM_ADDR) };
 	const byte Count{ cfg_byte(p_config, c::ID_HACK_SCRIPT_VAR_COUNT) };
 	if (Count == 0 || Count > 0x80)

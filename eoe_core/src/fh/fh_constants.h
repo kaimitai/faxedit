@@ -10,13 +10,16 @@ namespace fh {
 
 	namespace ROM {
 		// bank 12 addresses
-		constexpr word IScripts_JumpTable_Ref_U{ 0x8273 }; // us, jp
-		constexpr word IScripts_JumpTable_Ref_L{ 0x8277 }; // us, jp
+		constexpr word IScripts_Begin{ 0x8242 };
+		constexpr word IScripts_JumpTable_Ref_U{ 0x8273 };
+		constexpr word IScripts_JumpTable_Ref_L{ 0x8277 };
 		constexpr word TextBox_OpenForNPC{ 0x81e2 };
 		constexpr word TextBox_Close{ 0x81fb };
 		constexpr word TextBox_OpenForPortrait{ 0x821f };
 		constexpr word TextBox_ClearForPortraitAndText{ 0x822b };
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
+		// JP diverges from US/EU at [$0c:$8302]
+
 		constexpr word Menu_WaitInput{ 0x84ed };
 		constexpr word Portrait_Pump{ 0x87b0 };
 		constexpr word ItemNameDraw{ 0x8c36 };
@@ -347,7 +350,6 @@ namespace fh {
 	namespace c {
 		constexpr byte FlagsByteCount{ 0x1f };
 
-		constexpr char ID_ROM_ISCRIPTS_BEGIN[]{ "rom_iscripts_begin" };
 		constexpr char ID_ROM_ISCRIPTS_LOADBYTE[]{ "rom_iscripts_loadbyte" };
 		constexpr char ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE[]{ "rom_iscripts_skipaddrandinvoke" };
 		constexpr char ID_ROM_ISCRIPTS_JUMPTONEXTADDR[]{ "rom_iscripts_jumptonextaddr" };

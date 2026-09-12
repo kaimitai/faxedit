@@ -382,8 +382,6 @@
 		<const name="tileset_primary_bank" value="0x04" />
 		<const name="tileset_secondary_bank" value="29" region="en-transl,512" />
 		<!-- script routine addresses needed for opcode library extension -->
-		<const name="rom_iscripts_begin" region="us,randum,eu,us-rev-a" value="$8242" />
-		<const name="rom_iscripts_begin" region="jp,en-transl" value="$821a" />
 		<const name="rom_iscripts_loadbyte" region="us,randum,eu,us-rev-a" value="$87a4" />
 		<const name="rom_iscripts_loadbyte" region="jp,en-transl" value="$877c" />
 		<const name="rom_iscripts_skipaddrandinvoke" region="us,randum,eu,us-rev-a" value="$8616" />

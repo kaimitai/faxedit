@@ -783,7 +783,7 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	code.label("@use_item_script");
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(12);
-	code.dw(cfg_word(p_config, c::ID_ROM_ISCRIPTS_BEGIN) - 1);
+	code.dw(ROM::IScripts_Begin - 1);
 	code.jmp(ROM::Player_ClearSelectedItem);
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
