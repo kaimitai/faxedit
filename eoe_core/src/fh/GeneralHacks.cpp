@@ -725,6 +725,70 @@ void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
 	klib::Asm6502::apply_byte(p_rom, OP_BEQ, 14, ROM::PendantBugBNE);
 }
 
+word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	if (!p_hack.has_param("data"))
+		throw std::runtime_error("General Hack ItemScripts is missing required element 'data'");
+
+	const auto data{ p_hack.split_twice_bytes("data", 2) };
+	if(data.size() > 32)
+		throw std::runtime_error("Invalid item IDs");
+
+	std::map<byte, byte> item_to_script, item_to_script_extended;
+	for (const auto& data_item : data) {
+		if (data_item[0] <= 16)
+			item_to_script[data_item[0]] = data_item[1];
+		else
+			item_to_script_extended[data_item[0]] = data_item[1];
+	}
+
+	klib::Asm6502 code;
+
+	if (!item_to_script_extended.empty()) {
+		// hook
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_LDA_Item);
+
+		// extended items routine
+		code.lda_abs(RAM::SelectedItem);
+		for (const auto& [item_id, script_id] : item_to_script_extended) {
+			const auto l_label{ std::format("@next_{:02x}", item_id) };
+
+			code.cmp_imm(item_id);
+			code.bne(l_label);
+
+			code.lda_imm(script_id);
+			code.jsr("@use_item_script");
+
+			code.lda_imm(0xff);
+			code.rts();
+
+			code.label(l_label);
+		}
+
+		// no extended match, return for vanilla handling
+		code.lda_abs(RAM::SelectedItem);
+		code.rts();
+	}
+
+	for (const auto& [item_id, script_id] : item_to_script) {
+		// patch UseItem_JumpTable to this stub - 1
+		const word l_tmp_addr{ static_cast<word>(cpu_addr + code.size()) };
+		klib::Asm6502::apply_word(p_rom, l_tmp_addr - 1, 15, ROM::UseItem_JumpTable + 2 * item_id);
+
+		code.lda_imm(script_id);
+		code.jmp("@use_item_script");
+	}
+
+	code.label("@use_item_script");
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(12);
+	code.dw(cfg_word(p_config, c::ID_ROM_ISCRIPTS_BEGIN) - 1);
+	code.jmp(ROM::Player_ClearSelectedItem);
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+}
+
 namespace {
 	struct FallProfile { std::vector<byte> curve; byte steer; };
 	const std::map<std::string, FallProfile> FALL_PROFILES{
@@ -1049,6 +1113,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::BugFixes:
 			install_BugFixes(patched_rom);
+			break;
+		case fh::GeneralHackLib::ItemScripts:
+			cpu_addr = install_ItemScripts(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FastStart:
 			cpu_addr = install_FastStart(p_config, patched_rom, cpu_addr, hack);

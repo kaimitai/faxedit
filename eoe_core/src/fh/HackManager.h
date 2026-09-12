@@ -324,6 +324,8 @@ namespace fh {
 		void install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::GeneralHack& p_hack) const;
 		void install_BugFixes(std::vector<byte>& p_rom) const;
+		word install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
+			word cpu_addr, const fh::GeneralHack& p_hack) const;
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

@@ -35,7 +35,9 @@ This document describes the hacks in the current library and their parameters. I
   - [SRAM](#sram)
   - [TextSpeed](#textspeed)
   - [BugFixes](#bugfixes)
-  - [ConditionalTrigger](#conditionaltrigger)
+  - [ConditionalScript](#conditionalscript)
+  - [ItemScripts](#itemscripts)
+	- [Item List](#item-list)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -73,6 +75,8 @@ Hacks are installed in the order listed. An unknown hack name or an invalid para
 
 ### KillSwitch
 
+> by [Notlob](https://github.com/Notlobb/Randumizer)
+
 Pressing Select while the game is paused kills the player when the game is unpaused. This gives players a way out of softlocks without resetting the console and losing progress since the last password.
 
 No parameters.
@@ -92,6 +96,8 @@ SameWorldTransPal2Mus
 ```
 
 ### FastStart
+
+> by [Notlob](https://github.com/Notlobb/Randumizer)
 
 Starts a new game with more resources: health and mana start at 80, starting gold is configurable, and the Ring of Elf can be granted from the beginning so the Eolis gate content is open immediately.
 
@@ -131,6 +137,8 @@ BossLockedItems enemies=false
 ```
 
 ### FlexibleItems
+
+> by [Notlob](https://github.com/Notlobb/Randumizer) and [Songbirder](https://github.com/rgeraldporter)
 
 Loosens the vanilla item restrictions in four independent ways: items can be used inside buildings, the player-state gate on item use is removed, and shops will buy any item — items without a sell-table entry sell for a configurable price.
 
@@ -206,6 +214,8 @@ See the document [Tileset Graphics and Metatiles](./tileset-gfx.md) for an examp
 
 ### PoisonPickup
 
+> by [Notlob](https://github.com/Notlobb/Randumizer)
+
 Changes poison pickups so that they add an item to the player's inventory instead of damaging the player. By default, poison becomes the Red Potion (`0x10`).
 
 The original "touched poison" script is still run by default. Set `script=false` to skip it entirely.
@@ -216,39 +226,11 @@ The original "touched poison" script is still run by default. Set `script=false`
 | `sound`   | `0x08`  | Sound effect played when the item is picked up      |
 | `script`  | `true`  | Whether to run the original "touched poison" script |
 
-Vanilla item IDs are:
-
-| ID            | item          | notes                                  |
-| ------------- | ------------- | -------------------------------------- |
-| `0x00`        | Ring of Elf   |                                        |
-| `0x01`        | Ruby Ring     |                                        |
-| `0x02`        | Ring of Dworf |                                        |
-| `0x03`        | Demon's Ring  |                                        |
-| `0x04`        | Key A         |                                        |
-| `0x05`        | Key K         |                                        |
-| `0x06`        | Key Q         |                                        |
-| `0x07`        | Key J         |                                        |
-| `0x08`        | Key Jo        |                                        |
-| `0x09`        | Mattock       |                                        |
-| `0x0a`        | Rod           |                                        |
-| `0x0b`        | Crystal       |                                        |
-| `0x0c`        | Lamp          |                                        |
-| `0x0d`        | Hour Glass    |                                        |
-| `0x0e`        | Book          |                                        |
-| `0x0f`        | Wing Boots    |                                        |
-| `0x10`        | Red Potion    |                                        |
-| `0x11`        | Black Potion  | Unused in the vanilla game             |
-| `0x12`        | Elixir        | Not a normal selectable inventory item |
-| `0x13`        | Pendant       | Not a normal selectable inventory item |
-| `0x14`        | Black Onix    | Not a normal selectable inventory item |
-| `0x15`        | Fire Crystal  | Not a normal selectable inventory item |
-| `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
-
-Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
-
 ```text
 PoisonPickup item=16 script=false
 ```
+
+See the [Item List](#item-list) for valid item values.
 
 ### SRAM
 
@@ -279,6 +261,8 @@ The attribute data is configured by `sram_start_screen_attrs` in `eoe_config.xml
 Use `color=false` to disable the attribute changes entirely.
 
 ### TextSpeed
+
+> by [Songbirder](https://github.com/rgeraldporter)
 
 Changes the text display speed. Lower masks make text display faster. For regular timing, use `%0` or binary masks consisting only of consecutive `1` bits, such as `%1`, `%11`, `%111`, etc. Other values are valid but may produce uneven text timing.
 
@@ -336,6 +320,70 @@ By default the behavior is applied to triggers, but not NPCs.
 ```text
 ConditionalScript
 ```
+
+### ItemScripts
+
+Makes configured items execute iScripts when used.
+
+Each configured item ID is mapped to an iScript ID. When the item is used, the corresponding iScript is executed and the item is removed from the player's inventory.
+
+Items 0-16 normally use the game's item-use handlers. Configured items replace their normal behavior, while unconfigured items are left unchanged. Item IDs above 16 can also be configured, allowing normally unusable item slots to execute scripts.
+
+This can be used to implement custom consumables and other scripted item effects. Extended script opcodes can provide the actual item behavior without requiring additional item-specific code.
+
+| parameter | default  | meaning                     |
+| --------- | -------- | --------------------------- |
+| `data`    | required | List of `item:script` pairs |
+
+For example, this makes item 14 execute iScript 90 and item 17 execute iScript 91:
+
+```text
+ItemScripts data=14:90+17:91
+```
+
+The scripts might look like this:
+
+```asm
+.entrypoint 90
+.textbox GENERIC
+  ; custom behavior for item 14
+  End
+
+.entrypoint 91
+.textbox GENERIC
+  ; custom behavior for item 17
+  End
+```
+
+#### Item List
+
+| ID            | item          | notes                                  |
+| ------------- | ------------- | -------------------------------------- |
+| `0x00`        | Ring of Elf   | Not a normal selectable inventory item |
+| `0x01`        | Ruby Ring     | Not a normal selectable inventory item |
+| `0x02`        | Ring of Dworf | Not a normal selectable inventory item |
+| `0x03`        | Demon's Ring  | Not a normal selectable inventory item |
+| `0x04`        | Key A         |                                        |
+| `0x05`        | Key K         |                                        |
+| `0x06`        | Key Q         |                                        |
+| `0x07`        | Key J         |                                        |
+| `0x08`        | Key Jo        |                                        |
+| `0x09`        | Mattock       |                                        |
+| `0x0a`        | Rod           |                                        |
+| `0x0b`        | Crystal       |                                        |
+| `0x0c`        | Lamp          | Unused in the vanilla game             |
+| `0x0d`        | Hour Glass    |                                        |
+| `0x0e`        | Book          | Unused in the vanilla game             |
+| `0x0f`        | Wing Boots    |                                        |
+| `0x10`        | Red Potion    |                                        |
+| `0x11`        | Black Potion  | Unused in the vanilla game             |
+| `0x12`        | Elixir        | Not a normal selectable inventory item |
+| `0x13`        | Pendant       | Not a normal selectable inventory item |
+| `0x14`        | Black Onix    | Not a normal selectable inventory item |
+| `0x15`        | Fire Crystal  | Unused in the vanilla game             |
+| `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
+
+Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
 
 ### AtlasDevFrameScheduler
 

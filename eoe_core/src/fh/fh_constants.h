@@ -47,6 +47,9 @@ namespace fh {
 
 		// bank 15 addresses
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
+		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
+		constexpr word Player_ClearSelectedItem{ 0xc4bf };
+		constexpr word UseItem_JumpTable{ 0xc49d };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpBattleSuit_WeaponsCountBug{ 0xc6f8 };
 		constexpr word Player_PickUpDragonSlayer_ArmoursCountBug{ 0xc738 };

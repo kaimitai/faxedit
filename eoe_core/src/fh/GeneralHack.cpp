@@ -27,7 +27,7 @@ namespace {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
 		fh::GeneralHackLib::PoisonPickup, fh::GeneralHackLib::TextSpeed,
-		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes,
+		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes, fh::GeneralHackLib::ItemScripts,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
@@ -65,6 +65,7 @@ namespace {
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
+		{ fh::GeneralHackLib::ItemScripts, { "data" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
