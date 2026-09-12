@@ -650,6 +650,9 @@
     <ClCompile Include="src\fh\AtlasDevCombatFeel.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevRunControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevSmartMattock.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
