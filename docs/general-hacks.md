@@ -561,6 +561,17 @@ clear flag is indistinguishable from stock, and the flag page is cleared at
 reset, so a runtime build plays exactly like the original game until the
 script sets the flag. `attackflag` and `attack=1` are mutually exclusive.
 
+`flag=n` does the same for the climb speeds: every speed block whose value
+differs from vanilla (`up`, `down`, `wingup`, `wingdown`) becomes a call into
+a stub that runs the new constants while extended flag `n` is set and the
+displaced vanilla bytes while it is clear. Blocks left at vanilla speed are
+not touched. The stubs live in the free block, 35 bytes per 16 bit speed and
+23 for the wing boots ascent, and leave carry and the accumulator exactly as
+the vanilla code does, since the instructions after each block read them.
+`flag` alone, with every speed at vanilla, is refused because there is
+nothing to switch. `flag` and `attackflag` are independent and may name the
+same flag or different ones.
+
 Every site is verified against its exact vanilla bytes before anything is
 written, and all of them are identical in the US, US rev A, EU and JP ROMs.
 Does not require AtlasDevFrameScheduler.
@@ -574,6 +585,7 @@ Does not require AtlasDevFrameScheduler.
 | `attack` | `0` | 1 allows attacking while on a ladder |
 | `attackpose` | `0` | 1 draws the attack frames while climbing instead of the climb pose |
 | `attackflag` | none | extended flag 0 to 247 that allows the attack at runtime |
+| `flag` | none | extended flag 0 to 247 that switches the changed climb speeds on at runtime; while it is clear the vanilla speeds run |
 
 
 `profile` sets `up`, `down`, `attack` and `attackpose` at once, in the spirit
@@ -595,6 +607,7 @@ are refused here rather than invented: leave this hack out for those feels.
 ```text
 AtlasDevLadderControl up=384 down=448 attack=1 attackpose=1
 AtlasDevLadderControl up=320 attackflag=4 attackpose=1
+AtlasDevLadderControl up=384 down=448 flag=22
 ```
 
 ### AtlasDevLadderCrown
