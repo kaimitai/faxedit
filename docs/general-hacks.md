@@ -438,6 +438,13 @@ switching off also clears its RAM byte. `armed=0` installs it off until a
 script arms it. The kind is gate only, so the tick never calls the slot;
 the cost is 82 bytes of gates in the stubs.
 
+`flag=n` is the lighter runtime switch: every stub runs only while extended
+flag `n` is set, so a script switches jump control with `SetFlag n` and
+`ClearFlag n`, no scheduler needed. The flag page is cleared at reset, so a
+`flag` install is off until a script sets the flag; a clear flag is
+indistinguishable from stock. `flag` and `switchable` are two forms of the
+same switch and cannot be combined; `armed` belongs to `switchable`.
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `coyote` | `5` | frames after leaving a ledge during which A still jumps, 0 to 15 |
@@ -446,6 +453,7 @@ the cost is 82 bytes of gates in the stubs.
 | `airjumps` | `0` | extra jumps allowed in the air, 0 to 15 |
 | `switchable` | `0` | `1` gates the hack on scheduler kind `$86` so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
 | `armed` | `1` | with `switchable=1`, whether the hack is on at boot |
+| `flag` | none | extended flag 0 to 247 that switches the hack on at runtime; cannot be combined with `switchable` |
 
 
 `profile` sets all four at once, in the spirit of the game named, and any
@@ -467,6 +475,7 @@ knob given explicitly overrides it. With no profile the defaults above apply.
 ```text
 AtlasDevJumpControl coyote=5 buffer=5 shorthop=3 airjumps=1
 AtlasDevJumpControl switchable=1 armed=0
+AtlasDevJumpControl flag=20
 ```
 
 ### AtlasDevFallControl

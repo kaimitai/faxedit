@@ -53,22 +53,35 @@ namespace {
 	constexpr byte ARC_ORIG[4]{ 0xa6, 0xa6, 0xe0, 0x10 };
 	constexpr word INIT_VANILLA{ 0xe449 };
 	constexpr byte KIND_JUMP{ 0x86 };            // gate only: the tick never calls it
+	// extended flags: flag n lives at $0101 + (n >> 3), mask 1 << (n & 7)
+	constexpr word FLAG_BASE{ 0x0101 };
+	constexpr byte MAX_FLAG{ 247 };
+	constexpr byte NO_FLAG{ 0xff };
 
 	struct Settings {
-		byte coyote, buffer, shorthop, airjumps, switchable;
+		byte coyote, buffer, shorthop, airjumps, switchable, flag;
+		bool gated(void) const { return switchable || flag != NO_FLAG; }
 		bool want_fall(void) const { return coyote || buffer || airjumps; }
 		bool want_init(void) const { return buffer || airjumps; }
 		bool want_hop(void) const { return shorthop != 0; }
 		bool any(void) const { return want_fall() || want_init() || want_hop(); }
 	};
 
-	// fall through when no scheduler slot holds our kind, else branch
-	void emit_gate(klib::Asm6502& code, const std::string& p_on) {
+	// fall through when the hack is off, else branch: off is no scheduler
+	// slot holding our kind (switchable) or the extended flag clear (flag)
+	void emit_gate(klib::Asm6502& code, const Settings& s, const std::string& p_on) {
 		using namespace fh::afs;
-		for (word slot : { RAM_SLOT0, RAM_SLOT1, RAM_SLOT2 }) {
-			code.lda_abs(slot);
-			code.cmp_imm(KIND_JUMP);
-			code.beq(p_on);
+		if (s.switchable) {
+			for (word slot : { RAM_SLOT0, RAM_SLOT1, RAM_SLOT2 }) {
+				code.lda_abs(slot);
+				code.cmp_imm(KIND_JUMP);
+				code.beq(p_on);
+			}
+		}
+		else {
+			code.lda_abs(static_cast<word>(FLAG_BASE + (s.flag >> 3)));
+			code.and_imm(static_cast<byte>(1 << (s.flag & 7)));
+			code.bne(p_on);
 		}
 	}
 
@@ -96,8 +109,8 @@ namespace {
 	// every free fall frame; exits to $e3d1 (keep falling) or $e43a (jump)
 	void emit_fall(klib::Asm6502& code, const Settings& s) {
 		code.label("@fall");
-		if (s.switchable) {
-			emit_gate(code, "@f_on");
+		if (s.gated()) {
+			emit_gate(code, s, "@f_on");
 			code.jmp("@f_fall");
 			code.label("@f_on");
 		}
@@ -172,8 +185,8 @@ namespace {
 	// every other frame; exits to $e463 (arc), $e44d (accept) or $e433
 	void emit_init(klib::Asm6502& code, const Settings& s) {
 		code.label("@init");
-		if (s.switchable) {
-			emit_gate(code, "@i_on");
+		if (s.gated()) {
+			emit_gate(code, s, "@i_on");
 			// switched off: forget any buffered press, then do what the
 			// replaced instruction did and hand vanilla its own press check
 			code.lda_imm(0x00);
@@ -248,8 +261,8 @@ namespace {
 	void emit_hop(klib::Asm6502& code, const Settings& s) {
 		code.label("@hop");
 		code.ldx_zp(ZP_A6);
-		if (s.switchable) {
-			emit_gate(code, "@h_on");
+		if (s.gated()) {
+			emit_gate(code, s, "@h_on");
 			code.jmp("@h_done");
 			code.label("@h_on");
 		}
@@ -320,8 +333,15 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 	if (armed > 1)
 		throw std::runtime_error("AtlasDevJumpControl: armed must be 0 or 1");
 	const JumpProfile& base{ jump_profile(p_hack) };
+	const byte flag{ p_hack.has_param("flag") ? p_hack.byte_or("flag", 0) : NO_FLAG };
+	if (flag != NO_FLAG && flag > MAX_FLAG)
+		throw std::runtime_error(std::format("AtlasDevJumpControl: flag must be 0 to {}", MAX_FLAG));
+	if (flag != NO_FLAG && switchable)
+		throw std::runtime_error("AtlasDevJumpControl: flag and switchable are two runtime switches; use one");
+	if (flag != NO_FLAG && p_hack.has_param("armed"))
+		throw std::runtime_error("AtlasDevJumpControl: armed belongs to switchable; a flag install is armed by the flag");
 	const Settings s{ setting(p_hack, "coyote", base.coyote), setting(p_hack, "buffer", base.buffer),
-		setting(p_hack, "shorthop", base.shorthop), setting(p_hack, "airjumps", base.airjumps), switchable };
+		setting(p_hack, "shorthop", base.shorthop), setting(p_hack, "airjumps", base.airjumps), switchable, flag };
 	if (!s.any())
 		return cpu_addr;
 

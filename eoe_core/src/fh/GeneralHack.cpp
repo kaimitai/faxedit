@@ -51,7 +51,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },
-		{ fh::GeneralHackLib::AtlasDevJumpControl, { "profile", "coyote", "buffer", "shorthop", "airjumps", "switchable", "armed" } },
+		{ fh::GeneralHackLib::AtlasDevJumpControl, { "profile", "coyote", "buffer", "shorthop", "airjumps", "switchable", "armed", "flag" } },
 		{ fh::GeneralHackLib::AtlasDevLadderControl, { "profile", "up", "down", "wingup", "wingdown", "attack", "attackpose", "attackflag" } },
 		{ fh::GeneralHackLib::AtlasDevFallControl, { "profile", "curve", "steer", "kind", "boot" } },
 		{ fh::GeneralHackLib::AtlasDevLadderCrown, { "mode", "downhold", "align", "roompolicy", "rooms" } },
