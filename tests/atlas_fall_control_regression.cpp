@@ -29,14 +29,15 @@ namespace {
 		"a6a6e00a9004a20a86a6a5a1187d02fd85a1e00ab002e6a64cfce3"
 		"0101010102020404040408"
 		"a5a42905f00da5a43006a5162903d0034c88e14c97e1" };
-	// python3 tools/build_fall_control.py --emit-hex --profile arc --kind 6 --org 0xfd64
-	// (the scheduler core takes the first 150 bytes from $fcce)
+	// python3 tools/build_fall_control.py --emit-hex --profile arc --kind 6 --org 0xfd6a
+	// (the scheduler core takes the first 156 bytes from $fcce since the gate
+	// only kinds landed; the body itself is unchanged, only its addresses moved)
 	const std::string GOLDEN_ARC_KIND6{
 		"add804c906f00cadd904c906f005adda04c90660"
-		"2064fdd012a5a42904d00ca200a5a6c920d002a20a86a6a5a4090485a460"
-		"2064fdd01ba6a6e00a9004a20a86a6a5a1187dc0fd85a1e00ab002e6a64cfce3a5a118690885a14cfce3"
+		"206afdd012a5a42904d00ca200a5a6c920d002a20a86a6a5a4090485a460"
+		"206afdd01ba6a6e00a9004a20a86a6a5a1187dc6fd85a1e00ab002e6a64cfce3a5a118690885a14cfce3"
 		"0101010102020404040408"
-		"2064fdd016a5a42905f00da5a43006a5162903d0034c88e14c97e1a5a42905f0f74c88e1" };
+		"206afdd016a5a42905f00da5a43006a5162903d0034c88e14c97e1a5a42905f0f74c88e1" };
 	constexpr std::array<byte, 5> SCHED_HOOK1_ORIG{ 0xa9, 0x07, 0x8d, 0x14, 0x40 };
 	constexpr std::array<byte, 5> SCHED_HOOK2_ORIG{ 0x8d, 0x01, 0x20, 0xa5, 0x5a };
 
@@ -69,6 +70,17 @@ namespace {
 		return s;
 	}
 
+	// flag=3 with the arc profile at $fcce, no scheduler: the 20 byte slot scan
+	// becomes lda $0101 / and #$08 / eor #$08 / rts (8 bytes), so mark sits at
+	// $fcd6, step at $fcf4, the curve at $fd1e and steer at $fd29; every other
+	// byte is GOLDEN_ARC_KIND6 with those addresses relocated
+	const std::string GOLDEN_ARC_FLAG3{
+		"ad01012908490860"
+		"20cefcd012a5a42904d00ca200a5a6c920d002a20a86a6a5a4090485a460"
+		"20cefcd01ba6a6e00a9004a20a86a6a5a1187d1efd85a1e00ab002e6a64cfce3a5a118690885a14cfce3"
+		"0101010102020404040408"
+		"20cefcd016a5a42905f00da5a43006a5162903d0034c88e14c97e1a5a42905f0f74c88e1" };
+
 	void test_zelda2_matches_the_python_golden() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevFallControl profile=zelda2") };
@@ -96,9 +108,9 @@ namespace {
 		const word body{ static_cast<word>(ORG + fh::afs::CORE_SIZE) };
 		require(hex_at(rom, body, GOLDEN_ARC_KIND6.size() / 2) == GOLDEN_ARC_KIND6,
 			"gated arc body differs from the Python emitter: " + hex_at(rom, body, GOLDEN_ARC_KIND6.size() / 2));
-		require(hex_at(rom, 0xe3d1, 6) == "2078fdeaeaea", "gated mark hook: " + hex_at(rom, 0xe3d1, 6));
-		require(hex_at(rom, 0xe3f5, 7) == "4c96fdeaeaeaea", "gated step hook: " + hex_at(rom, 0xe3f5, 7));
-		require(hex_at(rom, 0xe182, 6) == "4ccbfdeaeaea", "gated steer hook: " + hex_at(rom, 0xe182, 6));
+		require(hex_at(rom, 0xe3d1, 6) == "207efdeaeaea", "gated mark hook: " + hex_at(rom, 0xe3d1, 6));
+		require(hex_at(rom, 0xe3f5, 7) == "4c9cfdeaeaeaea", "gated step hook: " + hex_at(rom, 0xe3f5, 7));
+		require(hex_at(rom, 0xe182, 6) == "4cd1fdeaeaea", "gated steer hook: " + hex_at(rom, 0xe182, 6));
 		const auto sched{ klib::Asm6502::get_file_offset(15, ORG) };
 		require(rom[sched + fh::afs::OFF_ARM0] == 6, "boot slot 0 carries kind 6");
 		require(rom[sched + fh::afs::OFF_ARM0 + 1] == 0 && rom[sched + fh::afs::OFF_ARM0 + 2] == 0, "other slots untouched");
@@ -111,7 +123,7 @@ namespace {
 		install(rom, "AtlasDevFrameScheduler\nAtlasDevFallControl profile=zelda2 kind=6 boot=false");
 		const auto sched{ klib::Asm6502::get_file_offset(15, ORG) };
 		require(rom[sched + fh::afs::OFF_ARM0] == 0, "boot=false leaves the arm table alone");
-		require(hex_at(rom, 0xe182, 6) == "4cc8fdeaeaea", "gated steer=2 has a body: " + hex_at(rom, 0xe182, 6));
+		require(hex_at(rom, 0xe182, 6) == "4ccefdeaeaea", "gated steer=2 has a body: " + hex_at(rom, 0xe182, 6));
 		auto r{ vanilla_rom() };
 		bool threw{ false };
 		try { install(r, "AtlasDevFallControl profile=arc kind=6"); } catch (const std::exception&) { threw = true; }
@@ -157,6 +169,37 @@ namespace {
 		require(threw, "accepted an unknown profile");
 	}
 
+	void test_flag_gate_without_the_scheduler() {
+		auto rom{ vanilla_rom() };
+		const auto n{ install(rom, "AtlasDevFallControl profile=arc flag=3") };
+		require(n == GOLDEN_ARC_FLAG3.size() / 2, "flag gated body size " + std::to_string(n));
+		require(hex_at(rom, ORG, n) == GOLDEN_ARC_FLAG3, "flag gated arc body: " + hex_at(rom, ORG, n));
+		require(hex_at(rom, 0xe3d1, 6) == "20d6fceaeaea", "flag mark hook: " + hex_at(rom, 0xe3d1, 6));
+		require(hex_at(rom, 0xe3f5, 7) == "4cf4fceaeaeaea", "flag step hook: " + hex_at(rom, 0xe3f5, 7));
+		require(hex_at(rom, 0xe182, 6) == "4c29fdeaeaea", "flag steer hook: " + hex_at(rom, 0xe182, 6));
+		require(hex_at(rom, 0xc9af, 5) == "a9078d1440", "a flag install never touches the scheduler hook");
+		// flag 247 is the last valid one: $011f bit 7
+		auto hi{ vanilla_rom() };
+		install(hi, "AtlasDevFallControl profile=arc flag=247");
+		require(hex_at(hi, ORG, 8) == "ad1f012980498060", "flag 247 address and mask: " + hex_at(hi, ORG, 8));
+		for (const std::string spec : {
+			"AtlasDevFallControl profile=arc flag=248",
+			"AtlasDevFrameScheduler\nAtlasDevFallControl profile=arc flag=3 kind=6",
+			"AtlasDevFallControl profile=arc flag=3 boot=false",
+			"AtlasDevFallControl profile=arc flag=3 boot=true" }) {
+			auto r{ vanilla_rom() };
+			const auto before{ r };
+			bool threw{ false };
+			try { install(r, spec); }
+			catch (const std::exception& e) {
+				threw = true;
+				require(std::string{ e.what() }.find("AtlasDevFallControl") != std::string::npos, "rejection names the hack: " + spec);
+			}
+			require(threw, "accepted " + spec);
+			require(r == before, "a refused flag install changed the ROM: " + spec);
+		}
+	}
+
 	void test_vanilla_profile_is_byte_identical() {
 		auto rom{ vanilla_rom() };
 		const auto before{ rom };
@@ -194,6 +237,7 @@ int main() {
 		test_overrides_and_refusals();
 		test_kind_gate_with_the_scheduler();
 		test_kind_gate_boot_off_and_refusals();
+		test_flag_gate_without_the_scheduler();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_fall_control_regression: " << e.what() << '\n';

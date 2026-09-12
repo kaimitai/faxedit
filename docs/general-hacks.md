@@ -489,6 +489,7 @@ Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Righ
 | `steer` | from the profile | `0` vanilla, `1` steer only while a direction is held (momentum kept otherwise), `2` full air control |
 | `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `6` is the registered number for this hack |
 | `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
+| `flag` | none | extended flag 0 to 247 that switches the hack on at runtime: every stub runs the vanilla bytes while the flag is clear, so `SetFlag n` and `ClearFlag n` switch it with no scheduler. Cannot be combined with `kind`; `boot` belongs to `kind` |
 
 | profile | curve | steer |
 | --- | --- | --- |
@@ -512,13 +513,14 @@ each composes into one feel. Each is a first pick in the spirit of the game
 named, not a port of its numbers; several share a curve for now, and the
 values will be tuned by play.
 
-Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the scheduler must be installed first; the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available.
+Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the scheduler must be installed first; the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available. With `flag` set the same gated stubs test the extended flag instead of the slots; the flag page is cleared at reset, so a `flag` install is off until a script sets the flag, and a clear flag is indistinguishable from stock.
 
 ```text
 AtlasDevFallControl profile=zelda2
 AtlasDevFallControl curve=1+1+2+2+4+8 steer=1
 AtlasDevFrameScheduler
 AtlasDevFallControl profile=arc kind=6
+AtlasDevFallControl profile=zelda2 flag=21
 ```
 
 ### AtlasDevLadderControl
