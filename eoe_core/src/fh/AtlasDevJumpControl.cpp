@@ -392,6 +392,9 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 				throw std::runtime_error("AtlasDevJumpControl: the jump arc table is not a mirror");
 	}
 	const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+	if (off > p_rom.size() || size > p_rom.size() - off)
+		throw std::runtime_error(std::format(
+			"AtlasDevJumpControl: {} bytes at ${:04x} overflow the ROM image", size, cpu_addr));
 	for (std::size_t i{ 0 }; i < size; ++i)
 		if (p_rom[off + i] != 0xff)
 			throw std::runtime_error(std::format(

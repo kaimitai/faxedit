@@ -164,6 +164,9 @@ word fh::HackManager::install_AtlasDevFrameScheduler(const fe::Config&, std::vec
 	const auto tramp{ static_cast<word>(cpu_addr + code.label_position("tramp")) };
 
 	const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+	if (off > p_rom.size() || CORE_SIZE > p_rom.size() - off)
+		throw std::runtime_error(std::format(
+			"AtlasDevFrameScheduler: {} bytes at ${:04x} overflow the ROM image", CORE_SIZE, cpu_addr));
 	for (std::size_t i{ 0 }; i < CORE_SIZE; ++i)
 		if (p_rom[off + i] != 0xff)
 			throw std::runtime_error(std::format(
