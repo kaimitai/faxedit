@@ -1022,16 +1022,6 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 	// TODO: Throw if cpu range is invalid but that would be a config error
 	const word cpu_start{ static_cast<word>(p_cpu_addr_start) };
 	word cpu_addr{ cpu_start };
-	// these native companions scan their prospective bodies before the
-	// assembler's bounds check. Crown can leave less than one body available;
-	// reject that case before the scan, without changing their legacy path.
-	const auto crown_companion_capacity = [&](std::size_t bytes) {
-		const auto offset{ klib::Asm6502::get_file_offset(p_bank, cpu_addr) };
-		if (cpu_addr > p_cpu_addr_end || bytes > p_cpu_addr_end - cpu_addr
-			|| offset > patched_rom.size() || bytes > patched_rom.size() - offset)
-			throw std::runtime_error("AtlasDevLadderCrown: fixed-bank companion overflow");
-		};
-
 	for (const auto& hack : ordered) {
 		const word previous_cpu_addr{ cpu_addr };
 		switch (hack.get_type()) {
@@ -1076,7 +1066,6 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			cpu_addr = install_ConditionalScript(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
-			if (ladder_exit) crown_companion_capacity(afs::CORE_SIZE);
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevDayNightCycle:
@@ -1097,34 +1086,10 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevCombatFeel:
 			cpu_addr = install_AtlasDevCombatFeel(p_config, patched_rom, cpu_addr, hack);
 			break;
-		case fh::GeneralHackLib::AtlasDevJumpControl: {
-			if (ladder_exit) {
-				const bool coyote{ hack.byte_or("coyote", 5) != 0 };
-				const bool buffer{ hack.byte_or("buffer", 5) != 0 };
-				const bool hop{ hack.byte_or("shorthop", 3) != 0 };
-				const bool air{ hack.byte_or("airjumps", 0) != 0 };
-				const bool switched{ hack.byte_or("switchable", 0) != 0 };
-				const bool trying{ coyote || air };
-				// Native Jump's fall/init/hop/buffer emitter sizes depend only
-				// on these five booleans. Crown's regression pins all 32 shapes.
-				std::size_t bytes{};
-				if (coyote || buffer || air)
-					bytes += 3 + (switched ? 24 : 0) + (coyote ? 18 : 0)
-					+ (buffer ? 3 + (trying ? 2 : 0) : 4)
-					+ (trying ? 25 + (buffer ? 8 : 0) : 0) + (air ? 17 : 0);
-				if (buffer || air)
-					bytes += 22 + (switched ? 34 : 0) + (buffer ? 3 + (air ? 2 : 0) : 4)
-					+ (air ? 43 : 0) + (buffer ? 15 : 3);
-				if (hop) bytes += 25 + (switched ? 24 : 0);
-				if (buffer) bytes += 28;
-				crown_companion_capacity(bytes);
-			}
+		case fh::GeneralHackLib::AtlasDevJumpControl:
 			cpu_addr = install_AtlasDevJumpControl(p_config, patched_rom, cpu_addr, hack);
 			break;
-		}
 		case fh::GeneralHackLib::AtlasDevLadderControl:
-			if (ladder_exit && hack.byte_or("attackflag", 0xff) != 0xff)
-				crown_companion_capacity(14);
 			cpu_addr = install_AtlasDevLadderControl(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFallControl:

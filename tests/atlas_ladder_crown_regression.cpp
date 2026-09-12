@@ -381,7 +381,7 @@ void test_allocator_owned_space() {
             auto rom{fixture()};
             require(install(rom, spec, end - bytes, end) == bytes,
                 "companions must use the supplied allocation end, including beyond FFE0");
-            refuses(fixture(), spec, end - bytes, end - 1, "us", "fixed-bank companion overflow");
+            refuses(fixture(), spec, end - bytes, end - 1, "us", "overflow");
         }
 }
 
@@ -464,7 +464,9 @@ void test_composition() {
 }
 
 void test_companion_capacity_preflight() {
-    // Pin the existing Jump emitter independently of Crown's preflight.
+    // Pin the existing Jump emitter, then compose it with Crown at an exact
+    // fit and one byte short; the orchestrator's own bounds check refuses the
+    // short window, since installers bound their scans by the ROM image.
     // Bits select coyote, buffer, short hop, air jumps and switchable;
     // nonzero numeric values do not change instruction lengths.
     constexpr std::array<std::size_t, 32> jump_bytes{
@@ -485,20 +487,20 @@ void test_companion_capacity_preflight() {
             auto vanilla{fixture()};
             require(install(vanilla, "AtlasDevLadderCrown mode=vanilla\n" + companions) == companion_bytes
                     && vanilla == legacy,
-                "Crown capacity preflight must not alter vanilla/absent paths");
+                "vanilla Crown must not alter companion paths");
 
             const std::string composed{"AtlasDevLadderCrown mode=floor\n" + companions};
             const std::size_t total{(shape & 2 ? 340U : 315U) + companion_bytes};
             if (total <= END - ORG) {
                 auto exact{fixture()};
                 require(install(exact, composed, static_cast<word>(END - total)) == total,
-                    "Crown preflight must accept an exact-fit native Jump shape");
+                    "an exact-fit native Jump shape must install beside Crown");
                 if (jump_bytes[shape])
                     refuses(fixture(), composed, static_cast<word>(END - total + 1), END, "us",
-                        "fixed-bank companion overflow");
+                        "overflow");
             }
             else
-                refuses(fixture(), composed, ORG, END, "us", "fixed-bank companion overflow");
+                refuses(fixture(), composed, ORG, END, "us", "overflow");
         }
     }
     // These would scan beyond physical $ffff in the native installers if
@@ -507,7 +509,7 @@ void test_companion_capacity_preflight() {
             "AtlasDevLadderCrown\nAtlasDevJumpControl\nAtlasDevFrameScheduler",
             "AtlasDevLadderCrown\nAtlasDevFrameScheduler\nAtlasDevJumpControl",
             "AtlasDevLadderCrown downhold=8 align=2 roompolicy=deny rooms=0:0+1:1+2:2+3:3+4:4+5:5+6:3+255:255\nAtlasDevFrameScheduler"})
-        refuses(fixture(), spec, ORG, END, "us", "fixed-bank companion overflow");
+        refuses(fixture(), spec, ORG, END, "us", "overflow");
 }
 
 void test_ladder_control_composition() {
@@ -543,9 +545,9 @@ void test_ladder_control_composition() {
         }
         if (body) {
             const std::string spec{crown + "\nAtlasDevLadderControl attackflag=4"};
-            refuses(source, spec, ORG, ORG + body + 13, "us", "fixed-bank companion overflow");
+            refuses(source, spec, ORG, ORG + body + 13, "us", "overflow");
             // reject before the helper scans past the physical bank end.
-            refuses(source, spec, 0x10000 - body - 7, 0x10000, "us", "fixed-bank companion overflow");
+            refuses(source, spec, 0x10000 - body - 7, 0x10000, "us", "overflow");
         }
     }
 }
