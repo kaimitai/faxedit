@@ -72,6 +72,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevNagaControl](#atlasdevnagacontrol)
   - [AtlasDevPakukameControl](#atlasdevpakukamecontrol)
   - [AtlasDevSugataControl](#atlasdevsugatacontrol)
+  - [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol)
 
 <hr>
 
@@ -1701,6 +1702,42 @@ US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevSugataControl damage=4
 AtlasDevSugataControl damage=0 flash=30
 AtlasDevSugataControl flash=60 flag=16
+```
+
+<hr>
+
+### AtlasDevGiantBeesControl
+
+Tunes the Giant Bees. In the stock game a Giant Bee climbs to the top of the
+screen, dives at you, hovers for a while and then climbs again. With this
+hack you set how fast it climbs, how fast it moves sideways while it dives
+and how long it hovers. The defaults are the stock numbers, so the hack
+changes nothing until you set a value. The dive's fall, the bob while it
+hovers and its hitbox stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `rise` | `4` | pixels per frame it climbs, 1 to 8 |
+| `dive` | `1` | pixels per frame it moves sideways while diving, 1 to 4 |
+| `hover` | `128` | frames it hovers before climbing again: 32, 64, 128 or 256 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new climb speed, dive speed and hover length are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 59 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevGiantBeesControl rise=8
+AtlasDevGiantBeesControl dive=3 hover=64
+AtlasDevGiantBeesControl hover=256 flag=16
 ```
 
 <hr>

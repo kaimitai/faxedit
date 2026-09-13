@@ -59,6 +59,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevNagaControl,
 		fh::GeneralHackLib::AtlasDevPakukameControl,
 		fh::GeneralHackLib::AtlasDevSugataControl,
+		fh::GeneralHackLib::AtlasDevGiantBeesControl,
 	}},
 	};
 
@@ -102,6 +103,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevNagaControl, { "chase", "zone", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevPakukameControl, { "delay", "cap", "windup", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevSugataControl, { "damage", "flash", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevGiantBeesControl, { "rise", "dive", "hover", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
