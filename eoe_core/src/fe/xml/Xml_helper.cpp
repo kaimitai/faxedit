@@ -1959,9 +1959,12 @@ bool fe::xml::evaluate_bool_condition(const std::vector<byte>& p_rom,
 			throw std::runtime_error(
 				"Invalid condition expression: " + p_condition);
 
+		const bool negate{ eq_pos > pos && p_condition[eq_pos - 1] == '!' };
+		const auto offset_end{ negate ? eq_pos - 1 : eq_pos };
+
 		std::string offset_str{
 			trim_whitespace(
-				p_condition.substr(pos, eq_pos - pos))
+				p_condition.substr(pos, offset_end - pos))
 		};
 
 		pos = eq_pos + 1;
@@ -1980,8 +1983,9 @@ bool fe::xml::evaluate_bool_condition(const std::vector<byte>& p_rom,
 
 		const auto offset{ parse_numeric(offset_str) };
 		const auto bytes{ parse_byte_list(bytes_str) };
+		const bool match{ is_byte_match(p_rom, offset, bytes) };
 
-		if (!is_byte_match(p_rom, offset, bytes))
+		if (negate ? match : !match)
 			return false;
 	}
 
