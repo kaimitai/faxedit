@@ -67,6 +67,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevHornetControl](#atlasdevhornetcontrol)
   - [AtlasDevYuinaruControl](#atlasdevyuinarucontrol)
   - [AtlasDevBihorudaControl](#atlasdevbihorudacontrol)
+  - [AtlasDevYareekaControl](#atlasdevyareekacontrol)
 
 <hr>
 
@@ -1512,4 +1513,39 @@ AtlasDevBihorudaControl xspeed=32
 AtlasDevBihorudaControl xspeed=32 xloop=64 yspeed=8 yloop=32
 AtlasDevBihorudaControl yloop=32 flag=16
 ```
+
+### AtlasDevYareekaControl
+
+Tunes Yareeka's dash. In the stock game Yareeka speeds up, dashes sideways
+at about 2 pixels per frame for 64 frames, then slows down, over and over,
+and walls turn it around. With this hack you set how fast the dash is and
+how long it lasts. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. The speed-up and slow-down stay as they are,
+because another routine uses the same code.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `dash` | `16` | dash speed in eighths of a pixel per frame, 1 to 64 (16 is the stock 2 pixels) |
+| `dashlen` | `64` | frames the dash lasts, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the dash length and the dash speed are written straight into
+the stock instructions in bank 14, and no free space is used. With a flag
+and a value changed, only the instruction whose value differs is retargeted,
+to 15 to 37 bytes of bank 14 free space. At the default values nothing is written. No RAM is claimed.
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevYareekaControl dash=32
+AtlasDevYareekaControl dash=32 dashlen=96
+AtlasDevYareekaControl dashlen=128 flag=16
+```
+
+<hr>
 

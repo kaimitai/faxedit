@@ -28,6 +28,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevHornetControl,
 		fh::GeneralHackLib::AtlasDevYuinaruControl,
 		fh::GeneralHackLib::AtlasDevBihorudaControl,
+		fh::GeneralHackLib::AtlasDevYareekaControl,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -92,6 +93,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevHornetControl, { "speed", "bob", "period", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevYuinaruControl, { "xspeed", "xloop", "yspeed", "yloop", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevBihorudaControl, { "xspeed", "xloop", "yspeed", "yloop", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevYareekaControl, { "dash", "dashlen", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

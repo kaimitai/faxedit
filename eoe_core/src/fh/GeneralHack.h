@@ -34,6 +34,7 @@ namespace fh {
 		AtlasDevHornetControl,
 		AtlasDevYuinaruControl,
 		AtlasDevBihorudaControl,
+		AtlasDevYareekaControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 
