@@ -1349,6 +1349,75 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 ### Changelog
 
+* 2026-09-13: version beta-9.2 - "Crowning Achievement"
+
+> AtlasDev gameplay hacks
+
+A large new set of gameplay hacks expands what can be changed in the running game, including movement, combat and enemy behavior. Several behaviors can be controlled at runtime through extended flags or scripts, allowing abilities and movement characteristics to be gained, lost or changed during play.
+
+* `AtlasDevFallControl` replaces the fixed vanilla fall with configurable fall curves and air steering, with optional runtime switching.
+* `AtlasDevJumpControl` adds coyote time, jump buffering, short hops and air jumps. The behavior can be enabled during play, allowing scripts to grant or remove advanced jumping abilities.
+* `AtlasDevLadderControl` controls climbing speeds and allows attacking on ladders. Speed and attack behavior can be switched independently through extended flags.
+* `AtlasDevLadderCrown` adds configurable behavior for exiting from the top of ladders, including crown/floor handling, room policies, alignment and down-hold behavior.
+* `AtlasDevRunControl` adds configurable running behavior.
+* `AtlasDevCombatFeel` controls walking acceleration and speed, damage invincibility, knockback, attack timing and movement while attacking.
+* `AtlasDevEnemyStats` scales enemy HP, damage, XP, Gold drops and stagger, with ready-made difficulty profiles.
+* `AtlasDevSmartKeys` automatically uses a matching carried key when opening a locked door without changing the selected item.
+* `AtlasDevSmartMattock` lets the player dig with a carried Mattock without selecting it first, including optional walk-into-rock digging.
+* `AtlasDevSirGawaineControl` and `AtlasDevWolfmanControl` replace the sword dwarves' broad vanilla attack behavior with configurable step-back, lunge, sword reach and timing behavior.
+* Shared gameplay profiles allow the movement and combat hacks to be combined into consistent styles inspired by other action games.
+
+Together these solve a number of movement and combat limitations that previously required much more invasive game-specific code, while also making them available as reusable, configurable hacks.
+
+> Other general hacks
+
+* `TextSpeed` makes dialogue speed configurable and adjusts text sounds appropriately at higher speeds.
+* `ItemScripts` routes configured item use to custom iScripts, including item IDs outside the vanilla usable-item table.
+* `ConditionalScript` makes NPC interactions and invisible triggers conditional on extended flags, allowing one-time events and scripts that appear or disappear as game state changes.
+* ...and more
+
+> SRAM saves
+
+* Added optional battery-backed SRAM saving as an alternative to the password system, via general hack `SRAM`.
+* Gurus save the configured game state directly to SRAM, and CONTINUE loads it without entering the password screen.
+* Saves use validation, checksums and incomplete-write protection.
+* The persisted RAM ranges are configurable, allowing hacks and expanded game state to participate in saves.
+* The start screen detects whether a valid save exists, prevents invalid CONTINUE attempts and can optionally indicate save availability through palette attributes.
+* Gold and XP can optionally be restored exactly from the save and/or preserved across death.
+* Added absolute spawn restoration for saves that need to restore location directly rather than through the vanilla temple spawn tables.
+* SRAM installation and start-screen integration are region-aware.
+
+> Scripting
+
+The AtlasDev scripting extensions also grew substantially, giving scripts more control over gameplay state and making more complex runtime behavior possible without dedicated game code.
+
+* Added inventory operations for equipping, testing, using and clearing carried items, plus inventory-full checks.
+* Added player operations for damage, invincibility, knockback, forced jumps, velocity and attacks using the game's existing player systems.
+* Added `AtlasDevRandomVar` and related random-event recipes for script-controlled random outcomes.
+* Added additional register operations including copy, swap, flag reads, RAM reads and frame-counter access.
+* Added control-flow operations for loops, switch-style dispatch and random-chance branches.
+* Added variable-driven metatile writes.
+* Added timed-effect script controls.
+* Reduced the size of the variable opcode implementations through shared operand handling.
+
+> Graphics importing
+
+* Reworked world graphics importing around the core graphics library rather than GUI-specific SDL surfaces.
+* Added advanced custom world graphics imports with explicit world, tileset, palette, metatile and CHR ranges.
+* Added writable CHR ranges so part of a tileset can be rebuilt while preserving graphics outside the selected range.
+* Added core RGB image and PNG loading/saving support.
+* Added detailed documentation covering CHR, tilesets, metatiles, palettes, graphics importing and `DynamicTilesets`.
+* Expanded ROMs now reserve unused tilemap banks for injected hacks and other data instead of unnecessarily consuming expansion space.
+
+> Other
+
+* Reorganized the project control window and simplified its common actions.
+* Added `!=` support to ROM configuration conditions, including detection of dynamically installed randomizer hacks.
+* Improved region handling and validation for general hack installation.
+* Extended the internal 6502 pseudo-assembler with additional instructions and generalized absolute, low-byte and high-byte label references.
+
+---
+
 * 2026-08-30: version beta-9.1 - "Caution to the Wind"
 
 ⚠️ Breaking Change
