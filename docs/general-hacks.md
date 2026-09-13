@@ -63,6 +63,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevPpuDrainUnroll](#atlasdevppudrainunroll)
   - [AtlasDevQueueLess](#atlasdevqueueless)
   - [AtlasDevPreventTextbox](#atlasdevpreventtextbox)
+  - [AtlasDevMaskmanControl](#atlasdevmaskmancontrol)
 
 <hr>
 
@@ -1261,6 +1262,19 @@ about a quarter of a second.
 
 | parameter | default | meaning |
 | --- | --- | --- |
+### AtlasDevMaskmanControl
+
+Makes Maskman's spear hurt where it is drawn. In the stock game, while he
+strides with his spear forward, his hitbox shrinks to a thin spot to his
+right: his body does not hurt, the spear only hurts at one exact distance,
+and when he faces left it does not hurt at all. With this hack, during that
+stride his body hurts and so does his spear, `spear` pixels past his body on
+the side he faces, never behind him. The default is the length of the spear
+as drawn. The rest of his moves are unchanged.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `spear` | `16` | how far the spear reaches past his body, 0 to 64 pixels; 0 is his body only |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
 
@@ -1312,6 +1326,19 @@ AtlasDevFrameScheduler.
 AtlasDevFastBlink
 AtlasDevScreenBlink flag=16
 AtlasDevFastBlink flag=24
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+One vanilla instruction sequence in bank 14 is retargeted, inside the
+routine that picks each sprite's hitbox, and 34 bytes of bank 14 free space
+are used (52 with a flag). No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevMaskmanControl
+AtlasDevMaskmanControl spear=24
+AtlasDevMaskmanControl flag=14
 ```
 
 <hr>

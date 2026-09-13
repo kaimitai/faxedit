@@ -107,6 +107,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevPpuDrainUnroll.cpp
     src/fh/AtlasDevQueueLess.cpp
     src/fh/AtlasDevPreventTextbox.cpp
+    src/fh/AtlasDevMaskmanControl.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

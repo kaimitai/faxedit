@@ -30,6 +30,7 @@ namespace fh {
 		AtlasDevPpuDrainUnroll,
 		AtlasDevQueueLess,
 		AtlasDevPreventTextbox,
+		AtlasDevMaskmanControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

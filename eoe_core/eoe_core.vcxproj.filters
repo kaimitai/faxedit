@@ -666,6 +666,7 @@
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFastBlink.cpp">
+    <ClCompile Include="src\fh\AtlasDevMaskmanControl.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevLandingTuck.cpp">

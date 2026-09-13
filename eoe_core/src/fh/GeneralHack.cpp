@@ -24,6 +24,7 @@ namespace {
 		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalScript,
 		fh::GeneralHackLib::OintmentFix,
 		fh::GeneralHackLib::AtlasDevSirGawaineControl, fh::GeneralHackLib::AtlasDevWolfmanControl,
+		fh::GeneralHackLib::AtlasDevMaskmanControl,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -84,6 +85,7 @@ namespace {
 			{ "left", "right", "up", "down", "h", "v", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevFastBlink, { "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevLandingTuck, { "profile", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevMaskmanControl, { "spear", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
