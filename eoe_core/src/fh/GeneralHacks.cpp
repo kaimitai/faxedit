@@ -1279,6 +1279,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevMaskmanControl:
 			cpu_addr = install_AtlasDevMaskmanControl(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevHornetControl:
+			cpu_addr = install_AtlasDevHornetControl(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}

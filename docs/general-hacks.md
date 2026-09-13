@@ -64,6 +64,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevQueueLess](#atlasdevqueueless)
   - [AtlasDevPreventTextbox](#atlasdevpreventtextbox)
   - [AtlasDevMaskmanControl](#atlasdevmaskmancontrol)
+  - [AtlasDevHornetControl](#atlasdevhornetcontrol)
 
 <hr>
 
@@ -1389,3 +1390,39 @@ AtlasDevLandingTuck
 AtlasDevLandingTuck profile=light
 AtlasDevLandingTuck profile=heavy flag=24
 ```
+### AtlasDevHornetControl
+
+Tunes how the Hornet flies. In the stock game it crosses the screen at 2
+pixels per frame, faster than you walk, and bobs up and down in a wave that
+repeats every 64 frames, turning at walls and blocks. With this hack you set
+its sideways speed, how hard it bobs and how quickly the wave repeats. The
+defaults are the stock numbers, so the hack changes nothing until you set a
+value. Walls and blocks still turn it the stock way.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `speed` | `16` | sideways speed in eighths of a pixel per frame, 0 to 64 (16 is the stock 2 pixels; you walk at up to 12) |
+| `bob` | `16` | the peak up and down speed in eighths of a pixel per frame, 0 to 64, in the stock wave shape; 0 flies flat |
+| `period` | `8` | frames per step of the eight step wave: 1, 2, 4, 8, 16 or 32 (8 is the stock 64 frame wave) |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag, and with a period of 8 or less, the new numbers are written
+straight into the stock routine in bank 14: its two speed loads, its timer
+shifts and its two speed tables. No free space is used. A period of 16 is the
+one shift that does not fit, and takes seven bytes of bank 14 free space. A
+flag with a value changed retargets one instruction to a hook there, which
+covers only the values that differ: 26 bytes for the speed alone, up to 64. At the default values nothing is written. No RAM is claimed.
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevHornetControl speed=8
+AtlasDevHornetControl speed=24 bob=32 period=4
+AtlasDevHornetControl bob=0 flag=15
+```
+

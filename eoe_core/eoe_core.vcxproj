@@ -188,6 +188,7 @@
     <ClCompile Include="src\fh\AtlasDevLandingTuck.cpp" />
     <ClCompile Include="src\fh\AtlasDevPreventTextbox.cpp" />
     <ClCompile Include="src\fh\AtlasDevMaskmanControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevHornetControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

@@ -31,6 +31,7 @@ namespace fh {
 		AtlasDevQueueLess,
 		AtlasDevPreventTextbox,
 		AtlasDevMaskmanControl,
+		AtlasDevHornetControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 
