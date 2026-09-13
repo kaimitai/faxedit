@@ -113,6 +113,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevBihorudaControl.cpp
     src/fh/AtlasDevYareekaControl.cpp
     src/fh/AtlasDevRipasheikuControl.cpp
+    src/fh/AtlasDevNagaControl.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

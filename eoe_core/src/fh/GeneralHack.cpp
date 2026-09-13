@@ -56,6 +56,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevQueueLess,
 		fh::GeneralHackLib::AtlasDevPreventTextbox,
 		fh::GeneralHackLib::AtlasDevRipasheikuControl,
+		fh::GeneralHackLib::AtlasDevNagaControl,
 	}},
 	};
 
@@ -96,6 +97,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevBihorudaControl, { "xspeed", "xloop", "yspeed", "yloop", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevYareekaControl, { "dash", "dashlen", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevRipasheikuControl, { "drift", "sit", "fire", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevNagaControl, { "chase", "zone", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

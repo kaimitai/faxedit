@@ -193,6 +193,7 @@
     <ClCompile Include="src\fh\AtlasDevBihorudaControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevYareekaControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevRipasheikuControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevNagaControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

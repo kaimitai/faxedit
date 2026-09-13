@@ -69,6 +69,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevBihorudaControl](#atlasdevbihorudacontrol)
   - [AtlasDevYareekaControl](#atlasdevyareekacontrol)
   - [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol)
+  - [AtlasDevNagaControl](#atlasdevnagacontrol)
 
 <hr>
 
@@ -1587,6 +1588,41 @@ AtlasDevFrameScheduler.
 AtlasDevRipasheikuControl drift=16
 AtlasDevRipasheikuControl sit=96 fire=32
 AtlasDevRipasheikuControl fire=128 flag=16
+```
+
+<hr>
+
+### AtlasDevNagaControl
+
+Tunes how Naga chases your height. In the stock game Naga faces you and bobs
+up and down, and whenever you are 16 pixels or more above or below it, it
+also creeps toward your height at 0.75 pixels per frame. With this hack you
+set how fast it creeps and how big a height gap it ignores. The defaults are
+the stock numbers, so the hack changes nothing until you set a value. The
+bob stays as it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `chase` | `6` | creep speed in eighths of a pixel per frame, 1 to 64 (6 is the stock 0.75 pixels) |
+| `zone` | `16` | height gap in pixels it ignores, 0 to 255; 0 means it always creeps |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new height gap and creep speed are written straight into
+the stock instructions in bank 14, and no free space is used. With a flag,
+only the instructions whose values you change are retargeted, to at most 44
+bytes of bank 15 free space. At the default values nothing is written. No
+RAM is claimed. Every site is verified against its exact vanilla bytes
+before anything is written, and all of them are identical in the US, US rev
+A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevNagaControl chase=16
+AtlasDevNagaControl chase=12 zone=0
+AtlasDevNagaControl zone=48 flag=16
 ```
 
 <hr>
