@@ -68,6 +68,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevYuinaruControl](#atlasdevyuinarucontrol)
   - [AtlasDevBihorudaControl](#atlasdevbihorudacontrol)
   - [AtlasDevYareekaControl](#atlasdevyareekacontrol)
+  - [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol)
 
 <hr>
 
@@ -1545,6 +1546,47 @@ Does not require AtlasDevFrameScheduler.
 AtlasDevYareekaControl dash=32
 AtlasDevYareekaControl dash=32 dashlen=96
 AtlasDevYareekaControl dashlen=128 flag=16
+```
+
+<hr>
+
+### AtlasDevRipasheikuControl
+
+Tunes Ripasheiku's rhythm. In the stock game Ripasheiku rises while it
+drifts sideways about 1 pixel per frame, slams down, then sits for 256
+frames and fires a shot every 64 frames before it rises again. With this
+hack you set how fast it drifts, how long it sits and how often it fires.
+The defaults are the stock numbers, so the hack changes nothing until you
+set a value. The climb and the slam stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `drift` | `8` | sideways speed while rising and slamming, in eighths of a pixel per frame, 1 to 64 (8 is the stock 1 pixel) |
+| `sit` | `256` | frames it sits before rising again, 1 to 256 |
+| `fire` | `64` | frames between shots while it sits: 16, 32, 64 or 128 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The shots follow the game's frame counter, so a short `sit` can mean fewer
+shots per landing.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the shot timing and the drift speed are written straight into
+the stock instructions in bank 14, and no free space is used; a changed sit
+length retargets the instruction where it is set, to 10 bytes of bank 15
+free space. With a flag, only the instructions whose values you change are
+retargeted, to at most 65 bytes of bank 15 free space. At the default values
+nothing is written. No RAM is claimed. Every site is verified against its
+exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevRipasheikuControl drift=16
+AtlasDevRipasheikuControl sit=96 fire=32
+AtlasDevRipasheikuControl fire=128 flag=16
 ```
 
 <hr>
