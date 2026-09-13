@@ -71,6 +71,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol)
   - [AtlasDevNagaControl](#atlasdevnagacontrol)
   - [AtlasDevPakukameControl](#atlasdevpakukamecontrol)
+  - [AtlasDevSugataControl](#atlasdevsugatacontrol)
 
 <hr>
 
@@ -1662,6 +1663,44 @@ US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevPakukameControl delay=32
 AtlasDevPakukameControl cap=1
 AtlasDevPakukameControl delay=128 cap=5 windup=16 flag=16
+```
+
+<hr>
+
+### AtlasDevSugataControl
+
+Tunes Sugata's curse. In the stock game Sugata walks, and once a cycle it
+turns the screen gray for a moment and then takes 10 HP from you wherever
+you stand, with the usual knockback. With this hack you set how much HP the
+curse takes and how many frames the screen stays gray before it lands. The
+defaults are the stock numbers, so the hack changes nothing until you set a
+value. Its walk stays as it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `damage` | `10` | HP the curse takes, 0 to 255 |
+| `flash` | `2` | frames the screen stays gray before the curse lands, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`damage=0` still flashes the screen and knocks you back; only the HP loss is
+gone.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new wait and damage of the curse are written straight
+into the stock instructions in bank 14, and no free space is used. With a
+flag, only the instructions whose values you change are retargeted, to at
+most 38 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevSugataControl damage=4
+AtlasDevSugataControl damage=0 flash=30
+AtlasDevSugataControl flash=60 flag=16
 ```
 
 <hr>

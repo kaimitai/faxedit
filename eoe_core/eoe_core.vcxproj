@@ -195,6 +195,7 @@
     <ClCompile Include="src\fh\AtlasDevRipasheikuControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevNagaControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevPakukameControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevSugataControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

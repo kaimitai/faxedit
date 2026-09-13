@@ -38,6 +38,7 @@ namespace fh {
 		AtlasDevRipasheikuControl,
 		AtlasDevNagaControl,
 		AtlasDevPakukameControl,
+		AtlasDevSugataControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 
