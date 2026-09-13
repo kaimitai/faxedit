@@ -70,6 +70,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevYareekaControl](#atlasdevyareekacontrol)
   - [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol)
   - [AtlasDevNagaControl](#atlasdevnagacontrol)
+  - [AtlasDevPakukameControl](#atlasdevpakukamecontrol)
 
 <hr>
 
@@ -1623,6 +1624,44 @@ A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevNagaControl chase=16
 AtlasDevNagaControl chase=12 zone=0
 AtlasDevNagaControl zone=48 flag=16
+```
+
+<hr>
+
+### AtlasDevPakukameControl
+
+Tunes how Pakukame spawns Liliths. In the stock game Pakukame sits still,
+waits 64 frames, winds up in steps of 8 frames and spawns a Lilith, with at
+most 3 alive at once, over and over. With this hack you set how long it
+waits, how many Liliths may be alive and how long each windup step takes.
+The defaults are the stock numbers, so the hack changes nothing until you
+set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `delay` | `64` | frames it waits before each windup, 1 to 255 |
+| `cap` | `3` | Liliths alive at once, 1 to 8; at the cap it waits |
+| `windup` | `8` | frames per windup step: 2, 4, 8 or 16 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The spawn comes on the second windup step.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new wait, windup step and Lilith count are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 63 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevPakukameControl delay=32
+AtlasDevPakukameControl cap=1
+AtlasDevPakukameControl delay=128 cap=5 windup=16 flag=16
 ```
 
 <hr>
