@@ -679,6 +679,9 @@
     <ClCompile Include="src\fh\AtlasDevYuinaruControl.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevBihorudaControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>

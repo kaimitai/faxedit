@@ -66,6 +66,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevMaskmanControl](#atlasdevmaskmancontrol)
   - [AtlasDevHornetControl](#atlasdevhornetcontrol)
   - [AtlasDevYuinaruControl](#atlasdevyuinarucontrol)
+  - [AtlasDevBihorudaControl](#atlasdevbihorudacontrol)
 
 <hr>
 
@@ -1468,5 +1469,47 @@ AtlasDevFrameScheduler.
 AtlasDevYuinaruControl xspeed=16
 AtlasDevYuinaruControl xspeed=16 xloop=64 yspeed=32 yloop=32
 AtlasDevYuinaruControl yspeed=4 flag=16
+```
+
+### AtlasDevBihorudaControl
+
+Tunes how Bihoruda swoops. In the stock game its speed rises and falls in a
+steady wave on both axes: it builds up to about 2 pixels per frame and back
+down over 128 frames, sideways and up and down, and walls turn it around.
+With this hack you set the peak speed and the length of the swoop on each
+axis. The defaults are the stock numbers, so the hack changes nothing until
+you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `xspeed` | `16` | peak sideways speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
+| `xloop` | `128` | frames per sideways swoop: 8, 16, 32, 64, 128 or 256 |
+| `yspeed` | `16` | peak up and down speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
+| `yloop` | `128` | frames per up and down swoop: 8, 16, 32, 64, 128 or 256 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The speeds and swoops come in powers of two because the hack reuses the
+game's own wave routine. On short swoops the top speed is reached a little
+under the peak (three quarters of it at 8 frames, almost all of it at 256).
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new numbers are written straight into the stock movement
+in bank 14, and no free space is used. A half-pixel peak on a 256-frame loop
+(`xspeed=4 xloop=256`, or the same on y) cannot use the stock scaler, and
+takes a nine byte routine in bank 14 free space, 18 for both axes. A flag
+with a value changed retargets the load of the axis that differs to a hook
+there, which covers only that axis: 26 bytes for a loop alone, up to 70. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevBihorudaControl xspeed=32
+AtlasDevBihorudaControl xspeed=32 xloop=64 yspeed=8 yloop=32
+AtlasDevBihorudaControl yloop=32 flag=16
 ```
 
