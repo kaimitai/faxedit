@@ -73,6 +73,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevPakukameControl](#atlasdevpakukamecontrol)
   - [AtlasDevSugataControl](#atlasdevsugatacontrol)
   - [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol)
+  - [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol)
 
 <hr>
 
@@ -1738,6 +1739,51 @@ US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevGiantBeesControl rise=8
 AtlasDevGiantBeesControl dive=3 hover=64
 AtlasDevGiantBeesControl hover=256 flag=16
+```
+
+<hr>
+
+### AtlasDevZorugeriruControl
+
+Tunes Zorugeriru. In the stock game Zorugeriru sits in place, rests a
+moment, winds up, and drops a rock above your head, with at most four rocks
+out at once. With this hack you set how long it rests and winds up between
+drops, how many rocks may be out, and how fast the rocks speed up as they
+fall. You can also give it a box that covers its whole body: the stock box
+covers only the left half of what is drawn, so the right half can neither
+touch you nor be hit. The defaults are the stock numbers, so the hack
+changes nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `rest` | `12` | frames it rests after a drop before it tries again, 1 to 16 |
+| `windup` | `32` | frames it winds up before each drop, 1 to 255 |
+| `cap` | `4` | rocks that may be out at once, 1 to 7 |
+| `fall` | `2` | how fast the rocks speed up: 1 is half the stock rate, 4 is double |
+| `body` | `16` | box width: 32 covers the whole drawn body |
+| `flag` | none | extended flag `n`, 0 to 247: the rock settings are on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`rest` stops at 16 because Zorugeriru only checks for room for a new rock
+every 16 frames; use `windup` for longer pauses.
+
+`flag=n` lets a script grant or remove the rock settings with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+`body` is set when you build and does not follow the flag.
+
+Without a flag the new windup, rest, rock count and fall speed are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 80 bytes of bank 15 free space. `body=32` changes one byte of
+Zorugeriru's box. At the default values nothing is written. No RAM is
+claimed. Every site is verified against its exact vanilla bytes before
+anything is written, and all of them are identical in the US, US rev A, EU
+and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevZorugeriruControl rest=4 windup=16
+AtlasDevZorugeriruControl cap=2 fall=4
+AtlasDevZorugeriruControl body=32 flag=16
 ```
 
 <hr>
