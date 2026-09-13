@@ -98,6 +98,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevCombatFeel.cpp
     src/fh/AtlasDevRunControl.cpp
     src/fh/AtlasDevSmartMattock.cpp
+    src/fh/AtlasDevDwarfControl.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp
