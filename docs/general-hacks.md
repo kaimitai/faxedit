@@ -1214,7 +1214,7 @@ hack, inside its reach the dwarf holds its guard, steps back,
 lunges with the sword out, then recovers. Only the thrust hurts, and only
 within `sword` pixels, so stepping back when it steps back makes the lunge
 miss, and the recovery is the moment to strike. Hitting it restarts its wind
-up. While the hero swings it may still rush in, but a rush never hurts.
+up. While the hero is jumping it may still rush in, but a rush never hurts.
 
 `AtlasDevWolfmanControl` takes the same parameters for Wolfman. Either name
 alone changes one monster and leaves the other with the vanilla timing and
@@ -1231,7 +1231,7 @@ reach. The two names can be listed in any order, each with its own flag.
 | `recover` | `24` | frames of guard after the thrust, 0 to 255 |
 | `reach` | `24` | distance in pixels at which the dwarf stops and fights, 1 to 255 |
 | `approach` | `1` | walking speed in pixels per frame, 0 to 3 |
-| `chase` | `2` | rush speed while the hero swings, 0 to 3; 0 never rushes |
+| `chase` | `2` | rush speed while the hero is jumping, 0 to 3; 0 never rushes |
 | `bodyhurt` | `0` | 1 makes contact hurt in every pose, as in vanilla |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
