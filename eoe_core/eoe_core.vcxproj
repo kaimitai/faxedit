@@ -198,6 +198,7 @@
     <ClCompile Include="src\fh\AtlasDevSugataControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevGiantBeesControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevZorugeriruControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevNecronAidesControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

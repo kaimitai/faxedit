@@ -61,6 +61,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevSugataControl,
 		fh::GeneralHackLib::AtlasDevGiantBeesControl,
 		fh::GeneralHackLib::AtlasDevZorugeriruControl,
+		fh::GeneralHackLib::AtlasDevNecronAidesControl,
 	}},
 	};
 
@@ -106,6 +107,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevSugataControl, { "damage", "flash", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevGiantBeesControl, { "rise", "dive", "hover", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevZorugeriruControl, { "rest", "windup", "cap", "fall", "body", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevNecronAidesControl, { "climb", "walk", "cling", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

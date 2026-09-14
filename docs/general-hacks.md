@@ -74,6 +74,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSugataControl](#atlasdevsugatacontrol)
   - [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol)
   - [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol)
+  - [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol)
 
 <hr>
 
@@ -1784,6 +1785,49 @@ and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevZorugeriruControl rest=4 windup=16
 AtlasDevZorugeriruControl cap=2 fall=4
 AtlasDevZorugeriruControl body=32 flag=16
+```
+
+<hr>
+
+### AtlasDevNecronAidesControl
+
+Tunes the Necron Aides. In the stock game a Necron Aide climbs up and down a
+ladder; when it touches you it lets go, drops to the floor and walks. With
+this hack you set how fast it climbs, how fast it walks once it drops, and
+whether it keeps climbing after it hits you. The defaults are the stock
+numbers, so the hack changes nothing until you set a value. The way it
+turns, its fall and its hitbox stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `climb` | `2` | ladder speed: 1 is half the stock speed, 4 is double |
+| `walk` | `1` | pixels per frame it walks after it drops, 1 to 4 |
+| `cling` | `0` | 1 keeps it on its ladder after it hits you instead of letting go |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+With `cling=1` a Necron Aide can touch you again once your invincibility
+wears off.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the walk speed is written straight into the stock instruction
+in bank 14, and no free space is used; a slower or faster climb retargets
+the instruction where the climb speed is read, to 19 bytes of bank 15 free
+space. `cling=1` retargets the one instruction in the enemy touch code that
+makes a Necron Aide let go; without a flag that needs no free space. With a
+flag, only the instructions whose values you change are retargeted, to at
+most 51 bytes of bank 15 free space, 16 more with `cling=1`. At the default
+values nothing is written. No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevNecronAidesControl climb=4
+AtlasDevNecronAidesControl walk=3
+AtlasDevNecronAidesControl cling=1 flag=16
 ```
 
 <hr>
