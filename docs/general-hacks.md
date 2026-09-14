@@ -76,6 +76,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol)
   - [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol)
   - [AtlasDevIshiisuControl](#atlasdevishiisucontrol)
+  - [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol)
 
 <hr>
 
@@ -1870,6 +1871,43 @@ US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevIshiisuControl walk=6
 AtlasDevIshiisuControl range=48 windup=6 recover=30
 AtlasDevIshiisuControl face=1 flag=16
+```
+
+<hr>
+
+### AtlasDevTamazutsuControl
+
+Tunes Tamazutsu. In the stock game Tamazutsu stays in one place: it waits
+underground, blinks a warning, pops up, stays up for a while and sinks again.
+With this hack you set how long it stays underground, how long it stays up
+and how long the warning blinks before it rises. The defaults are the stock
+numbers, so the hack changes nothing until you set a value. The rise and the
+sink keep their stock length.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `60` | frames underground, 16 to 255 |
+| `up` | `60` | frames above ground, 16 to 255 |
+| `warn` | `30` | frames of warning blink before it rises, 1 to 255; at `hide` or more it blinks the whole time it is underground |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times underground, time above ground and warning
+blink are written straight into the stock instructions in bank 14, and no
+free space is used. With a flag, only the instructions whose values you
+change are retargeted, to at most 74 bytes of bank 15 free space. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevTamazutsuControl hide=30
+AtlasDevTamazutsuControl up=120 warn=10
+AtlasDevTamazutsuControl hide=90 flag=16
 ```
 
 <hr>
