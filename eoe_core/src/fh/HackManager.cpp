@@ -574,6 +574,17 @@ word fh::HackManager::apply_SetAddr(const fe::Config& p_config, std::vector<byte
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+word fh::HackManager::apply_Respawn(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(14);
+	code.dw(ROM::Player_HandleDeath_Respawn - 1);
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
 word fh::HackManager::apply_AtlasDevSetVar(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
@@ -5790,6 +5801,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		}
 		case HackLib::SetAddr:
 			cpu_addr = apply_SetAddr(p_config, p_rom, cpu_addr, load_word_helper_addr.value());
+			break;
+		case HackLib::Respawn:
+			cpu_addr = apply_Respawn(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevSetVar:

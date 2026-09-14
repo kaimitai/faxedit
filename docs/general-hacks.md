@@ -359,6 +359,15 @@ The scripts might look like this:
   End
 ```
 
+If you use a script opcode which does not return to the script context, like `AtlasDevWarpAreaScreenPos` or `Respawn`, the used item will not be cleared. You can then clear it from the script yourself by setting RAM `$03c1` to `$ff` inside the script.
+
+```asm
+.entrypoint 90
+.textbox GENERIC
+  SetAddr $3c1 $ff ; clear item
+  Respawn
+```
+
 #### Item List
 
 | ID            | item          | notes                                  |

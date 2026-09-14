@@ -93,7 +93,9 @@ namespace fh {
 		constexpr word EntityAllocate{ 0xc205 };
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Player_HandleDeath_InitGoldXP{ 0xd99a };
+		constexpr word Player_HandleDeath_Respawn{ 0xd9a0 };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
+		constexpr word Player_Spawn{ 0xdb0a };
 		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };

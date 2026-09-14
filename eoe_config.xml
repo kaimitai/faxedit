@@ -1880,6 +1880,7 @@
 			<entry key="IfAddrEquals" value="Args=Short+Byte,Flow=Jump" />
 			<entry key="IfAddrBetween" value="Args=Short+Byte+Byte,Flow=Jump" />
 			<entry key="SetAddr" value="Args=Short+Byte" />
+			<entry key="Respawn" value="Flow=End,Terminal=true" />
 			<entry key="AtlasDevSetVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevAddVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSubVar" value="Args=Byte+Byte" />
