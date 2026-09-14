@@ -78,6 +78,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevIshiisuControl](#atlasdevishiisucontrol)
   - [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol)
   - [AtlasDevBorabohraControl](#atlasdevborabohracontrol)
+  - [AtlasDevMagmanControl](#atlasdevmagmancontrol)
 
 <hr>
 
@@ -1952,6 +1953,42 @@ AtlasDevFrameScheduler.
 AtlasDevBorabohraControl speed=16
 AtlasDevBorabohraControl loop=64 turn=32
 AtlasDevBorabohraControl body=32 flag=16
+```
+
+<hr>
+
+### AtlasDevMagmanControl
+
+Tunes Magman. In the stock game Magman hides off screen, then appears
+right in front of you at your height, stays there facing you for a while and
+hides again. Its only attack is its touch. With this hack you set how long it
+stays hidden, how long it stays out, and how far in front of you it appears.
+The defaults are the stock numbers, so the hack changes nothing until you set
+a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `60` | frames hidden, 16 to 255 |
+| `stay` | `120` | frames it stays out, 16 to 255 |
+| `distance` | `48` | how far in front of you it appears, in pixels, 8 to 112 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times hidden, time out and distance are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 88 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevMagmanControl hide=30
+AtlasDevMagmanControl stay=60 distance=80
+AtlasDevMagmanControl hide=90 flag=16
 ```
 
 <hr>

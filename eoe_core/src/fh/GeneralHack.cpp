@@ -65,6 +65,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevIshiisuControl,
 		fh::GeneralHackLib::AtlasDevTamazutsuControl,
 		fh::GeneralHackLib::AtlasDevBorabohraControl,
+		fh::GeneralHackLib::AtlasDevMagmanControl,
 	}},
 	};
 
@@ -114,6 +115,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevIshiisuControl, { "walk", "range", "windup", "recover", "face", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevTamazutsuControl, { "hide", "up", "warn", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevBorabohraControl, { "speed", "loop", "turn", "body", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevMagmanControl, { "hide", "stay", "distance", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
