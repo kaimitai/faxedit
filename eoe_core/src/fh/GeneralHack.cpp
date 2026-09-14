@@ -69,6 +69,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevKingGrieveControl,
 		fh::GeneralHackLib::AtlasDevNashControl,
 		fh::GeneralHackLib::AtlasDevExecutionHoodControl,
+		fh::GeneralHackLib::AtlasDevShadowEuraControl,
 	}},
 	};
 
@@ -122,6 +123,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevKingGrieveControl, { "shots", "hover", "rest", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevNashControl, { "hide", "windup", "attack", "throw", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevExecutionHoodControl, { "walk", "length", "pause", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevShadowEuraControl, { "walk", "pause", "fire1", "fire2", "step", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

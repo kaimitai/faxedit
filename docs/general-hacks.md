@@ -82,6 +82,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol)
   - [AtlasDevNashControl](#atlasdevnashcontrol)
   - [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol)
+  - [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol)
 
 <hr>
 
@@ -2112,3 +2113,43 @@ AtlasDevExecutionHoodControl walk=2 flag=16
 
 <hr>
 
+### AtlasDevShadowEuraControl
+
+Tunes Shadow Eura, the final boss. In the stock game it lurches toward you
+one step at a time, throws at you on two of its steps, and stands still
+between walks. With this hack you set how many steps it walks, how long it
+stands, which two steps it throws on, and how far each moving step goes.
+`body=1` makes its box cover its whole body; the stock box misses a strip
+on the left and the top of its head. The defaults are the stock numbers,
+so the hack changes nothing until you set a value. What it throws stays as
+it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `20` | steps per walk, 1 to 255; each step takes 8 frames |
+| `pause` | `30` | frames it stands between walks, 16 to 255 |
+| `fire1` | `3` | the first step it throws on, 1 to 9, or 0 for no throw |
+| `fire2` | `8` | the second step it throws on, 1 to 9, or 0 for no throw |
+| `step` | `8` | pixels per moving step, 1 to 16 |
+| `body` | `0` | `1` = its box covers its whole body (x+0, y-8, 48x88) |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+`step` and `body` change data in the ROM, so they apply whatever the flag.
+
+Without a flag the new walk lengths, throw steps and pause are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 90 bytes of bank 15 free space. `step` rewrites six bytes of its
+step table and `body=1` its four box bytes. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevShadowEuraControl walk=10 pause=60
+AtlasDevShadowEuraControl fire1=2 fire2=6 step=12
+AtlasDevShadowEuraControl body=1 flag=16
+```
