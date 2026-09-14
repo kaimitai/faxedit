@@ -81,6 +81,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevMagmanControl](#atlasdevmagmancontrol)
   - [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol)
   - [AtlasDevNashControl](#atlasdevnashcontrol)
+  - [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol)
 
 <hr>
 
@@ -2071,6 +2072,42 @@ AtlasDevFrameScheduler.
 AtlasDevNashControl hide=60
 AtlasDevNashControl windup=30 attack=90 throw=45
 AtlasDevNashControl hide=200 flag=16
+```
+
+<hr>
+
+### AtlasDevExecutionHoodControl
+
+Tunes Execution Hood. In the stock game it walks for a while, stops and
+faces you, then throws at you and walks again. With this hack you set how
+fast it walks, how long it walks between throws, and how long it stands
+before each throw. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. What it throws stays as it is, since other
+monsters throw the same thing.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `4` | walk speed in eighths of a pixel per frame, 1 to 16 (4 is half a pixel) |
+| `length` | `48` | frames it walks between throws: 24, 48, 96 or 192 |
+| `pause` | `15` | frames it stands facing you before it throws, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new walk speed, walk length and pause are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 85 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevExecutionHoodControl walk=8
+AtlasDevExecutionHoodControl length=96 pause=30
+AtlasDevExecutionHoodControl walk=2 flag=16
 ```
 
 <hr>
