@@ -64,6 +64,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevNecronAidesControl,
 		fh::GeneralHackLib::AtlasDevIshiisuControl,
 		fh::GeneralHackLib::AtlasDevTamazutsuControl,
+		fh::GeneralHackLib::AtlasDevBorabohraControl,
 	}},
 	};
 
@@ -112,6 +113,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevNecronAidesControl, { "climb", "walk", "cling", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevIshiisuControl, { "walk", "range", "windup", "recover", "face", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevTamazutsuControl, { "hide", "up", "warn", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevBorabohraControl, { "speed", "loop", "turn", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

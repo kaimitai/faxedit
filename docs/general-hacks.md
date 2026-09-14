@@ -77,6 +77,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol)
   - [AtlasDevIshiisuControl](#atlasdevishiisucontrol)
   - [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol)
+  - [AtlasDevBorabohraControl](#atlasdevborabohracontrol)
 
 <hr>
 
@@ -1908,6 +1909,49 @@ AtlasDevFrameScheduler.
 AtlasDevTamazutsuControl hide=30
 AtlasDevTamazutsuControl up=120 warn=10
 AtlasDevTamazutsuControl hide=90 flag=16
+```
+
+<hr>
+
+### AtlasDevBorabohraControl
+
+Tunes Borabohra. In the stock game Borabohra rises out of the ground and then
+glides sideways at you forever. Its speed swells from nothing to about one
+pixel a frame and back, and it turns toward you on every frame. With this
+hack you set its top speed, how long each swell lasts, and how often it turns
+toward you, so it can glide past you and give you an opening. `body=32` makes
+its box as wide as its wings, so a hit on a wing tip counts, and so does a
+wing tip touching you. The defaults are the stock numbers, so the hack
+changes nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `speed` | `8` | top glide speed in eighths of a pixel per frame: 2, 4, 8, 16 or 32 |
+| `loop` | `128` | frames from one standstill to the next: 32, 64, 128 or 256 |
+| `turn` | `1` | how often it turns toward you, in frames: 1, 2, 4, 8, 16, 32, 64 or 128 |
+| `body` | `24` | box width; 32 covers its whole drawing |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`speed=2` needs a `loop` of 128 or less. `flag=n` lets a script grant or
+remove the behavior with `SetFlag` and `ClearFlag`. A clear flag, like
+`mode=vanilla`, is the stock behavior; `body` is not switched by the flag.
+
+Without a flag the glide's wave is written straight into the stock
+instructions in bank 14, and no free space is used; `speed=2` (or `speed=4
+loop=256`) needs a small rewrite of the glide, 20 bytes of bank 15 free
+space, and `turn` above 1 retargets the turn test to 13 bytes. With a flag,
+only the instructions whose values you change are retargeted, to at most 66
+bytes of bank 15 free space. `body=32` changes two bytes of its box. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevBorabohraControl speed=16
+AtlasDevBorabohraControl loop=64 turn=32
+AtlasDevBorabohraControl body=32 flag=16
 ```
 
 <hr>
