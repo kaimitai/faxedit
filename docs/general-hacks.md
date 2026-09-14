@@ -79,6 +79,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol)
   - [AtlasDevBorabohraControl](#atlasdevborabohracontrol)
   - [AtlasDevMagmanControl](#atlasdevmagmancontrol)
+  - [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol)
 
 <hr>
 
@@ -1989,6 +1990,47 @@ US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
 AtlasDevMagmanControl hide=30
 AtlasDevMagmanControl stay=60 distance=80
 AtlasDevMagmanControl hide=90 flag=16
+```
+
+<hr>
+
+### AtlasDevKingGrieveControl
+
+Tunes King Grieve. In the stock game King Grieve swoops down, hovers and
+fires at you, rises to the top of the room and rests before it swoops again.
+With this hack you set how often it fires while it hovers, how long it hovers
+and how long it rests. `body=1` makes its box cover its body: the stock box
+covers only about half of what is drawn, so many hits that look like they
+land go through it. The defaults are the stock numbers, so the hack changes
+nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `shots` | `16` | frames between shots while it hovers: 4, 8, 16, 32, 64 or 128 |
+| `hover` | `60` | frames it hovers, 16 to 255 |
+| `rest` | `30` | frames it rests at the top, 16 to 255 |
+| `body` | `0` | 1 makes its box cover its body |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior; `body`
+is not switched by the flag.
+
+Without a flag the new shot timing, time hovering and time resting are
+written straight into the stock instructions in bank 14, and no free space
+is used. With a flag, only the instructions whose values you change are
+retargeted, to at most 71 bytes of bank 15 free space. `body=1` rewrites its
+box, whose top stops just short of the top of the screen at its highest
+point. At the default values nothing is written. No RAM is claimed. Every
+site is verified against its exact vanilla bytes before anything is written,
+and all of them are identical in the US, US rev A, EU and JP ROMs. Does not
+require AtlasDevFrameScheduler.
+
+```
+AtlasDevKingGrieveControl shots=8
+AtlasDevKingGrieveControl hover=90 rest=60
+AtlasDevKingGrieveControl body=1 flag=16
 ```
 
 <hr>

@@ -66,6 +66,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevTamazutsuControl,
 		fh::GeneralHackLib::AtlasDevBorabohraControl,
 		fh::GeneralHackLib::AtlasDevMagmanControl,
+		fh::GeneralHackLib::AtlasDevKingGrieveControl,
 	}},
 	};
 
@@ -116,6 +117,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevTamazutsuControl, { "hide", "up", "warn", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevBorabohraControl, { "speed", "loop", "turn", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevMagmanControl, { "hide", "stay", "distance", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevKingGrieveControl, { "shots", "hover", "rest", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

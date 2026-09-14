@@ -1324,6 +1324,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevMagmanControl:
 			cpu_addr = install_AtlasDevMagmanControl(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevKingGrieveControl:
+			cpu_addr = install_AtlasDevKingGrieveControl(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
