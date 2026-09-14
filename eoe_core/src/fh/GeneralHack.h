@@ -47,6 +47,7 @@ namespace fh {
 		AtlasDevBorabohraControl,
 		AtlasDevMagmanControl,
 		AtlasDevKingGrieveControl,
+		AtlasDevNashControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

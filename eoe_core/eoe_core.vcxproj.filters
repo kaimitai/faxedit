@@ -721,6 +721,9 @@
     <ClCompile Include="src\fh\AtlasDevKingGrieveControl.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevNashControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>

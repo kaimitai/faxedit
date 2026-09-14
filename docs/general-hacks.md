@@ -80,6 +80,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevBorabohraControl](#atlasdevborabohracontrol)
   - [AtlasDevMagmanControl](#atlasdevmagmancontrol)
   - [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol)
+  - [AtlasDevNashControl](#atlasdevnashcontrol)
 
 <hr>
 
@@ -2031,6 +2032,45 @@ require AtlasDevFrameScheduler.
 AtlasDevKingGrieveControl shots=8
 AtlasDevKingGrieveControl hover=90 rest=60
 AtlasDevKingGrieveControl body=1 flag=16
+```
+
+<hr>
+
+### AtlasDevNashControl
+
+Tunes Nash. In the stock game Nash hides, then appears near you, faces you
+for a while, attacks, and throws at you partway through the attack before it
+hides again. With this hack you set how long it stays hidden, how long it
+faces you before the attack, how long the attack lasts, and when in the
+attack it throws. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. What it throws stays as it is, since other
+monsters throw the same thing.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `120` | frames hidden, 16 to 255 |
+| `windup` | `60` | frames it faces you before the attack, 16 to 255 |
+| `attack` | `60` | frames the attack lasts, 16 to 255 |
+| `throw` | `10` | when it throws: the attack counts down from `attack`, and it throws at this count, 1 to `attack` - 1 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times hidden, throw moment, windup and attack length
+are written straight into the stock instructions in bank 14, and no free
+space is used. With a flag, only the instructions whose values you change
+are retargeted, to at most 97 bytes of bank 15 free space. At the default
+values nothing is written. No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevNashControl hide=60
+AtlasDevNashControl windup=30 attack=90 throw=45
+AtlasDevNashControl hide=200 flag=16
 ```
 
 <hr>

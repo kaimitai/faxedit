@@ -204,6 +204,7 @@
     <ClCompile Include="src\fh\AtlasDevBorabohraControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevMagmanControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevKingGrieveControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevNashControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
