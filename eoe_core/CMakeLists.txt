@@ -119,6 +119,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevGiantBeesControl.cpp
     src/fh/AtlasDevZorugeriruControl.cpp
     src/fh/AtlasDevNecronAidesControl.cpp
+    src/fh/AtlasDevIshiisuControl.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

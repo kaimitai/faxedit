@@ -42,6 +42,7 @@ namespace fh {
 		AtlasDevGiantBeesControl,
 		AtlasDevZorugeriruControl,
 		AtlasDevNecronAidesControl,
+		AtlasDevIshiisuControl,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

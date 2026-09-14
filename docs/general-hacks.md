@@ -75,6 +75,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol)
   - [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol)
   - [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol)
+  - [AtlasDevIshiisuControl](#atlasdevishiisucontrol)
 
 <hr>
 
@@ -1828,6 +1829,47 @@ AtlasDevFrameScheduler.
 AtlasDevNecronAidesControl climb=4
 AtlasDevNecronAidesControl walk=3
 AtlasDevNecronAidesControl cling=1 flag=16
+```
+
+<hr>
+
+### AtlasDevIshiisuControl
+
+Tunes Ishiisu. In the stock game Ishiisu walks toward you; when you are
+close and facing it, it winds up, throws at you and recovers before it walks
+again. With this hack you set how fast it walks, how close you must be
+before it attacks, how long it winds up and recovers, and whether it attacks
+even when you are not facing it. The defaults are the stock numbers, so the
+hack changes nothing until you set a value. The throw itself and what it
+throws stay as they are, since other monsters use the same throw.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `3` | walk speed in quarter pixels per frame, 1 to 8 |
+| `range` | `32` | how close you must be before it attacks, in pixels, 8 to 128 |
+| `windup` | `10` | frames from the start of an attack to the throw, 1 to 64 |
+| `recover` | `20` | frames from the throw until it walks again, 1 to 64 |
+| `face` | `0` | 1 makes it attack even when you are not facing it |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the walk speed, the distance, the attack length, the throw
+moment and the throw pose are written straight into the stock instructions
+in bank 14, and no free space is used. `face=1` retargets the start of the
+facing test; without a flag that needs no free space. With a flag, only the
+instructions whose values you change are retargeted, to at most 118 bytes of
+bank 15 free space, 14 more with `face=1`. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevIshiisuControl walk=6
+AtlasDevIshiisuControl range=48 windup=6 recover=30
+AtlasDevIshiisuControl face=1 flag=16
 ```
 
 <hr>
