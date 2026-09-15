@@ -182,6 +182,7 @@
     <ClCompile Include="src\fh\AtlasDevRunControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevSmartMattock.cpp" />
     <ClCompile Include="src\fh\AtlasDevDwarfControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevScreenBlink.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

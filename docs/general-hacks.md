@@ -53,6 +53,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSmartMattock](#atlasdevsmartmattock)
   - [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol)
   - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
+  - [AtlasDevScreenBlink](#atlasdevscreenblink)
 
 <hr>
 
@@ -1006,4 +1007,33 @@ change both dwarves.
 AtlasDevWolfmanControl
 AtlasDevSirGawaineControl
 AtlasDevWolfmanControl lunge=3 recover=12 flag=13
+```
+
+<hr>
+
+### AtlasDevScreenBlink
+
+Walking off the left or right side of a screen makes the stock game slide
+the next screen in, which takes about a second with everything frozen.
+Going up or down it blanks the screen and redraws it at once instead. This
+hack makes left and right do the same, so a horizontal screen change takes
+about a quarter of a second.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock slide.
+
+Without a flag two bytes in bank 15 change and no free space is used. With
+a flag, 15 bytes of bank 15 free space are used. No RAM is claimed. Every
+site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevScreenBlink
+AtlasDevScreenBlink flag=16
 ```

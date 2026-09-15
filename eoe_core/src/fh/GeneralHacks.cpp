@@ -1179,6 +1179,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevWolfmanControl:
 			cpu_addr = install_AtlasDevDwarfControl(p_config, patched_rom, cpu_addr, hack, true);
 			break;
+		case fh::GeneralHackLib::AtlasDevScreenBlink:
+			cpu_addr = install_AtlasDevScreenBlink(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
