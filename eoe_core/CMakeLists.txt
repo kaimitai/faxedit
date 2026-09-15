@@ -103,7 +103,8 @@ add_library(eoe_core STATIC
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp
     src/fh/TilemapChanges.cpp
-	src/fh/SramHack.cpp
+    src/fh/SramHack.cpp
+    src/fh/PermaDoorHack.cpp
 
     # fv
     src/fv/MiscWriter.cpp

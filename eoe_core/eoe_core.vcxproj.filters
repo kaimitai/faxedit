@@ -677,5 +677,8 @@
     <ClCompile Include="src\fh\SramHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\PermaDoorHack.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
