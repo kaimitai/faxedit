@@ -54,6 +54,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol)
   - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
   - [AtlasDevScreenBlink](#atlasdevscreenblink)
+  - [AtlasDevFastBlink](#atlasdevfastblink)
 
 <hr>
 
@@ -1036,4 +1037,40 @@ Does not require AtlasDevFrameScheduler.
 ```
 AtlasDevScreenBlink
 AtlasDevScreenBlink flag=16
+```
+
+<hr>
+
+### AtlasDevFastBlink
+
+A screen change that blanks and redraws the screen takes about a quarter
+of a second in the stock game: going up or down, in an area without
+smooth scrolling, or left and right with AtlasDevScreenBlink. About half
+of it is waiting, a frame at a time, for the enemy graphics to reach the
+video chip and for the display to go dark. This hack turns the display
+off first and runs the same steps back to back, so a change takes about
+half as long. The screen that comes up is the same.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock change.
+
+Uses 68 bytes of bank 15 free space, or 105 with a flag, and rewrites 43
+bytes of stock code in place: the blank path at $DB91 and the two waits
+of the video queue at $CFCA and $CFF4, which become jumps to the new
+code. With the frame handlers on the two waits behave as before. No RAM
+is claimed. Every site is verified against its exact vanilla bytes before
+anything is written, and all of them are identical in the US, US rev A,
+EU and JP ROMs. AtlasDevScreenBlink checks the stock blank path when it
+installs, so list it before this hack. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevFastBlink
+AtlasDevScreenBlink flag=16
+AtlasDevFastBlink flag=24
 ```

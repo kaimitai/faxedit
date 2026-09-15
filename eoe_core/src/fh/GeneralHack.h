@@ -24,6 +24,7 @@ namespace fh {
 		AtlasDevSmartMattock,
 		AtlasDevSirGawaineControl, AtlasDevWolfmanControl,
 		AtlasDevScreenBlink,
+		AtlasDevFastBlink,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

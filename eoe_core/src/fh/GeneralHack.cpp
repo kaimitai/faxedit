@@ -41,6 +41,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevRunControl,
 		fh::GeneralHackLib::AtlasDevSmartMattock,
 		fh::GeneralHackLib::AtlasDevScreenBlink,
+		fh::GeneralHackLib::AtlasDevFastBlink,
 	}},
 	};
 
@@ -67,6 +68,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevSirGawaineControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevWolfmanControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevScreenBlink, { "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevFastBlink, { "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

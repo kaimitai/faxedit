@@ -100,6 +100,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevSmartMattock.cpp
     src/fh/AtlasDevDwarfControl.cpp
     src/fh/AtlasDevScreenBlink.cpp
+    src/fh/AtlasDevFastBlink.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp
