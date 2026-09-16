@@ -42,6 +42,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevSmartMattock,
 		fh::GeneralHackLib::AtlasDevScreenTransition,
 		fh::GeneralHackLib::AtlasDevFastBlink,
+		fh::GeneralHackLib::AtlasDevLandingTuck,
 	}},
 	};
 
@@ -70,6 +71,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevScreenTransition,
 			{ "left", "right", "up", "down", "h", "v", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevFastBlink, { "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevLandingTuck, { "profile", "flag", "mode" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type" } },
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },

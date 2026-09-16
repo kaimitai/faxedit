@@ -55,6 +55,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
   - [AtlasDevScreenBlink](#atlasdevscreenblink)
   - [AtlasDevFastBlink](#atlasdevfastblink)
+  - [AtlasDevLandingTuck](#atlasdevlandingtuck)
 
 <hr>
 
@@ -1073,4 +1074,53 @@ AtlasDevFrameScheduler.
 AtlasDevFastBlink
 AtlasDevScreenBlink flag=16
 AtlasDevFastBlink flag=24
+```
+
+<hr>
+
+### AtlasDevLandingTuck
+
+A short pose when the hero comes down from a jump. Vanilla snaps him
+upright on the first grounded frame; this holds a crouched frame for a
+few frames and then lets go. It is only how he is drawn. Nothing about
+movement, physics, damage or collision changes, and pressing jump or
+attack drops the pose on the same frame.
+
+The pose is not new art. Every gear group's jump frame is already a
+16x32 record, so the hack crops each one to its top 24 pixels and draws
+it eight pixels lower. That is a hero with his knees up, built from
+tiles the project already exports, so edited graphics follow
+automatically and no CHR, no XML frame and no tile budget is touched.
+Gear groups whose jump frames crop to the same bytes share one record.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `profile` | `medium` | `off`, `light`, `medium` or `heavy`: the pose is held 0, 3, 4 or 6 frames |
+| `flag` | | extended flag 0 to 247 that switches the pose on at runtime |
+| `mode` | | `vanilla` installs nothing |
+
+`profile=off` installs nothing at all, so a hack listed that way leaves
+the ROM byte identical. `flag=n` lets a script turn the pose on and off
+with `SetFlag` and `ClearFlag`; while the flag is clear the hero lands
+the way he always did.
+
+Uses 299 bytes of bank 15 free space with vanilla art, 306 with a
+flag. Roughly a third of that is the cropped records themselves, so a
+project whose eight gear groups share more art uses less. It rewrites
+seven instructions in place: the per frame tick at $E0D3, the pose
+picker at $EC43, the weapon and shield drawers at $B875 and $B9D1 in
+bank 14, and the three places that end a life or a screen, $D127, $E0AA
+and $D8F4. One RAM byte at $04FE holds the state: bit 7 says the hero
+was in the air last frame, bit 6 says the pose is up, and the low three
+bits count it down. $04FE and $04FF are the last two bytes of the free
+tail and the only pair nothing else has taken. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the
+US, US rev A, EU and JP ROMs. It reads the player frame directory the
+project exported, so it must run after the sprite graphics are written,
+which it does. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevLandingTuck
+AtlasDevLandingTuck profile=light
+AtlasDevLandingTuck profile=heavy flag=24
 ```

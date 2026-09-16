@@ -184,6 +184,7 @@
     <ClCompile Include="src\fh\AtlasDevDwarfControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevScreenTransition.cpp" />
     <ClCompile Include="src\fh\AtlasDevFastBlink.cpp" />
+    <ClCompile Include="src\fh\AtlasDevLandingTuck.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
