@@ -6,6 +6,7 @@
 #include "fe_constants.h"
 #include "common/klib/NES_tile.h"
 #include <map>
+#include <cstdint>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -122,6 +123,8 @@ namespace fe {
 		static std::pair<std::size_t, std::size_t> file_range_to_cpu_range(const std::pair<std::size_t, std::size_t>& p_range);
 		static std::pair<std::size_t, std::size_t> find_trailing_free_range(const std::vector<byte>& p_rom,
 			const std::pair<std::size_t, std::size_t>& p_range,
+			byte p_free_value = 0xff, std::size_t p_cushion = 1);
+		static uint16_t find_trailing_free_cpu_addr(const std::vector<byte>& p_rom, byte p_bank,
 			byte p_free_value = 0xff, std::size_t p_cushion = 1);
 		static std::vector<std::pair<std::size_t, std::size_t>> parse_bank_15_free_ranges(const fe::Config& p_config);
 		static bool is_sram_enabled(const std::vector<byte>& p_rom);

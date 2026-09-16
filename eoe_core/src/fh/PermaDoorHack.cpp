@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fh_constants.h"
 #include "fe/Game.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include <format>
 #include <stdexcept>
@@ -13,7 +14,7 @@ namespace {
 
 	constexpr byte PTR_LO{ fh::RAM::ZP_e2 };
 	constexpr byte PTR_HI{ fh::RAM::ZP_e3 };
-	constexpr byte VALUE_IO{ fh::RAM::ZP_e4 };
+	constexpr byte VALUE_IO{ fh::RAM::ZP_e5 };
 
 	struct DoorFlag {
 		byte screen;
@@ -271,33 +272,15 @@ namespace {
 		return main_entry_addr;
 	}
 
-	// shared code in bank 15 which does the lookup in the free bank
-	word install_PermaDoors_Shared(const fe::Config& p_config, std::vector<byte>& p_rom,
-		word cpu_addr, word permadoor_main_addr, byte p_other_bank) {
-		klib::Asm6502 code;
-
-		code.lda_abs(fh::RAM::CurrentROMBank);
-		code.pha();
-
-		code.ldx_imm(p_other_bank);
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-		code.jsr(permadoor_main_addr);
-
-		code.pla();
-		code.tax();
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
-	}
-
-
 }
 
 word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
 	const byte other_bank{ p_hack.get_byte("bank") };
-	const word other_addr{ p_hack.get_word("addr") };
+	const word other_addr{ p_hack.has_param("addr") ?
+		p_hack.get_word("addr") :
+		fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, other_bank)
+	};
 
 	const word other_bank_main_addr{ install_PermaDoors_FreeBankInstall(p_rom,
 		other_bank, other_addr, p_game) };
@@ -320,6 +303,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 	code.beq("@locked");
 	// door was unlocked in the past
 	code.lda_imm(0x00);
+	code.sta_abs(RAM::DoorKeyRequirement);
 	code.rts();
 
 	code.label("@locked");
@@ -356,6 +340,9 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 	code.jsr(set_flag_trampoline);
 	code.nop(2);
 	code.apply_hack_and_clear(p_rom, 15, ROM::Game_UnlockDoorWithKey_afterUse);
+
+	// install flag-clearing routine
+	install_hack_clear_flag_memory(p_config, p_rom);
 
 	return result;
 }

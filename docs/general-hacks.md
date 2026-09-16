@@ -38,6 +38,7 @@ This document describes the hacks in the current library and their parameters. I
   - [ConditionalScript](#conditionalscript)
   - [ItemScripts](#itemscripts)
 	- [Item List](#item-list)
+  - [PermaDoors](#permadoors)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -397,6 +398,23 @@ If you use a script opcode which does not return to the script context, like `At
 | `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
 
 Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
+
+### PermaDoors
+
+Keeps doors unlocked after they have been opened with a key. An alternative to the script-based approach described in [Advanced Modding](./advanced-modding.md).
+
+| parameter | default  | meaning                     |
+| --------- | -------- | --------------------------- |
+| `bank`    | none, required | Which bank to install the majority of the hack in |
+| `addr`    | none, calculated | Which cpu address in that bank to install the hack in |
+
+`bank` should probably be 9 for vanilla ROMs, and for example 28 for expanded ROMs.
+
+If `addr` is not given, free space will be automically deduced, if possible.
+
+```text
+PermaDoors bank=28
+```
 
 ### AtlasDevFrameScheduler
 

@@ -977,6 +977,18 @@ std::pair<std::size_t, std::size_t> fe::ROM_Manager::find_trailing_free_range(co
 	return { start, p_range.second };
 }
 
+uint16_t fe::ROM_Manager::find_trailing_free_cpu_addr(const std::vector<byte>& p_rom, byte p_bank,
+	byte p_free_value, std::size_t p_cushion) {
+	constexpr std::size_t HEADER_SIZE{ 0x10 };
+	constexpr std::size_t BANK_SIZE{ 0x4000 };
+
+	const std::size_t bank_start{ HEADER_SIZE + static_cast<std::size_t>(p_bank) * BANK_SIZE };
+	const std::size_t bank_end{ bank_start + BANK_SIZE };
+	const auto free_range{ find_trailing_free_range(p_rom, { bank_start, bank_end }, p_free_value, p_cushion) };
+
+	return static_cast<uint16_t>(0x8000 + (free_range.first - bank_start));
+}
+
 void fe::ROM_Manager::clear_bank_data(std::vector<byte>& p_rom, byte p_bank_no) const {
 	auto bank_start{ bank_no_to_file_offset(p_bank_no) };
 
