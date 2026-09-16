@@ -368,7 +368,7 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&, bool p_wolfman) const;
-		word install_AtlasDevScreenBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+		word install_AtlasDevScreenTransition(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevFastBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;

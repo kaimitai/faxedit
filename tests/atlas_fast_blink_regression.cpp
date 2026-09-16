@@ -12,7 +12,7 @@
 
 // pins install_AtlasDevFastBlink to known bytes for the plain install, two
 // flags at either end of a flag byte, mode=vanilla, and an install after
-// AtlasDevScreenBlink in both of its forms; pins that the reverse order is
+// AtlasDevScreenTransition in both of its forms; pins that the reverse order is
 // refused; and checks that every refused install leaves the rom as it was
 // (the install driver works on a copy and keeps it only when every hack
 // succeeds). everything the hack touches is in bank 15
@@ -37,7 +37,7 @@ namespace {
 	const std::string WFC_HEX{ "20d0cf90fb60" };
 	const std::string WUC_HEX{ "a520c51fd0fa60" };
 	const std::string DRAW_ALL_HEX{ "203ccfa520c51fd0f760" };
-	// AtlasDevScreenBlink's redraw loop site, so it can be installed first
+	// AtlasDevScreenTransition's redraw loop site, so it can be installed first
 	const std::string REDRAW_HEX{ "2048e020e7d2201dd6a554c902b005a50cd0ed60a557d0e860" };
 
 	const std::string PLAIN_BODY{
@@ -128,34 +128,40 @@ int main() {
 			expect(rom, vanilla_rom(), shape.regions, spec);
 		}
 		{
-			// after the plain AtlasDevScreenBlink (two nops at $db8f, no free space) the install is the plain shape
+			// after AtlasDevScreenTransition h=blink (a 26 byte stub at the origin) the body
+			// and its two wait hooks sit 26 bytes further up
 			auto rom{ vanilla_rom() };
-			require(install(rom, "AtlasDevScreenBlink") == 0, "the plain screen blink takes no free space");
-			require(install(rom, "AtlasDevFastBlink") == 68, "fast blink after screen blink: size");
-			auto regions{ SHAPES[0].regions };
-			regions.push_back({ 15, 0xdb8f, "eaea" });
-			expect(rom, vanilla_rom(), regions, "AtlasDevScreenBlink then AtlasDevFastBlink");
-		}
-		{
-			// after AtlasDevScreenBlink flag=168 (a 15 byte stub at the origin) the body and its two wait hooks move up 15 bytes
-			auto rom{ vanilla_rom() };
-			require(install(rom, "AtlasDevScreenBlink flag=168") == 15, "the flagged screen blink takes 15 bytes");
-			require(install(rom, "AtlasDevFastBlink", static_cast<word>(ORG + 15)) == 68, "fast blink after the flagged screen blink: size");
+			require(install(rom, "AtlasDevScreenTransition h=blink") == 26, "the transition stub takes 26 bytes");
+			require(install(rom, "AtlasDevFastBlink", static_cast<word>(ORG + 26)) == 68, "fast blink after the transition: size");
 			expect(rom, vanilla_rom(), {
 				{ 15, 0xdb8b, "20cefc901fea" },
-				{ 15, 0xfcce, "a554c902b008ad16012901f0013860" },
-				{ 15, 0xdb91, "4cddfceaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea" },
-				{ 15, 0xcfca, "4c03fdeaeaea" },
-				{ 15, 0xcff4, "4c13fdeaeaeaea" },
-				{ 15, 0xfcdd, "a90085148513855b8d012020fbcf2047cb2030c120b4c1208dc220fbcf200fdd2017cb4c45db20d0cfb00aa513d0f7203ccf4c03fd60a513f007a520c51fd0fa604cfbcf" },
-			}, "AtlasDevScreenBlink flag=168 then AtlasDevFastBlink");
+				{ 15, 0xfcce, "a654bde4fcf0023860e002900238601860a554c9026001010101" },
+				{ 15, 0xdb91, "4ce8fceaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea" },
+				{ 15, 0xcfca, "4c0efdeaeaea" },
+				{ 15, 0xcff4, "4c1efdeaeaeaea" },
+				{ 15, 0xfce8, "a90085148513855b8d012020fbcf2047cb2030c120b4c1208dc220fbcf200fdd2017cb4c45db20d0cfb00aa513d0f7203ccf4c0efd60a513f007a520c51fd0fa604cfbcf" },
+			}, "AtlasDevScreenTransition h=blink then AtlasDevFastBlink");
 		}
 		{
-			// the reverse order is refused: AtlasDevScreenBlink checks the stock blank path this hack rewrites
+			// and with a flag on the transition, a 33 byte stub, everything moves 33
+			auto rom{ vanilla_rom() };
+			require(install(rom, "AtlasDevScreenTransition h=blink flag=168") == 33, "the flagged transition takes 33 bytes");
+			require(install(rom, "AtlasDevFastBlink", static_cast<word>(ORG + 33)) == 68, "fast blink after the flagged transition: size");
+			expect(rom, vanilla_rom(), {
+				{ 15, 0xdb8b, "20cefc901fea" },
+				{ 15, 0xfcce, "ad16012901f011a654bdebfcf0023860e002900238601860a554c9026001010101" },
+				{ 15, 0xdb91, "4ceffceaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaeaea" },
+				{ 15, 0xcfca, "4c15fdeaeaea" },
+				{ 15, 0xcff4, "4c25fdeaeaeaea" },
+				{ 15, 0xfcef, "a90085148513855b8d012020fbcf2047cb2030c120b4c1208dc220fbcf200fdd2017cb4c45db20d0cfb00aa513d0f7203ccf4c15fd60a513f007a520c51fd0fa604cfbcf" },
+			}, "AtlasDevScreenTransition h=blink flag=168 then AtlasDevFastBlink");
+		}
+		{
+			// the reverse order is refused: AtlasDevScreenTransition checks the stock blank path this hack rewrites
 			auto rom{ vanilla_rom() };
 			install(rom, "AtlasDevFastBlink");
-			refused(rom, "AtlasDevScreenBlink", "AtlasDevScreenBlink listed after AtlasDevFastBlink");
-			refused(rom, "AtlasDevScreenBlink flag=168", "AtlasDevScreenBlink flag=168 listed after AtlasDevFastBlink");
+			refused(rom, "AtlasDevScreenTransition h=blink", "AtlasDevScreenTransition listed after AtlasDevFastBlink");
+			refused(rom, "AtlasDevScreenTransition h=blink flag=168", "the flagged transition listed after AtlasDevFastBlink");
 		}
 		for (const char* bad : { "AtlasDevFastBlink flag=248", "AtlasDevFastBlink mode=on",
 			"AtlasDevFastBlink speed=3", "AtlasDevFastBlink mode=vanilla flag=248" })

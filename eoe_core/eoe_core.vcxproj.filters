@@ -659,7 +659,7 @@
     <ClCompile Include="src\fh\AtlasDevDwarfControl.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
-    <ClCompile Include="src\fh\AtlasDevScreenBlink.cpp">
+    <ClCompile Include="src\fh\AtlasDevScreenTransition.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFastBlink.cpp">

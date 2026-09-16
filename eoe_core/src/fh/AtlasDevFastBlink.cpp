@@ -13,7 +13,7 @@
 
 // fast blink: a screen change that blanks and redraws the screen (going up
 // or down, an area without smooth scrolling, or left and right with
-// AtlasDevScreenBlink) spends about 16 frames before play resumes. about
+// AtlasDevScreenTransition) spends about 16 frames before play resumes. about
 // half of that is waiting: two frame waits inside the sprite setup, the
 // enemy graphics trickling through the ppu queue a few tiles a frame, and a
 // two frame wait for the display to go dark. this hack turns the display
@@ -34,7 +34,7 @@
 // with a flag the new path runs only while the flag is set; clear, a copy
 // of the stock path runs. the waits need no flag, for the reason above.
 //
-// AtlasDevScreenBlink checks the stock blank path before it installs, so
+// AtlasDevScreenTransition checks the stock blank path before it installs, so
 // it must be listed before this hack.
 namespace {
 	constexpr byte BANK15{ 15 };
