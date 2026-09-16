@@ -11,6 +11,10 @@ namespace {
 	constexpr byte DOOR_KEY_REQ_MAX{ 0x05 };
 	constexpr byte DOOR_FLAG_MAX{ static_cast<byte>(fh::c::FlagsByteCount * 8 - 1) };
 
+	constexpr byte PTR_LO{ fh::RAM::ZP_e2 };
+	constexpr byte PTR_HI{ fh::RAM::ZP_e3 };
+	constexpr byte VALUE_IO{ fh::RAM::ZP_e4 };
+
 	struct DoorFlag {
 		byte screen;
 		byte yx;
@@ -20,6 +24,9 @@ namespace {
 	using DoorFlagTable = std::vector<std::vector<DoorFlag>>;
 
 	DoorFlagTable make_door_flag_table(const fe::Game* p_game) {
+		if (!p_game)
+			throw std::runtime_error("PermaDoors: Door data not available");
+
 		DoorFlagTable table(p_game->m_chunks.size());
 		std::size_t flag_count{ 0 };
 
@@ -90,9 +97,6 @@ namespace {
 
 	word install_PermaDoors_TableWalker(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 		word table_addr) {
-		constexpr byte PTR_LO{ fh::RAM::ZP_e2 };
-		constexpr byte PTR_HI{ fh::RAM::ZP_e3 };
-
 		klib::Asm6502 code;
 
 		code.lda_zp(fh::RAM::ZP_CurrentWorld);
@@ -142,15 +146,216 @@ namespace {
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
+
+	word install_PermaDoors_BitmaskTable(std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
+		klib::Asm6502 code;
+		code.db(0x01);
+		code.db(0x02);
+		code.db(0x04);
+		code.db(0x08);
+		code.db(0x10);
+		code.db(0x20);
+		code.db(0x40);
+		code.db(0x80);
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	}
+
+	// ; A = flag number
+	// ; Returns A = 0 if not set / invalid
+	// ; Returns A != 0 if set
+	word install_PermaDoors_CheckFlag(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		word bitmask_table_addr) {
+		klib::Asm6502 code;
+
+		code.cmp_imm(0xff);
+		code.beq("@clear");
+
+		code.tax();
+		code.lsr_a(3);
+		code.tay();
+
+		code.txa();
+		code.and_imm(0x07);
+		code.tax();
+
+		code.lda_abs_y(fh::RAM::Flags);
+		code.and_abs_x(bitmask_table_addr);
+		code.rts();
+
+		code.label("@clear");
+		code.lda_imm(0x00);
+		code.rts();
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	}
+
+	// A = flag number
+	word install_PermaDoors_SetFlag(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		word bitmask_table_addr) {
+		klib::Asm6502 code;
+
+		code.cmp_imm(0xff);
+		code.beq("@done");
+
+		code.tax();
+		code.lsr_a(3);
+		code.tay();
+
+		code.txa();
+		code.and_imm(0x07);
+		code.tax();
+		code.lda_abs_y(fh::RAM::Flags);
+		code.ora_abs_x(bitmask_table_addr);
+		code.sta_abs_y(fh::RAM::Flags);
+
+		code.label("@done");
+		code.rts();
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	}
+
+	// ; ZP addr VALUE_IO:
+	// ; 0 = check
+	// ; 1 = set
+	// ;
+	// ; returns:
+	// ; check -> VALUE_IO=0 or VALUE_IO!=0
+	// ; set -> ignored
+	word install_PermaDoors_Main(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		word table_walker_addr, word set_flag_addr, word check_flag_addr) {
+		klib::Asm6502 code;
+
+		code.jsr(table_walker_addr);
+		code.ldx_zp(VALUE_IO);
+		code.beq("@check");
+
+		code.jsr(set_flag_addr);
+		code.rts();
+
+		code.label("@check");
+		code.jsr(check_flag_addr);
+		code.sta_zp(VALUE_IO);
+		code.rts();
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	}
+
+	word install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		const fe::Game* p_game) {
+		const auto l_door_flag_table{ make_door_flag_table(p_game) };
+
+		const word lookup_table_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_LookupTable(p_rom, p_bank,
+			lookup_table_addr, l_door_flag_table);
+
+		const word table_walker_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_TableWalker(p_rom, p_bank,
+			table_walker_addr, lookup_table_addr);
+
+		const word bitmask_table_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_BitmaskTable(p_rom, p_bank,
+			bitmask_table_addr);
+
+		const word check_flag_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_CheckFlag(p_rom, p_bank,
+			check_flag_addr, bitmask_table_addr);
+
+		const word set_flag_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_SetFlag(p_rom, p_bank,
+			set_flag_addr, bitmask_table_addr);
+
+		const word main_entry_addr{ cpu_addr };
+		cpu_addr = install_PermaDoors_Main(p_rom, p_bank,
+			main_entry_addr, table_walker_addr, set_flag_addr, check_flag_addr);
+
+		return main_entry_addr;
+	}
+
+	// shared code in bank 15 which does the lookup in the free bank
+	word install_PermaDoors_Shared(const fe::Config& p_config, std::vector<byte>& p_rom,
+		word cpu_addr, word permadoor_main_addr, byte p_other_bank) {
+		klib::Asm6502 code;
+
+		code.lda_abs(fh::RAM::CurrentROMBank);
+		code.pha();
+
+		code.ldx_imm(p_other_bank);
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.jsr(permadoor_main_addr);
+
+		code.pla();
+		code.tax();
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.rts();
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	}
+
+
 }
 
 word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
-	if (!p_game)
-		throw std::runtime_error("PermaDoors: Door data not available");
+	const byte other_bank{ p_hack.get_byte("bank") };
+	const word other_addr{ p_hack.get_word("addr") };
+
+	const word other_bank_main_addr{ install_PermaDoors_FreeBankInstall(p_rom,
+		other_bank, other_addr, p_game) };
 
 	klib::Asm6502 code;
 
+	code.label("@set_flag_trampoline");
+	code.lda_imm(0x01);
+	code.sta_zp(VALUE_IO);
+	code.jsr("@shared_logic");
+	code.lda_imm(0xff);
+	code.sta_abs(RAM::SelectedItem);
+	code.rts();
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	code.label("@check_flag_trampoline");
+	code.lda_imm(0x00);
+	code.sta_zp(VALUE_IO);
+	code.jsr("@shared_logic");
+	code.lda_zp(VALUE_IO);
+	code.beq("@locked");
+	// door was unlocked in the past
+	code.lda_imm(0x00);
+	code.rts();
+
+	code.label("@locked");
+	// door still locked, let vanilla handle it
+	code.lda_abs(RAM::DoorKeyRequirement);
+	code.rts();
+
+	code.label("@shared_logic");
+	code.lda_abs(fh::RAM::CurrentROMBank);
+	code.pha();
+
+	code.ldx_imm(other_bank);
+	code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+	code.jsr(other_bank_main_addr);
+
+	code.pla();
+	code.tax();
+	code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+	code.rts();
+
+	const word set_flag_trampoline{
+		static_cast<word>(cpu_addr + code.label_position("@set_flag_trampoline"))
+	};
+	const word check_flag_trampoline{
+	static_cast<word>(cpu_addr + code.label_position("@check_flag_trampoline"))
+	};
+
+	const word result{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+
+	// install hooks
+	code.jsr(check_flag_trampoline);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_RunDoorRequirementHandler);
+
+	code.jsr(set_flag_trampoline);
+	code.nop(2);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_UnlockDoorWithKey_afterUse);
+
+	return result;
 }

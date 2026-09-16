@@ -29,6 +29,7 @@ namespace {
 		fh::GeneralHackLib::FogRules, fh::GeneralHackLib::DynamicTilesets,
 		fh::GeneralHackLib::PoisonPickup, fh::GeneralHackLib::TextSpeed,
 		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes, fh::GeneralHackLib::ItemScripts,
+		fh::GeneralHackLib::PermaDoors,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
@@ -73,6 +74,7 @@ namespace {
 		{ fh::GeneralHackLib::BugFixes, {} },
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data" }},
+		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

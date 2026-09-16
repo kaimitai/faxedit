@@ -731,7 +731,7 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 		throw std::runtime_error("General Hack ItemScripts is missing required element 'data'");
 
 	const auto data{ p_hack.split_twice_bytes("data", 2) };
-	if(data.size() > 32)
+	if (data.size() > 32)
 		throw std::runtime_error("Invalid item IDs");
 
 	std::map<byte, byte> item_to_script, item_to_script_extended;
@@ -1113,6 +1113,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::BugFixes:
 			install_BugFixes(patched_rom);
+			break;
+		case fh::GeneralHackLib::PermaDoors:
+			cpu_addr = install_PermaDoors(p_config, patched_rom, cpu_addr, hack, p_game);
 			break;
 		case fh::GeneralHackLib::ItemScripts:
 			cpu_addr = install_ItemScripts(p_config, patched_rom, cpu_addr, hack);
