@@ -370,6 +370,12 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&, bool p_wolfman) const;
+		word install_AtlasDevScreenTransition(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevFastBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevLandingTuck(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
 		// bank 12 general hacks
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

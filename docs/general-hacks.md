@@ -54,6 +54,9 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSmartMattock](#atlasdevsmartmattock)
   - [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol)
   - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
+  - [AtlasDevScreenBlink](#atlasdevscreenblink)
+  - [AtlasDevFastBlink](#atlasdevfastblink)
+  - [AtlasDevLandingTuck](#atlasdevlandingtuck)
 
 <hr>
 
@@ -1028,4 +1031,118 @@ change both dwarves.
 AtlasDevWolfmanControl
 AtlasDevSirGawaineControl
 AtlasDevWolfmanControl lunge=3 recover=12 flag=13
+```
+
+<hr>
+
+### AtlasDevScreenBlink
+
+Walking off the left or right side of a screen makes the stock game slide
+the next screen in, which takes about a second with everything frozen.
+Going up or down it blanks the screen and redraws it at once instead. This
+hack makes left and right do the same, so a horizontal screen change takes
+about a quarter of a second.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock slide.
+
+Without a flag two bytes in bank 15 change and no free space is used. With
+a flag, 15 bytes of bank 15 free space are used. No RAM is claimed. Every
+site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevScreenBlink
+AtlasDevScreenBlink flag=16
+```
+
+<hr>
+
+### AtlasDevFastBlink
+
+A screen change that blanks and redraws the screen takes about a quarter
+of a second in the stock game: going up or down, in an area without
+smooth scrolling, or left and right with AtlasDevScreenBlink. About half
+of it is waiting, a frame at a time, for the enemy graphics to reach the
+video chip and for the display to go dark. This hack turns the display
+off first and runs the same steps back to back, so a change takes about
+half as long. The screen that comes up is the same.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock change.
+
+Uses 68 bytes of bank 15 free space, or 105 with a flag, and rewrites 43
+bytes of stock code in place: the blank path at $DB91 and the two waits
+of the video queue at $CFCA and $CFF4, which become jumps to the new
+code. With the frame handlers on the two waits behave as before. No RAM
+is claimed. Every site is verified against its exact vanilla bytes before
+anything is written, and all of them are identical in the US, US rev A,
+EU and JP ROMs. AtlasDevScreenBlink checks the stock blank path when it
+installs, so list it before this hack. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevFastBlink
+AtlasDevScreenBlink flag=16
+AtlasDevFastBlink flag=24
+```
+
+<hr>
+
+### AtlasDevLandingTuck
+
+A short pose when the hero comes down from a jump. Vanilla snaps him
+upright on the first grounded frame; this holds a crouched frame for a
+few frames and then lets go. It is only how he is drawn. Nothing about
+movement, physics, damage or collision changes, and pressing jump or
+attack drops the pose on the same frame.
+
+The pose is not new art. Every gear group's jump frame is already a
+16x32 record, so the hack crops each one to its top 24 pixels and draws
+it eight pixels lower. That is a hero with his knees up, built from
+tiles the project already exports, so edited graphics follow
+automatically and no CHR, no XML frame and no tile budget is touched.
+Gear groups whose jump frames crop to the same bytes share one record.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `profile` | `medium` | `off`, `light`, `medium` or `heavy`: the pose is held 0, 3, 4 or 6 frames |
+| `flag` | | extended flag 0 to 247 that switches the pose on at runtime |
+| `mode` | | `vanilla` installs nothing |
+
+`profile=off` installs nothing at all, so a hack listed that way leaves
+the ROM byte identical. `flag=n` lets a script turn the pose on and off
+with `SetFlag` and `ClearFlag`; while the flag is clear the hero lands
+the way he always did.
+
+Uses 299 bytes of bank 15 free space with vanilla art, 306 with a
+flag. Roughly a third of that is the cropped records themselves, so a
+project whose eight gear groups share more art uses less. It rewrites
+seven instructions in place: the per frame tick at $E0D3, the pose
+picker at $EC43, the weapon and shield drawers at $B875 and $B9D1 in
+bank 14, and the three places that end a life or a screen, $D127, $E0AA
+and $D8F4. One RAM byte at $04FE holds the state: bit 7 says the hero
+was in the air last frame, bit 6 says the pose is up, and the low three
+bits count it down. $04FE and $04FF are the last two bytes of the free
+tail and the only pair nothing else has taken. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the
+US, US rev A, EU and JP ROMs. It reads the player frame directory the
+project exported, so it must run after the sprite graphics are written,
+which it does. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevLandingTuck
+AtlasDevLandingTuck profile=light
+AtlasDevLandingTuck profile=heavy flag=24
 ```
