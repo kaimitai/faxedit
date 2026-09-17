@@ -1455,6 +1455,12 @@ void fe::xml::save_settings_xml(const std::string& p_filepath, const fe::EditorS
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_FOG, p_settings.m_patch_fog);
 	add_setting(n_settings, c::SETTINGS_PARAM_PATCH_BG_GFX, p_settings.m_patch_bg_gfx);
 
+	add_setting(n_settings, c::SETTINGS_PARAM_PRE_PATCH_ISCRIPTS, p_settings.m_pre_patch_iscripts);
+	add_setting(n_settings, c::SETTINGS_PARAM_PRE_PATCH_BSCRIPTS, p_settings.m_pre_patch_bscripts);
+	add_setting(n_settings, c::SETTINGS_PARAM_PRE_PATCH_MSCRIPTS, p_settings.m_pre_patch_mscripts);
+	add_setting(n_settings, c::SETTINGS_PARAM_PRE_PATCH_MISC, p_settings.m_pre_patch_misc);
+	add_setting(n_settings, c::SETTINGS_PARAM_PRE_PATCH_MML, p_settings.m_pre_patch_mml);
+
 	add_setting(n_settings, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 	add_setting(n_settings, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);
 	add_setting(n_settings, c::SETTINGS_PARAM_ENABLE_IPS_BUTTON, p_settings.m_enable_ips_button);
@@ -1522,6 +1528,12 @@ void fe::xml::load_settings_xml(const std::string& p_filepath, fe::EditorSetting
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_SCENES, p_settings.m_patch_scenes);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_FOG, p_settings.m_patch_fog);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_PATCH_BG_GFX, p_settings.m_patch_bg_gfx);
+
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PRE_PATCH_ISCRIPTS, p_settings.m_pre_patch_iscripts);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PRE_PATCH_BSCRIPTS, p_settings.m_pre_patch_bscripts);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PRE_PATCH_MSCRIPTS, p_settings.m_pre_patch_mscripts);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PRE_PATCH_MISC, p_settings.m_pre_patch_misc);
+		read_setting_bool(n_root, c::SETTINGS_PARAM_PRE_PATCH_MML, p_settings.m_pre_patch_mml);
 
 		read_setting_bool(n_root, c::SETTINGS_PARAM_SHOW_DOOR_PADDING, p_settings.m_door_pad_byte);
 		read_setting_bool(n_root, c::SETTINGS_PARAM_ENABLE_CONFIG_DUMP, p_settings.m_enable_config_dump);

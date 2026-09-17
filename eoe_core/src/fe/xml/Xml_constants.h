@@ -49,6 +49,12 @@ namespace fe {
 			constexpr char SETTINGS_PARAM_PATCH_FOG[]{ "patch_fog" };
 			constexpr char SETTINGS_PARAM_PATCH_BG_GFX[]{ "patch_bg_gfx" };
 
+			constexpr char SETTINGS_PARAM_PRE_PATCH_ISCRIPTS[]{ "pre_patch_iscripts" };
+			constexpr char SETTINGS_PARAM_PRE_PATCH_BSCRIPTS[]{ "pre_patch_bscripts" };
+			constexpr char SETTINGS_PARAM_PRE_PATCH_MSCRIPTS[]{ "pre_patch_mscripts" };
+			constexpr char SETTINGS_PARAM_PRE_PATCH_MISC[]{ "pre_patch_misc" };
+			constexpr char SETTINGS_PARAM_PRE_PATCH_MML[]{ "pre_patch_mml" };
+
 			constexpr char SETTINGS_PARAM_SHOW_BLD_SPRITE_SETS[]{ "show_building_sprite_sets" };
 			constexpr char SETTINGS_PARAM_SHOW_GRID[]{ "show_grid" };
 			constexpr char SETTINGS_PARAM_ANIMATE_SPRITES[]{ "animate_sprites" };

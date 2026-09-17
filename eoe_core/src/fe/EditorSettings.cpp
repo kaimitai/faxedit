@@ -43,6 +43,12 @@ void fe::EditorSettings::set_patching_defaults(void) {
 	m_patch_scenes = true;
 	m_patch_fog = true;
 	m_patch_bg_gfx = true;
+	// pre-patch script builds
+	m_pre_patch_iscripts = true;
+	m_pre_patch_bscripts = true;
+	m_pre_patch_mscripts = false;
+	m_pre_patch_misc = true;
+	m_pre_patch_mml = true;
 }
 
 // TODO: decide if this should be enabled front-end to

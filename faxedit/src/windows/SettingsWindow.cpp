@@ -50,6 +50,13 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			ui::imgui_checkbox("Disallow cinematic data overflow", m_settings.throw_on_cinematic_overflow,
 				"Whether to fail patching if cinematic data could potentially overwrite script data (see documentation)");
 
+			ImGui::SeparatorText("Build Existing Script Files When Patching ROM");
+			ui::imgui_checkbox("iScripts", m_settings.m_pre_patch_iscripts);
+			ui::imgui_checkbox("bScripts", m_settings.m_pre_patch_bscripts);
+			ui::imgui_checkbox("mScripts", m_settings.m_pre_patch_mscripts);
+			ui::imgui_checkbox("Misc. data", m_settings.m_pre_patch_misc);
+			ui::imgui_checkbox("MML", m_settings.m_pre_patch_mml);
+
 			ImGui::SeparatorText("Default Patching Settings");
 			if (ui::imgui_button("Reset to Defaults###patch", 4))
 				m_settings.set_patching_defaults();
