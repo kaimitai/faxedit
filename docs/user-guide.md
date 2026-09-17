@@ -1241,7 +1241,7 @@ This screen allows fine-grained control of what gets patched when writing ROM fi
 
 The first 15 checkboxed just control what gets patched.
 
-The last checkbox, "Disallow cinematic data overflow", determines whether or not to fail patching on potential data overflow. (enabled by default)
+The checkbox "Disallow cinematic data overflow" determines whether or not to fail patching on potential data overflow. (enabled by default)
 
 If the cinematic animation frame graphics are expanded, they will spill into the free space in bank 12. This space is also potentially used by iScript bytecode. Configuration constant **iscript_data_rg2_start** defines where the free space region for overflowing iScript bytecode code can be stored, and if cinematic data patching needs to use this space, it will fail by default. The error message will tell you a minimum value for **iscript_data_rg2_start** which would allow cinematic data patching, so that you can make a configuration override.
 
@@ -1250,6 +1250,18 @@ There is quite a lot of free space at the end of bank 12, so letting iScript byt
 - Make a configuration override with an increased value for **iscript_data_rg2_start**
 - Re-assemble your scripts with this new constant active. The script code will now be relocated to start later in the bank.
 - Patch your cinematic data once again now that you are sure it will not overwrite any scripts.
+
+The options under the heading `Build Existing Script Files When Patching ROM` enables automatically building existing script source files before **Patch ROM** or **Save IPS** is run. This keeps the patched output in sync with the source files without requiring them to be assembled or compiled manually first.
+
+Each checkbox controls one source type. If enabled, the corresponding source file is built when it exists; if no source file exists, it is simply skipped. A build error will stop the ROM or IPS from being generated.
+
+* **iScripts** — Assemble the iScript source file
+* **bScripts** — Assemble the bScript source file
+* **Miscellaneous** — Build the miscellaneous data source file
+* **MML** — Compile the MML music source file
+* **mScripts** — Assemble the low-level music script source file
+
+If both **MML** and **mScripts** are enabled and both music source files exist, mScripts are assembled first and MML is compiled afterward, so the MML output takes precedence.
 
 ### Rendering
 
