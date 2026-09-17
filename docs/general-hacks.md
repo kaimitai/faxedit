@@ -178,23 +178,23 @@ FogRules rules=0:1+0:3+0:5+6:3+7
 
 Allows individual screens to override their world's normal tileset. Overrides are given as `world:screen:tileset` entries separated by `+`. Screens without an entry continue to use the tileset selected by the normal game logic.
 
-The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` and `addr` can place them in another PRG bank instead.
+The lookup code and data are placed with the rest of the hack by default. For ROMs where fixed-bank space is limited, `bank` can place them in another PRG bank instead. The address can either be specified explicitly with `addr`, or automatically deduced from trailing free space in that bank.
 
 The transition hooks are individually configurable. Hooks which are disabled are not installed and their trampolines do not consume ROM space. Entering buildings is disabled by default because buildings already have their own per-screen tileset selection mechanism via the Building Scene objects.
 
 The tileset does not change during normal scrolling transitions, since reloading CHR while the transition is visible would not be seamless.
 
-| parameter | default | meaning |
-| --- | --- | --- |
-| `data` | none, required | `world:screen:tileset` entries separated by `+`
-| `bank` | 15 | PRG bank containing the lookup code and data table |
-| `addr` | none | CPU address of the lookup code when `bank` is not 15 |
-| `enter_building` | `false` | apply overrides when entering buildings |
-| `exit_building` | `true` | apply overrides when exiting buildings |
-| `sameworld` | `true` | apply overrides to same-world doors and screen transitions |
-| `start_screen` | `true` | apply an override when loading the starting screen |
-| `otherworld` | `true` | apply overrides to otherworld-transitions |
-| `stage_doors` | `true` | apply overrides to stage-door transitions |
+| parameter        | default          | meaning                                                    |
+| ---------------- | ---------------- | ---------------------------------------------------------- |
+| `data`           | none, required   | `world:screen:tileset` entries separated by `+`            |
+| `bank`           | `15`             | PRG bank containing the lookup code and data table         |
+| `addr`           | none, calculated | CPU address of the lookup code when using another bank     |
+| `enter_building` | `false`          | apply overrides when entering buildings                    |
+| `exit_building`  | `true`           | apply overrides when exiting buildings                     |
+| `sameworld`      | `true`           | apply overrides to same-world doors and screen transitions |
+| `start_screen`   | `true`           | apply an override when loading the starting screen         |
+| `otherworld`     | `true`           | apply overrides to otherworld-transitions                  |
+| `stage_doors`    | `true`           | apply overrides to stage-door transitions                  |
 
 For normal use, no placement parameters are necessary:
 
@@ -205,10 +205,16 @@ DynamicTilesets data=0:1:6+2:2:5+2:3:5+7:0:5
 To keep the lookup code and data in another bank:
 
 ```text
+DynamicTilesets bank=28 data=0:1:6+2:2:5+2:3:5+7:0:5
+```
+
+Free space in the selected bank is automatically deduced when `addr` is omitted. An explicit address can still be given when needed:
+
+```text
 DynamicTilesets bank=28 addr=0x8000 data=0:1:6+2:2:5+2:3:5+7:0:5
 ```
 
-For expanded ROMs, it is reasonable to use `bank=28` and `addr=$8000` unless something else was deliberately put there. By default bank 29 is used for the doubled tileset collection, and bank 30 for dynamic tilemap changes.
+For expanded ROMs, bank 28 is a reasonable choice unless something else was deliberately put there. By default bank 29 is used for the doubled tileset collection, and bank 30 for dynamic tilemap changes.
 
 Hooks can be disabled when a project does not need those transition types:
 

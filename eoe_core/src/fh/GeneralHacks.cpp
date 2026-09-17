@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "fe/Game.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include "AtlasDevFrameScheduler.h"
@@ -450,7 +451,12 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	const std::size_t world_count{ p_game ? p_game->m_chunks.size() : 8 };
 	const byte loader_bank{ p_hack.byte_or("bank", p_bank) };
 	const bool local_loader{ loader_bank == p_bank };
-	const word loader_addr{ local_loader ? cpu_addr : p_hack.get_word("addr") };
+	const word loader_addr{
+	local_loader ?
+		cpu_addr : p_hack.has_param("addr") ?
+			p_hack.get_word("addr") :
+			fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, loader_bank, 0xff, 16)
+	};
 
 	const bool opt_enter_building{ p_hack.bool_or("enter_building", false) };
 	const bool opt_exit_building{ p_hack.bool_or("exit_building", true) };

@@ -283,7 +283,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 			cpu_addr :
 			p_hack.has_param("addr") ?
 				p_hack.get_word("addr") :
-				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank)
+				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
 	};
 
 	const auto [main_entry_addr, next_addr] { install_PermaDoors_FreeBankInstall(p_rom, bank, install_addr, p_game) };
