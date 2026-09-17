@@ -5,6 +5,7 @@
 #include "common/klib/Asm6502.h"
 #include <format>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -241,7 +242,7 @@ namespace {
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	word install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+	std::pair<word, word> install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 		const fe::Game* p_game) {
 		const auto l_door_flag_table{ make_door_flag_table(p_game) };
 
@@ -269,21 +270,26 @@ namespace {
 		cpu_addr = install_PermaDoors_Main(p_rom, p_bank,
 			main_entry_addr, table_walker_addr, set_flag_addr, check_flag_addr);
 
-		return main_entry_addr;
+		return std::make_pair(main_entry_addr, cpu_addr);
 	}
 
 }
 
 word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
-	const byte other_bank{ p_hack.get_byte("bank") };
-	const word other_addr{ p_hack.has_param("addr") ?
-		p_hack.get_word("addr") :
-		fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, other_bank)
+	const byte bank{ p_hack.byte_or("bank", 15) };
+	const word install_addr{
+		bank == 15 ?
+			cpu_addr :
+			p_hack.has_param("addr") ?
+				p_hack.get_word("addr") :
+				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank)
 	};
 
-	const word other_bank_main_addr{ install_PermaDoors_FreeBankInstall(p_rom,
-		other_bank, other_addr, p_game) };
+	const auto [main_entry_addr, next_addr] { install_PermaDoors_FreeBankInstall(p_rom, bank, install_addr, p_game) };
+
+	if (bank == 15)
+		cpu_addr = next_addr;
 
 	klib::Asm6502 code;
 
@@ -312,17 +318,22 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 	code.rts();
 
 	code.label("@shared_logic");
-	code.lda_abs(fh::RAM::CurrentROMBank);
-	code.pha();
+	if (bank == 15) {
+		code.jmp(main_entry_addr);
+	}
+	else {
+		code.lda_abs(fh::RAM::CurrentROMBank);
+		code.pha();
 
-	code.ldx_imm(other_bank);
-	code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-	code.jsr(other_bank_main_addr);
+		code.ldx_imm(bank);
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.jsr(main_entry_addr);
 
-	code.pla();
-	code.tax();
-	code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-	code.rts();
+		code.pla();
+		code.tax();
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.rts();
+	}
 
 	const word set_flag_trampoline{
 		static_cast<word>(cpu_addr + code.label_position("@set_flag_trampoline"))

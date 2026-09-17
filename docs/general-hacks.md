@@ -403,18 +403,22 @@ Items from index 0x16 and up can be stored and displayed in the inventory, but h
 
 Keeps doors unlocked after they have been opened with a key. An alternative to the script-based approach described in [Advanced Modding](./advanced-modding.md).
 
-| parameter | default  | meaning                     |
-| --------- | -------- | --------------------------- |
-| `bank`    | none, required | Which bank to install the majority of the hack in |
-| `addr`    | none, calculated | Which cpu address in that bank to install the hack in |
+| parameter | default          | meaning                                               |
+| --------- | ---------------- | ----------------------------------------------------- |
+| `bank`    | 15               | Which bank to install the majority of the hack in     |
+| `addr`    | none, calculated | Which CPU address in that bank to install the hack in |
 
-`bank` should probably be 9 for vanilla ROMs, and for example 28 for expanded ROMs.
+If `bank` is omitted, the entire hack is installed in the normal free-space range in bank 15. Bank 15 space is limited, however, so using another bank may be preferable if space is available.
 
-If `addr` is not given, free space will be automically deduced, if possible.
+Bank 9 is a good choice for vanilla ROMs, while expanded ROMs can use one of their additional banks, for example bank 28.
+
+If `addr` is not given for another bank, free space will be automatically deduced, if possible. `addr` is ignored when using bank 15.
 
 ```text
 PermaDoors bank=28
 ```
+
+This hack is currently not compatible with [AtlasDevSmartKeys](#atlasdevsmartkeys).
 
 ### AtlasDevFrameScheduler
 
