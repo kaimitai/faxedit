@@ -52,6 +52,8 @@ void fe::MainWindow::save_xml(void) {
 void fe::MainWindow::patch_nes_rom(bool p_in_place) {
 	try {
 		const auto tmp_config{ hot_reload_config() };
+		build_scripts_for_patch(tmp_config);
+
 		std::string l_out_file{ p_in_place ? m_loaded_rom_path : get_nes_path() };
 		fe::game::patch_rom_to_file(tmp_config, m_game.value(),
 			l_out_file, get_rom_patch_options(m_settings), m_msg_callback);
@@ -130,6 +132,7 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 
 			try {
 				const auto tmp_config{ hot_reload_config() };
+				build_scripts_for_patch(tmp_config);
 				fe::game::generate_ips_to_file(tmp_config, m_game.value(), get_ips_path(),
 					get_rom_patch_options(m_settings), m_msg_callback);
 			}

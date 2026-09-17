@@ -341,6 +341,16 @@ namespace fe {
 		// debug and patching functions
 		void dump_debug_data(bool p_complete = false);
 		void generate_extended_flag_to_door_map_asm(const fe::Game& p_game, bool incl_defensive_returns) const;
+		void assemble_iscripts(const fe::Config& p_config);
+		void assemble_bscripts(const fe::Config& p_config);
+		void assemble_mscripts(const fe::Config& p_config);
+		void build_misc(const fe::Config& p_config);
+		void compile_mml(const fe::Config& p_config);
+		void build_scripts_for_patch(const fe::Config& p_config);
+		std::filesystem::path get_script_dir(void) const;
+		std::string get_script_path(const std::string& p_name, const std::string& p_extension) const;
+		std::string get_mml_path(void) const;
+		std::string get_script_file_prefix(const std::string& p_name) const;
 
 		// scripting helpers
 		void refresh_rom_caches(const std::vector<byte>& p_rom, bool p_report = true);

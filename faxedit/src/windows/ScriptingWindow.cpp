@@ -13,26 +13,6 @@ void fe::MainWindow::draw_scripting_window(void) {
 	static bool ls_include_all_sprites{ false };
 	static bool ls_lilypond_percussion{ false };
 
-	const auto get_script_dir = [this](void) -> std::filesystem::path {
-		const std::filesystem::path dir{ m_path / std::format("{}-scripts", m_filename) };
-		klib::file::create_directories(dir);
-		return dir;
-		};
-
-	const auto get_script_path = [this, &get_script_dir](const std::string& p_name,
-		const std::string& p_extension) -> std::string {
-			return (get_script_dir() /
-				(this->m_filename + "-" + p_name + "." + p_extension)).string();
-		};
-
-	const auto get_mml_path = [this, &get_script_dir]() -> std::string {
-		return (get_script_dir() / (this->m_filename + ".mml")).string();
-		};
-
-	const auto get_script_file_prefix = [&get_script_dir](const std::string& p_name) -> std::string {
-		return (get_script_dir() / p_name).string();
-		};
-
 	const bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
 	ui::imgui_screen("Scripting",
@@ -51,27 +31,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("iScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble iScripts from asm-file and patch ROM")) try {
-				const auto tmp_config{ hot_reload_config() };
-				const auto l_opcode_info{ fe::script::get_iscript_opcode_info(tmp_config) };
-
-				auto xrom{
-					fe::script::asm_iscripts(tmp_config,
-						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_script_path("iscript", "asm")),
-						l_opcode_info,
-						false,
-						m_msg_callback)
-				};
-
-				m_game->m_rom_data = std::move(xrom);
-				m_cache.iscript_opcode_info = l_opcode_info;
-
-				refresh_screen_event_handler_cache(m_game->m_rom_data);
-
-				// cannot reasonably fail as assembly already verified the script layer from all entrypoints
-				if (!refresh_iscript_cache(m_game->m_rom_data))
-					throw std::runtime_error("iScript assembly succeeded, but GUI cache refresh failed");
-
+				assemble_iscripts(hot_reload_config());
 				add_message("iScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -101,17 +61,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("bScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble bScripts from asm-file and patch ROM")) try {
-
-				auto xrom{
-					fe::script::asm_bscripts(m_config,
-						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_script_path("bscript", "asm")),
-						false,
-						m_msg_callback)
-				};
-
-				m_game->m_rom_data = std::move(xrom);
-
+				assemble_bscripts(m_config);
 				add_message("bScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -137,20 +87,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("mScript Assembly");
 
 			if (ui::imgui_button("Assemble", 2, "Assemble mScripts from asm-file and patch ROM")) try {
-
-				auto xrom{
-					fe::script::asm_mscripts(m_config,
-						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_script_path("mscript", "asm")),
-						m_msg_callback)
-				};
-
-				m_game->m_rom_data = std::move(xrom);
-
-				// this should truly be impossible
-				if (!refresh_mscript_cache(m_game->m_rom_data))
-					throw std::runtime_error("mScript assembly succeeded, but GUI cache refresh failed");
-
+				assemble_mscripts(m_config);
 				add_message("mScript assembly succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -179,16 +116,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("Miscellaneous Build");
 
 			if (ui::imgui_button("Build", 2, "Build misc data from txt-file and patch ROM")) try {
-
-				auto xrom{
-					fe::script::build_misc(m_config,
-						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_script_path("misc", "txt")),
-						m_msg_callback)
-				};
-
-				m_game->m_rom_data = std::move(xrom);
-
+				build_misc(m_config);
 				add_message("Miscellaneous data build succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -217,20 +145,7 @@ void fe::MainWindow::draw_scripting_window(void) {
 			ImGui::SeparatorText("MML Compilation");
 
 			if (ui::imgui_button("Compile", 2, "Compile music from MML-file and patch ROM")) try {
-
-				auto xrom{
-					fe::script::compile_mml(m_config,
-						m_game->m_rom_data,
-						klib::file::read_file_as_strings(get_mml_path()),
-						m_msg_callback)
-				};
-
-				m_game->m_rom_data = std::move(xrom);
-
-				// this should truly be impossible
-				if (!refresh_mscript_cache(m_game->m_rom_data))
-					throw std::runtime_error("MML compilation succeeded, but GUI cache refresh failed");
-
+				compile_mml(m_config);
 				add_message("MML compilation succeeded", fe::MsgType::Success);
 			}
 			catch (const std::exception& ex) {
@@ -308,4 +223,121 @@ void fe::MainWindow::draw_scripting_window(void) {
 	}
 
 	ImGui::End();
+}
+
+void fe::MainWindow::assemble_iscripts(const fe::Config& p_config) {
+	const auto l_opcode_info{ fe::script::get_iscript_opcode_info(p_config) };
+
+	auto xrom{
+		fe::script::asm_iscripts(p_config,
+			m_game->m_rom_data,
+			klib::file::read_file_as_strings(get_script_path("iscript", "asm")),
+			l_opcode_info,
+			false,
+			m_msg_callback)
+	};
+
+	m_game->m_rom_data = std::move(xrom);
+	m_cache.iscript_opcode_info = l_opcode_info;
+
+	refresh_screen_event_handler_cache(m_game->m_rom_data);
+
+	// cannot reasonably fail as assembly already verified the script layer from all entrypoints
+	if (!refresh_iscript_cache(m_game->m_rom_data))
+		throw std::runtime_error("iScript assembly succeeded, but GUI cache refresh failed");
+}
+
+void fe::MainWindow::assemble_bscripts(const fe::Config& p_config) {
+	auto xrom{
+	fe::script::asm_bscripts(p_config,
+		m_game->m_rom_data,
+		klib::file::read_file_as_strings(get_script_path("bscript", "asm")),
+		false,
+		m_msg_callback)
+	};
+
+	m_game->m_rom_data = std::move(xrom);
+}
+
+void fe::MainWindow::assemble_mscripts(const fe::Config& p_config) {
+	auto xrom{
+	fe::script::asm_mscripts(p_config,
+		m_game->m_rom_data,
+		klib::file::read_file_as_strings(get_script_path("mscript", "asm")),
+		m_msg_callback)
+	};
+
+	m_game->m_rom_data = std::move(xrom);
+
+	// this should truly be impossible
+	if (!refresh_mscript_cache(m_game->m_rom_data))
+		throw std::runtime_error("mScript assembly succeeded, but GUI cache refresh failed");
+}
+
+void fe::MainWindow::build_misc(const fe::Config& p_config) {
+	auto xrom{
+		fe::script::build_misc(p_config,
+			m_game->m_rom_data,
+			klib::file::read_file_as_strings(get_script_path("misc", "txt")),
+			m_msg_callback)
+	};
+
+	m_game->m_rom_data = std::move(xrom);
+}
+
+void fe::MainWindow::compile_mml(const fe::Config& p_config) {
+	auto xrom{
+		fe::script::compile_mml(p_config,
+			m_game->m_rom_data,
+			klib::file::read_file_as_strings(get_mml_path()),
+			m_msg_callback)
+	};
+
+	m_game->m_rom_data = std::move(xrom);
+
+	// this should truly be impossible
+	if (!refresh_mscript_cache(m_game->m_rom_data))
+		throw std::runtime_error("MML compilation succeeded, but GUI cache refresh failed");
+}
+
+void fe::MainWindow::build_scripts_for_patch(const fe::Config& p_config) {
+	if (m_settings.m_pre_patch_mscripts) {
+		if (std::filesystem::exists(get_script_path("mscript", "asm")))
+			assemble_mscripts(p_config);
+	}
+	if (m_settings.m_pre_patch_mml) {
+		if (std::filesystem::exists(get_mml_path()))
+			compile_mml(p_config);
+	}
+	if (m_settings.m_pre_patch_misc) {
+		if (std::filesystem::exists(get_script_path("misc", "txt")))
+			build_misc(p_config);
+	}
+	if (m_settings.m_pre_patch_bscripts) {
+		if (std::filesystem::exists(get_script_path("bscript", "asm")))
+			assemble_bscripts(p_config);
+	}
+	if (m_settings.m_pre_patch_iscripts) {
+		if (std::filesystem::exists(get_script_path("iscript", "asm")))
+			assemble_iscripts(p_config);
+	}
+}
+
+std::filesystem::path fe::MainWindow::get_script_dir(void) const {
+	const std::filesystem::path dir{ m_path / std::format("{}-scripts", m_filename) };
+	klib::file::create_directories(dir);
+	return dir;
+}
+
+std::string fe::MainWindow::get_script_path(const std::string& p_name, const std::string& p_extension) const {
+	return (get_script_dir() /
+		(m_filename + "-" + p_name + "." + p_extension)).string();
+}
+
+std::string fe::MainWindow::get_mml_path(void) const {
+	return (get_script_dir() / (m_filename + ".mml")).string();
+}
+
+std::string fe::MainWindow::get_script_file_prefix(const std::string& p_name) const {
+	return (get_script_dir() / p_name).string();
 }
