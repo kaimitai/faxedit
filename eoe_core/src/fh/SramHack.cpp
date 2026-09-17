@@ -1,5 +1,6 @@
 #include "HackManager.h"
 #include "fh_constants.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
@@ -486,6 +487,6 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	install_SRAM_ShowMantra(p_config, p_rom, save_addr);
 	install_SRAM_ChooseContinue(p_config, p_rom, load_addr);
 
-	// update SRAM-bit in the ROM header
-	p_rom.at(6) |= 0x02;
+	// update SRAM info in the ROM header
+	fe::ROM_Manager::enable_sram(p_rom);
 }

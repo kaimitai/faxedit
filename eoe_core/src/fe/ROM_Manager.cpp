@@ -1030,3 +1030,20 @@ std::vector<std::pair<std::size_t, std::size_t>> fe::ROM_Manager::parse_bank_15_
 bool fe::ROM_Manager::is_sram_enabled(const std::vector<byte>& p_rom) {
 	return p_rom.at(6) & 0x02;
 }
+
+void fe::ROM_Manager::enable_sram(std::vector<byte>& p_rom) {
+	constexpr byte BATTERY_BACKED_PRG_RAM{ 0x02 };
+	constexpr byte NES_2_HEADER_MASK{ 0x0c };
+	constexpr byte NES_2_HEADER_VALUE{ 0x08 };
+	constexpr byte PRG_RAM_MASK{ 0x0f };
+	constexpr byte PRG_NVRAM_8K{ 0x70 };
+
+	const bool is_nes_2{ (p_rom.at(7) & NES_2_HEADER_MASK) == NES_2_HEADER_VALUE };
+
+	// mark PRG-RAM as battery-backed
+	p_rom.at(6) |= BATTERY_BACKED_PRG_RAM;
+
+	// NES 2.0 additionally specifies the PRG-NVRAM size
+	if (is_nes_2)
+		p_rom.at(10) = (p_rom.at(10) & PRG_RAM_MASK) | PRG_NVRAM_8K;
+}
