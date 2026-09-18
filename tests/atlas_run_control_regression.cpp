@@ -16,6 +16,9 @@
 //   python3 tools/build_run_control.py --emit-hex --org 0xfdbe
 //   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --mode instant --walk-cycle 4
 //   python3 tools/build_run_control.py --emit-hex --org 0xfe5a --kind 135   (ORG + the 156 byte scheduler core)
+//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --tap hold
+//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --tap hold --mode instant --walk-cycle 2
+//   python3 tools/build_run_control.py --emit-hex --org 0xfe5a --kind 135 --tap hold
 namespace {
 	constexpr word ORG{ 0xfdbe };
 	constexpr std::size_t ROM_SIZE{ 0x40010 };
@@ -41,6 +44,17 @@ namespace {
 		"4cc2fea9008df604a5a429df85a460205afed052adf604104da5a42905d014a5162901f008a5a42940d008f027a5a429"
 		"40d021a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa3860adf604297f8df604a98085a9"
 		"a90185aa3860a5a9c980a5aae90160" };
+
+	const std::string GOLDEN_HOLD{
+		"a5162903f008a9808df6044c7fe2a9008df6044c7fe2a5a42920f005a9008df604a5a429df85a460"
+		"adf604102da5a9c980a5aae902b021a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38603860a5a9c980a5aae90160" };
+	const std::string GOLDEN_HOLD_INSTANT_WC2{
+		"a5162903f00ea9808df604a98085a9a90285aa60a9008df6044c7fe2a5a42920f005a9008df604a5a429df85a460"
+		"adf604102fa5a9c980a5aae902b023a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38e6a3603860a5a9c980a5aae90160" };
+	const std::string GOLDEN_HOLD_KIND87{
+		"add804c987f00cadd904c987f005adda04c98760205afed013a5162903f008a9808df6044c7fe2a9008df6044c7fe2"
+		"205afed006a5a42920f005a9008df604a5a429df85a460205afed032adf604102da5a9c980a5aae902b021a5a918691085a9"
+		"a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38603860a5a9c980a5aae90160" };
 
 	void require(bool c, const std::string& m) { if (!c) throw std::runtime_error(m); }
 
@@ -105,6 +119,24 @@ namespace {
 		require(hex_at(rom, ORG, n) == GOLDEN_INSTANT_WC4, "instant body differs: " + hex_at(rom, ORG, n));
 	}
 
+	void test_hold_matches_the_python_goldens() {
+		auto rom{ vanilla_rom() };
+		const auto n{ install(rom, "AtlasDevRunControl tap=hold") };
+		require(n == GOLDEN_HOLD.size() / 2, "hold body size " + std::to_string(n));
+		require(hex_at(rom, ORG, n) == GOLDEN_HOLD, "hold body differs: " + hex_at(rom, ORG, n));
+		require(hex_at(rom, 0xe1d5, 3) == op_to(0x20, ORG) && hex_at(rom, 0xe226, 3) == op_to(0x20, ORG),
+			"hold: both start sites share the one stub");
+		auto rom2{ vanilla_rom() };
+		const auto n2{ install(rom2, "AtlasDevRunControl tap=hold mode=instant walk_cycle=2") };
+		require(n2 == GOLDEN_HOLD_INSTANT_WC2.size() / 2, "hold instant body size " + std::to_string(n2));
+		require(hex_at(rom2, ORG, n2) == GOLDEN_HOLD_INSTANT_WC2, "hold instant body differs: " + hex_at(rom2, ORG, n2));
+		auto rom3{ vanilla_rom() };
+		const auto n3{ install(rom3, "AtlasDevFrameScheduler\nAtlasDevRunControl kind=135 tap=hold") };
+		require(n3 == fh::afs::CORE_SIZE + GOLDEN_HOLD_KIND87.size() / 2, "hold gated size " + std::to_string(n3));
+		const word body{ static_cast<word>(ORG + fh::afs::CORE_SIZE) };
+		require(hex_at(rom3, body, GOLDEN_HOLD_KIND87.size() / 2) == GOLDEN_HOLD_KIND87, "hold gated body differs");
+	}
+
 	void test_kind_gate_with_the_scheduler() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevFrameScheduler\nAtlasDevRunControl kind=135") };
@@ -123,7 +155,8 @@ namespace {
 		const auto pristine{ vanilla_rom() };
 		for (const char* spec : { "AtlasDevRunControl speed=12", "AtlasDevRunControl speed=65",
 			"AtlasDevRunControl accel=256", "AtlasDevRunControl window=0", "AtlasDevRunControl window=64",
-			"AtlasDevRunControl mode=dash", "AtlasDevRunControl walk_cycle=5", "AtlasDevRunControl kind=135" }) {
+			"AtlasDevRunControl mode=dash", "AtlasDevRunControl walk_cycle=5", "AtlasDevRunControl kind=135",
+			"AtlasDevRunControl tap=triple" }) {
 			auto rom{ vanilla_rom() };
 			bool threw{ false };
 			try { install(rom, spec); } catch (const std::exception&) { threw = true; }
@@ -162,6 +195,7 @@ int main() {
 	try {
 		test_default_matches_the_python_golden();
 		test_instant_walk_cycle_matches_the_python_golden();
+		test_hold_matches_the_python_goldens();
 		test_kind_gate_with_the_scheduler();
 		test_refusals_leave_the_rom_untouched();
 		test_coexists_with_the_movement_hacks_in_both_orders();
