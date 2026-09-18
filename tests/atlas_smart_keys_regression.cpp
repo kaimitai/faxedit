@@ -33,6 +33,13 @@ namespace {
 		"b00bbdad03ca9dad03e8e8d0f0cec603a984"
 		"2059f80c41824ce1ebb996eb2059f80c4182607d7c7b027e" };
 
+	// the two calls permadoors leaves in the gate when it is listed first
+	constexpr std::array<byte, 3> PD_CHECK{ 0x20, 0x34, 0x12 };
+	constexpr std::array<byte, 5> PD_SET{ 0x20, 0x78, 0x56, 0xea, 0xea };
+	// the remember stub at the cursor: save $03c1, call the set-flag routine,
+	// restore, unlock
+	const std::string STUB{ "adc1034820785668" "8dc1034ce1eb" };
+
 	void require(bool c, const std::string& m) { if (!c) throw std::runtime_error(m); }
 
 	std::vector<byte> vanilla_rom() {
@@ -104,6 +111,49 @@ namespace {
 		require(hex_at(rom, 0xeb2f, 7) == "ad2b04f00a0aa8", "the dispatcher moved");
 	}
 
+	std::vector<byte> permadoors_rom() {
+		auto rom{ vanilla_rom() };
+		auto put = [&](word cpu, const auto& bytes) {
+			const auto off{ klib::Asm6502::get_file_offset(15, cpu) };
+			for (std::size_t i{ 0 }; i < bytes.size(); ++i) rom[off + i] = bytes[i];
+		};
+		put(0xeb2f, PD_CHECK);
+		put(0xebd9, PD_SET);
+		return rom;
+	}
+
+	// with permadoors first, the carried path unlocks through a stub that
+	// remembers the door; everything else is as without it
+	void test_composes_with_permadoors() {
+		auto rom{ permadoors_rom() };
+		const auto used{ install(rom, "AtlasDevSmartKeys") };
+		require(used == 14, "the remember stub is 14 bytes");
+		require(hex_at(rom, ORG, 14) == STUB, "the remember stub");
+		std::string body{ BODY };
+		const auto at{ body.find("4ce1eb") };
+		require(at != std::string::npos, "the body's unlock jump");
+		body.replace(at, 6, "4ccefc");
+		require(hex_at(rom, 0xeb51, 75) == body, "body jumps to the stub");
+		require(hex_at(rom, 0xeb41, 10) == "50eb50eb50eb50eb50eb", "key entries");
+		require(hex_at(rom, 0xeb2f, 3) == "203412", "permadoors' check call was disturbed");
+		require(hex_at(rom, 0xebd9, 5) == "207856eaea", "permadoors' set call was disturbed");
+	}
+
+	// a call at $eb2f that is not permadoors' pair is refused, naming the hack
+	void test_refuses_a_foreign_hook() {
+		auto rom{ vanilla_rom() };
+		const auto off{ klib::Asm6502::get_file_offset(15, 0xeb2f) };
+		for (std::size_t i{ 0 }; i < PD_CHECK.size(); ++i) rom[off + i] = PD_CHECK[i];
+		bool threw{ false };
+		try { install(rom, "AtlasDevSmartKeys"); }
+		catch (const std::runtime_error& e) {
+			threw = true;
+			require(std::string{ e.what() }.find("PermaDoors") != std::string::npos,
+				"the refusal does not name PermaDoors");
+		}
+		require(threw, "a foreign hook at $eb2f was accepted");
+	}
+
 	void test_refusals() {
 		auto rom{ vanilla_rom() };
 		bool threw{ false };
@@ -138,6 +188,8 @@ int main() {
 		test_only_the_key_entries_move();
 		test_refusals();
 		test_refuses_a_disturbed_gate();
+		test_composes_with_permadoors();
+		test_refuses_a_foreign_hook();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_smart_keys_regression: " << e.what() << '\n';

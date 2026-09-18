@@ -427,7 +427,7 @@ If `addr` is not given for another bank, free space will be automatically deduce
 PermaDoors bank=28
 ```
 
-This hack is currently not compatible with [AtlasDevSmartKeys](#atlasdevsmartkeys).
+Works with [AtlasDevSmartKeys](#atlasdevsmartkeys) when PermaDoors is listed first: a door opened with a carried key is then remembered like any other.
 
 ### AtlasDevFrameScheduler
 
@@ -813,7 +813,15 @@ differs, is refused.
 
 `mode=vanilla` installs nothing. The default is `mode=carried`.
 
+With [PermaDoors](#permadoors) listed before it, a door opened with a
+carried key is remembered too: the carried path calls PermaDoors' remember
+routine through a 14-byte stub in general hack space, with the selected item
+kept, since that routine assumes the selected key was spent. Listed after
+AtlasDevSmartKeys, PermaDoors would never see a carried key, so that order is
+refused with a message saying which way round to list them.
+
 ```
+PermaDoors
 AtlasDevSmartKeys
 ```
 
