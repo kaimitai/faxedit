@@ -25,6 +25,9 @@ constexpr std::array OPS{fh::HackLib::AtlasDevSwapVar, fh::HackLib::AtlasDevRepe
     fh::HackLib::AtlasDevReadFlagToVar, fh::HackLib::AtlasDevWriteVarToMetatile,
     fh::HackLib::AtlasDevRandomVar};
 std::size_t file(word cpu) { return 0x28010 + cpu; }
+// the iscript entry the variable reset displaces: a fixed address since rom_iscripts_begin
+// was removed (3120ce0), so a configured value no longer moves it
+constexpr word BEGIN{0x8242};
 word read_word(const Bytes& rom, std::size_t at) { return static_cast<word>(rom.at(at) | rom.at(at + 1) << 8); }
 void put_word(Bytes& rom, word at, word value) { rom[file(at)] = value & 255; rom[file(at) + 1] = value >> 8; }
 std::size_t fixed(std::size_t file_offset) { // bank-15 mirror: $C000-$FFFF lives at the PRG tail
@@ -137,7 +140,7 @@ struct Fixture {
             {"hack_script_var_ram_addr", s.vars}, {"hack_script_var_count", s.count},
             {"rom_iscripts_loadbyte", s.helpers}, {"rom_iscripts_skipaddrandinvoke", s.helpers + 0x40U},
             {"rom_iscripts_jumptonextaddr", s.helpers + 0x80U}, {"rom_iscripts_invokenextaction", s.helpers + 0xc0U},
-            {"rom_iscripts_begin", s.helpers + 0x100U}, {"hack_clear_persistent_flags", s.clear_flags}})
+            {"hack_clear_persistent_flags", s.clear_flags}})
             out << "<const name=\"" << key << "\" value=\"" << value << "\"/>";
         out << "</consts></eoe_config>"; out.close(); check(bool(out), "authored configuration write");
         return fe::Config(EOE_TEST_CONFIG_PATH, path.string(), rom, "us");
@@ -161,7 +164,7 @@ Image install(Fixture& fixture, Settings settings, word origin, const std::vecto
             || (i >= file(0x8277) && i < file(0x8279))
             || (needs_flags && fixed(i) >= 0x3c950 && fixed(i) < 0x3c978)
             || (needs_flags && fixed(i) >= 0x3f800 && fixed(i) < 0x3f880)
-            || (i >= file(settings.helpers + 0x100) && i < file(settings.helpers + 0x106)),
+            || (i >= file(BEGIN) && i < file(BEGIN + 6)),
             "installer changed an unowned byte at cpu " + std::to_string(i - 0x28010));
     return image;
 }

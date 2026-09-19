@@ -25,6 +25,9 @@ void check(bool value, const std::string& why) {
 constexpr std::array OPS{fh::HackLib::AtlasDevIfEffectActive, fh::HackLib::AtlasDevGetEffectTime,
     fh::HackLib::AtlasDevClearTimedEffect, fh::HackLib::AtlasDevClearTimedEffects};
 std::size_t file(word cpu) { return 0x28010 + cpu; }
+// the iscript entry the variable reset displaces: a fixed address since rom_iscripts_begin
+// was removed (3120ce0), so a configured value no longer moves it
+constexpr word BEGIN{0x8242};
 word read_word(const Bytes& rom, std::size_t at) { return static_cast<word>(rom.at(at) | rom.at(at + 1) << 8); }
 void put_word(Bytes& rom, word at, word value) { rom[file(at)] = value & 255; rom[file(at) + 1] = value >> 8; }
 
@@ -125,7 +128,7 @@ struct Fixture {
             {"hack_script_var_ram_addr", s.vars}, {"hack_script_var_count", s.count},
             {"rom_iscripts_loadbyte", s.helpers}, {"rom_iscripts_skipaddrandinvoke", s.helpers + 0x40U},
             {"rom_iscripts_jumptonextaddr", s.helpers + 0x80U}, {"rom_iscripts_invokenextaction", s.helpers + 0xc0U},
-            {"rom_iscripts_begin", s.helpers + 0x100U}, {"rom_hud_draw_timer", s.helpers + 0x140U}})
+            {"rom_hud_draw_timer", s.helpers + 0x140U}})
             out << "<const name=\"" << key << "\" value=\"" << value << "\"/>";
         out << "</consts></eoe_config>"; out.close(); check(bool(out), "authored configuration write");
         return fe::Config(EOE_TEST_CONFIG_PATH, path.string(), rom, "us");
@@ -145,11 +148,11 @@ Image install(Fixture& fixture, Settings settings, word origin, const std::vecto
         image.entry[library[i]] = static_cast<word>(1 + image.rom[file(low) + i + 2] + (image.rom[file(high) + i + 2] << 8));
     const bool vars = std::find(library.begin(), library.end(), OPS[1]) != library.end()
         || std::find(library.begin(), library.end(), fh::HackLib::AtlasDevSetVar) != library.end();
-    check((image.rom[file(settings.helpers + 0x100)] == 0x4c) == vars, "only variable consumers install begin reset");
+    check((image.rom[file(BEGIN)] == 0x4c) == vars, "only variable consumers install begin reset");
     for (std::size_t i{}; i < image.rom.size(); ++i) if (image.rom[i] != before[i])
         check((i >= file(origin) && i < end_file) || (i >= file(0x8273) && i < file(0x8275))
             || (i >= file(0x8277) && i < file(0x8279))
-            || (vars && i >= file(settings.helpers + 0x100) && i < file(settings.helpers + 0x106)), "installer changed an unowned byte");
+            || (vars && i >= file(BEGIN) && i < file(BEGIN + 6)), "installer changed an unowned byte");
     return image;
 }
 Cpu cpu(const Image& image) {
@@ -244,7 +247,7 @@ void configuration(Fixture& fixture) {
                     check(c.m[s.vars + i] == (reg < s.count && i == reg ? timer < 128 ? timer : 0 : 0x69), "configured register domain");
             }
             for (const byte a : {byte{0}, byte{0x45}, byte{0xff}}) {
-                prepare(c, 0, 0); c.a = a; c.run(s.helpers + 0x100, s.helpers + 0x106);
+                prepare(c, 0, 0); c.a = a; c.run(BEGIN, BEGIN + 6);
                 for (unsigned i{}; i < s.count; ++i) check(c.m[s.vars + i] == 0, "begin clears configured variables");
                 check(c.a == (a == 255 ? 31 : a), "begin reproduces displaced accumulator behavior");
                 for (const word at : c.writes) check((at >= s.vars && at < s.vars + s.count)
