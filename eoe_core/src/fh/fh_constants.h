@@ -34,6 +34,7 @@ namespace fh {
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
 		// bank 14 addresses
+		constexpr word Player_CheckShieldHitByMagic{ 0x877c };
 		constexpr word PendantBugBNE{ 0x8879 };
 		constexpr word Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value{ 0x8988 };
 		constexpr word Player_HandleTouchTrigger_STA_CurrentSprite_Value{ 0x89f2 };
@@ -46,6 +47,7 @@ namespace fh {
 		constexpr word SpriteBehavior_QWingBoots_CheckForBosses{ 0xa42c };
 		constexpr word SpriteBehavior_BlackOnyx_CheckForBosses{ 0xa450 };
 		constexpr word SpriteBehavior_Pendant_CheckForBosses{ 0xa474 };
+		constexpr word SpriteBehavior_FlashDamage_JSR_ReduceHP{ 0xab5d };
 		constexpr word SpriteTypeTable{ 0xb544 };
 
 		// bank 15 addresses
@@ -308,6 +310,7 @@ namespace fh {
 		constexpr word Inventory_Shields{ 0x03a5 };
 		constexpr word Inventory_Magics{ 0x03a9 };
 		constexpr word Inventory_Items{ 0x03ad };
+		constexpr word EquippedShield{ 0x03bf };
 		constexpr word Inventory_WeaponsCount{ 0x03c2 };
 		constexpr word Inventory_ArmorsCount{ 0x03c3 };
 		constexpr word Inventory_ShieldsCount{ 0x03c4 };

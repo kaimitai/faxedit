@@ -319,6 +319,47 @@ word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std:
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
 
+// makes ointment work against magic even while wearing a shield
+// optionally also enables ointment to work against sugata's "clap"
+word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) const {
+	const bool sugata{ p_hack.bool_or("sugata", true) };
+
+	klib::Asm6502 code;
+
+	code.jsr(cpu_addr);
+	code.apply_hack_and_clear(p_rom, 14, ROM::Player_CheckShieldHitByMagic);
+
+	// return shield value 3 while ointment is active, causing the vanilla
+	// shield-vs-magic routine to return immediately; otherwise use the equipped shield
+	code.lda_abs(RAM::TimedEffectTimers);
+	code.bpl("@ointment_active");
+	code.lda_abs(RAM::EquippedShield);
+	code.rts();
+
+	code.label("@ointment_active");
+	code.lda_imm(0x03);
+	code.rts();
+
+	cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+
+	if (sugata) {
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_FlashDamage_JSR_ReduceHP);
+
+		code.lda_abs(RAM::TimedEffectTimers);
+		code.bpl("@ointment_active_sugata");
+		code.jmp(ROM::Player_ReduceHP);
+
+		code.label("@ointment_active_sugata");
+		code.rts();
+
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+	}
+
+	return cpu_addr;
+}
+
 // supports using items inside buildings, disregarding player state flags
 // and selling items to shops which do not sell those items for a given price
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -1140,6 +1181,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::ConditionalScript:
 			cpu_addr = install_ConditionalScript(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::OintmentFix:
+			cpu_addr = install_OintmentFix(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);

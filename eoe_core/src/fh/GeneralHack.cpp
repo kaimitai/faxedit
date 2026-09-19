@@ -22,6 +22,7 @@ namespace {
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
 		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalScript,
+		fh::GeneralHackLib::OintmentFix,
 		fh::GeneralHackLib::AtlasDevSirGawaineControl, fh::GeneralHackLib::AtlasDevWolfmanControl,
 	}},
 	{ 15, {
@@ -82,6 +83,7 @@ namespace {
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr" }},
+		{ fh::GeneralHackLib::OintmentFix, { "sugata" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

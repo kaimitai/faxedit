@@ -39,6 +39,7 @@ This document describes the hacks in the current library and their parameters. I
   - [ItemScripts](#itemscripts)
 	- [Item List](#item-list)
   - [PermaDoors](#permadoors)
+  - [OintmentFix](#ointmentfix)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -428,6 +429,30 @@ PermaDoors bank=28
 ```
 
 Works with [AtlasDevSmartKeys](#atlasdevsmartkeys) when PermaDoors is listed first: a door opened with a carried key is then remembered like any other.
+
+### OintmentFix
+
+Fixes cases where the Ointment fails to make the player fully invincible.
+
+In the original game, the Ointment is intended to prevent the player from taking damage. However, when a shield is equipped, magic damage can bypass the Ointment's invincibility due to the order of checks in the game's damage handling.
+
+This hack fixes the damage handling so the player remains invincible while the Ointment is active, including when a shield is equipped.
+
+By default, the hack also prevents damage from Sugata's screen-wide flash attack while the Ointment is active. This can be disabled with the `sugata` parameter.
+
+| parameter | default | meaning                                                              |
+| --------- | ------- | -------------------------------------------------------------------- |
+| `sugata`  | `true`  | Makes the Ointment protect against Sugata's screen-wide flash damage |
+
+```text
+OintmentFix
+```
+
+To retain Sugata's original behavior:
+
+```text
+OintmentFix sugata=false
+```
 
 ### AtlasDevFrameScheduler
 
