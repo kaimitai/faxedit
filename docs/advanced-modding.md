@@ -218,7 +218,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevPeekToVar | Byte, Byte, Byte | Reads one byte of RAM at the address (low byte first) into a script register; reads only, never writes. Pairs with AtlasDevShowNumberInMessage to display memory live from a dialogue | AtlasDevPeekToVar $1d $02 0 ; register 0 now mirrors the dialogue timer |
 | AtlasDevFrameCountToVar | Byte | Copies the free-running dialogue timer at $021d into a script register; it advances each frame while the text machinery runs | AtlasDevFrameCountToVar 1 ; timestamp source |
 | AtlasDevReadFlagToVar | Byte, Byte | Stores persistent flag 0..247 as canonical 0 or 1 in a script register; an out-of-range flag consumes both operands and does nothing | AtlasDevReadFlagToVar 34 0 ; register 0 becomes 0 or 1 |
-| AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for block (5,4) |
+| AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for the block at x=5, y=4 |
 | AtlasDevCopyVar | Byte, Byte | Copies one script register into another; an invalid register on either side does nothing | AtlasDevCopyVar 0 3 ; register 3 becomes a copy of register 0 |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
@@ -331,7 +331,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevDropItem | Byte, Byte, Byte | Spawns a pickup and sets its amount | AtlasDevDropItem 2 5 154 ; coin worth 5 |
 | AtlasDevDespawnEntity | Byte | Removes entity slot 0-7. Other values do nothing | AtlasDevDespawnEntity 7 |
 | AtlasDevDespawnAllEntities | None | Removes all eight entity slots | AtlasDevDespawnAllEntities |
-| AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
+| AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile $45 16 ; block at x=5, y=4 |
 | AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
 | AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
 | AtlasDevIfEffectActive | Byte, Label | Branches while the selected timed effect is active, including a counter of zero | AtlasDevIfEffectActive 2 @flying |
