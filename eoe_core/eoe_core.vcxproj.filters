@@ -692,5 +692,17 @@
     <ClCompile Include="src\fh\PermaDoorHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\FlagDoorRequirements.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevPpuDrainUnroll.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevQueueLess.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevSpriteSpeed.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

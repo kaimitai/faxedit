@@ -1082,7 +1082,7 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 
 	bool enemy_hud{ false };
 	for (const auto& hack : p_hacks) {
-		if (hack.get_type() == GeneralHackLib::AtlasDevEnemyHud && hack.string_or("mode","") != "vanilla")
+		if (hack.get_type() == GeneralHackLib::AtlasDevEnemyHud && hack.string_or("mode", "") != "vanilla")
 			enemy_hud = true;
 		if (enemy_hud && hack.get_type() == GeneralHackLib::AtlasDevEnemyStats)
 			throw std::runtime_error("AtlasDevEnemyHud: list AtlasDevEnemyStats before the HUD");
@@ -1198,6 +1198,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::OintmentFix:
 			cpu_addr = install_OintmentFix(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::FlagDoorRequirements:
+			cpu_addr = install_FlagDoorRequirements(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);

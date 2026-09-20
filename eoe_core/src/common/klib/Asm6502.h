@@ -165,6 +165,7 @@ namespace klib {
 		void and_imm(byte p_value);
 		void and_zp(byte p_addr);
 		void and_abs_y(word p_addr);
+		void and_abs_y(const std::string& p_label);
 		void ora_imm(byte p_value);
 		void ora_abs_y(word p_addr);
 		void eor_imm(byte p_value);

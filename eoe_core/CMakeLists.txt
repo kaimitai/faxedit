@@ -112,6 +112,7 @@ add_library(eoe_core STATIC
     src/fh/TilemapChanges.cpp
     src/fh/SramHack.cpp
     src/fh/PermaDoorHack.cpp
+    src/fh/FlagDoorRequirements.cpp
 
     # fv
     src/fv/MiscWriter.cpp

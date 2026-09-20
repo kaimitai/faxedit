@@ -121,7 +121,10 @@ namespace fh {
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
 		constexpr word Game_RunDoorRequirementHandler{ 0xeb2f };
+		constexpr word Game_RunDoorRequirementHandler_BEQ_RTS{ 0xeb32 };
+		constexpr word Game_RunDoorRequirementHandler_TAY{ 0xeb35 };
 		constexpr word Game_UnlockDoorWithKey_afterUse{ 0xebd9 };
+		constexpr word Game_UnlockDoorWithSoundEffect{ 0xebe1 };
 		constexpr word Player_SetWeapon_CMP_BuildingsWorldNo{ 0xedf0 };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };

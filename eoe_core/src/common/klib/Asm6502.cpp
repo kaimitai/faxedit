@@ -560,6 +560,11 @@ void klib::Asm6502::and_abs_y(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::and_abs_y(const std::string& p_label) {
+	emit(OP_AND_ABS_Y);
+	dw(p_label);
+}
+
 void klib::Asm6502::ora_imm(byte p_value) {
 	emit(OP_ORA_IMM);
 	emit(p_value);

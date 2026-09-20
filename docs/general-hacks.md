@@ -39,6 +39,7 @@ This document describes the hacks in the current library and their parameters. I
   - [ItemScripts](#itemscripts)
 	- [Item List](#item-list)
   - [PermaDoors](#permadoors)
+  - [FlagDoorRequirements](#flagdoorrequirements)
   - [OintmentFix](#ointmentfix)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
@@ -536,6 +537,40 @@ PermaDoors bank=28
 ```
 
 Works with [AtlasDevSmartKeys](#atlasdevsmartkeys) when PermaDoors is listed first: a door opened with a carried key is then remembered like any other.
+
+### FlagDoorRequirements
+
+Adds extended-flag-based door requirements.
+
+In the original game, door requirement values range from 0-8, where 0 means no requirement and 1-8 use the game's normal key and ring requirements.
+
+This hack extends the available requirements with values 9-15. Each extended requirement is associated with an extended flag. The door can be entered when its flag is set; otherwise, entry is blocked.
+
+Each requirement can also specify an optional iScript to run when the required flag is not set. This can be used to display dialogue or perform other scripted behavior when the player attempts to enter the door.
+
+The `data` parameter is a comma-separated list of flag and optional iScript pairs, using `+` between the flag and iScript. Entries are assigned sequentially starting at requirement 9: the first entry defines requirement 9, the second requirement 10, and so on, up to requirement 15.
+
+| parameter | default  | meaning                                                                         |
+| --------- | -------- | ------------------------------------------------------------------------------- |
+| `data`    | required | Extended flag and optional failure iScript for each additional door requirement |
+
+For example:
+
+```text
+FlagDoorRequirements data=10:20+11+12:21
+```
+
+This defines:
+
+* requirement 9: requires extended flag 10; runs iScript 20 if not set
+* requirement 10: requires extended flag 11; no failure iScript
+* requirement 11: requires extended flag 12; runs iScript 21 if not set
+
+Between 1 and 7 entries must be provided. Do not assign an extended requirement to a door unless the corresponding entry is configured.
+
+The door requirements available for selection in the editor are defined by the `door_requirement_labels` configuration item. To use the extended requirements, add an override for this `byte_to_string_map` entry containing labels for the additional requirement values used by the hack.
+
+For example, if requirements 9-11 are configured, the `door_requirement_labels` override should also define entries for values 9, 10 and 11. The labels can describe what each requirement represents in the project.
 
 ### OintmentFix
 
