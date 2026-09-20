@@ -58,6 +58,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevScreenBlink](#atlasdevscreenblink)
   - [AtlasDevFastBlink](#atlasdevfastblink)
   - [AtlasDevLandingTuck](#atlasdevlandingtuck)
+  - [AtlasDevSpriteSpeed](#atlasdevspritespeed)
 
 <hr>
 
@@ -81,6 +82,45 @@ Hacks are installed in the order listed. An unknown hack name or an invalid para
 <hr>
 
 ## The Library
+
+### AtlasDevSpriteSpeed
+
+Reduces the CPU time spent building sprites. It keeps every monster update,
+collision check and draw request, including clipping, background priority,
+sprite ordering and the HUD's sprite-zero split. It does not change the monster
+limit or remove the NES eight-sprites-per-scanline limit.
+
+```text
+AtlasDevSpriteSpeed
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mode` | `both` | `clear` speeds up sprite-buffer clearing; `draw` speeds up visible tile emission; `both` enables both |
+
+Clear mode uses 204 bytes from the normal bank 15 allocation cursor and replaces
+three bytes at `$cb84`. Draw mode uses no extra code allocation: it replaces two
+65-byte spans at `$f120` and `$f1d4`. Neither mode needs extra RAM or frame-scheduler
+vectors. The allocator's capacity checks apply, and altered hook/continuation
+instructions or an occupied helper range stop installation without changing the
+ROM. Rebuild from your clean project source; installing a mode twice is rejected.
+
+Other hacks still need room in the same bank. Default Ladder Crown uses 605
+bytes, so adding the 204-byte clear helper exceeds a 786-byte allocation window.
+Use `mode=draw` with default Crown, or `AtlasDevLadderCrown mode=floor` with
+`mode=both` when enough space remains. A hack that changes the checked sprite
+instructions cannot be combined with the affected mode.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery support and header padding are not compatibility tests.
+Instruction checks determine whether the sprite code is compatible; runtime
+testing currently covers US revision 0 only.
+
+This is an experimental performance option. In a matched 1,800-frame workload
+with six small monsters, missed update deadlines fell from 73 to 1. Eight small
+monsters and six larger monsters still exceeded the frame budget. Savings depend
+on the scene and other enabled features; this does not guarantee full speed in
+every crowded room.
 
 ### KillSwitch
 

@@ -1215,6 +1215,11 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevLadderControl:
 			cpu_addr = install_AtlasDevLadderControl(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevSpriteSpeed:
+			if (p_bank != 15)
+				throw std::runtime_error("AtlasDevSpriteSpeed: requires PRG bank 15");
+			cpu_addr = install_AtlasDevSpriteSpeed(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevFallControl:
 			cpu_addr = install_AtlasDevFallControl(p_config, patched_rom, cpu_addr, hack);
 			break;

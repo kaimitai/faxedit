@@ -45,6 +45,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevScreenTransition,
 		fh::GeneralHackLib::AtlasDevFastBlink,
 		fh::GeneralHackLib::AtlasDevLandingTuck,
+		fh::GeneralHackLib::AtlasDevSpriteSpeed,
 	}},
 	};
 
@@ -56,6 +57,7 @@ namespace {
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
 		{ fh::GeneralHackLib::TextSpeed, { "mask" }},
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
+		{ fh::GeneralHackLib::AtlasDevSpriteSpeed, { "mode" } },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },
