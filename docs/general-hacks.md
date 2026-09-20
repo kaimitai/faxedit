@@ -59,6 +59,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevFastBlink](#atlasdevfastblink)
   - [AtlasDevLandingTuck](#atlasdevlandingtuck)
   - [AtlasDevSpriteSpeed](#atlasdevspritespeed)
+  - [AtlasDevPpuDrainUnroll](#atlasdevppudrainunroll)
 
 <hr>
 
@@ -121,6 +122,39 @@ with six small monsters, missed update deadlines fell from 73 to 1. Eight small
 monsters and six larger monsters still exceeded the frame budget. Savings depend
 on the scene and other enabled features; this does not guarantee full speed in
 every crowded room.
+
+### AtlasDevPpuDrainUnroll
+
+Speeds up full-tile transfers from the graphics queue to the PPU. Short records
+and records crossing the queue boundary use the original byte loop. This helps
+graphics uploads; it does not reduce monster AI or remove sprite flicker.
+
+```text
+AtlasDevPpuDrainUnroll
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `budget` | `48` | Payload threshold per drain, 1..64; `64` lets a fourth 16-byte tile through instead of three |
+
+The six-record limit stays unchanged. This is a post-record threshold, not a
+hard byte ceiling: the last record can exceed it. Default 48 keeps the original
+threshold. Higher values spend more vblank time and need testing with the other
+graphics features in your project. Values above 64 are not supported.
+
+The helper uses 131 bytes plus 0..255 bytes of page-alignment padding in bank 15.
+It uses no extra RAM or scheduler vectors and can share the normal allocator
+with Sprite Speed and the frame scheduler, provided space remains. Occupied
+allocation space or changed queue instructions reject the build transactionally.
+List this before unaligned helpers to reduce padding when practical.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery bits and header padding may vary. Instruction checks determine
+source compatibility; runtime coverage is currently US revision 0 only.
+
+For a non-wrapping 16-byte record the copier saves 76 CPU cycles. Short records
+cost 11 extra cycles and wrapping records can cost 15 extra cycles. This is an
+experimental workload-dependent optimization, not a guarantee of faster frames.
 
 ### KillSwitch
 

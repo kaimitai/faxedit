@@ -99,3 +99,7 @@ add_executable(atlas_sprite_speed_regression atlas_sprite_speed_regression.cpp)
 target_link_libraries(atlas_sprite_speed_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_sprite_speed_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_sprite_speed_regression COMMAND atlas_sprite_speed_regression)
+
+add_executable(atlas_ppu_drain_regression atlas_ppu_drain_regression.cpp)
+target_link_libraries(atlas_ppu_drain_regression PRIVATE eoe_core)
+add_test(NAME atlas_ppu_drain_regression COMMAND atlas_ppu_drain_regression)
