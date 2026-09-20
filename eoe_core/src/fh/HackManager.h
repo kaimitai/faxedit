@@ -358,6 +358,8 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevPpuDrainUnroll(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_AtlasDevQueueLess(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevSmartKeys(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,

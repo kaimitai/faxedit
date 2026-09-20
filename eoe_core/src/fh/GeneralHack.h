@@ -28,6 +28,7 @@ namespace fh {
 		AtlasDevLandingTuck,
 		AtlasDevSpriteSpeed,
 		AtlasDevPpuDrainUnroll,
+		AtlasDevQueueLess,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

@@ -47,6 +47,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevLandingTuck,
 		fh::GeneralHackLib::AtlasDevSpriteSpeed,
 		fh::GeneralHackLib::AtlasDevPpuDrainUnroll,
+		fh::GeneralHackLib::AtlasDevQueueLess,
 	}},
 	};
 
@@ -60,6 +61,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevSpriteSpeed, { "mode" } },
 		{ fh::GeneralHackLib::AtlasDevPpuDrainUnroll, { "budget" } },
+		{ fh::GeneralHackLib::AtlasDevQueueLess, { "dedup" } },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },

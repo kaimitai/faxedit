@@ -103,3 +103,7 @@ add_test(NAME atlas_sprite_speed_regression COMMAND atlas_sprite_speed_regressio
 add_executable(atlas_ppu_drain_regression atlas_ppu_drain_regression.cpp)
 target_link_libraries(atlas_ppu_drain_regression PRIVATE eoe_core)
 add_test(NAME atlas_ppu_drain_regression COMMAND atlas_ppu_drain_regression)
+
+add_executable(atlas_queue_less_regression atlas_queue_less_regression.cpp)
+target_link_libraries(atlas_queue_less_regression PRIVATE eoe_core)
+add_test(NAME atlas_queue_less_regression COMMAND atlas_queue_less_regression)

@@ -60,6 +60,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevLandingTuck](#atlasdevlandingtuck)
   - [AtlasDevSpriteSpeed](#atlasdevspritespeed)
   - [AtlasDevPpuDrainUnroll](#atlasdevppudrainunroll)
+  - [AtlasDevQueueLess](#atlasdevqueueless)
 
 <hr>
 
@@ -155,6 +156,37 @@ source compatibility; runtime coverage is currently US revision 0 only.
 For a non-wrapping 16-byte record the copier saves 76 CPU cycles. Short records
 cost 11 extra cycles and wrapping records can cost 15 extra cycles. This is an
 experimental workload-dependent optimization, not a guarantee of faster frames.
+
+### AtlasDevQueueLess
+
+Avoids uploading the same entity graphics several times while loading a room.
+When a higher, already-loaded slot has the same entity ID, the next slot reuses
+its CHR tile base. The entities still update and draw independently. ID `$30`
+keeps its normal upload because it also loads a companion graphics set.
+
+```text
+AtlasDevQueueLess
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `dedup` | `1` | Reuse duplicate room-entry sprite uploads; `0` installs nothing |
+
+Uses 32 bytes from the normal bank 15 allocation cursor and replaces the
+three-byte upload call at `$c2a6`. No extra RAM, scheduler vectors or NMI work
+are needed. It can be combined with Sprite Speed and PPU Drain Unroll when
+enough bank space remains. Hook, uploader and allocation checks reject altered
+or occupied inputs without changing the ROM. Rebuild from a clean project
+source; installing this hook twice is rejected.
+
+This version only reduces duplicate room-entry uploads. It does not change
+text-canvas clearing, cache graphics between rooms, speed up AI or remove
+sprite flicker. Rooms with unique entity IDs do not benefit. Shared CHR tiles
+must not be edited independently by per-instance custom graphics code.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery bits and header padding may vary. Instruction checks determine
+compatibility; runtime evidence currently covers US revision 0 only.
 
 ### KillSwitch
 
