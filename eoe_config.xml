@@ -474,6 +474,7 @@
 		<const name="rom_hud_draw_timer" region="jp,en-transl" value="$fa58" />
 		<const name="rom_hud_draw_timer" value="$f990" />
 		<!-- tilemap change hack injection points -->
+		<const name="hack_enemy_hud_enabled" region="us,us-rev-a,eu,jp" value="1" />
 		<const name="hack_tm_change_bank" region="en-transl,512" value="30" />
 		<const name="hack_tm_change_bank" value="9" />
 		<const name="hack_tm_change_cpu_addr" region="en-transl,512" value="$8000" />

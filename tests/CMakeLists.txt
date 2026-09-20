@@ -46,6 +46,11 @@ target_link_libraries(atlas_enemy_stats_regression PRIVATE eoe_core)
 
 add_test(NAME atlas_enemy_stats_regression COMMAND atlas_enemy_stats_regression)
 
+add_executable(atlas_enemy_hud_regression atlas_enemy_hud_regression.cpp)
+target_link_libraries(atlas_enemy_hud_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_enemy_hud_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_enemy_hud_regression COMMAND atlas_enemy_hud_regression)
+
 add_executable(atlas_combat_feel_regression
     atlas_combat_feel_regression.cpp
 )

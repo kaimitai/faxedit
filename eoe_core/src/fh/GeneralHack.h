@@ -20,7 +20,7 @@ namespace fh {
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		AtlasDevLadderControl, AtlasDevLadderCrown, AtlasDevSmartKeys, AtlasDevEnemyStats, AtlasDevCombatFeel,
-		AtlasDevRunControl,
+		AtlasDevEnemyHud, AtlasDevRunControl,
 		AtlasDevSmartMattock,
 		AtlasDevSirGawaineControl, AtlasDevWolfmanControl,
 		AtlasDevScreenTransition,

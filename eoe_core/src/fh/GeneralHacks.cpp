@@ -1080,6 +1080,20 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 	if (p_hacks.empty())
 		return 0;
 
+	bool enemy_hud{ false };
+	for (const auto& hack : p_hacks) {
+		if (hack.get_type() == GeneralHackLib::AtlasDevEnemyHud && hack.string_or("mode","") != "vanilla")
+			enemy_hud = true;
+		if (enemy_hud && hack.get_type() == GeneralHackLib::AtlasDevEnemyStats)
+			throw std::runtime_error("AtlasDevEnemyHud: list AtlasDevEnemyStats before the HUD");
+	}
+	if (enemy_hud) for (const auto& hack : p_hacks)
+		if (hack.get_type() == GeneralHackLib::AtlasDevFrameScheduler ||
+			hack.get_type() == GeneralHackLib::AtlasDevDayNightCycle ||
+			hack.get_type() == GeneralHackLib::AtlasDevInfectedTint ||
+			hack.get_type() == GeneralHackLib::AtlasDevTimeOfDay)
+			throw std::runtime_error("AtlasDevEnemyHud: scheduler roles cannot share its RAM reservation");
+
 	std::size_t crown_count{ 0 };
 	bool ladder_exit{ false };
 	bool jump_buffer{ false };
@@ -1202,6 +1216,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::AtlasDevEnemyStats:
 			cpu_addr = install_AtlasDevEnemyStats(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevEnemyHud:
+			cpu_addr = install_AtlasDevEnemyHud(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevCombatFeel:
 			cpu_addr = install_AtlasDevCombatFeel(p_config, patched_rom, cpu_addr, hack);

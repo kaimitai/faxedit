@@ -95,6 +95,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevLadderCrown.cpp
     src/fh/AtlasDevSmartKeys.cpp
     src/fh/AtlasDevEnemyStats.cpp
+    src/fh/AtlasDevEnemyHud.cpp
     src/fh/AtlasDevCombatFeel.cpp
     src/fh/AtlasDevRunControl.cpp
     src/fh/AtlasDevSmartMattock.cpp

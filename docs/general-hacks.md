@@ -50,6 +50,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevLadderCrown](#atlasdevladdercrown)
   - [AtlasDevSmartKeys](#atlasdevsmartkeys)
   - [AtlasDevEnemyStats](#atlasdevenemystats)
+  - [AtlasDevEnemyHud](#atlasdevenemyhud)
   - [AtlasDevCombatFeel](#atlasdevcombatfeel)
   - [AtlasDevRunControl](#atlasdevruncontrol)
   - [AtlasDevSmartMattock](#atlasdevsmartmattock)
@@ -991,6 +992,47 @@ AtlasDevEnemyStats profile=hard
 AtlasDevEnemyStats profile=nightmare xp=150
 AtlasDevEnemyStats hp=150 damage=150 xp=75
 ```
+
+### AtlasDevEnemyHud
+
+Shows the health of the last enemy hit by a sword or spell. The bar sits
+above the player meters, aligned with them, with an E on the left and the
+enemy name on the right. Names use community names, shortened where needed
+to fit fifteen characters.
+
+| Parameter | Default | Meaning |
+|---|---|---|
+| `names` | `true` | Show enemy names. Set to `false` for just the bar and a smaller ROM footprint. |
+| `visibility` | `timed` | Hide after 180 game-loop passes. Use `always` to keep the last living target visible. |
+| `mode` | active | Set to `vanilla` to disable the hack. |
+
+With `always`, you still need to hit an enemy first. The display clears when
+the enemy dies, its slot is reused, you change rooms, or you die. In the
+original game, an enemy at zero HP survives until the next hit; the bar
+follows that behavior. Updates wait while the graphics queue is busy or the
+screen is scrolling. The timeout counts game-loop passes, not seconds.
+
+```text
+AtlasDevEnemyHud
+AtlasDevEnemyHud names=false visibility=always
+```
+
+Uses 3187 bytes in bank 9 at $8000 with names, or 1577 without names, plus
+95 bytes in bank 15 and 15 bytes for hooks. `visibility=always` saves another
+five bytes. Reserves seven RAM bytes at $04E3..$04E9. Uses the existing
+graphics and does not change combat stats.
+
+Supports USA Rev 0 (`us`), USA Rev 1 (`us-rev-a`), Europe (`eu`) and Japan
+(`jp`). Names are English in all versions. Translations, randomizers and
+expanded ROMs are not supported. The configuration must enable
+`hack_enemy_hud_enabled`; required game code and free space are checked
+before applying the hack.
+
+Cannot be combined with AtlasDevFrameScheduler, AtlasDevDayNightCycle,
+AtlasDevInfectedTint or AtlasDevTimeOfDay. Other hacks must leave the HUD
+row and its RAM and ROM space free. If using AtlasDevEnemyStats, list it
+before AtlasDevEnemyHud so the bar uses the modified HP values. Build from
+the clean source ROM each time; the hack cannot be applied twice.
 
 ### AtlasDevCombatFeel
 

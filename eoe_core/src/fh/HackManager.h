@@ -364,6 +364,8 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevSmartKeys(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_AtlasDevEnemyHud(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevEnemyStats(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevCombatFeel(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
