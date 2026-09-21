@@ -233,12 +233,12 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevCloseDialogue | None | Closes a portrait conversation: clears the textbox context and repaints the larger portrait-and-text rectangle | AtlasDevCloseDialogue ; tears the portrait conversation down |
 | AtlasDevEntitySayMessage | Byte, string | Gives the message to the entity in the given slot, so it is spoken with that entity's own portrait context | AtlasDevEntitySayMessage 2 "Who goes there?" |
 | AtlasDevShowSequentialMessages | string, string, string, string | Shows up to four messages in order, one A press between each. An unused slot is a plain 0. B skips the rest; the remaining operands are still consumed, so the stream never desyncs | AtlasDevShowSequentialMessages "One." "Two." "Three." 0 |
-| AtlasDevShowNumberInMessage | string, Byte | **Do not use yet.** Reveals the message without its A wait, renders a script register as three digits at the text cursor, then runs the engine's own A wait | AtlasDevShowNumberInMessage "You have" 0 |
-| AtlasDevShowChoiceToVar | Byte, Byte | **Do not use yet.** Runs the vanilla menu selection loop over Count rows and stores the chosen index in a script register, or $FF if the player cancels with B. Count is clamped to 1-8 | AtlasDevShowChoiceToVar 3 0 ; three rows, result into register 0 |
-| AtlasDevShowMessageFromVar | Byte | **Do not use yet.** Shows the message whose id is held in a script register. An out-of-range register, or an id outside 1-193, is a no-op | AtlasDevShowMessageFromVar 0 |
+| AtlasDevShowNumberInMessage | string, Byte | Reveals the message without its A wait, renders a script register as three digits at the text cursor, then runs the engine's own A wait. Message id 0 does nothing and still takes both operands | AtlasDevShowNumberInMessage "You have" 0 |
+| AtlasDevShowChoiceToVar | Byte, Byte | Runs the vanilla menu selection loop over Count rows and stores the chosen index in a script register, or $FF if the player cancels with B. Count is clamped to 1-8. The script draws its own choice text | AtlasDevShowChoiceToVar 3 0 ; three rows, result into register 0 |
+| AtlasDevShowMessageFromVar | Byte | Shows the message whose id is held in a script register. An out-of-range register, or an id outside 1-193, is a no-op | AtlasDevShowMessageFromVar 0 |
 | AtlasDevIfEntityCountAtLeast | Byte, Label | Jumps when at least Count of the eight entity slots hold a live entity. Count 0 always jumps; Count above 8 never does | AtlasDevIfEntityCountAtLeast 1 @some_left |
-| AtlasDevCountActiveEntities | Byte | **Do not use yet.** Stores how many of the eight entity slots are live, 0-8, into a script register | AtlasDevCountActiveEntities 0 |
-| AtlasDevFindEntity | Byte, Byte | **Do not use yet.** Stores the lowest slot holding the given entity identity into a script register, or $FF when no slot does | AtlasDevFindEntity 58 0 |
+| AtlasDevCountActiveEntities | Byte | Stores how many of the eight entity slots are live, 0-8, into a script register. Use AtlasDevIfEntityCountAtLeast instead when only the comparison is wanted, since it needs no register | AtlasDevCountActiveEntities 0 |
+| AtlasDevFindEntity | Byte, Byte | Stores the lowest slot holding the given entity identity into a script register, or $FF when no slot does. An identity with bit 7 set always answers $FF, because that bit marks a free slot | AtlasDevFindEntity 58 0 |
 | AtlasDevFreezeEntities | None | Pauses every entity's update until AtlasDevResumeEntities; nothing else clears the pause, so a script that freezes must resume | AtlasDevFreezeEntities |
 | AtlasDevResumeEntities | None | Ends the pause started by AtlasDevFreezeEntities | AtlasDevResumeEntities |
 | AtlasDevIfBossPresent | Label | Jumps when any of the eight slots holds a boss | AtlasDevIfBossPresent @boss_here |
@@ -255,8 +255,8 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetEntityBehavior | Byte, Byte | Selects one of the engine's behaviours for the slot and re-runs its initializer; behaviour 6 is refused | AtlasDevSetEntityBehavior 0 4 |
 | AtlasDevSetEntitySpeed | Byte, Byte, Byte | Sets a walker's cached speed, fraction then whole pixels; flyers keep their velocity elsewhere and are unaffected | AtlasDevSetEntitySpeed 0 0 3 |
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
-| AtlasDevEntityFieldToVar | Byte, Byte, Byte | **Do not use yet.** Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group | AtlasDevEntityFieldToVar 0 6 2 |
-| AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | **Do not use yet.** Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7 | AtlasDevDrawVarNumber 0 4 24 3 |
+| AtlasDevEntityFieldToVar | Byte, Byte, Byte | Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group. A field of 12 or more reads field 0. There is no field for an entity's position | AtlasDevEntityFieldToVar 0 6 2 |
+| AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7. The digit tiles are always resident, so no graphics upload is needed | AtlasDevDrawVarNumber 0 4 24 3 |
 | AtlasDevIfPlayerFacing | Byte, Label | Jumps when the player faces the requested direction; even values mean left and odd values mean right | AtlasDevIfPlayerFacing 1 @facing_right |
 | AtlasDevIfPlayerClimbing | Label | Jumps while the engine's own climbing predicate is true | AtlasDevIfPlayerClimbing @on_ladder |
 | AtlasDevIfPlayerGrounded | Label | Jumps when the player is not jumping, falling, or actively climbing | AtlasDevIfPlayerGrounded @on_ground |
@@ -437,6 +437,10 @@ is one roll to 255 followed by
 ```AtlasDevCopyVar``` copies one register into another, so a value can be kept
 before ```AtlasDevAddVar``` changes it; swapping two registers is three copies
 through a spare one.
+
+An opcode that writes a script register uses ```hack_script_var_ram_addr```
+and ```hack_script_var_count```. A register at or above the configured count
+consumes its operands and writes nothing.
 
 #### AtlasDev dialogue opcodes
 
