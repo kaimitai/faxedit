@@ -112,3 +112,7 @@ add_test(NAME atlas_ppu_drain_regression COMMAND atlas_ppu_drain_regression)
 add_executable(atlas_queue_less_regression atlas_queue_less_regression.cpp)
 target_link_libraries(atlas_queue_less_regression PRIVATE eoe_core)
 add_test(NAME atlas_queue_less_regression COMMAND atlas_queue_less_regression)
+
+add_executable(atlas_prevent_textbox_regression atlas_prevent_textbox_regression.cpp)
+target_link_libraries(atlas_prevent_textbox_regression PRIVATE eoe_core)
+add_test(NAME atlas_prevent_textbox_regression COMMAND atlas_prevent_textbox_regression)

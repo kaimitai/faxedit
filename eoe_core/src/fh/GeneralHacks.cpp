@@ -1247,6 +1247,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 				throw std::runtime_error("AtlasDevQueueLess: requires PRG bank 15");
 			cpu_addr = install_AtlasDevQueueLess(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevPreventTextbox:
+			cpu_addr = install_AtlasDevPreventTextbox(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevFallControl:
 			cpu_addr = install_AtlasDevFallControl(p_config, patched_rom, cpu_addr, hack);
 			break;
