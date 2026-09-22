@@ -452,7 +452,7 @@ consumes its operands and writes nothing.
 the byte work that addition and subtraction cannot: masking bits out,
 multiplying or dividing by a power of two, and keeping a running value inside
 bounds without a pair of conditionals. ```AtlasDevIfVarMask``` is their
-conditional - it tests several bits at once, so one branch can ask whether a
+conditional. It tests several bits at once, so one branch can ask whether a
 register's low two bits are exactly 2, which a chain of equality tests cannot
 do without spending registers.
 
