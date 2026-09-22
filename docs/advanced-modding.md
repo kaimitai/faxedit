@@ -220,6 +220,12 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevReadFlagToVar | Byte, Byte | Stores persistent flag 0..247 as canonical 0 or 1 in a script register; an out-of-range flag consumes both operands and does nothing | AtlasDevReadFlagToVar 34 0 ; register 0 becomes 0 or 1 |
 | AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for the block at x=5, y=4 |
 | AtlasDevCopyVar | Byte, Byte | Copies one script register into another; an invalid register on either side does nothing | AtlasDevCopyVar 0 3 ; register 3 becomes a copy of register 0 |
+| AtlasDevVarBitOp | Byte, Byte, Byte | Combines a script register with a value: operation 0 is AND, 1 is OR, 2 is XOR. An operation above 2, or an invalid register, consumes every operand and writes nothing | AtlasDevVarBitOp 0 1 $80 ; sets bit 7 of register 0 |
+| AtlasDevVarShift | Byte, Byte, Byte | Shifts a script register, direction 0 left and 1 right, by Count bits; bits shifted out are lost and zeros come in. A count of 8 or more leaves zero and a count of 0 changes nothing. Any other direction, or an invalid register, writes nothing | AtlasDevVarShift 0 0 1 ; doubles register 0, dropping the top bit |
+| AtlasDevClampVar | Byte, Byte, Byte | Holds a script register inside inclusive unsigned bounds: below Minimum becomes Minimum, above Maximum becomes Maximum, and a value already between them is left alone. A Maximum below Minimum is refused and changes nothing, as is an invalid register | AtlasDevClampVar 0 1 99 ; keeps register 0 between 1 and 99 |
+| AtlasDevIfVarMask | Byte, Byte, Byte, Label | Jumps when the bits Mask selects match Expected exactly, that is when the register AND Mask equals Expected. Expected may only contain bits that Mask selects; when it does not the test is always false, as it is for an invalid register | AtlasDevIfVarMask 0 $03 $02 @two ; jumps when the low two bits of register 0 are exactly 2 |
+| AtlasDevGetLocationToVars | Byte, Byte | Stores the current world and the current screen, the same values IfWorld and IfScreen compare against, into two script registers, which must be two different ones | AtlasDevGetLocationToVars 0 1 ; register 0 is the world, register 1 the screen |
+| AtlasDevGetPlayerPositionToVars | Byte, Byte | Stores the player's normalized metatile position into two script registers, x first then y, using the same centred conversion as IfYX; the two registers must be different ones | AtlasDevGetPlayerPositionToVars 0 1 ; register 0 is x, register 1 is y |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
 | AtlasDevFadeIn | Byte, Byte | Fades the background/UI palette back in over the given number of NMI frames, reversing the given stage depth (1-4) | AtlasDevFadeIn 60 4 ; fades back in over 60 frames |
@@ -441,6 +447,21 @@ through a spare one.
 An opcode that writes a script register uses ```hack_script_var_ram_addr```
 and ```hack_script_var_count```. A register at or above the configured count
 consumes its operands and writes nothing.
+
+```AtlasDevVarBitOp```, ```AtlasDevVarShift``` and ```AtlasDevClampVar``` do
+the byte work that addition and subtraction cannot: masking bits out,
+multiplying or dividing by a power of two, and keeping a running value inside
+bounds without a pair of conditionals. ```AtlasDevIfVarMask``` is their
+conditional - it tests several bits at once, so one branch can ask whether a
+register's low two bits are exactly 2, which a chain of equality tests cannot
+do without spending registers.
+
+```AtlasDevGetLocationToVars``` and ```AtlasDevGetPlayerPositionToVars``` read
+the player's whereabouts into registers, so a script can compute with a
+position instead of only comparing it as ```IfWorld```, ```IfScreen``` and
+```IfYX``` do. Both write two registers and both need two different ones:
+naming the same register twice writes neither, because a single register
+cannot hold both halves of an answer.
 
 #### AtlasDev dialogue opcodes
 
