@@ -189,9 +189,9 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | ClearFlag | Byte | Clears an extended flag (0-247) | ClearFlag 110 ; clears flag 110 |
 | IfFlag | Byte, Label | Jumps if the extended flag is set | IfFlag 110 @target ; jumps to @target if flag 110 is set |
 | SelectFlag | Byte | Selects an extended flag for later use by the selected-flag opcodes | SelectFlag 110 ; prepares use of flag 110 |
-| SetSelectedFlag | None | Sets the currently selected extended flag | |
-| ClearSelectedFlag | None | Clears the currently selected extended flag | |
-| IfSelectedFlag | Label | Jumps if the currently selected extended flag is set | |
+| SetSelectedFlag | None | Sets the currently selected extended flag | SetSelectedFlag ; sets the flag a previous SelectFlag chose |
+| ClearSelectedFlag | None | Clears the currently selected extended flag | ClearSelectedFlag ; clears the flag a previous SelectFlag chose |
+| IfSelectedFlag | Label | Jumps if the currently selected extended flag is set | IfSelectedFlag @already_open ; jumps to @already_open if that flag is set |
 | SetQuestFlag | Byte | Sets a vanilla quest flag (0-7) | SetQuestFlag 3 ; sets quest flag 3 |
 | ClearQuestFlag | Byte | Clears a vanilla quest flag (0-7) | ClearQuestFlag 3 ; clears quest flag 3 |
 | IfQuestFlag | Byte, Label | Jumps if the vanilla quest flag is set | IfQuestFlag 3 @target ; jumps to @target if quest flag 3 is set |
@@ -202,14 +202,14 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | IfStage | Byte, Label | Jumps if the current stage equals the argument | IfStage 2 @is_stage_2 ; jumps to @is_stage_2 if current stage is 2 |
 | IfYX | Byte, Label | Jumps if the player's normalized metatile position equals the argument | IfYX $a4 @pos_4_10 ; jumps to @pos_4_10 if player position is (x=4, y=10) |
 | IfDoorYX | Byte, Label | Jumps if the currently selected door has the specified packed YX coordinate | IfDoorYX $a4 @door_4_10 ; jumps to @door_4_10 if current door position is (x=4, y=10) |
-| ForceDoor | None | Overrides a failed door requirement, allowing the current door transition to proceed | |
-| RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | |
+| ForceDoor | None | Overrides a failed door requirement, allowing the current door transition to proceed | ForceDoor ; lets the refused door transition through |
+| RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | RunScreenHandler ; applies this screen's tile changes now |
 | GetXP | Short (0-65,535) | Gives player xp; note that "next rank" can only increase by 1 each time XP is given | GetXP 100 ; player gets 100xp |
-| Die | None | Kills the player when the script ends | |
+| Die | None | Kills the player when the script ends | Die ; the player dies once the script finishes |
 | IfAddrEquals | Short, Byte, Label | Jumps to label if value at cpu-address equals the byte | IfAddrEquals $03d1 5 @music_no_is_5 |
 | IfAddrBetween | Short, Byte, Byte, Label | Jumps to label if value at cpu-address lies between the byte operands | IfAddrBetween $03d1 2 5 @music_no_is_between_2_and_5 |
 | SetAddr | Short, Byte | Sets value at given cpu-address (must be RAM) to the byte value given | SetAddr $03d1 5 ; set music to 5 |
-| Respawn | None | Warps to the current spawn point | `Respawn` |
+| Respawn | None | Warps to the current spawn point | Respawn ; warps to the current spawn point |
 | AtlasDevRandomVar | Byte, Byte | Stores a value from 0 through Maximum in a script register, every value equally likely to within one part in 256; the roll steps the game's own random offset and mixes in the frame counter, so repeated rolls differ and a roll is as random as the frame the player acted on | AtlasDevRandomVar 0 5 ; register 0 becomes 0, 1, 2, 3, 4 or 5 |
 | AtlasDevRepeat | Byte, Byte | Closes a loop body: the first pass stores Count in Register and jumps back, every later pass decrements it and jumps while nonzero, so the body runs Count + 1 times. Count 0 falls through. The register file is cleared when a script begins and ends, so an interrupted loop cannot leak its counter | AtlasDevRepeat 0 4 ; end of a body that runs 5 times |
 | AtlasDevSwitch | Byte, Byte | Dispatches over a jump ladder: RowCount vanilla Jump rows must follow the opcode byte-adjacent, and the handler skips three stream bytes per row so the selected row executes. A value at or above RowCount skips the whole ladder, the default case. Keep ladders short and early in an entrypoint | AtlasDevSwitch 2 4 ; four Jump rows, value 2 selects the third |
