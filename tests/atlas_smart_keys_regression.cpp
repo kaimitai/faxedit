@@ -39,6 +39,8 @@ namespace {
 	// the remember stub at the cursor: save $03c1, call the set-flag routine,
 	// restore, unlock
 	const std::string STUB{ "adc1034820785668" "8dc1034ce1eb" };
+	// the jump flagdoorrequirements leaves over the branch at $eb32
+	constexpr std::array<byte, 3> FDR_JUMP{ 0x4c, 0xbc, 0x9a };
 
 	void require(bool c, const std::string& m) { if (!c) throw std::runtime_error(m); }
 
@@ -154,6 +156,39 @@ namespace {
 		require(threw, "a foreign hook at $eb2f was accepted");
 	}
 
+	std::vector<byte> with_fdr_jump(std::vector<byte> rom) {
+		const auto off{ klib::Asm6502::get_file_offset(15, 0xeb32) };
+		for (std::size_t i{ 0 }; i < FDR_JUMP.size(); ++i) rom[off + i] = FDR_JUMP[i];
+		return rom;
+	}
+
+	// with flagdoorrequirements' jump at $eb32, with or without permadoors,
+	// the install writes exactly what it writes over the vanilla branch and
+	// leaves the jump in place
+	void test_composes_with_flag_door_requirements() {
+		for (const auto& base : { vanilla_rom(), permadoors_rom() }) {
+			auto plain{ base };
+			const auto plain_used{ install(plain, "AtlasDevSmartKeys") };
+			auto rom{ with_fdr_jump(base) };
+			const auto used{ install(rom, "AtlasDevSmartKeys") };
+			require(used == plain_used, "the jump at $eb32 changed the space used");
+			require(hex_at(rom, 0xeb32, 4) == "4cbc9aa8", "the jump at $eb32 was disturbed");
+			const auto off{ klib::Asm6502::get_file_offset(15, 0xeb32) };
+			for (std::size_t i{ 0 }; i < FDR_JUMP.size(); ++i) rom[off + i] = DISPATCH[3 + i];
+			require(rom == plain, "the jump at $eb32 changed what was written");
+		}
+	}
+
+	// the jump is only accepted with the tay after it
+	void test_refuses_a_jump_without_the_tay() {
+		auto rom{ with_fdr_jump(vanilla_rom()) };
+		rom[klib::Asm6502::get_file_offset(15, 0xeb35)] = 0xea;
+		bool threw{ false };
+		try { install(rom, "AtlasDevSmartKeys"); }
+		catch (const std::runtime_error&) { threw = true; }
+		require(threw, "a jump at $eb32 without the tay was accepted");
+	}
+
 	void test_refusals() {
 		auto rom{ vanilla_rom() };
 		bool threw{ false };
@@ -164,8 +199,8 @@ namespace {
 
 	// a rom whose gate is not vanilla is refused, naming the hack
 	void test_refuses_a_disturbed_gate() {
-		for (const word cpu : { word{ 0xeb2f }, word{ 0xeb41 }, word{ 0xeb54 },
-			word{ 0xeb94 }, word{ 0xebd1 }, word{ 0xebe1 } }) {
+		for (const word cpu : { word{ 0xeb2f }, word{ 0xeb32 }, word{ 0xeb33 }, word{ 0xeb35 },
+			word{ 0xeb41 }, word{ 0xeb54 }, word{ 0xeb94 }, word{ 0xebd1 }, word{ 0xebe1 } }) {
 			auto rom{ vanilla_rom() };
 			rom[klib::Asm6502::get_file_offset(15, cpu)] ^= 0x01;
 			bool threw{ false };
@@ -190,6 +225,8 @@ int main() {
 		test_refuses_a_disturbed_gate();
 		test_composes_with_permadoors();
 		test_refuses_a_foreign_hook();
+		test_composes_with_flag_door_requirements();
+		test_refuses_a_jump_without_the_tay();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_smart_keys_regression: " << e.what() << '\n';

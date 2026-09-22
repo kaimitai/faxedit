@@ -957,6 +957,10 @@ PermaDoors
 AtlasDevSmartKeys
 ```
 
+[FlagDoorRequirements](#flagdoorrequirements) can be listed before or after
+it. The requirements it adds stay with that hack, and keys and rings are
+handled the same way as without it.
+
 ### AtlasDevEnemyStats
 
 Scales the enemy tables at build time. Every enemy's hit points, contact

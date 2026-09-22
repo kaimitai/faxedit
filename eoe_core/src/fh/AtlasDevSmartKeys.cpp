@@ -46,6 +46,12 @@
 // vanilla and permadoors' own hooks see it. listed the other way round,
 // permadoors would install after this hack and carried keys would open doors
 // it never remembers, so that order is refused.
+//
+// flagdoorrequirements puts a jump to its own handler over the branch at
+// $eb32. the handler takes requirements 9 to 15 itself and sends 1 to 8 back
+// to the tay at $eb35 with the requirement doubled, as vanilla does, so the
+// key entries are reached exactly as before. that jump is accepted in place of
+// the branch, and the two hacks can be listed in either order.
 namespace {
 	constexpr word ORG{ 0xeb51 }, END{ 0xeba1 };
 	constexpr word TABLE{ 0xeb3f };
@@ -53,6 +59,7 @@ namespace {
 	constexpr word VANILLA_TAIL{ 0xebd1 };   // message, destroy $03c1, clear gate
 	constexpr word UNLOCK_TAIL{ 0xebe1 };    // clear gate and sound only
 	constexpr word DISPATCH_LDA{ 0xeb2f };   // lda $042b, or permadoors' jsr
+	constexpr word DISPATCH_BEQ{ 0xeb32 };   // beq / asl, or flagdoorrequirements' jmp
 	constexpr word DESELECT{ 0xebd9 };       // lda #$ff / sta $03c1, or permadoors' jsr + 2 nops
 	constexpr word FAR_CALL{ 0xf859 };
 	constexpr byte MESSAGE_BANK{ 0x0c };
@@ -95,7 +102,12 @@ namespace {
 	void require_gate(const std::vector<byte>& rom) {
 		if (rom.size() != ROM_SIZE)
 			fail("expected a 256 KiB rom with a sixteen byte header");
-		require_site(rom, DISPATCH_LDA + 3, { 0xf0, 0x0a, 0x0a, 0xa8 });
+		// the requirement branch is vanilla, or the jump flagdoorrequirements puts
+		// over it. the tay after it is needed either way
+		if (rom[klib::Asm6502::get_file_offset(15, DISPATCH_BEQ)] == 0x4c)
+			require_site(rom, DISPATCH_BEQ + 3, { 0xa8 });
+		else
+			require_site(rom, DISPATCH_BEQ, { 0xf0, 0x0a, 0x0a, 0xa8 });
 		for (std::size_t i{ 0 }; i < HANDLERS.size(); ++i) {
 			require_site(rom, HANDLERS[i],
 				{ 0xad, 0xc1, 0x03, 0xc9, static_cast<byte>(0x04 + i) });
