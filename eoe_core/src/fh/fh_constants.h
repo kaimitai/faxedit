@@ -377,6 +377,7 @@ namespace fh {
 		constexpr char ID_ROM_PPU_QUEUE_PAYLOAD[]{ "rom_ppu_queue_payload" };
 		constexpr char ID_ROM_WINDOW_CLOSE[]{ "rom_window_close" };
 		constexpr char ID_ROM_VANILLA_FAR_CALL[]{ "rom_vanilla_far_call" };
+		constexpr char ID_ROM_PLAYER_MENU_SHOW[]{ "rom_player_menu_show" };
 		constexpr char ID_ROM_HUD_DRAW_TIMER[]{ "rom_hud_draw_timer" };
 
 		// ram addresses differing between regions

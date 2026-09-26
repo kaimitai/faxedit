@@ -5473,6 +5473,29 @@ word fh::HackManager::apply_helper_LoadVarOperands(const fe::Config& p_config,
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// The retail menu clears the current dialogue. Save its type, run the menu,
+// then rebuild the dialogue frame before the script continues.
+word fh::HackManager::apply_AtlasDevShowInventoryMenu(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	code.jsr(ROM::TextBox_Close);
+	code.lda_abs(RAM::IScriptTextBoxContext);
+	code.pha();
+	code.lda_imm(0x00);
+	code.sta_abs(RAM::IScriptTextBoxContext);
+	code.jsr(ROM::TextBox_ClearForPortraitAndText);
+	code.jsr(cfg_word(p_config, c::ID_ROM_PLAYER_MENU_SHOW));
+	code.pla();
+	code.sta_abs(RAM::IScriptTextBoxContext);
+	code.bpl("@generic");
+	code.jsr(ROM::TextBox_OpenForPortrait);
+	code.label("@generic");
+	code.jsr(ROM::TextBox_OpenForNPC);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -6324,6 +6347,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		}
 		case HackLib::AtlasDevWriteVarToMetatile:
 			cpu_addr = apply_AtlasDevWriteVarToMetatile(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevShowInventoryMenu:
+			cpu_addr = apply_AtlasDevShowInventoryMenu(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:

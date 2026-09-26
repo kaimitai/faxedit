@@ -219,6 +219,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevFrameCountToVar | Byte | Copies the free-running dialogue timer at $021d into a script register; it advances each frame while the text machinery runs | AtlasDevFrameCountToVar 1 ; timestamp source |
 | AtlasDevReadFlagToVar | Byte, Byte | Stores persistent flag 0..247 as canonical 0 or 1 in a script register; an out-of-range flag consumes both operands and does nothing | AtlasDevReadFlagToVar 34 0 ; register 0 becomes 0 or 1 |
 | AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for the block at x=5, y=4 |
+| AtlasDevShowInventoryMenu | None | Opens the retail inventory/equipment menu, waits for it to close, then continues the script | AtlasDevShowInventoryMenu |
 | AtlasDevCopyVar | Byte, Byte | Copies one script register into another; an invalid register on either side does nothing | AtlasDevCopyVar 0 3 ; register 3 becomes a copy of register 0 |
 | AtlasDevSetVar | Byte, Byte | Stores a value in a script register | AtlasDevSetVar 0 5 ; register 0 becomes 5 |
 | AtlasDevAddVar | Byte, Byte | Adds a value to a script register, wrapping at 255 | AtlasDevAddVar 0 1 ; counts register 0 up by one |

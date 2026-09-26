@@ -77,6 +77,7 @@ namespace fh {
 		AtlasDevRepeat, AtlasDevSwitch, AtlasDevSwapVar, AtlasDevIfRandomChance,
 		AtlasDevPeekToVar, AtlasDevFrameCountToVar, AtlasDevReadFlagToVar,
 		AtlasDevWriteVarToMetatile,
+		AtlasDevShowInventoryMenu,
 		// Keep Count last.
 		Count
 	};
@@ -269,6 +270,7 @@ namespace fh {
 		word apply_AtlasDevFrameCountToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevReadFlagToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
 		word apply_AtlasDevWriteVarToMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowInventoryMenu(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
