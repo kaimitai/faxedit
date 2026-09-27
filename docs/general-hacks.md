@@ -44,6 +44,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
   - [AtlasDevTimeOfDay](#atlasdevtimeofday)
+  - [AtlasDevStatusWard](#atlasdevstatusward)
   - [AtlasDevJumpControl](#atlasdevjumpcontrol)
   - [AtlasDevFallControl](#atlasdevfallcontrol)
   - [AtlasDevLadderControl](#atlasdevladdercontrol)
@@ -2167,3 +2168,89 @@ AtlasDevShadowEuraControl walk=10 pause=60
 AtlasDevShadowEuraControl fire1=2 fire2=6 step=12
 AtlasDevShadowEuraControl body=1 flag=16
 ```
+
+### AtlasDevStatusWard
+
+Turns a timed status effect into a configurable forcefield. While the
+selected timer is active, living monsters inside the field radius are pushed
+away from the player; pull mode turns the same rule into a magnet with an
+eight-pixel dead zone. The trigger is the game's own status counter, so any
+ordinary item, shop or script that grants that effect also grants the ward.
+Requires AtlasDevFrameScheduler earlier in the list. Scripts switch the role
+with AtlasDevArmRole 5.
+
+The role body uses no additional RAM and joins the existing POST chain. If
+all three scheduler kinds are occupied, it installs dormant without
+displacing them so a script can swap kind 5 in later. Multiple StatusWard
+entries can share kind 5—for example, one entry per status trigger—but only
+one entry may enable `fieldfx`; that entry owns all three PRE vectors. A PRE
+vector already claimed by another hack is refused without modifying the ROM.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `trigger` | `ointment` | status that carries the field: `ointment`, `glove`, `wingboots`, `hourglass`, `any`, or `always` |
+| `radius` | `40` | field radius in pixels, 4 to 120 |
+| `push` | `2` | pixels moved per active frame, 1 to 4 |
+| `exempt` | `$33` | one entity id the field never moves |
+| `pull` | `false` | pull monsters inward instead of pushing them outward; requires `radius` above 12 |
+| `arc` | `both` | active side of the player: `both`, `front`, or `back` |
+| `fieldpulse` | `0` | rest mask; the field sleeps while the scheduler counter masked by this byte is zero (`$18` rests 8 of every 32 frames) |
+| `aura` | `false` | conduct an installed AtlasDevInfectedTint through slot 2 while active; cannot be combined with `trigger=always` and owns slot 2 during the effect |
+| `fieldfx` | `false` | draw the field sprites in OAM entries 60 to 63; claims all three PRE vectors |
+| `fieldtile` | `$40` | first existing sprite tile used by the field orbs |
+| `fieldattr` | `0` | OAM attribute used by the orbs; 0 uses sprite palette 0 |
+| `fieldspeed` | `3` | pattern speed, 0 (static) through 5; each angle/radius stage lasts `1 << (6-speed)` scheduler ticks when nonzero |
+| `fieldcount` | `4` | number of orbs: 1, 2, or 4 |
+| `fielddir` | `cw` | orbit direction: `cw` or `ccw`; for radial patterns, `ccw` mirrors fixed compass indices (`angle XOR 7`), rather than reversing the radius sequence |
+| `edgepark` | `false` | park an orb outside X 0–255 or Y 0–239, including signed offsets that would wrap onto the opposite edge |
+| `fieldpattern` | `orbit` | `orbit`, `expand` or `contract`; radial modes keep fixed compass angles and cycle through quarter, half, three-quarter and full radius, forward or backward |
+| `fieldblink` | `0` | visual-only rest mask: hide the field when the scheduler counter AND this mask is zero; 0 disables this extra gate |
+| `fieldframes` | `1` | 1, 2 or 4 consecutive existing sprite tiles starting at `fieldtile`; the interval must end at or before tile 256 |
+| `fieldanimspeed` | `3` | tile animation speed, 0 through 5; 0 freezes the first tile, otherwise each tile lasts `1 << (6-speed)` scheduler ticks |
+
+These options change the graphic only: `radius`, `push`, `pull` and the
+existing `fieldpulse` still control the force. In radial modes, each stage's
+radius is rounded to the nearest integer (half upward), then its compass
+offsets are rounded; `fieldspeed=0` holds the full radius for both expansion
+and contraction. Animation selects `(counter >> (6-fieldanimspeed)) AND
+(fieldframes-1)`. All options share the existing scheduler counter, so a
+blink or pulse mask can hide entire radius stages or animation frames. For
+example, `fieldpulse=$18` with `fieldspeed=3` hides stage 0: quarter radius
+for expansion, full radius for contraction. Set both rest masks to 0 when
+every phase should be visible.
+
+No new RAM, OAM entries or graphics are allocated. Tiles must already be
+loaded in sprite CHR RAM; this is not a custom-art importer. Cleanup preserves
+tiles outside the configured interval, but another sprite using a tile
+inside that same interval is indistinguishable from a field sprite. With
+`fieldfx=false`, visual options emit no code. Omitted new options retain the
+previous byte-for-byte emission. Larger visual configurations consume more
+fixed-bank space and are rejected transactionally if they do not fit.
+
+Use at most one `aura=true` entry. Multiple aura-enabled wards currently
+compete for the tint slot: an inactive entry can clear another entry's glow.
+For one glow shared by the four status effects, use `trigger=any`.
+
+```text
+AtlasDevStatusWard trigger=wingboots radius=48 push=1 fieldpulse=$18 aura=true fieldfx=true edgepark=true
+```
+
+```text
+AtlasDevStatusWard trigger=wingboots fieldfx=true edgepark=true fieldpattern=expand fieldspeed=3 fieldframes=4 fieldanimspeed=4
+```
+
+The default role uses 96 bytes in bank 9 and no fixed-bank bytes beyond
+its scheduler. The scheduler uses 156 bytes and seven RAM bytes; the ward
+adds zero RAM. A basic four-orb field adds 236 fixed-bank bytes. A tested
+expanded, clipped, four-tile field adds 461 bytes (617 including scheduler).
+Build-time byte checks decide whether a configuration fits. In native retail
+exports the available fixed-bank space was 780 bytes on US/US Rev A/EU and
+551 on JP: default and basic orbit exported on all four, while the larger
+617-byte configuration was refused on JP without creating an output ROM.
+These are installation checks; fresh gameplay replay coverage is US Rev 0.
+
+The force tests horizontal distance only; the circular graphic does not add
+a vertical collision test. Entries with zero HP and the configured exempt ID
+are skipped. `aura=true` can displace another role in slot 2; reserve that
+slot for tint and use a single aura owner. The graphic shares the engine's
+sprite limit and costs up to four additional sprites on a scanline.

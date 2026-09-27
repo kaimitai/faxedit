@@ -19,6 +19,7 @@ namespace fh {
 		SRAM, BugFixes, ItemScripts, PermaDoors, OintmentFix,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
+		AtlasDevStatusWard,
 		AtlasDevLadderControl, AtlasDevLadderCrown, AtlasDevSmartKeys, AtlasDevEnemyStats, AtlasDevCombatFeel,
 		AtlasDevEnemyHud, AtlasDevRunControl,
 		AtlasDevSmartMattock,
