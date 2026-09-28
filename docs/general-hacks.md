@@ -630,9 +630,25 @@ FlagDoorRequirements data=9:152+11+10:153 bank=9 addr=$8000
 
 Between 1 and 7 `data` entries must be provided. Do not assign an extended requirement to a door unless the corresponding entry is configured.
 
-The door requirements available for selection in the editor are defined by the `door_requirement_labels` configuration item. To use the extended requirements, add an override for this `byte_to_string_map` entry containing labels for the additional requirement values used by the hack.
+The door requirements available for selection in the editor are defined by the `door_requirement_labels` byte map. To make extended requirements available in the editor, add labels for them under the `byte_to_string_maps` section of the project configuration.
 
-For example, if requirements 9-11 are configured, the `door_requirement_labels` override should also define entries for values 9, 10 and 11. The labels can describe what each requirement represents in the project.
+For example, to add requirements 9 and 10:
+
+```xml
+<!-- byte map overrides -->
+<byte_to_string_maps>
+
+	<byte_to_string_map name="door_requirement_labels">
+		<entry byte="9" str="My Requirement" />
+		<entry byte="10" str="Another Requirement" />
+	</byte_to_string_map>
+
+</byte_to_string_maps>
+```
+
+The configured entries are merged with the standard door requirement labels. The `str` values are the labels shown for these requirements in the editor and can be named to describe their purpose in the project.
+
+Add an entry for each extended requirement used by `FlagDoorRequirements`. For example, if the hack defines requirements 9-11, the override should contain labels for requirements 9, 10 and 11.
 
 ### OintmentFix
 

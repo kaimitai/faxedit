@@ -577,7 +577,7 @@
 			<entry byte="$0d" str="OW/Return (fg)" />
 		</byte_to_string_map>
 		<!-- labels for door requirements -->
-		<byte_to_string_map name="door_requirement_labels">
+		<byte_to_string_map name="door_requirement_labels" merge="true">
 			<entry byte="$00" str="None" />
 			<entry byte="$01" str="Key A" />
 			<entry byte="$02" str="Key K" />
