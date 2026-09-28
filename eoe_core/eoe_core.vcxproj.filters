@@ -641,6 +641,9 @@
     <ClCompile Include="src\fh\AtlasDevLadderCrown.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevStatusWard.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevSmartKeys.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
@@ -668,7 +671,70 @@
     <ClCompile Include="src\fh\AtlasDevFastBlink.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevMaskmanControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\AtlasDevLandingTuck.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevPreventTextbox.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevHornetControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevYuinaruControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevBihorudaControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevYareekaControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevRipasheikuControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevNagaControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevPakukameControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevSugataControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevGiantBeesControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevZorugeriruControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevNecronAidesControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevIshiisuControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevTamazutsuControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevBorabohraControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevMagmanControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevKingGrieveControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevNashControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevExecutionHoodControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevShadowEuraControl.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">

@@ -45,6 +45,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
   - [AtlasDevTimeOfDay](#atlasdevtimeofday)
+  - [AtlasDevStatusWard](#atlasdevstatusward)
   - [AtlasDevJumpControl](#atlasdevjumpcontrol)
   - [AtlasDevFallControl](#atlasdevfallcontrol)
   - [AtlasDevLadderControl](#atlasdevladdercontrol)
@@ -63,6 +64,27 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSpriteSpeed](#atlasdevspritespeed)
   - [AtlasDevPpuDrainUnroll](#atlasdevppudrainunroll)
   - [AtlasDevQueueLess](#atlasdevqueueless)
+  - [AtlasDevPreventTextbox](#atlasdevpreventtextbox)
+  - [AtlasDevMaskmanControl](#atlasdevmaskmancontrol)
+  - [AtlasDevHornetControl](#atlasdevhornetcontrol)
+  - [AtlasDevYuinaruControl](#atlasdevyuinarucontrol)
+  - [AtlasDevBihorudaControl](#atlasdevbihorudacontrol)
+  - [AtlasDevYareekaControl](#atlasdevyareekacontrol)
+  - [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol)
+  - [AtlasDevNagaControl](#atlasdevnagacontrol)
+  - [AtlasDevPakukameControl](#atlasdevpakukamecontrol)
+  - [AtlasDevSugataControl](#atlasdevsugatacontrol)
+  - [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol)
+  - [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol)
+  - [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol)
+  - [AtlasDevIshiisuControl](#atlasdevishiisucontrol)
+  - [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol)
+  - [AtlasDevBorabohraControl](#atlasdevborabohracontrol)
+  - [AtlasDevMagmanControl](#atlasdevmagmancontrol)
+  - [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol)
+  - [AtlasDevNashControl](#atlasdevnashcontrol)
+  - [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol)
+  - [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol)
 
 <hr>
 
@@ -189,6 +211,30 @@ must not be edited independently by per-instance custom graphics code.
 The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
 Mirroring, battery bits and header padding may vary. Instruction checks determine
 compatibility; runtime evidence currently covers US revision 0 only.
+
+### AtlasDevPreventTextbox
+
+> idea by songbirder
+
+Lets an interaction script run with no textbox. A script whose textbox value is `$7f` draws no window when it starts and erases none when it ends; everything else in the script runs as before. Useful for cutscenes and for scripts that only move entities, change tiles or play music, for example on an invisible trigger entity.
+
+```text
+AtlasDevPreventTextbox
+```
+
+```text
+.textbox $7f
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `textbox` | `$7f` | The textbox value that prevents the window, 1 to 127 |
+
+The value must be 1 to 127: 0 is the plain box and 128 and up are the portraits. No stock script uses any value in that range, so the default changes nothing in an unmodified game.
+
+Messages in such a script still run and still wait for a button, but they cannot be seen, so leave them out or open a window yourself. Item grants, the sell menu and the shops open their own window and still do.
+
+Uses 22 bytes from the normal bank 15 allocation cursor and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
 
 ### KillSwitch
 
@@ -978,6 +1024,17 @@ verified against its exact vanilla bytes before anything is written; the gate
 is identical in the US, US rev A and EU ROMs, and the JP ROM, where it
 differs, is refused.
 
+`flag=n` gates the carried key on extended flag `n` at runtime, so a script
+can switch the hack on with `SetFlag` and off with `ClearFlag`. A clear flag
+is indistinguishable from stock, the flag page is cleared at reset, and
+selecting the key still opens the door either way. The test runs in the five
+spare bytes of the replaced checks, which fit one bit test, so `n` must be 6
+or 7 modulo 8: 6, 7, 14, 15 and so on up to 247. Other flags are refused.
+
+```
+AtlasDevSmartKeys flag=7
+```
+
 `mode=vanilla` installs nothing. The default is `mode=carried`.
 
 With [PermaDoors](#permadoors) listed before it, a door opened with a
@@ -991,6 +1048,10 @@ refused with a message saying which way round to list them.
 PermaDoors
 AtlasDevSmartKeys
 ```
+
+[FlagDoorRequirements](#flagdoorrequirements) can be listed before or after
+it. The requirements it adds stay with that hack, and keys and rings are
+handled the same way as without it.
 
 ### AtlasDevEnemyStats
 
@@ -1131,12 +1192,15 @@ AtlasDevCombatFeel walk=256 walkmax=512 ramp=4+4+4+4
 
 Double tap a direction to run. The second tap inside the window raises the walk speed cap from 1.5 px per frame to ```speed``` eighths and adds ```accel``` each running frame; letting go, turning on the ground, a hit or a ladder drop back to walking. A running jump keeps its speed in the air. One RAM byte at ```$04f6``` holds the state.
 
+With ```tap=hold``` there is no double tap: any held direction runs from its first frame, a turn keeps running, and only letting go ends it. A hit still takes over, as in the vanilla game, until the direction is released.
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `speed` | `20` | run cap in eighths of a pixel per frame, 13 to 64 (20 is 2.5 px per frame; the walk cap is 12; 64 is the 8 px per frame the game's own knockback already moves) |
 | `accel` | `16` | extra speed per running frame in 1/256 px, 0 to 255; 0 keeps the vanilla ramp only |
 | `window` | `12` | frames after a release in which a second tap starts the run, 1 to 63 |
 | `mode` | `ramp` | `ramp` starts the run from the vanilla 0.75 px per frame and ramps; `instant` starts at ```speed``` |
+| `tap` | `double` | `double` runs on the second tap inside `window`; `hold` runs on any held direction, no tap, and `window` is unused |
 | `walk_cycle` | `1` | walk animation steps per running frame, 1 to 4; 1 keeps the vanilla cadence |
 | `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `$87` is the registered number for this hack |
 | `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
@@ -1200,7 +1264,7 @@ hack, inside its reach the dwarf holds its guard, steps back,
 lunges with the sword out, then recovers. Only the thrust hurts, and only
 within `sword` pixels, so stepping back when it steps back makes the lunge
 miss, and the recovery is the moment to strike. Hitting it restarts its wind
-up. While the hero swings it may still rush in, but a rush never hurts.
+up. While the hero is jumping it may still rush in, but a rush never hurts.
 
 `AtlasDevWolfmanControl` takes the same parameters for Wolfman. Either name
 alone changes one monster and leaves the other with the vanilla timing and
@@ -1217,7 +1281,7 @@ reach. The two names can be listed in any order, each with its own flag.
 | `recover` | `24` | frames of guard after the thrust, 0 to 255 |
 | `reach` | `24` | distance in pixels at which the dwarf stops and fights, 1 to 255 |
 | `approach` | `1` | walking speed in pixels per frame, 0 to 3 |
-| `chase` | `2` | rush speed while the hero swings, 0 to 3; 0 never rushes |
+| `chase` | `2` | rush speed while the hero is jumping, 0 to 3; 0 never rushes |
 | `bodyhurt` | `0` | 1 makes contact hurt in every pose, as in vanilla |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
@@ -1267,6 +1331,19 @@ about a quarter of a second.
 
 | parameter | default | meaning |
 | --- | --- | --- |
+### AtlasDevMaskmanControl
+
+Makes Maskman's spear hurt where it is drawn. In the stock game, while he
+strides with his spear forward, his hitbox shrinks to a thin spot to his
+right: his body does not hurt, the spear only hurts at one exact distance,
+and when he faces left it does not hurt at all. With this hack, during that
+stride his body hurts and so does his spear, `spear` pixels past his body on
+the side he faces, never behind him. The default is the length of the spear
+as drawn. The rest of his moves are unchanged.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `spear` | `16` | how far the spear reaches past his body, 0 to 64 pixels; 0 is his body only |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
 
@@ -1318,6 +1395,19 @@ AtlasDevFrameScheduler.
 AtlasDevFastBlink
 AtlasDevScreenBlink flag=16
 AtlasDevFastBlink flag=24
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+One vanilla instruction sequence in bank 14 is retargeted, inside the
+routine that picks each sprite's hitbox, and 34 bytes of bank 14 free space
+are used (52 with a flag). No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevMaskmanControl
+AtlasDevMaskmanControl spear=24
+AtlasDevMaskmanControl flag=14
 ```
 
 <hr>
@@ -1368,3 +1458,834 @@ AtlasDevLandingTuck
 AtlasDevLandingTuck profile=light
 AtlasDevLandingTuck profile=heavy flag=24
 ```
+### AtlasDevHornetControl
+
+Tunes how the Hornet flies. In the stock game it crosses the screen at 2
+pixels per frame, faster than you walk, and bobs up and down in a wave that
+repeats every 64 frames, turning at walls and blocks. With this hack you set
+its sideways speed, how hard it bobs and how quickly the wave repeats. The
+defaults are the stock numbers, so the hack changes nothing until you set a
+value. Walls and blocks still turn it the stock way.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `speed` | `16` | sideways speed in eighths of a pixel per frame, 0 to 64 (16 is the stock 2 pixels; you walk at up to 12) |
+| `bob` | `16` | the peak up and down speed in eighths of a pixel per frame, 0 to 64, in the stock wave shape; 0 flies flat |
+| `period` | `8` | frames per step of the eight step wave: 1, 2, 4, 8, 16 or 32 (8 is the stock 64 frame wave) |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag, and with a period of 8 or less, the new numbers are written
+straight into the stock routine in bank 14: its two speed loads, its timer
+shifts and its two speed tables. No free space is used. A period of 16 is the
+one shift that does not fit, and takes seven bytes of bank 14 free space. A
+flag with a value changed retargets one instruction to a hook there, which
+covers only the values that differ: 26 bytes for the speed alone, up to 64. At the default values nothing is written. No RAM is claimed.
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevHornetControl speed=8
+AtlasDevHornetControl speed=24 bob=32 period=4
+AtlasDevHornetControl bob=0 flag=15
+```
+
+### AtlasDevYuinaruControl
+
+Tunes how Yuinaru swoops. In the stock game its speed rises and falls in a
+steady wave on each axis: sideways it builds up to about 4 pixels per frame
+and back down over 256 frames, faster than you walk, and up and down it
+reaches about 2 pixels per frame over 128 frames. It flies through walls and
+turns at the screen edges. With this hack you set the peak speed and the
+length of the swoop on each axis. The defaults are the stock numbers, so the
+hack changes nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `xspeed` | `32` | peak sideways speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (32 is the stock 4 pixels) |
+| `xloop` | `256` | frames per sideways swoop: 8, 16, 32, 64, 128 or 256 |
+| `yspeed` | `16` | peak up and down speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
+| `yloop` | `128` | frames per up and down swoop: 8, 16, 32, 64, 128 or 256 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The speeds and swoops come in powers of two because the hack reuses the
+game's own wave routine. On short swoops the top speed is reached a little
+under the peak (three quarters of it at 8 frames, almost all of it at 256).
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new numbers are written straight into the stock movement
+in bank 14, and no free space is used. A half-pixel peak on a 256-frame loop
+(`xspeed=4 xloop=256`, or the same on y) cannot use the stock scaler, and
+takes a nine byte routine in bank 14 free space, 18 for both axes. A flag
+with a value changed retargets the load of the axis that differs to a hook
+there, which covers only that axis: 26 bytes for a loop alone, up to 70. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevYuinaruControl xspeed=16
+AtlasDevYuinaruControl xspeed=16 xloop=64 yspeed=32 yloop=32
+AtlasDevYuinaruControl yspeed=4 flag=16
+```
+
+### AtlasDevBihorudaControl
+
+Tunes how Bihoruda swoops. In the stock game its speed rises and falls in a
+steady wave on both axes: it builds up to about 2 pixels per frame and back
+down over 128 frames, sideways and up and down, and walls turn it around.
+With this hack you set the peak speed and the length of the swoop on each
+axis. The defaults are the stock numbers, so the hack changes nothing until
+you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `xspeed` | `16` | peak sideways speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
+| `xloop` | `128` | frames per sideways swoop: 8, 16, 32, 64, 128 or 256 |
+| `yspeed` | `16` | peak up and down speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
+| `yloop` | `128` | frames per up and down swoop: 8, 16, 32, 64, 128 or 256 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The speeds and swoops come in powers of two because the hack reuses the
+game's own wave routine. On short swoops the top speed is reached a little
+under the peak (three quarters of it at 8 frames, almost all of it at 256).
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new numbers are written straight into the stock movement
+in bank 14, and no free space is used. A half-pixel peak on a 256-frame loop
+(`xspeed=4 xloop=256`, or the same on y) cannot use the stock scaler, and
+takes a nine byte routine in bank 14 free space, 18 for both axes. A flag
+with a value changed retargets the load of the axis that differs to a hook
+there, which covers only that axis: 26 bytes for a loop alone, up to 70. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevBihorudaControl xspeed=32
+AtlasDevBihorudaControl xspeed=32 xloop=64 yspeed=8 yloop=32
+AtlasDevBihorudaControl yloop=32 flag=16
+```
+
+### AtlasDevYareekaControl
+
+Tunes Yareeka's dash. In the stock game Yareeka speeds up, dashes sideways
+at about 2 pixels per frame for 64 frames, then slows down, over and over,
+and walls turn it around. With this hack you set how fast the dash is and
+how long it lasts. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. The speed-up and slow-down stay as they are,
+because another routine uses the same code.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `dash` | `16` | dash speed in eighths of a pixel per frame, 1 to 64 (16 is the stock 2 pixels) |
+| `dashlen` | `64` | frames the dash lasts, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the dash length and the dash speed are written straight into
+the stock instructions in bank 14, and no free space is used. With a flag
+and a value changed, only the instruction whose value differs is retargeted,
+to 15 to 37 bytes of bank 14 free space. At the default values nothing is written. No RAM is claimed.
+Every site is verified against its exact vanilla bytes before anything is
+written, and all of them are identical in the US, US rev A, EU and JP ROMs.
+Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevYareekaControl dash=32
+AtlasDevYareekaControl dash=32 dashlen=96
+AtlasDevYareekaControl dashlen=128 flag=16
+```
+
+<hr>
+
+### AtlasDevRipasheikuControl
+
+Tunes Ripasheiku's rhythm. In the stock game Ripasheiku rises while it
+drifts sideways about 1 pixel per frame, slams down, then sits for 256
+frames and fires a shot every 64 frames before it rises again. With this
+hack you set how fast it drifts, how long it sits and how often it fires.
+The defaults are the stock numbers, so the hack changes nothing until you
+set a value. The climb and the slam stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `drift` | `8` | sideways speed while rising and slamming, in eighths of a pixel per frame, 1 to 64 (8 is the stock 1 pixel) |
+| `sit` | `256` | frames it sits before rising again, 1 to 256 |
+| `fire` | `64` | frames between shots while it sits: 16, 32, 64 or 128 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The shots follow the game's frame counter, so a short `sit` can mean fewer
+shots per landing.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the shot timing and the drift speed are written straight into
+the stock instructions in bank 14, and no free space is used; a changed sit
+length retargets the instruction where it is set, to 10 bytes of bank 15
+free space. With a flag, only the instructions whose values you change are
+retargeted, to at most 65 bytes of bank 15 free space. At the default values
+nothing is written. No RAM is claimed. Every site is verified against its
+exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevRipasheikuControl drift=16
+AtlasDevRipasheikuControl sit=96 fire=32
+AtlasDevRipasheikuControl fire=128 flag=16
+```
+
+<hr>
+
+### AtlasDevNagaControl
+
+Tunes how Naga chases your height. In the stock game Naga faces you and bobs
+up and down, and whenever you are 16 pixels or more above or below it, it
+also creeps toward your height at 0.75 pixels per frame. With this hack you
+set how fast it creeps and how big a height gap it ignores. The defaults are
+the stock numbers, so the hack changes nothing until you set a value. The
+bob stays as it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `chase` | `6` | creep speed in eighths of a pixel per frame, 1 to 64 (6 is the stock 0.75 pixels) |
+| `zone` | `16` | height gap in pixels it ignores, 0 to 255; 0 means it always creeps |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new height gap and creep speed are written straight into
+the stock instructions in bank 14, and no free space is used. With a flag,
+only the instructions whose values you change are retargeted, to at most 44
+bytes of bank 15 free space. At the default values nothing is written. No
+RAM is claimed. Every site is verified against its exact vanilla bytes
+before anything is written, and all of them are identical in the US, US rev
+A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevNagaControl chase=16
+AtlasDevNagaControl chase=12 zone=0
+AtlasDevNagaControl zone=48 flag=16
+```
+
+<hr>
+
+### AtlasDevPakukameControl
+
+Tunes how Pakukame spawns Liliths. In the stock game Pakukame sits still,
+waits 64 frames, winds up in steps of 8 frames and spawns a Lilith, with at
+most 3 alive at once, over and over. With this hack you set how long it
+waits, how many Liliths may be alive and how long each windup step takes.
+The defaults are the stock numbers, so the hack changes nothing until you
+set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `delay` | `64` | frames it waits before each windup, 1 to 255 |
+| `cap` | `3` | Liliths alive at once, 1 to 8; at the cap it waits |
+| `windup` | `8` | frames per windup step: 2, 4, 8 or 16 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+The spawn comes on the second windup step.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new wait, windup step and Lilith count are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 63 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevPakukameControl delay=32
+AtlasDevPakukameControl cap=1
+AtlasDevPakukameControl delay=128 cap=5 windup=16 flag=16
+```
+
+<hr>
+
+### AtlasDevSugataControl
+
+Tunes Sugata's curse. In the stock game Sugata walks, and once a cycle it
+turns the screen gray for a moment and then takes 10 HP from you wherever
+you stand, with the usual knockback. With this hack you set how much HP the
+curse takes and how many frames the screen stays gray before it lands. The
+defaults are the stock numbers, so the hack changes nothing until you set a
+value. Its walk stays as it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `damage` | `10` | HP the curse takes, 0 to 255 |
+| `flash` | `2` | frames the screen stays gray before the curse lands, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`damage=0` still flashes the screen and knocks you back; only the HP loss is
+gone.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new wait and damage of the curse are written straight
+into the stock instructions in bank 14, and no free space is used. With a
+flag, only the instructions whose values you change are retargeted, to at
+most 38 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevSugataControl damage=4
+AtlasDevSugataControl damage=0 flash=30
+AtlasDevSugataControl flash=60 flag=16
+```
+
+<hr>
+
+### AtlasDevGiantBeesControl
+
+Tunes the Giant Bees. In the stock game a Giant Bee climbs to the top of the
+screen, dives at you, hovers for a while and then climbs again. With this
+hack you set how fast it climbs, how fast it moves sideways while it dives
+and how long it hovers. The defaults are the stock numbers, so the hack
+changes nothing until you set a value. The dive's fall, the bob while it
+hovers and its hitbox stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `rise` | `4` | pixels per frame it climbs, 1 to 8 |
+| `dive` | `1` | pixels per frame it moves sideways while diving, 1 to 4 |
+| `hover` | `128` | frames it hovers before climbing again: 32, 64, 128 or 256 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new climb speed, dive speed and hover length are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 59 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevGiantBeesControl rise=8
+AtlasDevGiantBeesControl dive=3 hover=64
+AtlasDevGiantBeesControl hover=256 flag=16
+```
+
+<hr>
+
+### AtlasDevZorugeriruControl
+
+Tunes Zorugeriru. In the stock game Zorugeriru sits in place, rests a
+moment, winds up, and drops a rock above your head, with at most four rocks
+out at once. With this hack you set how long it rests and winds up between
+drops, how many rocks may be out, and how fast the rocks speed up as they
+fall. You can also give it a box that covers its whole body: the stock box
+covers only the left half of what is drawn, so the right half can neither
+touch you nor be hit. The defaults are the stock numbers, so the hack
+changes nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `rest` | `12` | frames it rests after a drop before it tries again, 1 to 16 |
+| `windup` | `32` | frames it winds up before each drop, 1 to 255 |
+| `cap` | `4` | rocks that may be out at once, 1 to 7 |
+| `fall` | `2` | how fast the rocks speed up: 1 is half the stock rate, 4 is double |
+| `body` | `16` | box width: 32 covers the whole drawn body |
+| `flag` | none | extended flag `n`, 0 to 247: the rock settings are on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`rest` stops at 16 because Zorugeriru only checks for room for a new rock
+every 16 frames; use `windup` for longer pauses.
+
+`flag=n` lets a script grant or remove the rock settings with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+`body` is set when you build and does not follow the flag.
+
+Without a flag the new windup, rest, rock count and fall speed are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 80 bytes of bank 15 free space. `body=32` changes one byte of
+Zorugeriru's box. At the default values nothing is written. No RAM is
+claimed. Every site is verified against its exact vanilla bytes before
+anything is written, and all of them are identical in the US, US rev A, EU
+and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevZorugeriruControl rest=4 windup=16
+AtlasDevZorugeriruControl cap=2 fall=4
+AtlasDevZorugeriruControl body=32 flag=16
+```
+
+<hr>
+
+### AtlasDevNecronAidesControl
+
+Tunes the Necron Aides. In the stock game a Necron Aide climbs up and down a
+ladder; when it touches you it lets go, drops to the floor and walks. With
+this hack you set how fast it climbs, how fast it walks once it drops, and
+whether it keeps climbing after it hits you. The defaults are the stock
+numbers, so the hack changes nothing until you set a value. The way it
+turns, its fall and its hitbox stay as they are.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `climb` | `2` | ladder speed: 1 is half the stock speed, 4 is double |
+| `walk` | `1` | pixels per frame it walks after it drops, 1 to 4 |
+| `cling` | `0` | 1 keeps it on its ladder after it hits you instead of letting go |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+With `cling=1` a Necron Aide can touch you again once your invincibility
+wears off.
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the walk speed is written straight into the stock instruction
+in bank 14, and no free space is used; a slower or faster climb retargets
+the instruction where the climb speed is read, to 19 bytes of bank 15 free
+space. `cling=1` retargets the one instruction in the enemy touch code that
+makes a Necron Aide let go; without a flag that needs no free space. With a
+flag, only the instructions whose values you change are retargeted, to at
+most 51 bytes of bank 15 free space, 16 more with `cling=1`. At the default
+values nothing is written. No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevNecronAidesControl climb=4
+AtlasDevNecronAidesControl walk=3
+AtlasDevNecronAidesControl cling=1 flag=16
+```
+
+<hr>
+
+### AtlasDevIshiisuControl
+
+Tunes Ishiisu. In the stock game Ishiisu walks toward you; when you are
+close and facing it, it winds up, throws at you and recovers before it walks
+again. With this hack you set how fast it walks, how close you must be
+before it attacks, how long it winds up and recovers, and whether it attacks
+even when you are not facing it. The defaults are the stock numbers, so the
+hack changes nothing until you set a value. The throw itself and what it
+throws stay as they are, since other monsters use the same throw.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `3` | walk speed in quarter pixels per frame, 1 to 8 |
+| `range` | `32` | how close you must be before it attacks, in pixels, 8 to 128 |
+| `windup` | `10` | frames from the start of an attack to the throw, 1 to 64 |
+| `recover` | `20` | frames from the throw until it walks again, 1 to 64 |
+| `face` | `0` | 1 makes it attack even when you are not facing it |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the walk speed, the distance, the attack length, the throw
+moment and the throw pose are written straight into the stock instructions
+in bank 14, and no free space is used. `face=1` retargets the start of the
+facing test; without a flag that needs no free space. With a flag, only the
+instructions whose values you change are retargeted, to at most 118 bytes of
+bank 15 free space, 14 more with `face=1`. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevIshiisuControl walk=6
+AtlasDevIshiisuControl range=48 windup=6 recover=30
+AtlasDevIshiisuControl face=1 flag=16
+```
+
+<hr>
+
+### AtlasDevTamazutsuControl
+
+Tunes Tamazutsu. In the stock game Tamazutsu stays in one place: it waits
+underground, blinks a warning, pops up, stays up for a while and sinks again.
+With this hack you set how long it stays underground, how long it stays up
+and how long the warning blinks before it rises. The defaults are the stock
+numbers, so the hack changes nothing until you set a value. The rise and the
+sink keep their stock length.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `60` | frames underground, 16 to 255 |
+| `up` | `60` | frames above ground, 16 to 255 |
+| `warn` | `30` | frames of warning blink before it rises, 1 to 255; at `hide` or more it blinks the whole time it is underground |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times underground, time above ground and warning
+blink are written straight into the stock instructions in bank 14, and no
+free space is used. With a flag, only the instructions whose values you
+change are retargeted, to at most 74 bytes of bank 15 free space. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevTamazutsuControl hide=30
+AtlasDevTamazutsuControl up=120 warn=10
+AtlasDevTamazutsuControl hide=90 flag=16
+```
+
+<hr>
+
+### AtlasDevBorabohraControl
+
+Tunes Borabohra. In the stock game Borabohra rises out of the ground and then
+glides sideways at you forever. Its speed swells from nothing to about one
+pixel a frame and back, and it turns toward you on every frame. With this
+hack you set its top speed, how long each swell lasts, and how often it turns
+toward you, so it can glide past you and give you an opening. `body=32` makes
+its box as wide as its wings, so a hit on a wing tip counts, and so does a
+wing tip touching you. The defaults are the stock numbers, so the hack
+changes nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `speed` | `8` | top glide speed in eighths of a pixel per frame: 2, 4, 8, 16 or 32 |
+| `loop` | `128` | frames from one standstill to the next: 32, 64, 128 or 256 |
+| `turn` | `1` | how often it turns toward you, in frames: 1, 2, 4, 8, 16, 32, 64 or 128 |
+| `body` | `24` | box width; 32 covers its whole drawing |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`speed=2` needs a `loop` of 128 or less. `flag=n` lets a script grant or
+remove the behavior with `SetFlag` and `ClearFlag`. A clear flag, like
+`mode=vanilla`, is the stock behavior; `body` is not switched by the flag.
+
+Without a flag the glide's wave is written straight into the stock
+instructions in bank 14, and no free space is used; `speed=2` (or `speed=4
+loop=256`) needs a small rewrite of the glide, 20 bytes of bank 15 free
+space, and `turn` above 1 retargets the turn test to 13 bytes. With a flag,
+only the instructions whose values you change are retargeted, to at most 66
+bytes of bank 15 free space. `body=32` changes two bytes of its box. At the
+default values nothing is written. No RAM is claimed. Every site is verified
+against its exact vanilla bytes before anything is written, and all of them
+are identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevBorabohraControl speed=16
+AtlasDevBorabohraControl loop=64 turn=32
+AtlasDevBorabohraControl body=32 flag=16
+```
+
+<hr>
+
+### AtlasDevMagmanControl
+
+Tunes Magman. In the stock game Magman hides off screen, then appears
+right in front of you at your height, stays there facing you for a while and
+hides again. Its only attack is its touch. With this hack you set how long it
+stays hidden, how long it stays out, and how far in front of you it appears.
+The defaults are the stock numbers, so the hack changes nothing until you set
+a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `60` | frames hidden, 16 to 255 |
+| `stay` | `120` | frames it stays out, 16 to 255 |
+| `distance` | `48` | how far in front of you it appears, in pixels, 8 to 112 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times hidden, time out and distance are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 88 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevMagmanControl hide=30
+AtlasDevMagmanControl stay=60 distance=80
+AtlasDevMagmanControl hide=90 flag=16
+```
+
+<hr>
+
+### AtlasDevKingGrieveControl
+
+Tunes King Grieve. In the stock game King Grieve swoops down, hovers and
+fires at you, rises to the top of the room and rests before it swoops again.
+With this hack you set how often it fires while it hovers, how long it hovers
+and how long it rests. `body=1` makes its box cover its body: the stock box
+covers only about half of what is drawn, so many hits that look like they
+land go through it. The defaults are the stock numbers, so the hack changes
+nothing until you set a value.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `shots` | `16` | frames between shots while it hovers: 4, 8, 16, 32, 64 or 128 |
+| `hover` | `60` | frames it hovers, 16 to 255 |
+| `rest` | `30` | frames it rests at the top, 16 to 255 |
+| `body` | `0` | 1 makes its box cover its body |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior; `body`
+is not switched by the flag.
+
+Without a flag the new shot timing, time hovering and time resting are
+written straight into the stock instructions in bank 14, and no free space
+is used. With a flag, only the instructions whose values you change are
+retargeted, to at most 71 bytes of bank 15 free space. `body=1` rewrites its
+box, whose top stops just short of the top of the screen at its highest
+point. At the default values nothing is written. No RAM is claimed. Every
+site is verified against its exact vanilla bytes before anything is written,
+and all of them are identical in the US, US rev A, EU and JP ROMs. Does not
+require AtlasDevFrameScheduler.
+
+```
+AtlasDevKingGrieveControl shots=8
+AtlasDevKingGrieveControl hover=90 rest=60
+AtlasDevKingGrieveControl body=1 flag=16
+```
+
+<hr>
+
+### AtlasDevNashControl
+
+Tunes Nash. In the stock game Nash hides, then appears near you, faces you
+for a while, attacks, and throws at you partway through the attack before it
+hides again. With this hack you set how long it stays hidden, how long it
+faces you before the attack, how long the attack lasts, and when in the
+attack it throws. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. What it throws stays as it is, since other
+monsters throw the same thing.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `hide` | `120` | frames hidden, 16 to 255 |
+| `windup` | `60` | frames it faces you before the attack, 16 to 255 |
+| `attack` | `60` | frames the attack lasts, 16 to 255 |
+| `throw` | `10` | when it throws: the attack counts down from `attack`, and it throws at this count, 1 to `attack` - 1 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new times hidden, throw moment, windup and attack length
+are written straight into the stock instructions in bank 14, and no free
+space is used. With a flag, only the instructions whose values you change
+are retargeted, to at most 97 bytes of bank 15 free space. At the default
+values nothing is written. No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevNashControl hide=60
+AtlasDevNashControl windup=30 attack=90 throw=45
+AtlasDevNashControl hide=200 flag=16
+```
+
+<hr>
+
+### AtlasDevExecutionHoodControl
+
+Tunes Execution Hood. In the stock game it walks for a while, stops and
+faces you, then throws at you and walks again. With this hack you set how
+fast it walks, how long it walks between throws, and how long it stands
+before each throw. The defaults are the stock numbers, so the hack changes
+nothing until you set a value. What it throws stays as it is, since other
+monsters throw the same thing.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `4` | walk speed in eighths of a pixel per frame, 1 to 16 (4 is half a pixel) |
+| `length` | `48` | frames it walks between throws: 24, 48, 96 or 192 |
+| `pause` | `15` | frames it stands facing you before it throws, 1 to 255 |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+Without a flag the new walk speed, walk length and pause are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 85 bytes of bank 15 free space. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevExecutionHoodControl walk=8
+AtlasDevExecutionHoodControl length=96 pause=30
+AtlasDevExecutionHoodControl walk=2 flag=16
+```
+
+<hr>
+
+### AtlasDevShadowEuraControl
+
+Tunes Shadow Eura, the final boss. In the stock game it lurches toward you
+one step at a time, throws at you on two of its steps, and stands still
+between walks. With this hack you set how many steps it walks, how long it
+stands, which two steps it throws on, and how far each moving step goes.
+`body=1` makes its box cover its whole body; the stock box misses a strip
+on the left and the top of its head. The defaults are the stock numbers,
+so the hack changes nothing until you set a value. What it throws stays as
+it is.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `walk` | `20` | steps per walk, 1 to 255; each step takes 8 frames |
+| `pause` | `30` | frames it stands between walks, 16 to 255 |
+| `fire1` | `3` | the first step it throws on, 1 to 9, or 0 for no throw |
+| `fire2` | `8` | the second step it throws on, 1 to 9, or 0 for no throw |
+| `step` | `8` | pixels per moving step, 1 to 16 |
+| `body` | `0` | `1` = its box covers its whole body (x+0, y-8, 48x88) |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+`step` and `body` change data in the ROM, so they apply whatever the flag.
+
+Without a flag the new walk lengths, throw steps and pause are written
+straight into the stock instructions in bank 14, and no free space is used.
+With a flag, only the instructions whose values you change are retargeted,
+to at most 90 bytes of bank 15 free space. `step` rewrites six bytes of its
+step table and `body=1` its four box bytes. At the default values nothing is
+written. No RAM is claimed. Every site is verified against its exact vanilla
+bytes before anything is written, and all of them are identical in the US,
+US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+
+```
+AtlasDevShadowEuraControl walk=10 pause=60
+AtlasDevShadowEuraControl fire1=2 fire2=6 step=12
+AtlasDevShadowEuraControl body=1 flag=16
+```
+
+### AtlasDevStatusWard
+
+Turns a timed status effect into a configurable forcefield. While the
+selected timer is active, living monsters inside the field radius are pushed
+away from the player; pull mode turns the same rule into a magnet with an
+eight-pixel dead zone. The trigger is the game's own status counter, so any
+ordinary item, shop or script that grants that effect also grants the ward.
+Requires AtlasDevFrameScheduler earlier in the list. Scripts switch the role
+with AtlasDevArmRole 5.
+
+The role body uses no additional RAM and joins the existing POST chain. If
+all three scheduler kinds are occupied, it installs dormant without
+displacing them so a script can swap kind 5 in later. Multiple StatusWard
+entries can share kind 5—for example, one entry per status trigger—but only
+one entry may enable `fieldfx`; that entry owns all three PRE vectors. A PRE
+vector already claimed by another hack is refused without modifying the ROM.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `trigger` | `ointment` | status that carries the field: `ointment`, `glove`, `wingboots`, `hourglass`, `any`, or `always` |
+| `radius` | `40` | field radius in pixels, 4 to 120 |
+| `push` | `2` | pixels moved per active frame, 1 to 4 |
+| `exempt` | `$33` | one entity id the field never moves |
+| `pull` | `false` | pull monsters inward instead of pushing them outward; requires `radius` above 12 |
+| `arc` | `both` | active side of the player: `both`, `front`, or `back` |
+| `fieldpulse` | `0` | rest mask; the field sleeps while the scheduler counter masked by this byte is zero (`$18` rests 8 of every 32 frames) |
+| `aura` | `false` | conduct an installed AtlasDevInfectedTint through slot 2 while active; cannot be combined with `trigger=always` and owns slot 2 during the effect |
+| `fieldfx` | `false` | draw the field sprites in OAM entries 60 to 63; claims all three PRE vectors |
+| `fieldtile` | `$40` | first existing sprite tile used by the field orbs |
+| `fieldattr` | `0` | OAM attribute used by the orbs; 0 uses sprite palette 0 |
+| `fieldspeed` | `3` | pattern speed, 0 (static) through 5; each angle/radius stage lasts `1 << (6-speed)` scheduler ticks when nonzero |
+| `fieldcount` | `4` | number of orbs: 1, 2, or 4 |
+| `fielddir` | `cw` | orbit direction: `cw` or `ccw`; for radial patterns, `ccw` mirrors fixed compass indices (`angle XOR 7`), rather than reversing the radius sequence |
+| `edgepark` | `false` | park an orb outside X 0–255 or Y 0–239, including signed offsets that would wrap onto the opposite edge |
+| `fieldpattern` | `orbit` | `orbit`, `expand` or `contract`; radial modes keep fixed compass angles and cycle through quarter, half, three-quarter and full radius, forward or backward |
+| `fieldblink` | `0` | visual-only rest mask: hide the field when the scheduler counter AND this mask is zero; 0 disables this extra gate |
+| `fieldframes` | `1` | 1, 2 or 4 consecutive existing sprite tiles starting at `fieldtile`; the interval must end at or before tile 256 |
+| `fieldanimspeed` | `3` | tile animation speed, 0 through 5; 0 freezes the first tile, otherwise each tile lasts `1 << (6-speed)` scheduler ticks |
+
+These options change the graphic only: `radius`, `push`, `pull` and the
+existing `fieldpulse` still control the force. In radial modes, each stage's
+radius is rounded to the nearest integer (half upward), then its compass
+offsets are rounded; `fieldspeed=0` holds the full radius for both expansion
+and contraction. Animation selects `(counter >> (6-fieldanimspeed)) AND
+(fieldframes-1)`. All options share the existing scheduler counter, so a
+blink or pulse mask can hide entire radius stages or animation frames. For
+example, `fieldpulse=$18` with `fieldspeed=3` hides stage 0: quarter radius
+for expansion, full radius for contraction. Set both rest masks to 0 when
+every phase should be visible.
+
+No new RAM, OAM entries or graphics are allocated. Tiles must already be
+loaded in sprite CHR RAM; this is not a custom-art importer. Cleanup preserves
+tiles outside the configured interval, but another sprite using a tile
+inside that same interval is indistinguishable from a field sprite. With
+`fieldfx=false`, visual options emit no code. Omitted new options retain the
+previous byte-for-byte emission. Larger visual configurations consume more
+fixed-bank space and are rejected transactionally if they do not fit.
+
+Use at most one `aura=true` entry. Multiple aura-enabled wards currently
+compete for the tint slot: an inactive entry can clear another entry's glow.
+For one glow shared by the four status effects, use `trigger=any`.
+
+```text
+AtlasDevStatusWard trigger=wingboots radius=48 push=1 fieldpulse=$18 aura=true fieldfx=true edgepark=true
+```
+
+```text
+AtlasDevStatusWard trigger=wingboots fieldfx=true edgepark=true fieldpattern=expand fieldspeed=3 fieldframes=4 fieldanimspeed=4
+```
+
+The default role uses 96 bytes in bank 9 and no fixed-bank bytes beyond
+its scheduler. The scheduler uses 156 bytes and seven RAM bytes; the ward
+adds zero RAM. A basic four-orb field adds 236 fixed-bank bytes. A tested
+expanded, clipped, four-tile field adds 461 bytes (617 including scheduler).
+Build-time byte checks decide whether a configuration fits. In native retail
+exports the available fixed-bank space was 780 bytes on US/US Rev A/EU and
+551 on JP: default and basic orbit exported on all four, while the larger
+617-byte configuration was refused on JP without creating an output ROM.
+These are installation checks; fresh gameplay replay coverage is US Rev 0.
+
+The force tests horizontal distance only; the circular graphic does not add
+a vertical collision test. Entries with zero HP and the configured exempt ID
+are skipped. `aura=true` can displace another role in slot 2; reserve that
+slot for tint and use a single aura owner. The graphic shares the engine's
+sprite limit and costs up to four additional sprites on a scanline.

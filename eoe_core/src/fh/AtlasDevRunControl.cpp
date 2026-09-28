@@ -22,6 +22,12 @@
 // the hack is invisible until the second tap. the stubs run in the main
 // loop, so the nmi budget is untouched.
 //
+// tap=hold drops the double tap: any held direction runs from its first
+// frame, both sites share one stub, the idle tail only forgets the running
+// bit, a turn keeps running, and a speed already at or above the cap is
+// held rather than clamped, so a hit's $0800 lasts as long as vanilla holds
+// it. window is unused in that shape.
+//
 // kind=N makes the hack a client of the AtlasDevFrameScheduler, which must
 // be installed earlier: every stub runs the vanilla bytes unless a slot
 // holds N, so AtlasDevArmRole N, 1 and AtlasDevArmRole N, 0 switch it.
@@ -37,7 +43,7 @@ namespace {
 
 	struct Settings {
 		byte speed, accel, window, walk_cycle, kind;
-		bool instant, boot;
+		bool instant, boot, hold;
 		word cap(void) const { return static_cast<word>(speed * 32); }
 		byte cap_lo(void) const { return static_cast<byte>(cap() & 0xff); }
 		byte cap_hi(void) const { return static_cast<byte>(cap() >> 8); }
@@ -67,18 +73,24 @@ namespace {
 			code.rts();
 		}
 		code.label("@start_right");
-		code.lda_zp(ZP_A4); code.and_imm(0x40);
-		code.bne("@start_same");
-		code.beq("@start_no");
-		code.label("@start_left");
-		code.lda_zp(ZP_A4); code.and_imm(0x40);
-		code.bne("@start_no");
+		if (s.hold)
+			code.label("@start_left");
+		else {
+			code.lda_zp(ZP_A4); code.and_imm(0x40);
+			code.bne("@start_same");
+			code.beq("@start_no");
+			code.label("@start_left");
+			code.lda_zp(ZP_A4); code.and_imm(0x40);
+			code.bne("@start_no");
+		}
 		code.label("@start_same");
 		if (s.gated()) { code.jsr("@armed"); code.bne("@start_off"); }
 		code.lda_zp(ZP_JOY); code.and_imm(0x03);
 		code.beq("@start_no");
-		code.lda_abs(STATE); code.and_imm(0x3f);
-		code.beq("@start_no");
+		if (!s.hold) {
+			code.lda_abs(STATE); code.and_imm(0x3f);
+			code.beq("@start_no");
+		}
 		code.lda_imm(0x80); code.sta_abs(STATE);
 		if (s.instant) {
 			code.lda_imm(s.cap_lo()); code.sta_zp(ZP_A9);
@@ -95,17 +107,24 @@ namespace {
 		code.label("@idle");
 		if (s.gated()) { code.jsr("@armed"); code.bne("@idle_off"); }
 		code.lda_zp(ZP_A4); code.and_imm(0x20);
-		code.beq("@idle_tick");
-		code.lda_imm(s.window); code.sta_abs(STATE);
-		code.bne("@idle_v");
-		code.label("@idle_tick");
-		code.lda_abs(STATE); code.and_imm(0x3f);
-		code.beq("@idle_v");
-		code.dec_abs(STATE);
-		if (s.gated()) {
-			code.jmp("@idle_v");
-			code.label("@idle_off");
+		if (s.hold) {
+			code.beq("@idle_v");
+			if (s.gated()) code.label("@idle_off");
 			code.lda_imm(0x00); code.sta_abs(STATE);
+		}
+		else {
+			code.beq("@idle_tick");
+			code.lda_imm(s.window); code.sta_abs(STATE);
+			code.bne("@idle_v");
+			code.label("@idle_tick");
+			code.lda_abs(STATE); code.and_imm(0x3f);
+			code.beq("@idle_v");
+			code.dec_abs(STATE);
+			if (s.gated()) {
+				code.jmp("@idle_v");
+				code.label("@idle_off");
+				code.lda_imm(0x00); code.sta_abs(STATE);
+			}
 		}
 		code.label("@idle_v");
 		code.lda_zp(ZP_A4); code.and_imm(0xdf); code.sta_zp(ZP_A4);
@@ -115,16 +134,23 @@ namespace {
 		if (s.gated()) { code.jsr("@armed"); code.bne("@cap_walk"); }
 		code.lda_abs(STATE);
 		code.bpl("@cap_walk");
-		code.lda_zp(ZP_A4); code.and_imm(0x05);
-		code.bne("@cap_run");
-		code.lda_zp(ZP_JOY); code.and_imm(0x01);
-		code.beq("@cap_lheld");
-		code.lda_zp(ZP_A4); code.and_imm(0x40);
-		code.bne("@cap_run");
-		code.beq("@cap_stop");
-		code.label("@cap_lheld");
-		code.lda_zp(ZP_A4); code.and_imm(0x40);
-		code.bne("@cap_stop");
+		if (s.hold) {
+			code.lda_zp(ZP_A9); code.cmp_imm(s.cap_lo());
+			code.lda_zp(ZP_AA); code.sbc_imm(s.cap_hi());
+			code.bcs("@cap_hold");
+		}
+		else {
+			code.lda_zp(ZP_A4); code.and_imm(0x05);
+			code.bne("@cap_run");
+			code.lda_zp(ZP_JOY); code.and_imm(0x01);
+			code.beq("@cap_lheld");
+			code.lda_zp(ZP_A4); code.and_imm(0x40);
+			code.bne("@cap_run");
+			code.beq("@cap_stop");
+			code.label("@cap_lheld");
+			code.lda_zp(ZP_A4); code.and_imm(0x40);
+			code.bne("@cap_stop");
+		}
 		code.label("@cap_run");
 		if (s.accel) {
 			code.lda_zp(ZP_A9); code.clc(); code.adc_imm(s.accel); code.sta_zp(ZP_A9);
@@ -139,12 +165,19 @@ namespace {
 		code.label("@cap_anim");
 		for (byte k{ 1 }; k < s.walk_cycle; ++k) code.inc_zp(ZP_A3);
 		code.rts();
-		code.label("@cap_stop");
-		code.lda_abs(STATE); code.and_imm(0x7f); code.sta_abs(STATE);
-		code.lda_imm(0x80); code.sta_zp(ZP_A9);
-		code.lda_imm(0x01); code.sta_zp(ZP_AA);
-		code.sec();
-		code.rts();
+		if (s.hold) {
+			code.label("@cap_hold");
+			code.sec();
+			code.rts();
+		}
+		else {
+			code.label("@cap_stop");
+			code.lda_abs(STATE); code.and_imm(0x7f); code.sta_abs(STATE);
+			code.lda_imm(0x80); code.sta_zp(ZP_A9);
+			code.lda_imm(0x01); code.sta_zp(ZP_AA);
+			code.sec();
+			code.rts();
+		}
 		code.label("@cap_walk");
 		code.lda_zp(ZP_A9); code.cmp_imm(0x80);
 		code.lda_zp(ZP_AA); code.sbc_imm(0x01);
@@ -167,9 +200,14 @@ word fh::HackManager::install_AtlasDevRunControl(const fe::Config&, std::vector<
 		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 	if (mode != "ramp" && mode != "instant")
 		throw std::runtime_error("AtlasDevRunControl: mode must be ramp or instant");
+	std::string tap{ p_hack.string_or("tap", "double") };
+	std::transform(tap.begin(), tap.end(), tap.begin(),
+		[](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+	if (tap != "double" && tap != "hold")
+		throw std::runtime_error("AtlasDevRunControl: tap must be double or hold");
 	const Settings s{ ranged(p_hack, "speed", 20, 13, 64), ranged(p_hack, "accel", 16, 0, 255),
 		ranged(p_hack, "window", 12, 1, 63), ranged(p_hack, "walk_cycle", 1, 1, 4),
-		p_hack.byte_or("kind", 0), mode == "instant", p_hack.bool_or("boot", true) };
+		p_hack.byte_or("kind", 0), mode == "instant", p_hack.bool_or("boot", true), tap == "hold" };
 
 	// ownership checks first, so a refused install leaves the ROM byte identical
 	std::size_t scheduler{ 0 };

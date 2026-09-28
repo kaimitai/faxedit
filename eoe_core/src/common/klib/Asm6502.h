@@ -110,6 +110,9 @@ namespace klib {
 
 		// loads
 		void lda_zp(byte p_addr);
+		void dec_zp_x(byte p_addr);
+		void inc_zp_x(byte p_addr);
+		void lda_zp_x(byte p_addr);
 		void lda_imm(byte p_value);
 		void lda_abs(word p_addr);
 		void lda_abs_x(word p_addr);

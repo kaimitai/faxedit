@@ -857,3 +857,18 @@ word klib::Asm6502::read_word(const std::vector<byte>& p_rom, std::size_t p_file
 word klib::Asm6502::read_word(const std::vector<byte>& p_rom, byte p_bank_no, word p_cpu_addr) {
 	return read_word(p_rom, get_file_offset(p_bank_no, p_cpu_addr));
 }
+
+void klib::Asm6502::lda_zp_x(byte p_addr) {
+	emit(byte{0xb5});
+	emit(p_addr);
+}
+
+void klib::Asm6502::inc_zp_x(byte p_addr) {
+	emit(byte{0xf6});
+	emit(p_addr);
+}
+
+void klib::Asm6502::dec_zp_x(byte p_addr) {
+	emit(byte{0xd6});
+	emit(p_addr);
+}

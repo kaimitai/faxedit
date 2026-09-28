@@ -1214,6 +1214,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		case fh::GeneralHackLib::AtlasDevTimeOfDay:
 			cpu_addr = install_AtlasDevTimeOfDay(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevStatusWard:
+			cpu_addr = install_AtlasDevStatusWard(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevSmartKeys:
 			cpu_addr = install_AtlasDevSmartKeys(p_config, patched_rom, cpu_addr, hack);
 			break;
@@ -1250,6 +1253,9 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 				throw std::runtime_error("AtlasDevQueueLess: requires PRG bank 15");
 			cpu_addr = install_AtlasDevQueueLess(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevPreventTextbox:
+			cpu_addr = install_AtlasDevPreventTextbox(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevFallControl:
 			cpu_addr = install_AtlasDevFallControl(p_config, patched_rom, cpu_addr, hack);
 			break;
@@ -1275,6 +1281,66 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			break;
 		case fh::GeneralHackLib::AtlasDevLandingTuck:
 			cpu_addr = install_AtlasDevLandingTuck(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevMaskmanControl:
+			cpu_addr = install_AtlasDevMaskmanControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevHornetControl:
+			cpu_addr = install_AtlasDevHornetControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevYuinaruControl:
+			cpu_addr = install_AtlasDevYuinaruControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevBihorudaControl:
+			cpu_addr = install_AtlasDevBihorudaControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevYareekaControl:
+			cpu_addr = install_AtlasDevYareekaControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevRipasheikuControl:
+			cpu_addr = install_AtlasDevRipasheikuControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevNagaControl:
+			cpu_addr = install_AtlasDevNagaControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevPakukameControl:
+			cpu_addr = install_AtlasDevPakukameControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevSugataControl:
+			cpu_addr = install_AtlasDevSugataControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevGiantBeesControl:
+			cpu_addr = install_AtlasDevGiantBeesControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevZorugeriruControl:
+			cpu_addr = install_AtlasDevZorugeriruControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevNecronAidesControl:
+			cpu_addr = install_AtlasDevNecronAidesControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevIshiisuControl:
+			cpu_addr = install_AtlasDevIshiisuControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevTamazutsuControl:
+			cpu_addr = install_AtlasDevTamazutsuControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevBorabohraControl:
+			cpu_addr = install_AtlasDevBorabohraControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevMagmanControl:
+			cpu_addr = install_AtlasDevMagmanControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevKingGrieveControl:
+			cpu_addr = install_AtlasDevKingGrieveControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevNashControl:
+			cpu_addr = install_AtlasDevNashControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevExecutionHoodControl:
+			cpu_addr = install_AtlasDevExecutionHoodControl(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::AtlasDevShadowEuraControl:
+			cpu_addr = install_AtlasDevShadowEuraControl(p_config, patched_rom, cpu_addr, hack);
 			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");

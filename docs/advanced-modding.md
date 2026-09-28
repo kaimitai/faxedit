@@ -189,9 +189,9 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | ClearFlag | Byte | Clears an extended flag (0-247) | ClearFlag 110 ; clears flag 110 |
 | IfFlag | Byte, Label | Jumps if the extended flag is set | IfFlag 110 @target ; jumps to @target if flag 110 is set |
 | SelectFlag | Byte | Selects an extended flag for later use by the selected-flag opcodes | SelectFlag 110 ; prepares use of flag 110 |
-| SetSelectedFlag | None | Sets the currently selected extended flag | |
-| ClearSelectedFlag | None | Clears the currently selected extended flag | |
-| IfSelectedFlag | Label | Jumps if the currently selected extended flag is set | |
+| SetSelectedFlag | None | Sets the currently selected extended flag | SetSelectedFlag ; sets the flag a previous SelectFlag chose |
+| ClearSelectedFlag | None | Clears the currently selected extended flag | ClearSelectedFlag ; clears the flag a previous SelectFlag chose |
+| IfSelectedFlag | Label | Jumps if the currently selected extended flag is set | IfSelectedFlag @already_open ; jumps to @already_open if that flag is set |
 | SetQuestFlag | Byte | Sets a vanilla quest flag (0-7) | SetQuestFlag 3 ; sets quest flag 3 |
 | ClearQuestFlag | Byte | Clears a vanilla quest flag (0-7) | ClearQuestFlag 3 ; clears quest flag 3 |
 | IfQuestFlag | Byte, Label | Jumps if the vanilla quest flag is set | IfQuestFlag 3 @target ; jumps to @target if quest flag 3 is set |
@@ -202,14 +202,14 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | IfStage | Byte, Label | Jumps if the current stage equals the argument | IfStage 2 @is_stage_2 ; jumps to @is_stage_2 if current stage is 2 |
 | IfYX | Byte, Label | Jumps if the player's normalized metatile position equals the argument | IfYX $a4 @pos_4_10 ; jumps to @pos_4_10 if player position is (x=4, y=10) |
 | IfDoorYX | Byte, Label | Jumps if the currently selected door has the specified packed YX coordinate | IfDoorYX $a4 @door_4_10 ; jumps to @door_4_10 if current door position is (x=4, y=10) |
-| ForceDoor | None | Overrides a failed door requirement, allowing the current door transition to proceed | |
-| RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | |
+| ForceDoor | None | Overrides a failed door requirement, allowing the current door transition to proceed | ForceDoor ; lets the refused door transition through |
+| RunScreenHandler | None | Executes the custom screen event handler (used by the tilemap change subsystem) | RunScreenHandler ; applies this screen's tile changes now |
 | GetXP | Short (0-65,535) | Gives player xp; note that "next rank" can only increase by 1 each time XP is given | GetXP 100 ; player gets 100xp |
-| Die | None | Kills the player when the script ends | |
+| Die | None | Kills the player when the script ends | Die ; the player dies once the script finishes |
 | IfAddrEquals | Short, Byte, Label | Jumps to label if value at cpu-address equals the byte | IfAddrEquals $03d1 5 @music_no_is_5 |
 | IfAddrBetween | Short, Byte, Byte, Label | Jumps to label if value at cpu-address lies between the byte operands | IfAddrBetween $03d1 2 5 @music_no_is_between_2_and_5 |
 | SetAddr | Short, Byte | Sets value at given cpu-address (must be RAM) to the byte value given | SetAddr $03d1 5 ; set music to 5 |
-| Respawn | None | Warps to the current spawn point | `Respawn` |
+| Respawn | None | Warps to the current spawn point | Respawn ; warps to the current spawn point |
 | AtlasDevRandomVar | Byte, Byte | Stores a value from 0 through Maximum in a script register, every value equally likely to within one part in 256; the roll steps the game's own random offset and mixes in the frame counter, so repeated rolls differ and a roll is as random as the frame the player acted on | AtlasDevRandomVar 0 5 ; register 0 becomes 0, 1, 2, 3, 4 or 5 |
 | AtlasDevRepeat | Byte, Byte | Closes a loop body: the first pass stores Count in Register and jumps back, every later pass decrements it and jumps while nonzero, so the body runs Count + 1 times. Count 0 falls through. The register file is cleared when a script begins and ends, so an interrupted loop cannot leak its counter | AtlasDevRepeat 0 4 ; end of a body that runs 5 times |
 | AtlasDevSwitch | Byte, Byte | Dispatches over a jump ladder: RowCount vanilla Jump rows must follow the opcode byte-adjacent, and the handler skips three stream bytes per row so the selected row executes. A value at or above RowCount skips the whole ladder, the default case. Keep ladders short and early in an entrypoint | AtlasDevSwitch 2 4 ; four Jump rows, value 2 selects the third |
@@ -218,8 +218,23 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevPeekToVar | Byte, Byte, Byte | Reads one byte of RAM at the address (low byte first) into a script register; reads only, never writes. Pairs with AtlasDevShowNumberInMessage to display memory live from a dialogue | AtlasDevPeekToVar $1d $02 0 ; register 0 now mirrors the dialogue timer |
 | AtlasDevFrameCountToVar | Byte | Copies the free-running dialogue timer at $021d into a script register; it advances each frame while the text machinery runs | AtlasDevFrameCountToVar 1 ; timestamp source |
 | AtlasDevReadFlagToVar | Byte, Byte | Stores persistent flag 0..247 as canonical 0 or 1 in a script register; an out-of-range flag consumes both operands and does nothing | AtlasDevReadFlagToVar 34 0 ; register 0 becomes 0 or 1 |
-| AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for block (5,4) |
+| AtlasDevWriteVarToMetatile | Byte, Byte | AtlasDevSetMetatile with the tile id taken from a script register, so computed conditions can place tiles; the same packed-position and world checks apply | AtlasDevWriteVarToMetatile $45 0 ; register 0 holds the tile for the block at x=5, y=4 |
+| AtlasDevShowInventoryMenu | None | Opens the retail inventory/equipment menu, waits for it to close, then continues the script | AtlasDevShowInventoryMenu |
 | AtlasDevCopyVar | Byte, Byte | Copies one script register into another; an invalid register on either side does nothing | AtlasDevCopyVar 0 3 ; register 3 becomes a copy of register 0 |
+| AtlasDevSetVar | Byte, Byte | Stores a value in a script register | AtlasDevSetVar 0 5 ; register 0 becomes 5 |
+| AtlasDevAddVar | Byte, Byte | Adds a value to a script register, wrapping at 255 | AtlasDevAddVar 0 1 ; counts register 0 up by one |
+| AtlasDevSubVar | Byte, Byte | Subtracts a value from a script register, wrapping at 0 | AtlasDevSubVar 0 1 ; counts register 0 down by one |
+| AtlasDevIfVarEqual | Byte, Byte, Label | Jumps when a script register equals the value | AtlasDevIfVarEqual 0 3 @three ; jumps to @three when register 0 is 3 |
+| AtlasDevIfVarLess | Byte, Byte, Label | Jumps when a script register is below the value, compared as unsigned bytes | AtlasDevIfVarLess 0 8 @small ; jumps to @small when register 0 is under 8 |
+| AtlasDevIfVarGreaterEqual | Byte, Byte, Label | Jumps when a script register is the value or above, compared as unsigned bytes | AtlasDevIfVarGreaterEqual 0 8 @big ; jumps to @big when register 0 is 8 or more |
+| AtlasDevVarBitOp | Byte, Byte, Byte | Combines a script register with a value: operation 0 is AND, 1 is OR, 2 is XOR. An operation above 2, or an invalid register, consumes every operand and writes nothing | AtlasDevVarBitOp 0 1 $80 ; sets bit 7 of register 0 |
+| AtlasDevVarShift | Byte, Byte, Byte | Shifts a script register, direction 0 left and 1 right, by Count bits; bits shifted out are lost and zeros come in. A count of 8 or more leaves zero and a count of 0 changes nothing. Any other direction, or an invalid register, writes nothing | AtlasDevVarShift 0 0 1 ; doubles register 0, dropping the top bit |
+| AtlasDevClampVar | Byte, Byte, Byte | Holds a script register inside inclusive unsigned bounds: below Minimum becomes Minimum, above Maximum becomes Maximum, and a value already between them is left alone. A Maximum below Minimum is refused and changes nothing, as is an invalid register | AtlasDevClampVar 0 1 99 ; keeps register 0 between 1 and 99 |
+| AtlasDevIfVarMask | Byte, Byte, Byte, Label | Jumps when the bits Mask selects match Expected exactly, that is when the register AND Mask equals Expected. Expected may only contain bits that Mask selects; when it does not the test is always false, as it is for an invalid register | AtlasDevIfVarMask 0 $03 $02 @two ; jumps when the low two bits of register 0 are exactly 2 |
+| AtlasDevGetLocationToVars | Byte, Byte | Stores the current world and the current screen, the same values IfWorld and IfScreen compare against, into two script registers, which must be two different ones | AtlasDevGetLocationToVars 0 1 ; register 0 is the world, register 1 the screen |
+| AtlasDevGetPlayerPositionToVars | Byte, Byte | Stores the player's normalized metatile position into two script registers, x first then y, using the same centred conversion as IfYX; the two registers must be different ones | AtlasDevGetPlayerPositionToVars 0 1 ; register 0 is x, register 1 is y |
+| AtlasDevArmRole | Byte, Byte | Arms or disarms an AtlasDevFrameScheduler role at runtime: a nonzero State gives Kind a slot, reusing one that already holds it and taking the first free one otherwise, and State 0 clears every slot holding Kind. Kind 0 marks an empty slot and is refused, all three slots busy means nothing happens, and without the scheduler installed the opcode is inert | AtlasDevArmRole 3 0 ; stops the role on kind 3 |
+| AtlasDevDayNight | Byte | AtlasDevArmRole for the day and night kind: a nonzero State starts the cycle and 0 stops it. AtlasDevDayNightCycle returns the palette to full daylight before it goes quiet, so stopping at midnight does not strand a dark screen | AtlasDevDayNight 0 ; stops the cycle |
 | AtlasDevShakeScreen | Byte, Byte, Byte | Shakes the screen for the given number of NMI frames, alternating the scroll register by the given amplitude every given number of frames, then restores the entry scroll position | AtlasDevShakeScreen 60 2 1 ; shakes for 60 frames at amplitude 2, flipping every frame |
 | AtlasDevFadeOut | Byte, Byte | Fades the background/UI palette toward black over the given number of NMI frames, stopping at the given stage depth (1-4) | AtlasDevFadeOut 60 4 ; fades fully to black over 60 frames |
 | AtlasDevFadeIn | Byte, Byte | Fades the background/UI palette back in over the given number of NMI frames, reversing the given stage depth (1-4) | AtlasDevFadeIn 60 4 ; fades back in over 60 frames |
@@ -233,12 +248,12 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevCloseDialogue | None | Closes a portrait conversation: clears the textbox context and repaints the larger portrait-and-text rectangle | AtlasDevCloseDialogue ; tears the portrait conversation down |
 | AtlasDevEntitySayMessage | Byte, string | Gives the message to the entity in the given slot, so it is spoken with that entity's own portrait context | AtlasDevEntitySayMessage 2 "Who goes there?" |
 | AtlasDevShowSequentialMessages | string, string, string, string | Shows up to four messages in order, one A press between each. An unused slot is a plain 0. B skips the rest; the remaining operands are still consumed, so the stream never desyncs | AtlasDevShowSequentialMessages "One." "Two." "Three." 0 |
-| AtlasDevShowNumberInMessage | string, Byte | **Do not use yet.** Reveals the message without its A wait, renders a script register as three digits at the text cursor, then runs the engine's own A wait | AtlasDevShowNumberInMessage "You have" 0 |
-| AtlasDevShowChoiceToVar | Byte, Byte | **Do not use yet.** Runs the vanilla menu selection loop over Count rows and stores the chosen index in a script register, or $FF if the player cancels with B. Count is clamped to 1-8 | AtlasDevShowChoiceToVar 3 0 ; three rows, result into register 0 |
-| AtlasDevShowMessageFromVar | Byte | **Do not use yet.** Shows the message whose id is held in a script register. An out-of-range register, or an id outside 1-193, is a no-op | AtlasDevShowMessageFromVar 0 |
+| AtlasDevShowNumberInMessage | string, Byte | Reveals the message without its A wait, renders a script register as three digits at the text cursor, then runs the engine's own A wait. Message id 0 does nothing and still takes both operands | AtlasDevShowNumberInMessage "You have" 0 |
+| AtlasDevShowChoiceToVar | Byte, Byte | Runs the vanilla menu selection loop over Count rows and stores the chosen index in a script register, or $FF if the player cancels with B. Count is clamped to 1-8. The script draws its own choice text | AtlasDevShowChoiceToVar 3 0 ; three rows, result into register 0 |
+| AtlasDevShowMessageFromVar | Byte | Shows the message whose id is held in a script register. An out-of-range register, or an id outside 1-193, is a no-op | AtlasDevShowMessageFromVar 0 |
 | AtlasDevIfEntityCountAtLeast | Byte, Label | Jumps when at least Count of the eight entity slots hold a live entity. Count 0 always jumps; Count above 8 never does | AtlasDevIfEntityCountAtLeast 1 @some_left |
-| AtlasDevCountActiveEntities | Byte | **Do not use yet.** Stores how many of the eight entity slots are live, 0-8, into a script register | AtlasDevCountActiveEntities 0 |
-| AtlasDevFindEntity | Byte, Byte | **Do not use yet.** Stores the lowest slot holding the given entity identity into a script register, or $FF when no slot does | AtlasDevFindEntity 58 0 |
+| AtlasDevCountActiveEntities | Byte | Stores how many of the eight entity slots are live, 0-8, into a script register. Use AtlasDevIfEntityCountAtLeast instead when only the comparison is wanted, since it needs no register | AtlasDevCountActiveEntities 0 |
+| AtlasDevFindEntity | Byte, Byte | Stores the lowest slot holding the given entity identity into a script register, or $FF when no slot does. An identity with bit 7 set always answers $FF, because that bit marks a free slot | AtlasDevFindEntity 58 0 |
 | AtlasDevFreezeEntities | None | Pauses every entity's update until AtlasDevResumeEntities; nothing else clears the pause, so a script that freezes must resume | AtlasDevFreezeEntities |
 | AtlasDevResumeEntities | None | Ends the pause started by AtlasDevFreezeEntities | AtlasDevResumeEntities |
 | AtlasDevIfBossPresent | Label | Jumps when any of the eight slots holds a boss | AtlasDevIfBossPresent @boss_here |
@@ -255,8 +270,8 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetEntityBehavior | Byte, Byte | Selects one of the engine's behaviours for the slot and re-runs its initializer; behaviour 6 is refused | AtlasDevSetEntityBehavior 0 4 |
 | AtlasDevSetEntitySpeed | Byte, Byte, Byte | Sets a walker's cached speed, fraction then whole pixels; flyers keep their velocity elsewhere and are unaffected | AtlasDevSetEntitySpeed 0 0 3 |
 | AtlasDevSetEntityFacing | Byte, Byte | Faces the slot's entity left (0) or right (nonzero); a free slot is left alone | AtlasDevSetEntityFacing 0 1 |
-| AtlasDevEntityFieldToVar | Byte, Byte, Byte | **Do not use yet.** Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group | AtlasDevEntityFieldToVar 0 6 2 |
-| AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | **Do not use yet.** Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7 | AtlasDevDrawVarNumber 0 4 24 3 |
+| AtlasDevEntityFieldToVar | Byte, Byte, Byte | Reads one per-slot byte, field 0-11, into a script register; fields 0-5 come from the $02CC group, 6-11 from the $0344 group. A field of 12 or more reads field 0. There is no field for an entity's position | AtlasDevEntityFieldToVar 0 6 2 |
+| AtlasDevDrawVarNumber | Byte, Byte, Byte, Byte | Draws a script register as a zero-padded decimal at a raw tile position through the HUD's own digit routine; operands are register, X tile, Y tile, digit count 1-7. The digit tiles are always resident, so no graphics upload is needed | AtlasDevDrawVarNumber 0 4 24 3 |
 | AtlasDevIfPlayerFacing | Byte, Label | Jumps when the player faces the requested direction; even values mean left and odd values mean right | AtlasDevIfPlayerFacing 1 @facing_right |
 | AtlasDevIfPlayerClimbing | Label | Jumps while the engine's own climbing predicate is true | AtlasDevIfPlayerClimbing @on_ladder |
 | AtlasDevIfPlayerGrounded | Label | Jumps when the player is not jumping, falling, or actively climbing | AtlasDevIfPlayerGrounded @on_ground |
@@ -331,7 +346,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevDropItem | Byte, Byte, Byte | Spawns a pickup and sets its amount | AtlasDevDropItem 2 5 154 ; coin worth 5 |
 | AtlasDevDespawnEntity | Byte | Removes entity slot 0-7. Other values do nothing | AtlasDevDespawnEntity 7 |
 | AtlasDevDespawnAllEntities | None | Removes all eight entity slots | AtlasDevDespawnAllEntities |
-| AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile 69 16 ; block (5,4) |
+| AtlasDevSetMetatile | Byte, Byte | Changes one visible metatile. Packed Y must be 0-12 and the tile must exist in the current area | AtlasDevSetMetatile $45 16 ; block at x=5, y=4 |
 | AtlasDevSetScreenEvent | Byte | Selects vanilla screen event 0, 1 or 2, or cancels it with $FF. Other values leave the current event unchanged | AtlasDevSetScreenEvent 1 |
 | AtlasDevApplyEffect | Byte, Byte | Starts a timed effect (0 ointment, 1 glove, 2 wing boots, 3 hour glass) for a duration of roughly one second per unit. The effect is masked to 0-3 and the duration clamped to 0-127; the item's normal cost is not charged | AtlasDevApplyEffect 2 30 ; wing boots for ~30s |
 | AtlasDevIfEffectActive | Byte, Label | Branches while the selected timed effect is active, including a counter of zero | AtlasDevIfEffectActive 2 @flying |
@@ -437,6 +452,25 @@ is one roll to 255 followed by
 ```AtlasDevCopyVar``` copies one register into another, so a value can be kept
 before ```AtlasDevAddVar``` changes it; swapping two registers is three copies
 through a spare one.
+
+An opcode that writes a script register uses ```hack_script_var_ram_addr```
+and ```hack_script_var_count```. A register at or above the configured count
+consumes its operands and writes nothing.
+
+```AtlasDevVarBitOp```, ```AtlasDevVarShift``` and ```AtlasDevClampVar``` do
+the byte work that addition and subtraction cannot: masking bits out,
+multiplying or dividing by a power of two, and keeping a running value inside
+bounds without a pair of conditionals. ```AtlasDevIfVarMask``` is their
+conditional. It tests several bits at once, so one branch can ask whether a
+register's low two bits are exactly 2, which a chain of equality tests cannot
+do without spending registers.
+
+```AtlasDevGetLocationToVars``` and ```AtlasDevGetPlayerPositionToVars``` read
+the player's whereabouts into registers, so a script can compute with a
+position instead of only comparing it as ```IfWorld```, ```IfScreen``` and
+```IfYX``` do. Both write two registers and both need two different ones:
+naming the same register twice writes neither, because a single register
+cannot hold both halves of an answer.
 
 #### AtlasDev dialogue opcodes
 

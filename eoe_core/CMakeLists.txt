@@ -93,6 +93,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevJumpControl.cpp
     src/fh/AtlasDevLadderControl.cpp
     src/fh/AtlasDevLadderCrown.cpp
+    src/fh/AtlasDevStatusWard.cpp
     src/fh/AtlasDevSmartKeys.cpp
     src/fh/AtlasDevEnemyStats.cpp
     src/fh/AtlasDevEnemyHud.cpp
@@ -106,6 +107,27 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevSpriteSpeed.cpp
     src/fh/AtlasDevPpuDrainUnroll.cpp
     src/fh/AtlasDevQueueLess.cpp
+    src/fh/AtlasDevPreventTextbox.cpp
+    src/fh/AtlasDevMaskmanControl.cpp
+    src/fh/AtlasDevHornetControl.cpp
+    src/fh/AtlasDevYuinaruControl.cpp
+    src/fh/AtlasDevBihorudaControl.cpp
+    src/fh/AtlasDevYareekaControl.cpp
+    src/fh/AtlasDevRipasheikuControl.cpp
+    src/fh/AtlasDevNagaControl.cpp
+    src/fh/AtlasDevPakukameControl.cpp
+    src/fh/AtlasDevSugataControl.cpp
+    src/fh/AtlasDevGiantBeesControl.cpp
+    src/fh/AtlasDevZorugeriruControl.cpp
+    src/fh/AtlasDevNecronAidesControl.cpp
+    src/fh/AtlasDevIshiisuControl.cpp
+    src/fh/AtlasDevTamazutsuControl.cpp
+    src/fh/AtlasDevBorabohraControl.cpp
+    src/fh/AtlasDevMagmanControl.cpp
+    src/fh/AtlasDevKingGrieveControl.cpp
+    src/fh/AtlasDevNashControl.cpp
+    src/fh/AtlasDevExecutionHoodControl.cpp
+    src/fh/AtlasDevShadowEuraControl.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

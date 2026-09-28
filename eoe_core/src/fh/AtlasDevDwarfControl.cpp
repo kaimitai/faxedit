@@ -155,7 +155,7 @@ namespace {
 		c.label("@ret0"); c.rts();
 		c.label("@inrange");
 		c.lda_zp(ZP_A4); c.and_imm(0x01); c.beq("@hold");
-		c.lda_imm(0); c.sta_abs_x(PHASE); c.jsr(H_FACE);          // the hero swings: rush
+		c.lda_imm(0); c.sta_abs_x(PHASE); c.jsr(H_FACE);          // the hero is jumping: rush
 		c.lda_abs_y(at(p_rows, R_CHASE)); c.jsr("@move");
 		c.lda_abs(COUNTER); c.and_imm(0x04); c.bne("@ret0"); inc_abs_x(c, PHASE); c.rts();
 		c.label("@hold");

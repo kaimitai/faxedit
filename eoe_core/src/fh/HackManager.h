@@ -77,6 +77,7 @@ namespace fh {
 		AtlasDevRepeat, AtlasDevSwitch, AtlasDevSwapVar, AtlasDevIfRandomChance,
 		AtlasDevPeekToVar, AtlasDevFrameCountToVar, AtlasDevReadFlagToVar,
 		AtlasDevWriteVarToMetatile,
+		AtlasDevShowInventoryMenu,
 		// Keep Count last.
 		Count
 	};
@@ -269,6 +270,7 @@ namespace fh {
 		word apply_AtlasDevFrameCountToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevReadFlagToVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word flag_decode_helper_addr, word bitmask_table_addr) const;
 		word apply_AtlasDevWriteVarToMetatile(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_AtlasDevShowInventoryMenu(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevCastSpell(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevIfMagicActive(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_AtlasDevClearVisibleMagic(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
@@ -362,6 +364,8 @@ namespace fh {
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevQueueLess(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_AtlasDevPreventTextbox(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevSmartKeys(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
@@ -388,7 +392,48 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevLandingTuck(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
+		word install_AtlasDevMaskmanControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevHornetControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevYuinaruControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevBihorudaControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevYareekaControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevRipasheikuControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevNagaControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevPakukameControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevSugataControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevGiantBeesControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevZorugeriruControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevNecronAidesControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevIshiisuControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevTamazutsuControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevBorabohraControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevMagmanControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevKingGrieveControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevNashControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevExecutionHoodControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
+		word install_AtlasDevShadowEuraControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack&) const;
 		// bank 12 general hacks
+		word install_AtlasDevStatusWard(const fe::Config&, std::vector<byte>&, word, const fh::GeneralHack&) const;
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 
