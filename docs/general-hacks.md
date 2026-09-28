@@ -594,25 +594,41 @@ This hack extends the available requirements with values 9-15. Each extended req
 
 Each requirement can also specify an optional iScript to run when the required flag is not set. This can be used to display dialogue or perform other scripted behavior when the player attempts to enter the door.
 
-The `data` parameter is a comma-separated list of flag and optional iScript pairs, using `+` between the flag and iScript. Entries are assigned sequentially starting at requirement 9: the first entry defines requirement 9, the second requirement 10, and so on, up to requirement 15.
+The `data` parameter is a `+`-separated list of flag and optional iScript pairs. Entries are assigned sequentially starting at requirement 9: the first entry defines requirement 9, the second requirement 10, and so on, up to requirement 15.
 
-| parameter | default  | meaning                                                                         |
-| --------- | -------- | ------------------------------------------------------------------------------- |
-| `data`    | required | Extended flag and optional failure iScript for each additional door requirement |
+By default, the hack is installed in bank 15. The `bank` parameter can be used to move most of the hack to another bank, reducing its bank 15 space usage. When another bank is selected, the hack automatically uses trailing free space in that bank. An explicit installation address can instead be specified with `addr`.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `data` | required | `+`-separated extended flag and optional failure iScript entries |
+| `bank` | `15` | Bank used for the relocatable portion of the hack |
+| `addr` | auto | Installation address when using a bank other than 15; if omitted, trailing free space is used |
 
 For example:
 
 ```text
-FlagDoorRequirements data=10:20+11+12:21
+FlagDoorRequirements data=9:152+11+10:153
 ```
 
 This defines:
 
-* requirement 9: requires extended flag 10; runs iScript 20 if not set
+* requirement 9: requires extended flag 9; runs iScript 152 if not set
 * requirement 10: requires extended flag 11; no failure iScript
-* requirement 11: requires extended flag 12; runs iScript 21 if not set
+* requirement 11: requires extended flag 10; runs iScript 153 if not set
 
-Between 1 and 7 entries must be provided. Do not assign an extended requirement to a door unless the corresponding entry is configured.
+To install the relocatable portion in another bank:
+
+```text
+FlagDoorRequirements data=9:152+11+10:153 bank=9
+```
+
+An explicit address can also be supplied:
+
+```text
+FlagDoorRequirements data=9:152+11+10:153 bank=9 addr=$8000
+```
+
+Between 1 and 7 `data` entries must be provided. Do not assign an extended requirement to a door unless the corresponding entry is configured.
 
 The door requirements available for selection in the editor are defined by the `door_requirement_labels` configuration item. To use the extended requirements, add an override for this `byte_to_string_map` entry containing labels for the additional requirement values used by the hack.
 

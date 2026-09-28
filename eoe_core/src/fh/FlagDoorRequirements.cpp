@@ -1,11 +1,14 @@
 #include "HackManager.h"
 #include "fh_constants.h"
+#include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include <stdexcept>
+#include <utility>
 
 namespace {
 
-	constexpr byte TmpScript{ fh::RAM::ZP_e2 };
+	constexpr byte ValueIO{ fh::RAM::ZP_e5 };
+	constexpr byte TmpScript{ fh::RAM::ZP_e6 };
 
 	word install_FlagDoorRequirements_LookupTable(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 		const std::vector<std::pair<byte, std::optional<byte>>>& p_requirements) {
@@ -66,24 +69,58 @@ namespace {
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
+	std::pair<word, word> install_FlagDoorRequirements_FreeBankInstall(
+		std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		const std::vector<std::pair<byte, std::optional<byte>>>& p_requirements) {
+
+		const word lookup_table_addr{ cpu_addr };
+		cpu_addr = install_FlagDoorRequirements_LookupTable(
+			p_rom, p_bank, cpu_addr, p_requirements);
+
+		const word table_lookup_addr{ cpu_addr };
+		cpu_addr = install_FlagDoorRequirements_TableLookup(
+			p_rom, p_bank, cpu_addr, lookup_table_addr);
+
+		const word flag_check_addr{ cpu_addr };
+		cpu_addr = install_FlagDoorRequirements_FlagChecker(
+			p_rom, p_bank, cpu_addr);
+
+		// entry point for requirement lookup and flag check
+		const word main_entry_addr{ cpu_addr };
+
+		klib::Asm6502 code;
+		code.jsr(table_lookup_addr);
+		code.jsr(flag_check_addr);
+		code.rts();
+
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(
+			p_rom, p_bank, cpu_addr);
+
+		return { main_entry_addr, cpu_addr };
+	}
+
 }
 
 word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) const {
-	constexpr byte BANK{ 15 };
+	const byte bank{ p_hack.byte_or("bank", 15) };
+	const word install_addr{
+		bank == 15 ?
+			cpu_addr :
+			p_hack.has_param("addr") ?
+				p_hack.get_word("addr") :
+				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
+	};
 
 	const auto req_data{ p_hack.split_byte_optional_byte("data") };
 	if (req_data.empty() || req_data.size() > 7)
 		throw std::runtime_error("FlagDoorRequirements requires data entry count 1-7");
 
-	const word lookup_table_addr{ cpu_addr };
-	cpu_addr = install_FlagDoorRequirements_LookupTable(p_rom, BANK, lookup_table_addr, req_data);
+	const auto [main_entry_addr, next_addr] {
+		install_FlagDoorRequirements_FreeBankInstall(p_rom, bank, install_addr, req_data) };
 
-	const word table_lookup_addr{ cpu_addr };
-	cpu_addr = install_FlagDoorRequirements_TableLookup(p_rom, BANK, table_lookup_addr, lookup_table_addr);
-
-	const word flag_check_addr{ cpu_addr };
-	cpu_addr = install_FlagDoorRequirements_FlagChecker(p_rom, BANK, flag_check_addr);
+	if (bank == 15)
+		cpu_addr = next_addr;
 
 	const word handler_addr{ cpu_addr };
 
@@ -91,7 +128,7 @@ word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, s
 
 	// install hook
 	code.jmp(handler_addr);
-	code.apply_hack_and_clear(p_rom, BANK, ROM::Game_RunDoorRequirementHandler_BEQ_RTS);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Game_RunDoorRequirementHandler_BEQ_RTS);
 
 	// new routine
 	code.cmp_imm(0x09);
@@ -104,8 +141,32 @@ word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, s
 	code.jmp(ROM::Game_RunDoorRequirementHandler_TAY);
 
 	code.label("@extended");
-	code.jsr(table_lookup_addr);
-	code.jsr(flag_check_addr);
+
+	if (bank == 15) {
+		code.jsr(main_entry_addr);
+	}
+	else {
+		// main_entry_addr expects A = door requirement (9-15) so preserve it across the bank switch
+		code.sta_zp(ValueIO);
+
+		code.lda_abs(fh::RAM::CurrentROMBank);
+		code.pha();
+
+		code.ldx_imm(bank);
+		code.jsr(cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK));
+
+		code.lda_zp(ValueIO);
+		code.jsr(main_entry_addr);
+		// output: preserve flag result across bank restore
+		code.sta_zp(ValueIO);
+
+		code.pla();
+		code.tax();
+		code.jsr(cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK));
+
+		code.lda_zp(ValueIO);
+	}
+
 	code.beq("@requirement_failed");
 	code.jmp(ROM::Game_UnlockDoorWithSoundEffect);
 
@@ -122,5 +183,5 @@ word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, s
 	code.label("@return");
 	code.rts();
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, BANK, handler_addr);
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, handler_addr);
 }

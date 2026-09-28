@@ -136,7 +136,7 @@ namespace {
 		{ fh::GeneralHackLib::ItemScripts, { "data" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr" }},
 		{ fh::GeneralHackLib::OintmentFix, { "sugata" }},
-		{ fh::GeneralHackLib::FlagDoorRequirements, { "data" }},
+		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
