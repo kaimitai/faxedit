@@ -43,17 +43,9 @@ word fh::HackManager::install_AtlasDevTimeOfDay(const fe::Config&, std::vector<b
 		throw std::runtime_error("AtlasDevTimeOfDay: cell must be a nametable address");
 
 	const auto scheduler{ klib::Asm6502::get_file_offset(15, base) };
-	const bool chain{ p_rom[scheduler + OFF_POSTARMED] != 0x00 };
-	// an unclaimed post lane must still hold the scheduler's default
-	// stub, so an unknown claimant fails the build instead of losing
-	// its vector
-	const word post_vector{ static_cast<word>(
-		p_rom[scheduler + OFF_POST] | (p_rom[scheduler + OFF_POST + 1] << 8)) };
-	if (!chain && post_vector != static_cast<word>(base + OFF_STUB))
-		throw std::runtime_error(
-			"AtlasDevTimeOfDay: scheduler post lane has an unknown claimant");
-	const word chain_to{ static_cast<word>(
-		p_rom[scheduler + OFF_POST] | (p_rom[scheduler + OFF_POST + 1] << 8)) };
+	const auto chain{ validate_post_chain_state(p_rom, scheduler, base, "AtlasDevTimeOfDay") };
+	const auto arm_site{ select_post_arm_site(p_rom, scheduler, base,
+		KIND_CLOCK, true, "AtlasDevTimeOfDay") };
 
 	klib::Asm6502 code;
 	// enable gate: run only while some scheduler slot holds our kind
@@ -141,32 +133,21 @@ word fh::HackManager::install_AtlasDevTimeOfDay(const fe::Config&, std::vector<b
 	code.sta_abs(0x2006);
 	code.sta_abs(0x2006);
 	code.label("@tail");
-	if (chain)
-		code.jmp(chain_to);
+	if (chain.chained)
+		code.jmp(chain.target);
 	else
 		code.rts();
 
 	// first bank 9 spot with room for the body
-	const auto off9_base{ klib::Asm6502::get_file_offset(9, 0x8000) };
-	word org{ 0 };
-	for (word off{ 0 }; off < 0x4000 - code.size(); ++off) {
-		bool free{ true };
-		for (std::size_t i{ 0 }; i < code.size(); ++i)
-			if (p_rom[off9_base + off + i] != 0xff) { free = false; break; }
-		if (free) { org = static_cast<word>(0x8000 + off); break; }
-	}
+	const word org{ find_pristine_post_bank9_org(p_rom, code.size()) };
 	if (org == 0)
 		throw std::runtime_error("AtlasDevTimeOfDay: no free bank 9 window");
 
+	// ownership and room are checked before the first write
 	code.apply_hack_and_clear(p_rom, 9, org);
 	p_rom[scheduler + OFF_POST] = org & 0xff;
 	p_rom[scheduler + OFF_POST + 1] = org >> 8;
 	p_rom[scheduler + OFF_POSTARMED] = 0x01;
-	for (std::size_t i{ 0 }; i < 3; ++i) {
-		if (p_rom[scheduler + OFF_ARM0 + i] == 0x00) {
-			p_rom[scheduler + OFF_ARM0 + i] = KIND_CLOCK;
-			return cpu_addr;
-		}
-	}
-	throw std::runtime_error("AtlasDevTimeOfDay: no free scheduler slot");
+	p_rom[scheduler + *arm_site] = KIND_CLOCK;
+	return cpu_addr;
 }

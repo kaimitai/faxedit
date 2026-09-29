@@ -14,6 +14,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -996,6 +997,204 @@ namespace {
 			0xfdbe, 0xfff0, hacks(params), nullptr);
 		write_rom(native_path, native);
 	}
+	template<typename Mutator>
+	void require_role_atomic_refusal(PostRole role, const std::string& expected,
+		const std::string& params, Mutator mutate) {
+		auto rom{ vanilla_rom() };
+		install_scheduler(rom);
+		const auto off{ scheduler_file_offset(rom) };
+		mutate(rom, off);
+		const auto before{ rom };
+		bool threw{ false };
+		std::string message;
+		try {
+			install_role(rom, role, params);
+		}
+		catch (const std::runtime_error& e) {
+			threw = true;
+			message = e.what();
+		}
+		require(threw, std::string(role_hack_name(role)) + " conflicting install did not throw");
+		require(message.find(expected) != std::string::npos,
+			std::string(role_hack_name(role)) + " refusal reported the wrong error: " + message);
+		require(rom == before,
+			std::string(role_hack_name(role)) + " refusal mutated the caller ROM");
+	}
+
+	void test_post_roles_refuse_malformed_chain_state_atomically() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day }) {
+			require_role_atomic_refusal(role, "POST", {}, [](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_POST] = 0x00;
+				rom[off + fh::afs::OFF_POST + 1] = 0x90;
+			});
+			require_role_atomic_refusal(role, "POST", {}, [](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_POST] = 0x00;
+				rom[off + fh::afs::OFF_POST + 1] = 0x00;
+				rom[off + fh::afs::OFF_POSTARMED] = 1;
+			});
+			require_role_atomic_refusal(role, "POST", {}, [](auto& rom, std::size_t off) {
+				const auto target{ klib::Asm6502::get_file_offset(9, 0x9000) };
+				rom[target] = 0x60;
+				rom[off + fh::afs::OFF_POST] = 0x00;
+				rom[off + fh::afs::OFF_POST + 1] = 0x90;
+				rom[off + fh::afs::OFF_POSTARMED] = 2;
+			});
+			require_role_atomic_refusal(role, "POST", {}, [](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_POST] = 0x00;
+				rom[off + fh::afs::OFF_POST + 1] = 0x90;
+				rom[off + fh::afs::OFF_POSTARMED] = 1;
+			});
+			require_role_atomic_refusal(role, "POST", {}, [](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_POSTARMED] = 1;
+			});
+		}
+	}
+
+	void test_post_roles_reuse_compatible_existing_kind() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day }) {
+			auto rom{ vanilla_rom() };
+			install_scheduler(rom);
+			const auto off{ scheduler_file_offset(rom) };
+			rom[off + fh::afs::OFF_ARM0 + 1] = role_kind(role);
+			rom[off + fh::afs::OFF_ARM0 + 2] = 7;
+			install_role(rom, role);
+			require(rom[off + fh::afs::OFF_ARM0] == 0
+				&& rom[off + fh::afs::OFF_ARM0 + 1] == role_kind(role)
+				&& rom[off + fh::afs::OFF_ARM0 + 2] == 7,
+				std::string(role_hack_name(role)) + " duplicated an existing compatible kind");
+		}
+	}
+
+	void test_post_roles_skip_reserved_boot_off_slot() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day }) {
+			auto rom{ vanilla_rom() };
+			install_scheduler(rom);
+			const auto off{ scheduler_file_offset(rom) };
+			rom[off + fh::afs::OFF_PRE0] = 0x00;
+			rom[off + fh::afs::OFF_PRE0 + 1] = 0x90;
+			rom[off + fh::afs::OFF_ARM0 + 2] = 7;
+			install_role(rom, role);
+			require(read_word(rom, off + fh::afs::OFF_PRE0) == 0x9000
+				&& rom[off + fh::afs::OFF_ARM0] == 0
+				&& rom[off + fh::afs::OFF_ARM0 + 1] == role_kind(role)
+				&& rom[off + fh::afs::OFF_ARM0 + 2] == 7,
+				std::string(role_hack_name(role)) + " hijacked a boot-off PRE claimant");
+		}
+	}
+
+	void test_post_roles_refuse_incompatible_existing_kind_atomically() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day })
+			require_role_atomic_refusal(role, "PRE claimant", {}, [role](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_ARM0 + 1] = role_kind(role);
+				rom[off + fh::afs::OFF_PRE1] = 0x00;
+				rom[off + fh::afs::OFF_PRE1 + 1] = 0x90;
+			});
+	}
+
+	void test_post_roles_refuse_duplicate_existing_kind_atomically() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day })
+			require_role_atomic_refusal(role, "multiple slots", {}, [role](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_ARM0] = role_kind(role);
+				rom[off + fh::afs::OFF_ARM0 + 1] = role_kind(role);
+			});
+	}
+
+	void test_post_roles_refuse_full_arm_table_atomically() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day })
+			require_role_atomic_refusal(role, "no unclaimed slot", {},
+				[](auto& rom, std::size_t off) {
+					rom[off + fh::afs::OFF_ARM0] = 5;
+					rom[off + fh::afs::OFF_ARM0 + 1] = 6;
+					rom[off + fh::afs::OFF_ARM0 + 2] = 7;
+				});
+	}
+
+	void test_tint_dormant_install_refuses_existing_kind_atomically() {
+		require_role_atomic_refusal(PostRole::tint, "armed=0", "armed=0",
+			[](auto& rom, std::size_t off) {
+				rom[off + fh::afs::OFF_ARM0] = role_kind(PostRole::tint);
+			});
+	}
+
+	void test_tint_refuses_invalid_pulse_domain_atomically() {
+		require_role_atomic_refusal(PostRole::tint, "pulse", "pulse=3",
+			[](auto&, std::size_t) {});
+		require_role_atomic_refusal(PostRole::tint, "pulse", "colors=$3F+$00+$00 pulse=2",
+			[](auto&, std::size_t) {});
+	}
+
+	void test_post_roles_accept_exact_fit_and_refuse_one_byte_short() {
+		for (const auto role : { PostRole::tint, PostRole::time_of_day }) {
+			auto measured{ vanilla_rom() };
+			install_scheduler(measured);
+			const auto before_role{ measured };
+			install_role(measured, role);
+			const auto [first, last]{ changed_bank9_span(before_role, measured) };
+			require(first == 0, "blank bank-9 role did not install at $8000");
+			const std::size_t size{ last - first + 1 };
+			require(size > 0 && size < BANK9_SIZE, "role body size is outside bank 9");
+
+			auto exact{ vanilla_rom() };
+			install_scheduler(exact);
+			const auto bank9{ klib::Asm6502::get_file_offset(9, 0x8000) };
+			for (std::size_t i{ 0 }; i < BANK9_SIZE - size; ++i)
+				exact[bank9 + i] = 0x00;
+			install_role(exact, role);
+			const auto scheduler{ scheduler_file_offset(exact) };
+			require(read_word(exact, scheduler + fh::afs::OFF_POST)
+				== static_cast<word>(0xc000 - size),
+				std::string(role_hack_name(role)) + " missed the exact-fit final bank-9 window");
+
+			auto short_rom{ vanilla_rom() };
+			install_scheduler(short_rom);
+			for (std::size_t i{ 0 }; i <= BANK9_SIZE - size; ++i)
+				short_rom[bank9 + i] = 0x00;
+			const auto before_short{ short_rom };
+			bool threw{ false };
+			try {
+				install_role(short_rom, role);
+			}
+			catch (const std::runtime_error& e) {
+				threw = std::string(e.what()).find("no free bank 9 window") != std::string::npos;
+			}
+			require(threw,
+				std::string(role_hack_name(role)) + " accepted a one-byte-short bank-9 window");
+			require(short_rom == before_short,
+				std::string(role_hack_name(role)) + " short-window refusal mutated the caller ROM");
+		}
+	}
+
+	void test_valid_three_role_post_chain_is_ordered() {
+		auto rom{ vanilla_rom() };
+		install_scheduler(rom);
+		install_daynight(rom);
+		const auto scheduler{ scheduler_file_offset(rom) };
+		const word daynight{ read_word(rom, scheduler + fh::afs::OFF_POST) };
+		require(daynight == 0x8000, "day/night did not start the POST chain at $8000");
+
+		auto before_tint{ rom };
+		install_role(rom, PostRole::tint);
+		const word tint{ read_word(rom, scheduler + fh::afs::OFF_POST) };
+		const auto [tint_first, tint_last]{ changed_bank9_span(before_tint, rom) };
+		const auto bank9{ klib::Asm6502::get_file_offset(9, 0x8000) };
+		require(tint == static_cast<word>(0x8000 + tint_first)
+			&& rom[bank9 + tint_last - 2] == 0x4c
+			&& read_word(rom, bank9 + tint_last - 1) == daynight,
+			"tint does not tail-jump to the preceding day/night body");
+
+		auto before_clock{ rom };
+		install_role(rom, PostRole::time_of_day);
+		const word clock{ read_word(rom, scheduler + fh::afs::OFF_POST) };
+		const auto [clock_first, clock_last]{ changed_bank9_span(before_clock, rom) };
+		require(clock == static_cast<word>(0x8000 + clock_first)
+			&& rom[bank9 + clock_last - 2] == 0x4c
+			&& read_word(rom, bank9 + clock_last - 1) == tint,
+			"time-of-day does not tail-jump to the preceding tint body");
+		require(rom[scheduler + fh::afs::OFF_ARM0] == 2
+			&& rom[scheduler + fh::afs::OFF_ARM0 + 1] == 3
+			&& rom[scheduler + fh::afs::OFF_ARM0 + 2] == 4,
+			"three-role chain does not own the three expected arm slots");
+	}
 }
 
 int main(int argc, char** argv) {
@@ -1035,6 +1234,16 @@ int main(int argc, char** argv) {
 		test_status_ward_visual_blink_and_animated_tiles();
 		test_status_ward_visual_parameters_and_capacity();
 		test_status_ward_plain_bodies_share_one_existing_field_kind();
+		test_post_roles_refuse_malformed_chain_state_atomically();
+		test_post_roles_reuse_compatible_existing_kind();
+		test_post_roles_skip_reserved_boot_off_slot();
+		test_post_roles_refuse_incompatible_existing_kind_atomically();
+		test_post_roles_refuse_duplicate_existing_kind_atomically();
+		test_post_roles_refuse_full_arm_table_atomically();
+		test_tint_dormant_install_refuses_existing_kind_atomically();
+		test_tint_refuses_invalid_pulse_domain_atomically();
+		test_post_roles_accept_exact_fit_and_refuse_one_byte_short();
+		test_valid_three_role_post_chain_is_ordered();
 		std::cout << "atlas scheduler regressions: ok\n";
 		return 0;
 	}

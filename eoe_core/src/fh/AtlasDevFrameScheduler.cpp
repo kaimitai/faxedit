@@ -142,6 +142,89 @@ word fh::afs::find_base(const std::vector<byte>& p_rom) {
 	return static_cast<word>(base);
 }
 
+fh::afs::PostChain fh::afs::validate_post_chain_state(const std::vector<byte>& p_rom,
+	std::size_t p_scheduler, word p_base, const char* p_role_name) {
+	const word target{ static_cast<word>(p_rom[p_scheduler + OFF_POST]
+		| (p_rom[p_scheduler + OFF_POST + 1] << 8)) };
+	const byte marker{ p_rom[p_scheduler + OFF_POSTARMED] };
+	const word stub{ static_cast<word>(p_base + OFF_STUB) };
+	if (marker == 0) {
+		if (target != stub)
+			throw std::runtime_error(std::format(
+				"{}: scheduler POST lane has inconsistent unclaimed state", p_role_name));
+		return { false, stub };
+	}
+	if (marker != 1)
+		throw std::runtime_error(std::format(
+			"{}: scheduler POST marker must be 0 or 1", p_role_name));
+	if (target < 0x8000 || target >= 0xc000)
+		throw std::runtime_error(std::format(
+			"{}: scheduler POST chain target is outside bank 9", p_role_name));
+	const auto target_off{ klib::Asm6502::get_file_offset(9, target) };
+	if (target_off >= p_rom.size() || p_rom[target_off] == 0xff)
+		throw std::runtime_error(std::format(
+			"{}: scheduler POST chain target is pristine or unavailable", p_role_name));
+	return { true, target };
+}
+
+std::optional<std::size_t> fh::afs::select_post_arm_site(
+	const std::vector<byte>& p_rom, std::size_t p_scheduler, word p_base,
+	byte p_kind, bool p_arm_at_boot, const char* p_role_name) {
+	constexpr std::size_t pre_sites[3]{ OFF_PRE0, OFF_PRE1, OFF_PRE2 };
+	const word stub{ static_cast<word>(p_base + OFF_STUB) };
+	const auto read_operand{ [&p_rom, p_scheduler](std::size_t site) {
+		return static_cast<word>(p_rom[p_scheduler + site]
+			| (p_rom[p_scheduler + site + 1] << 8));
+	} };
+	std::optional<std::size_t> existing;
+	for (std::size_t i{ 0 }; i < 3; ++i) {
+		if (p_rom[p_scheduler + OFF_ARM0 + i] != p_kind)
+			continue;
+		if (read_operand(pre_sites[i]) != stub)
+			throw std::runtime_error(std::format(
+				"{}: scheduler kind {} slot has a PRE claimant", p_role_name, p_kind));
+		if (existing.has_value())
+			throw std::runtime_error(std::format(
+				"{}: scheduler kind {} appears in multiple slots", p_role_name, p_kind));
+		existing = OFF_ARM0 + i;
+	}
+	if (!p_arm_at_boot) {
+		if (existing.has_value())
+			throw std::runtime_error(std::format(
+				"{}: armed=0 conflicts with an existing kind {} slot", p_role_name, p_kind));
+		return std::nullopt;
+	}
+	if (existing.has_value())
+		return existing;
+	for (std::size_t i{ 0 }; i < 3; ++i)
+		if (p_rom[p_scheduler + OFF_ARM0 + i] == 0
+			&& read_operand(pre_sites[i]) == stub)
+			return OFF_ARM0 + i;
+	throw std::runtime_error(std::format(
+		"{}: scheduler arm table has no unclaimed slot", p_role_name));
+}
+
+word fh::afs::find_pristine_post_bank9_org(const std::vector<byte>& p_rom,
+	std::size_t p_size) {
+	constexpr std::size_t bank_size{ 0x4000 };
+	if (p_size == 0 || p_size > bank_size)
+		return 0;
+	const auto bank9{ klib::Asm6502::get_file_offset(9, 0x8000) };
+	if (p_rom.size() < bank9 + bank_size)
+		return 0;
+	for (std::size_t off{ 0 }; off <= bank_size - p_size; ++off) {
+		bool pristine{ true };
+		for (std::size_t i{ 0 }; i < p_size; ++i)
+			if (p_rom[bank9 + off + i] != 0xff) {
+				pristine = false;
+				break;
+			}
+		if (pristine)
+			return static_cast<word>(0x8000 + off);
+	}
+	return 0;
+}
+
 word fh::HackManager::install_AtlasDevFrameScheduler(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack&) const {
 	klib::Asm6502 code;

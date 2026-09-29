@@ -676,9 +676,9 @@ OintmentFix sugata=false
 
 ### AtlasDevFrameScheduler
 
-A neutral frame scheduler other hacks build on: an NMI tick with three role slots and an exclusive post-deadline lane for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
+A neutral frame scheduler other hacks build on: an NMI tick with three role slots and one physical post-deadline vector for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
 
-The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes. At build time, a boot slot is unclaimed only when its arm byte is zero and its PRE vector still points to the scheduler's default stub. A role installer reuses only a compatible existing kind or claims the first unclaimed slot, refusing without modifying the ROM when none is available. The single POST lane similarly refuses a second claimant.
+The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes. At build time, a boot slot is unclaimed only when its arm byte is zero and its PRE vector still points to the scheduler's default stub. A role installer reuses only a compatible existing kind or claims the first unclaimed slot, refusing without modifying the ROM when none is available. The first POST role requires marker 0 and the default stub. A later compatible role takes the vector and ends with `JMP` to the previous bank 9 handler, so both run in order. Before chaining, the installer checks for marker 1 and an occupied address in bank 9. Those checks catch malformed lane state; each role still has to be compatible with the handler it follows.
 
 Kinds `$80` to `$ff` are gate only: a slot holding one is armed, cleared and tested exactly like any other kind, but the tick never calls its vector, so a hack that only needs a runtime switch costs the tick nothing beyond the slot test. AtlasDevJumpControl with `switchable=1` is such a client, on kind `$86`.
 
@@ -692,7 +692,7 @@ AtlasDevFrameScheduler
 
 ### AtlasDevDayNightCycle
 
-A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list and exclusive ownership of its POST lane. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
+A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list and must be the first owner of its POST vector; chainable roles such as tint and time-of-day follow it in the hack list. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -715,7 +715,7 @@ day cycle demands an unclaimed one.
 | parameter | default | meaning |
 | --- | --- | --- |
 | `colors` | `$09+$19+$29` | three palette values, plus separated |
-| `pulse` | `$20` | pulse mask, a power of two; `0` for a steady tint |
+| `pulse` | `$20` | one-bit pulse mask; `0` for steady. Each color plus `pulse >> 1` must stay at or below `$3F` |
 | `armed` | `1` | `0` installs it dormant, for scripts to switch on |
 
 ```text

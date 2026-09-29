@@ -2,6 +2,7 @@
 #define FH_ATLAS_DEV_FRAME_SCHEDULER_H
 
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 using byte = unsigned char;
@@ -60,6 +61,28 @@ namespace fh::afs {
 	// emission; only the documented patch sites (vectors, postarmed, arm
 	// table) may differ. safe on truncated or arbitrary input.
 	word find_base(const std::vector<byte>& p_rom);
+
+	// an unused POST lane has marker 0 and points to the core stub.
+	// a claimed lane has marker 1 and points to occupied bank 9 space,
+	// which is mapped while POST runs. this checks the lane state;
+	// the role still has to know it can chain to the previous handler.
+	struct PostChain {
+		bool chained;
+		word target;
+	};
+	PostChain validate_post_chain_state(const std::vector<byte>& p_rom,
+		std::size_t p_scheduler, word p_base, const char* p_role_name);
+
+	// reuse the kind's slot, or take the first slot with arm 0 and PRE
+	// pointing to the stub. armed=0 takes no slot and refuses an already
+	// armed copy of the kind, so a dormant install really stays dormant.
+	std::optional<std::size_t> select_post_arm_site(
+		const std::vector<byte>& p_rom, std::size_t p_scheduler, word p_base,
+		byte p_kind, bool p_arm_at_boot, const char* p_role_name);
+
+	// first bank 9 span filled with $ff, including an exact fit at the
+	// end of the bank. zero means there is no room.
+	word find_pristine_post_bank9_org(const std::vector<byte>& p_rom, std::size_t p_size);
 }
 
 #endif
