@@ -746,8 +746,7 @@ void fe::MainWindow::draw_filepicker_window(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath,
 	const std::string& p_region) {
-	add_message("Attempting to load file " + p_filepath, fe::MsgType::Info);
-	const auto config_files{ get_config_file_paths() };
+	const auto config_files{ get_config_file_paths(p_filepath) };
 	auto l_config_xml_path{ config_files.first };
 	auto l_config_override_xml_path{ config_files.second };
 
@@ -818,7 +817,7 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 	}
 }
 
-std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) const {
+std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(const std::string& p_rom_path) {
 	std::filesystem::path l_config_dir;
 	const char* basePath{ SDL_GetBasePath() };
 	if (basePath)
@@ -835,9 +834,20 @@ std::pair<std::string, std::string> fe::MainWindow::get_config_file_paths(void) 
 			l_config_dir = l_bundle_resources;
 	}
 
+	auto l_override_path{ l_config_dir / c::CONFIG_OVERRIDE_FILE_NAME };
+
+	const auto l_rom_dir{ std::filesystem::path{ p_rom_path }.parent_path() };
+	const auto l_rom_override_path{ l_rom_dir / c::CONFIG_OVERRIDE_FILE_NAME };
+
+	if (std::filesystem::is_regular_file(l_rom_override_path, ec))
+		l_override_path = l_rom_override_path;
+
+	if (std::filesystem::is_regular_file(l_override_path, ec))
+		add_message(std::format("Using config override: {}", l_override_path.string()), MsgType::Info);
+
 	return std::make_pair(
 		(l_config_dir / c::CONFIG_FILE_NAME).string(),
-		(l_config_dir / c::CONFIG_OVERRIDE_FILE_NAME).string());
+		l_override_path.string());
 }
 
 int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes) {
@@ -852,7 +862,7 @@ int fe::MainWindow::load_external_rom_data(const std::vector<byte>& p_bytes) {
 			++byte_diffs;
 
 	if (m_region_override.empty()) {
-		const auto l_config_files{ get_config_file_paths() };
+		const auto l_config_files{ get_config_file_paths(m_loaded_rom_path) };
 
 		fe::Config tmp_config;
 		tmp_config.load_definitions(l_config_files.first, l_config_files.second);
@@ -896,8 +906,8 @@ void fe::MainWindow::cache_config_variables(void) {
 }
 
 // reload config from disk into a temporary, assuming the region is the same as current
-fe::Config fe::MainWindow::hot_reload_config(void) const {
-	const auto config_files{ get_config_file_paths() };
+fe::Config fe::MainWindow::hot_reload_config(void) {
+	const auto config_files{ get_config_file_paths(m_loaded_rom_path) };
 	return fe::Config(config_files.first, config_files.second, m_game->m_rom_data, m_config.get_region());
 }
 
