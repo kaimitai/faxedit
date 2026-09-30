@@ -107,6 +107,17 @@ void fe::MainWindow::draw_control_window(SDL_Renderer* p_rnd) {
 		catch (const std::exception& ex) {
 			add_message(ex.what(), fe::MsgType::Error);
 		}
+
+		ImGui::SameLine();
+
+		if (ui::imgui_button("Apply External ROM Changes", 4,
+			"Re-read the ROM file from disk and apply external changes. Does not rebuild or reset the editor state.")) try {
+			int byte_diffs{ load_external_rom_data(klib::file::read_file_as_bytes(m_loaded_rom_path)) };
+			add_message(std::format("Applied external changes from {} ({} bytes different)", m_loaded_rom_path, byte_diffs), fe::MsgType::Success);
+		}
+		catch (const std::exception& ex) {
+			add_message(ex.what(), fe::MsgType::Error);
+		}
 	}
 
 	if (ui::imgui_button("Load xml", 2, "", !l_shift))
