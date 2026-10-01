@@ -3,6 +3,7 @@
 #include "fh/GeneralHack.h"
 #include "fh/HackManager.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <iostream>
@@ -14,10 +15,11 @@
 // body replaces the five key handlers of the door gate in place, so a
 // default install must consume no cursor space, must leave the dispatcher,
 // the unlocked entry and the three ring handlers exactly as they were, and
-// must refuse a rom whose gate has already been altered.
+// must refuse a rom whose gate has already been altered. a rom the editor
+// expanded to 512 KiB must get exactly the same bank 15.
 namespace {
 	constexpr word ORG{ 0xfcce };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 
 	// the instructions each install guard checks, and nothing more
 	constexpr std::array<byte, 7> DISPATCH{ 0xad, 0x2b, 0x04, 0xf0, 0x0a, 0x0a, 0xa8 };
@@ -67,10 +69,26 @@ namespace {
 		return rom;
 	}
 
-	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
+	std::size_t install(std::vector<byte>& rom, const std::string& spec,
+		const fe::Config& config = fe::Config{}) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0,
+		return fh::HackManager{}.install_general_hacks(config, rom, 15, ORG, 0xfff0,
 			hacks, nullptr);
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -259,6 +277,53 @@ namespace {
 			require(threw, "a disturbed gate was accepted");
 		}
 	}
+
+	// every install writes the same bank 15 on the expanded rom, and nothing
+	// outside it
+	void test_expanded_rom_gets_the_same_bank_15() {
+		for (const auto& base : { vanilla_rom(), permadoors_rom(), with_fdr_jump(vanilla_rom()) })
+			for (const auto& spec : { "AtlasDevSmartKeys", "AtlasDevSmartKeys flag=7",
+				"AtlasDevSmartKeys flag=6", "AtlasDevSmartKeys flag=247" }) {
+				auto plain{ base };
+				const auto plain_used{ install(plain, spec) };
+				auto rom{ expanded(base) };
+				const auto before{ rom };
+				const auto used{ install(rom, spec, region_config(rom, "us-512")) };
+				require(used == plain_used, std::string{ "space used differs when expanded: " } + spec);
+				require(std::equal(plain.begin() + 16, plain.end(), rom.begin() + 16),
+					std::string{ "bank 0 to 15 differ when expanded: " } + spec);
+				require(std::equal(rom.begin(), rom.begin() + 16, before.begin())
+					&& std::equal(rom.begin() + ROM_SIZE, rom.end(), before.begin() + ROM_SIZE),
+					std::string{ "the header or banks 16 to 31 were written: " } + spec);
+			}
+	}
+
+	void test_expanded_refusals() {
+		auto refused = [](std::vector<byte> rom, const fe::Config& config, const std::string& what) {
+			const auto before{ rom };
+			bool threw{ false };
+			try { install(rom, "AtlasDevSmartKeys", config); }
+			catch (const std::runtime_error& e) {
+				threw = true;
+				require(std::string{ e.what() }.find("AtlasDevSmartKeys") != std::string::npos,
+					"the refusal does not name the hack");
+			}
+			require(threw, "accepted " + what);
+			require(rom == before, "a refused install wrote bytes: " + what);
+		};
+		auto rom{ expanded(vanilla_rom()) };
+		rom[4] = 0x10;
+		refused(rom, region_config(rom, "us-512"), "a 512 KiB rom declaring 16 banks");
+		rom = expanded(vanilla_rom());
+		refused(rom, region_config(rom, "us"), "a 512 KiB rom in a region that does not copy bank 15");
+		refused(rom, fe::Config{}, "a 512 KiB rom without a region");
+		for (const std::size_t size : { ROM_SIZE - 16, ROM_SIZE + 1, ROM_SIZE + 128,
+			EXPANDED_ROM_SIZE - 1, EXPANDED_ROM_SIZE + 1 }) {
+			auto odd{ vanilla_rom() };
+			odd.resize(size, 0xff);
+			refused(odd, fe::Config{}, std::to_string(size) + " bytes");
+		}
+	}
 }
 
 int main() {
@@ -275,6 +340,8 @@ int main() {
 		test_refuses_a_foreign_hook();
 		test_composes_with_flag_door_requirements();
 		test_refuses_a_jump_without_the_tay();
+		test_expanded_rom_gets_the_same_bank_15();
+		test_expanded_refusals();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_smart_keys_regression: " << e.what() << '\n';

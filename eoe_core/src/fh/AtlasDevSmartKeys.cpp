@@ -43,6 +43,11 @@
 // every site is verified against its exact vanilla bytes before anything is
 // written, and a rom that differs is refused.
 //
+// the gate is all in bank 15, which keeps its file offset when the editor
+// expands the rom to 512 KiB. bank 31 is the fixed bank whenever a bank above
+// 15 is switched in, so an expanded rom is accepted only when its region
+// copies bank 15 into bank 31 after the hacks are installed.
+//
 // permadoors, listed before this hack, replaces the requirement load at $eb2f
 // with a call to its check routine (an opened door reads as no requirement) and
 // the deselect at $ebd9 with a call to its set-flag routine. the shared handler
@@ -72,7 +77,8 @@ namespace {
 	constexpr byte MESSAGE_BANK{ 0x0c };
 	constexpr word MESSAGE_TARGET{ 0x8241 };
 	constexpr byte USED_KEY{ 0x84 };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
+	constexpr byte EXPANDED_BANKS{ 0x20 };
 
 	constexpr std::array<word, 5> HANDLERS{ 0xeb51, 0xeb61, 0xeb71, 0xeb81, 0xeb91 };
 	// extended flags: flag n lives at $0101 + (n >> 3), bit n & 7
@@ -109,9 +115,16 @@ namespace {
 		return { true, word_at(DISPATCH_LDA + 1), word_at(DESELECT + 1) };
 	}
 	// the five key handlers, and the table entries that reach them
-	void require_gate(const std::vector<byte>& rom) {
-		if (rom.size() != ROM_SIZE)
-			fail("expected a 256 KiB rom with a sixteen byte header");
+	void require_gate(const fe::Config& config, const std::vector<byte>& rom) {
+		if (rom.size() == EXPANDED_ROM_SIZE) {
+			if (rom[4] != EXPANDED_BANKS)
+				fail("a 512 KiB rom must declare 32 banks in its header");
+			if (!config.boolean_or(fe::c::ID_DUPLICATE_STATIC_BANK, false))
+				fail("a 512 KiB rom needs a region that copies bank 15 into bank 31");
+		}
+		else if (rom.size() != ROM_SIZE)
+			fail(std::format("expected a 256 KiB or 512 KiB rom with a sixteen byte header, "
+				"not {} bytes", rom.size()));
 		// the requirement branch is vanilla, or the jump flagdoorrequirements puts
 		// over it. the tay after it is needed either way
 		if (rom[klib::Asm6502::get_file_offset(15, DISPATCH_BEQ)] == 0x4c)
@@ -221,7 +234,7 @@ word fh::HackManager::install_AtlasDevSmartKeys(const fe::Config& config,
 	if (flag != NO_FLAG && (flag & 7) != 6 && (flag & 7) != 7)
 		fail(std::format("flag {} is bit {} of its byte; only bits 6 and 7 can be "
 			"tested in the space available, so use 6, 7, 14, 15 and so on", flag, flag & 7));
-	require_gate(rom);
+	require_gate(config, rom);
 	const PermaDoors permadoors{ detect_permadoors(rom) };
 	// keep every write private until the whole install succeeds
 	std::vector<byte> patched{ rom };
