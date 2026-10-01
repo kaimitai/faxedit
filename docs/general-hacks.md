@@ -60,7 +60,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevSmartMattock](#atlasdevsmartmattock)
   - [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol)
   - [AtlasDevWolfmanControl](#atlasdevwolfmancontrol)
-  - [AtlasDevScreenBlink](#atlasdevscreenblink)
+  - [AtlasDevScreenTransition](#atlasdevscreentransition)
   - [AtlasDevFastBlink](#atlasdevfastblink)
   - [AtlasDevLandingTuck](#atlasdevlandingtuck)
   - [AtlasDevSpriteSpeed](#atlasdevspritespeed)
@@ -1356,44 +1356,47 @@ AtlasDevWolfmanControl lunge=3 recover=12 flag=13
 
 <hr>
 
-### AtlasDevScreenBlink
+### AtlasDevScreenTransition
 
 Walking off the left or right side of a screen makes the stock game slide
 the next screen in, which takes about a second with everything frozen.
-Going up or down it blanks the screen and redraws it at once instead. This
-hack makes left and right do the same, so a horizontal screen change takes
-about a quarter of a second.
+Going up or down it blanks the screen and redraws it at once instead, which
+takes about a quarter of a second. This hack picks one of the two for each
+direction, so a horizontal screen change can blank as well.
 
 | parameter | default | meaning |
 | --- | --- | --- |
-### AtlasDevMaskmanControl
-
-Makes Maskman's spear hurt where it is drawn. In the stock game, while he
-strides with his spear forward, his hitbox shrinks to a thin spot to his
-right: his body does not hurt, the spear only hurts at one exact distance,
-and when he faces left it does not hurt at all. With this hack, during that
-stride his body hurts and so does his spear, `spear` pixels past his body on
-the side he faces, never behind him. The default is the length of the spear
-as drawn. The rest of his moves are unchanged.
-
-| parameter | default | meaning |
-| --- | --- | --- |
-| `spear` | `16` | how far the spear reaches past his body, 0 to 64 pixels; 0 is his body only |
+| `left` | `scroll` | `scroll` slides the next screen in, `blink` blanks and redraws it |
+| `right` | `scroll` | the same, walking off the right side |
+| `up` | `blink` | the same, going up |
+| `down` | `blink` | the same, going down |
+| `h` | | sets `left` and `right` together |
+| `v` | | sets `up` and `down` together |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
 
-`flag=n` lets a script grant or remove the behavior with `SetFlag` and
-`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock slide.
+A direction given by name wins over `h` or `v`, so `h=blink right=scroll`
+blanks only to the left. Areas without smooth scrolling always blank, as in
+the stock game. `up=scroll` and `down=scroll` need AtlasDevVerticalScroll,
+which supplies the vertical slide, listed before this hack; without it they
+are refused. Every parameter is checked, even with `mode=vanilla`.
 
-Without a flag two bytes in bank 15 change and no free space is used. With
-a flag, 15 bytes of bank 15 free space are used. No RAM is claimed. Every
-site is verified against its exact vanilla bytes before anything is
-written, and all of them are identical in the US, US rev A, EU and JP ROMs.
-Does not require AtlasDevFrameScheduler.
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock choice.
+
+Uses 26 bytes of bank 15 free space, or 33 with a flag, and rewrites the
+six bytes at $DB8B that choose between the two, which become a call to the
+new code. When every direction keeps its stock choice nothing is
+installed. No RAM is claimed. Every site is verified against its exact
+vanilla bytes before anything is written, and all of them are identical in
+the US, US rev A, EU and JP ROMs. AtlasDevFastBlink changes the blank path
+this hack checks, so list this hack first. Does not require
+AtlasDevFrameScheduler.
 
 ```
-AtlasDevScreenBlink
-AtlasDevScreenBlink flag=16
+AtlasDevScreenTransition h=blink
+AtlasDevScreenTransition h=blink flag=16
+AtlasDevScreenTransition left=blink
 ```
 
 <hr>
@@ -1402,7 +1405,7 @@ AtlasDevScreenBlink flag=16
 
 A screen change that blanks and redraws the screen takes about a quarter
 of a second in the stock game: going up or down, in an area without
-smooth scrolling, or left and right with AtlasDevScreenBlink. About half
+smooth scrolling, or wherever AtlasDevScreenTransition picks `blink`. About half
 of it is waiting, a frame at a time, for the enemy graphics to reach the
 video chip and for the display to go dark. This hack turns the display
 off first and runs the same steps back to back, so a change takes about
@@ -1422,27 +1425,14 @@ of the video queue at $CFCA and $CFF4, which become jumps to the new
 code. With the frame handlers on the two waits behave as before. No RAM
 is claimed. Every site is verified against its exact vanilla bytes before
 anything is written, and all of them are identical in the US, US rev A,
-EU and JP ROMs. AtlasDevScreenBlink checks the stock blank path when it
-installs, so list it before this hack. Does not require
+EU and JP ROMs. AtlasDevScreenTransition checks the stock blank path when
+it installs, so list it before this hack. Does not require
 AtlasDevFrameScheduler.
 
 ```
 AtlasDevFastBlink
-AtlasDevScreenBlink flag=16
+AtlasDevScreenTransition h=blink flag=16
 AtlasDevFastBlink flag=24
-`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
-
-One vanilla instruction sequence in bank 14 is retargeted, inside the
-routine that picks each sprite's hitbox, and 34 bytes of bank 14 free space
-are used (52 with a flag). No RAM is claimed. Every site is verified against
-its exact vanilla bytes before anything is written, and all of them are
-identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
-
-```
-AtlasDevMaskmanControl
-AtlasDevMaskmanControl spear=24
-AtlasDevMaskmanControl flag=14
 ```
 
 <hr>
@@ -1493,6 +1483,41 @@ AtlasDevLandingTuck
 AtlasDevLandingTuck profile=light
 AtlasDevLandingTuck profile=heavy flag=24
 ```
+
+<hr>
+
+### AtlasDevMaskmanControl
+
+Makes Maskman's spear hurt where it is drawn. In the stock game, while he
+strides with his spear forward, his hitbox shrinks to a thin spot to his
+right: his body does not hurt, the spear only hurts at one exact distance,
+and when he faces left it does not hurt at all. With this hack, during that
+stride his body hurts and so does his spear, `spear` pixels past his body on
+the side he faces, never behind him. The default is the length of the spear
+as drawn. The rest of his moves are unchanged.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `spear` | `16` | how far the spear reaches past his body, 0 to 64 pixels; 0 is his body only |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+
+`flag=n` lets a script grant or remove the behavior with `SetFlag` and
+`ClearFlag`. A clear flag, like `mode=vanilla`, is the stock behavior.
+
+One vanilla instruction sequence in bank 14 is retargeted, inside the
+routine that picks each sprite's hitbox, and 34 bytes of bank 14 free space
+are used (52 with a flag). No RAM is claimed. Every site is verified against
+its exact vanilla bytes before anything is written, and all of them are
+identical in the US, US rev A, EU and JP ROMs. Does not require
+AtlasDevFrameScheduler.
+
+```
+AtlasDevMaskmanControl
+AtlasDevMaskmanControl spear=24
+AtlasDevMaskmanControl flag=14
+```
+
 ### AtlasDevHornetControl
 
 Tunes how the Hornet flies. In the stock game it crosses the screen at 2
