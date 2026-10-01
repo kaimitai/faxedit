@@ -800,6 +800,8 @@ The extended flags are for general use, whereas the quest flags have special mea
 
 ## Example: Keep all doors in world 1 (Trunk) unlocked
 
+> > **Note:** This can also be achieved more easily with the general hack [PermaDoors](general-hacks.md#permadoors). However, this script-based approach does not consume any bank 15 free space.
+
 We will need the following custom opcodes in ```iscript_opcodes``` in ```eoe_config_override.xml```
 
 ```xml

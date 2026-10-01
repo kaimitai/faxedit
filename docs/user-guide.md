@@ -1359,7 +1359,49 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 <hr>
 
-### Changelog
+# Changelog
+
+### 2026-10-01: version beta-9.3 - "More of the Same"
+
+#### General hacks
+
+- Added `PermaDoors`, allowing key-locked doors to remain permanently unlocked after being opened.
+- Added `FlagDoorRequirements`, extending door requirements with values 9-15 backed by extended flags, with optional failure iScripts.
+- Added `OintmentFix`, fixing magic damage bypassing Ointment invincibility when a shield is equipped, with optional protection against Sugata's flash attack.
+- Added `Respawn` script opcode for respawning at the current temple spawn point through the game's normal respawn path.
+- Improved compatibility between `PermaDoors`, `AtlasDevSmartKeys`, and `FlagDoorRequirements`.
+- Improved configurable bank placement and automatic trailing free-space detection for several hacks.
+
+#### AtlasDev
+
+- Added a large collection of configurable enemy behavior hacks.
+- Added `AtlasDevPreventTextbox`, allowing scripts to run without opening a dialogue window.
+- Added `AtlasDevLandingTuck`, providing a configurable landing pose after jumps using existing player graphics.
+- Added `AtlasDevScreenTransition`, allowing scroll/blink screen transitions to be configured independently by direction.
+- Added `AtlasDevFastBlink`.
+- Added `AtlasDevStatusWard`, with configurable force and field graphics.
+- Added a dialogue-safe `ShowInventoryMenu` script opcode.
+- Added runtime flag control to `AtlasDevSmartKeys`.
+- Improved `AtlasDevRunControl` behavior.
+- Hardened scheduler and visual-effect patch validation and ownership checks.
+
+#### Editor and workflow
+
+- Added options to automatically rebuild existing iScript, bScript, mScript, misc and MML sources before creating ROM or IPS output.
+- Config overrides beside the loaded ROM are now preferred over the application-directory override.
+- Door requirement labels can now be extended through project config overrides, allowing custom requirements such as those provided by `FlagDoorRequirements` to appear in the editor.
+- Restored `Apply External ROM Changes` as a debug option.
+
+#### Other
+
+- Fixed SRAM support for NES 2.0 ROMs by configuring PRG-NVRAM when enabling battery-backed saves.
+- Added configurable enemy HUD behavior.
+- Added configurable sprite construction speed and PPU drain behavior.
+- Avoid duplicate room sprite uploads.
+- Expanded the script opcode documentation with missing script-register opcodes and additional examples.
+- Fixed and clarified several documentation entries and examples.
+
+---
 
 * 2026-09-13: version beta-9.2 - "Crowning Achievement"
 

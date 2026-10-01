@@ -10,11 +10,13 @@ General hacks are completely optional. A project that enables none of them produ
 
 This document describes the hacks in the current library and their parameters. It assumes you are familiar with the configuration override system described in the [advanced modding documentation](advanced-modding.md).
 
-> **Warning:** General hacks are not automatically removed from an already patched ROM. If you build a ROM with hacks A, B and C, then load that ROM and rebuild it with only hacks D, E and F, hooks and other patches from A, B and C may remain in the ROM.
->
-> Keep a clean base ROM and treat patched ROMs as build outputs. Your project XML, config overrides, ASM/music sources and other source files should be considered the authoritative project state.
->
-> Rebuilding an already patched ROM is generally safe when you continue installing the same hacks, but changing the selected set of hacks should be done from a clean base ROM.
+> **Warning:** Treat patched ROMs as build outputs and always rebuild from a clean base ROM.
+
+> General hacks are not automatically removed when a ROM is patched again. If you build a ROM with hacks A, B and C, then load that ROM and rebuild it with only hacks D, E and F, hooks, injected code and other changes from A, B and C may remain in the ROM.
+
+> Repatching can also consume additional free space even when installing the same hacks. Some hacks that support bank switching can automatically locate free space when no explicit address is configured. When run against an already patched ROM, previously injected code is no longer considered free, so another copy may be installed elsewhere. Repeating this can progressively consume the available space until the bank runs out.
+
+> Keep a clean base ROM and generate patched ROMs from it. Your project XML, config overrides, ASM/music sources and other source files should be considered the authoritative project state rather than changes made directly to a generated ROM.
 
 
 <hr>

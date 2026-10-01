@@ -143,7 +143,7 @@ Working directly on a ROM is fine for small or experimental changes, but we reco
 
 Special thanks to the following contributors and fellow digital archaeologists:
 
-  * [mal.exe](https://github.com/malexe3169/) - For major contributions that extend Faxanadu far beyond its original engine, including a greatly expanded scripting system, advanced gameplay and entity control, frame scheduling, day/night cycles, dynamic visual effects, extensive documentation, and numerous improvements to the codebase.
+  * [mal.exe](https://github.com/malexe3169/) - For major contributions that extend Faxanadu far beyond its original engine, including a greatly expanded scripting system, advanced gameplay and entity control, frame scheduling, day/night cycles, dynamic visual effects, extensive documentation, and numerous improvements to the codebase. His visionary hacks frequently go beyond traditional ROM hacking by introducing entirely new gameplay systems, backed by careful implementation, validation, and extensive configurability.
   * [Rob Porter aka "Songbirder"](https://github.com/rgeraldporter) - For providing macOS build scripts and binaries, helping with testing, bug reports and feature suggestions, and for providing the SUROM expansion hack used by Echoes of Eolis.
   * ["Vagla"](https://www.romhacking.net/community/627/) - For documenting the original Faxanadu data formats. This documentation was the foundation on which Echoes of Eolis was originally started.
   * [ChipX86/Christian Hammond](http://chipx86.com/) - For helping me directly with many previously unknown details that helped me achieve a high level of generality - and also for providing everyone with an invaluable source in his [Faxanadu disassembly](https://chipx86.com/faxanadu/) project.
@@ -163,8 +163,10 @@ Special thanks to the following contributors and fellow digital archaeologists:
 Notable community projects include:
 
 * [Root of Decay](https://www.okimpala.net/faxanadu-root-of-decay) - An upcoming Faxanadu ROM hack by Ok Impala.
-* [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/) - A full music replacement hack for Faxanadu.
+* [WraithSeed](https://www.youtube.com/watch?v=QiLMK4wo7s4) - A Faxanadu ROM hack by [Feistygandhi](http://feistygandhi.blogspot.com/), featuring new world layouts, enemies, music, palettes, story and dialogue. Act 1 is currently available to play, with the IPS patch linked from the video description.
 * [Faxanadu 40th Anniversary edition](https://fax40.net/) - Songbirder's enhancement project, currently in beta.
+* [Faxanadu Atlas](https://github.com/malexe3169/faxanadu-atlas) - mal.exe's collection of creative and highly configurable Faxanadu patches, experiments, and gameplay enhancements.
+* [Jessica's Alternate Soundtrack hack](https://www.romhacking.net/hacks/9396/) - A full music replacement hack for Faxanadu.
 * [Faxanadu Retranslation+ and Sara's Quest](https://github.com/UnsavoryMaggot/) - By Ascended Mermaid
 
 <hr>
