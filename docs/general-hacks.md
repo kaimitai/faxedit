@@ -1054,7 +1054,8 @@ the same bytes they occupied, so this hack uses no general hack space at all.
 The unlocked case and the three ring checks are not touched. Every site is
 verified against its exact vanilla bytes before anything is written; the gate
 is identical in the US, US rev A and EU ROMs, and the JP ROM, where it
-differs, is refused.
+differs, is refused. ROMs expanded to 512 KiB by the editor work the same way,
+since the expanded regions copy bank 15 into bank 31.
 
 `flag=n` gates the carried key on extended flag `n` at runtime, so a script
 can switch the hack on with `SetFlag` and off with `ClearFlag`. A clear flag
