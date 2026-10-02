@@ -115,6 +115,8 @@
 	<!-- contant addresses and counts -->
 	<!-- data end offsets will point to the first byte after the end, so data size is (end - start) -->
 	<consts>
+		<!-- SetMusic/IfMusic ceiling: 0 detects the ROM song count; custom layouts may override (1..31). -->
+		<const name="hack_music_max_id" value="0" />
 		<!-- mappings from world to tilemap bank, followed by mapping to ptr index -->
 		<const name="world_tilemap_metadata" value="0x3df44" />
 		<!-- max size screen tilemaps can occupy within a bank -->

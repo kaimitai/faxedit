@@ -422,6 +422,7 @@ namespace fh {
 		constexpr char ID_HACK_SCRIPT_JSR_RAM_ADDR_LO[]{ "hack_script_jsr_ram_addr_lo" };
 		constexpr char ID_HACK_SCRIPT_JSR_RAM_ADDR_HI[]{ "hack_script_jsr_ram_addr_hi" };
 		constexpr char ID_HACK_SCRIPT_SELECTED_FLAG_RAM_ADDR[]{ "hack_script_selected_flag_ram_addr" };
+		constexpr char ID_HACK_MUSIC_MAX_ID[]{ "hack_music_max_id" };
 
 		// sameworld to stage-door hack injection point IDs
 		constexpr char ID_HACK_HANDLE_PALETTE_ADDR[]{ "hack_handle_palette_addr" };

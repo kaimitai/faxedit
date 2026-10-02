@@ -765,11 +765,29 @@ All three effects are safe to run inside an open dialogue box; the box does not 
 
 #### AtlasDev audio
 
-```AtlasDevSetMusic``` writes the requested state straight to ```Music_Current``` (```$fa```), which is the same contract the game's own five call sites use, and the sound engine picks the change up on its next pass. ```0``` stops the music and ```1```-```16``` select a song. Values above 16 are deliberately a no-op rather than an error, so a script driving the opcode from a variable cannot push the sound engine into an undefined song. **Note:** the choice lasts until the player leaves the area. Scrolling between screens keeps it, but area changes and building entries set the music themselves, so use this for a moment in the current area rather than to retheme one.
+```AtlasDevSetMusic``` writes the requested state straight to ```Music_Current``` (```$fa```), which is the same contract the game's own five call sites use, and the sound engine picks the change up on its next pass. ```0``` stops the music and positive IDs select a song. Values above the detected or configured maximum are deliberately a no-op rather than an error, so a script driving the opcode from a variable cannot push the sound engine into an undefined song. **Note:** the choice lasts until the player leaves the area. Scrolling between screens keeps it, but area changes and building entries set the music themselves, so use this for a moment in the current area rather than to retheme one.
 
 ```AtlasDevPlaySFX``` plays a public sound effect through the game's own ```Sound_PlayEffect```, the same entry point its 56 vanilla call sites use, so an effect from a script sounds exactly like one from ordinary play. Whether the music continues underneath depends on which effect you pick, not on the opcode: an effect occupies whatever channels its own sound data uses, so most leave the melodic channels alone and a few take them. (That is separate from the priority arbitration in ```$F36F```, whose per-effect table at ```$F388``` only decides which of two competing effects wins the slot.) Measured from an APU write log with a song playing, effects ```$01``` and ```$04``` are indistinguishable from music alone, while effect ```$16``` triples the melodic writes and zeroes the triangle, so the track audibly drops under it. Only IDs ```$00```-```$1c``` are passed on; the effect routine indexes its table without bounds checking of its own, so higher values are dropped rather than forwarded.
 
-```AtlasDevIfMusic``` answers "is this song currently selected". It needs care that is worth knowing about if you write your own audio opcodes: ```Music_Current``` holds the requested ID up until the NMI picks it up, and the same ID with bit 7 set afterwards. A comparison against only one of those two forms would answer differently depending on which side of a frame boundary the script happened to run, so the opcode accepts both. Each read of ```$fa``` is a single instruction and the NMI preserves the accumulator, so no interrupt window can be observed between the two comparisons. IDs above 16 take the false branch, matching ```AtlasDevSetMusic```'s domain.
+Both opcodes automatically use the ROM's song count when their handlers are
+installed. An expanded soundtrack needs no extra setting: install the music
+first, then rebuild the scripts so the guard follows the new song table.
+
+For a custom layout that the normal music parser cannot read, override the
+highest accepted song ID in the `<consts>` section of `eoe_config_override.xml`:
+
+```xml
+<const name="hack_music_max_id" value="18" />
+```
+
+The setting defaults to `0` (automatic detection); an omitted setting also
+uses automatic detection. An explicit value bypasses song-count detection.
+The detected or explicit maximum must be 1..31, since the stock loader's
+eight-bit index wraps at ID 32. This does not add songs or validate channel
+pointers. Generated handlers keep their original byte sizes and have no
+runtime dependency on the editor.
+
+```AtlasDevIfMusic``` answers "is this song currently selected". It needs care that is worth knowing about if you write your own audio opcodes: ```Music_Current``` holds the requested ID up until the NMI picks it up, and the same ID with bit 7 set afterwards. A comparison against only one of those two forms would answer differently depending on which side of a frame boundary the script happened to run, so the opcode accepts both. Each read of ```$fa``` is a single instruction and the NMI preserves the accumulator, so no interrupt window can be observed between the two comparisons. IDs above the detected or configured maximum take the false branch, matching ```AtlasDevSetMusic```'s domain.
 
 None of the three blocks script execution, and none of them claims any state of its own or switches banks.
 

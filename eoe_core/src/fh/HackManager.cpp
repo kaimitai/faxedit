@@ -4,6 +4,7 @@
 #include "fe/fe_constants.h"
 #include "fe/nes_constants.h"
 #include "fe/ROM_Manager.h"
+#include "fm/fm_util.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
 #include <algorithm>
@@ -1115,16 +1116,30 @@ word fh::HackManager::apply_AtlasDevFadeIn(const fe::Config& p_config,
 	return get_next_cpu_addr(cpu_addr, code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
-// AtlasDevSetMusic State: 0 stops the music, 1..16 select a song.
-// Values above 16 are a deliberate no-op so a script driven by a variable
-// cannot reach an undefined song.
+namespace {
+
+	byte music_id_bound(const fe::Config& p_config, const std::vector<byte>& p_rom) {
+		// An explicit ceiling also supports custom song-table layouts.
+		const auto override_id{ p_config.constant_or(fh::c::ID_HACK_MUSIC_MAX_ID, 0) };
+		const auto max_id{ override_id == 0 ? fm::util::get_music_count(p_config, p_rom) : override_id };
+		// Music_Load shifts the ID three times in an 8-bit register.
+		// ID 32 would wrap its eight-byte song-table index back to zero.
+		if (max_id < 1 || max_id > 31)
+			throw std::runtime_error("Music opcode ceiling must be between 1 and 31 (hack_music_max_id: 0=auto)");
+		return static_cast<byte>(max_id + 1);
+	}
+
+}
+
+// AtlasDevSetMusic State: 0 stops music; positive IDs request a song.
+// Values above the detected or configured song count are a deliberate no-op.
 word fh::HackManager::apply_AtlasDevSetMusic(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = requested state
-	code.cmp_imm(0x11);                                       // 0=stop, 1..16=song
-	code.bcs("@done");                                        // 17..255: safe no-op
+	code.cmp_imm(music_id_bound(p_config, p_rom));             // 0=stop, installed songs
+	code.bcs("@done");                                        // out of range: safe no-op
 	code.sta_zp(RAM::ZP_MusicCurrent);
 
 	code.label("@done");
@@ -1497,8 +1512,8 @@ word fh::HackManager::apply_AtlasDevIfMusic(const fe::Config& p_config,
 	klib::Asm6502 code;
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = requested song
-	code.cmp_imm(0x11);                                       // valid: 0..16
-	code.bcs("@not_equal");                                   // 17..255: false
+	code.cmp_imm(music_id_bound(p_config, p_rom));             // same domain as SetMusic
+	code.bcs("@not_equal");                                   // out of range: false
 
 	code.cmp_zp(RAM::ZP_MusicCurrent);                        // pending form
 	code.beq("@equal");
