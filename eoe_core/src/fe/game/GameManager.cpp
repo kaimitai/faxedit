@@ -868,6 +868,14 @@ std::vector<byte> fe::game::patch_rom(
 	if (!general_hacks.empty()) {
 		fh::HackManager hack_mgr;
 
+		// if the rom has, or will have, SRAM support - prepare cursor for code-from-sram
+		if (fe::ROM_Manager::is_sram_enabled(x_rom) ||
+			std::find_if(general_hacks.begin(), general_hacks.end(),
+				[](const auto& hack) {
+					return hack.get_type() == fh::GeneralHackLib::SRAM;
+				}) != general_hacks.end())
+			hack_mgr.init_sram_state(p_config);
+
 		for (byte bank : { 12, 14, 15 }) {
 			const auto bank_hacks{ fh::filter_general_hacks(bank, general_hacks) };
 			if (bank_hacks.empty())

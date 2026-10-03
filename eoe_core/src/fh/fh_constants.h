@@ -65,6 +65,7 @@ namespace fh {
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
 		constexpr word WaitForInterrupt{ 0xca2e };
+		constexpr word Game_InitScreenAndMusic{ 0xca78 };
 		constexpr word PPU_WaitUntilFlushed{ 0xcaf7 };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
 		// Waits until the PPU queue has room for up to $24 bytes.
@@ -432,6 +433,10 @@ namespace fh {
 
 		// double tileset hack
 		constexpr char ID_HACK_DOUBLE_TILESET_ADDR[]{ "hack_double_tileset_addr" };
+
+		// sram backing code
+		constexpr char ID_SRAM_CODE_BANK[]{ "sram_code_bank" };
+		constexpr char ID_SRAM_CODE_ADDR[]{ "sram_code_addr" };
 
 		// Transient iScript registers.
 		constexpr char ID_HACK_SCRIPT_VAR_RAM_ADDR[]{ "hack_script_var_ram_addr" };

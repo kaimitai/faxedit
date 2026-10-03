@@ -15,8 +15,88 @@
 #include <stdexcept>
 #include <utility>
 
+namespace {
+
+	// helper which installs the bank 15 routine which copies code from backing bank to SRAM
+	// TODO: Make this smaller
+	word install_SRAM_Init(const fe::Config& p_config, std::vector<byte>& p_rom,
+		word cpu_addr, byte p_rom_bank, word p_rom_begin,
+		word p_sram_begin, std::size_t p_size) {
+		constexpr byte SRC_LO{ fh::RAM::ZP_e2 };
+		constexpr byte SRC_HI{ fh::RAM::ZP_e3 };
+		constexpr byte DST_LO{ fh::RAM::ZP_e4 };
+		constexpr byte DST_HI{ fh::RAM::ZP_e5 };
+		constexpr byte LEN_LO{ fh::RAM::ZP_e6 };
+		constexpr byte LEN_HI{ fh::RAM::ZP_e7 };
+
+		klib::Asm6502 code;
+
+		// run once during game initialization, after MMC/bank initialization
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 15, fh::ROM::Game_Init_JSR_Game_InitScreenAndMusic);
+
+		code.lda_abs(fh::RAM::CurrentROMBank);
+		code.pha();
+
+		code.ldx_imm(p_rom_bank);
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+
+		code.lda_imm(static_cast<byte>(p_rom_begin & 0xff));
+		code.sta_zp(SRC_LO);
+		code.lda_imm(static_cast<byte>(p_rom_begin >> 8));
+		code.sta_zp(SRC_HI);
+
+		code.lda_imm(static_cast<byte>(p_sram_begin & 0xff));
+		code.sta_zp(DST_LO);
+		code.lda_imm(static_cast<byte>(p_sram_begin >> 8));
+		code.sta_zp(DST_HI);
+
+		code.lda_imm(static_cast<byte>(p_size & 0xff));
+		code.sta_zp(LEN_LO);
+		code.lda_imm(static_cast<byte>((p_size >> 8) & 0xff));
+		code.sta_zp(LEN_HI);
+
+		code.ldy_imm(0x00);
+
+		code.label("@copy");
+		code.lda_ind_y(SRC_LO);
+		code.sta_ind_y(DST_LO);
+
+		code.inc_zp(SRC_LO);
+		code.bne("@src_done");
+		code.inc_zp(SRC_HI);
+		code.label("@src_done");
+
+		code.inc_zp(DST_LO);
+		code.bne("@dst_done");
+		code.inc_zp(DST_HI);
+		code.label("@dst_done");
+
+		code.lda_zp(LEN_LO);
+		code.bne("@dec_lo");
+		code.dec_zp(LEN_HI);
+
+		code.label("@dec_lo");
+		code.dec_zp(LEN_LO);
+
+		code.lda_zp(LEN_LO);
+		code.ora_zp(LEN_HI);
+		code.bne("@copy");
+
+		code.pla();
+		code.tax();
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.jmp(fh::ROM::Game_InitScreenAndMusic);
+
+		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	}
+
+}
+
 // kill switch; Pressing Select while the game is paused kills the player when the game is unpaused
-word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const {
+word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
+	const bool sram_install{ true };
+
 	klib::Asm6502 code;
 
 	// call the routine vanilla would have called if we didn't install the hook
@@ -29,10 +109,18 @@ word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector
 	code.sta_abs(RAM::PlayerIsDead);
 	code.label("@select_not_pressed");
 	code.rts();
-	const auto next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr) };
+
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	if (sram_install)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 
 	// install the hook
-	code.jsr(cpu_addr);
+	code.jsr(hack_addr);
+
 	code.apply_hack_and_clear(p_rom, p_bank, ROM::GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges);
 
 	return next_cpu_addr;
@@ -1076,7 +1164,7 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 // orchestrator for per-bank hack injection
 std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
-	const fe::Game* p_game) const {
+	const fe::Game* p_game) {
 	if (p_hacks.empty())
 		return 0;
 
@@ -1351,6 +1439,14 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 				"Hack address wrapped in bank ${:02x}", p_bank));
 		if (static_cast<std::size_t>(cpu_addr) > p_cpu_addr_end)
 			throw std::runtime_error(std::format("Hack overflow in bank ${:02x}", p_bank));
+	}
+
+	if (p_bank == 15 && sram_state.has_value() && sram_state->sram_begin != sram_state->sram_cursor) {
+		const word sram_init_addr{ cpu_addr };
+
+		cpu_addr = install_SRAM_Init(p_config, patched_rom, sram_init_addr,
+			sram_state->rom_bank, sram_state->rom_begin, sram_state->sram_begin,
+			static_cast<word>(sram_state->sram_cursor - sram_state->sram_begin));
 	}
 
 	p_rom = std::move(patched_rom);

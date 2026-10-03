@@ -433,6 +433,10 @@ namespace {
 	}
 }
 
+word fh::HackManager::get_SRAM_savefile_end_addr(void) const {
+	return static_cast<word>(0x6800 + 2 + HEADER.size());
+}
+
 // installs SRAM save support
 void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {

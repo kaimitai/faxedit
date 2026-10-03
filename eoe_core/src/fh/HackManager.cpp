@@ -12,6 +12,43 @@
 #include <set>
 #include <stdexcept>
 
+void fh::HackManager::init_sram_state(const fe::Config& p_config) {
+	const word sram_addr{ get_SRAM_savefile_end_addr() };
+	const word rom_addr{ cfg_word(p_config, c::ID_SRAM_CODE_ADDR) };
+
+	sram_state = SramState{
+		.rom_bank = cfg_byte(p_config, c::ID_SRAM_CODE_BANK),
+		.rom_begin = rom_addr,
+		.rom_cursor = rom_addr,
+		.sram_begin = sram_addr,
+		.sram_cursor = sram_addr
+	};
+}
+
+word fh::HackManager::install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502& p_code) {
+	if (!sram_state)
+		throw std::runtime_error("SRAM state not initialized");
+
+	auto& state{ *sram_state };
+
+	const word runtime_addr{ state.sram_cursor };
+
+	if (static_cast<std::size_t>(state.sram_cursor) + p_code.size() > 0x8000)
+		throw std::runtime_error("SRAM overflow when installing asm routine");
+
+	const std::size_t rom_end{ state.rom_bank == 15 || state.rom_bank == 31 ? 0x10000u : 0xc000u };
+	if (static_cast<std::size_t>(state.rom_cursor) + p_code.size() > rom_end)
+		throw std::runtime_error("ROM bank overflow when installing SRAM asm routine");
+
+	const std::size_t size{ p_code.apply_hack_and_clear_relocated(p_rom, state.rom_bank,
+		state.rom_cursor, state.sram_cursor) };
+
+	state.rom_cursor += static_cast<word>(size);
+	state.sram_cursor += static_cast<word>(size);
+
+	return runtime_addr;
+}
+
 // shared helpers for script library hacks
 
 // reads the next script operand as a flag number, stores the byte number (relative to start of flags block)

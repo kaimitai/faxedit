@@ -612,7 +612,7 @@ void klib::Asm6502::tsx(void) {
 
 // shifts
 void klib::Asm6502::lsr_a(std::size_t count) {
-	for (std::size_t i{ 0 }; i < count;++i)
+	for (std::size_t i{ 0 }; i < count; ++i)
 		emit(OP_LSR_A);
 }
 
@@ -779,6 +779,19 @@ std::size_t klib::Asm6502::apply_hack_and_clear(std::vector<byte>& p_rom, byte p
 	return apply_hack_and_clear(p_rom, p_bank_no, p_cpu_addr, get_cpu_min_addr(p_bank_no));
 }
 
+// when the rom address and final runtime addresses differ
+std::size_t klib::Asm6502::apply_hack_and_clear_relocated(std::vector<byte>& p_rom,
+	byte p_bank_no, word p_rom_addr, word p_runtime_addr) {
+
+	resolve_labels(p_runtime_addr);
+
+	const std::size_t result{ size() };
+	apply_hack(p_rom, p_bank_no, p_rom_addr, get_cpu_min_addr(p_bank_no));
+	clear();
+
+	return result;
+}
+
 word klib::Asm6502::apply_hack_and_clear_get_next_cpu_addr(std::vector<byte>& p_rom, byte p_bank_no,
 	word p_cpu_addr) {
 	const std::size_t next_addr{ static_cast<std::size_t>(p_cpu_addr) + apply_hack_and_clear(p_rom, p_bank_no, p_cpu_addr) };
@@ -859,16 +872,16 @@ word klib::Asm6502::read_word(const std::vector<byte>& p_rom, byte p_bank_no, wo
 }
 
 void klib::Asm6502::lda_zp_x(byte p_addr) {
-	emit(byte{0xb5});
+	emit(byte{ 0xb5 });
 	emit(p_addr);
 }
 
 void klib::Asm6502::inc_zp_x(byte p_addr) {
-	emit(byte{0xf6});
+	emit(byte{ 0xf6 });
 	emit(p_addr);
 }
 
 void klib::Asm6502::dec_zp_x(byte p_addr) {
-	emit(byte{0xd6});
+	emit(byte{ 0xd6 });
 	emit(p_addr);
 }

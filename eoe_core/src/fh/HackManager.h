@@ -82,7 +82,18 @@ namespace fh {
 		Count
 	};
 
+	struct SramState {
+		byte rom_bank;
+		word rom_begin;
+		word rom_cursor;
+		word sram_begin;
+		word sram_cursor;
+	};
+
 	class HackManager {
+		// sram to code installer
+		std::optional<SramState> sram_state;
+		word install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502& p_code);
 
 		// script action library
 		word apply_SetFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -316,7 +327,7 @@ namespace fh {
 
 		// general hack library implementations
 		// bank 15 general hacks
-		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) const;
+		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr);
 		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 			bool p_stage_door_hack_installed = true) const;
 		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -329,6 +340,7 @@ namespace fh {
 			word cpu_addr, const fh::GeneralHack& p_hack) const;
 		void install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::GeneralHack& p_hack) const;
+		word get_SRAM_savefile_end_addr(void) const;
 		void install_BugFixes(std::vector<byte>& p_rom) const;
 		word install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack) const;
@@ -447,6 +459,7 @@ namespace fh {
 
 	public:
 		HackManager(void) = default;
+		void init_sram_state(const fe::Config& p_config);
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
 		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);
@@ -456,7 +469,7 @@ namespace fh {
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
 		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
-			const fe::Game* p_game = nullptr) const;
+			const fe::Game* p_game = nullptr);
 		static void install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom);
 
 		// util
