@@ -95,7 +95,8 @@ namespace {
 
 // kill switch; Pressing Select while the game is paused kills the player when the game is unpaused
 word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
-	const bool sram_install{ true };
+	// TODO: Make configurable
+	const bool sram_install{ false };
 
 	klib::Asm6502 code;
 
