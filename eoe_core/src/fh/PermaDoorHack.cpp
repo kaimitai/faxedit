@@ -73,9 +73,8 @@ namespace {
 		return table;
 	}
 
-	word install_PermaDoors_LookupTable(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		const DoorFlagTable& table) {
-		klib::Asm6502 code;
+	void append_PermaDoors_LookupTable(klib::Asm6502& code, const DoorFlagTable& table) {
+		code.label("@lookup_table");
 
 		// emit world ptrs
 		for (std::size_t world{ 0 }; world < table.size(); ++world)
@@ -93,21 +92,17 @@ namespace {
 
 			code.db(0xff);
 		}
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	word install_PermaDoors_TableWalker(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		word table_addr) {
-		klib::Asm6502 code;
-
+	void append_PermaDoors_TableWalker(klib::Asm6502& code) {
+		code.label("@table_walker");
 		code.lda_zp(fh::RAM::ZP_CurrentWorld);
 		code.asl_a();
 		code.tax();
 
-		code.lda_abs_x(table_addr);
+		code.lda_abs_x("@lookup_table");
 		code.sta_zp(PTR_LO);
-		code.lda_abs_x(table_addr + 1);
+		code.lda_abs_x("@lookup_table", 1);
 		code.sta_zp(PTR_HI);
 
 		code.ldy_imm(0x00);
@@ -145,12 +140,10 @@ namespace {
 		code.lda_imm(0xff);
 		// $ff denotes no flag selection
 		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	word install_PermaDoors_BitmaskTable(std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
-		klib::Asm6502 code;
+	void append_PermaDoors_BitmaskTable(klib::Asm6502& code) {
+		code.label("@bitmask_table");
 		code.db(0x01);
 		code.db(0x02);
 		code.db(0x04);
@@ -159,16 +152,13 @@ namespace {
 		code.db(0x20);
 		code.db(0x40);
 		code.db(0x80);
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
 	// ; A = flag number
 	// ; Returns A = 0 if not set / invalid
 	// ; Returns A != 0 if set
-	word install_PermaDoors_CheckFlag(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		word bitmask_table_addr) {
-		klib::Asm6502 code;
-
+	void append_PermaDoors_CheckFlag(klib::Asm6502& code) {
+		code.label("@check_flag");
 		code.cmp_imm(0xff);
 		code.beq("@clear");
 
@@ -181,20 +171,17 @@ namespace {
 		code.tax();
 
 		code.lda_abs_y(fh::RAM::Flags);
-		code.and_abs_x(bitmask_table_addr);
+		code.and_abs_x("@bitmask_table");
 		code.rts();
 
 		code.label("@clear");
 		code.lda_imm(0x00);
 		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
 	// A = flag number
-	word install_PermaDoors_SetFlag(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		word bitmask_table_addr) {
-		klib::Asm6502 code;
+	void append_PermaDoors_SetFlag(klib::Asm6502& code) {
+		code.label("@set_flag");
 
 		code.cmp_imm(0xff);
 		code.beq("@done");
@@ -207,13 +194,11 @@ namespace {
 		code.and_imm(0x07);
 		code.tax();
 		code.lda_abs_y(fh::RAM::Flags);
-		code.ora_abs_x(bitmask_table_addr);
+		code.ora_abs_x("@bitmask_table");
 		code.sta_abs_y(fh::RAM::Flags);
 
 		code.label("@done");
 		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
 	// ; ZP addr VALUE_IO:
@@ -223,52 +208,37 @@ namespace {
 	// ; returns:
 	// ; check -> VALUE_IO=0 or VALUE_IO!=0
 	// ; set -> ignored
-	word install_PermaDoors_Main(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		word table_walker_addr, word set_flag_addr, word check_flag_addr) {
-		klib::Asm6502 code;
+	void append_PermaDoors_Main(klib::Asm6502& code) {
+		code.label("@main");
 
-		code.jsr(table_walker_addr);
+		code.jsr("@table_walker");
 		code.ldx_zp(VALUE_IO);
 		code.beq("@check");
 
-		code.jsr(set_flag_addr);
+		code.jsr("@set_flag");
 		code.rts();
 
 		code.label("@check");
-		code.jsr(check_flag_addr);
+		code.jsr("@check_flag");
 		code.sta_zp(VALUE_IO);
 		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
 	std::pair<word, word> install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 		const fe::Game* p_game) {
 		const auto l_door_flag_table{ make_door_flag_table(p_game) };
 
-		const word lookup_table_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_LookupTable(p_rom, p_bank,
-			lookup_table_addr, l_door_flag_table);
+		klib::Asm6502 code;
 
-		const word table_walker_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_TableWalker(p_rom, p_bank,
-			table_walker_addr, lookup_table_addr);
+		append_PermaDoors_LookupTable(code, l_door_flag_table);
+		append_PermaDoors_TableWalker(code);
+		append_PermaDoors_BitmaskTable(code);
+		append_PermaDoors_CheckFlag(code);
+		append_PermaDoors_SetFlag(code);
+		append_PermaDoors_Main(code);
 
-		const word bitmask_table_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_BitmaskTable(p_rom, p_bank,
-			bitmask_table_addr);
-
-		const word check_flag_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_CheckFlag(p_rom, p_bank,
-			check_flag_addr, bitmask_table_addr);
-
-		const word set_flag_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_SetFlag(p_rom, p_bank,
-			set_flag_addr, bitmask_table_addr);
-
-		const word main_entry_addr{ cpu_addr };
-		cpu_addr = install_PermaDoors_Main(p_rom, p_bank,
-			main_entry_addr, table_walker_addr, set_flag_addr, check_flag_addr);
+		const word main_entry_addr{ code.label_addr("@main", cpu_addr) };
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 
 		return std::make_pair(main_entry_addr, cpu_addr);
 	}

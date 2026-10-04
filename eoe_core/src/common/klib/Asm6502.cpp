@@ -103,7 +103,8 @@ void klib::Asm6502::resolve_labels(word p_base_cpu_addr) {
 		if (it == m_labels.end())
 			throw std::runtime_error(std::format("Undefined label: {}", jump.label));
 
-		const auto target = static_cast<word>(p_base_cpu_addr + it->second);
+		const auto target = static_cast<word>(static_cast<int>(p_base_cpu_addr) +
+			static_cast<int>(it->second) + jump.address_offset);
 
 		switch (jump.type) {
 		case LabelRefType::Absolute:
@@ -287,6 +288,10 @@ std::size_t klib::Asm6502::label_position(const std::string& p_name) const {
 	return it->second;
 }
 
+word klib::Asm6502::label_addr(const std::string& p_name, word p_base_cpu_addr) const {
+	return static_cast<word>(p_base_cpu_addr + label_position(p_name));
+}
+
 void klib::Asm6502::jmp(const std::string& p_label) {
 	emit(OP_JMP);
 
@@ -323,15 +328,9 @@ void klib::Asm6502::lda_imm(byte p_value) {
 	emit(p_value);
 }
 
-void klib::Asm6502::lda_abs_x(const std::string& p_label) {
+void klib::Asm6502::lda_abs_x(const std::string& p_label, int p_offset) {
 	emit(OP_LDA_ABS_X);
-
-	m_jump_refs.push_back({
-		m_bytes.size(),
-		p_label
-		});
-
-	emit_word(word{ 0 }); // patched later
+	dw(p_label, p_offset);
 }
 
 void klib::Asm6502::lda_abs(word p_addr) {
@@ -701,9 +700,19 @@ void klib::Asm6502::and_abs_x(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::and_abs_x(const std::string& p_label, int p_offset) {
+	emit(OP_AND_ABS_X);
+	dw(p_label, p_offset);
+}
+
 void klib::Asm6502::ora_abs_x(word p_addr) {
 	emit(OP_ORA_ABS_X);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::ora_abs_x(const std::string& p_label, int p_offset) {
+	emit(OP_ORA_ABS_X);
+	dw(p_label, p_offset);
 }
 
 void klib::Asm6502::dex(void) {
@@ -740,8 +749,8 @@ void klib::Asm6502::dw(word p_word) {
 	emit_word(p_word);
 }
 
-void klib::Asm6502::dw(const std::string& p_label) {
-	m_jump_refs.push_back({ m_bytes.size(), p_label });
+void klib::Asm6502::dw(const std::string& p_label, int p_offset) {
+	m_jump_refs.push_back({ m_bytes.size(), p_label, LabelRefType::Absolute, p_offset });
 	emit_word(word{ 0 }); // patched later
 }
 

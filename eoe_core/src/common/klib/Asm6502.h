@@ -33,6 +33,7 @@ namespace klib {
 			std::size_t offset;
 			std::string label;
 			LabelRefType type{ LabelRefType::Absolute };
+			int address_offset{ 0 };
 		};
 
 		std::vector<byte> m_bytes;
@@ -100,7 +101,7 @@ namespace klib {
 		void jsr(word p_addr);
 		void jsr(const std::string& p_label);
 		void lda_abs(const std::string& p_label);
-		void lda_abs_x(const std::string& p_label);
+		void lda_abs_x(const std::string& p_label, int p_offset = 0);
 		void ora_abs(word p_addr);
 		void ora_abs(const std::string& p_label);
 		void ora_zp(byte p_addr);
@@ -108,6 +109,7 @@ namespace klib {
 		void inc_abs(word p_addr);
 		void dec_abs(word p_addr);
 		std::size_t label_position(const std::string& p_name) const;
+		word label_addr(const std::string& p_name, word p_base_cpu_addr) const;
 		void rts(void);
 
 		// loads
@@ -207,7 +209,9 @@ namespace klib {
 		void ldy_abs_x(word p_addr);
 		void eor_abs_x(word p_addr);
 		void and_abs_x(word p_addr);
+		void and_abs_x(const std::string& p_label, int p_offset = 0);
 		void ora_abs_x(word p_addr);
+		void ora_abs_x(const std::string& p_label, int p_offset = 0);
 		void dex(void);
 		void dey(void);
 		void iny(void);
@@ -218,7 +222,7 @@ namespace klib {
 		void nop(std::size_t count = 1);
 		void db(byte p_value);
 		void dw(word p_word);
-		void dw(const std::string& p_label);
+		void dw(const std::string& p_label, int p_offset = 0);
 	};
 
 }
