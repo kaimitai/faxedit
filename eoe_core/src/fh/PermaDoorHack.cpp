@@ -224,18 +224,23 @@ namespace {
 		code.rts();
 	}
 
-	std::pair<word, word> install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		const fe::Game* p_game) {
-		const auto l_door_flag_table{ make_door_flag_table(p_game) };
-
+	klib::Asm6502 make_PermaDoors(const fe::Game* p_game) {
 		klib::Asm6502 code;
+		const auto door_flag_table{ make_door_flag_table(p_game) };
 
-		append_PermaDoors_LookupTable(code, l_door_flag_table);
+		append_PermaDoors_LookupTable(code, door_flag_table);
 		append_PermaDoors_TableWalker(code);
 		append_PermaDoors_BitmaskTable(code);
 		append_PermaDoors_CheckFlag(code);
 		append_PermaDoors_SetFlag(code);
 		append_PermaDoors_Main(code);
+
+		return code;
+	}
+
+	std::pair<word, word> install_PermaDoors_FreeBankInstall(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+		const fe::Game* p_game) {
+		auto code{ make_PermaDoors(p_game) };
 
 		const word main_entry_addr{ code.label_addr("@main", cpu_addr) };
 		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
@@ -243,10 +248,64 @@ namespace {
 		return std::make_pair(main_entry_addr, cpu_addr);
 	}
 
+	klib::Asm6502 make_PermaDoors_Trampolines(word main_entry_addr, const fe::Config& p_config,
+		byte bank, bool sram) {
+		klib::Asm6502 code;
+
+		code.label("@set_flag_trampoline");
+		code.lda_imm(0x01);
+		code.sta_zp(VALUE_IO);
+		code.jsr("@shared_logic");
+		code.lda_imm(0xff);
+		code.sta_abs(fh::RAM::SelectedItem);
+		code.rts();
+
+		code.label("@check_flag_trampoline");
+		code.lda_imm(0x00);
+		code.sta_zp(VALUE_IO);
+		code.jsr("@shared_logic");
+		code.lda_zp(VALUE_IO);
+		code.beq("@locked");
+		// door was unlocked in the past
+		code.lda_imm(0x00);
+		code.sta_abs(fh::RAM::DoorKeyRequirement);
+		code.rts();
+
+		code.label("@locked");
+		// door still locked, let vanilla handle it
+		code.lda_abs(fh::RAM::DoorKeyRequirement);
+		code.rts();
+
+		code.label("@shared_logic");
+		if (bank == 15 || sram) {
+			code.jmp(main_entry_addr);
+		}
+		else {
+			code.lda_abs(fh::RAM::CurrentROMBank);
+			code.pha();
+
+			code.ldx_imm(bank);
+			code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+			code.jsr(main_entry_addr);
+
+			code.pla();
+			code.tax();
+			code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+			code.rts();
+		}
+
+		return code;
+	}
+
 }
 
 word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
+	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) {
+	const bool sram{ p_hack.bool_or("sram", false) };
+
+	if (sram && (p_hack.has_param("bank") || p_hack.has_param("addr")))
+		throw std::runtime_error("PermaDoors cannot specify bank/addr with sram=true");
+
 	const byte bank{ p_hack.byte_or("bank", 15) };
 	const word install_addr{
 		bank == 15 ?
@@ -256,63 +315,42 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
 	};
 
-	const auto [main_entry_addr, next_addr] { install_PermaDoors_FreeBankInstall(p_rom, bank, install_addr, p_game) };
+	word main_entry_addr{};
 
-	if (bank == 15)
-		cpu_addr = next_addr;
-
-	klib::Asm6502 code;
-
-	code.label("@set_flag_trampoline");
-	code.lda_imm(0x01);
-	code.sta_zp(VALUE_IO);
-	code.jsr("@shared_logic");
-	code.lda_imm(0xff);
-	code.sta_abs(RAM::SelectedItem);
-	code.rts();
-
-	code.label("@check_flag_trampoline");
-	code.lda_imm(0x00);
-	code.sta_zp(VALUE_IO);
-	code.jsr("@shared_logic");
-	code.lda_zp(VALUE_IO);
-	code.beq("@locked");
-	// door was unlocked in the past
-	code.lda_imm(0x00);
-	code.sta_abs(RAM::DoorKeyRequirement);
-	code.rts();
-
-	code.label("@locked");
-	// door still locked, let vanilla handle it
-	code.lda_abs(RAM::DoorKeyRequirement);
-	code.rts();
-
-	code.label("@shared_logic");
-	if (bank == 15) {
-		code.jmp(main_entry_addr);
+	if (sram) {
+		auto code{ make_PermaDoors(p_game) };
+		const std::size_t main_offset{ code.label_position("@main") };
+		const word runtime_addr{ install_sram_hack(p_rom, code) };
+		main_entry_addr = static_cast<word>(runtime_addr + main_offset);
 	}
 	else {
-		code.lda_abs(fh::RAM::CurrentROMBank);
-		code.pha();
+		const auto [entry_addr, next_addr] { install_PermaDoors_FreeBankInstall(p_rom, bank, install_addr, p_game) };
 
-		code.ldx_imm(bank);
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-		code.jsr(main_entry_addr);
-
-		code.pla();
-		code.tax();
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-		code.rts();
+		main_entry_addr = entry_addr;
+		if (bank == 15)
+			cpu_addr = next_addr;
 	}
 
-	const word set_flag_trampoline{
-		static_cast<word>(cpu_addr + code.label_position("@set_flag_trampoline"))
-	};
-	const word check_flag_trampoline{
-	static_cast<word>(cpu_addr + code.label_position("@check_flag_trampoline"))
-	};
+	auto code{ make_PermaDoors_Trampolines(main_entry_addr, p_config, bank, sram) };
 
-	const word result{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+	word set_flag_trampoline{};
+	word check_flag_trampoline{};
+	word result{ cpu_addr };
+
+	if (sram) {
+		const word runtime_addr{ sram_state->sram_cursor };
+
+		set_flag_trampoline = code.label_addr("@set_flag_trampoline", runtime_addr);
+		check_flag_trampoline = code.label_addr("@check_flag_trampoline", runtime_addr);
+
+		install_sram_hack(p_rom, code);
+	}
+	else {
+		set_flag_trampoline = code.label_addr("@set_flag_trampoline", cpu_addr);
+		check_flag_trampoline = code.label_addr("@check_flag_trampoline", cpu_addr);
+
+		result = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	}
 
 	// install hooks
 	code.jsr(check_flag_trampoline);
