@@ -845,13 +845,15 @@ void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
 }
 
 word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
 	if (!p_hack.has_param("data"))
 		throw std::runtime_error("General Hack ItemScripts is missing required element 'data'");
 
 	const auto data{ p_hack.split_twice_bytes("data", 2) };
 	if (data.size() > 32)
 		throw std::runtime_error("Invalid item IDs");
+
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	std::map<byte, byte> item_to_script, item_to_script_extended;
 	for (const auto& data_item : data) {
@@ -864,10 +866,6 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	klib::Asm6502 code;
 
 	if (!item_to_script_extended.empty()) {
-		// hook
-		code.jsr(cpu_addr);
-		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_LDA_Item);
-
 		// extended items routine
 		code.lda_abs(RAM::SelectedItem);
 		for (const auto& [item_id, script_id] : item_to_script_extended) {
@@ -890,10 +888,9 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 		code.rts();
 	}
 
+	std::map<byte, std::size_t> item_offsets;
 	for (const auto& [item_id, script_id] : item_to_script) {
-		// patch UseItem_JumpTable to this stub - 1
-		const word l_tmp_addr{ static_cast<word>(cpu_addr + code.size()) };
-		klib::Asm6502::apply_word(p_rom, l_tmp_addr - 1, 15, ROM::UseItem_JumpTable + 2 * item_id);
+		item_offsets[item_id] = code.size();
 
 		code.lda_imm(script_id);
 		code.jmp("@use_item_script");
@@ -905,7 +902,25 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	code.dw(ROM::IScripts_Begin - 1);
 	code.jmp(ROM::Player_ClearSelectedItem);
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	word install_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+	if (sram)
+		install_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+
+	if (!item_to_script_extended.empty()) {
+		code.jsr(install_addr);
+		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckUseCurrentItem_LDA_Item);
+	}
+
+	for (const auto& [item_id, offset] : item_offsets) {
+		const word item_addr{ static_cast<word>(install_addr + offset) };
+
+		klib::Asm6502::apply_word(p_rom, item_addr - 1, 15, ROM::UseItem_JumpTable + 2 * item_id);
+	}
+
+	return next_cpu_addr;
 }
 
 namespace {

@@ -133,7 +133,7 @@ namespace {
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
-		{ fh::GeneralHackLib::ItemScripts, { "data" }},
+		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr" }},
 		{ fh::GeneralHackLib::OintmentFix, { "sugata" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr" }},
