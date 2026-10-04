@@ -90,10 +90,17 @@ namespace fh {
 		word sram_cursor;
 	};
 
+	struct GeneralHackUsage {
+		std::size_t bank_used{};
+		std::optional<std::size_t> sram_used{};
+		std::optional<std::size_t> sram_available{};
+	};
+
 	class HackManager {
 		// sram to code installer
 		std::optional<SramState> sram_state;
 		word install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502& p_code);
+		word sram_hack_addr(void) const;
 
 		// script action library
 		word apply_SetFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -353,7 +360,7 @@ namespace fh {
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
+			const fh::GeneralHack& p_hack);
 		word install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_ConditionalScript(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -468,7 +475,7 @@ namespace fh {
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 			std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const;
-		std::size_t install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
+		fh::GeneralHackUsage install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 			const fe::Game* p_game = nullptr);
 		static void install_hack_surom_expansion(const fe::Config& p_config, std::vector<byte>& p_rom);

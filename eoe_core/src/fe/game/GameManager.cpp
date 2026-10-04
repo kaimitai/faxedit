@@ -887,13 +887,18 @@ std::vector<byte> fe::game::patch_rom(
 
 			const auto [free_start, free_end] = general_hack_ranges.at(bank);
 
-			const std::size_t hack_size{ hack_mgr.install_general_hacks(p_config, x_rom, bank,
+			const auto hack_report{ hack_mgr.install_general_hacks(p_config, x_rom, bank,
 				free_start, free_end, bank_hacks, &p_game) };
 
 			send_message(p_message, { std::format("Installed general hacks in bank {} ({}/{} bytes)",
-					bank, hack_size, free_end - free_start) });
+					bank, hack_report.bank_used, free_end - free_start) });
 
-			l_dyndata_bytes += hack_size;
+			if (hack_report.sram_available && hack_report.sram_used)
+				send_message(p_message,
+					{ std::format("Installed SRAM-backed general hacks ({}/{} bytes)",
+					hack_report.sram_used.value(), hack_report.sram_available.value()) });
+
+			l_dyndata_bytes += hack_report.bank_used;
 		}
 	}
 

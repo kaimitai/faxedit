@@ -194,7 +194,8 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 // this hack will check whether the player has the item in inventory (or equipped)
 // param: type=both,wing_boots,mattock
 word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
+	const bool sram{ p_hack.bool_or("sram", false) };
 	const std::string type{ p_hack.string_or("type", "both") };
 	const bool hack_mattock{ type == "mattock" || type == "both" };
 	const bool hack_wing_boots{ type == "wing_boots" || type == "both" };
@@ -202,6 +203,8 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 	if (!hack_mattock && !hack_wing_boots)
 		throw std::runtime_error(std::format("Invalid QuestFlagItemDrops hack type: {}", type));
 
+	const word install_addr{ sram ? sram_hack_addr() : cpu_addr };
+	std::optional<word> check_mattock_addr, check_wing_boots_addr;
 	klib::Asm6502 code;
 	/*
 	A = item ID
@@ -235,25 +238,32 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 	code.rts();
 
 	// Item-specific entry points.
-	word check_mattock{ 0 };
 	if (hack_mattock) {
-		check_mattock = static_cast<word>(cpu_addr + code.size());
+		code.label("@check_mattock");
 		code.lda_imm(0x09);
 		code.bne("@check_has_item");
+
+		check_mattock_addr = code.label_addr("@check_mattock", install_addr);
 	}
-	word check_wing_boots{ 0 };
 	if (hack_wing_boots) {
-		check_wing_boots = static_cast<word>(cpu_addr + code.size());
+		code.label("@check_wing_boots");
 		code.lda_imm(0x0f);
 		code.bne("@check_has_item");
+
+		check_wing_boots_addr = code.label_addr("@check_wing_boots", install_addr);
 	}
 
-	// install the routine in bank 14
-	const word result{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr) };
+	word result{ cpu_addr };
+
+	// install the routine
+	if (sram)
+		install_sram_hack(p_rom, code);
+	else
+		result = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, install_addr);
 
 	// replace vanilla quest-flag checks with inventory checks.
-	if (hack_mattock) {
-		code.jsr(check_mattock);
+	if (check_mattock_addr) {
+		code.jsr(check_mattock_addr.value());
 		code.nop(2);
 		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests);
 
@@ -265,8 +275,8 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 		code.nop(8);
 		code.apply_hack_and_clear(p_rom, 15, ROM::Player_Spawn_LDA_Quests);
 	}
-	if (hack_wing_boots) {
-		code.jsr(check_wing_boots);
+	if (check_wing_boots_addr) {
+		code.jsr(check_wing_boots_addr.value());
 		code.nop(2);
 		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_WingBootsDroppedByZorugeriru_LDA_Quests);
 
@@ -1161,11 +1171,11 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 }
 
 // orchestrator for per-bank hack injection
-std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
+fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 	std::size_t p_cpu_addr_start, std::size_t p_cpu_addr_end, const std::vector<GeneralHack>& p_hacks,
 	const fe::Game* p_game) {
 	if (p_hacks.empty())
-		return 0;
+		return {};
 
 	bool enemy_hud{ false };
 	for (const auto& hack : p_hacks) {
@@ -1440,7 +1450,14 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			throw std::runtime_error(std::format("Hack overflow in bank ${:02x}", p_bank));
 	}
 
+	GeneralHackUsage usage{
+		.bank_used = 0
+	};
+
 	if (p_bank == 15 && sram_state.has_value() && sram_state->sram_begin != sram_state->sram_cursor) {
+		usage.sram_used = static_cast<std::size_t>(sram_state->sram_cursor - sram_state->sram_begin);
+		usage.sram_available = static_cast<std::size_t>(0x8000 - sram_state->sram_begin);
+
 		const word sram_init_addr{ cpu_addr };
 
 		cpu_addr = install_SRAM_Init(p_config, patched_rom, sram_init_addr,
@@ -1448,6 +1465,8 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 			static_cast<word>(sram_state->sram_cursor - sram_state->sram_begin));
 	}
 
+	usage.bank_used = static_cast<std::size_t>(cpu_addr) - p_cpu_addr_start;
+
 	p_rom = std::move(patched_rom);
-	return static_cast<std::size_t>(cpu_addr) - p_cpu_addr_start;
+	return usage;
 }

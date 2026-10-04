@@ -49,6 +49,12 @@ word fh::HackManager::install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502&
 	return runtime_addr;
 }
 
+word fh::HackManager::sram_hack_addr() const {
+	if (!sram_state)
+		throw std::runtime_error("SRAM state not initialized");
+	return sram_state->sram_cursor;
+}
+
 // shared helpers for script library hacks
 
 // reads the next script operand as a flag number, stores the byte number (relative to start of flags block)
