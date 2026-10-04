@@ -355,7 +355,7 @@ namespace fh {
 		word install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game);
 		word install_FlagDoorRequirements(const fe::Config& p_config, std::vector<byte>& p_rom,
-			word cpu_addr, const fh::GeneralHack& p_hack) const;
+			word cpu_addr, const fh::GeneralHack& p_hack);
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;

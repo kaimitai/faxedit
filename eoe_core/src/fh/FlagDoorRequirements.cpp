@@ -10,21 +10,17 @@ namespace {
 	constexpr byte ValueIO{ fh::RAM::ZP_e5 };
 	constexpr byte TmpScript{ fh::RAM::ZP_e6 };
 
-	word install_FlagDoorRequirements_LookupTable(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+	void append_FlagDoorRequirements_LookupTable(klib::Asm6502& code,
 		const std::vector<std::pair<byte, std::optional<byte>>>& p_requirements) {
-		klib::Asm6502 code;
-
+		code.label("@lookup_table");
 		for (const auto& [flag, script] : p_requirements) {
 			code.db(flag);
 			code.db(script.value_or(0xff));
 		}
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	word install_FlagDoorRequirements_TableLookup(std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		word p_table_addr) {
-		klib::Asm6502 code;
+	void append_FlagDoorRequirements_TableLookup(klib::Asm6502& code) {
+		code.label("@table_lookup");
 
 		// A = door requirement (9-15)
 		// convert requirement to 2-byte table offset: (requirement - 9) * 2
@@ -33,18 +29,16 @@ namespace {
 		code.asl_a();
 		code.tax();
 
-		code.lda_abs_x(p_table_addr + 1);
+		code.lda_abs_x("@lookup_table", 1);
 		code.sta_zp(TmpScript);
 
-		code.lda_abs_x(p_table_addr);
+		code.lda_abs_x("@lookup_table");
 
 		code.rts();
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	word install_FlagDoorRequirements_FlagChecker(std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
-		klib::Asm6502 code;
+	void append_FlagDoorRequirements_FlagChecker(klib::Asm6502& code) {
+		code.label("@flag_check");
 
 		// A = extended flag number
 		// returns A = 0 if clear, non-zero if set
@@ -65,64 +59,63 @@ namespace {
 		code.label("@bitmask_table");
 		code.db(0x01); code.db(0x02); code.db(0x04); code.db(0x08);
 		code.db(0x10); code.db(0x20); code.db(0x40); code.db(0x80);
-
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 	}
 
-	std::pair<word, word> install_FlagDoorRequirements_FreeBankInstall(
-		std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-		const std::vector<std::pair<byte, std::optional<byte>>>& p_requirements) {
-
-		const word lookup_table_addr{ cpu_addr };
-		cpu_addr = install_FlagDoorRequirements_LookupTable(
-			p_rom, p_bank, cpu_addr, p_requirements);
-
-		const word table_lookup_addr{ cpu_addr };
-		cpu_addr = install_FlagDoorRequirements_TableLookup(
-			p_rom, p_bank, cpu_addr, lookup_table_addr);
-
-		const word flag_check_addr{ cpu_addr };
-		cpu_addr = install_FlagDoorRequirements_FlagChecker(
-			p_rom, p_bank, cpu_addr);
-
-		// entry point for requirement lookup and flag check
-		const word main_entry_addr{ cpu_addr };
-
+	klib::Asm6502 build_FlagDoorRequirements(const std::vector<std::pair<byte, std::optional<byte>>>& p_requirements) {
 		klib::Asm6502 code;
-		code.jsr(table_lookup_addr);
-		code.jsr(flag_check_addr);
+
+		append_FlagDoorRequirements_LookupTable(code, p_requirements);
+		append_FlagDoorRequirements_TableLookup(code);
+		append_FlagDoorRequirements_FlagChecker(code);
+
+		code.label("@main");
+		code.jsr("@table_lookup");
+		code.jsr("@flag_check");
 		code.rts();
 
-		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(
-			p_rom, p_bank, cpu_addr);
-
-		return { main_entry_addr, cpu_addr };
+		return code;
 	}
-
 }
 
 word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
+	const bool sram{ p_hack.bool_or("sram", false) };
+
+	if (sram && (p_hack.has_param("bank") || p_hack.has_param("addr")))
+		throw std::runtime_error("FlagDoorRequirements: sram cannot be combined with bank or addr");
+
 	const byte bank{ p_hack.byte_or("bank", 15) };
-	const word install_addr{
-		bank == 15 ?
-			cpu_addr :
-			p_hack.has_param("addr") ?
-				p_hack.get_word("addr") :
-				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
-	};
+	word install_addr{ cpu_addr };
+
+	if (sram) {
+		install_addr = sram_hack_addr();
+	}
+	else if (bank != 15) {
+		install_addr = p_hack.has_param("addr") ? p_hack.get_word("addr") :
+			fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16);
+	}
 
 	const auto req_data{ p_hack.split_byte_optional_byte("data") };
 	if (req_data.empty() || req_data.size() > 7)
 		throw std::runtime_error("FlagDoorRequirements requires data entry count 1-7");
 
-	const auto [main_entry_addr, next_addr] {
-		install_FlagDoorRequirements_FreeBankInstall(p_rom, bank, install_addr, req_data) };
+	auto free_bank_code{ build_FlagDoorRequirements(req_data) };
 
-	if (bank == 15)
-		cpu_addr = next_addr;
+	const word main_entry_addr{ free_bank_code.label_addr("@main", install_addr) };
+	if (sram) {
+		install_sram_hack(p_rom, free_bank_code);
+	}
+	else {
+		const word next_addr{
+			free_bank_code.apply_hack_and_clear_get_next_cpu_addr(
+				p_rom, bank, install_addr)
+		};
 
-	const word handler_addr{ cpu_addr };
+		if (bank == 15)
+			cpu_addr = next_addr;
+	}
+
+	const word handler_addr{ sram ? sram_hack_addr() : cpu_addr };
 
 	klib::Asm6502 code;
 
@@ -142,7 +135,7 @@ word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, s
 
 	code.label("@extended");
 
-	if (bank == 15) {
+	if (bank == 15 || sram) {
 		code.jsr(main_entry_addr);
 	}
 	else {
@@ -182,6 +175,11 @@ word fh::HackManager::install_FlagDoorRequirements(const fe::Config& p_config, s
 
 	code.label("@return");
 	code.rts();
+
+	if (sram) {
+		install_sram_hack(p_rom, code);
+		return cpu_addr;
+	}
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, handler_addr);
 }
