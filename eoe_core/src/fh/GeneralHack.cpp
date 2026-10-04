@@ -129,7 +129,7 @@ namespace {
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type", "sram" }},
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies" } },
-		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors"}},
+		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors", "sram" }},
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},

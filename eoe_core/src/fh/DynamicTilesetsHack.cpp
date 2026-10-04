@@ -3,6 +3,7 @@
 #include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include <format>
+#include <stdexcept>
 
 namespace {
 
@@ -190,17 +191,25 @@ namespace {
 // makes a trampoline for calls to the tileset loader, with data lookup
 word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-	const fh::GeneralHack& p_hack, const fe::Game* p_game) const {
+	const fh::GeneralHack& p_hack, const fe::Game* p_game) {
+	const bool sram{ p_hack.bool_or("sram", false) };
+
+	if (sram && (p_hack.has_param("bank") || p_hack.has_param("addr")))
+		throw std::runtime_error("DynamicTilesets: sram cannot be combined with bank or addr");
 
 	const std::size_t world_count{ p_game ? p_game->m_chunks.size() : 8 };
 	const byte loader_bank{ p_hack.byte_or("bank", p_bank) };
 	const bool local_loader{ loader_bank == p_bank };
-	const word loader_addr{
-	local_loader ?
-		cpu_addr : p_hack.has_param("addr") ?
-			p_hack.get_word("addr") :
-			fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, loader_bank, 0xff, 16)
-	};
+
+	word loader_addr{ cpu_addr };
+
+	if (sram) {
+		loader_addr = sram_hack_addr();
+	}
+	else if (!local_loader) {
+		loader_addr = p_hack.has_param("addr") ? p_hack.get_word("addr") :
+			fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, loader_bank, 0xff, 16);
+	}
 
 	const bool opt_enter_building{ p_hack.bool_or("enter_building", false) };
 	const bool opt_exit_building{ p_hack.bool_or("exit_building", true) };
@@ -217,26 +226,40 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 		assigns[entry[0]][entry[1]] = entry[2];
 
 	const word MMC1_UpdateROMBank{ cfg_word(p_config, c::ID_ROM_MMC1_UPDATEROMBANK) };
-	const word CurrentROMBank{ RAM::CurrentROMBank };
 
 	auto code{ build_DynamicTilesets_Loader(assigns, world_count) };
 	const word loader_entry_addr{ code.label_addr("@loader", loader_addr) };
 
-	if (local_loader)
+	if (sram) {
+		install_sram_hack(p_rom, code);
+	}
+	else if (local_loader) {
 		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, loader_bank, loader_entry_addr);
-	else
+	}
+	else {
 		code.apply_hack_and_clear(p_rom, loader_bank, loader_entry_addr);
+	}
 
-	append_DynamicTilesets_Lookup(code, local_loader, loader_bank, loader_entry_addr, MMC1_UpdateROMBank);
-	const word lookup_cpu_addr{ code.label_addr("@lookup", cpu_addr) };
+	append_DynamicTilesets_Lookup(code, local_loader || sram, loader_bank, loader_entry_addr, MMC1_UpdateROMBank);
+	const word lookup_cpu_addr{ code.label_addr("@lookup", sram ? sram_hack_addr() : cpu_addr) };
 
-	cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	if (sram) {
+		install_sram_hack(p_rom, code);
+	}
+	else {
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+	}
 
 	if (opt_otherworld || opt_stage_doors || opt_start_screen) {
 		append_DynamicTilesets_AreaLoadTrampoline(code, lookup_cpu_addr);
 
-		const word trampoline_addr{ code.label_addr("@area_load_trampoline", cpu_addr) };
-		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+		const word trampoline_addr{ code.label_addr("@area_load_trampoline", sram ? sram_hack_addr() : cpu_addr) };
+		if (sram) {
+			install_sram_hack(p_rom, code);
+		}
+		else {
+			cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+		}
 
 		if (opt_otherworld) {
 			code.jsr(trampoline_addr);
@@ -255,8 +278,13 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	if (opt_sameworld) {
 		append_DynamicTilesets_SameWorldTrampoline(code, lookup_cpu_addr);
 
-		const word trampoline_addr{ code.label_addr("@sameworld_trampoline", cpu_addr) };
-		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+		const word trampoline_addr{ code.label_addr("@sameworld_trampoline", sram ? sram_hack_addr() : cpu_addr) };
+		if (sram) {
+			install_sram_hack(p_rom, code);
+		}
+		else {
+			cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+		}
 
 		code.jsr(trampoline_addr);
 		code.apply_hack_and_clear(p_rom, 15, ROM::Game_SetupEnterScreen_JSR_Screen_Load);
@@ -265,8 +293,13 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	if (opt_exit_building) {
 		append_DynamicTilesets_ExitBuildingTrampoline(code, lookup_cpu_addr);
 
-		const word trampoline_addr{ code.label_addr("@exit_building_trampoline", cpu_addr) };
-		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+		const word trampoline_addr{ code.label_addr("@exit_building_trampoline", sram ? sram_hack_addr() : cpu_addr) };
+		if (sram) {
+			install_sram_hack(p_rom, code);
+		}
+		else {
+			cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+		}
 
 		code.jsr(trampoline_addr);
 		code.apply_hack_and_clear(p_rom, 15, ROM::Game_ExitBuilding_JSR_Area_LoadTiles);
@@ -275,8 +308,13 @@ word fh::HackManager::install_DynamicTilesets(const fe::Config& p_config,
 	if (opt_enter_building) {
 		append_DynamicTilesets_EnterBuildingTrampoline(code, lookup_cpu_addr);
 
-		const word trampoline_addr{ code.label_addr("@enter_building_trampoline", cpu_addr) };
-		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
+		const word trampoline_addr{ code.label_addr("@enter_building_trampoline", sram ? sram_hack_addr() : cpu_addr) };
+		if (sram) {
+			install_sram_hack(p_rom, code);
+		}
+		else {
+			cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, trampoline_addr);
+		}
 
 		code.jsr(trampoline_addr);
 		code.apply_hack_and_clear(p_rom, 15, ROM::Game_EnterBuilding_JSR_Area_LoadTiles);
