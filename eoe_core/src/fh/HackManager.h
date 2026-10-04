@@ -327,7 +327,8 @@ namespace fh {
 
 		// general hack library implementations
 		// bank 15 general hacks
-		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr);
+		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+			const fh::GeneralHack& p_hack);
 		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 			bool p_stage_door_hack_installed = true) const;
 		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,

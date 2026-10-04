@@ -18,70 +18,53 @@
 namespace {
 
 	// helper which installs the bank 15 routine which copies code from backing bank to SRAM
-	// TODO: Make this smaller
-	word install_SRAM_Init(const fe::Config& p_config, std::vector<byte>& p_rom,
-		word cpu_addr, byte p_rom_bank, word p_rom_begin,
-		word p_sram_begin, std::size_t p_size) {
-		constexpr byte SRC_LO{ fh::RAM::ZP_e2 };
-		constexpr byte SRC_HI{ fh::RAM::ZP_e3 };
-		constexpr byte DST_LO{ fh::RAM::ZP_e4 };
-		constexpr byte DST_HI{ fh::RAM::ZP_e5 };
-		constexpr byte LEN_LO{ fh::RAM::ZP_e6 };
-		constexpr byte LEN_HI{ fh::RAM::ZP_e7 };
-
+	word install_SRAM_Init(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+		byte p_rom_bank, word p_rom_begin, word p_sram_begin, std::size_t p_size) {
 		klib::Asm6502 code;
 
-		// run once during game initialization, after MMC/bank initialization
+		// hook: run once during game initialization, after MMC/bank initialization
 		code.jsr(cpu_addr);
 		code.apply_hack_and_clear(p_rom, 15, fh::ROM::Game_Init_JSR_Game_InitScreenAndMusic);
 
+		// new routine
 		code.lda_abs(fh::RAM::CurrentROMBank);
 		code.pha();
 
 		code.ldx_imm(p_rom_bank);
 		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
 
-		code.lda_imm(static_cast<byte>(p_rom_begin & 0xff));
-		code.sta_zp(SRC_LO);
-		code.lda_imm(static_cast<byte>(p_rom_begin >> 8));
-		code.sta_zp(SRC_HI);
+		const std::size_t full_blocks{ p_size / 0x100 };
+		const byte remainder{ static_cast<byte>(p_size % 0x100) };
 
-		code.lda_imm(static_cast<byte>(p_sram_begin & 0xff));
-		code.sta_zp(DST_LO);
-		code.lda_imm(static_cast<byte>(p_sram_begin >> 8));
-		code.sta_zp(DST_HI);
+		// copy all complete 256-byte blocks in one loop
+		if (full_blocks != 0) {
+			code.ldx_imm(0x00);
 
-		code.lda_imm(static_cast<byte>(p_size & 0xff));
-		code.sta_zp(LEN_LO);
-		code.lda_imm(static_cast<byte>((p_size >> 8) & 0xff));
-		code.sta_zp(LEN_HI);
+			code.label("@copy_full");
+			for (std::size_t i{ 0 }; i < full_blocks; ++i) {
+				const word offset{ static_cast<word>(i * 0x100) };
 
-		code.ldy_imm(0x00);
+				code.lda_abs_x(static_cast<word>(p_rom_begin + offset));
+				code.sta_abs_x(static_cast<word>(p_sram_begin + offset));
+			}
 
-		code.label("@copy");
-		code.lda_ind_y(SRC_LO);
-		code.sta_ind_y(DST_LO);
+			code.inx();
+			code.bne("@copy_full");
+		}
 
-		code.inc_zp(SRC_LO);
-		code.bne("@src_done");
-		code.inc_zp(SRC_HI);
-		code.label("@src_done");
+		// copy the remaining bytes
+		if (remainder != 0) {
+			const word offset{ static_cast<word>(full_blocks * 0x100) };
 
-		code.inc_zp(DST_LO);
-		code.bne("@dst_done");
-		code.inc_zp(DST_HI);
-		code.label("@dst_done");
+			code.ldx_imm(0x00);
 
-		code.lda_zp(LEN_LO);
-		code.bne("@dec_lo");
-		code.dec_zp(LEN_HI);
-
-		code.label("@dec_lo");
-		code.dec_zp(LEN_LO);
-
-		code.lda_zp(LEN_LO);
-		code.ora_zp(LEN_HI);
-		code.bne("@copy");
+			code.label("@copy_remainder");
+			code.lda_abs_x(static_cast<word>(p_rom_begin + offset));
+			code.sta_abs_x(static_cast<word>(p_sram_begin + offset));
+			code.inx();
+			code.cpx_imm(remainder);
+			code.bne("@copy_remainder");
+		}
 
 		code.pla();
 		code.tax();
@@ -94,9 +77,9 @@ namespace {
 }
 
 // kill switch; Pressing Select while the game is paused kills the player when the game is unpaused
-word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr) {
-	// TODO: Make configurable
-	const bool sram_install{ false };
+word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
+	const fh::GeneralHack& p_hack) {
+	const bool sram_install{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502 code;
 
@@ -1240,7 +1223,7 @@ std::size_t fh::HackManager::install_general_hacks(const fe::Config& p_config, s
 		const word previous_cpu_addr{ cpu_addr };
 		switch (hack.get_type()) {
 		case fh::GeneralHackLib::KillSwitch:
-			cpu_addr = install_KillSwitch(p_config, patched_rom, p_bank, cpu_addr);
+			cpu_addr = install_KillSwitch(p_config, patched_rom, p_bank, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, patched_rom, p_bank, cpu_addr,
