@@ -445,12 +445,13 @@ word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vecto
 // supports using items inside buildings, disregarding player state flags
 // and selling items to shops which do not sell those items for a given price
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const bool buildings{ p_hack.bool_or("buildings", true) };
 	const bool wep_indoors{ p_hack.bool_or("wep_indoors", false) };
 	const bool state{ p_hack.bool_or("state", true) };
 	const bool selling{ p_hack.bool_or("selling", true) };
 	const word price{ p_hack.word_or("price", 100) };
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502 code;
 
@@ -472,10 +473,6 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 	if (!selling)
 		return cpu_addr;
 	else {
-		// install hook
-		code.jmp(cpu_addr);
-		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY));
-
 		// preserve the original item ID in X when no sell-table entry is found
 		code.nop();
 		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_FINDSELLMENUENTRY_TAX));
@@ -496,7 +493,19 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 		code.lda_imm(price / 256);
 		code.jmp(cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_STA_COSTHI));
 
-		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+		word hack_addr{ cpu_addr };
+		word next_cpu_addr{ cpu_addr };
+
+		if (sram)
+			hack_addr = install_sram_hack(p_rom, code);
+		else
+			next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+
+		// hook
+		code.jmp(hack_addr);
+		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY));
+
+		return next_cpu_addr;
 	}
 }
 
