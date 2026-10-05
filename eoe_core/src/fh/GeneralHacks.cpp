@@ -20,7 +20,7 @@ namespace {
 	// helper which installs the bank 15 routine which copies code from backing bank to SRAM
 	word install_SRAM_Init(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 		byte p_rom_bank, word p_rom_begin, word p_sram_begin, std::size_t p_size) {
-		const word copy_routine_addr{ static_cast<word>(p_sram_begin + p_size) };
+		const word copy_routine_addr{ static_cast<word>(p_rom_begin + p_size) };
 
 		klib::Asm6502 code;
 
