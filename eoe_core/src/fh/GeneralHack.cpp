@@ -77,7 +77,7 @@ namespace {
 	const std::map<fh::GeneralHackLib, std::set<std::string>> GENERAL_HACK_PARAMS{
 		{ fh::GeneralHackLib::FlexibleItems, { "buildings", "price", "selling", "state", "wep_indoors", "sram" }},
 		{ fh::GeneralHackLib::KillSwitch, { "sram" }},
-		{ fh::GeneralHackLib::SameWorldTransPal2Mus, {} },
+		{ fh::GeneralHackLib::SameWorldTransPal2Mus, { "sram" }},
 		{ fh::GeneralHackLib::FogRules, { "rules" } },
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
 		{ fh::GeneralHackLib::TextSpeed, { "mask" }},

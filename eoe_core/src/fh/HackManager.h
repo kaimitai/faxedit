@@ -337,7 +337,7 @@ namespace fh {
 		word install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 			const fh::GeneralHack& p_hack);
 		word install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
-			bool p_stage_door_hack_installed = true) const;
+			const fh::GeneralHack& p_hack, bool p_stage_door_hack_installed = true);
 		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_DynamicTilesets(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,

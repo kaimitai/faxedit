@@ -111,7 +111,7 @@ word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector
 }
 
 word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom,
-	byte p_bank, word cpu_addr, bool p_stage_door_hack_installed) const {
+	byte p_bank, word cpu_addr, const fh::GeneralHack& p_hack, bool p_stage_door_hack_installed) {
 	klib::Asm6502 code;
 
 	// if the stage door hack is not installed, this becomes a static patch
@@ -121,6 +121,8 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 		code.apply_hack_and_clear(p_rom, p_bank, ROM::SwTransJmpSetupEnterScreen);
 		return cpu_addr;
 	}
+
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	// constants from the rom
 	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
@@ -150,11 +152,16 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 	code.label("@enterScreen");
 	code.jmp(ROM::Game_SetupEnterScreen);
 
-	// insert the new routine in rom
-	const auto next_cpu_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr) };
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	if (sram)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, p_bank, cpu_addr);
 
 	// from sw-transitions, jump into our new routine rather than Game_SetupEnterScreen
-	code.jmp(cpu_addr);
+	code.jmp(hack_addr);
 	code.apply_hack_and_clear(p_rom, p_bank, ROM::SwTransJmpSetupEnterScreen);
 
 	return next_cpu_addr;
@@ -1028,7 +1035,7 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 			break;
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, patched_rom, p_bank, cpu_addr,
-				p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
+				hack, p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
 			break;
 		case fh::GeneralHackLib::FogRules:
 			cpu_addr = install_FogRules(p_config, patched_rom, cpu_addr, hack);
