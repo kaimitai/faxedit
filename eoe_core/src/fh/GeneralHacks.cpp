@@ -20,19 +20,11 @@ namespace {
 	// helper which installs the bank 15 routine which copies code from backing bank to SRAM
 	word install_SRAM_Init(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 		byte p_rom_bank, word p_rom_begin, word p_sram_begin, std::size_t p_size) {
+		const word copy_routine_addr{ static_cast<word>(p_sram_begin + p_size) };
+
 		klib::Asm6502 code;
 
-		// hook: run once during game initialization, after MMC/bank initialization
-		code.jsr(cpu_addr);
-		code.apply_hack_and_clear(p_rom, 15, fh::ROM::Game_Init_JSR_Game_InitScreenAndMusic);
-
-		// new routine
-		code.lda_abs(fh::RAM::CurrentROMBank);
-		code.pha();
-
-		code.ldx_imm(p_rom_bank);
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
-
+		// new routine in the backing bank, following the actual code/data
 		const std::size_t full_blocks{ p_size / 0x100 };
 		const byte remainder{ static_cast<byte>(p_size % 0x100) };
 
@@ -66,9 +58,17 @@ namespace {
 			code.bne("@copy_remainder");
 		}
 
-		code.pla();
-		code.tax();
-		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_MMC1_UPDATEROMBANK));
+		code.rts();
+		code.apply_hack_and_clear(p_rom, p_rom_bank, copy_routine_addr);
+
+		// hook: run once during game initialization, after MMC/bank initialization
+		code.jsr(cpu_addr);
+		code.apply_hack_and_clear(p_rom, 15, fh::ROM::Game_Init_JSR_Game_InitScreenAndMusic);
+
+		// new bank 15 routine
+		code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_VANILLA_FAR_CALL));
+		code.db(p_rom_bank);
+		code.dw(copy_routine_addr - 1);
 		code.jmp(fh::ROM::Game_InitScreenAndMusic);
 
 		return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
