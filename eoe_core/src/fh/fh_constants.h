@@ -103,6 +103,7 @@ namespace fh {
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Screen_Load{ 0xdd46 };
+		constexpr word Game_SpawnInTemple_LDA_Palette{ 0xdd90 };
 		constexpr word Game_EnterBuilding_STA_ActiveWeapon{ 0xde08 };
 		constexpr word Game_EnterBuilding_JSR_Area_LoadTiles{ 0xde53 };
 		constexpr word Game_ExitBuilding_JSR_Area_LoadTiles{ 0xde92 };
@@ -273,6 +274,7 @@ namespace fh {
 		constexpr word World_DefaultMusic{ 0x03d1 };
 		constexpr word SavedScreen{ 0x03d6 };
 		constexpr word PortraitSavedPalette{ 0x03d3 };
+		constexpr word BuildingTileset{ 0x03d9 };
 		constexpr word DestBuildingScreen{ 0x03da };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };

@@ -17,6 +17,7 @@ namespace fh {
 		FlexibleItems, DynamicTilesets,
 		KillSwitch, SameWorldTransPal2Mus, FogRules, PoisonPickup, TextSpeed,
 		SRAM, BugFixes, ItemScripts, PermaDoors, OintmentFix, FlagDoorRequirements,
+		SpawnScreens,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		AtlasDevStatusWard,
