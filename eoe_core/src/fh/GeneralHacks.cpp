@@ -167,6 +167,59 @@ word fh::HackManager::install_SameWorldTransPal2Mus(const fe::Config& p_config, 
 	return next_cpu_addr;
 }
 
+word fh::HackManager::install_OtherWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) {
+	const bool sram{ p_hack.bool_or("sram", false) };
+
+	const auto pal_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_PALETTE_PTR) };
+	const auto mus_ptr{ p_config.pointer(fe::c::ID_PAL2MUS_MUSIC_PTR) };
+
+	const byte pal2mus_slot_count{ p_rom.at(p_config.constant(fe::c::ID_PAL2MUS_ENTRY_COUNT_OFFSET)) };
+	const word pal2mus_pal_table_addr{ klib::Asm6502::read_word(p_rom, pal_ptr.first) };
+	const word pal2mus_mus_table_addr{ klib::Asm6502::read_word(p_rom, mus_ptr.first) };
+
+	klib::Asm6502 code;
+
+	// reproduce the first part of Game_SetupNewArea
+	code.jsr(ROM::PPU_WaitUntilFlushed);
+	code.jsr(ROM::Game_EnterAreaHandler);
+
+	// apply pal2mus using the destination palette still in $65
+	code.ldx_imm(pal2mus_slot_count);
+	code.label("@paletteCheckLoop");
+	code.lda_zp(RAM::ZP_TransitionPalette);
+	code.cmp_abs_x(pal2mus_pal_table_addr);
+	code.beq("@setupArea");
+	code.dex();
+	code.bpl("@paletteCheckLoop");
+	code.bmi("@enterScreen");
+
+	code.label("@setupArea");
+	code.lda_abs_x(pal2mus_mus_table_addr);
+	code.cmp_abs(RAM::World_DefaultMusic);
+	code.beq("@enterScreen");
+	code.sta_zp(RAM::ZP_MusicCurrent);
+	code.sta_abs(RAM::World_DefaultMusic);
+
+	code.label("@enterScreen");
+
+	// resume Game_SetupNewArea after Game_EnterAreaHandler
+	code.jmp(ROM::Game_SetupNewArea_JSR_Screen_ResetForGamePlay);
+
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	if (sram)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+
+	code.jmp(hack_addr);
+	code.apply_hack_and_clear(p_rom, 15, ROM::OwTransJmpGameSetupNewArea);
+
+	return next_cpu_addr;
+}
+
 // dynamically added to bank 14, but with hooks and constants in bank 15
 word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) const {
@@ -1036,6 +1089,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::SameWorldTransPal2Mus:
 			cpu_addr = install_SameWorldTransPal2Mus(p_config, patched_rom, p_bank, cpu_addr,
 				hack, p_game && p_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30);
+			break;
+		case fh::GeneralHackLib::OtherWorldTransPal2Mus:
+			cpu_addr = install_OtherWorldTransPal2Mus(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FogRules:
 			cpu_addr = install_FogRules(p_config, patched_rom, cpu_addr, hack);

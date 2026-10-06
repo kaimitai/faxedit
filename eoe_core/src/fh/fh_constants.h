@@ -97,6 +97,7 @@ namespace fh {
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Player_HandleDeath_InitGoldXP{ 0xd99a };
 		constexpr word Player_HandleDeath_Respawn{ 0xd9a0 };
+		constexpr word Game_SetupNewArea_JSR_Screen_ResetForGamePlay{ 0xdad3 };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
 		constexpr word Player_Spawn{ 0xdb0a };
 		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
@@ -111,6 +112,7 @@ namespace fh {
 		constexpr word Start_Health{ 0xdeaf };
 		constexpr word Game_LoadFirstLevel_JSR_Area_LoadTiles{ 0xded7 };
 		constexpr word Game_LoadCurrentArea_JSR_Area_LoadTiles{ 0xdf1a };
+		constexpr word Game_EnterAreaHandler{ 0xdf64 };
 		constexpr word Game_EnterAreaHandler_JSR_Area_LoadTiles{ 0xdf8e };
 		constexpr word Game_LoadCurrentArea_LoadPalette{ 0xdf1d };
 		constexpr word Game_LoadCurrentArea_LDX_Stage{ 0xdf22 };
@@ -122,6 +124,7 @@ namespace fh {
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
+		constexpr word OwTransJmpGameSetupNewArea{ 0xea91 };
 		constexpr word Game_RunDoorRequirementHandler{ 0xeb2f };
 		constexpr word Game_RunDoorRequirementHandler_BEQ_RTS{ 0xeb32 };
 		constexpr word Game_RunDoorRequirementHandler_TAY{ 0xeb35 };
