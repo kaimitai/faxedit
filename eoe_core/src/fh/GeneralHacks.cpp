@@ -671,16 +671,12 @@ void fh::HackManager::install_PoisonPickup(const fe::Config& p_config, std::vect
 }
 
 word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const byte mask{ p_hack.byte_or("mask", 0x00) };
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502 code;
 	code.apply_byte(p_rom, mask, 15, cfg_word(p_config, c::ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST));
-
-	// hook
-	code.jsr(cpu_addr);
-	code.nop(2);
-	code.apply_hack_and_clear(p_rom, 15, cfg_word(p_config, c::ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01));
 
 	// new routine
 	code.lda_abs(RAM::TextBox_Timer);
@@ -690,7 +686,20 @@ word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<
 	code.sta_abs(RAM::TextBox_PlayTextSound);
 	code.rts();
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	if (sram)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+
+	// hook
+	code.jsr(hack_addr);
+	code.nop(2);
+	code.apply_hack_and_clear(p_rom, 15, cfg_word(p_config, c::ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01));
+
+	return next_cpu_addr;
 }
 
 void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {

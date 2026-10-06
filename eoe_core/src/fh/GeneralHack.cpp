@@ -82,7 +82,7 @@ namespace {
 		{ fh::GeneralHackLib::OtherWorldTransPal2Mus, { "sram" }},
 		{ fh::GeneralHackLib::FogRules, { "rules", "sram" }},
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
-		{ fh::GeneralHackLib::TextSpeed, { "mask" }},
+		{ fh::GeneralHackLib::TextSpeed, { "mask", "sram" }},
 		{ fh::GeneralHackLib::SpawnScreens, { "data", "sram" }},
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevSpriteSpeed, { "mode" } },

@@ -347,7 +347,7 @@ namespace fh {
 		void install_PoisonPickup(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::GeneralHack& p_hack) const;
 		word install_TextSpeed(const fe::Config& p_config, std::vector<byte>& p_rom,
-			word cpu_addr, const fh::GeneralHack& p_hack) const;
+			word cpu_addr, const fh::GeneralHack& p_hack);
 		void install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::GeneralHack& p_hack) const;
 		word get_SRAM_savefile_end_addr(void) const;
