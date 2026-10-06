@@ -80,7 +80,7 @@ namespace {
 		{ fh::GeneralHackLib::KillSwitch, { "sram" }},
 		{ fh::GeneralHackLib::SameWorldTransPal2Mus, { "sram" }},
 		{ fh::GeneralHackLib::OtherWorldTransPal2Mus, { "sram" }},
-		{ fh::GeneralHackLib::FogRules, { "rules" } },
+		{ fh::GeneralHackLib::FogRules, { "rules", "sram" }},
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
 		{ fh::GeneralHackLib::TextSpeed, { "mask" }},
 		{ fh::GeneralHackLib::SpawnScreens, { "data", "sram" }},

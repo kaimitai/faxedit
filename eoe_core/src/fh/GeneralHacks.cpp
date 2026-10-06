@@ -571,7 +571,7 @@ word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vec
 
 // routine which enables fogs for arbitrary (world, palette)-combinations
 word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	std::map<byte, std::set<std::optional<byte>>> rules;
 
 	const auto rules_raw{ p_hack.split_byte_optional_byte("rules") };
@@ -582,12 +582,9 @@ word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<b
 	if (rules.empty())
 		throw std::runtime_error("FogRules requires at least one rule");
 
-	klib::Asm6502 code;
+	const bool sram{ p_hack.bool_or("sram", false) };
 
-	// install hook
-	code.jsr(cpu_addr);
-	code.nop(6);
-	code.apply_hack_and_clear(p_rom, 15, ROM::Fog_OnTick_CMP_02);
+	klib::Asm6502 code;
 
 	// replacement fog predicate - world is in A on entry
 	// returns A=0 (Z set) when fog is active, otherwise A=1 (Z clear),
@@ -632,7 +629,20 @@ word fh::HackManager::install_FogRules(const fe::Config& p_config, std::vector<b
 	code.lda_imm(0x01);
 	code.rts();
 
-	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	if (sram)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+
+	// install hook
+	code.jsr(hack_addr);
+	code.nop(6);
+	code.apply_hack_and_clear(p_rom, 15, ROM::Fog_OnTick_CMP_02);
+
+	return next_cpu_addr;
 }
 
 // adds a configurable item to the inventory when touching poison instead of taking damage

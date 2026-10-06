@@ -341,7 +341,7 @@ namespace fh {
 		word install_OtherWorldTransPal2Mus(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack);
 		word install_FogRules(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
+			const fh::GeneralHack& p_hack);
 		word install_DynamicTilesets(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank,
 			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game);
 		void install_PoisonPickup(const fe::Config& p_config, std::vector<byte>& p_rom,
