@@ -5,7 +5,7 @@
 #include "common/klib/Asm6502.h"
 
 word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game = nullptr) {
+	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) {
 	// read the references to the tables as words directly from ROM
 	const auto bld_scene_palette{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_PALETTE_PTR).first) };
 	const auto bld_scene_tileset{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_TILESET_PTR).first) };
@@ -13,6 +13,7 @@ word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vect
 	const auto bld_scene_music{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_MUSIC_PTR).first) };
 
 	const auto data{ p_hack.split_twice_bytes("data", 2) };
+	const bool sram_install{ p_hack.bool_or("sram", false) };
 
 	std::vector<byte> spawn_screens(p_game ? p_game->m_spawn_locations.size() : 8, 1);
 	for (const auto& data_pair : data)
@@ -32,8 +33,17 @@ word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vect
 	for (byte b : spawn_screens)
 		code.db(b);
 
-	const auto lookup_table_addr{ code.label_addr("@spawn_screens", cpu_addr) };
-	const auto next_addr{ code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+	word hack_addr{ cpu_addr };
+	word next_cpu_addr{ cpu_addr };
+
+	const auto lookup_table_offset{ code.label_position("@spawn_screens") };
+
+	if (sram_install)
+		hack_addr = install_sram_hack(p_rom, code);
+	else
+		next_cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+
+	const word lookup_table_addr{ static_cast<word>(lookup_table_offset + hack_addr) };
 
 	// hook - do as much work as we can on "this side"
 	// assumes X holds spawn point index
@@ -49,9 +59,9 @@ word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vect
 	code.lda_abs_x(bld_scene_music);
 	code.sta_abs(RAM::World_DefaultMusic);
 	// lookup the other two values in the new routine
-	code.jsr(cpu_addr);
+	code.jsr(hack_addr);
 	code.nop(2);
 	code.apply_hack_and_clear(p_rom, 15, ROM::Game_SpawnInTemple_LDA_Palette);
 
-	return next_addr;
+	return next_cpu_addr;
 }
