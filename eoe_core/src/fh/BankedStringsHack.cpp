@@ -4,9 +4,12 @@
 #include "common/klib/Asm6502.h"
 #include <format>
 #include <stdexcept>
+#include <vector>
 
 namespace {
 	constexpr byte TempMessageBank{ fh::RAM::ZP_e5 };
+
+	std::vector<word> msg_load_fixups, txtbox_nextchar_fixups;
 }
 
 word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -33,7 +36,13 @@ word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vec
 	const word messages_load_banked_addr{ code.label_addr("Messages_Load-Banked", install_addr) };
 	const word txtbox_shownextchar_addr{ code.label_addr("TextBox_ShowNextChar-Banked", install_addr) };
 
-	// TODO: Fixup script opcode calls to these entrypoints
+	// fixup script opcode calls to these entrypoints, then clear the vectors
+	for (auto addr : msg_load_fixups)
+		klib::Asm6502::apply_word(p_rom, messages_load_banked_addr, 12, addr);
+	for (auto addr : txtbox_nextchar_fixups)
+		klib::Asm6502::apply_word(p_rom, txtbox_shownextchar_addr, 12, addr);
+	msg_load_fixups.clear();
+	txtbox_nextchar_fixups.clear();
 
 	if (sram) {
 		install_sram_hack(p_rom, code);
@@ -41,5 +50,37 @@ word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vec
 	}
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, install_addr);
+}
 
+word fh::HackManager::apply_MsgEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	// string bank
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(TempMessageBank);
+
+	// string index
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+
+	code.label("@msg-load");
+	code.jsr(0xffff); // will be fixed up later
+
+	code.label("@write_loop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+
+	code.label("@shownextchar-load");
+	code.jsr(0xffff); // will be fixed up later
+
+	code.jsr(ROM::Text_ContinueGate);
+	code.bcc("@not_dismissed");
+	code.jmp(ROM::IScripts_MessageFinish);
+
+	code.label("@not_dismissed");
+	code.bne("@write_loop");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
+	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }

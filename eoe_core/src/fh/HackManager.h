@@ -28,7 +28,7 @@ namespace fh {
 		RunScreenHandler, GetXP, IfWorld, IfScreen, IfStage, Die,
 		JSR, Return, ForceDoor, IfYX, IfDoorYX,
 		IfAddrEquals, IfAddrBetween, SetAddr,
-		Respawn,
+		Respawn, MsgEx,
 		AtlasDevSetVar, AtlasDevAddVar, AtlasDevSubVar,
 		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual, AtlasDevRandomVar, AtlasDevCopyVar,
 		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
@@ -144,6 +144,7 @@ namespace fh {
 			word cpu_addr, word helper_load_word_addr) const;
 		word apply_Respawn(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr) const;
+		word apply_MsgEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
