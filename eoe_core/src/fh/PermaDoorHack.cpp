@@ -268,7 +268,9 @@ namespace {
 		code.beq("@locked");
 		// door was unlocked in the past
 		if (sound) {
-			code.jmp(fh::ROM::Game_UnlockDoorWithSoundEffect);
+			code.jsr(fh::ROM::Game_UnlockDoorWithSoundEffect);
+			code.lda_imm(0x00); // restore vanilla success return: A=0, Z=1
+			code.rts();
 		}
 		else {
 			code.lda_imm(0x00);
