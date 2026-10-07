@@ -351,11 +351,14 @@ word fh::HackManager::install_QuestFlagItemDrops(const fe::Config& p_config, std
 // make the boss locked items show in the screen regardless of which boss it is
 // optionally keep the item hidden until all enemy sprites have been removed
 word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const bool enemies{ p_hack.bool_or("enemies", true) };
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502 code;
-	code.jsr(cpu_addr);
+
+	const word install_addr{ sram ? sram_hack_addr() : cpu_addr };
+	code.jsr(install_addr);
 
 	// all boss locked items will no longer check for a given sprite ID in A, but for any
 	code.apply_hack_noclear(p_rom, 14, ROM::SpriteBehavior_BattleSuit_CheckForBosses);
@@ -402,6 +405,11 @@ word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::v
 	code.tax();
 	code.clc();
 	code.rts();
+
+	if (sram) {
+		install_sram_hack(p_rom, code);
+		return cpu_addr;
+	}
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }

@@ -366,7 +366,7 @@ namespace fh {
 		word install_QuestFlagItemDrops(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack);
 		word install_BossLockedItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
+			const fh::GeneralHack& p_hack);
 		word install_ConditionalScript(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_OintmentFix(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
