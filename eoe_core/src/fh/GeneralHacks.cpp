@@ -222,9 +222,10 @@ word fh::HackManager::install_OtherWorldTransPal2Mus(const fe::Config& p_config,
 
 // dynamically added to bank 14, but with hooks and constants in bank 15
 word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const word gold{ p_hack.word_or("gold", 1500) };
 	const bool ring_of_elf{ p_hack.bool_or("ring_of_elf", true) };
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Health);
 	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Mana);
@@ -232,7 +233,7 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 	klib::Asm6502 code;
 
 	// install hook from bank 15
-	code.jsr(cpu_addr);
+	code.jsr(sram ? sram_hack_addr() : cpu_addr);
 	code.apply_hack_and_clear(p_rom, 15, ROM::Game_Start_JSR_Game_LoadFirstLevel);
 
 	// new routine
@@ -246,6 +247,11 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 		code.sta_abs(RAM::SpecialItemBitfield);
 	}
 	code.jmp(ROM::Game_LoadFirstLevel);
+
+	if (sram) {
+		install_sram_hack(p_rom, code);
+		return cpu_addr;
+	}
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }

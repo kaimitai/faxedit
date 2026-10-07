@@ -129,7 +129,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevNashControl, { "hide", "windup", "attack", "throw", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevExecutionHoodControl, { "walk", "length", "pause", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevShadowEuraControl, { "walk", "pause", "fire1", "fire2", "step", "body", "flag", "mode" } },
-		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf" } },
+		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf", "sram" }},
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type", "sram" }},
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies", "sram" }},
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors", "sram" }},
