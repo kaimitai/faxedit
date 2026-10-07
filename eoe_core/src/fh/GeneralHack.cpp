@@ -37,6 +37,7 @@ namespace {
 		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes, fh::GeneralHackLib::ItemScripts,
 		fh::GeneralHackLib::PermaDoors, fh::GeneralHackLib::FlagDoorRequirements,
 		fh::GeneralHackLib::SpawnScreens, fh::GeneralHackLib::OtherWorldTransPal2Mus,
+		fh::GeneralHackLib::BankedStrings,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,
 		fh::GeneralHackLib::AtlasDevTimeOfDay, fh::GeneralHackLib::AtlasDevFallControl,
@@ -140,6 +141,7 @@ namespace {
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
 		{ fh::GeneralHackLib::OintmentFix, { "sugata", "sram" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
+		{ fh::GeneralHackLib::BankedStrings, { "sram" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

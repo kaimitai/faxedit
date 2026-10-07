@@ -1191,6 +1191,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::SpawnScreens:
 			cpu_addr = install_SpawnScreens(p_config, patched_rom, cpu_addr, hack, p_game);
 			break;
+		case fh::GeneralHackLib::BankedStrings:
+			cpu_addr = install_BankedStrings(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
 			break;

@@ -136,7 +136,9 @@ namespace fh {
 		constexpr word Portrait_LoadTiles{ 0xf24d };
 		constexpr word Portrait_Clear{ 0xf281 };
 		constexpr word Messages_Load{ 0xf3f5 };
+		constexpr word Messages_Load_JSR_MMC1_UpdateROMBank{ 0xf3fe };
 		constexpr word Text_ShowNextChar{ 0xf466 };
+		constexpr word TextBox_ShowNextChar_JSR_MMC1_UpdateROMBank{ 0xf46c };
 		constexpr word TextGridRowQueue{ 0xf5d9 };
 		constexpr word PPUAddressFromPos{ 0xf804 };
 		constexpr word PPUAdvanceRow{ 0xf826 };
@@ -282,6 +284,7 @@ namespace fh {
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
 		constexpr word TextBox_PlayTextSound{ 0x0212 };
+		constexpr word StringID{ 0x0213 };
 		constexpr word TextBox_Timer{ 0x021d };
 		constexpr word VisibleMagicState{ 0x02b3 };
 		constexpr word VisibleMagicFlags{ 0x02b4 };

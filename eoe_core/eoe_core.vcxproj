@@ -172,6 +172,7 @@
     <ClCompile Include="src\fh\AtlasDevPpuDrainUnroll.cpp" />
     <ClCompile Include="src\fh\AtlasDevQueueLess.cpp" />
     <ClCompile Include="src\fh\AtlasDevSpriteSpeed.cpp" />
+    <ClCompile Include="src\fh\BankedStringsHack.cpp" />
     <ClCompile Include="src\fh\DynamicTilesetsHack.cpp" />
     <ClCompile Include="src\fh\FlagDoorRequirements.cpp" />
     <ClCompile Include="src\fh\GeneralHack.cpp" />

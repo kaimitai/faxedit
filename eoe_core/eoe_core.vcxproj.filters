@@ -776,5 +776,8 @@
     <ClCompile Include="src\fh\SpawnScreensHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\BankedStringsHack.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
