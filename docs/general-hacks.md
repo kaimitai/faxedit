@@ -573,6 +573,7 @@ Keeps doors unlocked after they have been opened with a key. An alternative to t
 | --------- | ---------------- | ----------------------------------------------------- |
 | `bank`    | 15               | Which bank to install the majority of the hack in     |
 | `addr`    | none, calculated | Which CPU address in that bank to install the hack in |
+| `sound`   | `false`          | Play the vanilla unlock sound when reusing an already unlocked door |
 
 If `bank` is omitted, the entire hack is installed in the normal free-space range in bank 15. Bank 15 space is limited, however, so using another bank may be preferable if space is available.
 
@@ -581,7 +582,7 @@ Bank 9 is a good choice for vanilla ROMs, while expanded ROMs can use one of the
 If `addr` is not given for another bank, free space will be automatically deduced, if possible. `addr` is ignored when using bank 15.
 
 ```text
-PermaDoors bank=28
+PermaDoors bank=28 sound=true
 ```
 
 Works with [AtlasDevSmartKeys](#atlasdevsmartkeys) when PermaDoors is listed first: a door opened with a carried key is then remembered like any other.

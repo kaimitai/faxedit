@@ -249,7 +249,7 @@ namespace {
 	}
 
 	klib::Asm6502 make_PermaDoors_Trampolines(word main_entry_addr, const fe::Config& p_config,
-		byte bank, bool sram) {
+		byte bank, bool sound, bool sram) {
 		klib::Asm6502 code;
 
 		code.label("@set_flag_trampoline");
@@ -267,9 +267,14 @@ namespace {
 		code.lda_zp(VALUE_IO);
 		code.beq("@locked");
 		// door was unlocked in the past
-		code.lda_imm(0x00);
-		code.sta_abs(fh::RAM::DoorKeyRequirement);
-		code.rts();
+		if (sound) {
+			code.jmp(fh::ROM::Game_UnlockDoorWithSoundEffect);
+		}
+		else {
+			code.lda_imm(0x00);
+			code.sta_abs(fh::RAM::DoorKeyRequirement);
+			code.rts();
+		}
 
 		code.label("@locked");
 		// door still locked, let vanilla handle it
@@ -314,6 +319,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 				p_hack.get_word("addr") :
 				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
 	};
+	const bool sound{ p_hack.bool_or("sound", false) };
 
 	word main_entry_addr{};
 
@@ -331,7 +337,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 			cpu_addr = next_addr;
 	}
 
-	auto code{ make_PermaDoors_Trampolines(main_entry_addr, p_config, bank, sram) };
+	auto code{ make_PermaDoors_Trampolines(main_entry_addr, p_config, bank, sound, sram) };
 
 	word set_flag_trampoline{};
 	word check_flag_trampoline{};
