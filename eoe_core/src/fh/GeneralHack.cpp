@@ -138,7 +138,7 @@ namespace {
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
-		{ fh::GeneralHackLib::OintmentFix, { "sugata" }},
+		{ fh::GeneralHackLib::OintmentFix, { "sugata", "sram" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
 	};
 
