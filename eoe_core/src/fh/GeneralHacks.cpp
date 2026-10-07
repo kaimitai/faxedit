@@ -423,9 +423,10 @@ word fh::HackManager::install_BossLockedItems(const fe::Config& p_config, std::v
 // iScript N is skipped when extended flag N is set, for triggers and/or NPCs
 // returns A = iScript index, C set if the script should be skipped
 word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const bool trigger{ p_hack.bool_or("trigger", true) };
 	const bool npc{ p_hack.bool_or("npc", false) };
+	const bool sram{ p_hack.bool_or("sram", false) };
 
 	if (!trigger && !npc)
 		return cpu_addr;
@@ -434,13 +435,13 @@ word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std:
 	klib::Asm6502 code;
 
 	if (trigger) {
-		code.jsr(cpu_addr);
+		code.jsr(sram ? sram_hack_addr() : cpu_addr);
 		code.nop(2);
 		code.db(OP_BCS);
 		code.apply_hack_and_clear(p_rom, 14, ROM::Player_HandleTouchTrigger_STA_CurrentSprite_Value);
 	}
 	if (npc) {
-		code.jsr(cpu_addr);
+		code.jsr(sram ? sram_hack_addr() : cpu_addr);
 		code.nop(2);
 		code.db(OP_BCS);
 		code.apply_hack_and_clear(p_rom, 14, ROM::Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value);
@@ -471,6 +472,11 @@ word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std:
 	// restore script/flag index; LDA does not affect C
 	code.lda_abs(RAM::CurrentSprite_iScriptIndex);
 	code.rts();
+
+	if (sram) {
+		install_sram_hack(p_rom, code);
+		return cpu_addr;
+	}
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 }
