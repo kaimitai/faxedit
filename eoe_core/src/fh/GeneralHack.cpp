@@ -141,7 +141,7 @@ namespace {
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
 		{ fh::GeneralHackLib::OintmentFix, { "sugata", "sram" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
-		{ fh::GeneralHackLib::BankedStrings, { "sram" }},
+		{ fh::GeneralHackLib::BankedStrings, { "sram", "copy" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
