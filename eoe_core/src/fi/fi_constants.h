@@ -26,6 +26,7 @@ namespace fi {
 		constexpr char ID_STRING_DATA_END[]{ "string_data_end" };
 		constexpr char ID_STRING_CHAR_MAP[]{ "iscript_string_characters" };
 		constexpr char ID_STRING_RESERVED[]{ "reserved_script_string_indexes" };
+		constexpr char ID_STRING_BANKS[]{ "string_banks" };
 
 		constexpr char ID_DEFINES_TEXTBOX[]{ "defines_textbox" };
 		constexpr char ID_DEFINES_ITEM[]{ "defines_item" };

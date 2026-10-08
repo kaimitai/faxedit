@@ -29,6 +29,7 @@ namespace fi {
 		Rank,
 		TextBox,
 		TextString,
+		BankedTextString,
 		ButtonMask,
 		PlayerPackedYX
 	};

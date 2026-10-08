@@ -23,6 +23,7 @@ namespace fi {
 		// set of reserved string indexes first,
 		// then becomes full set of strings during parsing
 		std::map<int, fi::FaxString> m_strings;
+		std::map<byte, std::vector<fi::FaxString>> m_banked_strings;
 		std::map<std::string, std::size_t> m_defines;
 		std::map<std::size_t, fi::Shop> m_shops;
 		std::vector<fi::Instruction> m_instructions;
@@ -45,6 +46,8 @@ namespace fi {
 		void parse_section_iscript(const fe::Config& p_config, std::size_t script_rg2_offset);
 
 		std::map<std::string, int> relocate_strings(const std::set<std::string>& p_strings);
+		std::map<std::string, uint16_t> allocate_banked_strings(const fe::Config& p_config,
+			const std::set<std::string>& p_strings);
 
 		std::size_t resolve_token(const std::string& token) const;
 
@@ -72,6 +75,8 @@ namespace fi {
 		std::pair<std::vector<byte>, std::vector<byte>> get_script_bytes(const fe::Config& p_config) const;
 		std::vector<byte> get_string_bytes(const fe::Config& p_config) const;
 		std::size_t get_string_count(void) const;
+		std::map<byte, std::vector<byte>> get_banked_string_bytes(const fe::Config& p_config) const;
+		std::size_t get_banked_string_count(byte p_bank) const;
 
 		// get optional tilemap changes
 		const fh::TilemapChanges& get_tilemap_changes() const;

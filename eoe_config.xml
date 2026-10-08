@@ -527,6 +527,8 @@
 		<!-- banks which can be used for tilemap data -->
 		<set name="tilemap_banks" values="0,1,2,17,18,19,20,21" region="en-transl,512" />
 		<set name="tilemap_banks" values="0,1,2,9" />
+		<!-- banks that can be used for extra string data -->
+		<set name="string_banks" values="22,23,24" region="en-transl,512" />
 		<!-- reserved string indexes - will not be re-indexed or discarded by the assembler -->
 		<!-- strings called directly from the action handler; like "You can't carry any more." -->
 		<set name="reserved_script_string_indexes" values="3,6,16,18,19,20" />
@@ -1905,10 +1907,10 @@
 			<entry key="IfAddrBetween" value="Args=Short+Byte+Byte,Flow=Jump" />
 			<entry key="SetAddr" value="Args=Short+Byte" />
 			<entry key="Respawn" value="Flow=End,Terminal=true" />
-			<entry key="MsgEx" value="Args=Byte+Byte" />
-			<entry key="MsgNoskipEx" value="Args=Byte+Byte" />
-			<entry key="MsgPromptEx" value="Args=Byte+Byte" />
-			<entry key="IfMsgPromptEx" value="Args=Byte+Byte,Flow=Jump" />
+			<entry key="MsgEx" value="Args=Short:BankedTextString" />
+			<entry key="MsgNoskipEx" value="Args=Short:BankedTextString" />
+			<entry key="MsgPromptEx" value="Args=Short:BankedTextString" />
+			<entry key="IfMsgPromptEx" value="Args=Short:BankedTextString,Flow=Jump" />
 			<entry key="AtlasDevSetVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevAddVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSubVar" value="Args=Byte+Byte" />

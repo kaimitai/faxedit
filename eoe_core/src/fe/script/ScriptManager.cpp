@@ -141,6 +141,45 @@ void fe::script::validate_iscript_layer(const fe::Config& p_config, const std::v
 }
 
 // iScripts
+namespace {
+	void patch_banked_strings(const fe::Config& p_config, std::vector<byte>& p_rom,
+		const std::map<byte, std::vector<byte>>& p_strings, const fe::MessageCallback& p_message) {
+		if (p_strings.empty())
+			return;
+
+		constexpr std::size_t PRG_BANK_SIZE{ 0x4000 };
+		constexpr std::size_t INES_HEADER_SIZE{ 0x10 };
+
+		const std::size_t string_start{ p_config.constant(fi::c::ID_STRING_DATA_START) };
+		const std::size_t string_end{ p_config.constant(fi::c::ID_STRING_DATA_END) };
+		const std::size_t capacity{ string_end - string_start };
+
+		// Validate the original string range, including its exclusive endpoint.
+		fe::ROM_Manager::file_range_to_cpu_range({ string_start, string_end });
+
+		const std::size_t source_bank{ (string_start - INES_HEADER_SIZE) / PRG_BANK_SIZE };
+		const std::size_t bank_offset{ (string_start - INES_HEADER_SIZE) % PRG_BANK_SIZE };
+
+		for (const auto& [bank, data] : p_strings) {
+			if (bank == source_bank)
+				throw std::runtime_error("Banked strings cannot use the original string bank");
+
+			fe::script::try_patch(std::format("bank {} strings", bank), data.size(), capacity, p_message);
+
+			const std::size_t target_start{
+				INES_HEADER_SIZE + static_cast<std::size_t>(bank) * PRG_BANK_SIZE + bank_offset
+			};
+
+			if (target_start > p_rom.size() || capacity > p_rom.size() - target_start)
+				throw std::runtime_error(std::format("String bank {} exceeds ROM size", bank));
+
+			std::copy(data.begin(), data.end(), p_rom.begin() + target_start);
+			std::fill(p_rom.begin() + target_start + data.size(),
+				p_rom.begin() + target_start + capacity, 0x00);
+		}
+	}
+}
+
 std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std::vector<byte>& p_rom,
 	const std::vector<std::string>& p_asm, const fi::ScriptOpcodeInfo& p_opcode_info,
 	bool p_strict, const MessageCallback& p_message) {
@@ -215,6 +254,8 @@ std::vector<byte> fe::script::asm_iscripts(const fe::Config& p_config, const std
 	// zero out the remainder of string space to make sure no garbage string data is extracted from here later
 	for (std::size_t i{ strbytes.size() }; i < l_size_strings; ++i)
 		rom.at(i + l_iscript_string_start) = 0x00;
+	// patch banked strings, if any
+	patch_banked_strings(p_config, rom, reader.get_banked_string_bytes(p_config), p_message);
 
 	std::size_t l_hi_byte_addr_bank_rel{ l_iscript_ptr.first + reader.get_entrypoint_count() -
 	l_iscript_ptr.second };

@@ -107,6 +107,9 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 	// map each referenced string to the instruction and operand positions that use it
 	using StringOperandRef = std::pair<std::size_t, std::size_t>;
 	std::map<std::string, std::set<StringOperandRef>> string_operand_refs;
+	// banked strings
+	std::set<std::string> unique_banked_strings;
+	std::map<std::string, std::set<StringOperandRef>> banked_string_operand_refs;
 
 	// and so it begins...
 	for (std::string line : m_sections.at(fi::SectionType::IScript)) {
@@ -175,7 +178,28 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 			// parse explicit operands
 			for (const auto& arg : op.args) {
 
-				if (arg.domain == fi::ArgDomain::TextString) {
+				if (arg.domain == fi::ArgDomain::BankedTextString) {
+					if (arg.type != fi::ArgType::Short)
+						throw std::runtime_error("BankedTextString requires Short");
+
+					const auto& token{ tokens.at(current_token) };
+
+					if (!is_string_token(token))
+						throw std::runtime_error("BankedTextString requires a quoted string");
+
+					const std::string text{ token.substr(1, token.size() - 2) };
+					const std::size_t operand_index{ operands.size() };
+
+					unique_banked_strings.insert(text);
+					banked_string_operand_refs[text].insert({
+						m_instructions.size(),
+						operand_index
+						});
+
+					// placeholder until bank allocation
+					operands.push_back(0);
+				}
+				else if (arg.domain == fi::ArgDomain::TextString) {
 
 					std::string operand_str;
 					bool push_str{ true };
@@ -278,6 +302,17 @@ void fi::AsmReader::parse_section_iscript(const fe::Config& p_config, std::size_
 		for (const auto& [instruction_index, operand_index] : refs) {
 			m_instructions.at(instruction_index).operands.at(operand_index) =
 				static_cast<uint16_t>(string_index);
+		}
+	}
+
+	// allocate banked strings and patch their operands
+	auto banked_remap{ allocate_banked_strings(p_config, unique_banked_strings) };
+
+	for (const auto& [text, refs] : banked_string_operand_refs) {
+		const auto banked_index{ banked_remap.at(text) };
+
+		for (const auto& [instruction_index, operand_index] : refs) {
+			m_instructions.at(instruction_index).operands.at(operand_index) = banked_index;
 		}
 	}
 

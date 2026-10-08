@@ -474,6 +474,32 @@ std::size_t fi::AsmReader::get_string_count(void) const {
 	return m_strings.size();
 }
 
+std::map<byte, std::vector<byte>> fi::AsmReader::get_banked_string_bytes(const fe::Config& p_config) const {
+	std::map<byte, std::vector<byte>> result;
+	const auto char_map{ p_config.bmap_reverse(c::ID_STRING_CHAR_MAP) };
+
+	for (const auto& [bank, strings] : m_banked_strings) {
+		auto& bytes{ result[bank] };
+
+		for (std::size_t i{ 0 }; i < strings.size(); ++i) {
+			try {
+				const auto encoded{ strings[i].to_bytes(char_map) };
+				bytes.insert(end(bytes), begin(encoded), end(encoded));
+			}
+			catch (const std::runtime_error& ex) {
+				throw std::runtime_error(std::format(
+					"Could not generate banked string {}:{}: {}", bank, i + 1, ex.what()));
+			}
+		}
+	}
+
+	return result;
+}
+
+std::size_t fi::AsmReader::get_banked_string_count(byte p_bank) const {
+	return m_banked_strings.at(p_bank).size();
+}
+
 std::map<std::string, int> fi::AsmReader::relocate_strings(
 	const std::set<std::string>& p_strings) {
 	std::map<int, std::string> new_string_table;
@@ -521,6 +547,43 @@ std::map<std::string, int> fi::AsmReader::relocate_strings(
 			std::format("Only 255 unique strings can be used, but actual count is {}",
 				m_strings.size())
 		);
+
+	return result;
+}
+
+std::map<std::string, uint16_t> fi::AsmReader::allocate_banked_strings(const fe::Config& p_config,
+	const std::set<std::string>& p_strings) {
+	const std::size_t string_data_size{ p_config.constant(c::ID_STRING_DATA_END) - p_config.constant(c::ID_STRING_DATA_START) };
+	const std::set<byte> string_banks{ p_config.vset_as_set(c::ID_STRING_BANKS) };
+	const auto char_map{ p_config.bmap_reverse(c::ID_STRING_CHAR_MAP) };
+
+	std::map<std::string, uint16_t> result;
+	m_banked_strings.clear();
+
+	auto bank_it{ string_banks.begin() };
+	std::size_t used{ 0 };
+	std::size_t index{ 1 };
+
+	for (const auto& str : p_strings) {
+		fi::FaxString fs{ str };
+		const auto bytes{ fs.to_bytes(char_map) };
+
+		while (bank_it != string_banks.end() &&
+			(used + bytes.size() > string_data_size || index > 255)) {
+			++bank_it;
+			used = 0;
+			index = 1;
+		}
+
+		if (bank_it == string_banks.end())
+			throw std::runtime_error("Not enough banked string space");
+
+		result[str] = static_cast<uint16_t>((index << 8) | *bank_it);
+		m_banked_strings[*bank_it].push_back(std::move(fs));
+
+		used += bytes.size();
+		++index;
+	}
 
 	return result;
 }
