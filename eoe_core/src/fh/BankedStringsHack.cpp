@@ -25,13 +25,13 @@ word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vec
 	code.lda_abs(RAM::CurrentROMBank);
 	code.pha();
 	code.ldx_zp(TempMessageBank);
-	code.jmp(ROM::Messages_Load_JSR_MMC1_UpdateROMBank);
+	code.jmp(cfg_word(p_config, c::ID_ROM_MESSAGES_LOAD_JSR_MMC1_UPDATEROMBANK));
 
 	code.label("TextBox_ShowNextChar-Banked");
 	code.lda_abs(RAM::CurrentROMBank);
 	code.pha();
 	code.ldx_zp(TempMessageBank);
-	code.jmp(ROM::TextBox_ShowNextChar_JSR_MMC1_UpdateROMBank);
+	code.jmp(cfg_word(p_config, c::ID_ROM_TEXTBOX_SHOWNEXTCHAR_JSR_MMC1_UPDATEROMBANK));
 
 	const word messages_load_banked_addr{ code.label_addr("Messages_Load-Banked", install_addr) };
 	const word txtbox_shownextchar_addr{ code.label_addr("TextBox_ShowNextChar-Banked", install_addr) };
@@ -186,4 +186,9 @@ word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vecto
 	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
+void fh::HackManager::verify_BankedStrings_installed(void) const {
+	if (!msg_load_fixups.empty() || !txtbox_nextchar_fixups.empty())
+		throw std::runtime_error("BankedStrings opcode(s) used but BankedStrings general hack was not installed");
 }

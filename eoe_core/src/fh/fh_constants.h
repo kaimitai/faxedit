@@ -141,9 +141,7 @@ namespace fh {
 		constexpr word Portrait_LoadTiles{ 0xf24d };
 		constexpr word Portrait_Clear{ 0xf281 };
 		constexpr word Messages_Load{ 0xf3f5 };
-		constexpr word Messages_Load_JSR_MMC1_UpdateROMBank{ 0xf3fe };
 		constexpr word Text_ShowNextChar{ 0xf466 };
-		constexpr word TextBox_ShowNextChar_JSR_MMC1_UpdateROMBank{ 0xf46c };
 		constexpr word TextGridRowQueue{ 0xf5d9 };
 		constexpr word PPUAddressFromPos{ 0xf804 };
 		constexpr word PPUAdvanceRow{ 0xf826 };
@@ -421,6 +419,8 @@ namespace fh {
 		constexpr char ID_STARTSCREEN_INPUTSELECT[]{ "rom_startscreen_inputselect" };
 
 		// bank 15 cpu addresses
+		constexpr char ID_ROM_MESSAGES_LOAD_JSR_MMC1_UPDATEROMBANK[]{ "rom_messages_load_jsr_mmc1_updaterombank" };
+		constexpr char ID_ROM_TEXTBOX_SHOWNEXTCHAR_JSR_MMC1_UPDATEROMBANK[]{ "rom_textbox_shownextchar_jsr_mmc1_updaterombank" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01[]{ "textbox_show_next_char_lda_01" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST[]{ "textbox_show_next_char_if_ready_timer_const" };
 		constexpr char ID_CHOOSECONTINUE_TARGETADDR[]{ "rom_choosecontinue_targetaddr" };

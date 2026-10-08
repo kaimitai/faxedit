@@ -441,6 +441,10 @@
 		<const name="rom_startscreen_inputselect" region="us-rev-a,eu" value="$9f95" />
 		<const name="rom_startscreen_inputselect" value="$9f4a" />
 		<!-- bank 15 ROM cpu addresses -->
+		<const name="rom_messages_load_jsr_mmc1_updaterombank" region="jp,en-transl" value="$f50e" />
+		<const name="rom_messages_load_jsr_mmc1_updaterombank" value="$f3fe" />
+		<const name="rom_textbox_shownextchar_jsr_mmc1_updaterombank" region="jp,en-transl" value="$f560" />
+		<const name="rom_textbox_shownextchar_jsr_mmc1_updaterombank" value="$f46c" />
 		<const name="textbox_show_next_char_lda_01" region="eu,us,us-rev-a" value="0xf472" />
 		<const name="textbox_show_next_char_if_ready_timer_const" region="eu,us,us-rev-a" value="0xf49f" />
 		<const name="rom_mmc1_updaterombank" region="en-transl" value="$fdb2" />

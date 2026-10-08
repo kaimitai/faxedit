@@ -366,6 +366,7 @@ namespace fh {
 			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game = nullptr);
 		word install_BankedStrings(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack);
+		void verify_BankedStrings_installed(void) const;
 		// bank 14 general hacks
 		word install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack);
