@@ -13,6 +13,7 @@ std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
 	const std::vector<std::size_t>& p_entrypoints,
 	const std::set<std::size_t>& p_jump_targets,
 	const std::vector<fi::FaxString>& p_strings,
+	const std::map<byte, std::vector<fi::FaxString>>& p_banked_strings,
 	const std::vector<fi::Shop>& p_shops,
 	bool p_shop_comments) const {
 
@@ -121,6 +122,21 @@ std::string fi::AsmWriter::generate_asm(const fe::Config& p_config,
 						std::string l_out_str{ p_strings.at(str_ind - 1).get_string() };
 						line += std::format(" \"{}\"", l_out_str);
 						l_used_strings.insert(l_out_str);
+					}
+				}
+				else if (arg.domain == fi::ArgDomain::BankedTextString) {
+					const byte bank{ static_cast<byte>(operand & 0xff) };
+					const byte index{ static_cast<byte>(operand >> 8) };
+
+					const auto iter{ p_banked_strings.find(bank) };
+
+					if (index == 0 || iter == p_banked_strings.end() ||
+						index > iter->second.size()) {
+						line += std::format(" {}", operand);
+						append_comment("invalid banked string reference");
+					}
+					else {
+						line += std::format(" \"{}\"", iter->second[index - 1].get_string());
 					}
 				}
 				else if (arg.type == fi::ArgType::Byte) {

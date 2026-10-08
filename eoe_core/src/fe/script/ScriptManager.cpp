@@ -316,6 +316,7 @@ std::string fe::script::disasm_iscripts(const fe::Config& p_config, const std::v
 		loader.get_ptr_table(),
 		loader.get_jump_targets(),
 		loader.get_strings(),
+		loader.get_banked_strings(),
 		loader.get_shops(),
 		p_shop_comments);
 }

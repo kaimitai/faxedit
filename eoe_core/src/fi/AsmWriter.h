@@ -8,6 +8,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace fi {
 
@@ -39,6 +40,7 @@ namespace fi {
 			const std::vector<std::size_t>& p_entrypoints,
 			const std::set<std::size_t>& p_jump_targets,
 			const std::vector<fi::FaxString>& p_strings,
+			const std::map<byte, std::vector<fi::FaxString>>& p_banked_strings,
 			const std::vector<fi::Shop>& p_shops,
 			bool p_shop_comments) const;
 	};

@@ -6,6 +6,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <vector>
 #include "Opcode.h"
 #include "FaxString.h"
 #include "Shop.h"
@@ -38,6 +39,7 @@ namespace fi {
 		std::map<std::size_t, fi::Instruction> m_instructions;
 		std::vector<fi::Shop> m_shops;
 		std::vector<fi::FaxString> m_strings;
+		std::map<byte, std::vector<fi::FaxString>> m_banked_strings;
 
 		std::set<std::size_t> m_jump_targets;
 		// map from ROM address -> shop index
@@ -69,6 +71,7 @@ namespace fi {
 		const std::vector<std::size_t>& get_ptr_table(void) const;
 		const std::set<std::size_t>& get_jump_targets(void) const;
 		const std::vector<fi::FaxString>& get_strings(void) const;
+		const std::map<byte, std::vector<fi::FaxString>>& get_banked_strings(void) const;
 		const std::vector<fi::Shop>& get_shops(void) const;
 
 		std::size_t get_script_count(void) const;

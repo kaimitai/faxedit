@@ -43,6 +43,7 @@ void fi::IScriptLoader::reset(void) {
 	m_jump_targets.clear();
 	m_shop_addresses.clear();
 	m_strings.clear();
+	m_banked_strings.clear();
 }
 
 void fi::IScriptLoader::parse_rom(const std::vector<byte>& p_rom) {
@@ -82,6 +83,10 @@ const std::vector<fi::FaxString>& fi::IScriptLoader::get_strings(void) const {
 	return m_strings;
 }
 
+const std::map<byte, std::vector<fi::FaxString>>& fi::IScriptLoader::get_banked_strings(void) const {
+	return m_banked_strings;
+}
+
 const std::vector<fi::Shop>& fi::IScriptLoader::get_shops(void) const {
 	return m_shops;
 }
@@ -109,6 +114,47 @@ void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vec
 				encodedstring += iter->second;
 		}
 
+	}
+
+	// banked strings
+	constexpr std::size_t PRG_BANK_SIZE{ 0x4000 };
+	constexpr std::size_t INES_HEADER_SIZE{ 0x10 };
+
+	const std::size_t string_start{ p_config.constant(c::ID_STRING_DATA_START) };
+	const std::size_t string_end{ p_config.constant(c::ID_STRING_DATA_END) };
+	const std::size_t source_bank{ (string_start - INES_HEADER_SIZE) / PRG_BANK_SIZE };
+	const std::size_t bank_offset{ (string_start - INES_HEADER_SIZE) % PRG_BANK_SIZE };
+	const std::size_t capacity{ string_end - string_start };
+
+	m_banked_strings.clear();
+
+	for (const byte bank : p_config.vset_as_set(c::ID_STRING_BANKS)) {
+		if (bank == source_bank)
+			throw std::runtime_error("Banked strings cannot use the original string bank");
+
+		const std::size_t start{
+			INES_HEADER_SIZE + static_cast<std::size_t>(bank) * PRG_BANK_SIZE + bank_offset
+		};
+
+		std::string encodedstring;
+		auto& strings{ m_banked_strings[bank] };
+
+		for (std::size_t i{ start }; i < start + capacity && strings.size() < 255; ++i) {
+			const byte b{ p_rom.at(i) };
+
+			if (b == 0xff) {
+				strings.emplace_back(encodedstring);
+				encodedstring.clear();
+			}
+			else {
+				const auto iter{ lc_char_map.find(b) };
+
+				if (iter == lc_char_map.end())
+					encodedstring += std::format("<${:02x}>", b);
+				else
+					encodedstring += iter->second;
+			}
+		}
 	}
 }
 
@@ -332,6 +378,22 @@ std::vector<fi::AsmToken> fi::IScriptLoader::get_asm_code(void) const {
 					}
 					else {
 						result.push_back(fi::AsmToken(std::format("\"{}\"", m_strings[str_ind - 1].get_string()), 3, false));
+					}
+				}
+				else if (arg.domain == fi::ArgDomain::BankedTextString) {
+					const byte bank{ static_cast<byte>(opval & 0xff) };
+					const byte index{ static_cast<byte>(opval >> 8) };
+
+					const auto iter{ m_banked_strings.find(bank) };
+
+					if (index == 0 || iter == m_banked_strings.end() ||
+						index > iter->second.size()) {
+						result.push_back(fi::AsmToken(std::format("{}", opval), 5, false));
+						result.push_back(fi::AsmToken("; undefined banked string", 2, false));
+					}
+					else {
+						result.push_back(fi::AsmToken(
+							std::format("\"{}\"", iter->second[index - 1].get_string()), 3, false));
 					}
 				}
 				else if (arg.type == fi::ArgType::Byte) {
