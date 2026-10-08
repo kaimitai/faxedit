@@ -41,8 +41,7 @@ word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vec
 		klib::Asm6502::apply_word(p_rom, messages_load_banked_addr, 12, addr);
 	for (auto addr : txtbox_nextchar_fixups)
 		klib::Asm6502::apply_word(p_rom, txtbox_shownextchar_addr, 12, addr);
-	msg_load_fixups.clear();
-	txtbox_nextchar_fixups.clear();
+	clear_BankedStrings_fixups();
 
 	if (sram) {
 		install_sram_hack(p_rom, code);
@@ -191,4 +190,9 @@ word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vecto
 void fh::HackManager::verify_BankedStrings_installed(void) const {
 	if (!msg_load_fixups.empty() || !txtbox_nextchar_fixups.empty())
 		throw std::runtime_error("BankedStrings opcode(s) used but BankedStrings general hack was not installed");
+}
+
+void fh::HackManager::clear_BankedStrings_fixups(void) const {
+	msg_load_fixups.clear();
+	txtbox_nextchar_fixups.clear();
 }
