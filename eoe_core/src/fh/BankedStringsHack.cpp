@@ -84,3 +84,21 @@ word fh::HackManager::apply_MsgEx(const fe::Config& p_config, std::vector<byte>&
 
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
+
+word fh::HackManager::apply_MsgNoskipEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
+word fh::HackManager::apply_MsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
+word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}

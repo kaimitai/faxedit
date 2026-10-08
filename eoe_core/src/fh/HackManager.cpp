@@ -5889,6 +5889,15 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 		case HackLib::MsgEx:
 			cpu_addr = apply_MsgEx(p_config, p_rom, cpu_addr);
 			break;
+		case HackLib::MsgNoskipEx:
+			cpu_addr = apply_MsgNoskipEx(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::MsgPromptEx:
+			cpu_addr = apply_MsgPromptEx(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::IfMsgPromptEx:
+			cpu_addr = apply_IfMsgPromptEx(p_config, p_rom, cpu_addr);
+			break;
 
 		case HackLib::AtlasDevSetVar:
 			cpu_addr = apply_AtlasDevSetVar(p_config, p_rom, cpu_addr, var_operand_helper_addr.value());

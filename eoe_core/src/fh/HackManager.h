@@ -28,7 +28,7 @@ namespace fh {
 		RunScreenHandler, GetXP, IfWorld, IfScreen, IfStage, Die,
 		JSR, Return, ForceDoor, IfYX, IfDoorYX,
 		IfAddrEquals, IfAddrBetween, SetAddr,
-		Respawn, MsgEx,
+		Respawn, MsgEx, MsgNoskipEx, MsgPromptEx, IfMsgPromptEx,
 		AtlasDevSetVar, AtlasDevAddVar, AtlasDevSubVar,
 		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual, AtlasDevRandomVar, AtlasDevCopyVar,
 		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
@@ -145,6 +145,9 @@ namespace fh {
 		word apply_Respawn(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr) const;
 		word apply_MsgEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_MsgNoskipEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_MsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_IfMsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
