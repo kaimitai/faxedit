@@ -12,23 +12,32 @@ namespace {
 	constexpr word MsgLoadThunk{ fh::ROM::DEADCODE_TextBox_ClosePortrait };
 	constexpr word NextCharThunk{ fh::ROM::DEADCODE_TextBox_ClosePortrait + 3 };
 
+	constexpr bool INSTALL_VERIFICATION{ true };
+
 	void init_thunk_bytes(std::vector<byte>& p_rom) {
+		const auto msgload_offset{ klib::Asm6502::get_file_offset(12, MsgLoadThunk) };
+		const auto nextchar_offset{ klib::Asm6502::get_file_offset(12, NextCharThunk) };
+
 		for (std::size_t i{ 0 }; i < 3; ++i) {
-			p_rom.at(MsgLoadThunk + i) = 0xff;
-			p_rom.at(NextCharThunk + i) = 0xff;
+			p_rom.at(msgload_offset + i) = 0xff;
+			p_rom.at(nextchar_offset + i) = 0xff;
 		}
 	}
 
 	void verify_thunk_bytes(const std::vector<byte>& p_rom) {
+		const auto msgload_offset{ klib::Asm6502::get_file_offset(12, MsgLoadThunk) };
+		const auto nextchar_offset{ klib::Asm6502::get_file_offset(12, NextCharThunk) };
+
 		for (std::size_t i{ 0 }; i < 3; ++i)
-			if (p_rom.at(MsgLoadThunk + i) != 0xff || p_rom.at(NextCharThunk + i) != 0xff)
+			if (p_rom.at(msgload_offset + i) != 0xff || p_rom.at(nextchar_offset + i) != 0xff)
 				throw std::runtime_error("BankedStrings thunk area is not uninitialized");
 	}
 }
 
 word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
-	verify_thunk_bytes(p_rom);
+	if constexpr (INSTALL_VERIFICATION)
+		verify_thunk_bytes(p_rom);
 
 	const bool sram{ p_hack.bool_or("sram", false) };
 
@@ -89,7 +98,9 @@ word fh::HackManager::apply_MsgEx(const fe::Config& p_config, std::vector<byte>&
 	code.bne("@write_loop");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	init_thunk_bytes(p_rom);
+	if constexpr (INSTALL_VERIFICATION)
+		init_thunk_bytes(p_rom);
+
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -113,7 +124,9 @@ word fh::HackManager::apply_MsgNoskipEx(const fe::Config& p_config, std::vector<
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	init_thunk_bytes(p_rom);
+	if constexpr (INSTALL_VERIFICATION)
+		init_thunk_bytes(p_rom);
+
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -145,7 +158,9 @@ word fh::HackManager::apply_MsgPromptEx(const fe::Config& p_config, std::vector<
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	init_thunk_bytes(p_rom);
+	if constexpr (INSTALL_VERIFICATION)
+		init_thunk_bytes(p_rom);
+
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -174,6 +189,8 @@ word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vecto
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
 
-	init_thunk_bytes(p_rom);
+	if constexpr (INSTALL_VERIFICATION)
+		init_thunk_bytes(p_rom);
+
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
