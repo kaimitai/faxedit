@@ -423,6 +423,9 @@
 		<const name="rom_text_continuegate" region="jp,en-transl" value="$9d7a" />
 		<const name="rom_text_continuegate" region="us-rev-a,eu" value="$999a" />
 		<const name="rom_text_continuegate" value="$9956" />
+		<const name="rom_text_question_continuegate" region="jp,en-transl" value="$9dae" />
+		<const name="rom_text_question_continuegate" region="us-rev-a,eu" value="$99c4" />
+		<const name="rom_text_question_continuegate" value="$9980" />
 		<const name="rom_mantraload" region="jp,en-transl" value="$99cd" />
 		<const name="rom_mantraload" value="$95e9" />
 		<const name="rom_startscreen_draw" region="jp,en-transl" value="$a236" />

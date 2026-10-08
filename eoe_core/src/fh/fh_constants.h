@@ -11,6 +11,7 @@ namespace fh {
 	namespace ROM {
 		// bank 12 addresses
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
+		constexpr word IScripts_PositionAndFillPlaceholderText{ 0x81e8 };
 		constexpr word IScripts_Begin{ 0x8242 };
 		constexpr word IScripts_JumpTable_Ref_U{ 0x8273 };
 		constexpr word IScripts_JumpTable_Ref_L{ 0x8277 };
@@ -412,6 +413,7 @@ namespace fh {
 		constexpr char ID_ISCRIPTACTIONSHOWMANTRA[]{ "rom_iscriptactionshowmantra" };
 		constexpr char ID_ROM_TEXT_CHECK_CONTINUEGATE[]{ "rom_text_check_continuegate" };
 		constexpr char ID_ROM_TEXT_CONTINUEGATE[]{ "rom_text_continuegate" };
+		constexpr char ID_ROM_TEXT_QUESTION_CONTINUEGATE[]{ "rom_text_question_continuegate" };
 		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
 		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
