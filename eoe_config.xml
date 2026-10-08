@@ -417,6 +417,12 @@
 		<const name="rom_iscriptactionshowmantra" value="$8737" />
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" region="jp,en-transl" value="$8b5f" />
 		<const name="rom_playermenu_handleinventorymenuinput_cmp_worldno" value="$8b87" />
+		<const name="rom_text_check_continuegate" region="jp,en-transl" value="$9d51" />
+		<const name="rom_text_check_continuegate" region="us-rev-a,eu" value="$996e" />
+		<const name="rom_text_check_continuegate" value="$992a" />
+		<const name="rom_text_continuegate" region="jp,en-transl" value="$9d7a" />
+		<const name="rom_text_continuegate" region="us-rev-a,eu" value="$999a" />
+		<const name="rom_text_continuegate" value="$9956" />
 		<const name="rom_mantraload" region="jp,en-transl" value="$99cd" />
 		<const name="rom_mantraload" value="$95e9" />
 		<const name="rom_startscreen_draw" region="jp,en-transl" value="$a236" />

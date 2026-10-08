@@ -10,6 +10,7 @@ namespace fh {
 
 	namespace ROM {
 		// bank 12 addresses
+		constexpr word TextBox_RectRecompute{ 0x81c0 };
 		constexpr word IScripts_Begin{ 0x8242 };
 		constexpr word IScripts_JumpTable_Ref_U{ 0x8273 };
 		constexpr word IScripts_JumpTable_Ref_L{ 0x8277 };
@@ -18,7 +19,9 @@ namespace fh {
 		constexpr word TextBox_OpenForPortrait{ 0x821f };
 		constexpr word TextBox_ClearForPortraitAndText{ 0x822b };
 		constexpr word IScripts_MessageFinish{ 0x82b4 };
-		// JP diverges from US/EU at [$0c:$8302]
+		// JP diverges from US/EU at [$0c:$8302] (delta +3)
+		// JP diverges further from US/EU at [$0c:$8701-$8b5f] (delta +37)
+		// JP diverges further from US/EU at [$0c:$8b5f-$95e9] (delta +1004)
 
 		constexpr word Menu_WaitInput{ 0x84ed };
 		constexpr word Portrait_Pump{ 0x87b0 };
@@ -26,12 +29,13 @@ namespace fh {
 		constexpr word IconDraw{ 0x8c58 };
 		constexpr word OpenWindowDraw{ 0x8ef1 };
 		constexpr word WindowClose{ 0x9002 };
-		constexpr word Text_ContinueGate{ 0x9956 };
+		// EU diverges from US at [$0c:$95e9-$992a] (delta +75)
 		constexpr word TextGridLay{ 0x9910 };
+		constexpr word Text_ContinueGate{ 0x9956 }; // ID_ROM_TEXT_CONTINUEGATE
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
 		constexpr word IScripts_RootPointerHi{ 0xa003 };
+
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
-		constexpr word TextBox_RectRecompute{ 0x81c0 };
 
 		// bank 14 addresses
 		constexpr word Player_CheckShieldHitByMagic{ 0x877c };
@@ -406,6 +410,8 @@ namespace fh {
 		constexpr char ID_ROM_FINDSELLMENUENTRY_TAX[]{ "rom_findsellmenuentry_tax" };
 		constexpr char ID_ROM_PLAYERMENU_HANDLEINVENTORYMENUINPUT_CMP_WORLDNO[]{ "rom_playermenu_handleinventorymenuinput_cmp_worldno" };
 		constexpr char ID_ISCRIPTACTIONSHOWMANTRA[]{ "rom_iscriptactionshowmantra" };
+		constexpr char ID_ROM_TEXT_CHECK_CONTINUEGATE[]{ "rom_text_check_continuegate" };
+		constexpr char ID_ROM_TEXT_CONTINUEGATE[]{ "rom_text_continuegate" };
 		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
 		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
