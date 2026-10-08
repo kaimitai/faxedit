@@ -740,6 +740,19 @@ void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
 	klib::Asm6502::apply_byte(p_rom, OP_BEQ, 14, ROM::PendantBugBNE);
 }
 
+word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>& p_rom,
+	word cpu_addr, const fh::GeneralHack& p_hack) {
+	const bool startmenu{ p_hack.bool_or("start_menu", false) };
+
+	if (startmenu) {
+		klib::Asm6502 code;
+		code.lda_imm(0xff);
+		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckShowPlayerMenu);
+	}
+
+	return cpu_addr;
+}
+
 word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
 	if (!p_hack.has_param("data"))
@@ -1160,6 +1173,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 			break;
 		case fh::GeneralHackLib::BugFixes:
 			install_BugFixes(patched_rom);
+			break;
+		case fh::GeneralHackLib::Misc:
+			cpu_addr = install_Misc(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::PermaDoors:
 			cpu_addr = install_PermaDoors(p_config, patched_rom, cpu_addr, hack, p_game);
