@@ -5673,8 +5673,6 @@ void fh::HackManager::emit_arm_role_tail(const fe::Config& p_config, klib::Asm65
 // and extends the scripting language itself
 std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,
 	std::size_t p_file_offset, const std::vector<HackLib>& p_lib, std::size_t p_base_opcode_count) const {
-	clear_BankedStrings_fixups();
-
 	const std::set<HackLib> FLAG_REQUIRED{ HackLib::SetFlag, HackLib::ClearFlag, HackLib::IfFlag,
 	HackLib::SelectFlag, HackLib::SetSelectedFlag, HackLib::ClearSelectedFlag, HackLib::IfSelectedFlag,
 	HackLib::AtlasDevReadFlagToVar };

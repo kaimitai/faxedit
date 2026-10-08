@@ -12,9 +12,11 @@ namespace fh {
 		// bank 12 addresses
 		constexpr word TextBox_RectRecompute{ 0x81c0 };
 		constexpr word IScripts_PositionAndFillPlaceholderText{ 0x81e8 };
+		constexpr word DEADCODE_TextBox_ClosePortrait{ 0x8225 };
 		constexpr word IScripts_Begin{ 0x8242 };
 		constexpr word IScripts_JumpTable_Ref_U{ 0x8273 };
 		constexpr word IScripts_JumpTable_Ref_L{ 0x8277 };
+		constexpr word IScripts_JumpTable_OriginalLocation{ 0x827b };
 		constexpr word TextBox_OpenForNPC{ 0x81e2 };
 		constexpr word TextBox_Close{ 0x81fb };
 		constexpr word TextBox_OpenForPortrait{ 0x821f };

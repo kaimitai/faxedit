@@ -1362,9 +1362,6 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 
 	usage.bank_used = static_cast<std::size_t>(cpu_addr) - p_cpu_addr_start;
 
-	if (p_bank == 15)
-		verify_BankedStrings_installed();
-
 	p_rom = std::move(patched_rom);
 	return usage;
 }

@@ -9,11 +9,27 @@
 namespace {
 	constexpr byte TempMessageBank{ fh::RAM::ZP_e5 };
 
-	std::vector<word> msg_load_fixups, txtbox_nextchar_fixups;
+	constexpr word MsgLoadThunk{ fh::ROM::DEADCODE_TextBox_ClosePortrait };
+	constexpr word NextCharThunk{ fh::ROM::DEADCODE_TextBox_ClosePortrait + 3 };
+
+	void init_thunk_bytes(std::vector<byte>& p_rom) {
+		for (std::size_t i{ 0 }; i < 3; ++i) {
+			p_rom.at(MsgLoadThunk + i) = 0xff;
+			p_rom.at(NextCharThunk + i) = 0xff;
+		}
+	}
+
+	void verify_thunk_bytes(const std::vector<byte>& p_rom) {
+		for (std::size_t i{ 0 }; i < 3; ++i)
+			if (p_rom.at(MsgLoadThunk + i) != 0xff || p_rom.at(NextCharThunk + i) != 0xff)
+				throw std::runtime_error("BankedStrings thunk area is not uninitialized");
+	}
 }
 
 word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
+	verify_thunk_bytes(p_rom);
+
 	const bool sram{ p_hack.bool_or("sram", false) };
 
 	const word install_addr{ sram ? sram_hack_addr() : cpu_addr };
@@ -36,12 +52,11 @@ word fh::HackManager::install_BankedStrings(const fe::Config& p_config, std::vec
 	const word messages_load_banked_addr{ code.label_addr("Messages_Load-Banked", install_addr) };
 	const word txtbox_shownextchar_addr{ code.label_addr("TextBox_ShowNextChar-Banked", install_addr) };
 
-	// fixup script opcode calls to these entrypoints, then clear the vectors
-	for (auto addr : msg_load_fixups)
-		klib::Asm6502::apply_word(p_rom, messages_load_banked_addr, 12, addr);
-	for (auto addr : txtbox_nextchar_fixups)
-		klib::Asm6502::apply_word(p_rom, txtbox_shownextchar_addr, 12, addr);
-	clear_BankedStrings_fixups();
+	// update thunks
+	klib::Asm6502 thunk_code;
+	thunk_code.jmp(messages_load_banked_addr);
+	thunk_code.jmp(txtbox_shownextchar_addr);
+	thunk_code.apply_hack_and_clear(p_rom, 12, MsgLoadThunk);
 
 	if (sram) {
 		install_sram_hack(p_rom, code);
@@ -60,15 +75,11 @@ word fh::HackManager::apply_MsgEx(const fe::Config& p_config, std::vector<byte>&
 
 	// string index
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
-
-	code.label("@msg-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(MsgLoadThunk);
 
 	code.label("@write_loop");
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
-
-	code.label("@shownextchar-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(NextCharThunk);
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_CONTINUEGATE));
 	code.bcc("@not_dismissed");
@@ -78,9 +89,7 @@ word fh::HackManager::apply_MsgEx(const fe::Config& p_config, std::vector<byte>&
 	code.bne("@write_loop");
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
-	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
-
+	init_thunk_bytes(p_rom);
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -93,24 +102,18 @@ word fh::HackManager::apply_MsgNoskipEx(const fe::Config& p_config, std::vector<
 
 	// string index
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
-
-	code.label("@msg-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(MsgLoadThunk);
 
 	code.label("@loop");
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
-
-	code.label("@shownextchar-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(NextCharThunk);
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_CHECK_CONTINUEGATE));
 	code.bcc("@loop");
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
-	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
-
+	init_thunk_bytes(p_rom);
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -123,15 +126,11 @@ word fh::HackManager::apply_MsgPromptEx(const fe::Config& p_config, std::vector<
 
 	// string index
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
-
-	code.label("@msg-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(MsgLoadThunk);
 
 	code.label("@message_loop");
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
-
-	code.label("@shownextchar-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(NextCharThunk);
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_QUESTION_CONTINUEGATE));
 
@@ -146,9 +145,7 @@ word fh::HackManager::apply_MsgPromptEx(const fe::Config& p_config, std::vector<
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
 
-	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
-	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
-
+	init_thunk_bytes(p_rom);
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
@@ -161,15 +158,11 @@ word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vecto
 
 	// string index
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
-
-	code.label("@msg-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(MsgLoadThunk);
 
 	code.label("@message_loop");
 	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
-
-	code.label("@shownextchar-load");
-	code.jsr(0xffff); // will be fixed up later
+	code.jsr(NextCharThunk);
 
 	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_QUESTION_CONTINUEGATE));
 
@@ -181,18 +174,6 @@ word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vecto
 
 	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
 
-	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
-	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
-
+	init_thunk_bytes(p_rom);
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
-}
-
-void fh::HackManager::verify_BankedStrings_installed(void) const {
-	if (!msg_load_fixups.empty() || !txtbox_nextchar_fixups.empty())
-		throw std::runtime_error("BankedStrings opcode(s) used but BankedStrings general hack was not installed");
-}
-
-void fh::HackManager::clear_BankedStrings_fixups(void) const {
-	msg_load_fixups.clear();
-	txtbox_nextchar_fixups.clear();
 }
