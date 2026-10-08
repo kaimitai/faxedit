@@ -156,5 +156,34 @@ word fh::HackManager::apply_MsgPromptEx(const fe::Config& p_config, std::vector<
 word fh::HackManager::apply_IfMsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
 
+	// string bank
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+	code.sta_zp(TempMessageBank);
+
+	// string index
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE));
+
+	code.label("@msg-load");
+	code.jsr(0xffff); // will be fixed up later
+
+	code.label("@message_loop");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+
+	code.label("@shownextchar-load");
+	code.jsr(0xffff); // will be fixed up later
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_QUESTION_CONTINUEGATE));
+
+	code.bcc("@not_dismissed");
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_SKIPADDRANDINVOKE));
+
+	code.label("@not_dismissed");
+	code.bne("@message_loop");
+
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_JUMPTONEXTADDR));
+
+	msg_load_fixups.push_back(code.label_addr("@msg-load", cpu_addr) + 1);
+	txtbox_nextchar_fixups.push_back(code.label_addr("@shownextchar-load", cpu_addr) + 1);
+
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
