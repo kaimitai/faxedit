@@ -2,6 +2,7 @@
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
 
+#include <algorithm>
 #include <array>
 #include <charconv>
 #include <cstddef>
@@ -14,6 +15,8 @@
 // combat feel: the hero's walk, mercy time, knockback and swing. every knob is
 // an operand byte the vanilla rom already holds, so with default parameters
 // this hack writes nothing at all and uses no code, ram or general hack space.
+// walk above one pixel adds a ladder-centering clamp without changing the
+// walking speed. it uses the stack, not persistent ram.
 //
 // the walk is not one speed. $e27f resets the speed in $a9 and $aa to $00c0
 // on the first frame of a walk, 0.75 pixels per frame, and $e2b8 adds one of
@@ -60,6 +63,7 @@ namespace {
 	const Site ATTACK{ 15, 0xe150, { 0x08, 0x03, 0x08 } };
 	const Site ATTACK_READER{ 15, 0xe138, { 0xdd, 0x50, 0xe1 } };
 	const Site MOVEATTACK{ 15, 0xe199, { 0x30, 0x23 } };
+	const Site CENTER{ 15, 0xe1c5, { 0xe6, 0xa3, 0xa5, 0x9e } };
 
 	[[noreturn]] void fail(const std::string& message) {
 		throw std::runtime_error("AtlasDevCombatFeel: " + message);
@@ -105,6 +109,21 @@ namespace {
 		rom[klib::Asm6502::get_file_offset(s.bank, s.addr) + at] = value;
 	}
 
+	// only the ladder-centering path is clamped. ordinary walking keeps its
+	// configured speed, and a screen-edge move stays with the native mover.
+	void emit_center(klib::Asm6502& code) {
+		code.inc_abs(0x00a3);
+		code.lda_zp(0x9e); code.and_imm(0x0f); code.cmp_imm(8); code.bcs("@right");
+		code.lda_zp(0x9e); code.and_imm(0xf0); code.pha(); code.jsr(0xe220);
+		code.pla(); code.cmp_zp(0x9e); code.bcc("@done"); code.beq("@done"); code.jmp("@cap");
+		code.label("@right");
+		code.lda_zp(0x9e); code.and_imm(0xf0); code.clc(); code.adc_imm(0x10); code.bcs("@edge");
+		code.pha(); code.jsr(0xe1cf); code.pla(); code.cmp_zp(0x9e); code.bcs("@done");
+		code.label("@cap"); code.sta_zp(0x9e); code.lda_imm(0); code.sta_zp(0x9d);
+		code.label("@done"); code.rts();
+		code.label("@edge"); code.jmp(0xe1cf);
+	}
+
 	// a plus separated list of bytes, exactly N long; commas separate hacks
 	template<std::size_t N>
 	std::array<byte, N> byte_list(const fh::GeneralHack& hack, const char* name, std::array<byte, N> fallback) {
@@ -144,11 +163,20 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 		fail(std::format("knockback must be 1 to {} subpixels per frame", SPEED_MAX));
 	for (byte p : attack) if (p == 0) fail("attack phases must be 1 to 255 frames");
 	if (moveattack > 1) fail("moveattack must be 0 or 1");
+	klib::Asm6502 center;
+	if (walk > 0x0100) emit_center(center);
 
 	// every check is complete before any mutation
 	for (const Site* s : { &WALK_BASE, &WALK_CAP, &RAMP, &RAMP_READER, &IFRAMES_A, &IFRAMES_B,
 		&IFRAMES_C, &RELEASE, &KNOCKBACK, &ATTACK, &ATTACK_READER, &MOVEATTACK })
 		require(rom, *s);
+	if (center.size() > 0) {
+		require(rom, CENTER);
+		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+		if (off > rom.size() || center.size() > rom.size() - off
+			|| !std::all_of(rom.begin() + off, rom.begin() + off + center.size(), [](byte b) { return b == 0xff; }))
+			fail("no free space for ladder centering");
+	}
 
 	put(rom, WALK_BASE, 1, static_cast<byte>(walk & 0xff));
 	put(rom, WALK_BASE, 5, static_cast<byte>(walk >> 8));
@@ -161,5 +189,10 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 	put(rom, KNOCKBACK, 5, static_cast<byte>(knockback >> 8));
 	for (std::size_t i{ 0 }; i < 3; ++i) put(rom, ATTACK, i, attack[i]);
 	if (moveattack) put(rom, MOVEATTACK, 1, 0x00);
-	return cpu_addr;
+	if (center.size() == 0) return cpu_addr;
+	const word next{ center.apply_hack_and_clear_get_next_cpu_addr(rom, 15, cpu_addr) };
+	klib::Asm6502 hook;
+	hook.jmp(cpu_addr); hook.nop();
+	hook.apply_hack_and_clear(rom, 15, CENTER.addr);
+	return next;
 }

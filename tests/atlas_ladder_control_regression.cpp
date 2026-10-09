@@ -68,7 +68,7 @@ namespace {
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr).bank_used;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, byte bank, word cpu, std::size_t n) {
@@ -97,17 +97,17 @@ namespace {
 
 	void test_speeds_are_operand_bytes() {
 		auto rom{ vanilla_rom() };
-		install(rom, "AtlasDevLadderControl up=384 down=448 wingup=2 wingdown=512");
+		require(install(rom, "AtlasDevLadderControl up=384 down=448 wingup=2 wingdown=512") == 37, "fast descent body size");
 		require(byte_at(rom, 15, 0xe322) == 0x80, "climb up low operand");
 		require(byte_at(rom, 15, 0xe328) == 0x01, "climb up high operand");
-		require(byte_at(rom, 15, 0xe370) == 0xc0, "climb down low operand");
-		require(byte_at(rom, 15, 0xe376) == 0x01, "climb down high operand");
+		require(hex_at(rom, 15, 0xe36c, 13) == "20cefceaeaeaeaeaeaeaeaeaea", "fast descent hook");
+		require(hex_at(rom, 15, ORG, 13) == "a5a01869c085a0a5a1690185a1", "configured descent speed in body");
 		require(byte_at(rom, 15, 0xe318) == 0x02, "wing boots up operand");
 		require(byte_at(rom, 15, 0xe360) == 0x00, "wing boots down low operand");
 		require(byte_at(rom, 15, 0xe366) == 0x02, "wing boots down high operand");
 		// the surrounding instructions are untouched
 		require(byte_at(rom, 15, 0xe321) == 0xe9, "the sbc opcode moved");
-		require(byte_at(rom, 15, 0xe36f) == 0x69, "the adc opcode moved");
+		require(hex_at(rom, 15, 0xe379, 2) == "c9c1", "the screen boundary comparison moved");
 	}
 
 	void test_attack_is_one_branch_byte() {
@@ -115,6 +115,16 @@ namespace {
 		install(rom, "AtlasDevLadderControl attack=1");
 		require(byte_at(rom, 15, 0xe10b) == 0x00, "the refusing branch was not neutralized");
 		require(hex_at(rom, 15, 0xe107, 3) == "20f6ec", "the predicate call was disturbed");
+	}
+
+	void test_fast_down_refuses_occupied_space() {
+		auto rom{ vanilla_rom() };
+		rom[klib::Asm6502::get_file_offset(15, ORG)] = 0;
+		const auto before{ rom };
+		bool threw{ false };
+		try { install(rom, "AtlasDevLadderControl up=320 down=384"); }
+		catch (const std::runtime_error&) { threw = true; }
+		require(threw && rom == before, "fast descent refusal changed the ROM");
 	}
 
 	// patching one selector and not the other is what draws a third arm
@@ -250,12 +260,12 @@ namespace {
 
 		// all four blocks, in emission order up, down, wing up, wing down
 		auto all{ vanilla_rom() };
-		require(install(all, "AtlasDevLadderControl up=384 down=448 wingup=2 wingdown=512 flag=4") == 35 + 35 + 23 + 35,
+		require(install(all, "AtlasDevLadderControl up=384 down=448 wingup=2 wingdown=512 flag=4") == 35 + 58 + 23 + 35,
 			"four stubs size");
 		require(hex_at(all, 15, 0xe31e, 3) == "20cefc", "up call");
 		require(hex_at(all, 15, 0xe36c, 3) == "20f1fc", "down call at stub 35");
-		require(hex_at(all, 15, 0xe314, 3) == "2014fd", "wing up call at stub 70");
-		require(hex_at(all, 15, 0xe35c, 3) == "202bfd", "wing down call at stub 93");
+		require(hex_at(all, 15, 0xe314, 3) == "202bfd", "wing up call after capped descent");
+		require(hex_at(all, 15, 0xe35c, 3) == "2042fd", "wing down call after capped descent");
 		require(hex_at(all, 15, 0xe369, 3) == "4c79e3", "the jmp after the wing down block moved");
 		require(hex_at(all, 15, 0xe379, 2) == "c9c1", "the cmp after the down block moved");
 
@@ -290,6 +300,7 @@ int main() {
 		test_defaults_write_nothing();
 		test_speeds_are_operand_bytes();
 		test_attack_is_one_branch_byte();
+		test_fast_down_refuses_occupied_space();
 		test_pose_moves_both_selectors();
 		test_runtime_flag_redirects_only_the_call();
 		test_flag_arithmetic();

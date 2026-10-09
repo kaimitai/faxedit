@@ -98,7 +98,7 @@ std::size_t install(std::vector<byte>& rom, const std::string& spec,
     std::size_t origin = ORG, std::size_t end = END, const std::string& region = "us") {
     const auto all{ fh::parse_general_hacks(spec) };
     const auto selected{ fh::filter_general_hacks(15, all) };
-    return fh::HackManager{}.install_general_hacks(config(region), rom, 15, origin, end, selected, nullptr);
+    return fh::HackManager{}.install_general_hacks(config(region), rom, 15, origin, end, selected, nullptr).bank_used;
 }
 
 void refuses(std::vector<byte> rom, const std::string& spec,
@@ -535,7 +535,8 @@ void test_ladder_control_composition() {
             const auto helper{install(expected, control, ORG + body)};
             const bool runtime{options.find("attackflag=") != std::string::npos
                 && options.find("attackflag=255") == std::string::npos};
-            require(helper == (runtime ? 14U : 0U), "ladder control helper size");
+            const bool fast_down{options.find(" down=") != std::string::npos};
+            require(helper == (runtime ? 14U : 0U) + (fast_down ? 37U : 0U), "ladder control helper size");
             for (const std::string spec : {crown + '\n' + control, control + '\n' + crown}) {
                 auto actual{source};
                 require(install(actual, spec, ORG, ORG + body + helper) == body + helper
@@ -597,7 +598,7 @@ void test_crown_script_ram() {
                 for (const std::string mode : {"floor", "vanilla"}) {
                     rom = source;
                     require(fh::HackManager{}.install_general_hacks(cfg, rom, 15, ORG, END,
-                        fh::parse_general_hacks("AtlasDevLadderCrown mode=" + mode)) == (mode == "floor" ? 315 : 0),
+                        fh::parse_general_hacks("AtlasDevLadderCrown mode=" + mode)).bank_used == (mode == "floor" ? 315 : 0),
                         "RAM-free Floor/vanilla must not inherit Crown's storage claim");
                 }
             }
@@ -691,7 +692,7 @@ void export_rom(const char* source_name, const char* output_name, const char* or
     file.write(reinterpret_cast<const char*>(rom.data()), static_cast<std::streamsize>(rom.size()));
     file.close();
     if (!file) throw std::runtime_error("could not finish export output");
-    std::cout << "{\"origin\":" << origin << ",\"body_bytes\":" << used << ",\"rom_bytes\":" << rom.size() << "}\n";
+    std::cout << "{\"origin\":" << origin << ",\"body_bytes\":" << used.bank_used << ",\"rom_bytes\":" << rom.size() << "}\n";
 }
 
 }

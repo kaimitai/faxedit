@@ -19,6 +19,8 @@
 // boots ascent is whole pixels rather than subpixels because vanilla
 // subtracts from the whole pixel byte only, and widening it needs 14 bytes
 // where 7 are available.
+// descent above one pixel uses a small post-step floor cap; slower descent
+// and wing boots retain the original instructions.
 //
 // flag=n makes the climb speeds a runtime choice: each changed block of
 // speed code (the whole add or subtract pair, 13 bytes, or the 7 byte wing
@@ -248,6 +250,16 @@ namespace {
 		}
 	}
 
+	// faster descent can cross the floor between the native pre-step probe
+	// and its next tick. cap it before the sideways collision sees a third row.
+	void emit_floor_cap(klib::Asm6502& p_code) {
+		p_code.cmp_imm(0xc1); p_code.bcs("@floor_done");
+		p_code.ldx_imm(3); p_code.jsr(0xe6c8); p_code.beq("@floor_done");
+		p_code.lda_zp(0xa1); p_code.and_imm(0xf0); p_code.sta_zp(0xa1);
+		p_code.lda_imm(0); p_code.sta_zp(0xa0);
+		p_code.label("@floor_done"); p_code.lda_zp(0xa1);
+	}
+
 	// one stub per changed block: flag set runs the new constants, clear runs
 	// the vanilla ones; both paths end in rts with carry and A as vanilla left them
 	void emit_speed_stubs(klib::Asm6502& p_code, const Settings& s) {
@@ -260,6 +272,8 @@ namespace {
 			p_code.and_imm(static_cast<byte>(1 << (s.speed_flag & 7)));
 			p_code.beq(vanilla);
 			emit_step(p_code, block, s.value_of(block));
+			if (block.addr == BLOCK_DOWN.addr && s.down > 0x0100)
+				emit_floor_cap(p_code);
 			p_code.rts();
 			p_code.label(vanilla);
 			emit_step(p_code, block, block.vanilla);
@@ -321,8 +335,14 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	klib::Asm6502 speeds;
 	if (s.want_speed_gate())
 		emit_speed_stubs(speeds, s);
+	else if (s.down > 0x0100) {
+		speeds.label("@down");
+		emit_step(speeds, BLOCK_DOWN, s.down);
+		emit_floor_cap(speeds);
+		speeds.rts();
+	}
 	const auto runtime_size{ s.want_runtime() ? runtime.size() : 0 };
-	const auto size{ runtime_size + (s.want_speed_gate() ? speeds.size() : 0) };
+	const auto size{ runtime_size + speeds.size() };
 
 	// every ownership and capacity check is complete before any mutation
 	for (std::size_t i{ 0 }; i < 7; ++i)
@@ -354,18 +374,18 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 		put(p_rom, WING_DOWN_LO.addr, static_cast<byte>(s.wing_down & 0xff));
 		put(p_rom, WING_DOWN_HI.addr, static_cast<byte>(s.wing_down >> 8));
 	}
-	else {
+	if (speeds.size() > 0) {
 		// label positions are read before the apply clears them
 		const word base{ static_cast<word>(cpu_addr + runtime_size) };
 		word stubs[4]{};
 		const Block blocks[4]{ BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN };
 		for (std::size_t i{ 0 }; i < 4; ++i)
-			if (s.changed(blocks[i]))
+			if (s.want_speed_gate() ? s.changed(blocks[i]) : blocks[i].addr == BLOCK_DOWN.addr)
 				stubs[i] = static_cast<word>(base + speeds.label_position(blocks[i].label));
 		speeds.apply_hack_and_clear(p_rom, 15, base);
 		for (std::size_t i{ 0 }; i < 4; ++i) {
 			const Block& block{ blocks[i] };
-			if (!s.changed(block))
+			if (!(s.want_speed_gate() ? s.changed(block) : block.addr == BLOCK_DOWN.addr))
 				continue;
 			const word stub{ stubs[i] };
 			put(p_rom, block.addr, 0x20);
