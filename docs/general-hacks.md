@@ -18,12 +18,15 @@ This document describes the hacks in the current library and their parameters. I
 
 > Keep a clean base ROM and generate patched ROMs from it. Your project XML, config overrides, ASM/music sources and other source files should be considered the authoritative project state rather than changes made directly to a generated ROM.
 
-
 <hr>
 
 ## Table of Contents
 
 - [Enabling General Hacks](#enabling-general-hacks)
+- [SRAM-Backed Hacks](#sram-backed-hacks)
+  - [Requirements](#requirements)
+  - [Backing ROM configuration](#backing-rom-configuration)
+  - [Choosing which hacks to install in SRAM](#choosing-which-hacks-to-install-in-sram)
 - [The Library](#the-library)
   - [KillSwitch](#killswitch)
   - [SameWorldTransPal2Mus](#sameworldtranspal2mus)
@@ -113,134 +116,73 @@ Hacks are installed in the order listed. An unknown hack name or an invalid para
 
 <hr>
 
+## SRAM-Backed Hacks
+
+Many general hacks support installation in SRAM instead of ROM. This provides approximately 6 KB of additional space for custom code without requiring bank switching when executing it.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `sram` | `false` | Install the hack in SRAM instead of its normal ROM location. |
+
+For example:
+
+```xml
+<hack name="KillSwitch" sram="true" />
+```
+
+SRAM-backed code is stored in a designated ROM bank and copied into SRAM during game initialization. The hooks can then call it directly, without switching banks.
+
+The SRAM code area starts at `$6806`, immediately after the savefile, and extends to `$7FFF`. All SRAM-backed hacks share this space and are installed contiguously.
+
+If any SRAM-backed hacks are installed, a 9-byte trampoline is added to the fixed ROM bank 15. The loader itself resides in the backing ROM bank, keeping the fixed-bank overhead minimal.
+
+### Requirements
+
+SRAM-backed hacks require a ROM with SRAM support. This can be a ROM that already supports SRAM, or one where the `SRAM` hack is included in the installation list.
+
+Installation fails if SRAM backing is requested without SRAM support. For this reason, `sram=false` is the default for all hacks.
+
+### Backing ROM configuration
+
+The ROM bank and starting CPU address used to store SRAM-backed code are configurable through these constants:
+
+```xml
+<!-- sram code backing ROM -->
+<const name="sram_code_bank" region="en-transl,512" value="27" />
+<const name="sram_code_bank" value="9" />
+<const name="sram_code_addr" region="en-transl,512" value="$8000" />
+<const name="sram_code_addr" value="$a700" />
+```
+
+| ROM type | Default bank | Starting address |
+| --- | --- | --- |
+| Standard ROMs | 9 | `$A700` |
+| Expanded ROMs (`en-transl`, `512`) | 27 | `$8000` |
+
+Standard ROMs use approximately the last third of bank 9 for SRAM backing. Expanded ROMs have a dedicated backing bank, making space management considerably easier.
+
+**Important:** When using SRAM-backed hacks on standard ROMs, do not select bank 9 with automatic address allocation for other hacks. The normal ROM allocation mechanism can conflict with the SRAM backing cursor, causing overlapping code and corrupting the ROM.
+
+If bank 9 must also be used for other hacks, addresses must be managed explicitly to avoid overlapping the SRAM backing area.
+
+### Choosing which hacks to install in SRAM
+
+In general, enabling `sram=true` wherever supported is recommended. The installer manages the SRAM allocation automatically, placing code contiguously without requiring users to choose individual addresses.
+
+SRAM-backed hacks have several advantages:
+
+- They do not consume the normal free ROM space used by other hacks, apart from the shared 9-byte trampoline in bank 15.
+- They execute without bank switching.
+- Multiple hacks share the same automatically managed SRAM allocation.
+- They relieve pressure on the limited free space in the fixed bank 15.
+
+The available SRAM space is limited to approximately 6 KB. If this becomes exhausted, some hacks must be installed normally instead. ROM banks 12, 14 and the fixed bank 15 can still be used for hacks, subject to their available space.
+
+Expanded ROMs are particularly convenient because they provide additional free banks. Standard ROMs have much tighter constraints, with several features competing for the available space in bank 9.
+
+<hr>
+
 ## The Library
-
-### AtlasDevSpriteSpeed
-
-Reduces the CPU time spent building sprites. It keeps every monster update,
-collision check and draw request, including clipping, background priority,
-sprite ordering and the HUD's sprite-zero split. It does not change the monster
-limit or remove the NES eight-sprites-per-scanline limit.
-
-```text
-AtlasDevSpriteSpeed
-```
-
-| parameter | default | meaning |
-| --- | --- | --- |
-| `mode` | `both` | `clear` speeds up sprite-buffer clearing; `draw` speeds up visible tile emission; `both` enables both |
-
-Clear mode uses 204 bytes from the normal bank 15 allocation cursor and replaces
-three bytes at `$cb84`. Draw mode uses no extra code allocation: it replaces two
-65-byte spans at `$f120` and `$f1d4`. Neither mode needs extra RAM or frame-scheduler
-vectors. The allocator's capacity checks apply, and altered hook/continuation
-instructions or an occupied helper range stop installation without changing the
-ROM. Rebuild from your clean project source; installing a mode twice is rejected.
-
-Other hacks still need room in the same bank. Default Ladder Crown uses 605
-bytes, so adding the 204-byte clear helper exceeds a 786-byte allocation window.
-Use `mode=draw` with default Crown, or `AtlasDevLadderCrown mode=floor` with
-`mode=both` when enough space remains. A hack that changes the checked sprite
-instructions cannot be combined with the affected mode.
-
-The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
-Mirroring, battery support and header padding are not compatibility tests.
-Instruction checks determine whether the sprite code is compatible; runtime
-testing currently covers US revision 0 only.
-
-This is an experimental performance option. In a matched 1,800-frame workload
-with six small monsters, missed update deadlines fell from 73 to 1. Eight small
-monsters and six larger monsters still exceeded the frame budget. Savings depend
-on the scene and other enabled features; this does not guarantee full speed in
-every crowded room.
-
-### AtlasDevPpuDrainUnroll
-
-Speeds up full-tile transfers from the graphics queue to the PPU. Short records
-and records crossing the queue boundary use the original byte loop. This helps
-graphics uploads; it does not reduce monster AI or remove sprite flicker.
-
-```text
-AtlasDevPpuDrainUnroll
-```
-
-| parameter | default | meaning |
-| --- | --- | --- |
-| `budget` | `48` | Payload threshold per drain, 1..64; `64` lets a fourth 16-byte tile through instead of three |
-
-The six-record limit stays unchanged. This is a post-record threshold, not a
-hard byte ceiling: the last record can exceed it. Default 48 keeps the original
-threshold. Higher values spend more vblank time and need testing with the other
-graphics features in your project. Values above 64 are not supported.
-
-The helper uses 131 bytes plus 0..255 bytes of page-alignment padding in bank 15.
-It uses no extra RAM or scheduler vectors and can share the normal allocator
-with Sprite Speed and the frame scheduler, provided space remains. Occupied
-allocation space or changed queue instructions reject the build transactionally.
-List this before unaligned helpers to reduce padding when practical.
-
-The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
-Mirroring, battery bits and header padding may vary. Instruction checks determine
-source compatibility; runtime coverage is currently US revision 0 only.
-
-For a non-wrapping 16-byte record the copier saves 76 CPU cycles. Short records
-cost 11 extra cycles and wrapping records can cost 15 extra cycles. This is an
-experimental workload-dependent optimization, not a guarantee of faster frames.
-
-### AtlasDevQueueLess
-
-Avoids uploading the same entity graphics several times while loading a room.
-When a higher, already-loaded slot has the same entity ID, the next slot reuses
-its CHR tile base. The entities still update and draw independently. ID `$30`
-keeps its normal upload because it also loads a companion graphics set.
-
-```text
-AtlasDevQueueLess
-```
-
-| parameter | default | meaning |
-| --- | --- | --- |
-| `dedup` | `1` | Reuse duplicate room-entry sprite uploads; `0` installs nothing |
-
-Uses 32 bytes from the normal bank 15 allocation cursor and replaces the
-three-byte upload call at `$c2a6`. No extra RAM, scheduler vectors or NMI work
-are needed. It can be combined with Sprite Speed and PPU Drain Unroll when
-enough bank space remains. Hook, uploader and allocation checks reject altered
-or occupied inputs without changing the ROM. Rebuild from a clean project
-source; installing this hook twice is rejected.
-
-This version only reduces duplicate room-entry uploads. It does not change
-text-canvas clearing, cache graphics between rooms, speed up AI or remove
-sprite flicker. Rooms with unique entity IDs do not benefit. Shared CHR tiles
-must not be edited independently by per-instance custom graphics code.
-
-The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
-Mirroring, battery bits and header padding may vary. Instruction checks determine
-compatibility; runtime evidence currently covers US revision 0 only.
-
-### AtlasDevPreventTextbox
-
-> idea by songbirder
-
-Lets an interaction script run with no textbox. A script whose textbox value is `$7f` draws no window when it starts and erases none when it ends; everything else in the script runs as before. Useful for cutscenes and for scripts that only move entities, change tiles or play music, for example on an invisible trigger entity.
-
-```text
-AtlasDevPreventTextbox
-```
-
-```text
-.textbox $7f
-```
-
-| parameter | default | meaning |
-| --- | --- | --- |
-| `textbox` | `$7f` | The textbox value that prevents the window, 1 to 127 |
-
-The value must be 1 to 127: 0 is the plain box and 128 and up are the portraits. No stock script uses any value in that range, so the default changes nothing in an unmodified game.
-
-Messages in such a script still run and still wait for a button, but they cannot be seen, so leave them out or open a window yourself. Item grants, the sell menu and the shops open their own window and still do.
-
-Uses 22 bytes from the normal bank 15 allocation cursor and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
 
 ### KillSwitch
 
@@ -255,6 +197,8 @@ Pressing Select while the game is paused kills the player when the game is unpau
 ```text
 KillSwitch
 ```
+
+---
 
 ### SameWorldTransPal2Mus
 
@@ -302,6 +246,8 @@ Starts a new game with more resources: health and mana start at 80, starting gol
 FastStart gold=2000 ring_of_elf=false
 ```
 
+---
+
 ### QuestFlagItemDrops
 
 The wyvern's mattock and the stone dropper's wing boots normally depend on quest flags, which makes the drops unrepeatable. With this hack the drop check asks whether the player actually has the item in inventory or equipped, so a lost item can be earned again.
@@ -330,6 +276,8 @@ Boss-locked item sprites appear regardless of which boss guards the screen, so c
 BossLockedItems enemies=false
 ```
 
+---
+
 ### FlexibleItems
 
 > by [Notlob](https://github.com/Notlobb/Randumizer) and [Songbirder](https://github.com/rgeraldporter)
@@ -349,6 +297,8 @@ Loosens the vanilla item restrictions in four independent ways: items can be use
 FlexibleItems buildings=true state=false price=250 wep_indoors=true
 ```
 
+---
+
 ### FogRules
 
 Enables the fog effect on arbitrary world and palette combinations while reusing the vanilla fog update routine. Rules are `world:palette` pairs separated by `+`; a bare world number enables fog on every palette in that world. At least one rule is required.
@@ -361,6 +311,8 @@ Enables the fog effect on arbitrary world and palette combinations while reusing
 ```text
 FogRules rules=0:1+0:3+0:5+6:3+7
 ```
+
+---
 
 ### DynamicTilesets
 
@@ -415,6 +367,8 @@ DynamicTilesets changes which CHR tileset is loaded; it does not change a world'
 
 See the document [Tileset Graphics and Metatiles](./tileset-gfx.md) for an example of how to use this hack in practice.
 
+---
+
 ### PoisonPickup
 
 > by [Notlob](https://github.com/Notlobb/Randumizer)
@@ -434,6 +388,8 @@ PoisonPickup item=16 script=false
 ```
 
 See the [Item List](#item-list) for valid item values.
+
+---
 
 ### SRAM
 
@@ -462,6 +418,8 @@ With `color=true`, `CONTINUE` on the start screen is colored gray when no valid 
 The attribute data is configured by `sram_start_screen_attrs` in `eoe_config.xml`. Override this config item if you want to change the presentation. It specifies a PPU address followed by the attribute bytes written from that address onward for the valid and invalid save states.
 
 Use `color=false` to disable the attribute changes entirely.
+
+---
 
 ### TextSpeed
 
@@ -494,6 +452,8 @@ This hack has no parameters.
 BugFixes
 ```
 
+---
+
 ### ConditionalScript
 
 Makes sprite iScripts conditional based on extended flags.
@@ -525,6 +485,8 @@ By default the behavior is applied to triggers, but not NPCs.
 ```text
 ConditionalScript
 ```
+
+---
 
 ### ItemScripts
 
@@ -600,6 +562,8 @@ If you use a script opcode which does not return to the script context, like `At
 
 Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
 
+---
+
 ### PermaDoors
 
 Keeps doors unlocked after they have been opened with a key. An alternative to the script-based approach described in [Advanced Modding](./advanced-modding.md).
@@ -622,6 +586,8 @@ PermaDoors bank=28 sound=true
 ```
 
 Works with [AtlasDevSmartKeys](#atlasdevsmartkeys) when PermaDoors is listed first: a door opened with a carried key is then remembered like any other.
+
+---
 
 ### FlagDoorRequirements
 
@@ -689,6 +655,8 @@ For example, to add requirements 9 and 10:
 The configured entries are merged with the standard door requirement labels. The `str` values are the labels shown for these requirements in the editor and can be named to describe their purpose in the project.
 
 Add an entry for each extended requirement used by `FlagDoorRequirements`. For example, if the hack defines requirements 9-11, the override should contain labels for requirements 9, 10 and 11.
+
+---
 
 ### OintmentFix
 
@@ -1614,6 +1582,141 @@ AtlasDevLandingTuck
 AtlasDevLandingTuck profile=light
 AtlasDevLandingTuck profile=heavy flag=24
 ```
+
+<hr>
+
+### AtlasDevSpriteSpeed
+
+Reduces the CPU time spent building sprites. It keeps every monster update,
+collision check and draw request, including clipping, background priority,
+sprite ordering and the HUD's sprite-zero split. It does not change the monster
+limit or remove the NES eight-sprites-per-scanline limit.
+
+```text
+AtlasDevSpriteSpeed
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mode` | `both` | `clear` speeds up sprite-buffer clearing; `draw` speeds up visible tile emission; `both` enables both |
+
+Clear mode uses 204 bytes from the normal bank 15 allocation cursor and replaces
+three bytes at `$cb84`. Draw mode uses no extra code allocation: it replaces two
+65-byte spans at `$f120` and `$f1d4`. Neither mode needs extra RAM or frame-scheduler
+vectors. The allocator's capacity checks apply, and altered hook/continuation
+instructions or an occupied helper range stop installation without changing the
+ROM. Rebuild from your clean project source; installing a mode twice is rejected.
+
+Other hacks still need room in the same bank. Default Ladder Crown uses 605
+bytes, so adding the 204-byte clear helper exceeds a 786-byte allocation window.
+Use `mode=draw` with default Crown, or `AtlasDevLadderCrown mode=floor` with
+`mode=both` when enough space remains. A hack that changes the checked sprite
+instructions cannot be combined with the affected mode.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery support and header padding are not compatibility tests.
+Instruction checks determine whether the sprite code is compatible; runtime
+testing currently covers US revision 0 only.
+
+This is an experimental performance option. In a matched 1,800-frame workload
+with six small monsters, missed update deadlines fell from 73 to 1. Eight small
+monsters and six larger monsters still exceeded the frame budget. Savings depend
+on the scene and other enabled features; this does not guarantee full speed in
+every crowded room.
+
+<hr>
+
+### AtlasDevPpuDrainUnroll
+
+Speeds up full-tile transfers from the graphics queue to the PPU. Short records
+and records crossing the queue boundary use the original byte loop. This helps
+graphics uploads; it does not reduce monster AI or remove sprite flicker.
+
+```text
+AtlasDevPpuDrainUnroll
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `budget` | `48` | Payload threshold per drain, 1..64; `64` lets a fourth 16-byte tile through instead of three |
+
+The six-record limit stays unchanged. This is a post-record threshold, not a
+hard byte ceiling: the last record can exceed it. Default 48 keeps the original
+threshold. Higher values spend more vblank time and need testing with the other
+graphics features in your project. Values above 64 are not supported.
+
+The helper uses 131 bytes plus 0..255 bytes of page-alignment padding in bank 15.
+It uses no extra RAM or scheduler vectors and can share the normal allocator
+with Sprite Speed and the frame scheduler, provided space remains. Occupied
+allocation space or changed queue instructions reject the build transactionally.
+List this before unaligned helpers to reduce padding when practical.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery bits and header padding may vary. Instruction checks determine
+source compatibility; runtime coverage is currently US revision 0 only.
+
+For a non-wrapping 16-byte record the copier saves 76 CPU cycles. Short records
+cost 11 extra cycles and wrapping records can cost 15 extra cycles. This is an
+experimental workload-dependent optimization, not a guarantee of faster frames.
+
+<hr>
+
+### AtlasDevQueueLess
+
+Avoids uploading the same entity graphics several times while loading a room.
+When a higher, already-loaded slot has the same entity ID, the next slot reuses
+its CHR tile base. The entities still update and draw independently. ID `$30`
+keeps its normal upload because it also loads a companion graphics set.
+
+```text
+AtlasDevQueueLess
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `dedup` | `1` | Reuse duplicate room-entry sprite uploads; `0` installs nothing |
+
+Uses 32 bytes from the normal bank 15 allocation cursor and replaces the
+three-byte upload call at `$c2a6`. No extra RAM, scheduler vectors or NMI work
+are needed. It can be combined with Sprite Speed and PPU Drain Unroll when
+enough bank space remains. Hook, uploader and allocation checks reject altered
+or occupied inputs without changing the ROM. Rebuild from a clean project
+source; installing this hook twice is rejected.
+
+This version only reduces duplicate room-entry uploads. It does not change
+text-canvas clearing, cache graphics between rooms, speed up AI or remove
+sprite flicker. Rooms with unique entity IDs do not benefit. Shared CHR tiles
+must not be edited independently by per-instance custom graphics code.
+
+The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
+Mirroring, battery bits and header padding may vary. Instruction checks determine
+compatibility; runtime evidence currently covers US revision 0 only.
+
+<hr>
+
+### AtlasDevPreventTextbox
+
+> idea by songbirder
+
+Lets an interaction script run with no textbox. A script whose textbox value is `$7f` draws no window when it starts and erases none when it ends; everything else in the script runs as before. Useful for cutscenes and for scripts that only move entities, change tiles or play music, for example on an invisible trigger entity.
+
+```text
+AtlasDevPreventTextbox
+```
+
+```text
+.textbox $7f
+```
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `textbox` | `$7f` | The textbox value that prevents the window, 1 to 127 |
+
+The value must be 1 to 127: 0 is the plain box and 128 and up are the portraits. No stock script uses any value in that range, so the default changes nothing in an unmodified game.
+
+Messages in such a script still run and still wait for a button, but they cannot be seen, so leave them out or open a window yourself. Item grants, the sell menu and the shops open their own window and still do.
+
+Uses 22 bytes from the normal bank 15 allocation cursor and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
 
 <hr>
 
