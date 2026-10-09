@@ -32,7 +32,7 @@ namespace fh {
 		constexpr word IconDraw{ 0x8c58 };
 		constexpr word OpenWindowDraw{ 0x8ef1 };
 		constexpr word WindowClose{ 0x9002 };
-		// EU diverges from US at [$0c:$95e9-$992a] (delta +75)
+		// EU diverges from US at [$0c:$95e9-$992a] (delta +44)
 		constexpr word TextGridLay{ 0x9910 };
 		constexpr word Text_ContinueGate{ 0x9956 }; // ID_ROM_TEXT_CONTINUEGATE
 		constexpr word IScripts_RootPointerLo{ 0x9f6b };
@@ -95,6 +95,7 @@ namespace fh {
 		constexpr word UseRedPotionEffect{ 0xc53b };
 		constexpr word UseWingBootsEffect{ 0xc581 };
 		constexpr word UseHourGlassEffect{ 0xc5d0 };
+		constexpr word UseHourGlass_HalveHP{ 0xc5d8 };
 		// the hurt pipeline's HP step: 16-bit subtract from the damage cells,
 		// clamp, HUD bar, Elixir or death latch. same address in every region
 		constexpr word Player_ReduceHP{ 0xc08e };
@@ -126,6 +127,7 @@ namespace fh {
 		constexpr word Fog_OnTick_CMP_02{ 0xdfc7 };
 		constexpr word GameLoop_CheckShowPlayerMenu{ 0xe016 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
+		constexpr word Player_SetInitialState_SetFlags{ 0xe0bc };
 		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };

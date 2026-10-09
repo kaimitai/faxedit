@@ -223,12 +223,15 @@ word fh::HackManager::install_OtherWorldTransPal2Mus(const fe::Config& p_config,
 // dynamically added to bank 14, but with hooks and constants in bank 15
 word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) {
+	constexpr byte MAX_MANA{ 80 };
+	constexpr byte MAX_HEALTH{ 80 };
+
 	const word gold{ p_hack.word_or("gold", 1500) };
 	const bool ring_of_elf{ p_hack.bool_or("ring_of_elf", true) };
 	const bool sram{ p_hack.bool_or("sram", false) };
 
-	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Health);
-	klib::Asm6502::apply_byte(p_rom, 80, 15, ROM::Start_Mana);
+	klib::Asm6502::apply_byte(p_rom, MAX_HEALTH, 15, ROM::Start_Health);
+	klib::Asm6502::apply_byte(p_rom, MAX_MANA, 15, ROM::Start_Mana);
 
 	klib::Asm6502 code;
 
@@ -237,6 +240,8 @@ word fh::HackManager::install_FastStart(const fe::Config& p_config, std::vector<
 	code.apply_hack_and_clear(p_rom, 15, ROM::Game_Start_JSR_Game_LoadFirstLevel);
 
 	// new routine
+	code.lda_imm(MAX_MANA);
+	code.sta_abs(RAM::PlayerMana);
 	code.lda_imm(gold % 256);
 	code.sta_abs(RAM::PlayerGold_L);
 	code.lda_imm(gold / 256);
@@ -743,11 +748,17 @@ void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
 word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const bool startmenu{ p_hack.bool_or("start_menu", false) };
+	const bool safe_hourglass{ p_hack.bool_or("safe_hourglass", false) };
+
+	klib::Asm6502 code;
 
 	if (startmenu) {
-		klib::Asm6502 code;
 		code.lda_imm(0xff);
 		code.apply_hack_and_clear(p_rom, 15, ROM::GameLoop_CheckShowPlayerMenu);
+	}
+	if (safe_hourglass) {
+		code.nop(9);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseHourGlass_HalveHP);
 	}
 
 	return cpu_addr;

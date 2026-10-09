@@ -136,7 +136,7 @@ namespace {
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors", "sram" }},
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
 		{ fh::GeneralHackLib::BugFixes, {} },
-		{ fh::GeneralHackLib::Misc, { "start_menu" }},
+		{ fh::GeneralHackLib::Misc, { "start_menu", "safe_hourglass" }},
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc", "sram" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
