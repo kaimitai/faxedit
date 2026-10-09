@@ -14,7 +14,7 @@ using word = uint16_t;
 namespace fh {
 
 	enum class GeneralHackLib {
-		FlexibleItems, DynamicTilesets,
+		FlexibleItems, DynamicTilesets, StageDoorDirection,
 		KillSwitch, SameWorldTransPal2Mus, FogRules, PoisonPickup, TextSpeed,
 		SRAM, BugFixes, ItemScripts, PermaDoors, OintmentFix, FlagDoorRequirements,
 		SpawnScreens, OtherWorldTransPal2Mus, BankedStrings, Misc,

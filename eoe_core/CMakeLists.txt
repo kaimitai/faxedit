@@ -138,6 +138,7 @@ add_library(eoe_core STATIC
     src/fh/DynamicTilesetsHack.cpp
     src/fh/SpawnScreensHack.cpp
     src/fh/BankedStringsHack.cpp
+    src/fh/StageDoorDirectionHack.cpp
 
     # fv
     src/fv/MiscWriter.cpp

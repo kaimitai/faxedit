@@ -49,6 +49,7 @@ This document describes the hacks in the current library and their parameters. I
   - [OintmentFix](#ointmentfix)
   - [SpawnScreens](#spawnscreens)
   - [BankedStrings](#bankedstrings)
+  - [StageDoorDirectionHack](#stagedoordirectionhack)
   - [Misc](#misc)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
@@ -755,6 +756,45 @@ These opcodes behave similarly to their vanilla counterparts, but allow messages
 The `copy` parameter is needed if using a custom ROM which has a string handler running in the same bank as the string data, such as the Translation Hack.
 
 Note: For the Translation Hack and derivatives, you must also avoid using `<p>` in strings that live outside of the standard string bank, due to a bug in its string handler.
+
+---
+
+### StageDoorDirection
+
+Controls which direction the player faces when entering a screen through a stage door.
+
+Normally, the game forces the player to face right. This hack instead preserves the player's current facing direction, with optional overrides for specific destination screens.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `left` | `none` | World/screen pairs that force the player to face left, in the form world:screen. Multiple pairs are separated with + |
+| `right` | `none` | World/screen pairs that force the player to face right, in the form world:screen. Multiple pairs are separated with + |
+| `start_left` | `false` | Make the player face left when starting a new game |
+| `bank` | `15` | ROM bank used for the stage door direction routine |
+| `addr` | `auto` | CPU address for the routine |
+| `sram` | `false` | Add SRAM backing |
+
+For most purposes, installing `StageDoorDirection` without any parameters is sufficient. This simply preserves the player's facing direction instead of forcing them to face right.
+
+`StageDoorDirection start_left=true left=0:3+0:7+2:12 right=1:5+3:9`
+
+In this example:
+
+- The player faces left when starting a new game.
+- World 0, screens 3 and 7 force the player to face left.
+- World 2, screen 12 forces the player to face left.
+- World 1, screen 5 and world 3, screen 9 force the player to face right.
+- All other stage door transitions preserve the player's current facing direction.
+
+The `left` and `right` parameters refer to the destination screen, not the screen the player is leaving. Left overrides take priority if a screen appears in both lists.
+
+**The hack also applies to the starting screen.** The `start_left` parameter controls the player's initial direction when starting a new game, while `left` and `right` control the direction when arriving at that same screen through a door. These can be configured independently.
+
+If the **SameWorld-to-StageDoor** hack is installed, these direction rules also apply to same-world doors that use the stage door transition mechanism.
+
+This is a specialized hack, primarily useful for custom stage layouts and door transitions. Most users will not need to configure individual screens.
+
+The routine can be installed in bank 15, another ROM bank using the vanilla far-call mechanism, or SRAM. When `sram=true`, `bank` and `addr` cannot be specified.
 
 ---
 

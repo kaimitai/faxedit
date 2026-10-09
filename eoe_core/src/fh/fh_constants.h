@@ -111,6 +111,7 @@ namespace fh {
 		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
+		constexpr word Game_Start_ClearXP_Hi{ 0xdb39 };
 		constexpr word Screen_Load{ 0xdd46 };
 		constexpr word Game_SpawnInTemple_LDA_Palette{ 0xdd90 };
 		constexpr word Game_EnterBuilding_STA_ActiveWeapon{ 0xde08 };
