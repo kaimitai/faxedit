@@ -134,9 +134,18 @@ namespace {
 		std::size_t world_count) {
 		klib::Asm6502 code;
 
-		append_StageDoorDirection_LookupTable(
-			code, p_left, p_right, world_count);
-		append_StageDoorDirection_Main(code);
+		if (p_left.empty() && p_right.empty()) {
+			code.label("@main");
+			code.lda_zp(fh::RAM::ZP_PlayerState);
+			code.and_imm(0b01000000);
+			code.sta_zp(fh::RAM::ZP_PlayerState);
+			code.rts();
+		}
+		else {
+			append_StageDoorDirection_LookupTable(
+				code, p_left, p_right, world_count);
+			append_StageDoorDirection_Main(code);
+		}
 
 		return code;
 	}
