@@ -31,6 +31,7 @@ This document assumes you are already familiar with the basic iScript assembly s
   - [Compatibility](#compatibility)
   - [Runtime Helpers](#runtime-helpers)
   - [Custom Script Opcode Library Reference](#custom-script-opcode-library-reference)
+  - [Banked String Opcodes](#banked-string-opcodes)
   - [Example: Keep all Doors in World 1 (Trunk) Unlocked](#example-keep-all-doors-in-world-1-trunk-unlocked)
 - [Tilemap Change System](#tilemap-change-system)
   - [Overview](#overview)
@@ -814,11 +815,40 @@ The extended flags are for general use, whereas the quest flags have special mea
 | 6 | Unused |
 | 7 | Unused |
 
-<hr>
+---
+
+## Banked String Opcodes
+
+The vanilla game stores all message text in a single ROM bank. Large projects, translations, and content-heavy mods can eventually exhaust the available space for strings.
+
+The [BankedStrings](./general-hacks.md#bankedstrings) hack removes this limitation by allowing string data to be distributed across multiple banks. Before using any of the extended string opcodes, that hack must be installed.
+
+The extended opcodes are `MsgEx`, `MsgNoskipEx`, `MsgPromptEx` and `IfMsgPromptEx`.
+
+These opcodes mirror vanilla opcodes `Msg`, `MsgNoskip`, `MsgPrompt` and `IfMsgPrompt`. These vanilla opcodes all act on the standard string bank.
+
+```text
+MsgEx "Welcome to the new continent!"
+MsgNoskipEx "This text must be read in full."
+MsgPromptEx "Do you wish to continue?"
+IfMsgPromptEx "Use the magic key?" @label
+```
+
+These extended string opcodes also encode a bank number behind the scenes, so they all require one additional byte per instruction compared to their vanilla counterparts.
+
+### String Allocation
+
+Unlike vanilla message opcodes, the extended opcodes are not restricted to the standard string bank.
+
+The assembler automatically allocates string data to one of the configured banked-string banks. No special syntax is required in scripts.
+
+This allows mods to significantly increase available text capacity without changing how message scripts are written.
+
+---
 
 ## Example: Keep all doors in world 1 (Trunk) unlocked
 
-> > **Note:** This can also be achieved more easily with the general hack [PermaDoors](general-hacks.md#permadoors). However, this script-based approach does not consume any bank 15 free space.
+> **Note:** This can also be achieved more easily with the general hack [PermaDoors](general-hacks.md#permadoors). However, this script-based approach does not consume any bank 15 free space.
 
 We will need the following custom opcodes in ```iscript_opcodes``` in ```eoe_config_override.xml```
 

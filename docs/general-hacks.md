@@ -27,6 +27,7 @@ This document describes the hacks in the current library and their parameters. I
 - [The Library](#the-library)
   - [KillSwitch](#killswitch)
   - [SameWorldTransPal2Mus](#sameworldtranspal2mus)
+  - [OtherWorldTransPal2Mus](#otherworldtranspal2mus)
   - [FastStart](#faststart)
   - [QuestFlagItemDrops](#questflagitemdrops)
   - [BossLockedItems](#bosslockeditems)
@@ -43,6 +44,9 @@ This document describes the hacks in the current library and their parameters. I
   - [PermaDoors](#permadoors)
   - [FlagDoorRequirements](#flagdoorrequirements)
   - [OintmentFix](#ointmentfix)
+  - [SpawnScreens](#spawnscreens)
+  - [BankedStrings](#bankedstrings)
+  - [Misc](#misc)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
   - [AtlasDevInfectedTint](#atlasdevinfectedtint)
@@ -244,7 +248,9 @@ Uses 22 bytes from the normal bank 15 allocation cursor and replaces the textbox
 
 Pressing Select while the game is paused kills the player when the game is unpaused. This gives players a way out of softlocks without resetting the console and losing progress since the last password.
 
-No parameters.
+| parameter | default | meaning |
+| --- | --- | --- |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 KillSwitch
@@ -254,11 +260,31 @@ KillSwitch
 
 Screen transitions inside the same world apply the palette-to-music rules that normally only run when passing through a door. A transition that changes the area palette can then also change the music, which makes large single-world maps feel like distinct areas.
 
-No parameters.
+| parameter | default | meaning |
+| --- | --- | --- |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 SameWorldTransPal2Mus
 ```
+
+---
+
+### OtherWorldTransPal2Mus
+
+Screen transitions between different worlds apply the palette-to-music rules that normally only run when passing through a door. A transition that changes the area palette can then also change the music, which makes world-to-world transitions feel consistent with normal area transitions.
+
+Normally otherworld transitions will invoke the default music for the destination world, but if the transition's palette has an entry in the palette-to-music map, that music will take precedence.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `sram` | `false` | Add SRAM backing |
+
+```text
+OtherWorldTransPal2Mus
+```
+
+---
 
 ### FastStart
 
@@ -270,6 +296,7 @@ Starts a new game with more resources: health and mana start at 80, starting gol
 | --- | --- | --- |
 | `gold` | `1500` | starting gold |
 | `ring_of_elf` | `true` | start with the Ring of Elf |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 FastStart gold=2000 ring_of_elf=false
@@ -282,6 +309,7 @@ The wyvern's mattock and the stone dropper's wing boots normally depend on quest
 | parameter | default | meaning |
 | --- | --- | --- |
 | `type` | `both` | which drops to change: `both`, `mattock` or `wing_boots` |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 QuestFlagItemDrops type=mattock
@@ -296,6 +324,7 @@ Boss-locked item sprites appear regardless of which boss guards the screen, so c
 | parameter | default | meaning |
 | --- | --- | --- |
 | `enemies` | `true` | keep the item hidden until all enemies are cleared |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 BossLockedItems enemies=false
@@ -314,6 +343,7 @@ Loosens the vanilla item restrictions in four independent ways: items can be use
 | `state` | `true` | ignore the player-state gate on item use |
 | `selling` | `true` | shops buy any item |
 | `price` | `100` | sell price for items without a sell-table entry |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 FlexibleItems buildings=true state=false price=250 wep_indoors=true
@@ -326,6 +356,7 @@ Enables the fog effect on arbitrary world and palette combinations while reusing
 | parameter | default | meaning |
 | --- | --- | --- |
 | `rules` | none, required | `world:palette` pairs, `+`-separated; a bare world covers the whole world |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 FogRules rules=0:1+0:3+0:5+6:3+7
@@ -352,6 +383,7 @@ The tileset does not change during normal scrolling transitions, since reloading
 | `start_screen`   | `true`           | apply an override when loading the starting screen         |
 | `otherworld`     | `true`           | apply overrides to otherworld-transitions                  |
 | `stage_doors`    | `true`           | apply overrides to stage-door transitions                  |
+| `sram` | `false` | Add SRAM backing |
 
 For normal use, no placement parameters are necessary:
 
@@ -442,6 +474,7 @@ Changes the text display speed. Lower masks make text display faster. For regula
 | parameter | default | meaning |
 | --- | --- | --- |
 | `mask` | `%0` | Text speed mask. `%0` is fastest; `%11` is vanilla speed. Higher masks such as `%111` and `%1111` are progressively slower |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 TextSpeed mask=%1
@@ -475,6 +508,7 @@ This can be used to create one-time or conditional events and NPC interactions. 
 | --- | --- | --- |
 | `trigger` | `true` | Enables conditional scripts for invisible triggers |
 | `npc` | `false` | Enables conditional scripts for NPC interactions |
+| `sram` | `false` | Add SRAM backing |
 
 A script might look like this, if extended opcode `SetFlag` is available:
 
@@ -505,6 +539,7 @@ This can be used to implement custom consumables and other scripted item effects
 | parameter | default  | meaning                     |
 | --------- | -------- | --------------------------- |
 | `data`    | required | List of `item:script` pairs |
+| `sram` | `false` | Add SRAM backing |
 
 For example, this makes item 14 execute iScript 90 and item 17 execute iScript 91:
 
@@ -574,6 +609,7 @@ Keeps doors unlocked after they have been opened with a key. An alternative to t
 | `bank`    | 15               | Which bank to install the majority of the hack in     |
 | `addr`    | none, calculated | Which CPU address in that bank to install the hack in |
 | `sound`   | `false`          | Play the vanilla unlock sound when reusing an already unlocked door |
+| `sram` | `false` | Add SRAM backing |
 
 If `bank` is omitted, the entire hack is installed in the normal free-space range in bank 15. Bank 15 space is limited, however, so using another bank may be preferable if space is available.
 
@@ -606,6 +642,7 @@ By default, the hack is installed in bank 15. The `bank` parameter can be used t
 | `data` | required | `+`-separated extended flag and optional failure iScript entries |
 | `bank` | `15` | Bank used for the relocatable portion of the hack |
 | `addr` | auto | Installation address when using a bank other than 15; if omitted, trailing free space is used |
+| `sram` | `false` | Add SRAM backing |
 
 For example:
 
@@ -666,6 +703,7 @@ By default, the hack also prevents damage from Sugata's screen-wide flash attack
 | parameter | default | meaning                                                              |
 | --------- | ------- | -------------------------------------------------------------------- |
 | `sugata`  | `true`  | Makes the Ointment protect against Sugata's screen-wide flash damage |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 OintmentFix
@@ -676,6 +714,90 @@ To retain Sugata's original behavior:
 ```text
 OintmentFix sugata=false
 ```
+
+---
+
+### SpawnScreens
+
+Overrides which building screen is used for each spawn point.
+
+When the player spawns, the configured building screen is used to determine the screen, palette, music, tileset, and starting position. This makes it possible to redirect spawn points to arbitrary building scenes while still using the game's normal scene data.
+
+| parameter | default | meaning                                                              |
+| --------- | ------- | -------------------------------------------------------------------- |
+| `data`  | `none`  | Spawn point mappings in the form spawn:screen. Multiple mappings are separated with + |
+| `sram`  | `false`  | Add SRAM backing |
+
+Any spawn points not listed in data use screen 1, which is the Guru Temple/Church.
+
+`SpawnScreens data=0:5+1:6+2:0`
+
+In this example:
+
+- Spawn point 0 uses building screen 5
+- Spawn point 1 uses building screen 6
+- Spawn point 2 uses building screen 0
+- All other spawn points use screen 1
+
+This hack only changes which building screen a spawn point resolves to. The palette, music, tileset, and player position continue to be loaded from the selected building scene's existing data.
+
+---
+
+### BankedStrings
+
+Adds support for storing message text in multiple ROM banks, allowing projects to exceed the limits of the vanilla string bank.
+
+This hack is required whenever any of the extended message opcodes are used. Without it, those opcodes will not function correctly.
+
+See [Advanced Modding - Banked String Opcodes](./advanced-modding.md#banked-string-opcodes) for details on the extended message opcodes.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `copy` | `false` | Copy all non-string data from the original string bank into all configured string banks |
+| `sram` | `false` | Add SRAM backing |
+
+```text
+BankedStrings copy=true
+```
+
+In this example:
+
+- Support for banked message strings is installed
+- Additional string banks inherit the non-string data from the original string bank
+
+This hack *must* be installed when using any of the following extended message opcodes:
+
+- `MsgEx`
+- `MsgNoskipEx`
+- `MsgPromptEx`
+- `IfMsgPromptEx`
+
+These opcodes behave similarly to their vanilla counterparts, but allow messages to be loaded from banks other than the original string bank.
+
+The `copy` parameter is needed if using a custom ROM which has a string handler running in the same bank as the string data, such as the Translation Hack.
+
+Note: For the Translation Hack and derivatives, you must also avoid using `<p>` in strings that live outside of the standard string bank, due to a bug in its string handler.
+
+---
+
+### Misc
+
+A collection of small gameplay and quality-of-life tweaks that do not warrant their own dedicated hack.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `start_menu` | `false` | Allow the player menu to be opened immediately when starting a new game |
+| `safe_hourglass` | `false` | Prevent the Hourglass from reducing the player's HP |
+
+Any parameter may be omitted to leave the corresponding game behavior unchanged.
+
+```text
+Misc start_menu=true safe_hourglass=true
+```
+
+This hack acts as a home for minor gameplay and quality-of-life changes which do not justify a dedicated hack of their own. New parameters may be added in future versions.
+
+---
 
 ### AtlasDevFrameScheduler
 
