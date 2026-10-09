@@ -878,6 +878,10 @@ is the odd one out and is whole pixels per frame, because vanilla subtracts
 only from the whole pixel byte there and widening it would need more space
 than the instruction has.
 
+`down` above 256 uses a 37-byte floor cap so a fast step cannot leave the
+hero stuck inside the floor at a ladder's bottom. The speed is unchanged in
+an open shaft. Slower descent and Wing Boots keep the original movement code.
+
 `attack=1` lets the hero swing while on a ladder, which vanilla refuses with
 a single branch. The refusal outlasts the input: the game counts the hero as
 climbing until his body leaves the rung, not only while he is moving, so one
@@ -906,8 +910,8 @@ differs from vanilla (`up`, `down`, `wingup`, `wingdown`) becomes a call into
 a stub that runs the new constants while extended flag `n` is set and the
 displaced vanilla bytes while it is clear. Blocks left at vanilla speed are
 not touched. The stubs live in the free block, 35 bytes per 16 bit speed and
-23 for the wing boots ascent, and leave carry and the accumulator exactly as
-the vanilla code does, since the instructions after each block read them.
+23 for the wing boots ascent. Fast `down` adds 23 bytes for the floor cap;
+the clear-flag path still uses the displaced vanilla instructions.
 `flag` alone, with every speed at vanilla, is refused because there is
 nothing to switch. `flag` and `attackflag` are independent and may name the
 same flag or different ones.
@@ -1181,6 +1185,10 @@ pixel, and `ramp` is the four per frame increments by title tier, vanilla
 `2+4+6+8`; `ramp=0+0+0+0` gives a flat walk at the base speed. `walkmax` is
 capped at 2048, eight pixels per frame, which is the speed the engine already
 uses for the shove.
+
+`walk` above 256 adds a 57-byte ladder-centering helper. It stops at the
+alignment point instead of stepping past it repeatedly; ordinary walking
+keeps the configured speed. No persistent RAM is used.
 
 `iframes` is the mercy time after a hit in frames, vanilla 60, written to all
 three places the game sets it. The shove after a hit lasts while that counter

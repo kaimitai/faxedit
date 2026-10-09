@@ -3,6 +3,7 @@
 #include "fh/GeneralHack.h"
 #include "fh/HackManager.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <iostream>
@@ -10,9 +11,9 @@
 #include <string>
 #include <vector>
 
-// pins install_AtlasDevCombatFeel to the bytes it writes. every knob is an
-// operand byte, so a default install writes nothing and consumes no cursor
-// space, and each parameter touches exactly the bytes it names. the mercy
+// pins install_AtlasDevCombatFeel to the bytes it writes. a default install
+// writes nothing and consumes no cursor space; fast walking also needs the
+// bounded ladder-centering helper. the mercy
 // time and the shove are coupled through one threshold, and that coupling is
 // what the iframes tests are about.
 namespace {
@@ -42,12 +43,14 @@ namespace {
 		std::vector<byte> rom(ROM_SIZE, 0xff);
 		for (const Site& s : SITES)
 			for (std::size_t i{ 0 }; i < s.orig.size(); ++i) rom[off(s.bank, s.addr) + i] = s.orig[i];
+		const std::array<byte, 4> center{ 0xe6, 0xa3, 0xa5, 0x9e };
+		std::copy(center.begin(), center.end(), rom.begin() + off(15, 0xe1c5));
 		return rom;
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks, nullptr).bank_used;
 	}
 
 	std::vector<std::size_t> changed(const std::vector<byte>& a, const std::vector<byte>& b) {
@@ -66,8 +69,12 @@ namespace {
 	void test_walk_is_four_operands() {
 		auto rom{ vanilla_rom() };
 		const auto before{ rom };
-		install(rom, "AtlasDevCombatFeel walk=320 walkmax=512");
-		require(changed(before, rom).size() == 4, "walk and walkmax touched more than four bytes");
+		require(install(rom, "AtlasDevCombatFeel walk=320 walkmax=512") == 57, "ladder centering body size");
+		for (const auto at : changed(before, rom))
+			require(at == off(15, 0xe280) || at == off(15, 0xe284) || at == off(15, 0xe2a6) || at == off(15, 0xe2aa)
+				|| (at >= off(15, 0xe1c5) && at < off(15, 0xe1c9)) || (at >= off(15, ORG) && at < off(15, ORG) + 57),
+				"walk changed an unrelated byte");
+		require(rom[off(15, 0xe1c5)] == 0x4c, "centering hook");
 		require(rom[off(15, 0xe280)] == 0x40 && rom[off(15, 0xe284)] == 0x01, "walk base");
 		require(rom[off(15, 0xe2a6)] == 0x00 && rom[off(15, 0xe2aa)] == 0x02, "walk cap");
 	}
@@ -122,7 +129,7 @@ namespace {
 		};
 		for (const P& p : profiles) {
 			auto rom{ vanilla_rom() };
-			require(install(rom, std::string{ "AtlasDevCombatFeel profile=" } + p.name) == 0, "profile used cursor");
+			require(install(rom, std::string{ "AtlasDevCombatFeel profile=" } + p.name) == (p.walk > 256 ? 57 : 0), "profile centering size");
 			const std::string tag{ std::string{ "profile " } + p.name };
 			require(rom[off(15, 0xe280)] == (p.walk & 0xff) && rom[off(15, 0xe284)] == (p.walk >> 8), tag + " walk");
 			require(rom[off(15, 0xe2a6)] == (p.walkmax & 0xff) && rom[off(15, 0xe2aa)] == (p.walkmax >> 8), tag + " walkmax");
@@ -142,6 +149,18 @@ namespace {
 		install(over, "AtlasDevCombatFeel profile=megaman iframes=99");
 		require(over[off(15, 0xc84a)] == 99 && over[off(15, 0xe0f1)] == 97, "explicit iframes did not override the profile");
 		require(over[off(15, 0xe280)] == (352 & 0xff), "the profile's walk was lost under an override");
+	}
+
+	void test_centering_refusals() {
+		for (const auto at : { off(15, ORG), off(15, 0xe1c5) }) {
+			auto rom{ vanilla_rom() };
+			rom[at] = 0;
+			const auto before{ rom };
+			bool threw{ false };
+			try { install(rom, "AtlasDevCombatFeel walk=384 walkmax=384"); }
+			catch (const std::runtime_error&) { threw = true; }
+			require(threw && rom == before, "centering refusal changed the ROM");
+		}
 	}
 
 	void test_refusals() {
@@ -183,6 +202,7 @@ int main() {
 		test_lists_and_single_bytes();
 		test_profiles();
 		test_refusals();
+		test_centering_refusals();
 		test_refuses_a_disturbed_site();
 	}
 	catch (const std::exception& e) {
