@@ -127,7 +127,17 @@ Many general hacks support installation in SRAM instead of ROM. This provides ap
 For example:
 
 ```xml
-<hack name="KillSwitch" sram="true" />
+  <string name="general_hacks">
+      SRAM
+      FogRules rules=0:1+1:6+2+5:7+5:8+5:9+7 sram=true
+      PermaDoors sound=true sram=true
+      ConditionalScript npc=false trigger=false sram=true
+      FastStart gold=56667 ring_of_elf=true sram=true
+      OintmentFix sugata=true sram=true
+      BossLockedItems enemies=false sram=true
+      BankedStrings copy=false sram=true
+      FlexibleItems price=5000 wep_indoors=true sram=true
+  </string>
 ```
 
 SRAM-backed code is stored in a designated ROM bank and copied into SRAM during game initialization. The hooks can then call it directly, without switching banks.
