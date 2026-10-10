@@ -136,23 +136,23 @@ void fi::IScriptLoader::parse_strings(const fe::Config& p_config, const std::vec
 			INES_HEADER_SIZE + static_cast<std::size_t>(bank) * PRG_BANK_SIZE + bank_offset
 		};
 
-		std::string encodedstring;
+		std::string encoded_banked_string;
 		auto& strings{ m_banked_strings[bank] };
 
 		for (std::size_t i{ start }; i < start + capacity && strings.size() < 255; ++i) {
 			const byte b{ p_rom.at(i) };
 
 			if (b == 0xff) {
-				strings.emplace_back(encodedstring);
-				encodedstring.clear();
+				strings.emplace_back(encoded_banked_string);
+				encoded_banked_string.clear();
 			}
 			else {
 				const auto iter{ lc_char_map.find(b) };
 
 				if (iter == lc_char_map.end())
-					encodedstring += std::format("<${:02x}>", b);
+					encoded_banked_string += std::format("<${:02x}>", b);
 				else
-					encodedstring += iter->second;
+					encoded_banked_string += iter->second;
 			}
 		}
 	}
