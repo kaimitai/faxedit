@@ -4,7 +4,7 @@
 #include "fe/fe_constants.h"
 #include "common/klib/Asm6502.h"
 
-word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vector<byte>& p_rom,
+word fh::HackManager::install_BuildingScreenConfig(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game) {
 	// read the references to the tables as words directly from ROM
 	const auto bld_scene_palette{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_PALETTE_PTR).first) };
@@ -12,12 +12,12 @@ word fh::HackManager::install_SpawnScreens(const fe::Config& p_config, std::vect
 	const auto bld_scene_pos{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_POS_PTR).first) };
 	const auto bld_scene_music{ klib::Asm6502::read_word(p_rom, p_config.pointer(fe::c::ID_BLD_SCENE_MUSIC_PTR).first) };
 
-	const auto data{ p_hack.split_twice_bytes("data", 2) };
+	const auto spawns{ p_hack.split_twice_bytes("spawns", 2) };
 	const bool sram_install{ p_hack.bool_or("sram", false) };
 
 	std::vector<byte> spawn_screens(p_game ? p_game->m_spawn_locations.size() : 8, 1);
-	for (const auto& data_pair : data)
-		spawn_screens.at(data_pair.at(0)) = data_pair.at(1);
+	for (const auto& spawn : spawns)
+		spawn_screens.at(spawn.at(0)) = spawn.at(1);
 
 	klib::Asm6502 code;
 

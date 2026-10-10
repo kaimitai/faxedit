@@ -362,7 +362,7 @@ namespace fh {
 			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game);
 		word install_FlagDoorRequirements(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack);
-		word install_SpawnScreens(const fe::Config& p_config, std::vector<byte>& p_rom,
+		word install_BuildingScreenConfig(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack, const fe::Game* p_game = nullptr);
 		word install_BankedStrings(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack);

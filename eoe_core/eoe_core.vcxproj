@@ -218,7 +218,7 @@
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
     <ClCompile Include="src\fh\PermaDoorHack.cpp" />
-    <ClCompile Include="src\fh\SpawnScreensHack.cpp" />
+    <ClCompile Include="src\fh\BuildingScreenConfigHack.cpp" />
     <ClCompile Include="src\fh\SramHack.cpp" />
     <ClCompile Include="src\fh\StageDoorDirectionHack.cpp" />
     <ClCompile Include="src\fh\TilemapChanges.cpp" />

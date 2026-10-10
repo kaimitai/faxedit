@@ -136,7 +136,7 @@ add_library(eoe_core STATIC
     src/fh/PermaDoorHack.cpp
     src/fh/FlagDoorRequirements.cpp
     src/fh/DynamicTilesetsHack.cpp
-    src/fh/SpawnScreensHack.cpp
+    src/fh/BuildingScreenConfigHack.cpp
     src/fh/BankedStringsHack.cpp
     src/fh/StageDoorDirectionHack.cpp
 

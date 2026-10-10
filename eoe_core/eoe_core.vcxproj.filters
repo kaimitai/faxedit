@@ -773,7 +773,7 @@
     <ClCompile Include="src\fh\DynamicTilesetsHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
-    <ClCompile Include="src\fh\SpawnScreensHack.cpp">
+    <ClCompile Include="src\fh\BuildingScreenConfigHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\BankedStringsHack.cpp">
