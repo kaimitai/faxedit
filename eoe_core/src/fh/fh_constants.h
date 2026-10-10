@@ -114,6 +114,13 @@ namespace fh {
 		constexpr word Game_Start_ClearXP_Hi{ 0xdb39 };
 		constexpr word Screen_Load{ 0xdd46 };
 		constexpr word Game_SpawnInTemple_LDA_Palette{ 0xdd90 };
+		constexpr word Game_SpawnInTemple_SetFacing{ 0xdda6 };
+		constexpr word EndGameScreen{ 0xddde };
+		constexpr word EndGameMusic{ 0xdde5 };
+		constexpr word EndGamePosition{ 0xddea };
+		constexpr word EndGamePalette{ 0xddee };
+		constexpr word EndGameTileset{ 0xddf9 };
+		constexpr word EndGame_SetFacing{ 0xddfd };
 		constexpr word Game_EnterBuilding_STA_ActiveWeapon{ 0xde08 };
 		constexpr word Game_EnterBuilding_JSR_Area_LoadTiles{ 0xde53 };
 		constexpr word Game_ExitBuilding_JSR_Area_LoadTiles{ 0xde92 };
@@ -132,9 +139,11 @@ namespace fh {
 		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
+		constexpr word EnterBuilding_SetFacing{ 0xe5a6 };
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
+		constexpr word ExitBuilding_SetFacing{ 0xea50 };
 		constexpr word OwTransJmpGameSetupNewArea{ 0xea91 };
 		constexpr word Game_RunDoorRequirementHandler{ 0xeb2f };
 		constexpr word Game_RunDoorRequirementHandler_BEQ_RTS{ 0xeb32 };

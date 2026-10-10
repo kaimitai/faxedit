@@ -47,7 +47,7 @@ This document describes the hacks in the current library and their parameters. I
   - [PermaDoors](#permadoors)
   - [FlagDoorRequirements](#flagdoorrequirements)
   - [OintmentFix](#ointmentfix)
-  - [SpawnScreens](#spawnscreens)
+  - [BuildingScreenConfig](#buildingscreenconfig)
   - [BankedStrings](#bankedstrings)
   - [StageDoorDirectionHack](#stagedoordirectionhack)
   - [Misc](#misc)
@@ -696,20 +696,28 @@ OintmentFix sugata=false
 
 ---
 
-### SpawnScreens
+### BuildingScreenConfig
 
-Overrides which building screen is used for each spawn point.
+Configures which building screens are used for spawn points, the direction the player faces when entering or exiting buildings, and the building screen used for the endgame sequence.
 
-When the player spawns, the configured building screen is used to determine the screen, palette, music, tileset, and starting position. This makes it possible to redirect spawn points to arbitrary building scenes while still using the game's normal scene data.
+Spawn points can be redirected to arbitrary building screens. The palette, music, tileset, and starting position are loaded from the selected building scene's existing data.
 
-| parameter | default | meaning                                                              |
-| --------- | ------- | -------------------------------------------------------------------- |
-| `data`  | `none`  | Spawn point mappings in the form spawn:screen. Multiple mappings are separated with + |
-| `sram`  | `false`  | Add SRAM backing |
+| parameter | default | meaning |
+| --- | --- | --- |
+| `spawns` | `none` | Spawn point mappings in the form `spawn:screen`. Separate multiple mappings with `+` |
+| `right` | `none` | Building screen indices that should be entered facing right instead of left. Separate indices with `+` |
+| `end_screen` | `none` | Building screen index to use for the endgame return to the King's room |
+| `sram` | `false` | Add SRAM backing |
 
-Any spawn points not listed in data use screen 1, which is the Guru Temple/Church.
+Spawn points not listed in `spawns` use building screen 1 (Guru Temple/Church).
 
-`SpawnScreens data=0:5+1:6+2:0`
+By default, the player faces left when entering buildings and right when exiting. Screens listed in `right` reverse this behavior: the player enters facing right and exits facing left. The same rules apply when spawning in a temple.
+
+If `end_screen` is specified, the endgame sequence uses the selected building screen's palette, music, tileset, and starting position instead of the hardcoded values. The facing direction also follows `right`, although the scripted movement during the endgame may override it.
+
+If `right` or `end_screen` is omitted, the corresponding vanilla behavior is preserved.
+
+`BuildingScreenConfig spawns=0:5+1:6+2:0 right=0+6 end_screen=0 sram=true`
 
 In this example:
 
@@ -717,8 +725,9 @@ In this example:
 - Spawn point 1 uses building screen 6
 - Spawn point 2 uses building screen 0
 - All other spawn points use screen 1
-
-This hack only changes which building screen a spawn point resolves to. The palette, music, tileset, and player position continue to be loaded from the selected building scene's existing data.
+- Building screens 0 and 6 are entered facing right and exited facing left
+- The endgame sequence uses building screen 0
+- The hack's runtime code and tables are stored in SRAM
 
 ---
 

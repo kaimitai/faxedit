@@ -72,8 +72,9 @@ namespace fh {
 		bool get_bool(const std::string& p_id) const;
 		const std::string& get_string(const std::string& p_id) const;
 
-		// soecialized helpers
+		// specialized helpers
 		std::vector<std::string> split(const std::string& p_id, char p_delim = '+') const;
+		std::vector<byte> split_bytes(const std::string& p_id, char p_delim = '+') const;
 		std::vector<std::vector<std::string>> split_twice(const std::string& p_id,
 			char p_delim_outer = '+', char p_delim_inner = ':') const;
 		std::vector<std::pair<byte, std::optional<byte>>> split_byte_optional_byte(

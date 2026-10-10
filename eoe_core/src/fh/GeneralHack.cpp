@@ -84,7 +84,7 @@ namespace {
 		{ fh::GeneralHackLib::FogRules, { "rules", "sram" }},
 		{ fh::GeneralHackLib::PoisonPickup, { "item", "sound", "script" }},
 		{ fh::GeneralHackLib::TextSpeed, { "mask", "sram" }},
-		{ fh::GeneralHackLib::BuildingScreenConfig, { "spawns", "sram" }},
+		{ fh::GeneralHackLib::BuildingScreenConfig, { "spawns", "right", "end_screen", "sram" }},
 		{ fh::GeneralHackLib::AtlasDevFrameScheduler, {} },
 		{ fh::GeneralHackLib::AtlasDevSpriteSpeed, { "mode" } },
 		{ fh::GeneralHackLib::AtlasDevPpuDrainUnroll, { "budget" } },
@@ -304,6 +304,15 @@ const std::string& fh::GeneralHack::get_string(const std::string& p_id) const {
 
 std::vector<std::string> fh::GeneralHack::split(const std::string& p_id, char p_delim) const {
 	return split_value(get_string(p_id), p_delim);
+}
+
+std::vector<byte> fh::GeneralHack::split_bytes(const std::string& p_id, char p_delim) const {
+	std::vector<byte> result;
+
+	for (const auto& str : split(p_id, p_delim))
+		result.push_back(klib::str::parse_byte(str));
+
+	return result;
 }
 
 std::vector<std::vector<std::string>> fh::GeneralHack::split_twice(const std::string& p_id,
