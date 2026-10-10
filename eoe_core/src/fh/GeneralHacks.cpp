@@ -749,6 +749,7 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const bool startmenu{ p_hack.bool_or("start_menu", false) };
 	const bool safe_hourglass{ p_hack.bool_or("safe_hourglass", false) };
+	const bool trigger_size{ p_hack.has_param("trigger_size") };
 
 	klib::Asm6502 code;
 
@@ -759,6 +760,17 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	if (safe_hourglass) {
 		code.nop(9);
 		code.apply_hack_and_clear(p_rom, 15, ROM::UseHourGlass_HalveHP);
+	}
+	if (trigger_size) {
+		constexpr byte DIALOGUE_TRIGGER_SPRITE_ID{ 79 };
+
+		const auto dims{ p_hack.split_bytes("trigger_size", ':') };
+		if (dims.size() != 2)
+			throw std::runtime_error("Misc hack trigger size param must me on the form w:h");
+
+		word trigger_offset{ ROM::SpriteBoundingBoxTable + DIALOGUE_TRIGGER_SPRITE_ID * 4 };
+		klib::Asm6502::apply_byte(p_rom, dims[0], 14, trigger_offset + 2); // w
+		klib::Asm6502::apply_byte(p_rom, dims[1], 14, trigger_offset + 3); // h
 	}
 
 	return cpu_addr;

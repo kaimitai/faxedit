@@ -815,14 +815,34 @@ A collection of small gameplay and quality-of-life tweaks that do not warrant th
 | --------- | ------- | ------- |
 | `start_menu` | `false` | Allow the player menu to be opened immediately when starting a new game |
 | `safe_hourglass` | `false` | Prevent the Hourglass from reducing the player's HP |
+| `trigger_size` | `none` | Set the invisible dialogue trigger sprite's bounding box width and height in pixels, in the form `w:h` |
 
 Any parameter may be omitted to leave the corresponding game behavior unchanged.
 
 ```text
-Misc start_menu=true safe_hourglass=true
+Misc start_menu=true safe_hourglass=true trigger_size=16:32
 ```
 
-This hack acts as a home for minor gameplay and quality-of-life changes which do not justify a dedicated hack of their own. New parameters may be added in future versions.
+The invisible dialogue trigger (sprite 79) has an unusually large hitbox by default. This can be inconvenient when using it for scripted events, since the player may activate the trigger from much farther away than intended. The `trigger_size` parameter lets you specify a smaller hitbox, such as `16:16` or `16:32`, depending on the intended interaction area.
+
+**Note:** The invisible dialogue trigger is also affected by gravity by default. Its behavior script is:
+
+```text
+.entrypoint 79 ; Invisible Dialogue
+  Behavior_Fall ticks=0
+  End
+```
+
+To make the trigger remain stationary, remove the falling behavior:
+
+```text
+.entrypoint 79 ; Invisible Dialogue
+  End
+```
+
+For scripted events, a smaller hitbox combined with disabled gravity generally makes the trigger easier to position and control.
+
+The `Misc` hack acts as a home for minor gameplay and quality-of-life changes which do not justify a dedicated hack of their own. New parameters may be added in future versions.
 
 ---
 
