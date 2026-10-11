@@ -487,11 +487,12 @@ word fh::HackManager::install_ConditionalScript(const fe::Config& p_config, std:
 }
 
 // makes ointment work against magic even while wearing a shield
-// optionally also enables ointment to work against sugata's "clap"
+// optionally also enables ointment to work against sugata's "clap" and poison
 word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) {
 	const bool sram{ p_hack.bool_or("sram", false) };
 	const bool sugata{ p_hack.bool_or("sugata", true) };
+	const bool poison{ p_hack.bool_or("poison", true) };
 
 	klib::Asm6502 code;
 
@@ -516,23 +517,38 @@ word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vecto
 	else
 		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 
-	if (sugata) {
-		const word sugata_addr{ sram ? sram_hack_addr() : cpu_addr };
+	const word secondary_address{ sram ? sram_hack_addr() : cpu_addr };
 
-		code.jsr(sugata_addr);
-		code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_FlashDamage_JSR_ReduceHP);
-
+	if (sugata || poison) {
 		code.lda_abs(RAM::TimedEffectTimers);
-		code.bpl("@ointment_active_sugata");
+		code.bpl("@ointment_active_damage");
 		code.jmp(ROM::Player_ReduceHP);
 
-		code.label("@ointment_active_sugata");
+		code.label("@ointment_active_damage");
 		code.rts();
 
 		if (sram)
 			install_sram_hack(p_rom, code);
 		else
 			cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+
+		if (sugata) {
+			code.jsr(secondary_address);
+			code.apply_hack_and_clear(p_rom, 14, ROM::SpriteBehavior_FlashDamage_JSR_ReduceHP);
+		}
+
+		if (poison) {
+			if (sram) {
+				code.jmp(secondary_address);
+			}
+			else {
+				code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+				code.db(14);
+				code.dw(secondary_address - 1);
+				code.rts();
+			}
+			code.apply_hack_and_clear(p_rom, 15, ROM::Player_PickUpPoison_ReduceHP);
+		}
 	}
 
 	return cpu_addr;

@@ -69,6 +69,7 @@ namespace fh {
 		constexpr word Player_PickUpMattockWithQuest{ 0xc74a };
 		constexpr word Player_PickUpPoison{ 0xc83c };
 		constexpr word Player_PickUpPoison_DamageSoundIndex{ 0xc845 };
+		constexpr word Player_PickUpPoison_ReduceHP{ 0xc85d };
 		constexpr word Player_PickUpItem{ 0xc8cd };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };

@@ -682,6 +682,7 @@ By default, the hack also prevents damage from Sugata's screen-wide flash attack
 | parameter | default | meaning                                                              |
 | --------- | ------- | -------------------------------------------------------------------- |
 | `sugata`  | `true`  | Makes the Ointment protect against Sugata's screen-wide flash damage |
+| `poison`  | `true`  | Makes the Ointment protect against poison damage |
 | `sram` | `false` | Add SRAM backing |
 
 ```text

@@ -140,7 +140,7 @@ namespace {
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc", "sram" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
 		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
-		{ fh::GeneralHackLib::OintmentFix, { "sugata", "sram" }},
+		{ fh::GeneralHackLib::OintmentFix, { "sugata", "poison", "sram" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::BankedStrings, { "copy", "sram" }},
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
