@@ -57,11 +57,14 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevPreventTextbox(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const std::string name{ "AtlasDevPreventTextbox" };
 	const byte value{ p_hack.byte_or("textbox", DEFAULT_VALUE) };
 	if (value == 0x00 || value > 0x7f)
 		throw std::runtime_error(name + ": textbox must be 1 to 127; 0 is the plain box and 128 and up are portraits");
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error(name + ": sram=true requires a rom with sram support, or the SRAM hack");
 
 	// ownership checks first, so a refused install leaves the rom byte identical
 	require_site(p_rom, ENTRY, ENTRY_ORIG, name);
@@ -74,25 +77,31 @@ word fh::HackManager::install_AtlasDevPreventTextbox(const fe::Config&, std::vec
 	code.jmp(ROM::TextBox_OpenForNPC);
 	code.label("@no_open"); code.rts();
 	// the close: the stock routine returns to the caller of the script end as before
-	const word close{ static_cast<word>(cpu_addr + code.size()) };
+	// with sram both stubs run from the shared sram code area, and bank 12
+	// keeps only the two retargeted instructions
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word close{ static_cast<word>(body + code.size()) };
 	code.lda_abs(RAM::IScriptTextBoxContext); code.cmp_imm(value);
 	code.beq("@no_close");
 	code.jmp(ROM::TextBox_Close);
 	code.label("@no_close"); code.rts();
 
 	const std::size_t size{ code.size() };
-	const auto off{ klib::Asm6502::get_file_offset(BANK15, cpu_addr) };
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("{}: bank 15 space at ${:04x} is not free", name, cpu_addr + i));
-	code.apply_hack_and_clear(p_rom, BANK15, cpu_addr);
+	if (!sram) {
+		const auto off{ klib::Asm6502::get_file_offset(BANK15, cpu_addr) };
+		for (std::size_t i{ 0 }; i < size; ++i)
+			if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
+				throw std::runtime_error(std::format("{}: bank 15 space at ${:04x} is not free", name, cpu_addr + i));
+	}
+	if (sram) install_sram_hack(p_rom, code);
+	else code.apply_hack_and_clear(p_rom, BANK15, cpu_addr);
 
 	// the jsr stays a jsr and the jmp stays a jmp, at the same address and length:
 	// the stock branches at $825d and $82ba land on these two opcodes
 	klib::Asm6502 hook;
-	hook.jsr(cpu_addr);
+	hook.jsr(body);
 	hook.apply_hack_and_clear(p_rom, BANK12, OPEN);
 	hook.jmp(close);
 	hook.apply_hack_and_clear(p_rom, BANK12, CLOSE);
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

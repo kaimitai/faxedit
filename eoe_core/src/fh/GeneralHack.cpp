@@ -89,7 +89,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevSpriteSpeed, { "mode" } },
 		{ fh::GeneralHackLib::AtlasDevPpuDrainUnroll, { "budget" } },
 		{ fh::GeneralHackLib::AtlasDevQueueLess, { "dedup" } },
-		{ fh::GeneralHackLib::AtlasDevPreventTextbox, { "textbox" } },
+		{ fh::GeneralHackLib::AtlasDevPreventTextbox, { "textbox", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevDayNightCycle, { "length" } },
 		{ fh::GeneralHackLib::AtlasDevInfectedTint, { "colors", "pulse", "armed" } },
 		{ fh::GeneralHackLib::AtlasDevTimeOfDay, { "hourlength", "start", "cell" } },

@@ -1818,12 +1818,13 @@ AtlasDevPreventTextbox
 | parameter | default | meaning |
 | --- | --- | --- |
 | `textbox` | `$7f` | The textbox value that prevents the window, 1 to 127 |
+| `sram` | `false` | Add SRAM backing |
 
 The value must be 1 to 127: 0 is the plain box and 128 and up are the portraits. No stock script uses any value in that range, so the default changes nothing in an unmodified game.
 
 Messages in such a script still run and still wait for a button, but they cannot be seen, so leave them out or open a window yourself. Item grants, the sell menu and the shops open their own window and still do.
 
-Uses 22 bytes from the normal bank 15 allocation cursor and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
+Uses 22 bytes from the normal bank 15 allocation cursor, or from the SRAM code area with `sram=true`, and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
 
 <hr>
 

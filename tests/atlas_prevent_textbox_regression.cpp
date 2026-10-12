@@ -19,7 +19,7 @@
 // bank 15
 namespace {
 	constexpr word ORG{ 0xfcce };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 
 	std::vector<byte> from_hex(const std::string& p_hex) {
 		std::vector<byte> out;
@@ -62,7 +62,30 @@ namespace {
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec, word org = ORG) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, org, 0xfff0, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, org, 0xfff0, hacks, nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
+	}
+
+	std::string hex_at(const std::vector<byte>& rom, byte bank, word cpu, std::size_t n) {
+		static const char* d{ "0123456789abcdef" };
+		std::string s;
+		const auto off{ klib::Asm6502::get_file_offset(bank, cpu) };
+		for (std::size_t i{ 0 }; i < n; ++i) { s += d[rom[off + i] >> 4]; s += d[rom[off + i] & 15]; }
+		return s;
 	}
 
 	void expect(const std::vector<byte>& rom, std::vector<byte> want, const std::vector<Region>& regions, const std::string& spec) {
@@ -127,6 +150,26 @@ int main() {
 			auto rom{ vanilla_rom() };
 			rom[klib::Asm6502::get_file_offset(15, static_cast<word>(ORG + 22))] = 0x00;
 			require(install(rom, "AtlasDevPreventTextbox") == 22, "the byte after the stub may be used");
+		}
+		{
+			// sram=true: both stubs run from the sram code area at $6806, the open
+			// call and the close jump enter them there, and bank 15 keeps only the
+			// shared 9-byte trampoline
+			struct Layout { std::string region; bool expand; byte bank; word addr; };
+			for (const Layout& layout : { Layout{ "us", false, 9, 0xa700 }, Layout{ "us-512", true, 27, 0x8000 } }) {
+				auto rom{ layout.expand ? expanded(vanilla_rom()) : vanilla_rom() };
+				const auto config{ region_config(rom, layout.region) };
+				fh::HackManager manager;
+				manager.init_sram_state(config);
+				const auto usage{ manager.install_general_hacks(config, rom, 15, ORG, 0xfff0,
+					fh::filter_general_hacks(15, fh::parse_general_hacks("AtlasDevPreventTextbox sram=true")), nullptr) };
+				const std::string what{ layout.region + ": sram=true" };
+				require(usage.sram_used == 22 && usage.bank_used == 9, what + ": sizes");
+				require(hex_at(rom, 12, 0x8267, 3) == "200668", what + ": open call " + hex_at(rom, 12, 0x8267, 3));
+				require(hex_at(rom, 12, 0x82c2, 3) == "4c1168", what + ": close jump " + hex_at(rom, 12, 0x82c2, 3));
+				require(hex_at(rom, layout.bank, layout.addr, 22) == body("7f"), what + ": backing " + hex_at(rom, layout.bank, layout.addr, 22));
+			}
+			refused(vanilla_rom(), "AtlasDevPreventTextbox sram=true", "sram=true without sram support");
 		}
 		std::cout << "atlas_prevent_textbox_regression: ok\n";
 	}

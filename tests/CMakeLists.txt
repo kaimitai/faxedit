@@ -127,6 +127,7 @@ add_test(NAME atlas_queue_less_regression COMMAND atlas_queue_less_regression)
 
 add_executable(atlas_prevent_textbox_regression atlas_prevent_textbox_regression.cpp)
 target_link_libraries(atlas_prevent_textbox_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_prevent_textbox_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_prevent_textbox_regression COMMAND atlas_prevent_textbox_regression)
 add_executable(atlas_maskman_control_regression atlas_maskman_control_regression.cpp)
 target_link_libraries(atlas_maskman_control_regression PRIVATE eoe_core)
