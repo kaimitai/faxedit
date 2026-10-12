@@ -1438,6 +1438,7 @@ With ```tap=hold``` there is no double tap: any held direction runs from its fir
 | `walk_cycle` | `1` | walk animation steps per running frame, 1 to 4; 1 keeps the vanilla cadence |
 | `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `$87` is the registered number for this hack |
 | `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
+| `sram` | `false` | Add SRAM backing |
 
 ```text
 AtlasDevRunControl

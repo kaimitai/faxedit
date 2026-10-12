@@ -193,7 +193,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevRunControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	using namespace fh::afs;
 	std::string mode{ p_hack.string_or("mode", "ramp") };
 	std::transform(mode.begin(), mode.end(), mode.begin(),
@@ -208,6 +208,9 @@ word fh::HackManager::install_AtlasDevRunControl(const fe::Config&, std::vector<
 	const Settings s{ ranged(p_hack, "speed", 20, 13, 64), ranged(p_hack, "accel", 16, 0, 255),
 		ranged(p_hack, "window", 12, 1, 63), ranged(p_hack, "walk_cycle", 1, 1, 4),
 		p_hack.byte_or("kind", 0), mode == "instant", p_hack.bool_or("boot", true), tap == "hold" };
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error("AtlasDevRunControl: sram=true requires a rom with sram support, or the SRAM hack");
 
 	// ownership checks first, so a refused install leaves the ROM byte identical
 	std::size_t scheduler{ 0 };
@@ -249,21 +252,27 @@ word fh::HackManager::install_AtlasDevRunControl(const fe::Config&, std::vector<
 	klib::Asm6502 code;
 	emit_body(code, s);
 	const auto size{ code.size() };
-	const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("AtlasDevRunControl: bank 15 space at ${:04x} overflows the ROM image or is not free", cpu_addr + i));
+	if (!sram) {
+		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+		for (std::size_t i{ 0 }; i < size; ++i)
+			if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
+				throw std::runtime_error(std::format("AtlasDevRunControl: bank 15 space at ${:04x} overflows the ROM image or is not free", cpu_addr + i));
+	}
 
-	const word start_r{ static_cast<word>(cpu_addr + code.label_position("@start_right")) };
-	const word start_l{ static_cast<word>(cpu_addr + code.label_position("@start_left")) };
-	const word idle{ static_cast<word>(cpu_addr + code.label_position("@idle")) };
-	const word cap{ static_cast<word>(cpu_addr + code.label_position("@cap")) };
-	code.apply_hack_and_clear(p_rom, 15, cpu_addr);
+	// with sram the body runs from the shared sram code area, and bank 15
+	// keeps only the hooks below.
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word start_r{ static_cast<word>(body + code.label_position("@start_right")) };
+	const word start_l{ static_cast<word>(body + code.label_position("@start_left")) };
+	const word idle{ static_cast<word>(body + code.label_position("@idle")) };
+	const word cap{ static_cast<word>(body + code.label_position("@cap")) };
+	if (sram) install_sram_hack(p_rom, code);
+	else code.apply_hack_and_clear(p_rom, 15, cpu_addr);
 	code.jsr(start_r); code.apply_hack_and_clear(p_rom, 15, SITE_START_R);
 	code.jsr(start_l); code.apply_hack_and_clear(p_rom, 15, SITE_START_L);
 	code.jmp(idle); code.nop(4); code.apply_hack_and_clear(p_rom, 15, SITE_IDLE);
 	code.jsr(cap); code.nop(5); code.apply_hack_and_clear(p_rom, 15, SITE_CAP);
 	if (s.gated() && s.boot)
 		p_rom[scheduler + arm_site] = s.kind;
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

@@ -21,7 +21,7 @@
 //   python3 tools/build_run_control.py --emit-hex --org 0xfe5a --kind 135 --tap hold
 namespace {
 	constexpr word ORG{ 0xfdbe };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 	constexpr std::array<byte, 3> START_ORIG{ 0x20, 0x7f, 0xe2 };
 	constexpr std::array<byte, 7> IDLE_ORIG{ 0xa5, 0xa4, 0x29, 0xdf, 0x85, 0xa4, 0x60 };
 	constexpr std::array<byte, 8> CAP_ORIG{ 0xa5, 0xa9, 0xc9, 0x80, 0xa5, 0xaa, 0xe9, 0x01 };
@@ -75,7 +75,79 @@ namespace {
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
+	}
+
+	// sram=true moves the stubs to the sram code area. the backing copy is the
+	// bank 15 body with every address inside it moved to sram, and bank 15
+	// differs from a plain install only where an address moved, by the shared
+	// 9-byte trampoline, and by its call at game init.
+	void require_sram_backing(const std::string& spec) {
+		constexpr word SRAM_CODE{ 0x6806 }, TRAMPOLINE{ 9 };
+		struct Layout { std::string region; bool expand; byte bank; word addr; };
+		for (const Layout& layout : { Layout{ "us", false, 9, 0xa700 }, Layout{ "us-512", true, 27, 0x8000 } }) {
+			auto plain{ vanilla_rom() };
+			const auto body{ install(plain, spec) };
+			auto rom{ layout.expand ? expanded(vanilla_rom()) : vanilla_rom() };
+			const auto config{ region_config(rom, layout.region) };
+			fh::HackManager manager;
+			manager.init_sram_state(config);
+			const auto usage{ manager.install_general_hacks(config, rom, 15, ORG, 0xfff0,
+				hacks(spec + " sram=true"), nullptr) };
+			const std::string what{ layout.region + ": " + spec };
+			require(body > TRAMPOLINE, "the plain body is smaller than the trampoline: " + what);
+			require(usage.sram_used == body, "sram body size differs: " + what);
+			require(usage.bank_used == TRAMPOLINE, "sram install kept the body in bank 15: " + what);
+			const auto moved = [&](word from, word to) {
+				return from >= ORG && from < ORG + body && to == from - ORG + SRAM_CODE;
+			};
+			const auto at = [](const std::vector<byte>& r, std::size_t off) {
+				return static_cast<word>(r[off] | (r[off + 1] << 8));
+			};
+			const auto source{ klib::Asm6502::get_file_offset(15, ORG) };
+			const auto backing{ klib::Asm6502::get_file_offset(layout.bank, layout.addr) };
+			for (std::size_t i{ 0 }; i < body; ++i)
+				if (plain[source + i] != rom[backing + i]) {
+					require(i + 1 < body && moved(at(plain, source + i), at(rom, backing + i)),
+						"sram copy differs outside a moved address: " + what);
+					++i;
+				}
+			std::size_t hooks{ 0 }, init_calls{ 0 };
+			for (word cpu{ 0xc000 }; cpu < 0xfff0; ++cpu) {
+				const auto off{ klib::Asm6502::get_file_offset(15, cpu) };
+				if (cpu >= ORG && cpu < ORG + body) {
+					if (cpu >= ORG + TRAMPOLINE)
+						require(rom[off] == 0xff, "bank 15 space after the trampoline is not free: " + what);
+					continue;
+				}
+				if (plain[off] == rom[off]) continue;
+				if (moved(at(plain, off), at(rom, off))) { ++hooks; ++cpu; continue; }
+				require(rom[off] == 0x20 && at(rom, off + 1) == ORG && init_calls++ == 0,
+					"bank 15 differs outside the hooks: " + what);
+				cpu += 2;
+			}
+			require(hooks > 0 && init_calls == 1, "no hook enters the sram stubs: " + what);
+		}
+		auto rom{ vanilla_rom() };
+		const auto before{ rom };
+		bool threw{ false };
+		try { install(rom, spec + " sram=true"); } catch (const std::exception&) { threw = true; }
+		require(threw && rom == before, "accepted sram=true without sram support: " + spec);
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -189,6 +261,12 @@ namespace {
 			require(hex_at(rom, 0xe2a3, 1) == "20" && hex_at(rom, 0xe1be, 1) == "4c", "run hooks present in the combined build");
 		}
 	}
+
+	void test_sram_backing() {
+		for (const std::string spec : { "AtlasDevRunControl", "AtlasDevRunControl tap=hold",
+			"AtlasDevRunControl mode=instant walk_cycle=2" })
+			require_sram_backing(spec);
+	}
 }
 
 int main() {
@@ -199,6 +277,7 @@ int main() {
 		test_kind_gate_with_the_scheduler();
 		test_refusals_leave_the_rom_untouched();
 		test_coexists_with_the_movement_hacks_in_both_orders();
+		test_sram_backing();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_run_control_regression: " << e.what() << '\n';

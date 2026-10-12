@@ -102,7 +102,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevEnemyStats, { "profile", "hp", "damage", "xp", "gold", "stagger" } },
 		{ fh::GeneralHackLib::AtlasDevEnemyHud, { "names", "visibility", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevCombatFeel, { "profile", "walk", "walkmax", "ramp", "iframes", "knockbackframes", "knockback", "attack", "moveattack", "sram" } },
-		{ fh::GeneralHackLib::AtlasDevRunControl, { "speed", "accel", "window", "mode", "tap", "walk_cycle", "kind", "boot" } },
+		{ fh::GeneralHackLib::AtlasDevRunControl, { "speed", "accel", "window", "mode", "tap", "walk_cycle", "kind", "boot", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevSmartMattock, { "mode", "push", "flag", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevSirGawaineControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevWolfmanControl, { "windup", "tell", "back", "swing", "lunge", "sword", "recover", "reach", "approach", "chase", "bodyhurt", "flag", "mode", "sram" } },

@@ -417,7 +417,7 @@ namespace fh {
 		word install_AtlasDevLadderCrown(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&, bool jump_buffer);
 		word install_AtlasDevRunControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&) const;
+			const fh::GeneralHack&);
 		word install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&, bool p_wolfman);
 		word install_AtlasDevScreenTransition(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
