@@ -25,7 +25,7 @@
 namespace {
 
 constexpr word ORG{ 0xfcce }, END{ 0xffe0 };
-constexpr std::size_t ROM_SIZE{ 0x40010 };
+constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 std::size_t checks{ 0 };
 
 void require(bool condition, const std::string& message) {
@@ -91,6 +91,20 @@ fe::Config config(const std::string& region = "us") {
     fe::Config result;
     result.load_definitions(EOE_TEST_CONFIG_PATH, "");
     result.set_region(region);
+    return result;
+}
+
+// the editor's expansion appends banks 16 to 31 and declares 32 banks
+std::vector<byte> expanded(std::vector<byte> rom) {
+    rom.resize(EXPANDED_ROM_SIZE, 0xff);
+    rom[4] = 0x20;
+    return rom;
+}
+
+// region data such as the bank 31 copy and the sram backing bank
+fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+    auto result{ config(region) };
+    result.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
     return result;
 }
 
@@ -319,6 +333,88 @@ void test_structural_headers() {
     }
 }
 
+// bank 15 keeps its file offset when the rom is expanded, so both modes must
+// write exactly what they write on the 256 KiB rom and nothing outside banks
+// 0 to 15.
+void test_expanded_layout() {
+    const auto install_expanded = [](std::vector<byte>& rom, const std::string& spec, const std::string& region) {
+        const auto selected{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
+        return fh::HackManager{}.install_general_hacks(region_config(rom, region), rom, 15, ORG, END,
+            selected, nullptr).bank_used;
+    };
+    for (std::size_t header{}; header < HEADERS.size(); ++header)
+        for (const std::string spec : { "AtlasDevLadderCrown", "AtlasDevLadderCrown mode=floor",
+            "AtlasDevLadderCrown downhold=3 align=2 roompolicy=allow rooms=6:3+3:12" }) {
+            auto plain{ fixture(header) };
+            const auto plain_size{ install(plain, spec) };
+            const auto source{ expanded(fixture(header)) };
+            auto rom{ source };
+            require(install_expanded(rom, spec, "us-512") == plain_size, "expanded size differs: " + spec);
+            require(std::equal(plain.begin() + 16, plain.end(), rom.begin() + 16),
+                "expanded bank 15 differs: " + spec);
+            require(std::equal(source.begin(), source.begin() + 16, rom.begin())
+                && std::equal(source.begin() + ROM_SIZE, source.end(), rom.begin() + ROM_SIZE),
+                "expanded header or banks 16 to 31 changed: " + spec);
+        }
+    const auto refused = [&](std::vector<byte> rom, const std::string& region, const std::string& what) {
+        for (const std::string mode : { "crown", "floor" }) {
+            auto copy{ rom };
+            bool threw{ false };
+            try { install_expanded(copy, "AtlasDevLadderCrown mode=" + mode, region); }
+            catch (const std::exception&) { threw = true; }
+            require(threw, "accepted " + what + " in " + mode + " mode");
+            require(copy == rom, "refusal changed the ROM: " + what);
+        }
+    };
+    refused(expanded(fixture()), "us", "an expanded rom in a region that does not copy bank 15");
+    auto sixteen{ expanded(fixture()) }; sixteen[4] = 0x10;
+    refused(sixteen, "us-512", "an expanded rom declaring 16 banks");
+    auto nes2{ expanded(fixture(1)) }; nes2[9] = 1;
+    refused(nes2, "us-512", "an expanded nes2 rom with a size msb");
+    for (const std::size_t size : { EXPANDED_ROM_SIZE - 1, EXPANDED_ROM_SIZE + 1, EXPANDED_ROM_SIZE + 16 }) {
+        auto odd{ expanded(fixture()) }; odd.resize(size, 0xff);
+        refused(odd, "us-512", std::to_string(size) + " bytes");
+    }
+}
+
+// sram=true moves the body to the sram code area. bank 15 keeps only the
+// hooks and the shared 9-byte trampoline.
+void test_sram_backing() {
+    constexpr word SRAM_CODE{ 0x6806 };
+    for (const auto& [region, expand] : { std::pair<std::string, bool>{ "us", false }, { "us-512", true } })
+        for (std::size_t header{}; header < HEADERS.size(); ++header)
+            for (const std::string spec : { "AtlasDevLadderCrown", "AtlasDevLadderCrown mode=floor",
+                "AtlasDevLadderCrown downhold=3 align=2 roompolicy=allow rooms=6:3+3:12",
+                "AtlasDevLadderCrown mode=floor roompolicy=deny rooms=1:2" }) {
+                auto plain{ fixture(header) };
+                const auto body{ install(plain, spec) };
+                auto rom{ expand ? expanded(fixture(header)) : fixture(header) };
+                const auto cfg{ region_config(rom, region) };
+                fh::HackManager manager;
+                manager.init_sram_state(cfg);
+                const auto usage{ manager.install_general_hacks(cfg, rom, 15, ORG, END,
+                    fh::filter_general_hacks(15, fh::parse_general_hacks(spec + " sram=true")), nullptr) };
+                const std::string what{ region + ": " + spec };
+                require(usage.sram_used == body, "sram body size differs: " + what);
+                require(usage.bank_used == 9, "sram install kept the body in bank 15: " + what);
+                const auto in_sram = [&](word cpu) { return cpu >= SRAM_CODE && cpu < SRAM_CODE + body; };
+                for (const word hook : { word{ 0xe307 }, word{ 0xe2c8 } })
+                    require(rom[offset(hook)] == 0x4c && in_sram(target(rom, hook)),
+                        "hook does not enter the sram body: " + what);
+                if (spec.find("floor") == std::string::npos)
+                    require(rom[offset(0xc145)] == 0x20 && in_sram(target(rom, 0xc145)),
+                        "room reset hook does not enter sram: " + what);
+            }
+    // without sram support nothing is written.
+    for (const std::string mode : { "crown", "floor" }) {
+        auto rom{ fixture() };
+        const auto before{ rom };
+        bool threw{ false };
+        try { install(rom, "AtlasDevLadderCrown sram=true mode=" + mode); }
+        catch (const std::exception&) { threw = true; }
+        require(threw && rom == before, "accepted sram=true without sram support: " + mode);
+    }
+}
 void test_identity_ownership_capacity() {
     for (std::size_t size : { std::size_t{ 0 }, std::size_t{ 15 }, ROM_SIZE - 1, ROM_SIZE + 1, ROM_SIZE * 2 }) {
         auto rom{ fixture() }; rom.resize(size, 0xff);
@@ -708,6 +804,8 @@ int main(int argc, char** argv) {
         test_options();
         test_invalid_settings();
         test_structural_headers();
+        test_expanded_layout();
+        test_sram_backing();
         test_identity_ownership_capacity();
         test_allocator_owned_space();
         test_composition();

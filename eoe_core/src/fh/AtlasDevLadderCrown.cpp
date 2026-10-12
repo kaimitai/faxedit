@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "AtlasDevFrameScheduler.h"
 #include "fe/Config.h"
+#include "fe/fe_constants.h"
 #include "common/klib/Asm6502.h"
 
 #include <algorithm>
@@ -24,7 +25,7 @@ namespace {
 		void climb_tick() { if (m_jump_buffer) jsr("jump_buffer_tick"); }
 	};
 	constexpr word RUNG{ 0x04e0 }, HOLD{ 0x04e1 };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 
 	struct Settings {
 		std::string mode, policy;
@@ -330,13 +331,21 @@ namespace {
 		if (step < 1 || step > 0x0800) fail("ladder speed is outside 1 to 2048 subpixels per movement call");
 	}
 
-	void require_source(const std::vector<byte>& rom, const Settings& s) {
+	void require_source(const fe::Config& config, const std::vector<byte>& rom, const Settings& s) {
 		constexpr std::array<byte, 4> magic{ 0x4e, 0x45, 0x53, 0x1a };
-		if (rom.size() != ROM_SIZE || !std::equal(magic.begin(), magic.end(), rom.begin())
-			|| rom[4] != 0x10 || rom[5] != 0 || (rom[6] & 0xfc) != 0x10
+		// everything crown reads and writes is in bank 15, which keeps its file
+		// offset when the editor expands the rom to 512 KiB. byte 4 holds the 32
+		// banks on its own, so nes2 byte 9 stays zero in both layouts.
+		const bool expanded{ rom.size() == EXPANDED_ROM_SIZE };
+		if ((!expanded && rom.size() != ROM_SIZE) || !std::equal(magic.begin(), magic.end(), rom.begin())
+			|| rom[4] != (expanded ? 0x20 : 0x10) || rom[5] != 0 || (rom[6] & 0xfc) != 0x10
 			|| (rom[7] != 0 && rom[7] != 8)
 			|| (rom[7] == 8 && ((rom[8] & 0x0f) != 0 || rom[9] != 0)))
-			fail("requires an unexpanded MMC1 iNES or NES2 ROM without trainer or CHR ROM");
+			fail("requires a 256 KiB MMC1 iNES or NES2 ROM, or one the editor expanded to 512 KiB, "
+				"without trainer or CHR ROM");
+		// bank 31 is the fixed bank whenever a bank above 15 is switched in
+		if (expanded && !config.boolean_or(fe::c::ID_DUPLICATE_STATIC_BANK, false))
+			fail("a 512 KiB rom needs a region that copies bank 15 into bank 31");
 		// mirroring, battery flags and unused padding do not affect bank layout.
 		// check compatibility at the movement code below.
 		if (s.mode == "crown") {
@@ -408,10 +417,13 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevLadderCrown(const fe::Config& config, std::vector<byte>& rom,
-	word cpu_addr, const fh::GeneralHack& hack, bool jump_buffer) const {
+	word cpu_addr, const fh::GeneralHack& hack, bool jump_buffer) {
 	const Settings s{ settings(hack) };
+	const bool sram{ hack.bool_or("sram", false) };
 	if (s.mode == "vanilla") return cpu_addr;
-	require_source(rom, s);
+	if (sram && !sram_state)
+		fail("sram=true requires a rom with sram support, or the SRAM hack");
+	require_source(config, rom, s);
 	if (s.mode == "crown") require_ram(config);
 	if (jump_buffer) require_site(rom, 0xe34f, { 0xa2, 3, 0x20, 0xc8, 0xe6 });
 
@@ -433,22 +445,26 @@ word fh::HackManager::install_AtlasDevLadderCrown(const fe::Config& config, std:
 		fail("unexpected default body size");
 	// use the space assigned by faxedit, including reclaimed bytes.
 	// check physical bounds here; the caller checks capacity.
-	require_span(rom, cpu_addr, size);
+	// with sram the body runs from the shared sram code area, and bank 15
+	// keeps only the hooks below.
+	if (!sram) require_span(rom, cpu_addr, size);
+	const word base{ sram ? sram_hack_addr() : cpu_addr };
 
 	// keep label resolution and every write private until the whole install
 	// succeeds. callers never observe a half-written hook or body.
 	std::vector<byte> patched{ rom };
 	const auto address{ [&](const std::string& name) {
-		return static_cast<word>(cpu_addr + code.label_position(name));
+		return static_cast<word>(base + code.label_position(name));
 	} };
 	const word ascent{ address("ascent_entry") }, entry{ address("entry_guard") };
 	const word reset{ s.mode == "crown" ? address("reset_wrapper") : word{} };
 	const word descent{ jump_buffer ? address("descent_entry") : word{} };
-	code.apply_hack_and_clear(patched, 15, cpu_addr);
+	if (sram) install_sram_hack(patched, code);
+	else code.apply_hack_and_clear(patched, 15, cpu_addr);
 	code.jmp(ascent); code.nop(2); code.apply_hack_and_clear(patched, 15, 0xe307);
 	code.jmp(entry); code.nop(1); code.apply_hack_and_clear(patched, 15, 0xe2c8);
 	if (jump_buffer) { code.jmp(descent); code.nop(2); code.apply_hack_and_clear(patched, 15, 0xe34f); }
 	if (s.mode == "crown") { code.jsr(reset); code.apply_hack_and_clear(patched, 15, 0xc145); }
 	rom = std::move(patched);
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

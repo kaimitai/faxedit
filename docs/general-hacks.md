@@ -1144,6 +1144,7 @@ an already modified input ROM; always rebuild from your clean source ROM.
 | `align` | `0` | maximum horizontal correction toward the saved rung when descending from an earned crown, 0 to 2 pixels |
 | `roompolicy` | `all` | `all` rooms, only an `allow` list, or every room except a `deny` list |
 | `rooms` | none | up to eight distinct `area:screen` byte pairs, separated by `+` |
+| `sram` | `false` | Add SRAM backing |
 
 Room policies apply to the ladder exit behavior, not to climb speed or
 attacking. `allow` and `deny` require a nonempty list. `all` rejects a room
@@ -1180,12 +1181,14 @@ floor beneath the top rung. Walking off, taking damage, starting a jump or
 changing that geometry releases crown support. This is not a general
 invisible floor over every ladder.
 
-Supported input is an unexpanded MMC1 iNES or NES2 ROM with compatible movement
-code. Compatibility is checked against the instructions and routines used by
-the hack, not the region name. Mirroring and battery-backed RAM header flags
-are accepted, as is unused iNES padding; the original header is preserved.
-Trainer, CHR-ROM and expanded layouts are not supported. The default uses 605
-bytes of bank 15 space. Crown reserves `$04e0` for support and `$04e1` for
+Supported input is an MMC1 iNES or NES2 ROM with compatible movement code.
+Compatibility is checked against the instructions and routines used by the
+hack, not the region name. Mirroring and battery-backed RAM header flags are
+accepted, as is unused iNES padding; the original header is preserved.
+Trainer and CHR-ROM layouts are not supported. A ROM expanded to 512 KiB by
+the editor is accepted, since the expanded regions copy bank 15 into bank 31;
+it has 741 bytes of bank 15 space for general hacks instead of 785. The default
+uses 605 bytes of bank 15 space. Crown reserves `$04e0` for support and `$04e1` for
 the optional down-hold timer, separate from the scheduler, jump buffer and
 palette roles. Script storage configured over either cell is rejected,
 including mirrored addresses. Floor mode uses 315 bytes and no persistent RAM.
@@ -1193,13 +1196,23 @@ Room gates add code and tables; the largest crown configuration uses 713 bytes.
 Code uses the bank 15 space assigned by FaxEdit's general-hack allocator,
 including reclaimed space. Its location and capacity depend on the project.
 
+With `sram=true` the body runs from the SRAM code area instead, and bank 15
+keeps only the hooks Crown writes over the original movement code. This is
+the way to fit Crown next to other hacks on an expanded ROM:
+
+```text
+SRAM
+AtlasDevLadderCrown sram=true
+```
+
 AtlasDevJumpControl, AtlasDevFallControl and the native scheduler's palette
 roles can be listed together with this hack when their combined code fits.
 Crown is installed first; other hacks keep their relative order, so place
 AtlasDevFrameScheduler before its roles. A jump buffer adds ladder timer
 handling: default crown plus default jump control uses 785 bytes;
-default crown plus the scheduler uses 761. Larger combinations can
-exceed the available space and are rejected. No other hack is relocated or
+default crown plus the scheduler uses 761. Both fit a 256 KiB ROM; on an
+expanded one they need `sram=true`. Larger combinations can exceed the
+available space and are rejected. No other hack is relocated or
 given extra space by this feature.
 
 Build these combinations from a compatible base ROM. Crown accepts an existing

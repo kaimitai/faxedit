@@ -97,7 +97,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevJumpControl, { "profile", "coyote", "buffer", "shorthop", "airjumps", "switchable", "armed", "flag" } },
 		{ fh::GeneralHackLib::AtlasDevLadderControl, { "profile", "up", "down", "wingup", "wingdown", "attack", "attackpose", "attackflag", "flag" } },
 		{ fh::GeneralHackLib::AtlasDevFallControl, { "profile", "curve", "steer", "kind", "boot", "flag" } },
-		{ fh::GeneralHackLib::AtlasDevLadderCrown, { "mode", "downhold", "align", "roompolicy", "rooms" } },
+		{ fh::GeneralHackLib::AtlasDevLadderCrown, { "mode", "downhold", "align", "roompolicy", "rooms", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevSmartKeys, { "mode", "flag" } },
 		{ fh::GeneralHackLib::AtlasDevEnemyStats, { "profile", "hp", "damage", "xp", "gold", "stagger" } },
 		{ fh::GeneralHackLib::AtlasDevEnemyHud, { "names", "visibility", "mode" } },
