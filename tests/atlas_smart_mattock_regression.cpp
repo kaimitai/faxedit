@@ -8,6 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // pins install_AtlasDevSmartMattock to the Atlas builder's goldens:
@@ -17,7 +18,7 @@
 //   python3 tools/build_smart_mattock.py --emit-hex --org 0xfdbe --flag 12 --push 255
 namespace {
 	constexpr word ORG{ 0xfdbe };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 	constexpr std::array<byte, 3> PRESS_ORIG{ 0xad, 0xc1, 0x03 };
 	constexpr std::array<byte, 4> PUSH_ORIG{ 0xa9, 0x00, 0x85, 0xd7 };
 	constexpr std::array<byte, 3> SPEND_ORIG{ 0x20, 0xbf, 0xc4 };
@@ -65,7 +66,22 @@ namespace {
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -144,6 +160,53 @@ int main() {
 			bool threw{ false };
 			try { install(rom, "AtlasDevSmartMattock"); } catch (const std::exception&) { threw = true; }
 			require(threw, "a non vanilla site is refused");
+		}
+		// sram=true moves the body to the sram code area. bank 15 keeps only
+		// the three retargeted instructions and the shared 9-byte trampoline,
+		// and the body's call to its own block check goes to the sram copy.
+		{
+			constexpr word SRAM_CODE{ 0x6806 };
+			struct Layout { std::string region; bool expand; byte bank; word addr; };
+			for (const Layout& layout : { Layout{ "us", false, 9, 0xa700 }, Layout{ "us-512", true, 27, 0x8000 } })
+				for (const std::string spec : { "AtlasDevSmartMattock", "AtlasDevSmartMattock mode=press",
+					"AtlasDevSmartMattock flag=12 push=255" }) {
+					auto plain{ vanilla_rom() };
+					const auto body{ install(plain, spec) };
+					auto rom{ layout.expand ? expanded(vanilla_rom()) : vanilla_rom() };
+					const auto config{ region_config(rom, layout.region) };
+					fh::HackManager manager;
+					manager.init_sram_state(config);
+					const auto usage{ manager.install_general_hacks(config, rom, 15, ORG, 0xfff0,
+						hacks(spec + " sram=true"), nullptr) };
+					const std::string what{ layout.region + ": " + spec };
+					require(usage.sram_used == body, "sram body size differs: " + what);
+					require(usage.bank_used == 9, "sram install kept the body in bank 15: " + what);
+					const auto in_sram = [&](word cpu) { return cpu >= SRAM_CODE && cpu < SRAM_CODE + body; };
+					const auto operand = [&](word cpu) {
+						const auto off{ klib::Asm6502::get_file_offset(15, cpu) };
+						return static_cast<word>(rom[off + 1] | (rom[off + 2] << 8));
+					};
+					require(hex_at(rom, 0xc48b, 1) == "4c" && in_sram(operand(0xc48b)), "press hook: " + what);
+					require(hex_at(rom, 0xc64c, 1) == "20" && in_sram(operand(0xc64c)), "spend hook: " + what);
+					if (spec.find("press") == std::string::npos)
+						require(hex_at(rom, 0xe9b9, 1) == "4c" && in_sram(operand(0xe9b9)), "push hook: " + what);
+					// the bank 15 body calls its block check at ORG; the sram copy calls it in sram
+					const auto backing{ klib::Asm6502::get_file_offset(layout.bank, layout.addr) };
+					const std::vector<byte> image(rom.begin() + backing, rom.begin() + backing + body);
+					bool calls_sram{ false }, calls_org{ false };
+					for (std::size_t i{ 0 }; i + 2 < image.size(); ++i)
+						if (image[i] == 0x20) {
+							const word target{ static_cast<word>(image[i + 1] | (image[i + 2] << 8)) };
+							calls_sram = calls_sram || in_sram(target);
+							calls_org = calls_org || target == ORG;
+						}
+					require(calls_sram && !calls_org, "the sram copy does not call its own block check: " + what);
+				}
+			auto rom{ vanilla_rom() };
+			const auto before{ rom };
+			bool threw{ false };
+			try { install(rom, "AtlasDevSmartMattock sram=true"); } catch (const std::exception&) { threw = true; }
+			require(threw && rom == before, "accepted sram=true without sram support");
 		}
 		std::cout << "atlas_smart_mattock_regression: ok\n";
 	}

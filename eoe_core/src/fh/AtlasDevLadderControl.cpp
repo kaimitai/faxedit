@@ -283,7 +283,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const LadderProfile& base{ ladder_profile(p_hack) };
 	const Settings s{
 		p_hack.word_or("up", base.up),
@@ -329,6 +329,10 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 			"AtlasDevLadderControl: flag gates the climb speeds; give at least one of up, down, "
 			"wingup, wingdown a value other than vanilla");
 
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error("AtlasDevLadderControl: sram=true requires a rom with sram support, or the SRAM hack");
+
 	klib::Asm6502 runtime;
 	if (s.want_runtime())
 		emit_runtime(runtime, s.attack_flag);
@@ -354,7 +358,7 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	if (s.attack_pose)
 		for (const Pose& pose : POSE)
 			require_site(p_rom, pose.bank, pose.org, pose.orig, sizeof(pose.orig));
-	if (size > 0) {
+	if (size > 0 && !sram) {
 		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
 		if (off > p_rom.size() || size > p_rom.size() - off)
 			throw std::runtime_error(std::format(
@@ -364,6 +368,13 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 				throw std::runtime_error(std::format(
 					"AtlasDevLadderControl: no free space for {} bytes at ${:04x}", size, cpu_addr));
 	}
+
+	// with sram the runtime stub and the speed stubs run from the shared sram
+	// code area, in the same order as in bank 15, and bank 15 keeps only the
+	// retargeted calls.
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	if (sram && s.want_runtime())
+		install_sram_hack(p_rom, runtime);
 
 	if (!s.want_speed_gate()) {
 		put(p_rom, UP_LO.addr, static_cast<byte>(s.up & 0xff));
@@ -376,13 +387,14 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	}
 	if (speeds.size() > 0) {
 		// label positions are read before the apply clears them
-		const word base{ static_cast<word>(cpu_addr + runtime_size) };
+		const word base{ static_cast<word>(body + runtime_size) };
 		word stubs[4]{};
 		const Block blocks[4]{ BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN };
 		for (std::size_t i{ 0 }; i < 4; ++i)
 			if (s.want_speed_gate() ? s.changed(blocks[i]) : blocks[i].addr == BLOCK_DOWN.addr)
 				stubs[i] = static_cast<word>(base + speeds.label_position(blocks[i].label));
-		speeds.apply_hack_and_clear(p_rom, 15, base);
+		if (sram) install_sram_hack(p_rom, speeds);
+		else speeds.apply_hack_and_clear(p_rom, 15, base);
 		for (std::size_t i{ 0 }; i < 4; ++i) {
 			const Block& block{ blocks[i] };
 			if (!(s.want_speed_gate() ? s.changed(block) : block.addr == BLOCK_DOWN.addr))
@@ -408,11 +420,11 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 		}
 
 	if (s.want_runtime()) {
-		runtime.apply_hack_and_clear(p_rom, 15, cpu_addr);
+		if (!sram) runtime.apply_hack_and_clear(p_rom, 15, cpu_addr);
 		// retarget only the operand of the existing call
-		put(p_rom, static_cast<word>(ATTACK_CALL + 1), static_cast<byte>(cpu_addr & 0xff));
-		put(p_rom, static_cast<word>(ATTACK_CALL + 2), static_cast<byte>(cpu_addr >> 8));
+		put(p_rom, static_cast<word>(ATTACK_CALL + 1), static_cast<byte>(body & 0xff));
+		put(p_rom, static_cast<word>(ATTACK_CALL + 2), static_cast<byte>(body >> 8));
 	}
 
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

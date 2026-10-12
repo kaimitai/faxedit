@@ -145,7 +145,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<byte>& rom,
-	word cpu_addr, const fh::GeneralHack& hack) const {
+	word cpu_addr, const fh::GeneralHack& hack) {
 	const Profile& base{ profile(hack) };
 	const word walk{ hack.word_or("walk", base.walk) }, walkmax{ hack.word_or("walkmax", base.walkmax) };
 	const word knockback{ hack.word_or("knockback", base.knockback) };
@@ -163,6 +163,8 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 		fail(std::format("knockback must be 1 to {} subpixels per frame", SPEED_MAX));
 	for (byte p : attack) if (p == 0) fail("attack phases must be 1 to 255 frames");
 	if (moveattack > 1) fail("moveattack must be 0 or 1");
+	const bool sram{ hack.bool_or("sram", false) };
+	if (sram && !sram_state) fail("sram=true requires a rom with sram support, or the SRAM hack");
 	klib::Asm6502 center;
 	if (walk > 0x0100) emit_center(center);
 
@@ -173,8 +175,8 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 	if (center.size() > 0) {
 		require(rom, CENTER);
 		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
-		if (off > rom.size() || center.size() > rom.size() - off
-			|| !std::all_of(rom.begin() + off, rom.begin() + off + center.size(), [](byte b) { return b == 0xff; }))
+		if (!sram && (off > rom.size() || center.size() > rom.size() - off
+			|| !std::all_of(rom.begin() + off, rom.begin() + off + center.size(), [](byte b) { return b == 0xff; })))
 			fail("no free space for ladder centering");
 	}
 
@@ -190,9 +192,14 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 	for (std::size_t i{ 0 }; i < 3; ++i) put(rom, ATTACK, i, attack[i]);
 	if (moveattack) put(rom, MOVEATTACK, 1, 0x00);
 	if (center.size() == 0) return cpu_addr;
-	const word next{ center.apply_hack_and_clear_get_next_cpu_addr(rom, 15, cpu_addr) };
+	// with sram the centering clamp runs from the shared sram code area, and
+	// bank 15 keeps only the hook.
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	word next{ cpu_addr };
+	if (sram) install_sram_hack(rom, center);
+	else next = center.apply_hack_and_clear_get_next_cpu_addr(rom, 15, cpu_addr);
 	klib::Asm6502 hook;
-	hook.jmp(cpu_addr); hook.nop();
+	hook.jmp(body); hook.nop();
 	hook.apply_hack_and_clear(rom, 15, CENTER.addr);
 	return next;
 }

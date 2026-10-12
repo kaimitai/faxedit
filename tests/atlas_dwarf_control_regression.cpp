@@ -15,7 +15,7 @@
 // for every configuration, only the two 14 byte rows differ
 namespace {
 	constexpr word ORG{ 0xbdb5 }, GATE{ 0xbeb2 }, ROWS{ 0xbf01 };
-	constexpr std::size_t ROM_SIZE{ 0x40010 }, CODE_SIZE{ 332 }, ROWS_SIZE{ 28 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 }, CODE_SIZE{ 332 }, ROWS_SIZE{ 28 };
 	const std::vector<byte> FORK_ORIG{ 0x20, 0xf8, 0x82 };
 	const std::vector<byte> GATE_ORIG{ 0xa5, 0xad, 0xf0, 0x01, 0x60 };
 	const std::vector<byte> CONT_ORIG{ 0xad, 0x27, 0x04, 0x10, 0xf5 };
@@ -67,7 +67,22 @@ namespace {
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
 		const auto hacks{ fh::filter_general_hacks(14, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 14, ORG, 0xc000, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 14, ORG, 0xc000, hacks, nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -101,6 +116,61 @@ int main() {
 			require(hex_at(rom, 0x94b4, DEAD_ORIG.size()) == hex(DEAD_ORIG), spec + ": the fallback at $94b4 must stay");
 			require(hex_at(rom, 0x94f3, RUSH_ORIG.size()) == hex(RUSH_ORIG), spec + ": the rush path must stay");
 			require(hex_at(rom, 0x89b3, CONT_ORIG.size()) == hex(CONT_ORIG), spec + ": the touch continuation must stay");
+		}
+		// sram=true on the first name moves the code and both rows to the sram
+		// code area: the backing image is the same code with its addresses
+		// moved to sram, the rows follow it, and bank 14 keeps only the hooks.
+		// the second name writes its row into the backing image.
+		{
+			constexpr word SRAM_CODE{ 0x6806 };
+			struct Layout { std::string region; bool expand; byte bank; word addr; };
+			for (const Layout& layout : { Layout{ "us", false, 9, 0xa700 }, Layout{ "us-512", true, 27, 0x8000 } })
+				for (const auto& shape : SHAPES) {
+					std::string spec{ shape.spec };
+					spec.insert(spec.find('\n') == std::string::npos ? spec.size() : spec.find('\n'), " sram=true");
+					auto rom{ layout.expand ? expanded(vanilla_rom()) : vanilla_rom() };
+					const auto config{ region_config(rom, layout.region) };
+					fh::HackManager manager;
+					manager.init_sram_state(config);
+					const auto usage{ manager.install_general_hacks(config, rom, 14, ORG, 0xc000,
+						fh::filter_general_hacks(14, fh::parse_general_hacks(spec)), nullptr) };
+					const std::string what{ layout.region + ": " + spec };
+					require(usage.bank_used == 0, what + ": sram install used bank 14 space");
+					const auto backing{ klib::Asm6502::get_file_offset(layout.bank, layout.addr) };
+					std::string image;
+					static const char* d{ "0123456789abcdef" };
+					for (std::size_t k{ 0 }; k < CODE_SIZE + ROWS_SIZE; ++k) {
+						image += d[rom[backing + k] >> 4];
+						image += d[rom[backing + k] & 15];
+					}
+					require(image.substr(2 * CODE_SIZE) == shape.rows, what + ": rows differ: " + image.substr(2 * CODE_SIZE));
+					// every byte of the code is the bank 14 code, or an address into it moved to sram
+					std::size_t moved{ 0 };
+					for (std::size_t k{ 0 }; k < CODE_SIZE; ++k) {
+						const auto want{ std::stoi(EXPECTED_CODE.substr(2 * k, 2), nullptr, 16) };
+						if (rom[backing + k] == want) continue;
+						require(k + 1 < CODE_SIZE, what + ": code differs at its last byte");
+						const word from{ static_cast<word>(want | (std::stoi(EXPECTED_CODE.substr(2 * k + 2, 2), nullptr, 16) << 8)) };
+						const word to{ static_cast<word>(rom[backing + k] | (rom[backing + k + 1] << 8)) };
+						require(from >= ORG && from < ORG + CODE_SIZE + ROWS_SIZE && to == from - ORG + SRAM_CODE,
+							what + ": code differs outside a moved address");
+						++moved;
+						++k;
+					}
+					require(moved > 0, what + ": the sram code still uses its bank 14 addresses");
+					const auto jmp_to = [](word target) {
+						return std::string{ "4c" } + d[(target >> 4) & 15] + d[target & 15] + d[(target >> 12) & 15] + d[(target >> 8) & 15];
+					};
+					require(hex_at(rom, 0x94b1, 3) == jmp_to(SRAM_CODE), what + ": fork site " + hex_at(rom, 0x94b1, 3));
+					require(hex_at(rom, 0x89ae, 3) == jmp_to(static_cast<word>(SRAM_CODE + GATE - ORG)),
+						what + ": gate site " + hex_at(rom, 0x89ae, 3));
+					require(hex_at(rom, ORG, CODE_SIZE) == std::string(2 * CODE_SIZE, 'f'), what + ": bank 14 is not left free");
+				}
+			auto rom{ vanilla_rom() };
+			const auto before{ rom };
+			bool threw{ false };
+			try { install(rom, "AtlasDevSirGawaineControl sram=true"); } catch (const std::exception&) { threw = true; }
+			require(threw && rom == before, "accepted sram=true without sram support");
 		}
 		{
 			const auto pristine{ vanilla_rom() };

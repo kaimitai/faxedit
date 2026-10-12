@@ -939,6 +939,9 @@ rev A, EU and JP ROMs; the installer verifies them and refuses a ROM
 where they differ. Jumps made with A held are unchanged frame for frame.
 Does not require AtlasDevFrameScheduler unless `switchable` is set.
 
+With `sram=true` the stubs run from the SRAM code area instead, and bank 15
+keeps only the three retargeted instructions.
+
 With `switchable=1` the hack becomes a script controlled client of
 AtlasDevFrameScheduler, which must then appear earlier in the list. It
 claims kind `$86` in the next free boot slot, every stub runs only while
@@ -964,6 +967,7 @@ same switch and cannot be combined; `armed` belongs to `switchable`.
 | `switchable` | `0` | `1` gates the hack on scheduler kind `$86` so AtlasDevArmRole can switch it; requires AtlasDevFrameScheduler |
 | `armed` | `1` | with `switchable=1`, whether the hack is on at boot |
 | `flag` | none | extended flag 0 to 247 that switches the hack on at runtime; cannot be combined with `switchable` |
+| `sram` | `false` | Add SRAM backing |
 
 
 `profile` sets all four at once, in the spirit of the game named, and any
@@ -1000,6 +1004,7 @@ Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Righ
 | `kind` | `0` | `0` always on; `1` to `255` makes the hack script controllable: every stub runs the vanilla bytes unless an AtlasDevFrameScheduler slot holds this kind, so `AtlasDevArmRole kind, 1` and `AtlasDevArmRole kind, 0` switch it at runtime. Requires AtlasDevFrameScheduler earlier in the list. Kind `6` is the registered number for this hack |
 | `boot` | `true` | with `kind`, seed a scheduler boot slot so the hack is on from power on; `false` leaves arming to a script |
 | `flag` | none | extended flag 0 to 247 that switches the hack on at runtime: every stub runs the vanilla bytes while the flag is clear, so `SetFlag n` and `ClearFlag n` switch it with no scheduler. Cannot be combined with `kind`; `boot` belongs to `kind` |
+| `sram` | `false` | Add SRAM backing |
 
 | profile | curve | steer |
 | --- | --- | --- |
@@ -1100,6 +1105,7 @@ Does not require AtlasDevFrameScheduler.
 | `attackpose` | `0` | 1 draws the attack frames while climbing instead of the climb pose |
 | `attackflag` | none | extended flag 0 to 247 that allows the attack at runtime |
 | `flag` | none | extended flag 0 to 247 that switches the changed climb speeds on at runtime; while it is clear the vanilla speeds run |
+| `sram` | `false` | Add SRAM backing |
 
 
 `profile` sets `up`, `down`, `attack` and `attackpose` at once, in the spirit
@@ -1371,7 +1377,8 @@ uses for the shove.
 
 `walk` above 256 adds a 57-byte ladder-centering helper. It stops at the
 alignment point instead of stepping past it repeatedly; ordinary walking
-keeps the configured speed. No persistent RAM is used.
+keeps the configured speed. No persistent RAM is used. `sram=true` runs the
+helper from the SRAM code area instead, and bank 15 keeps only its hook.
 
 `iframes` is the mercy time after a hit in frames, vanilla 60, written to all
 three places the game sets it. The shove after a hit lasts while that counter
@@ -1470,6 +1477,9 @@ kept.
 grant the ability with `SetFlag` and take it away with `ClearFlag`. A clear
 flag is indistinguishable from stock.
 
+`sram=true` runs the body from the SRAM code area instead, and bank 15 keeps
+only the three retargeted instructions.
+
 Three vanilla instructions in bank 15 are retargeted, at the Down and B
 check, at the push check every non fountain frame reaches, and at the spend
 inside the dig. No RAM is claimed. Every site is verified against its exact
@@ -1512,6 +1522,7 @@ reach. The two names can be listed in any order, each with its own flag.
 | `bodyhurt` | `0` | 1 makes contact hurt in every pose, as in vanilla |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
 
 `windup`, `swing` and `recover` add up to at most 255 frames. The defaults
 make a one second cycle.
@@ -1522,7 +1533,10 @@ make a one second cycle.
 Two vanilla instructions in bank 14 are retargeted: the distance call in the
 behavior both dwarves share, and the start of the touch handler. The code and
 one 14 byte row per monster take 360 bytes of bank 14 free space; the code is
-installed once, whichever name comes first. No RAM is claimed: the attack
+installed once, whichever name comes first. With `sram=true` on the first
+name, the code and both rows go to the SRAM code area instead and bank 14
+keeps only the two retargeted instructions; the second name follows the first
+name's placement. No RAM is claimed: the attack
 timer is a per sprite behavior byte these two monsters never use. Every site
 is verified against its exact vanilla bytes before anything is written, and
 all of them are identical in the US, US rev A, EU and JP ROMs. Does not

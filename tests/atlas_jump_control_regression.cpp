@@ -8,6 +8,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // pins install_AtlasDevJumpControl's two runtime switches against each
@@ -16,7 +17,7 @@
 // installer refuses the combinations that would mean two switches at once.
 namespace {
 	constexpr word ORG{ 0xfcce };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 
 	constexpr std::array<byte, 4> FALL_ORIG{ 0xa5, 0xa5, 0x10, 0x00 };
 	constexpr std::array<byte, 5> INIT_ORIG{ 0xa5, 0xa4, 0x4a, 0xb0, 0x1a };
@@ -49,7 +50,22 @@ namespace {
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -87,9 +103,9 @@ namespace {
 		const auto flagged{ install(a, "AtlasDevJumpControl flag=3 airjumps=1") };
 		auto b{ vanilla_rom() };
 		const auto sched{ fh::HackManager{}.install_general_hacks(fe::Config{}, b, 15, ORG, 0xfff0,
-			hacks("AtlasDevFrameScheduler"), nullptr) };
+			hacks("AtlasDevFrameScheduler"), nullptr).bank_used };
 		const auto switched{ fh::HackManager{}.install_general_hacks(fe::Config{}, b, 15,
-			static_cast<word>(ORG + sched), 0xfff0, hacks("AtlasDevJumpControl switchable=1 airjumps=1"), nullptr) };
+			static_cast<word>(ORG + sched), 0xfff0, hacks("AtlasDevJumpControl switchable=1 airjumps=1"), nullptr).bank_used };
 		require(switched == flagged + 42, "flag body is not the switchable body minus three fourteen byte gate savings");
 		// flag 3 lives in $0101 bit 3
 		require(hex_at(a, ORG, 5) == "ad01012908", "flag 3 address or mask");
@@ -125,6 +141,44 @@ namespace {
 		}
 		std::cout << "rejections: ok\n";
 	}
+
+	word operand(const std::vector<byte>& rom, word cpu) {
+		return static_cast<word>(byte_at(rom, cpu + 1) | (byte_at(rom, cpu + 2) << 8));
+	}
+
+	// sram=true moves the stubs to the sram code area. bank 15 keeps only the
+	// three retargeted instructions and the shared 9-byte trampoline.
+	void test_sram_backing() {
+		constexpr word SRAM_CODE{ 0x6806 };
+		for (const auto& [region, expand] : { std::pair<std::string, bool>{ "us", false }, { "us-512", true } })
+			for (const std::string spec : { "AtlasDevJumpControl", "AtlasDevJumpControl airjumps=1",
+				"AtlasDevJumpControl flag=20 airjumps=1" }) {
+				auto plain{ vanilla_rom() };
+				const auto body{ install(plain, spec) };
+				auto rom{ expand ? expanded(vanilla_rom()) : vanilla_rom() };
+				const auto config{ region_config(rom, region) };
+				fh::HackManager manager;
+				manager.init_sram_state(config);
+				const auto usage{ manager.install_general_hacks(config, rom, 15, ORG, 0xfff0,
+					hacks(spec + " sram=true"), nullptr) };
+				const std::string what{ region + ": " + spec };
+				require(usage.sram_used == body, "sram body size differs: " + what);
+				require(usage.bank_used == 9, "sram install kept the stubs in bank 15: " + what);
+				for (const auto& [hook, opcode] : { std::pair<word, byte>{ 0xe3cd, 0x4c }, { 0xe444, 0x4c }, { 0xe463, 0x20 } }) {
+					const word target{ operand(rom, hook) };
+					require(byte_at(rom, hook) == opcode && target >= SRAM_CODE && target < SRAM_CODE + body,
+						"hook does not enter the sram stubs: " + what);
+				}
+			}
+		// without sram support nothing is written.
+		auto rom{ vanilla_rom() };
+		const auto before{ rom };
+		bool threw{ false };
+		try { install(rom, "AtlasDevJumpControl sram=true"); }
+		catch (const std::exception&) { threw = true; }
+		require(threw && rom == before, "accepted sram=true without sram support");
+		std::cout << "sram backing: ok\n";
+	}
 }
 
 int main() {
@@ -133,6 +187,7 @@ int main() {
 		test_flag_body_is_switchable_body_minus_42();
 		test_plain_install_has_no_gate();
 		test_rejections();
+		test_sram_backing();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "FAIL: " << e.what() << '\n';

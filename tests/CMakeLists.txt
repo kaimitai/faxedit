@@ -16,6 +16,7 @@ add_executable(atlas_fall_control_regression
 )
 
 target_link_libraries(atlas_fall_control_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_fall_control_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 
 add_test(NAME atlas_fall_control_regression COMMAND atlas_fall_control_regression)
 
@@ -24,6 +25,7 @@ add_executable(atlas_jump_control_regression
 )
 
 target_link_libraries(atlas_jump_control_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_jump_control_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 
 add_test(NAME atlas_jump_control_regression COMMAND atlas_jump_control_regression)
 
@@ -32,6 +34,7 @@ add_executable(atlas_ladder_control_regression
 )
 
 target_link_libraries(atlas_ladder_control_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_ladder_control_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 
 add_test(NAME atlas_ladder_control_regression COMMAND atlas_ladder_control_regression)
 
@@ -62,6 +65,7 @@ add_executable(atlas_combat_feel_regression
 )
 
 target_link_libraries(atlas_combat_feel_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_combat_feel_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 
 add_test(NAME atlas_combat_feel_regression COMMAND atlas_combat_feel_regression)
 
@@ -91,9 +95,11 @@ add_test(NAME atlas_run_control_regression COMMAND atlas_run_control_regression)
 
 add_executable(atlas_smart_mattock_regression atlas_smart_mattock_regression.cpp)
 target_link_libraries(atlas_smart_mattock_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_smart_mattock_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_smart_mattock_regression COMMAND atlas_smart_mattock_regression)
 add_executable(atlas_dwarf_control_regression atlas_dwarf_control_regression.cpp)
 target_link_libraries(atlas_dwarf_control_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_dwarf_control_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_dwarf_control_regression COMMAND atlas_dwarf_control_regression)
 add_executable(atlas_screen_transition_regression atlas_screen_transition_regression.cpp)
 target_link_libraries(atlas_screen_transition_regression PRIVATE eoe_core)

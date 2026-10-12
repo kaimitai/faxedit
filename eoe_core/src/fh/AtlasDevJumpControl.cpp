@@ -325,7 +325,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const byte switchable{ p_hack.byte_or("switchable", 0) };
 	if (switchable > 1)
 		throw std::runtime_error("AtlasDevJumpControl: switchable must be 0 or 1");
@@ -344,6 +344,9 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 		setting(p_hack, "shorthop", base.shorthop), setting(p_hack, "airjumps", base.airjumps), switchable, flag };
 	if (!s.any())
 		return cpu_addr;
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error("AtlasDevJumpControl: sram=true requires a rom with sram support, or the SRAM hack");
 
 	// a switchable install is a scheduler client: the scheduler must be
 	// there, and a boot slot is free only while its arm byte is zero and
@@ -391,19 +394,25 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 			if (p_rom[table + k] != p_rom[table + 31 - k])
 				throw std::runtime_error("AtlasDevJumpControl: the jump arc table is not a mirror");
 	}
-	const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
-	if (off > p_rom.size() || size > p_rom.size() - off)
-		throw std::runtime_error(std::format(
-			"AtlasDevJumpControl: {} bytes at ${:04x} overflow the ROM image", size, cpu_addr));
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (p_rom[off + i] != 0xff)
+	// with sram the body runs from the shared sram code area, and bank 15
+	// keeps only the hooks below.
+	if (!sram) {
+		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+		if (off > p_rom.size() || size > p_rom.size() - off)
 			throw std::runtime_error(std::format(
-				"AtlasDevJumpControl: bank 15 space at ${:04x} is not free", cpu_addr + i));
+				"AtlasDevJumpControl: {} bytes at ${:04x} overflow the ROM image", size, cpu_addr));
+		for (std::size_t i{ 0 }; i < size; ++i)
+			if (p_rom[off + i] != 0xff)
+				throw std::runtime_error(std::format(
+					"AtlasDevJumpControl: bank 15 space at ${:04x} is not free", cpu_addr + i));
+	}
 
-	const word fall{ static_cast<word>(cpu_addr + (s.want_fall() ? code.label_position("@fall") : 0)) };
-	const word init{ static_cast<word>(cpu_addr + (s.want_init() ? code.label_position("@init") : 0)) };
-	const word hop{ static_cast<word>(cpu_addr + (s.want_hop() ? code.label_position("@hop") : 0)) };
-	code.apply_hack_and_clear(p_rom, 15, cpu_addr);
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word fall{ static_cast<word>(body + (s.want_fall() ? code.label_position("@fall") : 0)) };
+	const word init{ static_cast<word>(body + (s.want_init() ? code.label_position("@init") : 0)) };
+	const word hop{ static_cast<word>(body + (s.want_hop() ? code.label_position("@hop") : 0)) };
+	if (sram) install_sram_hack(p_rom, code);
+	else code.apply_hack_and_clear(p_rom, 15, cpu_addr);
 	if (s.want_fall()) {
 		code.jmp(fall);
 		code.nop(1);
@@ -421,5 +430,5 @@ word fh::HackManager::install_AtlasDevJumpControl(const fe::Config&, std::vector
 	}
 	if (s.switchable && armed)
 		p_rom[scheduler + OFF_ARM0 + arm_slot] = KIND_JUMP;
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

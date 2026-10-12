@@ -9,6 +9,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Pins install_AtlasDevFallControl to the Atlas builder's goldens:
@@ -16,7 +17,7 @@
 //   python3 tools/build_fall_control.py --emit-hex --profile arc --org 0xfcce
 namespace {
 	constexpr word ORG{ 0xfcce };
-	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 	constexpr std::array<byte, 6> MARK_ORIG{ 0xa5, 0xa4, 0x09, 0x04, 0x85, 0xa4 };
 	constexpr std::array<byte, 7> STEP_ORIG{ 0xa5, 0xa1, 0x18, 0x69, 0x08, 0x85, 0xa1 };
 	constexpr std::array<byte, 6> STEER_ORIG{ 0xa5, 0xa4, 0x29, 0x05, 0xf0, 0x0f };
@@ -59,7 +60,22 @@ namespace {
 	}
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks(spec), nullptr).bank_used;
+	}
+
+	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {
+		fe::Config config;
+		config.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		config.set_region(region);
+		config.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return config;
+	}
+
+	// the editor's expansion appends banks 16 to 31 and declares 32 banks
+	std::vector<byte> expanded(std::vector<byte> rom) {
+		rom.resize(EXPANDED_ROM_SIZE, 0xff);
+		rom[4] = 0x20;
+		return rom;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {
@@ -207,6 +223,55 @@ namespace {
 		require(rom == before, "vanilla profile changed the ROM");
 	}
 
+	// sram=true moves the body to the sram code area: the backing copy is the
+	// bank 15 body with every address inside it moved to sram, and bank 15
+	// keeps only the hooks and the shared 9-byte trampoline.
+	void test_sram_backing() {
+		constexpr word SRAM_CODE{ 0x6806 };
+		struct Layout { std::string region; bool expand; byte bank; word addr; };
+		for (const Layout& layout : { Layout{ "us", false, 9, 0xa700 }, Layout{ "us-512", true, 27, 0x8000 } })
+			for (const std::string spec : { "AtlasDevFallControl profile=zelda2", "AtlasDevFallControl",
+				"AtlasDevFallControl flag=3" }) {
+				auto plain{ vanilla_rom() };
+				const auto body{ install(plain, spec) };
+				auto rom{ layout.expand ? expanded(vanilla_rom()) : vanilla_rom() };
+				const auto config{ region_config(rom, layout.region) };
+				fh::HackManager manager;
+				manager.init_sram_state(config);
+				const auto usage{ manager.install_general_hacks(config, rom, 15, ORG, 0xfff0,
+					hacks(spec + " sram=true"), nullptr) };
+				const std::string what{ layout.region + ": " + spec };
+				require(usage.sram_used == body, "sram body size differs: " + what);
+				require(usage.bank_used == 9, "sram install kept the body in bank 15: " + what);
+				const auto source{ klib::Asm6502::get_file_offset(15, ORG) };
+				const auto backing{ klib::Asm6502::get_file_offset(layout.bank, layout.addr) };
+				std::size_t moved{ 0 };
+				for (std::size_t i{ 0 }; i < body; ++i) {
+					const byte a{ plain[source + i] }, b{ rom[backing + i] };
+					if (a == b) continue;
+					require(i + 1 < body, "sram copy differs at its last byte: " + what);
+					const word from{ static_cast<word>(a | (plain[source + i + 1] << 8)) };
+					const word to{ static_cast<word>(b | (rom[backing + i + 1] << 8)) };
+					require(from >= ORG && from < ORG + body && to == from - ORG + SRAM_CODE,
+						"sram copy differs outside a moved address: " + what);
+					++moved;
+					++i;
+				}
+				// each of these bodies reads its curve or calls its gate by address
+				require(moved > 0, "sram copy still uses its bank 15 addresses: " + what);
+				for (const word hook : { word{ 0xe3d1 }, word{ 0xe3f5 } }) {
+					const auto off{ klib::Asm6502::get_file_offset(15, hook) };
+					const word target{ static_cast<word>(rom[off + 1] | (rom[off + 2] << 8)) };
+					require(target >= SRAM_CODE && target < SRAM_CODE + body, "hook does not enter sram: " + what);
+				}
+			}
+		auto rom{ vanilla_rom() };
+		const auto before{ rom };
+		bool threw{ false };
+		try { install(rom, "AtlasDevFallControl sram=true"); } catch (const std::exception&) { threw = true; }
+		require(threw && rom == before, "accepted sram=true without sram support");
+	}
+
 	void test_overrides_and_refusals() {
 		auto rom{ vanilla_rom() };
 		install(rom, "AtlasDevFallControl profile=moon steer=0");
@@ -238,6 +303,7 @@ int main() {
 		test_kind_gate_with_the_scheduler();
 		test_kind_gate_boot_off_and_refusals();
 		test_flag_gate_without_the_scheduler();
+		test_sram_backing();
 	}
 	catch (const std::exception& e) {
 		std::cerr << "atlas_fall_control_regression: " << e.what() << '\n';

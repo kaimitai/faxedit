@@ -138,7 +138,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevSmartMattock(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	std::string mode{ p_hack.string_or("mode", "both") };
 	std::transform(mode.begin(), mode.end(), mode.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 	if (mode != "vanilla" && mode != "press" && mode != "push" && mode != "both")
@@ -160,6 +160,9 @@ word fh::HackManager::install_AtlasDevSmartMattock(const fe::Config&, std::vecto
 		flag = static_cast<int>(f);
 	}
 	if (mode == "vanilla") return cpu_addr;
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error("AtlasDevSmartMattock: sram=true requires a rom with sram support, or the SRAM hack");
 	const Settings s{ presses, pushes, static_cast<byte>(push_w), flag };
 
 	// ownership checks first, so a refused install leaves the rom byte identical
@@ -171,17 +174,23 @@ word fh::HackManager::install_AtlasDevSmartMattock(const fe::Config&, std::vecto
 	klib::Asm6502 code;
 	emit_body(code, s);
 	const auto size{ code.size() };
-	const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("AtlasDevSmartMattock: bank 15 space at ${:04x} is not free", cpu_addr + i));
+	// with sram the body runs from the shared sram code area, and bank 15
+	// keeps only the hooks below.
+	if (!sram) {
+		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
+		for (std::size_t i{ 0 }; i < size; ++i)
+			if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
+				throw std::runtime_error(std::format("AtlasDevSmartMattock: bank 15 space at ${:04x} is not free", cpu_addr + i));
+	}
 
-	const word press{ static_cast<word>(cpu_addr + code.label_position("@press")) };
-	const word spend{ static_cast<word>(cpu_addr + code.label_position("@spend")) };
-	const word push{ pushes ? static_cast<word>(cpu_addr + code.label_position("@push")) : word{ 0 } };
-	code.apply_hack_and_clear(p_rom, 15, cpu_addr);
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word press{ static_cast<word>(body + code.label_position("@press")) };
+	const word spend{ static_cast<word>(body + code.label_position("@spend")) };
+	const word push{ pushes ? static_cast<word>(body + code.label_position("@push")) : word{ 0 } };
+	if (sram) install_sram_hack(p_rom, code);
+	else code.apply_hack_and_clear(p_rom, 15, cpu_addr);
 	code.jmp(press); code.apply_hack_and_clear(p_rom, 15, SITE_PRESS);
 	code.jsr(spend); code.apply_hack_and_clear(p_rom, 15, SITE_SPEND);
 	if (pushes) { code.jmp(push); code.nop(1); code.apply_hack_and_clear(p_rom, 15, SITE_PUSH); }
-	return static_cast<word>(cpu_addr + size);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
 }

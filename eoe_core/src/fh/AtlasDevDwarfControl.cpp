@@ -209,15 +209,15 @@ namespace {
 		return probe.size();
 	}
 
-	void write_row(std::vector<byte>& p_rom, word p_addr, const Row& p_row) {
+	void write_row(std::vector<byte>& p_rom, byte p_bank, word p_addr, const Row& p_row) {
 		const auto row{ p_row.bytes() };
 		for (std::size_t i{ 0 }; i < ROW; ++i)
-			p_rom.at(klib::Asm6502::get_file_offset(BANK, static_cast<word>(p_addr + i))) = row[i];
+			p_rom.at(klib::Asm6502::get_file_offset(p_bank, static_cast<word>(p_addr + i))) = row[i];
 	}
 }
 
 word fh::HackManager::install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack, bool p_wolfman) const {
+	const fh::GeneralHack& p_hack, bool p_wolfman) {
 	const std::string name{ p_wolfman ? "AtlasDevWolfmanControl" : "AtlasDevSirGawaineControl" };
 	// every parameter is judged in every mode, vanilla included
 	std::string mode{ p_hack.string_or("mode", "") };
@@ -227,27 +227,38 @@ word fh::HackManager::install_AtlasDevDwarfControl(const fe::Config&, std::vecto
 	const Row row{ parse_row(p_hack, name) };
 	if (mode == "vanilla")
 		return cpu_addr;
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error(name + ": sram=true requires a rom with sram support, or the SRAM hack");
 
 	const std::size_t size{ code_size() };
 	const word own_row{ static_cast<word>(p_wolfman ? ROW : 0) };
 	const auto fork_off{ klib::Asm6502::get_file_offset(BANK, SITE_FORK) };
 	if (fork_off + 2 < p_rom.size() && p_rom[fork_off] == 0x4c) {
-		// the other name already installed the code: verify it and write this row
+		// the other name already installed the code: verify it and write this row.
+		// its placement decides: bank 14, or the sram code area, whose image
+		// is in the backing bank and copied to sram at boot
 		const word org{ static_cast<word>(p_rom[fork_off + 1] | (p_rom[fork_off + 2] << 8)) };
+		const bool in_sram{ org >= 0x6000 && org < 0x8000 };
+		if (in_sram && !sram_state)
+			throw std::runtime_error(std::format("{}: the site at ${:04x} is patched by something else", name, SITE_FORK));
+		const byte bank{ in_sram ? sram_state->rom_bank : BANK };
+		const word image{ in_sram ? static_cast<word>(sram_state->rom_begin + (org - sram_state->sram_begin)) : org };
 		const word rows{ static_cast<word>(org + size) };
 		klib::Asm6502 expect;
 		emit_code(expect, rows);
 		const word gate{ static_cast<word>(org + expect.label_position("@gate")) };
 		std::vector<byte> scratch(p_rom);
-		expect.apply_hack_and_clear(scratch, BANK, org);
-		const auto off{ klib::Asm6502::get_file_offset(BANK, org) };
+		if (in_sram) expect.apply_hack_and_clear_relocated(scratch, bank, image, org);
+		else expect.apply_hack_and_clear(scratch, BANK, org);
+		const auto off{ klib::Asm6502::get_file_offset(bank, image) };
 		const auto gate_off{ klib::Asm6502::get_file_offset(BANK, SITE_GATE) };
 		const bool ours{ off + size <= p_rom.size()
 			&& std::equal(scratch.begin() + off, scratch.begin() + off + size, p_rom.begin() + off)
 			&& p_rom[gate_off] == 0x4c && p_rom[gate_off + 1] == (gate & 0xff) && p_rom[gate_off + 2] == (gate >> 8) };
 		if (!ours)
 			throw std::runtime_error(std::format("{}: the site at ${:04x} is patched by something else", name, SITE_FORK));
-		write_row(p_rom, static_cast<word>(rows + own_row), row);
+		write_row(p_rom, bank, static_cast<word>(image + size + own_row), row);
 		return cpu_addr;
 	}
 
@@ -258,19 +269,31 @@ word fh::HackManager::install_AtlasDevDwarfControl(const fe::Config&, std::vecto
 	require_site(p_rom, V_RUSH, RUSH_ORIG, name);
 	require_site(p_rom, V_CONT, CONT_ORIG, name);
 	const std::size_t total{ size + 2 * ROW };
-	const auto off{ klib::Asm6502::get_file_offset(BANK, cpu_addr) };
-	for (std::size_t i{ 0 }; i < total; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("{}: bank 14 space at ${:04x} is not free", name, cpu_addr + i));
+	if (!sram) {
+		const auto off{ klib::Asm6502::get_file_offset(BANK, cpu_addr) };
+		for (std::size_t i{ 0 }; i < total; ++i)
+			if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
+				throw std::runtime_error(std::format("{}: bank 14 space at ${:04x} is not free", name, cpu_addr + i));
+	}
 
-	const word rows{ static_cast<word>(cpu_addr + size) };
+	// with sram the body and both rows run from the shared sram code area, and
+	// bank 14 keeps only the two hooks
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word rows{ static_cast<word>(body + size) };
 	klib::Asm6502 code;
 	emit_code(code, rows);
-	const word gate{ static_cast<word>(cpu_addr + code.label_position("@gate")) };
-	code.apply_hack_and_clear(p_rom, BANK, cpu_addr);
-	write_row(p_rom, rows, p_wolfman ? vanilla_row() : row);
-	write_row(p_rom, static_cast<word>(rows + ROW), p_wolfman ? row : vanilla_row());
-	code.jmp(cpu_addr); code.apply_hack_and_clear(p_rom, BANK, SITE_FORK);
+	const word gate{ static_cast<word>(body + code.label_position("@gate")) };
+	if (sram) {
+		for (const Row& r : { p_wolfman ? vanilla_row() : row, p_wolfman ? row : vanilla_row() })
+			for (byte b : r.bytes()) code.db(b);
+		install_sram_hack(p_rom, code);
+	}
+	else {
+		code.apply_hack_and_clear(p_rom, BANK, cpu_addr);
+		write_row(p_rom, BANK, rows, p_wolfman ? vanilla_row() : row);
+		write_row(p_rom, BANK, static_cast<word>(rows + ROW), p_wolfman ? row : vanilla_row());
+	}
+	code.jmp(body); code.apply_hack_and_clear(p_rom, BANK, SITE_FORK);
 	code.jmp(gate); code.nop(2); code.apply_hack_and_clear(p_rom, BANK, SITE_GATE);
-	return static_cast<word>(cpu_addr + total);
+	return sram ? cpu_addr : static_cast<word>(cpu_addr + total);
 }

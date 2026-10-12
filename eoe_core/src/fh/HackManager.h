@@ -391,7 +391,7 @@ namespace fh {
 		word install_AtlasDevTimeOfDay(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevJumpControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&) const;
+			const fh::GeneralHack&);
 		word install_AtlasDevSpriteSpeed(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevPpuDrainUnroll(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
@@ -401,7 +401,7 @@ namespace fh {
 		word install_AtlasDevPreventTextbox(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
+			const fh::GeneralHack& p_hack);
 		word install_AtlasDevSmartKeys(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevEnemyHud(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
@@ -409,17 +409,17 @@ namespace fh {
 		word install_AtlasDevEnemyStats(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
 		word install_AtlasDevCombatFeel(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack& p_hack) const;
+			const fh::GeneralHack& p_hack);
 		word install_AtlasDevSmartMattock(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&) const;
+			const fh::GeneralHack&);
 		word install_AtlasDevFallControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&) const;
+			const fh::GeneralHack&);
 		word install_AtlasDevLadderCrown(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&, bool jump_buffer);
 		word install_AtlasDevRunControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevDwarfControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&, bool p_wolfman) const;
+			const fh::GeneralHack&, bool p_wolfman);
 		word install_AtlasDevScreenTransition(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevFastBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,

@@ -927,7 +927,7 @@ namespace {
 // SetFlag N and ClearFlag N switch the hack with no scheduler at all.
 // The regression test pins the emitted bytes for all three shapes.
 word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, std::vector<byte>& p_rom,
-	word cpu_addr, const fh::GeneralHack& p_hack) const {
+	word cpu_addr, const fh::GeneralHack& p_hack) {
 	using namespace fh::afs;
 	std::string profile{ p_hack.string_or("profile", "arc") };
 	std::transform(profile.begin(), profile.end(), profile.begin(),
@@ -970,16 +970,22 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 
 	if (curve.empty() && steer == 0)
 		return cpu_addr;
+	const bool sram{ p_hack.bool_or("sram", false) };
+	if (sram && !sram_state)
+		throw std::runtime_error("AtlasDevFallControl: sram=true requires a rom with sram support, or the SRAM hack");
 
 	const bool by_flag{ flag != FALL_NO_FLAG };
 	const bool gated{ kind != 0 || by_flag };
 	const std::size_t armed_size{ by_flag ? FALL_SIZE_ARMED_FLAG : FALL_SIZE_ARMED };
-	const word armed_addr{ cpu_addr };
-	const word mark_addr{ static_cast<word>(cpu_addr + (gated ? armed_size : 0)) };
+	// with sram the body runs from the shared sram code area, and bank 15
+	// keeps only the hooks below.
+	const word body{ sram ? sram_hack_addr() : cpu_addr };
+	const word armed_addr{ body };
+	const word mark_addr{ static_cast<word>(body + (gated ? armed_size : 0)) };
 	const word step_addr{ static_cast<word>(mark_addr + (gated ? FALL_SIZE_MARK_G : FALL_SIZE_MARK)) };
 	const word curve_addr{ static_cast<word>(step_addr + (gated ? FALL_SIZE_STEP_G : FALL_SIZE_STEP)) };
 	const word steer_addr{ static_cast<word>(curve.empty()
-		? (gated ? cpu_addr + armed_size : cpu_addr)
+		? (gated ? body + armed_size : body)
 		: curve_addr + curve.size()) };
 
 	// ownership checks first, so a refused install leaves the ROM byte identical
@@ -1085,8 +1091,11 @@ word fh::HackManager::install_AtlasDevFallControl(const fe::Config& p_config, st
 		}
 	}
 
-	const word next{ code.size() == 0 ? cpu_addr
-		: code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr) };
+	word next{ cpu_addr };
+	if (code.size() != 0) {
+		if (sram) install_sram_hack(p_rom, code);
+		else next = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 15, cpu_addr);
+	}
 
 	klib::Asm6502 hook;
 	if (!curve.empty()) {
