@@ -1380,7 +1380,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - `Misc`: Added options for opening the inventory on the starting screen, removing the Hour Glass HP penalty and configuring invisible dialogue trigger dimensions.
 
 **General Hack Improvements and Fixes**
-- `PermaDoors`: Added an optional unlock sound when traversing previously unlocked doors.
+- `PermaDoors`: Added optional unlock sound and iScript execution when entering previously unlocked doors.
 - `OintmentFix`: Added optional protection against poison damage.
 - `FastStart`: Fixed starting mana initialization and the initial HUD display.
 - `AtlasDevLadderControl`: Fixed ladder bottom exits.

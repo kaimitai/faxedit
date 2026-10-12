@@ -584,13 +584,16 @@ Keeps doors unlocked after they have been opened with a key. An alternative to t
 | `bank`    | 15               | Which bank to install the majority of the hack in     |
 | `addr`    | none, calculated | Which CPU address in that bank to install the hack in |
 | `sound`   | `false`          | Play the vanilla unlock sound when reusing an already unlocked door |
-| `sram` | `false` | Add SRAM backing |
+| `script`  | `$ff (disabled)` | iScript to run when entering an already unlocked door |
+| `sram`    | `false`          | Add SRAM backing |
 
 If `bank` is omitted, the entire hack is installed in the normal free-space range in bank 15. Bank 15 space is limited, however, so using another bank may be preferable if space is available.
 
 Bank 9 is a good choice for vanilla ROMs, while expanded ROMs can use one of their additional banks, for example bank 28.
 
 If `addr` is not given for another bank, free space will be automatically deduced, if possible. `addr` is ignored when using bank 15.
+
+The optional `script` parameter runs an iScript when entering a previously unlocked door. This allows custom dialogue or events to occur when revisiting a door, without requiring the player to unlock it again. The script does not run when the door is first unlocked.
 
 ```text
 PermaDoors bank=28 sound=true

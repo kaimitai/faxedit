@@ -249,7 +249,7 @@ namespace {
 	}
 
 	klib::Asm6502 make_PermaDoors_Trampolines(word main_entry_addr, const fe::Config& p_config,
-		byte bank, bool sound, bool sram) {
+		byte bank, bool sound, byte script, bool sram) {
 		klib::Asm6502 code;
 
 		code.label("@set_flag_trampoline");
@@ -267,6 +267,12 @@ namespace {
 		code.lda_zp(VALUE_IO);
 		code.beq("@locked");
 		// door was unlocked in the past
+		if (script != 0xff) {
+			code.lda_imm(script);
+			code.jsr(fh::HackManager::cfg_word(p_config, fh::c::ID_ROM_VANILLA_FAR_CALL));
+			code.db(12);
+			code.dw(fh::ROM::IScripts_Begin - 1);
+		}
 		if (sound) {
 			code.jsr(fh::ROM::Game_UnlockDoorWithSoundEffect);
 			code.lda_imm(0x00); // restore vanilla success return: A=0, Z=1
@@ -322,6 +328,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 				fe::ROM_Manager::find_trailing_free_cpu_addr(p_rom, bank, 0xff, 16)
 	};
 	const bool sound{ p_hack.bool_or("sound", false) };
+	const byte script{ p_hack.byte_or("script", 0xff) };
 
 	word main_entry_addr{};
 
@@ -339,7 +346,7 @@ word fh::HackManager::install_PermaDoors(const fe::Config& p_config, std::vector
 			cpu_addr = next_addr;
 	}
 
-	auto code{ make_PermaDoors_Trampolines(main_entry_addr, p_config, bank, sound, sram) };
+	auto code{ make_PermaDoors_Trampolines(main_entry_addr, p_config, bank, sound, script, sram) };
 
 	word set_flag_trampoline{};
 	word check_flag_trampoline{};

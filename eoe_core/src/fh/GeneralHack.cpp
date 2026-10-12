@@ -139,7 +139,7 @@ namespace {
 		{ fh::GeneralHackLib::Misc, { "start_menu", "safe_hourglass", "trigger_size" }},
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc", "sram" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
-		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "sram" }},
+		{ fh::GeneralHackLib::PermaDoors, { "bank", "addr", "sound", "script", "sram" }},
 		{ fh::GeneralHackLib::OintmentFix, { "sugata", "poison", "sram" }},
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::BankedStrings, { "copy", "sram" }},
