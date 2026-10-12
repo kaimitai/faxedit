@@ -1361,6 +1361,39 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 # Changelog
 
+### 2026-10-??: version beta-9.4 - "Bank Heist"
+
+**SRAM-Backed Hacks**
+- Added support for storing hack code in ROM and copying it to SRAM at startup, allowing routines to execute without consuming precious ROM space, and without bank switching.
+- Added optional `sram=true` support to numerous general hacks.
+- Bank 15 overhead for SRAM initialization is as little as 9 bytes, and SRAM usage is reported.
+
+**Extended Strings and Scripting**
+- Added `MsgEx`, `MsgNoskipEx`, `MsgPromptEx` and `IfMsgPromptEx` script opcodes, allowing strings to be stored in additional banks in expanded ROMS.
+- Added automatic allocation and deduplication of extended strings across configurable banks.
+- Added assembly and disassembly support for extended strings.
+
+**New General Hacks**
+- `BuildingScreenConfig`: Configure building entry/exit directions, temple spawn rooms and the endgame room.
+- `StageDoorDirection`: Preserve or override player facing direction during stage transitions via doors.
+- `OtherWorldTransPal2Mus`: Apply palette-to-music rules during transitions between worlds.
+- `Misc`: Added options for opening the inventory on the starting screen, removing the Hour Glass HP penalty and configuring invisible dialogue trigger dimensions.
+
+**General Hack Improvements and Fixes**
+- `PermaDoors`: Added an optional unlock sound when traversing previously unlocked doors.
+- `OintmentFix`: Added optional protection against poison damage.
+- `FastStart`: Fixed starting mana initialization and the initial HUD display.
+- `AtlasDevLadderControl`: Fixed ladder bottom exits.
+- `AtlasDevCombatFeel`: Fixed fast-walk centering.
+- Added expanded ROM compatibility to `AtlasDevLadderCrown`.
+- `AtlasDevSetMusic` and `AtlasDevIfMusic` now automatically recognize the ROM's song count, with an optional override.
+
+**Documentation**
+- Expanded general hack documentation, including SRAM-backed hack configuration and examples.
+- Added a ROM layout reference covering vanilla and expanded ROMs, bank organization and address calculations.
+
+---
+
 ### 2026-10-01: version beta-9.3 - "More of the Same"
 
 #### General hacks

@@ -1,7 +1,5 @@
 ﻿
-# Faxanadu ROM Layout
-
----
+# Faxanadu ROM Layout and Expansion
 
 ## Table of Contents
 
@@ -9,11 +7,10 @@
   - [ROM Banks, Addresses and Offsets](#rom-banks-addresses-and-offsets)
     - [File Offsets vs CPU Addresses](#file-offsets-vs-cpu-addresses)
     - [Bank Layout](#bank-layout)
+    - [Converting Between File Offsets and CPU Addresses](#converting-between-file-offsets-and-cpu-addresses)
   - [Vanilla ROM Layout (US)](#vanilla-rom-layout-us)
   - [Expanded ROM Layout (US)](#expanded-rom-layout-us)
-    - [Configurable Banks and Addresses](#configurable-banks-and-addresses)
-
----
+  - [Configurable Banks and Addresses](#configurable-banks-and-addresses)
 
 ## Overview
 
@@ -37,11 +34,9 @@ The diagrams below show where both original game data and editor-generated data 
 
 The exact layout depends on the ROM region, whether the ROM has been expanded, and which features or hacks have been installed. Several data types, including tilemaps, strings, SRAM runtime data, and dynamic tilemap changes, can be configured to use different banks.
 
----
-
 ## ROM Banks, Addresses and Offsets
 
-Before reading this document, you should be comfortable with hexadecimal notation. Nearly all ROM hacking documentation, emulator debuggers, disassemblies, and FaxEdit itself use hexadecimal values rather than decimal numbers.
+Before reading this document, you should be comfortable with hexadecimal notation. Nearly all ROM hacking documentation, emulator debuggers and disassemblies use hexadecimal values rather than decimal numbers.
 
 Faxanadu uses the MMC1 mapper. The PRG ROM is divided into 16 KiB banks (`0x4000` bytes each). Most banks are mapped into CPU memory at `$8000-$BFFF`, while the final fixed bank is mapped at `$C000-$FFFF`.
 
@@ -64,17 +59,59 @@ CPU Address Range
 $8000-$BFFF
 ```
 
-The final bank is fixed:
+The final bank is fixed. For expanded ROMs bank 15 and 31 are identical:
 
 ```text
 Vanilla ROM:
   Bank 15 -> $C000-$FFFF
 
 Expanded ROM:
-  Bank 31 -> $C000-$FFFF
+  Bank 15 and 31 -> $C000-$FFFF
 ```
 
----
+### Converting Between File Offsets and CPU Addresses
+
+Each PRG-ROM bank occupies `$4000` bytes (16 KiB), and the ROM file begins with a `$10`-byte header.
+
+To locate data in the ROM file, you need both the bank number and the CPU address.
+
+#### Bank + CPU Address → File Offset
+
+For switchable banks (CPU addresses `$8000-$BFFF`):
+
+File offset = `$10 + (bank × $4000) + (CPU address - $8000)`
+
+**Example:** Bank 12, CPU address `$A6C8`
+
+    $10 + (12 × $4000) + ($A6C8 - $8000)
+    = $10 + $30000 + $26C8
+    = $326D8
+
+For the fixed bank, subtract `$C000` instead of `$8000`.
+
+#### File Offset → Bank + CPU Address
+
+First subtract the `$10`-byte header.
+
+Bank = `(File offset - $10) / $4000`
+
+CPU address = `$8000 + ((File offset - $10) % $4000)`
+
+The bank calculation uses integer division, and `%` gives the remainder.
+
+**Example:** File offset `$37683`
+
+    $37683 - $10 = $37673
+
+    $37673 / $4000 = 13 (integer division)
+    $37673 % $4000 = $3673
+
+    Bank = 13
+    CPU address = $B673
+
+For the fixed bank, add the remainder to `$C000` instead of `$8000`.
+
+These calculations assume a standard 16-byte iNES or NES 2.0 header without an additional trainer.
 
 ## Vanilla ROM Layout (US)
 
@@ -171,8 +208,6 @@ The vanilla US ROM has the following layout. Other vanilla regions are largely i
 │ data, and general hacks      │
 └──────────────────────────────┘
 ```
-
----
 
 ## Expanded ROM Layout (US)
 
@@ -321,9 +356,7 @@ If you use SRAM-backed hacks there is no need to specify bank and address, as th
 
 Note: Bank 16 is used as the main string bank in the Translation Hack, unlike bank 13 in vanilla and the other expanded regions.
 
----
-
-### Configurable Banks and Addresses
+## Configurable Banks and Addresses
 
 You can change which banks, and in some case cpu-addresses, are used for different data by adding overrides to the following configuration items;
 

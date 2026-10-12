@@ -20,12 +20,12 @@ See the [documentation](./docs/user-guide.md) for a detailed overview of the edi
 
 - [Main User Documentation](./docs/user-guide.md)
   - [Tileset Graphics and Metatiles](./docs/tileset-gfx.md)
-  - [ROM Layout](./docs/rom-layout.md)
 - [Command-Line Documentation](./docs/cli-guide.md)
 - [Scripting Documentation](./docs/scripting-guide.md)
   - [Script Recipes](./docs/script-recipes.md)
 - [MML (Music Macro Language) documentation](./docs/mml-guide.md)
 - [Advanced Modding documentation](./docs/advanced-modding.md)
+  - [ROM Layout](./docs/rom-layout.md)
   - [General Hacks](./docs/general-hacks.md)
 - [Changelog](./docs/user-guide.md#changelog)
 - [Building from Source](#building-from-source)
