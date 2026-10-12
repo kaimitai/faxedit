@@ -823,6 +823,8 @@ The vanilla game stores all message text in a single ROM bank. Large projects, t
 
 The [BankedStrings](./general-hacks.md#bankedstrings) hack removes this limitation by allowing string data to be distributed across multiple banks. Before using any of the extended string opcodes, that hack must be installed.
 
+The ROM must be [expanded](./cli-guide.md#rom-expansion) before banked strings can be used, as free banks are needed.
+
 The extended opcodes are `MsgEx`, `MsgNoskipEx`, `MsgPromptEx` and `IfMsgPromptEx`.
 
 These opcodes mirror vanilla opcodes `Msg`, `MsgNoskip`, `MsgPrompt` and `IfMsgPrompt`. These vanilla opcodes all act on the standard string bank.
