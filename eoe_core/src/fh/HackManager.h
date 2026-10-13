@@ -90,6 +90,15 @@ namespace fh {
 		word sram_cursor;
 	};
 
+	// where a hack's relocatable code goes: the sram code area, or a rom bank
+	struct HackPlacement {
+		bool sram{ false };
+		byte bank{ 15 };                // with sram, the bank that backs the sram code area
+		word addr{};                    // runtime address of the code's first byte
+		std::size_t size{};             // the most code install_placed accepts
+		std::size_t far_entries{};      // trampolines still reserved at the bank 15 cursor
+	};
+
 	struct GeneralHackUsage {
 		std::size_t bank_used{};
 		std::optional<std::size_t> sram_used{};
@@ -482,6 +491,15 @@ namespace fh {
 	public:
 		HackManager(void) = default;
 		void init_sram_state(const fe::Config& p_config);
+
+		// relocatable placement
+		HackPlacement place_hack(const fe::Config& p_config, const std::vector<byte>& p_rom,
+			const fh::GeneralHack& p_hack, const std::string& p_name, word cpu_addr, std::size_t p_size,
+			std::size_t p_far_entries = 1, byte p_default_bank = 15) const;
+		word install_placed(std::vector<byte>& p_rom, klib::Asm6502& p_code, const HackPlacement& p_place,
+			word cpu_addr, const std::string& p_name);
+		word far_entry(const fe::Config& p_config, std::vector<byte>& p_rom, HackPlacement& p_place,
+			word p_entry, word& cpu_addr, const std::string& p_name) const;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
 		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);

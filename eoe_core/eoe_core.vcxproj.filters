@@ -530,6 +530,9 @@
     <ClCompile Include="src\fh\HackManager.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\HackPlacement.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
     <ClCompile Include="src\fh\TilemapChanges.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
