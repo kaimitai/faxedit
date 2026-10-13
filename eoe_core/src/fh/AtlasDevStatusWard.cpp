@@ -59,7 +59,7 @@ namespace {
 	// derived copy would do nothing
 	constexpr byte ZP_ENTITY_X{ 0xba };
 	constexpr byte ZP_PLAYER_X{ 0x9e };
-	// the prior-art PlayerFlags byte: bit 6 set = facing right
+	// the player flags byte: bit 6 set = facing right
 	constexpr byte ZP_PLAYER_FLAGS{ 0xa4 };
 	// hero screen Y; the drawn box top is this + 32 (the HUD band)
 	constexpr byte ZP_PLAYER_Y{ 0xa1 };
@@ -67,9 +67,7 @@ namespace {
 	constexpr byte KIND_WARD{ 0x05 };
 	constexpr byte KIND_TINT{ 0x03 };
 
-	// the scheduler abi once exposed these three helpers for role
-	// installers; current upstream keeps the abi slim and every role does
-	// the same checks locally, so this port carries its own copies
+	// local copies of the scheduler's post chain checks
 	struct PostChain {
 		bool chained;
 		word target;
@@ -210,7 +208,7 @@ word fh::HackManager::install_AtlasDevStatusWard(const fe::Config&, std::vector<
 	const byte fieldanimspeed{ p_hack.byte_or("fieldanimspeed", 3) };
 	if (fieldanimspeed > 5)
 		throw std::runtime_error("AtlasDevStatusWard: fieldanimspeed must be 0 to 5");
-	// Preserve the legacy single-tile comparison exactly. Animated ownership
+	// one frame keeps the single-tile comparison. Animated ownership
 	// is the non-wrapping interval [fieldtile, fieldtile + fieldframes).
 	const auto emit_tile_guard = [&](klib::Asm6502& c, const std::string& skip) {
 		c.cmp_imm(fieldtile);
@@ -453,7 +451,7 @@ word fh::HackManager::install_AtlasDevStatusWard(const fe::Config&, std::vector<
 	if (!fieldfx)
 		return cpu_addr;
 
-	// Orbit keeps its legacy X8/Y8 tables. Radial patterns use X32/Y32:
+	// Orbit keeps its X8/Y8 tables. Radial patterns use X32/Y32:
 	// four stages of eight compass angles, with a rounded radius per stage.
 	// installed on all three PRE vectors so it follows the ward through
 	// AtlasDevArmRole slot swaps (it acts only on the ward kind byte)

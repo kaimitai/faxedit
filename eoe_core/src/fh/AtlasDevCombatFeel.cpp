@@ -110,7 +110,7 @@ namespace {
 	}
 
 	// only the ladder-centering path is clamped. ordinary walking keeps its
-	// configured speed, and a screen-edge move stays with the native mover.
+	// configured speed, and a screen-edge move stays with the stock mover.
 	void emit_center(klib::Asm6502& code) {
 		code.inc_abs(0x00a3);
 		code.lda_zp(0x9e); code.and_imm(0x0f); code.cmp_imm(8); code.bcs("@right");

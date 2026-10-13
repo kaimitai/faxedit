@@ -79,7 +79,6 @@ namespace {
 		code.lda_abs(s.flag_byte()); code.and_imm(s.flag_mask()); code.beq(fail);
 	}
 
-	// the same layout and bytes as tools/build_smart_mattock.py body()
 	void emit_body(klib::Asm6502& code, const Settings& s) {
 		code.label("@can_dig");
 		code.lda_abs(SELECTED); code.cmp_imm(MATTOCK); code.beq("@rock");
@@ -145,8 +144,8 @@ word fh::HackManager::install_AtlasDevSmartMattock(const fe::Config&, std::vecto
 		throw std::runtime_error("AtlasDevSmartMattock: mode must be vanilla, press, push or both");
 	const bool presses{ mode == "press" || mode == "both" };
 	const bool pushes{ mode == "push" || mode == "both" };
-	// every parameter is judged in every mode, vanilla included, so a spec the
-	// builder would refuse is refused here too
+	// every parameter is judged in every mode, vanilla included, so a typo is
+	// caught even when the hack installs nothing
 	if (p_hack.has_param("push") && !pushes)
 		throw std::runtime_error("AtlasDevSmartMattock: push is only used with mode=push or mode=both");
 	const word push_w{ p_hack.word_or("push", 48) };

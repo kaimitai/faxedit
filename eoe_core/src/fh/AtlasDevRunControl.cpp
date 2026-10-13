@@ -58,7 +58,6 @@ namespace {
 					"AtlasDevRunControl: the vanilla site at ${:04x} is not intact", p_addr));
 	}
 
-	// the same layout and bytes as tools/build_run_control.py body()
 	void emit_body(klib::Asm6502& code, const Settings& s) {
 		using namespace fh::afs;
 		if (s.gated()) {

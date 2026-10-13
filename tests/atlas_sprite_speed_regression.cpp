@@ -219,13 +219,13 @@ namespace {
 							0xfcce, 0xfcce + extra, fh::parse_general_hacks(speed), nullptr);
 						require(combined == expected, "relocated companion bytes changed: " + spec);
 					}
-					// the sprite emitters are identical regardless of companion order.
+					// the sprite routines are identical regardless of companion order.
 					if (mode != "clear") {
 						auto speed_only{ source }; apply(speed_only, speed);
 						for (const word addr : { 0xf120, 0xf1d4 }) {
 							const auto off{ Asm::get_file_offset(15, addr) };
 							require(std::equal(speed_only.begin() + off, speed_only.begin() + off + 65,
-								combined.begin() + off), "companion changed sprite emitter: " + spec);
+								combined.begin() + off), "companion changed a sprite routine: " + spec);
 						}
 					}
 				}
@@ -235,8 +235,8 @@ namespace {
 				<< ", both orders: ok\n";
 		}
 	}
-	void export_rom(const char* input, const char* output, const char* region) {
-		require(!std::filesystem::exists(output), "output already exists");
+	// with a rom, also check composition with the other hacks against real bytes
+	void test_real_rom(const char* input, const char* region) {
 		std::ifstream in(input, std::ios::binary);
 		require(bool(in), "cannot open source rom");
 		std::vector<byte> rom(std::istreambuf_iterator<char>{ in }, {});
@@ -245,20 +245,16 @@ namespace {
 		cfg.set_region(region);
 		cfg.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
 		test_rom_composition(rom, cfg);
-		require(install(rom) == 204, "export size");
-		std::ofstream out(output, std::ios::binary);
-		out.write(reinterpret_cast<const char*>(rom.data()), static_cast<std::streamsize>(rom.size()));
-		out.close(); require(bool(out), "cannot write output rom");
+		require(install(rom) == 204, "real rom install size");
 	}
 }
 
 int main(int argc, char** argv) {
 	try {
-		require(argc == 1 || argc == 3 || argc == 4,
-			"usage: atlas_sprite_speed_regression [source.nes output.nes [region]]");
+		require(argc <= 3, "usage: atlas_sprite_speed_regression [source.nes [region]]");
 		test_modes_and_relocation(); test_refusals(); test_header_variants_and_composition();
 		test_occupied_scheduler_roles();
-		if (argc >= 3) export_rom(argv[1], argv[2], argc == 4 ? argv[3] : "us");
+		if (argc >= 2) test_real_rom(argv[1], argc == 3 ? argv[2] : "us");
 		std::cout << "atlas_sprite_speed_regression: modes, bytes, relocation, ownership, rollback, headers, scheduler: ok\n";
 	}
 	catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

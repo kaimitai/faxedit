@@ -12,13 +12,10 @@
 #include <string>
 #include <vector>
 
-// pins install_AtlasDevRunControl to the Atlas builder's goldens:
-//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe
-//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --mode instant --walk-cycle 4
-//   python3 tools/build_run_control.py --emit-hex --org 0xfe5a --kind 135   (ORG + the 156 byte scheduler core)
-//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --tap hold
-//   python3 tools/build_run_control.py --emit-hex --org 0xfdbe --tap hold --mode instant --walk-cycle 2
-//   python3 tools/build_run_control.py --emit-hex --org 0xfe5a --kind 135 --tap hold
+// pins install_AtlasDevRunControl to known bodies at $fdbe: the default,
+// mode=instant walk_cycle=4, tap=hold, tap=hold mode=instant walk_cycle=2,
+// and scheduler kind 135 at $fe5a (after the 156 byte scheduler core), plain
+// and with tap=hold
 namespace {
 	constexpr word ORG{ 0xfdbe };
 	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
@@ -28,30 +25,30 @@ namespace {
 	constexpr std::array<byte, 9> RESET_ORIG{ 0xa9, 0xc0, 0x85, 0xa9, 0xa9, 0x00, 0x85, 0xaa, 0x60 };
 	constexpr std::array<byte, 5> SCHED_HOOK1_ORIG{ 0xa9, 0x07, 0x8d, 0x14, 0x40 };
 	constexpr std::array<byte, 5> SCHED_HOOK2_ORIG{ 0x8d, 0x01, 0x20, 0xa5, 0x5a };
-	const std::string GOLDEN_DEFAULT{
+	const std::string BODY_DEFAULT{
 		"a5a42940d008f01ba5a42940d015a5162903f00fadf604293ff008a9808df6044c7fe2a9008df6044c7fe2"
 		"a5a42920f007a90c8df604d00aadf604293ff003cef604a5a429df85a460"
 		"adf604104da5a42905d014a5162901f008a5a42940d008f027a5a42940d021a5a918691085a9a5aa690085aa"
 		"a5a9c980a5aae9029009a98085a9a90285aa3860adf604297f8df604a98085a9a90185aa3860a5a9c980a5aae90160" };
-	const std::string GOLDEN_INSTANT_WC4{
+	const std::string BODY_INSTANT_WC4{
 		"a5a42940d008f021a5a42940d01ba5162903f015adf604293ff00ea9808df604a98085a9a90285aa60a9008df6044c7fe2"
 		"a5a42920f007a90c8df604d00aadf604293ff003cef604a5a429df85a460"
 		"adf6041053a5a42905d014a5162901f008a5a42940d008f02da5a42940d027a5a918691085a9a5aa690085aa"
 		"a5a9c980a5aae9029009a98085a9a90285aa38e6a3e6a3e6a360adf604297f8df604a98085a9a90185aa3860a5a9c980a5aae90160" };
-	const std::string GOLDEN_KIND87{
+	const std::string BODY_KIND87{
 		"add804c987f00cadd904c987f005adda04c98760a5a42940d008f020a5a42940d01a205afed01aa5162903f00fadf604"
 		"293ff008a9808df6044c7fe2a9008df6044c7fe2205afed01aa5a42920f007a90c8df604d012adf604293ff00bcef604"
 		"4cc2fea9008df604a5a429df85a460205afed052adf604104da5a42905d014a5162901f008a5a42940d008f027a5a429"
 		"40d021a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa3860adf604297f8df604a98085a9"
 		"a90185aa3860a5a9c980a5aae90160" };
 
-	const std::string GOLDEN_HOLD{
+	const std::string BODY_HOLD{
 		"a5162903f008a9808df6044c7fe2a9008df6044c7fe2a5a42920f005a9008df604a5a429df85a460"
 		"adf604102da5a9c980a5aae902b021a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38603860a5a9c980a5aae90160" };
-	const std::string GOLDEN_HOLD_INSTANT_WC2{
+	const std::string BODY_HOLD_INSTANT_WC2{
 		"a5162903f00ea9808df604a98085a9a90285aa60a9008df6044c7fe2a5a42920f005a9008df604a5a429df85a460"
 		"adf604102fa5a9c980a5aae902b023a5a918691085a9a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38e6a3603860a5a9c980a5aae90160" };
-	const std::string GOLDEN_HOLD_KIND87{
+	const std::string BODY_HOLD_KIND87{
 		"add804c987f00cadd904c987f005adda04c98760205afed013a5162903f008a9808df6044c7fe2a9008df6044c7fe2"
 		"205afed006a5a42920f005a9008df604a5a429df85a460205afed032adf604102da5a9c980a5aae902b021a5a918691085a9"
 		"a5aa690085aaa5a9c980a5aae9029009a98085a9a90285aa38603860a5a9c980a5aae90160" };
@@ -165,56 +162,56 @@ namespace {
 		return s;
 	}
 
-	std::size_t label(const std::string& golden, const std::string& needle_hex) {
+	std::size_t label(const std::string& body, const std::string& needle_hex) {
 		// byte offset of the first occurrence of a stub's opening bytes
-		return golden.find(needle_hex) / 2;
+		return body.find(needle_hex) / 2;
 	}
 
-	void test_default_matches_the_python_golden() {
+	void test_default_body() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevRunControl") };
-		require(n == GOLDEN_DEFAULT.size() / 2, "default body size " + std::to_string(n));
-		require(hex_at(rom, ORG, n) == GOLDEN_DEFAULT, "default body differs from the Python emitter: " + hex_at(rom, ORG, n));
+		require(n == BODY_DEFAULT.size() / 2, "default body size " + std::to_string(n));
+		require(hex_at(rom, ORG, n) == BODY_DEFAULT, "default body differs: " + hex_at(rom, ORG, n));
 		require(hex_at(rom, 0xe1d5, 3) == op_to(0x20, ORG), "right start hook: " + hex_at(rom, 0xe1d5, 3));
 		require(hex_at(rom, 0xe226, 3) == op_to(0x20, ORG + 8), "left start hook: " + hex_at(rom, 0xe226, 3));
-		const word idle{ static_cast<word>(ORG + label(GOLDEN_DEFAULT, "a5a42920f0")) };
+		const word idle{ static_cast<word>(ORG + label(BODY_DEFAULT, "a5a42920f0")) };
 		require(hex_at(rom, 0xe1be, 7) == op_to(0x4c, idle) + "eaeaeaea", "idle hook: " + hex_at(rom, 0xe1be, 7));
-		const word cap{ static_cast<word>(ORG + label(GOLDEN_DEFAULT, "adf60410")) };
+		const word cap{ static_cast<word>(ORG + label(BODY_DEFAULT, "adf60410")) };
 		require(hex_at(rom, 0xe2a3, 8) == op_to(0x20, cap) + "eaeaeaeaea", "cap hook: " + hex_at(rom, 0xe2a3, 8));
 		require(hex_at(rom, 0xe27f, 9) == "a9c085a9a90085aa60", "the speed setter is untouched");
 	}
 
-	void test_instant_walk_cycle_matches_the_python_golden() {
+	void test_instant_walk_cycle_body() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevRunControl mode=instant walk_cycle=4") };
-		require(n == GOLDEN_INSTANT_WC4.size() / 2, "instant body size " + std::to_string(n));
-		require(hex_at(rom, ORG, n) == GOLDEN_INSTANT_WC4, "instant body differs: " + hex_at(rom, ORG, n));
+		require(n == BODY_INSTANT_WC4.size() / 2, "instant body size " + std::to_string(n));
+		require(hex_at(rom, ORG, n) == BODY_INSTANT_WC4, "instant body differs: " + hex_at(rom, ORG, n));
 	}
 
-	void test_hold_matches_the_python_goldens() {
+	void test_hold_body() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevRunControl tap=hold") };
-		require(n == GOLDEN_HOLD.size() / 2, "hold body size " + std::to_string(n));
-		require(hex_at(rom, ORG, n) == GOLDEN_HOLD, "hold body differs: " + hex_at(rom, ORG, n));
+		require(n == BODY_HOLD.size() / 2, "hold body size " + std::to_string(n));
+		require(hex_at(rom, ORG, n) == BODY_HOLD, "hold body differs: " + hex_at(rom, ORG, n));
 		require(hex_at(rom, 0xe1d5, 3) == op_to(0x20, ORG) && hex_at(rom, 0xe226, 3) == op_to(0x20, ORG),
 			"hold: both start sites share the one stub");
 		auto rom2{ vanilla_rom() };
 		const auto n2{ install(rom2, "AtlasDevRunControl tap=hold mode=instant walk_cycle=2") };
-		require(n2 == GOLDEN_HOLD_INSTANT_WC2.size() / 2, "hold instant body size " + std::to_string(n2));
-		require(hex_at(rom2, ORG, n2) == GOLDEN_HOLD_INSTANT_WC2, "hold instant body differs: " + hex_at(rom2, ORG, n2));
+		require(n2 == BODY_HOLD_INSTANT_WC2.size() / 2, "hold instant body size " + std::to_string(n2));
+		require(hex_at(rom2, ORG, n2) == BODY_HOLD_INSTANT_WC2, "hold instant body differs: " + hex_at(rom2, ORG, n2));
 		auto rom3{ vanilla_rom() };
 		const auto n3{ install(rom3, "AtlasDevFrameScheduler\nAtlasDevRunControl kind=135 tap=hold") };
-		require(n3 == fh::afs::CORE_SIZE + GOLDEN_HOLD_KIND87.size() / 2, "hold gated size " + std::to_string(n3));
+		require(n3 == fh::afs::CORE_SIZE + BODY_HOLD_KIND87.size() / 2, "hold gated size " + std::to_string(n3));
 		const word body{ static_cast<word>(ORG + fh::afs::CORE_SIZE) };
-		require(hex_at(rom3, body, GOLDEN_HOLD_KIND87.size() / 2) == GOLDEN_HOLD_KIND87, "hold gated body differs");
+		require(hex_at(rom3, body, BODY_HOLD_KIND87.size() / 2) == BODY_HOLD_KIND87, "hold gated body differs");
 	}
 
 	void test_kind_gate_with_the_scheduler() {
 		auto rom{ vanilla_rom() };
 		const auto n{ install(rom, "AtlasDevFrameScheduler\nAtlasDevRunControl kind=135") };
-		require(n == fh::afs::CORE_SIZE + GOLDEN_KIND87.size() / 2, "scheduler + gated size " + std::to_string(n));
+		require(n == fh::afs::CORE_SIZE + BODY_KIND87.size() / 2, "scheduler + gated size " + std::to_string(n));
 		const word body{ static_cast<word>(ORG + fh::afs::CORE_SIZE) };
-		require(hex_at(rom, body, GOLDEN_KIND87.size() / 2) == GOLDEN_KIND87, "gated body differs: " + hex_at(rom, body, GOLDEN_KIND87.size() / 2));
+		require(hex_at(rom, body, BODY_KIND87.size() / 2) == BODY_KIND87, "gated body differs: " + hex_at(rom, body, BODY_KIND87.size() / 2));
 		const auto sched{ klib::Asm6502::get_file_offset(15, ORG) };
 		require(rom[sched + fh::afs::OFF_ARM0] == 0x87, "boot slot 0 carries kind $87");
 		require(rom[sched + fh::afs::OFF_ARM0 + 1] == 0 && rom[sched + fh::afs::OFF_ARM0 + 2] == 0, "other slots untouched");
@@ -257,7 +254,7 @@ namespace {
 			const auto table{ klib::Asm6502::get_file_offset(15, 0xe4d6) };
 			for (std::size_t k{ 0 }; k < 32; ++k) rom[table + k] = static_cast<byte>(k < 16 ? k : 31 - k);
 			const auto n{ install(rom, spec) };
-			require(n > fh::afs::CORE_SIZE + GOLDEN_DEFAULT.size() / 2, "combined install too small");
+			require(n > fh::afs::CORE_SIZE + BODY_DEFAULT.size() / 2, "combined install too small");
 			require(hex_at(rom, 0xe2a3, 1) == "20" && hex_at(rom, 0xe1be, 1) == "4c", "run hooks present in the combined build");
 		}
 	}
@@ -271,9 +268,9 @@ namespace {
 
 int main() {
 	try {
-		test_default_matches_the_python_golden();
-		test_instant_walk_cycle_matches_the_python_golden();
-		test_hold_matches_the_python_goldens();
+		test_default_body();
+		test_instant_walk_cycle_body();
+		test_hold_body();
 		test_kind_gate_with_the_scheduler();
 		test_refusals_leave_the_rom_untouched();
 		test_coexists_with_the_movement_hacks_in_both_orders();

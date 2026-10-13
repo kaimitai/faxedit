@@ -127,13 +127,10 @@ namespace {
 int main(int argc, char** argv) {
 	try {
 		test();
-		if (argc == 3) {
+		// with a rom, also check that the three hacks fit together in every order
+		if (argc == 2) {
 			std::ifstream input(argv[1], std::ios::binary); require(bool(input), "cannot open ROM");
 			const std::vector<byte> source{ std::istreambuf_iterator<char>(input), {} };
-			std::filesystem::create_directories(argv[2]);
-			auto rom{ source }; install(rom);
-			std::ofstream output(std::filesystem::path(argv[2]) / "queue-less.nes", std::ios::binary);
-			output.write(reinterpret_cast<const char*>(rom.data()), rom.size()); require(bool(output), "cannot write ROM");
 			std::array<std::string, 3> specs{ "AtlasDevPpuDrainUnroll", "AtlasDevQueueLess", "AtlasDevSpriteSpeed" };
 			do {
 				auto composed{ source };

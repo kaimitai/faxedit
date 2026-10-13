@@ -11,11 +11,8 @@
 #include <utility>
 #include <vector>
 
-// pins install_AtlasDevSmartMattock to the Atlas builder's goldens:
-//   python3 tools/build_smart_mattock.py --emit-hex --org 0xfdbe
-//   python3 tools/build_smart_mattock.py --emit-hex --org 0xfdbe --mode press
-//   python3 tools/build_smart_mattock.py --emit-hex --org 0xfdbe --mode push --push 1
-//   python3 tools/build_smart_mattock.py --emit-hex --org 0xfdbe --flag 12 --push 255
+// pins install_AtlasDevSmartMattock to known bodies at $fdbe: both modes,
+// mode=press, mode=push push=1, and flag=12 push=255
 namespace {
 	constexpr word ORG{ 0xfdbe };
 	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
@@ -25,21 +22,21 @@ namespace {
 	constexpr std::array<byte, 16> TO_BLOCK_ORIG{ 0xa5, 0xb6, 0x29, 0xf0, 0x85, 0x00, 0xa5, 0xb5,
 		0x4a, 0x4a, 0x4a, 0x4a, 0x05, 0x00, 0xaa, 0x60 };
 
-	const std::string GOLDEN_BOTH{
+	const std::string BODY_BOTH{
 		"adc103c909f011aec603e009b037ca3034bdad03c909d0f6a000a5a42940f001c8a59e18798dc6c9f0b01a85b5a5a1"
 		"85b6206ce8a5240a0aa8b98fc6f007dd0006d0023860186020befdb00dadc103c909f009adc1034c8ec44c16c660a5"
 		"162903f01aa5a42905d01420befd900fe6d7a5d7c930900ba90085d74c16c6a90085d760adc103c909d0034cbfc4ae"
 		"c603e009b01eca301bbdad03c909d0f6e8ecc603b00bbdad03ca9dad03e8e8d0f0cec60360" };
-	const std::string GOLDEN_PRESS{
+	const std::string BODY_PRESS{
 		"adc103c909f011aec603e009b037ca3034bdad03c909d0f6a000a5a42940f001c8a59e18798dc6c9f0b01a85b5a5a1"
 		"85b6206ce8a5240a0aa8b98fc6f007dd0006d0023860186020befdb00dadc103c909f009adc1034c8ec44c16c660ad"
 		"c103c909d0034cbfc4aec603e009b01eca301bbdad03c909d0f6e8ecc603b00bbdad03ca9dad03e8e8d0f0cec60360" };
-	const std::string GOLDEN_PUSH1{
+	const std::string BODY_PUSH1{
 		"adc103c909f00318902da000a5a42940f001c8a59e18798dc6c9f0b01a85b5a5a185b6206ce8a5240a0aa8b98fc6f0"
 		"07dd0006d0023860186020befdb00dadc103c909f009adc1034c8ec44c16c660a5162903f01aa5a42905d01420befd"
 		"900fe6d7a5d7c901900ba90085d74c16c6a90085d760adc103c909d0034cbfc4aec603e009b01eca301bbdad03c909"
 		"d0f6e8ecc603b00bbdad03ca9dad03e8e8d0f0cec60360" };
-	const std::string GOLDEN_FLAG12{
+	const std::string BODY_FLAG12{
 		"adc103c909f011aec603e009b037ca3034bdad03c909d0f6a000a5a42940f001c8a59e18798dc6c9f0b01a85b5a5a1"
 		"85b6206ce8a5240a0aa8b98fc6f007dd0006d00238601860ad02012910f00c20befdb00dadc103c909f009adc1034c"
 		"8ec44c16c660ad02012910f020a5162903f01aa5a42905d01420befd900fe6d7a5d7c9ff900ba90085d74c16c6a900"
@@ -105,32 +102,32 @@ int main() {
 		{
 			auto rom{ vanilla_rom() };
 			const auto n{ install(rom, "AtlasDevSmartMattock") };
-			require(n == GOLDEN_BOTH.size() / 2, "both: size " + std::to_string(n));
-			require(hex_at(rom, ORG, n) == GOLDEN_BOTH, "both: body differs: " + hex_at(rom, ORG, n));
+			require(n == BODY_BOTH.size() / 2, "both: size " + std::to_string(n));
+			require(hex_at(rom, ORG, n) == BODY_BOTH, "both: body differs: " + hex_at(rom, ORG, n));
 			// press site: JMP @press; spend site: JSR @spend; push site: JMP @push + NOP, RTS kept
-			const word press{ static_cast<word>(ORG + GOLDEN_BOTH.find("20befdb00d") / 2) };
+			const word press{ static_cast<word>(ORG + BODY_BOTH.find("20befdb00d") / 2) };
 			require(hex_at(rom, 0xc48b, 3) == op_to(0x4c, press), "press site: " + hex_at(rom, 0xc48b, 3));
-			const word spend{ static_cast<word>(ORG + GOLDEN_BOTH.rfind("adc103c909d0034cbfc4") / 2) };
+			const word spend{ static_cast<word>(ORG + BODY_BOTH.rfind("adc103c909d0034cbfc4") / 2) };
 			require(hex_at(rom, 0xc64c, 3) == op_to(0x20, spend), "spend site: " + hex_at(rom, 0xc64c, 3));
-			const word push{ static_cast<word>(ORG + GOLDEN_BOTH.find("a5162903f01a") / 2) };
+			const word push{ static_cast<word>(ORG + BODY_BOTH.find("a5162903f01a") / 2) };
 			require(hex_at(rom, 0xe9b9, 4) == op_to(0x4c, push) + "ea", "push site: " + hex_at(rom, 0xe9b9, 4));
 			require(hex_at(rom, 0xe9bd, 1) == "60", "push site: the rts must stay");
 		}
 		{
 			auto rom{ vanilla_rom() };
 			const auto n{ install(rom, "AtlasDevSmartMattock mode=press") };
-			require(hex_at(rom, ORG, n) == GOLDEN_PRESS, "press: body differs: " + hex_at(rom, ORG, n));
+			require(hex_at(rom, ORG, n) == BODY_PRESS, "press: body differs: " + hex_at(rom, ORG, n));
 			require(hex_at(rom, 0xe9b9, 4) == "a90085d7", "press: the push site must be untouched");
 		}
 		{
 			auto rom{ vanilla_rom() };
 			const auto n{ install(rom, "AtlasDevSmartMattock mode=push push=1") };
-			require(hex_at(rom, ORG, n) == GOLDEN_PUSH1, "push1: body differs: " + hex_at(rom, ORG, n));
+			require(hex_at(rom, ORG, n) == BODY_PUSH1, "push1: body differs: " + hex_at(rom, ORG, n));
 		}
 		{
 			auto rom{ vanilla_rom() };
 			const auto n{ install(rom, "AtlasDevSmartMattock flag=12 push=255") };
-			require(hex_at(rom, ORG, n) == GOLDEN_FLAG12, "flag12: body differs: " + hex_at(rom, ORG, n));
+			require(hex_at(rom, ORG, n) == BODY_FLAG12, "flag12: body differs: " + hex_at(rom, ORG, n));
 		}
 		{
 			const auto pristine{ vanilla_rom() };

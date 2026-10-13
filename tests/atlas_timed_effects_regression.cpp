@@ -25,8 +25,8 @@ void check(bool value, const std::string& why) {
 constexpr std::array OPS{fh::HackLib::AtlasDevIfEffectActive, fh::HackLib::AtlasDevGetEffectTime,
     fh::HackLib::AtlasDevClearTimedEffect, fh::HackLib::AtlasDevClearTimedEffects};
 std::size_t file(word cpu) { return 0x28010 + cpu; }
-// the iscript entry the variable reset displaces: a fixed address since rom_iscripts_begin
-// was removed (3120ce0), so a configured value no longer moves it
+// the iscript entry the variable reset displaces: a fixed address, so a
+// configured value does not move it
 constexpr word BEGIN{0x8242};
 word read_word(const Bytes& rom, std::size_t at) { return static_cast<word>(rom.at(at) | rom.at(at + 1) << 8); }
 void put_word(Bytes& rom, word at, word value) { rom[file(at)] = value & 255; rom[file(at) + 1] = value >> 8; }
@@ -266,7 +266,7 @@ void configuration(Fixture& fixture) {
         for (const unsigned i : {0U, 2U, 3U}) install(fixture, {0x3b5,0x9000,count}, 0xae00, {OPS[i]});
         bool refused = false; try { install(fixture, {0x3b5,0x9000,count}, 0xae00, {OPS[1]}); }
         catch (const std::runtime_error& e) { refused = std::string(e.what()).find("count") != std::string::npos; }
-        check(refused, "variable consumer enforces native count bounds");
+        check(refused, "variable consumer enforces the stock count bounds");
     }
     const auto alone = install(fixture, {}, 0xa800, {OPS.begin(), OPS.end()});
     const auto combined = install(fixture, {}, 0xb100, {fh::HackLib::AtlasDevApplyEffect, OPS[3], OPS[1], fh::HackLib::AtlasDevSetVar, OPS[0], OPS[2]});
