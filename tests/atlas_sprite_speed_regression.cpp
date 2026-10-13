@@ -53,7 +53,7 @@ namespace {
 	std::size_t install(std::vector<byte>& rom, const std::string& spec = "AtlasDevSpriteSpeed",
 		word origin = 0xfcce, std::size_t end = 0xffe0) {
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, origin, end,
-			fh::filter_general_hacks(15, fh::parse_general_hacks(spec)), nullptr);
+			fh::filter_general_hacks(15, fh::parse_general_hacks(spec)), nullptr).bank_used;
 	}
 	void reject(std::vector<byte> rom, const std::string& spec = "AtlasDevSpriteSpeed",
 		word origin = 0xfcce, std::size_t end = 0xffe0) {
@@ -174,7 +174,7 @@ namespace {
 	void test_rom_composition(const std::vector<byte>& source, const fe::Config& cfg) {
 		const auto apply = [&](std::vector<byte>& rom, const std::string& spec) {
 			return fh::HackManager{}.install_general_hacks(cfg, rom, 15, 0xfcce, 0xffe0,
-				fh::filter_general_hacks(15, fh::parse_general_hacks(spec)), nullptr);
+				fh::filter_general_hacks(15, fh::parse_general_hacks(spec)), nullptr).bank_used;
 		};
 		for (const std::string other : { "KillSwitch", "BugFixes", "OintmentFix",
 			"AtlasDevJumpControl", "AtlasDevFallControl", "AtlasDevLadderControl up=256 down=256",

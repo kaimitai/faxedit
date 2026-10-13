@@ -45,7 +45,7 @@ namespace {
 
 	std::size_t install_scheduler(std::vector<byte>& rom) {
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			SCHEDULER_ORG, 0xfff0, hacks("AtlasDevFrameScheduler"), nullptr);
+			SCHEDULER_ORG, 0xfff0, hacks("AtlasDevFrameScheduler"), nullptr).bank_used;
 	}
 
 	void install_daynight(std::vector<byte>& rom, const std::string& params = {}) {
@@ -81,7 +81,7 @@ namespace {
 		if (!params.empty())
 			spec += " " + params;
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			cpu_addr, 0xfff0, hacks(spec), nullptr);
+			cpu_addr, 0xfff0, hacks(spec), nullptr).bank_used;
 	}
 
 	std::size_t scheduler_file_offset(const std::vector<byte>& rom) {
@@ -391,7 +391,7 @@ namespace {
 		if (!params.empty())
 			spec += " " + params;
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			cpu_addr, 0xfff0, hacks(spec), nullptr);
+			cpu_addr, 0xfff0, hacks(spec), nullptr).bank_used;
 	}
 
 	void test_jump_control_installs_three_hooks_and_advances_the_cursor() {
@@ -845,7 +845,7 @@ namespace {
 		constexpr word org{ 0xfdbe };
 		const auto before{ rom };
 		const auto size{ fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			org, 0xfff0, hacks(spec), nullptr) };
+			org, 0xfff0, hacks(spec), nullptr).bank_used };
 		auto exact{ before }, short_one{ before };
 		fh::HackManager{}.install_general_hacks(fe::Config{}, exact, 15, org, org + size, hacks(spec), nullptr);
 		bool threw{ false };

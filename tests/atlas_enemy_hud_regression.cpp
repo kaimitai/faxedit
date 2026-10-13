@@ -38,7 +38,7 @@ namespace {
 	std::size_t install(std::vector<byte>& rom,const std::string& spec,word org=ORG,
 		std::size_t end=0xffe0,const std::string& region="us") {
 		return fh::HackManager{}.install_general_hacks(config(rom,region),rom,15,org,end,
-			fh::filter_general_hacks(15,fh::parse_general_hacks(spec)),nullptr);
+			fh::filter_general_hacks(15,fh::parse_general_hacks(spec)),nullptr).bank_used;
 	}
 	void refused(std::vector<byte> rom,const std::string& spec,word org=ORG,
 		std::size_t end=0xffe0,const std::string& region="us") {

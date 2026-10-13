@@ -73,7 +73,7 @@ namespace {
 		const fe::Config& config = fe::Config{}) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
 		return fh::HackManager{}.install_general_hacks(config, rom, 15, ORG, 0xfff0,
-			hacks, nullptr);
+			hacks, nullptr).bank_used;
 	}
 
 	fe::Config region_config(const std::vector<byte>& rom, const std::string& region) {

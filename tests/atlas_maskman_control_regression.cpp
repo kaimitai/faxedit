@@ -57,7 +57,7 @@ namespace {
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
 		const auto hacks{ fh::filter_general_hacks(14, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 14, ORG, 0xc000, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 14, ORG, 0xc000, hacks, nullptr).bank_used;
 	}
 
 	std::string hex_at(const std::vector<byte>& rom, word cpu, std::size_t n) {

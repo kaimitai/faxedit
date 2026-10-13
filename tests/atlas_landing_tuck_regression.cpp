@@ -84,7 +84,7 @@ namespace {
 		const auto cfg{ config(rom) };
 		const auto all{ fh::parse_general_hacks(spec) };
 		auto used{ fh::HackManager{}.install_general_hacks(cfg, rom, 15,
-			ORG, 0xffe0, fh::filter_general_hacks(15, all), nullptr) };
+			ORG, 0xffe0, fh::filter_general_hacks(15, all), nullptr).bank_used };
 		fh::HackManager{}.install_general_hacks(cfg, rom, 14,
 			0xbdb5, 0xc000, fh::filter_general_hacks(14, all), nullptr);
 		return used;

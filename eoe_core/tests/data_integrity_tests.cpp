@@ -324,7 +324,7 @@ namespace {
 		std::vector<byte> rom(0x40010, 0xff);
 		const auto original{ rom };
 		const fe::Config config;
-		const fh::HackManager manager;
+		fh::HackManager manager;
 		const std::vector<fh::GeneralHack> hacks{ fh::GeneralHack("KillSwitch") };
 
 		expect_throw([&] {
@@ -354,7 +354,7 @@ namespace {
 		check(rom == original, "unsupported general-hack bank modified the caller's ROM");
 
 		const auto installed_size{
-			manager.install_general_hacks(config, rom, 15, 0xc000, 0xc100, hacks) };
+			manager.install_general_hacks(config, rom, 15, 0xc000, 0xc100, hacks).bank_used };
 		check(installed_size > 0 && rom != original,
 			"successful general-hack transaction was not committed");
 	}
