@@ -404,8 +404,20 @@ namespace fh {
 	}
 
 	namespace PPU {
+		constexpr word PPU_CTRL{ 0x2000 };
+		constexpr word PPU_MASK{ 0x2001 };
+		constexpr word PPU_STATUS{ 0x2002 };
+		constexpr word PPU_SCROLL{ 0x2005 };
 		constexpr word PPU_ADDR{ 0x2006 };
 		constexpr word PPU_DATA{ 0x2007 };
+		constexpr word OAM_DMA{ 0x4014 };
+	}
+
+	// the addresses the game writes; each register answers anywhere in its 8 KiB range
+	namespace MMC1 {
+		constexpr word MMC1_CONTROL{ 0x9fff };
+		constexpr word MMC1_CHR_BANK0{ 0xbfff };
+		constexpr word MMC1_PRG_BANK{ 0xffff };
 	}
 
 	namespace c {
