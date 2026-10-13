@@ -96,7 +96,7 @@ namespace {
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec, word org = ORG) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, org, 0xfff0, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, org, 0xfff0, hacks, nullptr).bank_used;
 	}
 
 	void expect(const std::vector<byte>& rom, std::vector<byte> want, const std::vector<Region>& regions, const std::string& spec) {

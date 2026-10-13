@@ -103,7 +103,7 @@ namespace {
 
 	std::size_t install(std::vector<byte>& rom, const std::string& spec) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
-		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks, nullptr);
+		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, ORG, 0xfff0, hacks, nullptr).bank_used;
 	}
 
 }

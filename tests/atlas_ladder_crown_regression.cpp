@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <array>
-#include <charconv>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -185,9 +184,8 @@ void test_defaults_and_relocation() {
                 require(target(rom, 0xe2c8) == origin + (crown ? 152 : 110), "guard entry location");
                 if (crown) require(target(rom, 0xc145) == origin + 597, "reset wrapper location");
                 if (origin == ORG) {
-                    // Keep the original fixed emitter oracle, normalizing
-                    // only Crown's relocated latch operands back to $04e3.
-                    // This is not a cryptographic identity or ROM data.
+                    // Compare with the known body, normalizing only Crown's
+                    // relocated latch operands back to $04e3.
                     auto normalized{rom};
                     if (crown) {
                         const auto reset{unhex("a9008de0044c6fcd")};
@@ -486,7 +484,7 @@ void test_composition() {
         for (const std::string second : { "AtlasDevLadderCrown", "AtlasDevLadderCrown mode=floor", "AtlasDevLadderCrown mode=vanilla" })
             refuses(fixture(), first + "\n" + second, ORG, END, "us", "AtlasDevLadderCrown");
     // Only Crown moves to the front. Companion bodies, allocation and order
-    // must match an independent legacy installation at the shifted cursor.
+    // must match a separate installation at the shifted cursor.
     const auto composition = [&](const std::string& crown, const std::string& companions) {
         auto expected{fixture()};
         const auto crown_size{install(expected, crown)};
@@ -560,8 +558,8 @@ void test_composition() {
 }
 
 void test_companion_capacity_preflight() {
-    // Pin the existing Jump emitter, then compose it with Crown at an exact
-    // fit and one byte short; the orchestrator's own bounds check refuses the
+    // Pin the JumpControl sizes, then compose it with Crown at an exact
+    // fit and one byte short; the installer's own bounds check refuses the
     // short window, since installers bound their scans by the ROM image.
     // Bits select coyote, buffer, short hop, air jumps and switchable;
     // nonzero numeric values do not change instruction lengths.
@@ -577,12 +575,12 @@ void test_companion_capacity_preflight() {
                 + " switchable=" + std::to_string((shape & 16) != 0)};
             const std::string companions{(shape & 16 ? "AtlasDevFrameScheduler\n" : "") + jump};
             const std::size_t companion_bytes{jump_bytes[shape] + (shape & 16 ? fh::afs::CORE_SIZE : 0)};
-            auto legacy{fixture()};
-            require(install(legacy, companions) == companion_bytes,
-                "native Jump body size drifted for shape " + std::to_string(shape));
+            auto alone{fixture()};
+            require(install(alone, companions) == companion_bytes,
+                "JumpControl body size changed for shape " + std::to_string(shape));
             auto vanilla{fixture()};
             require(install(vanilla, "AtlasDevLadderCrown mode=vanilla\n" + companions) == companion_bytes
-                    && vanilla == legacy,
+                    && vanilla == alone,
                 "vanilla Crown must not alter companion paths");
 
             const std::string composed{"AtlasDevLadderCrown mode=floor\n" + companions};
@@ -590,7 +588,7 @@ void test_companion_capacity_preflight() {
             if (total <= END - ORG) {
                 auto exact{fixture()};
                 require(install(exact, composed, static_cast<word>(END - total)) == total,
-                    "an exact-fit native Jump shape must install beside Crown");
+                    "an exact-fit JumpControl shape must install beside Crown");
                 if (jump_bytes[shape])
                     refuses(fixture(), composed, static_cast<word>(END - total + 1), END, "us",
                         "overflow");
@@ -599,7 +597,7 @@ void test_companion_capacity_preflight() {
                 refuses(fixture(), composed, ORG, END, "us", "overflow");
         }
     }
-    // These would scan beyond physical $ffff in the native installers if
+    // These would scan beyond physical $ffff in the other installers if
     // the Crown-only guard ran after installation instead of beforehand.
     for (const std::string spec : {
             "AtlasDevLadderCrown\nAtlasDevJumpControl\nAtlasDevFrameScheduler",
@@ -756,50 +754,10 @@ void test_preinstalled_scheduler_ownership() {
     }
 }
 
-word parse_origin(std::string_view value) {
-    int base{ 10 };
-    if (value.starts_with("0x")) { base = 16; value.remove_prefix(2); }
-    unsigned int result{ 0 };
-    const auto parsed{ std::from_chars(value.data(), value.data() + value.size(), result, base) };
-    if (value.empty() || parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size() || result > 0xffff)
-        throw std::runtime_error("origin must be an unsigned decimal or 0x hexadecimal 16-bit address");
-    return static_cast<word>(result);
 }
 
-void export_rom(const char* source_name, const char* output_name, const char* origin_text, const char* spec) {
-    const std::filesystem::path source{ source_name }, output{ output_name };
-    if (std::filesystem::exists(output) || std::filesystem::is_symlink(output))
-        throw std::runtime_error("export output already exists; supply a fresh path");
-    if (std::filesystem::file_size(source) != ROM_SIZE)
-        throw std::runtime_error("source must be an unexpanded NES ROM");
-    std::ifstream input(source, std::ios::binary);
-    if (!input) throw std::runtime_error("cannot open source ROM");
-    std::vector<byte> rom((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-    if (input.bad() || rom.size() != ROM_SIZE) throw std::runtime_error("source must be an unexpanded NES ROM");
-    fe::Config source_config;
-    source_config.load_definitions(EOE_TEST_CONFIG_PATH, "");
-    source_config.determine_region(rom);
-    const auto origin{ parse_origin(origin_text) };
-    const auto parsed{ fh::parse_general_hacks(spec) };
-    const auto used{ fh::HackManager{}.install_general_hacks(source_config, rom, 15, origin, END,
-        fh::filter_general_hacks(15, parsed), nullptr) };
-    std::ofstream file(output, std::ios::binary);
-    if (!file) throw std::runtime_error("cannot create export output");
-    file.write(reinterpret_cast<const char*>(rom.data()), static_cast<std::streamsize>(rom.size()));
-    file.close();
-    if (!file) throw std::runtime_error("could not finish export output");
-    std::cout << "{\"origin\":" << origin << ",\"body_bytes\":" << used.bank_used << ",\"rom_bytes\":" << rom.size() << "}\n";
-}
-
-}
-
-int main(int argc, char** argv) {
+int main() {
     try {
-        if (argc == 6 && std::string_view(argv[1]) == "--export") {
-            export_rom(argv[2], argv[3], argv[4], argv[5]);
-            return 0;
-        }
-        if (argc != 1) throw std::runtime_error("usage: atlas_ladder_crown_regression [--export SOURCE OUT ORIGIN SPEC]");
         test_defaults_and_relocation();
         test_options();
         test_invalid_settings();

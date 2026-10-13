@@ -131,6 +131,7 @@ namespace klib {
 		void ldx_abs_y(word p_addr);
 		void ldy_imm(byte p_value);
 		void ldy_zp(byte p_value);
+		void ldy_abs(word p_addr);
 		// virtual helper
 		void lda_mem(word p_addr);
 
@@ -140,6 +141,7 @@ namespace klib {
 		void sta_abs_x(word p_addr);
 		void sta_ind_y(byte p_addr);
 		void stx_zp(byte p_addr);
+		void stx_abs(word p_addr);
 		void sty_zp(byte p_addr);
 		// virtual helper
 		void sta_mem(word p_addr);
@@ -151,6 +153,7 @@ namespace klib {
 		void cmp_abs_x(word p_addr);
 		void cmp_abs_y(word p_addr);
 		void cpx_imm(byte p_value);
+		void cpx_abs(word p_addr);
 		void cpy_imm(byte p_value);
 		void cpy_abs(word p_addr);
 
@@ -161,12 +164,16 @@ namespace klib {
 		void bcs(sbyte p_offset);
 		void bpl(sbyte p_offset);
 		void bmi(sbyte p_offset);
+		void bvc(sbyte p_offset);
+		void bvs(sbyte p_offset);
 		void beq(const std::string& p_label);
 		void bne(const std::string& p_label);
 		void bcc(const std::string& p_label);
 		void bcs(const std::string& p_label);
 		void bpl(const std::string& p_label);
 		void bmi(const std::string& p_label);
+		void bvc(const std::string& p_label);
+		void bvs(const std::string& p_label);
 
 		// logic
 		void and_imm(byte p_value);
@@ -176,10 +183,14 @@ namespace klib {
 		void ora_imm(byte p_value);
 		void ora_abs_y(word p_addr);
 		void eor_imm(byte p_value);
+		void bit_zp(byte p_addr);
+		void bit_abs(word p_addr);
 
 		// stack
 		void pha(void);
 		void pla(void);
+		void php(void);
+		void plp(void);
 
 		// registers
 		void tax(void);
@@ -191,14 +202,21 @@ namespace klib {
 		//shifts
 		void lsr_a(std::size_t count = 1);
 		void asl_a(void);
+		void asl_abs(word p_addr);
+		void rol_a(void);
+		void rol_zp(byte p_addr);
+		void ror_abs(word p_addr);
 
 		// math
 		void inc_zp(byte p_addr);
+		void inc_abs_x(word p_addr);
 		void inx(void);
 		void dec_zp(byte p_addr);
 		void dec_abs_x(word p_addr);
 		void adc_imm(byte p_value);
 		void adc_zp(byte p_addr);
+		void adc_abs(word p_addr);
+		void adc_abs_y(word p_addr);
 		void adc_abs_x(word p_addr);
 		void adc_ind_y(byte p_addr);
 		void sbc_imm(byte p_value);

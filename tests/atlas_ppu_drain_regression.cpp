@@ -38,7 +38,7 @@ namespace {
 	std::size_t install(std::vector<byte>& rom, const std::string& spec = "AtlasDevPpuDrainUnroll",
 		word origin = 0xfcce, std::size_t end = 0xffe0, byte bank = 15) {
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, bank, origin, end,
-			fh::parse_general_hacks(spec), nullptr);
+			fh::parse_general_hacks(spec), nullptr).bank_used;
 	}
 	void reject(std::vector<byte> rom, const std::string& spec = "AtlasDevPpuDrainUnroll",
 		word origin = 0xfcce, std::size_t end = 0xffe0, byte bank = 15) {
@@ -136,21 +136,9 @@ namespace {
 	}
 }
 
-int main(int argc, char** argv) {
+int main() {
 	try {
 		test();
-		if (argc == 3) {
-			std::ifstream input(argv[1], std::ios::binary);
-			require(bool(input), "cannot open source ROM");
-			const std::vector<byte> source{ std::istreambuf_iterator<char>(input), {} };
-			std::filesystem::create_directories(argv[2]);
-			for (const unsigned budget : { 48, 64 }) {
-				auto rom{ source }; install(rom, "AtlasDevPpuDrainUnroll budget=" + std::to_string(budget));
-				std::ofstream output(std::filesystem::path(argv[2]) / ("drain-" + std::to_string(budget) + ".nes"), std::ios::binary);
-				output.write(reinterpret_cast<const char*>(rom.data()), rom.size());
-				require(bool(output), "cannot write patched ROM");
-			}
-		}
 		std::cout << "ppu drain regression passed\n";
 		return 0;
 	} catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

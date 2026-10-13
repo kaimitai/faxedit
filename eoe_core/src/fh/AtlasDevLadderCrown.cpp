@@ -16,7 +16,7 @@
 // or at the adjacent floor. ordinary falls still pass through ladder shafts.
 // optional down hold and alignment apply only while an earned crown is valid.
 // fixed-bank code uses the existing general-hack cursor. state is separate
-// from the native scheduler, jump buffer and palette/clock roles.
+// from the scheduler, the jump buffer and the palette and clock roles.
 namespace {
 	class Code : public klib::Asm6502 {
 		bool m_jump_buffer;
@@ -288,10 +288,10 @@ namespace {
 	}
 
 	void emit_floor_shims(Code& c, const Settings& s) {
-		emit_floor(c, "legacy_");
+		emit_floor(c, "floor_");
 		for (const auto& entry : { std::string{ "ascent_entry" }, std::string{ "entry_guard" } }) {
 			c.label(entry); save(c); c.jsr("gate"); c.bcc(entry + "_denied");
-			restore(c); c.jmp("legacy_" + entry);
+			restore(c); c.jmp("floor_" + entry);
 			c.label(entry + "_denied");
 			if (entry == "ascent_entry") c.climb_tick();
 			restore(c);

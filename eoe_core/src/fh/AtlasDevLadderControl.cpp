@@ -250,7 +250,7 @@ namespace {
 		}
 	}
 
-	// faster descent can cross the floor between the native pre-step probe
+	// faster descent can cross the floor between the stock pre-step probe
 	// and its next tick. cap it before the sideways collision sees a third row.
 	void emit_floor_cap(klib::Asm6502& p_code) {
 		p_code.cmp_imm(0xc1); p_code.bcs("@floor_done");

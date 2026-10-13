@@ -1227,7 +1227,7 @@ SRAM
 AtlasDevLadderCrown sram=true
 ```
 
-AtlasDevJumpControl, AtlasDevFallControl and the native scheduler's palette
+AtlasDevJumpControl, AtlasDevFallControl and the scheduler's palette
 roles can be listed together with this hack when their combined code fits.
 Crown is installed first; other hacks keep their relative order, so place
 AtlasDevFrameScheduler before its roles. A jump buffer adds ladder timer
@@ -1238,7 +1238,7 @@ available space and are rejected. No other hack is relocated or
 given extra space by this feature.
 
 Build these combinations from a compatible base ROM. Crown accepts an existing
-native scheduler only with unclaimed PRE and POST vectors; preinstalled
+scheduler only with unclaimed PRE and POST vectors; preinstalled
 handlers and unknown NMI hooks are rejected. Hook checks also reject
 incompatible movement patches. Script activation, climb speeds and ladder
 attack settings are not part of this hack.
@@ -1739,14 +1739,13 @@ instructions cannot be combined with the affected mode.
 
 The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
 Mirroring, battery support and header padding are not compatibility tests.
-Instruction checks determine whether the sprite code is compatible; runtime
-testing currently covers US revision 0 only.
+Instruction checks determine whether the sprite code is compatible; tested in
+play on US revision 0 only.
 
-This is an experimental performance option. In a matched 1,800-frame workload
-with six small monsters, missed update deadlines fell from 73 to 1. Eight small
-monsters and six larger monsters still exceeded the frame budget. Savings depend
-on the scene and other enabled features; this does not guarantee full speed in
-every crowded room.
+This is an experimental performance option. With six small monsters on screen,
+slow frames fell from 73 to 1 over 1,800 frames. Eight small monsters or six
+larger ones still slow the game down. Savings depend on the scene and the other
+enabled hacks; this does not guarantee full speed in every crowded room.
 
 <hr>
 
@@ -1814,7 +1813,7 @@ must not be edited independently by per-instance custom graphics code.
 
 The supported layout is unexpanded MMC1 with 256 KiB PRG, CHR RAM and no trainer.
 Mirroring, battery bits and header padding may vary. Instruction checks determine
-compatibility; runtime evidence currently covers US revision 0 only.
+compatibility; tested in play on US revision 0 only.
 
 <hr>
 
@@ -2697,11 +2696,10 @@ The default role uses 96 bytes in bank 9 and no fixed-bank bytes beyond
 its scheduler. The scheduler uses 156 bytes and seven RAM bytes; the ward
 adds zero RAM. A basic four-orb field adds 236 fixed-bank bytes. A tested
 expanded, clipped, four-tile field adds 461 bytes (617 including scheduler).
-Build-time byte checks decide whether a configuration fits. In native retail
-exports the available fixed-bank space was 780 bytes on US/US Rev A/EU and
-551 on JP: default and basic orbit exported on all four, while the larger
-617-byte configuration was refused on JP without creating an output ROM.
-These are installation checks; fresh gameplay replay coverage is US Rev 0.
+Byte checks at build time decide whether a configuration fits. The fixed bank
+has 780 free bytes on US, US Rev A and EU, and 551 on JP: the default and the
+basic orbit fit all four, while the 617-byte configuration is refused on JP.
+Tested in play on US revision 0 only.
 
 The force tests horizontal distance only; the circular graphic does not add
 a vertical collision test. Entries with zero HP and the configured exempt ID

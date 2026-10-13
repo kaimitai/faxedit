@@ -571,6 +571,22 @@ the menu. ```AtlasDevIfInventoryFull``` and ```AtlasDevClearCarriedInventory```
 only touch the five ordinary lists. Item operands are the item defines
 (```ITEM_RED_POTION```, ```WEAPON_LONG_SWORD```), not category-local ids.
 
+```AtlasDevShowInventoryMenu``` opens the same menu as Select and waits until
+the player closes it. The regular controls and rules apply: picking equipment
+closes the category page and B closes the menu. The dialogue box is then
+rebuilt with old text cleared, and the next instruction runs. Use it in a
+normal dialogue script, never from an NMI or frame-scheduler callback. The
+game does not allow equipment changes inside buildings, the King's room
+included: the menu opens there, but nothing can be equipped, so use an
+outdoor script when the player has to equip something. The handler is 33
+bytes; alone in the library with its dispatch tables it uses 83 bytes.
+
+```text
+AtlasDevShowInventoryMenu
+Msg "READY TO GO?"
+End
+```
+
 #### AtlasDev player opcodes
 
 These write the player's own state cells and let the normal per-frame

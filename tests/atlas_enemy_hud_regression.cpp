@@ -38,7 +38,7 @@ namespace {
 	std::size_t install(std::vector<byte>& rom,const std::string& spec,word org=ORG,
 		std::size_t end=0xffe0,const std::string& region="us") {
 		return fh::HackManager{}.install_general_hacks(config(rom,region),rom,15,org,end,
-			fh::filter_general_hacks(15,fh::parse_general_hacks(spec)),nullptr);
+			fh::filter_general_hacks(15,fh::parse_general_hacks(spec)),nullptr).bank_used;
 	}
 	void refused(std::vector<byte> rom,const std::string& spec,word org=ORG,
 		std::size_t end=0xffe0,const std::string& region="us") {
@@ -49,21 +49,8 @@ namespace {
 	}
 }
 
-int main(int argc,char** argv) {
+int main() {
 	try {
-		// Optional ROM export for gameplay tests.
-		if(argc==5 || argc==6) {
-			std::ifstream input(argv[1],std::ios::binary);
-			std::vector<byte> rom((std::istreambuf_iterator<char>(input)),{});
-			require(input.good() || input.eof(),"input read failed");
-			const std::string region{argc==6 ? argv[5] : "us"};
-			install(rom,std::string{"AtlasDevEnemyHud names="}+argv[3]+" visibility="+argv[4],
-				region=="jp" ? word{0xfdb2} : ORG,0xffe0,region);
-			std::ofstream output(argv[2],std::ios::binary);
-			output.write(reinterpret_cast<const char*>(rom.data()),rom.size());
-			require(output.good(),"output write failed"); return 0;
-		}
-		require(argc==1,"expected input ROM, output ROM, names boolean, visibility");
 		const auto source{fixture()};
 		for(bool names : {false,true}) for(bool persistent : {false,true}) {
 			const std::string spec{std::string{"AtlasDevEnemyHud names="}+(names?"true":"false")+
@@ -116,7 +103,7 @@ int main(int argc,char** argv) {
 		auto short_rom{source}; short_rom.resize(100); refused(short_rom,"AtlasDevEnemyHud");
 		for(int at : {0,4,5,6,7}) {auto rom{source};rom[at]=255;refused(rom,"AtlasDevEnemyHud");}
 		auto rom{source}; require(install(rom,"AtlasDevEnemyHud mode=vanilla")==0 && rom==source,"vanilla mode writes");
-		std::cout<<"enemy HUD native variants, relocation, ownership and refusal checks passed\n";
+		std::cout<<"enemy HUD variants, relocation, ownership and refusal checks passed\n";
 		return 0;
 	} catch(const std::exception& e) {std::cerr<<e.what()<<'\n';return 1;}
 }

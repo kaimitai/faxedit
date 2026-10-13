@@ -25,8 +25,8 @@ constexpr std::array OPS{fh::HackLib::AtlasDevSwapVar, fh::HackLib::AtlasDevRepe
     fh::HackLib::AtlasDevReadFlagToVar, fh::HackLib::AtlasDevWriteVarToMetatile,
     fh::HackLib::AtlasDevRandomVar};
 std::size_t file(word cpu) { return 0x28010 + cpu; }
-// the iscript entry the variable reset displaces: a fixed address since rom_iscripts_begin
-// was removed (3120ce0), so a configured value no longer moves it
+// the iscript entry the variable reset displaces: a fixed address, so a
+// configured value does not move it
 constexpr word BEGIN{0x8242};
 word read_word(const Bytes& rom, std::size_t at) { return static_cast<word>(rom.at(at) | rom.at(at + 1) << 8); }
 void put_word(Bytes& rom, word at, word value) { rom[file(at)] = value & 255; rom[file(at) + 1] = value >> 8; }
@@ -239,7 +239,7 @@ void switch_behavior(const Image& image) {
         }
 }
 
-// the reference step, mirroring what AtlasDevRandomVar's emitter computes
+// the reference step, mirroring what AtlasDevRandomVar's code computes
 byte reference_step(byte state, byte frame) {
     byte next = state == 0 ? static_cast<byte>(frame | 1) : state;
     word shifted = static_cast<word>(next << 1);

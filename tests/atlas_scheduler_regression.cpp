@@ -45,7 +45,7 @@ namespace {
 
 	std::size_t install_scheduler(std::vector<byte>& rom) {
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			SCHEDULER_ORG, 0xfff0, hacks("AtlasDevFrameScheduler"), nullptr);
+			SCHEDULER_ORG, 0xfff0, hacks("AtlasDevFrameScheduler"), nullptr).bank_used;
 	}
 
 	void install_daynight(std::vector<byte>& rom, const std::string& params = {}) {
@@ -81,7 +81,7 @@ namespace {
 		if (!params.empty())
 			spec += " " + params;
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			cpu_addr, 0xfff0, hacks(spec), nullptr);
+			cpu_addr, 0xfff0, hacks(spec), nullptr).bank_used;
 	}
 
 	std::size_t scheduler_file_offset(const std::vector<byte>& rom) {
@@ -391,7 +391,7 @@ namespace {
 		if (!params.empty())
 			spec += " " + params;
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			cpu_addr, 0xfff0, hacks(spec), nullptr);
+			cpu_addr, 0xfff0, hacks(spec), nullptr).bank_used;
 	}
 
 	void test_jump_control_installs_three_hooks_and_advances_the_cursor() {
@@ -543,21 +543,6 @@ namespace {
 			require(plain[scheduler + fh::afs::OFF_ARM0 + i] == 0x00, "a plain install touched the arm table");
 	}
 
-	void write_jump_control_parity(const std::string& base, const std::string& out, const std::string& params) {
-		std::ifstream in(base, std::ios::binary);
-		if (!in)
-			throw std::runtime_error("cannot read " + base);
-		std::vector<byte> rom((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-		if (params.find("switchable=1") != std::string::npos) {
-			install_scheduler(rom);
-			install_jump_control(rom, params, SCHEDULER_ORG + fh::afs::CORE_SIZE);
-		}
-		else
-			install_jump_control(rom, params);
-		std::ofstream o(out, std::ios::binary);
-		o.write(reinterpret_cast<const char*>(rom.data()), static_cast<std::streamsize>(rom.size()));
-	}
-
 	void test_status_ward_install_survives_transactional_copy() {
 		auto rom{ vanilla_rom() };
 		install_scheduler(rom);
@@ -685,9 +670,8 @@ namespace {
 		require(cases == 479232, "edgepark boundary matrix shrank");
 	}
 
-	// FNV-1a over bank 9 and the field range at a fixed origin. The core is
-	// deliberately excluded: upstream scheduler evolution must not invalidate
-	// independent StatusWard emission evidence (76f4660 and 399063e oracles).
+	// FNV-1a over bank 9 and the field range at a fixed origin. The scheduler
+	// core is left out so a scheduler change does not move the StatusWard pins.
 	std::uint64_t ward_digest(const std::vector<byte>& rom) {
 		std::uint64_t digest{ 14695981039346656037ULL };
 		for (const auto range : { std::pair<std::size_t, std::size_t>{0x24010, 0x28010},
@@ -698,9 +682,9 @@ namespace {
 		return digest;
 	}
 
-	void test_status_ward_unclipped_emission_stays_legacy() {
-		// FNV-1a of StatusWard-owned ranges emitted by 76f4660. These
-		// pin the opt-out path independently of the new coordinate oracle.
+	void test_status_ward_unclipped_bytes_are_unchanged() {
+		// FNV-1a of the StatusWard ranges with edgepark=false. these pin the
+		// opt-out path separately from the coordinate checks.
 		const std::array<std::pair<std::string, std::uint64_t>, 3> cases{{
 			{"fieldfx=true", 6967315546989672379ULL},
 			{"trigger=always fieldfx=true radius=120 fieldspeed=5 fieldcount=1 fielddir=ccw",
@@ -713,11 +697,11 @@ namespace {
 			install_scheduler(rom);
 			install_status_ward(rom, params + " edgepark=false", 0xfdbe);
 			const auto digest{ ward_digest(rom) };
-			require(digest == expected, "edgepark=false changed legacy emission: " + params);
+			require(digest == expected, "edgepark=false changed the bytes: " + params);
 		}
 	}
 
-	void test_status_ward_visual_defaults_preserve_both_legacy_paths() {
+	void test_status_ward_visual_defaults_keep_both_paths() {
 		const std::array<std::pair<std::string, std::uint64_t>, 3> clipped{{
 			{"fieldfx=true", 6487282305893163547ULL},
 			{"trigger=always fieldfx=true radius=120 fieldspeed=5 fieldcount=1 fielddir=ccw",
@@ -733,10 +717,10 @@ namespace {
 				install_status_ward(omitted, spec, 0xfdbe);
 				install_status_ward(explicit_defaults, spec
 					+ " fieldpattern=orbit fieldblink=0 fieldframes=1 fieldanimspeed=3", 0xfdbe);
-				require(omitted == explicit_defaults, "explicit visual defaults changed emission");
+				require(omitted == explicit_defaults, "explicit visual defaults changed the bytes");
 				if (edge) {
 					const auto digest{ ward_digest(omitted) };
-					require(digest == expected, "new visual defaults changed legacy clipped emission");
+					require(digest == expected, "visual defaults changed the clipped bytes");
 				}
 			}
 		}
@@ -861,7 +845,7 @@ namespace {
 		constexpr word org{ 0xfdbe };
 		const auto before{ rom };
 		const auto size{ fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15,
-			org, 0xfff0, hacks(spec), nullptr) };
+			org, 0xfff0, hacks(spec), nullptr).bank_used };
 		auto exact{ before }, short_one{ before };
 		fh::HackManager{}.install_general_hacks(fe::Config{}, exact, 15, org, org + size, hacks(spec), nullptr);
 		bool threw{ false };
@@ -966,37 +950,6 @@ namespace {
 		}
 	}
 
-	void write_status_ward_parity_pair(const std::string& base_path,
-		const std::string& native_path, const std::string& custom_params = {}) {
-		const auto write_rom = [](const std::string& path,
-			const std::vector<byte>& rom) {
-			std::ofstream out(path, std::ios::binary);
-			if (!out)
-				throw std::runtime_error("could not open parity output: " + path);
-			out.write(reinterpret_cast<const char*>(rom.data()),
-				static_cast<std::streamsize>(rom.size()));
-			if (!out)
-				throw std::runtime_error("could not write parity output: " + path);
-		};
-		auto base{ vanilla_rom() };
-		write_rom(base_path, base);
-
-		// The project reference core ends at $FDBE. Put the smaller upstream
-		// core immediately before that boundary so both emitters place the
-		// independent bank-9 role at $8000 and the field graphic at $FDBE.
-		constexpr word parity_scheduler{ 0xfdbe - fh::afs::CORE_SIZE };
-		auto native{ base };
-		fh::HackManager{}.install_general_hacks(fe::Config{}, native, 15,
-			parity_scheduler, 0xfff0, hacks("AtlasDevFrameScheduler"), nullptr);
-		const std::string params{ custom_params.empty() ?
-			"AtlasDevStatusWard radius=48 push=1 exempt=34 trigger=wingboots "
-			"pull=false arc=front fieldpulse=24 aura=true fieldfx=true "
-			"fieldtile=64 fieldattr=0 fieldspeed=4 fieldcount=4 fielddir=ccw "
-			"edgepark=true" : custom_params };
-		fh::HackManager{}.install_general_hacks(fe::Config{}, native, 15,
-			0xfdbe, 0xfff0, hacks(params), nullptr);
-		write_rom(native_path, native);
-	}
 	template<typename Mutator>
 	void require_role_atomic_refusal(PostRole role, const std::string& expected,
 		const std::string& params, Mutator mutate) {
@@ -1197,18 +1150,8 @@ namespace {
 	}
 }
 
-int main(int argc, char** argv) {
+int main() {
 	try {
-		if ((argc == 4 || argc == 5) && std::string(argv[1]) == "--write-jumpcontrol-parity") {
-			write_jump_control_parity(argv[2], argv[3], argc == 5 ? argv[4] : "");
-			return 0;
-		}
-		if ((argc == 4 || argc == 5) && std::string(argv[1]) == "--write-statusward-parity") {
-			write_status_ward_parity_pair(argv[2], argv[3], argc == 5 ? argv[4] : "");
-			return 0;
-		}
-		if (argc != 1)
-			throw std::runtime_error("usage: atlas_scheduler_regression [--write-jumpcontrol-parity BASE OUT [PARAMS]] [--write-statusward-parity BASE NATIVE [HACK_SPEC]]");
 		test_scheduler_abi_and_strip_gate();
 		test_daynight_claims_first_free_arm_slot();
 		test_daynight_reuses_existing_arm_slot();
@@ -1228,8 +1171,8 @@ int main(int argc, char** argv) {
 		test_status_ward_field_claims_pre_lanes_and_edgepark_is_opt_in();
 		test_status_ward_refuses_a_pre_claim_atomically();
 		test_status_ward_edgepark_clips_both_axes();
-		test_status_ward_unclipped_emission_stays_legacy();
-		test_status_ward_visual_defaults_preserve_both_legacy_paths();
+		test_status_ward_unclipped_bytes_are_unchanged();
+		test_status_ward_visual_defaults_keep_both_paths();
 		test_status_ward_visual_pattern_coordinates();
 		test_status_ward_visual_blink_and_animated_tiles();
 		test_status_ward_visual_parameters_and_capacity();

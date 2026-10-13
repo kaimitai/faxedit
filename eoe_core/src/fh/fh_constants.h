@@ -41,10 +41,20 @@ namespace fh {
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
 
 		// bank 14 addresses
+		constexpr word Sprite_CalcDistanceXToPlayer{ 0x82f8 };
+		constexpr word Sprite_CalcDistanceYToPlayer{ 0x831b };
+		constexpr word Sprites_CalcHorizSpriteMovement{ 0x83c1 };
+		constexpr word Sprites_CalcVerticalSpriteMovement{ 0x83d1 };
+		// triangle wave of A, peak $ff>>Y; Y=0 leaves A as it is
+		constexpr word Sprites_CalcYFromGravity{ 0x83e1 };
+		constexpr word Sprite_MoveHorizAndTurnAroundIfNeeded{ 0x8419 };
+		constexpr word Sprite_MoveVertAndFlipIfNeeded{ 0x8564 };
+		constexpr word Sprite_CalculateNewVertPos{ 0x85ca };
 		constexpr word Player_CheckShieldHitByMagic{ 0x877c };
 		constexpr word PendantBugBNE{ 0x8879 };
 		constexpr word Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value{ 0x8988 };
 		constexpr word Player_HandleTouchTrigger_STA_CurrentSprite_Value{ 0x89f2 };
+		constexpr word SPRITE_GETBOUNDS_MASKMAN{ 0x8a75 };
 		constexpr word SpriteBehavior_MattockDroppedFromRipasheiku_LDA_Quests{ 0xa3f4 };
 		constexpr word SpriteBehavior_BattleSuit_CheckForBosses{ 0xa379 };
 		constexpr word SpriteBehavior_BattleHelmet_CheckForBosses{ 0xa3a9 };
@@ -57,12 +67,15 @@ namespace fh {
 		constexpr word SpriteBehavior_FlashDamage_JSR_ReduceHP{ 0xab5d };
 		constexpr word SpriteBoundingBoxTable{ 0xb273 };
 		constexpr word SpriteTypeTable{ 0xb544 };
+		constexpr word Player_DrawWeapon{ 0xb7d6 };
+		constexpr word Player_DrawShield{ 0xb982 };
 
 		// bank 15 addresses
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
 		constexpr word UseItem_JumpTable{ 0xc49d };
+		constexpr word Player_UseMattock{ 0xc616 };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpBattleSuit_WeaponsCountBug{ 0xc6f8 };
 		constexpr word Player_PickUpDragonSlayer_ArmoursCountBug{ 0xc738 };
@@ -73,16 +86,21 @@ namespace fh {
 		constexpr word Player_PickUpItem{ 0xc8cd };
 		constexpr word Game_Init_JSR_Game_InitMMCAndBank{ 0xc954 };
 		constexpr word Game_Init_JSR_Game_InitScreenAndMusic{ Game_Init_JSR_Game_InitMMCAndBank + 3 };
+		constexpr word WaitForNextFrame{ 0xca25 };
 		constexpr word WaitForInterrupt{ 0xca2e };
 		constexpr word Game_InitScreenAndMusic{ 0xca78 };
 		constexpr word PPU_WaitUntilFlushed{ 0xcaf7 };
+		constexpr word Screen_ResetSpritesForGamePlay{ 0xcb47 };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
 		// Waits until the PPU queue has room for up to $24 bytes.
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
 		constexpr word Sprites_FlipRanges{ 0xcba8 };
 		constexpr word MMC1_UpdateROMBank_SerialWrite{ 0xcc21 };
+		constexpr word MMC1_EnsurePRG{ 0xcc85 };
 		constexpr word MMC1_EnsurePRG_fastPath{ 0xccd2 };
+		constexpr word CurrentSprite_ResetPPUTileOffset{ 0xcd6f };
+		constexpr word Sprites_LoadImageForCurrentSprite{ 0xcdb5 };
 		constexpr word Area_LoadTiles{ 0xceb8 };
 		constexpr word Area_LoadTiles_LDX_Bank{ 0xcee1 };
 		constexpr word PPUQueueAppendHeader{ 0xcfdc };
@@ -92,6 +110,8 @@ namespace fh {
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
+		constexpr word Screen_LoadBlockDataVert{ 0xd3ba };
+		constexpr word SET_BLOCKS_TILEMAP_OFFSETS_L{ 0xd4cf };
 		// item menu effect tails: clear the selection, use sound, effect, return.
 		// same address in us, us rev a, eu and jp
 		constexpr word UseRedPotionEffect{ 0xc53b };
@@ -138,23 +158,40 @@ namespace fh {
 		constexpr word GameLoop_CheckShowPlayerMenu{ 0xe016 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
 		constexpr word Player_SetInitialState_SetFlags{ 0xe0bc };
+		constexpr word Player_TryMoveRight{ 0xe1cf };
+		constexpr word Player_TryMoveLeft{ 0xe220 };
+		constexpr word Player_SetStandardAcceleration{ 0xe27f };
+		constexpr word Player_CheckHandleClimbDown{ 0xe349 };
+		constexpr word Player_HandleVertLadderOrJump{ 0xe399 };
+		constexpr word Player_GrabClimbLadderOrJump{ 0xe43a };
+		constexpr word PLAYER_JUMP_CURVE{ 0xe4d6 };
 		constexpr word Player_CheckHandleEnterDoor_LDX_pal2mus_slots{ 0xe54a };
 		constexpr word Player_CheckHandleEnterDoor_enterScreen{ 0xe565 };
 		constexpr word Player_EnterDoorToOutside_JMP_SetupArea{ 0xe5d7 };
 		constexpr word EnterBuilding_SetFacing{ 0xe5a6 };
+		constexpr word Player_CheckIfPassable{ 0xe6c8 };
 		constexpr word Area_SetStateFromDoorDestination_STA_DoorReq{ 0xe84c };
 		constexpr word Area_ConvertPixelsToBlockPos{ 0xe86c };
+		constexpr word ScreenBuffer_IsBlockImpassable{ 0xe87c };
+		constexpr word Area_GetBlockProperty{ 0xe8c6 };
+		constexpr word BLOCK_PROPERTY_IMPASSABLE_MAP{ 0xe8d9 };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
 		constexpr word ExitBuilding_SetFacing{ 0xea50 };
 		constexpr word OwTransJmpGameSetupNewArea{ 0xea91 };
 		constexpr word Game_RunDoorRequirementHandler{ 0xeb2f };
 		constexpr word Game_RunDoorRequirementHandler_BEQ_RTS{ 0xeb32 };
 		constexpr word Game_RunDoorRequirementHandler_TAY{ 0xeb35 };
+		constexpr word DOOR_REQUIREMENT_LOOKUP_FUNC_ADDRS{ 0xeb3f };
+		constexpr word Game_UnlockDoorWithUsableItem{ 0xebd1 };
 		constexpr word Game_UnlockDoorWithKey_afterUse{ 0xebd9 };
 		constexpr word Game_UnlockDoorWithSoundEffect{ 0xebe1 };
+		constexpr word Player_DrawBody{ 0xebee };
 		constexpr word Player_SetWeapon_CMP_BuildingsWorldNo{ 0xedf0 };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };
+		constexpr word Sprites_HasBoss{ 0xeff8 };
+		constexpr word Sprite_SetPlayerAppearanceAddr{ 0xf039 };
+		constexpr word Sprites_IncNextSpriteSlot{ 0xf228 };
 		constexpr word Portrait_LoadTiles{ 0xf24d };
 		constexpr word Portrait_Clear{ 0xf281 };
 		constexpr word Messages_Load{ 0xf3f5 };
@@ -199,15 +236,22 @@ namespace fh {
 	}
 
 	namespace RAM {
+		constexpr byte ZP_Temp00{ 0x00 };
+		constexpr byte ZP_Temp_Addr_L{ 0x02 };
+		constexpr byte ZP_Temp_Addr_U{ 0x03 };
 		constexpr byte ZP_Temp07{ 0x07 };
 		constexpr byte ZP_Temp08{ 0x08 };
 		// PPUMASK shadow copied to $2001 by the NMI.
 		constexpr byte ZP_PPUMaskShadow{ 0x0b };
+		constexpr byte ZP_PPU_ScrollX{ 0x0c };
 		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
 		constexpr byte ZP_CameraNametableParity{ 0x0d };
+		constexpr byte ZP_Joy1_ButtonMask{ 0x16 };
+		constexpr byte ZP_Joy2_ButtonMask{ 0x17 };
 		constexpr byte ZP_Joy1_ChangedButtonMask{ 0x19 };
 		// Free-running frame counter, incremented by the NMI.
 		constexpr byte ZP_FrameCounter{ 0x1a };
+		constexpr byte ZP_Sprites_StartSlotRange{ 0x1c };
 		// Offset the vanilla GetRandom ($ca6e) reads its next table byte at; any
 		// value is a valid offset. Same byte in the US, US rev A, EU and JP ROMs.
 		constexpr byte ZP_RandomOffset{ 0xda };
@@ -216,6 +260,10 @@ namespace fh {
 		// consumer compares it against the read cursor $1f.
 		constexpr byte ZP_PPUBufferWriteCursor{ 0x20 };
 		constexpr byte ZP_CurrentWorld{ 0x24 };
+		constexpr byte ZP_Sprites_SpriteSlot{ 0x25 };
+		constexpr byte ZP_MovingSpriteVisibility{ 0x26 };
+		constexpr byte ZP_Arg_DrawSprite_PosY{ 0x28 };
+		constexpr byte ZP_CurrentSprite_FlipMask{ 0x29 };
 		// 7 unused bytes of zeropage (at least on US)
 		constexpr byte ZP_2c{ 0x2c };
 		constexpr byte ZP_2d{ 0x2d };
@@ -224,11 +272,34 @@ namespace fh {
 		constexpr byte ZP_30{ 0x30 };
 		constexpr byte ZP_31{ 0x31 };
 		constexpr byte ZP_32{ 0x32 };
+		constexpr byte ZP_Sprites_PPUOffset{ 0x33 };
+		constexpr byte ZP_Sprite_TileInfo_ReadAddr_L{ 0x3a };
+		constexpr byte ZP_Sprite_TileInfo_ReadAddr_U{ 0x3b };
+		constexpr byte ZP_Temp_Sprites_TileXOffset{ 0x42 };
+		constexpr byte ZP_Screen_ScrollVertLoadCounter{ 0x44 };
+		constexpr byte ZP_Screen_ScrollVertBlocks_PPUTileMapAddr_L{ 0x4e };
+		constexpr byte ZP_Screen_ScrollVertBlocks_PPUTileMapAddr_U{ 0x4f };
+		constexpr byte ZP_Screen_ScrollVertBlocks_PPUAttrAddr_L{ 0x52 };
+		constexpr byte ZP_Screen_ScrollVertBlocks_PPUAttrAddr_U{ 0x53 };
+		// 0 left, 1 right, 2 up, 3 down, $ff none
+		constexpr byte ZP_Screen_ScrollDirection{ 0x54 };
+		constexpr byte ZP_PPU_ScrollY{ 0x57 };
+		constexpr byte ZP_PPU_ScrollScreenHoriz{ 0x59 };
+		constexpr byte ZP_Sprites_Sprite0Mode{ 0x5a };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
+		constexpr byte ZP_Screen_ScrollLoadMode{ 0x6e };
+		constexpr byte ZP_Screen_ScrollHandlersPending{ 0x73 };
+		constexpr byte ZP_Screen_ScrollHorizBlocksLoaded{ 0x74 };
+		constexpr byte ZP_Screen_MaybeUnused_0075{ 0x75 };
+		constexpr byte ZP_Screen_ScrollHorizAttrsLoaded{ 0x76 };
 		constexpr byte ZP_TilesIndex = 0x95;
+		constexpr byte ZP_CurrentSprite_StartPPUTileOffset{ 0x9a };
+		constexpr byte ZP_PlayerPosX_Frac{ 0x9d };
 		constexpr byte ZP_PlayerPosX = 0x9e;
+		constexpr byte ZP_PlayerClimbFlySpeedModifier = 0xa0;
 		constexpr byte ZP_PlayerPosY = 0xa1;
+		constexpr byte ZP_PlayerMovementTick{ 0xa3 };
 		constexpr byte ZP_PlayerPosArgX = 0xb5;
 		constexpr byte ZP_PlayerPosArgY = 0xb6;
 		constexpr byte ZP_ScriptAddr{ 0xdb };
@@ -263,6 +334,8 @@ namespace fh {
 		// the swing's two timers, zeroed when a swing starts
 		constexpr byte ZP_PlayerAttackTimer{ 0xac };
 		constexpr byte ZP_PlayerAttackPhase{ 0xae };
+		constexpr byte ZP_Maybe_PlayerY_ForScroll{ 0xb3 };
+		constexpr byte ZP_Screen_ScrollPlayerTransitionCounter{ 0xb4 };
 
 		constexpr word CurrentROMBank{ 0x0100 };
 		// IScripts_Begin stores the active root index here before opening the
@@ -280,9 +353,17 @@ namespace fh {
 		constexpr word EntitySpeedFraction{ 0x02ec };
 		constexpr word EntitySpeedWhole{ 0x02f4 };
 		constexpr word EntityDropIdentity{ 0x02fc };
+		constexpr word CurrentSprites_PPUOffsets{ 0x032c };
 		constexpr word EntityMagicState{ 0x0334 };
 		constexpr word EntityMagicCounter{ 0x033c };
+		// speed arguments of the sprite movers in bank 14
+		constexpr word Arg_DeltaX_Frac{ 0x0374 };
+		constexpr word Arg_DeltaX_Full{ 0x0375 };
+		constexpr word Arg_DeltaY_Frac{ 0x0376 };
+		constexpr word Arg_DeltaY_Full{ 0x0377 };
 		constexpr word CurrentEntitySlot{ 0x0378 };
+		constexpr word SpriteUpdateCounter{ 0x0383 };
+		constexpr word CurrentSprite_Entity{ 0x038b };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };
@@ -301,11 +382,13 @@ namespace fh {
 		constexpr word PortraitSavedPalette{ 0x03d3 };
 		constexpr word BuildingTileset{ 0x03d9 };
 		constexpr word DestBuildingScreen{ 0x03da };
+		constexpr word Screen_TransitionCounter{ 0x03db };
 		constexpr word SelectedWeapon{ 0x03bd };
 		constexpr word SelectedMagic{ 0x03c0 };
 		constexpr word TextBox_PlayTextSound{ 0x0212 };
 		constexpr word StringID{ 0x0213 };
 		constexpr word TextBox_Timer{ 0x021d };
+		constexpr word Screen_ScrollVertPPUAttrData{ 0x028a };
 		constexpr word VisibleMagicState{ 0x02b3 };
 		constexpr word VisibleMagicFlags{ 0x02b4 };
 		constexpr word VisibleMagicXFraction{ 0x02b5 };
@@ -374,7 +457,14 @@ namespace fh {
 		// clear.  Region-invariant: all four retail images reference
 		// $0427-$042a the same number of times.
 		constexpr word TimedEffectTimers{ 0x0427 };
+		constexpr word DurationGlove{ 0x0428 };
+		constexpr word DurationWingBoots{ 0x0429 };
+		constexpr word DurationHourGlass{ 0x042a };
 		constexpr word StartScreenSelection{ 0x0687 }; // 0=START, 1=CONTINUE
+		constexpr word SPRITE0_Y{ 0x0700 };
+		constexpr word SPRITE0_TILE{ 0x0701 };
+		constexpr word SPRITE0_ATTRS{ 0x0702 };
+		constexpr word SPRITE0_X{ 0x0703 };
 
 		// RAM used by the sameworld to stage-door hack
 		constexpr word Hack_StageChangePending{ 0x1fff };
@@ -382,8 +472,20 @@ namespace fh {
 	}
 
 	namespace PPU {
+		constexpr word PPU_CTRL{ 0x2000 };
+		constexpr word PPU_MASK{ 0x2001 };
+		constexpr word PPU_STATUS{ 0x2002 };
+		constexpr word PPU_SCROLL{ 0x2005 };
 		constexpr word PPU_ADDR{ 0x2006 };
 		constexpr word PPU_DATA{ 0x2007 };
+		constexpr word OAM_DMA{ 0x4014 };
+	}
+
+	// the addresses the game writes; each register answers anywhere in its 8 KiB range
+	namespace MMC1 {
+		constexpr word MMC1_CONTROL{ 0x9fff };
+		constexpr word MMC1_CHR_BANK0{ 0xbfff };
+		constexpr word MMC1_PRG_BANK{ 0xffff };
 	}
 
 	namespace c {

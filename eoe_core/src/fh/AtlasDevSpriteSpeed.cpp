@@ -108,7 +108,7 @@ word fh::HackManager::install_AtlasDevSpriteSpeed(const fe::Config&, std::vector
 		if (code.size() != CLEAR_SIZE || std::size_t{ cpu_addr } + code.size() > 0xfffa)
 			throw std::runtime_error("AtlasDevSpriteSpeed: clear helper reaches interrupt vectors");
 		const auto off{ Asm::get_file_offset(15, cpu_addr) };
-		// the orchestrator owns this cursor. do not search padding for space
+		// the general hack installer owns this cursor. do not search padding for space
 		// or overwrite a previous occupant when installing into a patched rom.
 		if (!std::all_of(rom.begin() + off, rom.begin() + off + code.size(),
 			[](byte value) { return value == 0xff; }))
