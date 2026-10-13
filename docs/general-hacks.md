@@ -201,13 +201,22 @@ Expanded ROMs are particularly convenient because they provide additional free b
 
 Pressing Select while the game is paused kills the player when the game is unpaused. This gives players a way out of softlocks without resetting the console and losing progress since the last password.
 
+Optionally, an iScript can be executed instead of killing the player. This is particularly useful for debugging, allowing Select to trigger custom actions such as granting items, setting quest flags, or teleporting to specific locations.
+
 | parameter | default | meaning |
 | --- | --- | --- |
+| `script` | `0xff (disabled)` | iScript to execute when pressing Select while paused. `0xff` retains the original behavior. |
 | `sram` | `false` | Add SRAM backing |
 
 ```text
 KillSwitch
 ```
+
+```text
+KillSwitch script=12
+```
+
+**Note:** Scripts using portraits will hide all sprites until the game is unpaused.
 
 ---
 

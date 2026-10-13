@@ -79,6 +79,7 @@ namespace {
 // kill switch; Pressing Select while the game is paused kills the player when the game is unpaused
 word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector<byte>& p_rom, byte p_bank, word cpu_addr,
 	const fh::GeneralHack& p_hack) {
+	const byte script{ p_hack.byte_or("script", 0xff) };
 	const bool sram_install{ p_hack.bool_or("sram", false) };
 
 	klib::Asm6502 code;
@@ -89,8 +90,16 @@ word fh::HackManager::install_KillSwitch(const fe::Config& p_config, std::vector
 	// test bit 5: select button
 	code.and_imm(0b00100000);
 	code.beq("@select_not_pressed");
-	code.lda_imm(0x01);
-	code.sta_abs(RAM::PlayerIsDead);
+	if (script != 0xff) {
+		code.lda_imm(script);
+		code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+		code.db(12);
+		code.dw(ROM::IScripts_Begin - 1);
+	}
+	else {
+		code.lda_imm(0x01);
+		code.sta_abs(RAM::PlayerIsDead);
+	}
 	code.label("@select_not_pressed");
 	code.rts();
 

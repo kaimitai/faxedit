@@ -1380,13 +1380,14 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - `Misc`: Added options for opening the inventory on the starting screen, removing the Hour Glass HP penalty and configuring invisible dialogue trigger dimensions.
 
 **General Hack Improvements and Fixes**
-- `PermaDoors`: Added optional unlock sound and iScript execution when entering previously unlocked doors.
-- `OintmentFix`: Added optional protection against poison damage.
-- `FastStart`: Fixed starting mana initialization and the initial HUD display.
 - `AtlasDevLadderControl`: Fixed ladder bottom exits.
 - `AtlasDevCombatFeel`: Fixed fast-walk centering.
 - Added expanded ROM compatibility to `AtlasDevLadderCrown`.
 - `AtlasDevSetMusic` and `AtlasDevIfMusic` now automatically recognize the ROM's song count, with an optional override.
+- `PermaDoors`: Added optional unlock sound and iScript execution when entering previously unlocked doors.
+- `OintmentFix`: Added optional protection against poison damage.
+- `FastStart`: Fixed starting mana initialization and the initial HUD display.
+- `KillSwitch`: Added optional iScript execution when pressing Select while paused (providing what is essentially a programmable debug button).
 - `BugFixes`: Added `silent_note_fix` to restore very low square-wave notes that can be incorrectly muted by the NES APU sweep unit.
 
 **Documentation**
