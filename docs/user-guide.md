@@ -1387,6 +1387,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - `AtlasDevCombatFeel`: Fixed fast-walk centering.
 - Added expanded ROM compatibility to `AtlasDevLadderCrown`.
 - `AtlasDevSetMusic` and `AtlasDevIfMusic` now automatically recognize the ROM's song count, with an optional override.
+- `BugFixes`: Added `silent_note_fix` to restore very low square-wave notes that can be incorrectly muted by the NES APU sweep unit.
 
 **Documentation**
 - Expanded general hack documentation, including SRAM-backed hack configuration and examples.

@@ -451,13 +451,17 @@ TextSpeed mask=%1
 
 ### BugFixes
 
+> Param `silent_note_fix` thanks to [JessicaRobot](https://www.romhacking.net/community/9037/)
+
 Fixes several known bugs in the original game:
 
 * The Pendant increases weapon strength by 25% when equipped, instead of when it is not equipped.
 * Picking up the Battle Suit uses the armor inventory count instead of the weapon inventory count.
 * Picking up the Dragon Slayer uses the weapon inventory count instead of the armor inventory count.
 
-This hack has no parameters.
+| parameter | default | meaning |
+| --- | --- | --- |
+| `silent_note_fix` | `false` | Prevents very low notes from being muted by an NES APU sweep hardware quirk |
 
 ```text
 BugFixes

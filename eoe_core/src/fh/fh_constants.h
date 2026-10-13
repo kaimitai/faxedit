@@ -417,6 +417,10 @@ namespace fh {
 		constexpr char ID_RAM_UIDATAARRAY[]{ "ram_uidataarray" };
 		constexpr char ID_RAM_SHOPITEMCOSTSLO[]{ "ram_shopitemcostslo" };
 
+		// bank 5 cpu addresses
+		constexpr char ID_ROM_MUSIC_SQ1_SWEEP_INIT[]{ "rom_music_sq1_sweep_init" };
+		constexpr char ID_ROM_MUSIC_SQ2_SWEEP_INIT[]{ "rom_music_sq2_sweep_init" };
+
 		// other bank 12 cpu addresses
 		constexpr char ID_ISCRIPTACTIONSETSPAWN[]{ "rom_iscriptactionsetspawn" };
 		constexpr char ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY[]{ "rom_showsellmenu_jsr_findsellmenuentry" };

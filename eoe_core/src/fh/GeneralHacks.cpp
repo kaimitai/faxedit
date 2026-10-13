@@ -754,11 +754,20 @@ word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<
 	return next_cpu_addr;
 }
 
-void fh::HackManager::install_BugFixes(std::vector<byte>& p_rom) const {
+void fh::HackManager::install_BugFixes(const fe::Config& p_config, std::vector<byte>& p_rom,
+	const fh::GeneralHack& p_hack) const {
+	const bool sile_note_fix{ p_hack.bool_or("silent_note_fix", false) };
+
 	klib::Asm6502::apply_word(p_rom, RAM::Inventory_ArmorsCount, 15, ROM::Player_PickUpBattleSuit_WeaponsCountBug);
 	klib::Asm6502::apply_word(p_rom, RAM::Inventory_WeaponsCount, 15, ROM::Player_PickUpDragonSlayer_ArmoursCountBug);
 	constexpr byte OP_BEQ{ 0xf0 };
 	klib::Asm6502::apply_byte(p_rom, OP_BEQ, 14, ROM::PendantBugBNE);
+
+	// prevent sweep-unit muting of certain low notes
+	if (sile_note_fix) {
+		klib::Asm6502::apply_byte(p_rom, 0x08, 5, cfg_word(p_config, c::ID_ROM_MUSIC_SQ1_SWEEP_INIT));
+		klib::Asm6502::apply_byte(p_rom, 0x08, 5, cfg_word(p_config, c::ID_ROM_MUSIC_SQ2_SWEEP_INIT));
+	}
 }
 
 word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -1220,7 +1229,7 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 			install_SRAM(p_config, patched_rom, hack);
 			break;
 		case fh::GeneralHackLib::BugFixes:
-			install_BugFixes(patched_rom);
+			install_BugFixes(p_config, patched_rom, hack);
 			break;
 		case fh::GeneralHackLib::Misc:
 			cpu_addr = install_Misc(p_config, patched_rom, cpu_addr, hack);
