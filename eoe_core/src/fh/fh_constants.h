@@ -41,6 +41,12 @@ namespace fh {
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
 
 		// bank 14 addresses
+		constexpr word Sprites_CalcHorizSpriteMovement{ 0x83c1 };
+		constexpr word Sprites_CalcVerticalSpriteMovement{ 0x83d1 };
+		// triangle wave of A, peak $ff>>Y; Y=0 leaves A as it is
+		constexpr word Sprites_CalcYFromGravity{ 0x83e1 };
+		constexpr word Sprite_MoveHorizAndTurnAroundIfNeeded{ 0x8419 };
+		constexpr word Sprite_MoveVertAndFlipIfNeeded{ 0x8564 };
 		constexpr word Player_CheckShieldHitByMagic{ 0x877c };
 		constexpr word PendantBugBNE{ 0x8879 };
 		constexpr word Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value{ 0x8988 };
@@ -205,6 +211,7 @@ namespace fh {
 		constexpr byte ZP_PPUMaskShadow{ 0x0b };
 		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
 		constexpr byte ZP_CameraNametableParity{ 0x0d };
+		constexpr byte ZP_Joy1_ButtonMask{ 0x16 };
 		constexpr byte ZP_Joy1_ChangedButtonMask{ 0x19 };
 		// Free-running frame counter, incremented by the NMI.
 		constexpr byte ZP_FrameCounter{ 0x1a };
@@ -224,10 +231,19 @@ namespace fh {
 		constexpr byte ZP_30{ 0x30 };
 		constexpr byte ZP_31{ 0x31 };
 		constexpr byte ZP_32{ 0x32 };
+		constexpr byte ZP_Sprite_TileInfo_ReadAddr_L{ 0x3a };
+		// 0 left, 1 right, 2 up, 3 down, $ff none
+		constexpr byte ZP_Screen_ScrollDirection{ 0x54 };
+		constexpr byte ZP_Sprites_Sprite0Mode{ 0x5a };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
+		constexpr byte ZP_Screen_ScrollHandlersPending{ 0x73 };
+		constexpr byte ZP_Screen_ScrollHorizBlocksLoaded{ 0x74 };
+		constexpr byte ZP_Screen_MaybeUnused_0075{ 0x75 };
+		constexpr byte ZP_Screen_ScrollHorizAttrsLoaded{ 0x76 };
 		constexpr byte ZP_TilesIndex = 0x95;
 		constexpr byte ZP_PlayerPosX = 0x9e;
+		constexpr byte ZP_PlayerClimbFlySpeedModifier = 0xa0;
 		constexpr byte ZP_PlayerPosY = 0xa1;
 		constexpr byte ZP_PlayerPosArgX = 0xb5;
 		constexpr byte ZP_PlayerPosArgY = 0xb6;
@@ -282,7 +298,13 @@ namespace fh {
 		constexpr word EntityDropIdentity{ 0x02fc };
 		constexpr word EntityMagicState{ 0x0334 };
 		constexpr word EntityMagicCounter{ 0x033c };
+		// speed arguments of the sprite movers in bank 14
+		constexpr word Arg_DeltaX_Frac{ 0x0374 };
+		constexpr word Arg_DeltaX_Full{ 0x0375 };
+		constexpr word Arg_DeltaY_Frac{ 0x0376 };
+		constexpr word Arg_DeltaY_Full{ 0x0377 };
 		constexpr word CurrentEntitySlot{ 0x0378 };
+		constexpr word SpriteUpdateCounter{ 0x0383 };
 		constexpr word EntityHealth{ 0x0344 };
 		constexpr word EntityHitStun{ 0x034c };      // vanilla's own i-frame counter
 		constexpr word EntityProgramLo{ 0x0354 };
