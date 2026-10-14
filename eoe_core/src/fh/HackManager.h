@@ -500,6 +500,8 @@ namespace fh {
 			word cpu_addr, const std::string& p_name);
 		word far_entry(const fe::Config& p_config, std::vector<byte>& p_rom, HackPlacement& p_place,
 			word p_entry, word& cpu_addr, const std::string& p_name) const;
+		word far_entry_nmi(std::vector<byte>& p_rom, HackPlacement& p_place, word p_entry, word& cpu_addr,
+			const std::string& p_name) const;
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
 		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);

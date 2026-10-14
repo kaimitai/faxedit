@@ -8,11 +8,13 @@
 
 // sram/bank/addr placement for the bank 15 general hacks. place_hack checks
 // and picks the address, install_placed writes the code there, and far_entry
-// gives bank 15 an address to call when the code sits in another bank.
+// gives bank 15 an address to call when the code sits in another bank
+// (far_entry_nmi when the caller is the nmi).
 
 namespace {
 	constexpr byte FIXED_BANK{ 15 };
 	constexpr byte ValueIO{ fh::RAM::ZP_e5 };
+	// the larger of the two trampolines; a reservation fits either
 	constexpr std::size_t TRAMPOLINE_SIZE{ 26 };
 	// find_trailing_free_cpu_addr starts this far into a trailing run of $ff
 	constexpr std::size_t FREE_CUSHION{ 16 };
@@ -160,6 +162,34 @@ word fh::HackManager::far_entry(const fe::Config& p_config, std::vector<byte>& p
 	trampoline.tax();
 	trampoline.jsr(update_rom_bank);
 	trampoline.lda_zp(ValueIO);
+	trampoline.rts();
+
+	const word result{ cpu_addr };
+	cpu_addr = trampoline.apply_hack_and_clear_get_next_cpu_addr(p_rom, FIXED_BANK, cpu_addr);
+	return result;
+}
+
+// the vanilla nmi's own bank switch: MMC1_EnsurePRG tells an interrupted
+// MMC1_UpdateROMBank to redo its write. only from the nmi, since nothing
+// would redo this one. y goes in and comes back; a, x and the flags do not.
+// MMC1_EnsurePRG has no config entry; this is the US, EU and JP address
+word fh::HackManager::far_entry_nmi(std::vector<byte>& p_rom, HackPlacement& p_place, word p_entry,
+	word& cpu_addr, const std::string& p_name) const {
+	if (p_place.sram || p_place.bank == FIXED_BANK)
+		return p_entry;
+	if (p_place.far_entries == 0)
+		throw std::runtime_error(std::format("{}: more far entries than were placed", p_name));
+	--p_place.far_entries;
+
+	klib::Asm6502 trampoline;
+	trampoline.lda_abs(RAM::CurrentROMBank);
+	trampoline.pha();
+	trampoline.ldx_imm(p_place.bank);
+	trampoline.jsr(ROM::MMC1_EnsurePRG);
+	trampoline.jsr(p_entry);
+	trampoline.pla();
+	trampoline.tax();
+	trampoline.jsr(ROM::MMC1_EnsurePRG);
 	trampoline.rts();
 
 	const word result{ cpu_addr };
