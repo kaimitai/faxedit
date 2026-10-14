@@ -259,7 +259,7 @@ void test_options() {
 void test_invalid_settings() {
     for (const std::string option : {
         "mode=bad", "mode=Crown", "downhold=-1", "downhold=9", "downhold=256", "downhold=1.0",
-        "downhold=true", "align=-1", "align=3", "align=256", "align=2junk", "roompolicy=none",
+        "downhold=true", "align=-1", "align=9", "align=256", "align=2junk", "roompolicy=none",
         "roompolicy=Allow", "roompolicy=allow", "roompolicy=deny", "rooms=6:3",
         "roompolicy=all rooms=6:3", "roompolicy=allow rooms=6", "roompolicy=allow rooms=6:3:2",
         "roompolicy=allow rooms=:3", "roompolicy=allow rooms=6:", "roompolicy=allow rooms=-1:3",
@@ -754,6 +754,178 @@ void test_preinstalled_scheduler_ownership() {
     }
 }
 
+// a small 6502 runs the installed body against a 16x13 block map. block 0
+// is air, 1 is solid and 2 is a ladder; the stock routines come from the
+// fixture and the solid map from the retail table.
+struct Cpu {
+    std::array<byte, 0x10000> m{};
+    byte a{}, x{}, y{}, p{ 0x24 }, sp{ 0xfd }; word pc{};
+    byte get() { return m[pc++]; }
+    word address() { const byte lo{ get() }; return static_cast<word>(lo | get() << 8); }
+    byte nz(byte v) { p = static_cast<byte>((p & ~0x82) | (v ? 0 : 2) | (v & 0x80)); return v; }
+    void push(byte v) { m[0x100 | sp--] = v; }
+    byte pop() { return m[0x100 | ++sp]; }
+    void compare(byte left, byte right) { p = static_cast<byte>((p & ~1) | (left >= right)); nz(static_cast<byte>(left - right)); }
+    void add(byte v) { const unsigned r{ a + v + (p & 1u) }; p = static_cast<byte>((p & ~1) | (r > 255)); a = nz(static_cast<byte>(r)); }
+    void branch(bool taken) { const auto delta{ static_cast<std::int8_t>(get()) }; if (taken) pc = static_cast<word>(pc + delta); }
+    void step() {
+        const byte opcode{ get() };
+        word at{};
+        switch (opcode) {
+        case 0xa9: a = nz(get()); break;
+        case 0xa5: a = nz(m[get()]); break;
+        case 0xad: a = nz(m[address()]); break;
+        case 0xb9: a = nz(m[static_cast<word>(address() + y)]); break;
+        case 0xa2: x = nz(get()); break;
+        case 0xa6: x = nz(m[get()]); break;
+        case 0xbc: y = nz(m[static_cast<word>(address() + x)]); break;
+        case 0x85: m[get()] = a; break;
+        case 0x8d: m[address()] = a; break;
+        case 0xaa: x = nz(a); break;
+        case 0xa8: y = nz(a); break;
+        case 0x8a: a = nz(x); break;
+        case 0x98: a = nz(y); break;
+        case 0x48: push(a); break;
+        case 0x68: a = nz(pop()); break;
+        case 0x08: push(static_cast<byte>(p | 0x30)); break;
+        case 0x28: p = static_cast<byte>(pop() & 0xcf); break;
+        case 0x29: a = nz(a & get()); break;
+        case 0x09: a = nz(a | get()); break;
+        case 0x05: a = nz(a | m[get()]); break;
+        case 0xc9: compare(a, get()); break;
+        case 0xc5: compare(a, m[get()]); break;
+        case 0xcd: compare(a, m[address()]); break;
+        case 0x18: p &= ~1; break;
+        case 0x38: p |= 1; break;
+        case 0xe8: x = nz(static_cast<byte>(x + 1)); break;
+        case 0xca: x = nz(static_cast<byte>(x - 1)); break;
+        case 0x4a: p = static_cast<byte>((p & ~1) | (a & 1)); a = nz(static_cast<byte>(a >> 1)); break;
+        case 0x0a: p = static_cast<byte>((p & ~1) | (a >> 7)); a = nz(static_cast<byte>(a << 1)); break;
+        case 0x69: add(get()); break;
+        case 0xe9: add(static_cast<byte>(~get())); break;
+        case 0xe5: add(static_cast<byte>(~m[get()])); break;
+        case 0xf0: branch(p & 2); break;
+        case 0xd0: branch(!(p & 2)); break;
+        case 0x30: branch(p & 0x80); break;
+        case 0x10: branch(!(p & 0x80)); break;
+        case 0xb0: branch(p & 1); break;
+        case 0x90: branch(!(p & 1)); break;
+        case 0x4c: pc = address(); break;
+        case 0x20: at = address(); push(static_cast<byte>((pc - 1) >> 8)); push(static_cast<byte>(pc - 1)); pc = at; break;
+        case 0x60: { const byte lo{ pop() }; pc = static_cast<word>((lo | pop() << 8) + 1); } break;
+        case 0xea: break;
+        default: throw std::runtime_error("unsupported opcode " + std::to_string(opcode) + " at " + std::to_string(pc - 1));
+        }
+    }
+};
+
+// where the body leaves to: the stock entry, the wings entry, the standing
+// handler, climbing down, the stock ascent, or the stock passability test.
+constexpr std::array<word, 6> EXITS{ 0xe2d6, 0xe2cc, 0xe43a, 0xe349, 0xe30e, 0xe6c8 };
+
+struct Hero { byte x, y, sub, flags, pad; byte rung{ 0 }; byte status{ 0 }, scroll{ 0xff }; };
+struct Result { word exit; byte x, rung; };
+
+using Grid = std::array<std::string_view, 13>;
+
+Result run(const std::vector<byte>& rom, word hook, const Grid& grid, const Hero& hero) {
+    Cpu cpu;
+    std::copy_n(rom.begin() + offset(0xc000), 0x4000, cpu.m.begin() + 0xc000);
+    constexpr std::array<byte, 16> solid{ 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0 };
+    std::copy(solid.begin(), solid.end(), cpu.m.begin() + 0xe8d9);
+    cpu.m[0x043c] = 0x10; cpu.m[0x043d] = 0x02;
+    for (std::size_t row{}; row < grid.size(); ++row)
+        for (std::size_t col{}; col < 16; ++col)
+            cpu.m[0x600 + row * 16 + col] = grid[row][col] == '#' ? 1 : grid[row][col] == 'H' ? 2 : 0;
+    cpu.m[0x54] = hero.scroll; cpu.m[0xa5] = hero.status;
+    cpu.m[0x9e] = hero.x; cpu.m[0xa1] = hero.y; cpu.m[0xa0] = hero.sub;
+    cpu.m[0xa4] = hero.flags; cpu.m[0x16] = hero.pad; cpu.m[0x04e0] = hero.rung;
+    cpu.pc = hook;
+    for (std::size_t steps{}; std::find(EXITS.begin(), EXITS.end(), cpu.pc) == EXITS.end(); ++steps) {
+        if (steps > 2000) throw std::runtime_error("crown body did not exit");
+        cpu.step();
+    }
+    return { cpu.pc, cpu.m[0x9e], cpu.m[0x04e0] };
+}
+
+// the top rung at row 7 is level with the floors at columns 13 and 15.
+constexpr Grid FLUSH{
+    "................", "................", "................", "................",
+    "................", "................", "................", "##############H#",
+    "..............H.", "..............H.", "................", "................",
+    "################" };
+// the same shaft with its top rung at row 6, above the floors.
+constexpr Grid CROWN{
+    "................", "................", "................", "................",
+    "................", "................", "..............H.", "##############H#",
+    "..............H.", "..............H.", "................", "................",
+    "################" };
+// a floor on the right only.
+constexpr Grid RIGHT_FLOOR{
+    "................", "................", "................", "................",
+    "................", "................", "................", "..............H#",
+    "..............H.", "..............H.", "................", "................",
+    "################" };
+// two shafts side by side, both flush, with floors at columns 12 and 15.
+constexpr Grid WIDE{
+    "................", "................", "................", "................",
+    "................", "................", "................", "#############HH#",
+    ".............HH.", ".............HH.", "................", "................",
+    "################" };
+// tops in the edge columns, rung rows 4 and 9. the cells a neighbour past
+// the edge would read, the ends of the rows above and below, are solid.
+constexpr Grid EDGE_OPEN{
+    "................", "................", "................", "...............#",
+    "H..............#", "H...............", "H...............", "................",
+    "................", "...............H", "#..............H", "#..............H",
+    "################" };
+constexpr Grid EDGE_FLOOR{
+    "................", "................", "................", "...............#",
+    "H#.............#", "H...............", "H...............", "................",
+    "................", "..............#H", "#..............H", "#..............H",
+    "################" };
+
+constexpr byte DOWN{ 4 }, LEFT{ 2 }, RIGHT{ 1 };
+
+void test_flush_tops() {
+    auto flush{ fixture() }; install(flush, "AtlasDevLadderCrown flush=true");
+
+    // a hero walking onto a flush top owns it instead of sinking into the
+    // shaft: Down climbs, walking off releases, the next top beside is taken.
+    require(run(flush, 0xe2c8, FLUSH, { 224, 0x50, 0, 0x40, DOWN }).exit == 0xe349,
+        "Down climbs from a top reached on foot");
+    require(run(flush, 0xe2c8, FLUSH, { 216, 0x50, 0, 0x60, LEFT, 0x7e }).rung == 0,
+        "leaving the column releases the top");
+    require(run(flush, 0xe2c8, RIGHT_FLOOR, { 224, 0x50, 0, 0x60, RIGHT }).rung == 0x7e,
+        "a floor on one side makes a flush top");
+    require(run(flush, 0xe2c8, WIDE, { 218, 0x50, 0, 0x60, RIGHT, 0x7d }).rung == 0x7e,
+        "the next flush top is taken");
+    // climbing up from between rows stops on the top.
+    require(run(flush, 0xe307, FLUSH, { 224, 0x51, 0x60, 0x58, 8 }).rung == 0x7e,
+        "the ascent stops on a flush top");
+    // falls, jumps and a hero between rows still pass through.
+    for (const Hero& passing : { Hero{ 224, 0x50, 0, 0x64, 0 }, Hero{ 224, 0x50, 0, 0x61, 0 },
+            Hero{ 224, 0x58, 0, 0x48, 0 } })
+        require(run(flush, 0xe2c8, FLUSH, passing).rung == 0, "only a hero standing over a flush top is caught");
+
+    // the guards apply to the walk: scrolling, hurt, the right edge.
+    for (const Hero& guarded : { Hero{ 224, 0x50, 0, 0x60, RIGHT, 0, 0, 0 },
+            Hero{ 224, 0x50, 0, 0x60, RIGHT, 0, 2 }, Hero{ 241, 0x70, 0, 0x60, RIGHT } })
+        require(run(flush, 0xe2c8, guarded.x == 241 ? EDGE_FLOOR : FLUSH, guarded).rung == 0,
+            "a guarded walk is not caught");
+    // edge columns have one neighbour; the cell past the edge is another row.
+    require(run(flush, 0xe2c8, EDGE_OPEN, { 0, 0x20, 0, 0x60, LEFT }).rung == 0
+        && run(flush, 0xe2c8, EDGE_OPEN, { 236, 0x70, 0, 0x60, RIGHT }).rung == 0,
+        "a neighbour past the edge is not a floor");
+    // align up to half a block lines the hero up on a crown, with flush.
+    auto aligned{ fixture() }; install(aligned, "AtlasDevLadderCrown flush=true align=8");
+    require(run(aligned, 0xe2c8, CROWN, { 232, 0x40, 0, 0x40, DOWN, 0x6e }).x == 224,
+        "align=8 climbs from a crown");
+
+    for (const std::string option : { "mode=floor flush=true", "mode=vanilla flush=true" })
+        refuses(fixture(), "AtlasDevLadderCrown " + option);
+}
+
 }
 
 int main() {
@@ -771,6 +943,7 @@ int main() {
         test_ladder_control_composition();
         test_crown_script_ram();
         test_preinstalled_scheduler_ownership();
+        test_flush_tops();
     }
     catch (const std::exception& error) {
         std::cerr << "atlas_ladder_crown_regression: " << error.what() << '\n';

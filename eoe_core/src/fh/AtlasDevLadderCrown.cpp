@@ -1,5 +1,6 @@
 #include "HackManager.h"
 #include "AtlasDevFrameScheduler.h"
+#include "fh_constants.h"
 #include "fe/Config.h"
 #include "fe/fe_constants.h"
 #include "common/klib/Asm6502.h"
@@ -17,6 +18,9 @@
 // optional down hold and alignment apply only while an earned crown is valid.
 // fixed-bank code uses the existing general-hack cursor. state is separate
 // from the scheduler, the jump buffer and the palette and clock roles.
+// optional flush support adds tops whose rung is level with the floor
+// beside it: the climb stops at floor level, and walking onto such a top
+// from that floor stands on it instead of sinking into the shaft.
 namespace {
 	class Code : public klib::Asm6502 {
 		bool m_jump_buffer;
@@ -24,6 +28,8 @@ namespace {
 		explicit Code(bool jump_buffer = false) : m_jump_buffer(jump_buffer) {}
 		void climb_tick() { if (m_jump_buffer) jsr("jump_buffer_tick"); }
 	};
+	namespace RAM = fh::RAM;
+	namespace ROM = fh::ROM;
 	constexpr word RUNG{ 0x04e0 }, HOLD{ 0x04e1 };
 	constexpr std::size_t ROM_SIZE{ 0x40010 }, EXPANDED_ROM_SIZE{ 0x80010 };
 
@@ -31,6 +37,7 @@ namespace {
 		std::string mode, policy;
 		byte hold, align;
 		std::vector<std::pair<byte, byte>> rooms;
+		bool flush;
 		bool plain() const { return hold == 0 && align == 0 && policy == "all"; }
 	};
 
@@ -59,13 +66,14 @@ namespace {
 
 	Settings settings(const fh::GeneralHack& hack) {
 		Settings s{ hack.string_or("mode", "crown"), hack.string_or("roompolicy", "all"),
-			numeric_byte(hack.string_or("downhold", "0")), numeric_byte(hack.string_or("align", "0")), {} };
+			numeric_byte(hack.string_or("downhold", "0")), numeric_byte(hack.string_or("align", "0")), {},
+			hack.bool_or("flush", false) };
 		if (s.mode != "crown" && s.mode != "floor" && s.mode != "vanilla")
 			fail("mode must be crown, floor or vanilla");
 		if (s.policy != "all" && s.policy != "allow" && s.policy != "deny")
 			fail("roompolicy must be all, allow or deny");
-		if (s.hold > 8 || s.align > 2)
-			fail("downhold must be 0 to 8 and align must be 0 to 2");
+		if (s.hold > 8 || s.align > 8)
+			fail("downhold and align must be 0 to 8");
 		if (hack.has_param("rooms")) {
 			std::string_view remaining{ hack.get_string("rooms") };
 			for (;;) {
@@ -87,6 +95,8 @@ namespace {
 			fail("all takes no rooms; allow and deny require rooms");
 		if (s.mode != "crown" && (s.hold || s.align))
 			fail("downhold and align require crown mode");
+		if (s.mode != "crown" && s.flush)
+			fail("flush requires crown mode");
 		if (s.mode == "vanilla" && !s.plain())
 			fail("vanilla mode cannot use crown settings");
 		return s;
@@ -168,14 +178,23 @@ namespace {
 		c.label("ascent_fallback"); c.climb_tick(); restore(c); c.ldx_imm(2); c.jsr(0xe6c8); c.jmp(0xe30c);
 
 		c.label("entry_guard"); save(c);
-		c.lda_abs(RUNG); far(c, 0xf0, plain ? "entry_fallback" : "entry_clear");
-		guards("entry_clear");
+		if (s.flush) {
+			guards("entry_clear");
+			c.lda_abs(RUNG); far(c, 0xf0, "walk_onto_top");
+		}
+		else {
+			c.lda_abs(RUNG); far(c, 0xf0, plain ? "entry_fallback" : "entry_clear");
+			guards("entry_clear");
+		}
 		c.lda_zp(0xa4); c.and_imm(1); far(c, 0xd0, "entry_clear");
 		c.lda_abs(RUNG); c.cmp_imm(0x20); far(c, 0x90, "entry_clear");
 		c.cmp_imm(0xc0); far(c, 0xb0, "entry_clear");
 		c.and_imm(0xf0); c.sec(); c.sbc_imm(0x20); c.sta_zp(0xb6);
-		c.jsr("crown_shape"); far(c, 0x90, "entry_clear");
-		c.lda_zp(0); c.sec(); c.sbc_imm(0x10); c.cmp_abs(RUNG); far(c, 0xd0, "entry_clear");
+		// with flush, a hero walking from one top onto the next one beside it
+		// takes the new top instead of dropping into its shaft.
+		const std::string moved{ s.flush ? "entry_moved" : "entry_clear" };
+		c.jsr("crown_shape"); far(c, 0x90, moved);
+		c.lda_zp(0); c.sec(); c.sbc_imm(0x10); c.cmp_abs(RUNG); far(c, 0xd0, moved);
 		c.lda_zp(0xa1); c.cmp_zp(0xb6); far(c, 0x90, "entry_clear");
 		far(c, 0xf0, "at_crown");
 		c.and_imm(0xf0); c.cmp_zp(0xb6); far(c, 0xd0, "entry_clear");
@@ -218,21 +237,55 @@ namespace {
 		c.label("entry_fallback"); restore(c); c.lda_zp(0xa5); c.bmi("entry_wings"); c.jmp(0xe2d6);
 		c.label("entry_wings"); c.jmp(0xe2cc);
 
+		if (s.flush) {
+			// standing on a block edge, not jumping or falling, over a top:
+			// own it as a climb would. a fall through the shaft is not caught.
+			// hold is zero whenever rung is.
+			c.label("entry_moved"); c.lda_imm(0); c.sta_abs(RUNG); clear_hold();
+			c.label("walk_onto_top");
+			c.lda_zp(RAM::ZP_PlayerPosY); c.and_imm(0x0f); c.bne("entry_fallback");
+			c.lda_zp(RAM::ZP_PlayerState); c.and_imm(0x05); c.bne("entry_fallback");
+			c.lda_zp(RAM::ZP_PlayerPosY); c.sta_zp(RAM::ZP_PlayerPosArgY);
+			c.jsr("crown_shape"); c.bcc("entry_fallback");
+			c.lda_zp(RAM::ZP_Temp00); c.sec(); c.sbc_imm(0x10); c.sta_abs(RUNG);
+			c.jmp("at_crown");
+		}
+
 		// two air rows, an ordinary rung, and an immediately adjacent floor.
 		c.label("crown_shape"); c.lda_zp(0xb6); c.cmp_imm(0x91); far(c, 0xb0, "crown_no");
 		c.lda_zp(0x9e); c.clc(); c.adc_imm(7); c.lsr_a(4); c.sta_zp(0);
-		c.lda_zp(0xb6); c.ora_zp(0); c.tax();
+		if (s.flush) {
+			// the rung first: on ordinary ground it is the only probe.
+			c.lda_zp(RAM::ZP_PlayerPosArgY); c.clc(); c.adc_imm(0x20); c.ora_zp(RAM::ZP_Temp00); c.tax();
+			c.ldy_abs_x(RAM::ScreenBuffer); c.jsr(ROM::Area_GetBlockProperty); c.cmp_imm(2); c.bne("crown_no");
+			c.txa(); c.sec(); c.sbc_imm(0x20); c.tax();
+		}
+		else { c.lda_zp(0xb6); c.ora_zp(0); c.tax(); }
 		for (int row{}; row < 2; ++row) {
-			c.ldy_abs_x(0x0600); c.jsr(0xe8c6);
+			c.ldy_abs_x(RAM::ScreenBuffer); c.jsr(ROM::Area_GetBlockProperty);
 			c.cmp_imm(2); c.beq("crown_no"); c.cmp_imm(10); c.beq("crown_no");
-			c.tay(); c.lda_abs_y(0xe8d9); c.bne("crown_no");
+			c.tay(); c.lda_abs_y(ROM::BLOCK_PROPERTY_IMPASSABLE_MAP); c.bne("crown_no");
 			c.txa(); c.clc(); c.adc_imm(0x10); c.tax();
 		}
-		c.ldy_abs_x(0x0600); c.jsr(0xe8c6); c.cmp_imm(2); c.bne("crown_no");
-		c.txa(); c.clc(); c.adc_imm(0x10); c.tax(); c.sta_zp(0); c.and_imm(0x0f);
-		c.beq("crown_right"); c.dex(); c.jsr(0xe87c); c.bne("crown_yes");
-		c.label("crown_right"); c.ldx_zp(0); c.txa(); c.and_imm(0x0f); c.cmp_imm(0x0f);
-		c.beq("crown_no"); c.inx(); c.jsr(0xe87c); c.bne("crown_yes");
+		if (s.flush) {
+			// x is the rung again. an impassable block beside the row below is
+			// a crown and is checked first; one beside the rung is a flush
+			// top. $00 keeps the rung index + $10.
+			c.txa(); c.clc(); c.adc_imm(0x10); c.sta_zp(RAM::ZP_Temp00); c.tax();
+			c.jsr("crown_beside"); c.bcs("crown_yes");
+			c.txa(); c.sec(); c.sbc_imm(0x10); c.tax();
+			c.label("crown_beside"); c.txa(); c.and_imm(0x0f); c.beq("crown_right");
+			c.dex(); c.jsr(ROM::ScreenBuffer_IsBlockImpassable); c.inx(); c.tay(); c.bne("crown_yes");
+			c.label("crown_right"); c.txa(); c.and_imm(0x0f); c.cmp_imm(0x0f); c.beq("crown_no");
+			c.inx(); c.jsr(ROM::ScreenBuffer_IsBlockImpassable); c.dex(); c.tay(); c.bne("crown_yes");
+		}
+		else {
+			c.ldy_abs_x(0x0600); c.jsr(0xe8c6); c.cmp_imm(2); c.bne("crown_no");
+			c.txa(); c.clc(); c.adc_imm(0x10); c.tax(); c.sta_zp(0); c.and_imm(0x0f);
+			c.beq("crown_right"); c.dex(); c.jsr(0xe87c); c.bne("crown_yes");
+			c.label("crown_right"); c.ldx_zp(0); c.txa(); c.and_imm(0x0f); c.cmp_imm(0x0f);
+			c.beq("crown_no"); c.inx(); c.jsr(0xe87c); c.bne("crown_yes");
+		}
 		c.label("crown_no"); c.clc(); c.rts();
 		c.label("crown_yes"); c.sec(); c.rts();
 
@@ -441,7 +494,7 @@ word fh::HackManager::install_AtlasDevLadderCrown(const fe::Config& config, std:
 		code.label("jump_buffer_done"); code.rts();
 	}
 	const std::size_t size{ code.size() };
-	if (!jump_buffer && s.plain() && size != (s.mode == "crown" ? 605 : 315))
+	if (!jump_buffer && s.plain() && size != (s.mode == "crown" ? (s.flush ? 663 : 605) : 315))
 		fail("unexpected default body size");
 	// use the space assigned by faxedit, including reclaimed bytes.
 	// check physical bounds here; the caller checks capacity.

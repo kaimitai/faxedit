@@ -1159,7 +1159,8 @@ an already modified input ROM; always rebuild from your clean source ROM.
 | --- | --- | --- |
 | `mode` | `crown` | `crown`, `floor` or `vanilla` |
 | `downhold` | `0` | eligible Down movement ticks to wait before leaving an earned crown, 0 to 8 |
-| `align` | `0` | maximum horizontal correction toward the saved rung when descending from an earned crown, 0 to 2 pixels |
+| `align` | `0` | maximum horizontal correction toward the saved rung when descending from an earned crown, 0 to 8 pixels |
+| `flush` | `false` | also support ladder tops that are level with the floor beside them |
 | `roompolicy` | `all` | `all` rooms, only an `allow` list, or every room except a `deny` list |
 | `rooms` | none | up to eight distinct `area:screen` byte pairs, separated by `+` |
 | `sram` | `false` | Add SRAM backing |
@@ -1171,9 +1172,9 @@ list. Mode and policy names are lowercase. Numeric values accept decimal,
 
 `downhold=3` waits three eligible Down ticks and begins descent on the fourth.
 Releasing Down or pressing Up resets the wait. Alignment is limited to the
-saved rung; it does not pull the hero toward other ladders. Both options are
-exclusive to `crown` mode. `vanilla` rejects nondefault options that would
-otherwise have no effect.
+saved rung; it does not pull the hero toward other ladders. These options and
+`flush` are exclusive to `crown` mode. `vanilla` rejects nondefault options
+that would otherwise have no effect.
 
 ```text
 AtlasDevLadderCrown
@@ -1194,10 +1195,50 @@ AtlasDevLadderCrown mode=floor roompolicy=deny rooms=1:2
 
 These are alternatives; only one AtlasDevLadderCrown entry is allowed.
 
+#### Flush ladder tops
+
+A ladder whose top rung is level with the floor beside it has no rung above
+the floor. The original game can't stand there: climbing up, the hero bobs at
+the top and only Down works, and walking over the shaft he sinks 8 pixels and
+gets stuck against the floor on the other side. The original maps have two
+such tops, Branches screen 33 and Zenis screen 2, each with a crown floor on
+its other side: climbing them already works with the default crown, but
+walking over the shaft from the flush side still dips 8 pixels. `flush=true` supports them:
+
+```text
+AtlasDevLadderCrown flush=true align=8
+```
+
+Any impassable block beside the top rung counts as the floor, walls
+included.
+
+With it, climbing up stops with the hero's feet at floor level, and he can
+walk off to either side, jump, or press Down to climb back. Walking onto the
+top from the floor stands on it instead of sinking, and Down climbs from
+there as from a climbed top. Two tops side by side are walked across the
+same way. Falls and jumps still pass through the shaft. `downhold`,
+`align` and the room policies apply to flush tops as they do to crowns, and
+sticking-up tops behave as before. On the two original flush tops the dip
+is gone.
+
+Down climbs only when the hero is lined up with the ladder. A hero who walked
+onto a top is rarely lined up, so `align=8` is recommended with `flush`: Down
+anywhere over the ladder column lines him up and climbs. The column above the
+top is clear, so the correction never moves him into a wall.
+
+`flush=true` adds 58 to 63 bytes (663 by default, 776 for the largest
+configuration) and no RAM. It does not fit next to AtlasDevJumpControl or
+the scheduler in bank 15; use `sram=true` for those combinations. It costs
+about 140 to 180 CPU cycles per frame while the hero stands on ordinary
+ground.
+
+Wing Boots turn the support off, as taking damage does: walking over a
+flush top while flying sinks as in the original game.
+
 The ladder top must have clear body space above it and an adjacent solid
-floor beneath the top rung. Walking off, taking damage, starting a jump or
-changing that geometry releases crown support. This is not a general
-invisible floor over every ladder.
+floor beneath the top rung, or beside it with `flush=true`. Walking off,
+taking damage, starting a jump or changing that geometry releases crown
+support. This is not a general invisible floor over every ladder.
 
 Supported input is an MMC1 iNES or NES2 ROM with compatible movement code.
 Compatibility is checked against the instructions and routines used by the
