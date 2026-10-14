@@ -435,7 +435,7 @@ namespace fh {
 		word install_AtlasDevScreenTransition(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;
 		word install_AtlasDevFastBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-			const fh::GeneralHack&) const;
+			const fh::GeneralHack&);
 		word install_AtlasDevLandingTuck(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&);
 		word install_AtlasDevMaskmanControl(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,

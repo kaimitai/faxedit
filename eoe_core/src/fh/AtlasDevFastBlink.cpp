@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include "fh_constants.h"
 
 #include <algorithm>
 #include <array>
@@ -21,10 +22,10 @@
 // with the queue drained on the spot, so a change takes about 8 frames.
 // the screen that comes up is the same, byte for byte.
 //
-// the blank path at $db91 becomes a jump to the new path in bank 15. two
-// queue waits get a short stub each: the capacity wait at $cfca runs a
-// drain call itself while the handlers are off, and the clear wait at $cff4
-// (which the graphics loader jumps to) drains the whole queue. the stubs
+// the blank path in Game_MainLoop becomes a jump to the new path. two queue
+// waits get a short stub each: PPUBuffer_WaitForCapacity runs a drain call
+// itself while the handlers are off, and PPUBuffer_WaitEmpty (which the
+// graphics loader jumps to) drains the whole queue. the stubs
 // act only where the stock game would hang: no room, or a queue still
 // full, with the handlers off and so no nmi to drain it. everywhere the
 // stock game goes they behave as the stock waits. every site is checked
@@ -37,15 +38,12 @@
 // AtlasDevScreenTransition checks the stock blank path before it installs, so
 // it must be listed before this hack.
 namespace {
+	namespace ROM = fh::ROM;
+	namespace RAM = fh::RAM;
+
 	constexpr byte BANK15{ 15 };
-	constexpr word PATH{ 0xdb91 }, MAIN_LOOP{ 0xdb45 };
-	constexpr word FLUSH{ 0xcaf7 }, RESET_GAMEPLAY{ 0xcb17 }, DRAW{ 0xcf3c }, DRAW_ALL{ 0xcffb };
-	constexpr word WFC{ 0xcfca }, WUC{ 0xcff4 }, HAS_CAPACITY{ 0xcfd0 };
-	constexpr word RESET_SPRITES{ 0xcb47 }, CLEAR_SPRITES{ 0xc130 }, SPRITE_INFO{ 0xc1b4 }, SPRITE_IMAGES{ 0xc28d };
-	constexpr word WAIT_FRAME{ 0xca25 }, REDRAW{ 0xdd0f };
-	constexpr byte HANDLERS{ 0x13 }, PAUSE_COUNT{ 0x14 }, FORCE_LOWER{ 0x5b };
-	constexpr word PPUMASK{ 0x2001 };
-	constexpr word FLAG_BASE{ 0x0101 };
+	// the blank path in Game_MainLoop
+	constexpr word Game_MainLoop_blankTransition{ 0xdb91 };
 	constexpr int MAX_FLAG{ 247 };
 
 	// the blank path: sprite reset, wait, clear, info, wait, graphics, flush, redraw, reset, back to the loop
@@ -77,8 +75,8 @@ namespace {
 	}
 }
 
-word fh::HackManager::install_AtlasDevFastBlink(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+word fh::HackManager::install_AtlasDevFastBlink(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) {
 	const std::string name{ "AtlasDevFastBlink" };
 	// every parameter is judged in every mode, vanilla included
 	std::string mode{ p_hack.string_or("mode", "") };
@@ -95,55 +93,62 @@ word fh::HackManager::install_AtlasDevFastBlink(const fe::Config&, std::vector<b
 		return cpu_addr;
 
 	// ownership checks first, so a refused install leaves the rom byte identical
-	require_site(p_rom, PATH, PATH_ORIG, name);
-	require_site(p_rom, FLUSH, FLUSH_ORIG, name);
-	require_site(p_rom, RESET_GAMEPLAY, RESET_ORIG, name);
-	require_site(p_rom, DRAW, DRAW_ORIG, name);
-	require_site(p_rom, DRAW_ALL, DRAW_ALL_ORIG, name);
-	require_site(p_rom, WFC, WFC_ORIG, name);
-	require_site(p_rom, WUC, WUC_ORIG, name);
+	require_site(p_rom, Game_MainLoop_blankTransition, PATH_ORIG, name);
+	require_site(p_rom, ROM::PPU_WaitUntilFlushed, FLUSH_ORIG, name);
+	require_site(p_rom, ROM::Screen_ResetForGamePlay, RESET_ORIG, name);
+	require_site(p_rom, ROM::PPUBuffer_Draw, DRAW_ORIG, name);
+	require_site(p_rom, ROM::PPUBuffer_DrawAll, DRAW_ALL_ORIG, name);
+	require_site(p_rom, ROM::PPUBuffer_WaitForCapacity, WFC_ORIG, name);
+	require_site(p_rom, ROM::PPUBuffer_WaitEmpty, WUC_ORIG, name);
 
 	klib::Asm6502 code;
+	code.label("@path");
 	if (flag >= 0) {
 		// clear: the stock path, byte for byte
-		code.lda_abs(static_cast<word>(FLAG_BASE + (flag >> 3))); code.and_imm(static_cast<byte>(1 << (flag & 7)));
+		code.lda_abs(static_cast<word>(RAM::Flags + (flag >> 3))); code.and_imm(static_cast<byte>(1 << (flag & 7)));
 		code.bne("@go");
-		for (const word target : { RESET_SPRITES, WAIT_FRAME, CLEAR_SPRITES, SPRITE_INFO, WAIT_FRAME, SPRITE_IMAGES,
-			FLUSH, REDRAW, RESET_GAMEPLAY })
+		for (const word target : { ROM::Screen_ResetSpritesForGamePlay, ROM::WaitForNextFrame, ROM::Screen_ClearSprites,
+			ROM::Screen_LoadSpriteInfo, ROM::WaitForNextFrame, ROM::EntityChrPass, ROM::PPU_WaitUntilFlushed,
+			ROM::Game_UpdateForScroll, ROM::Screen_ResetForGamePlay })
 			code.jsr(target);
-		code.jmp(MAIN_LOOP);
+		code.jmp(ROM::Game_MainLoop);
 		code.label("@go");
 	}
 	// the stores of PPU_WaitUntilFlushed, then the display off, then the stock steps without their waits
-	code.lda_imm(0); code.sta_zp(PAUSE_COUNT); code.sta_zp(HANDLERS); code.sta_zp(FORCE_LOWER);
-	code.sta_abs(PPUMASK);
-	for (const word target : { DRAW_ALL, RESET_SPRITES, CLEAR_SPRITES, SPRITE_INFO, SPRITE_IMAGES, DRAW_ALL, REDRAW,
-		RESET_GAMEPLAY })
+	code.lda_imm(0);
+	code.sta_zp(RAM::ZP_PauseInterruptCounter);
+	code.sta_zp(RAM::ZP_Game_InterruptHandlersEnabled);
+	code.sta_zp(RAM::ZP_PPU_ForceLowerPatternTables);
+	code.sta_abs(fh::PPU::PPU_MASK);
+	for (const word target : { ROM::PPUBuffer_DrawAll, ROM::Screen_ResetSpritesForGamePlay, ROM::Screen_ClearSprites,
+		ROM::Screen_LoadSpriteInfo, ROM::EntityChrPass, ROM::PPUBuffer_DrawAll, ROM::Game_UpdateForScroll,
+		ROM::Screen_ResetForGamePlay })
 		code.jsr(target);
-	code.jmp(MAIN_LOOP);
+	code.jmp(ROM::Game_MainLoop);
 	// the capacity wait: no room and handlers on waits for the nmi as stock; handlers off runs a drain call
-	const word wfc{ static_cast<word>(cpu_addr + code.size()) };
 	code.label("@wfc");
-	code.jsr(HAS_CAPACITY); code.bcs("@ok");
-	code.lda_zp(HANDLERS); code.bne("@wfc");
-	code.jsr(DRAW); code.jmp("@wfc");
+	code.jsr(ROM::PPUBuffer_HasCapacity); code.bcs("@ok");
+	code.lda_zp(RAM::ZP_Game_InterruptHandlersEnabled); code.bne("@wfc");
+	code.jsr(ROM::PPUBuffer_Draw); code.jmp("@wfc");
 	code.label("@ok"); code.rts();
 	// the clear wait: handlers off drains the whole queue; on, the stock wait
-	const word wuc{ static_cast<word>(cpu_addr + code.size()) };
-	code.lda_zp(HANDLERS); code.beq("@drain");
+	code.label("@wuc");
+	code.lda_zp(RAM::ZP_Game_InterruptHandlersEnabled); code.beq("@drain");
 	code.label("@wait");
-	code.lda_zp(0x20); code.cmp_zp(0x1f); code.bne("@wait");
+	code.lda_zp(RAM::ZP_PPUBufferWriteCursor); code.cmp_zp(RAM::ZP_PPUBufferReadCursor); code.bne("@wait");
 	code.rts();
-	code.label("@drain"); code.jmp(DRAW_ALL);
+	code.label("@drain"); code.jmp(ROM::PPUBuffer_DrawAll);
 
-	const std::size_t size{ code.size() };
-	const auto off{ klib::Asm6502::get_file_offset(BANK15, cpu_addr) };
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("{}: bank 15 space at ${:04x} is not free", name, cpu_addr + i));
-	code.apply_hack_and_clear(p_rom, BANK15, cpu_addr);
-	hook(p_rom, PATH, cpu_addr, PATH_ORIG.size());
-	hook(p_rom, WFC, wfc, WFC_ORIG.size());
-	hook(p_rom, WUC, wuc, WUC_ORIG.size());
-	return static_cast<word>(cpu_addr + size);
+	// in bank 15, or with sram=true in the sram code area. the queue waits
+	// are reached from text, hud, password and graphics code in banks 12
+	// and 15 with any bank mapped, so the code must always be mapped
+	const auto place{ place_hack(p_config, p_rom, p_hack, name, cpu_addr, code.size(), 0) };
+	const word path{ code.label_addr("@path", place.addr) };
+	const word wfc{ code.label_addr("@wfc", place.addr) };
+	const word wuc{ code.label_addr("@wuc", place.addr) };
+	const word cursor{ install_placed(p_rom, code, place, cpu_addr, name) };
+	hook(p_rom, Game_MainLoop_blankTransition, path, PATH_ORIG.size());
+	hook(p_rom, ROM::PPUBuffer_WaitForCapacity, wfc, WFC_ORIG.size());
+	hook(p_rom, ROM::PPUBuffer_WaitEmpty, wuc, WUC_ORIG.size());
+	return cursor;
 }

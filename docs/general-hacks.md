@@ -1707,6 +1707,7 @@ half as long. The screen that comes up is the same.
 | --- | --- | --- |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
 | `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
 
 `flag=n` lets a script grant or remove the behavior with `SetFlag` and
 `ClearFlag`. A clear flag, like `mode=vanilla`, is the stock change.
@@ -1721,10 +1722,17 @@ EU and JP ROMs. AtlasDevScreenTransition checks the stock blank path when
 it installs, so list it before this hack. Does not require
 AtlasDevFrameScheduler.
 
+With `sram=true` the code runs from the SRAM code area, and bank 15
+keeps no bytes of its own; the code takes 68 bytes of the SRAM code
+area, or 105 with a flag. There is no `bank`: the video queue waits are
+reached from text, HUD, password and graphics code in banks 12 and 15
+with any bank mapped, so the code can only be in bank 15 or in SRAM.
+
 ```
 AtlasDevFastBlink
 AtlasDevScreenTransition h=blink flag=16
 AtlasDevFastBlink flag=24
+AtlasDevFastBlink sram=true
 ```
 
 <hr>

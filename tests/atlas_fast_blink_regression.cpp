@@ -15,10 +15,12 @@
 // AtlasDevScreenTransition in both of its forms; pins that the reverse order is
 // refused; and checks that every refused install leaves the rom as it was
 // (the install driver works on a copy and keeps it only when every hack
-// succeeds). everything the hack touches is in bank 15
+// succeeds), and that sram=true moves the code to sram. everything the hack
+// touches is in bank 15
 namespace {
 	constexpr word ORG{ 0xfcce };
 	constexpr std::size_t ROM_SIZE{ 0x40010 };
+	constexpr word SRAM_CODE{ 0x6806 };
 
 	std::vector<byte> from_hex(const std::string& p_hex) {
 		std::vector<byte> out;
@@ -97,6 +99,14 @@ namespace {
 	std::size_t install(std::vector<byte>& rom, const std::string& spec, word org = ORG) {
 		const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks(spec)) };
 		return fh::HackManager{}.install_general_hacks(fe::Config{}, rom, 15, org, 0xfff0, hacks, nullptr).bank_used;
+	}
+
+	fe::Config config(const std::vector<byte>& rom) {
+		fe::Config result;
+		result.load_definitions(EOE_TEST_CONFIG_PATH, "");
+		result.set_region("us");
+		result.load_config_data(EOE_TEST_CONFIG_PATH, "", rom);
+		return result;
 	}
 
 	void expect(const std::vector<byte>& rom, std::vector<byte> want, const std::vector<Region>& regions, const std::string& spec) {
@@ -189,6 +199,25 @@ int main() {
 			rom[klib::Asm6502::get_file_offset(15, static_cast<word>(last + 1))] = 0x00;
 			require(install(rom, spec) > 0, std::string{ spec } + ": the byte after the body may be used");
 		}
+		{
+			// sram=true: the code goes to sram, and the three hooks enter it at
+			// the offsets of the plain install
+			auto rom{ vanilla_rom() };
+			const auto cfg{ config(rom) };
+			fh::HackManager manager;
+			manager.init_sram_state(cfg);
+			const auto usage{ manager.install_general_hacks(cfg, rom, 15, ORG, 0xfff0,
+				fh::filter_general_hacks(15, fh::parse_general_hacks("AtlasDevFastBlink sram=true")), nullptr) };
+			require(usage.sram_used == 68, "sram=true: 68 bytes of sram");
+			for (const auto& [site, plain_to] : { std::pair{ word{ 0xdb91 }, ORG }, std::pair{ word{ 0xcfca }, word{ 0xfcf4 } },
+				std::pair{ word{ 0xcff4 }, word{ 0xfd04 } } }) {
+				const auto off{ klib::Asm6502::get_file_offset(15, site) };
+				const word to{ static_cast<word>(rom[off + 1] | (rom[off + 2] << 8)) };
+				require(to == plain_to - ORG + SRAM_CODE, "sram=true: a hook does not enter sram");
+			}
+		}
+		refused(vanilla_rom(), "AtlasDevFastBlink sram=true", "sram=true without sram support");
+		refused(vanilla_rom(), "AtlasDevFastBlink bank=9", "bank is not a parameter");
 		std::cout << "atlas_fast_blink_regression: ok\n";
 	}
 	catch (const std::exception& e) { std::cerr << "atlas_fast_blink_regression: " << e.what() << "\n"; return 1; }

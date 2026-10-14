@@ -71,6 +71,8 @@ namespace fh {
 		constexpr word Player_DrawShield{ 0xb982 };
 
 		// bank 15 addresses
+		constexpr word Screen_ClearSprites{ 0xc130 };
+		constexpr word Screen_LoadSpriteInfo{ 0xc1b4 };
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
@@ -90,11 +92,15 @@ namespace fh {
 		constexpr word WaitForInterrupt{ 0xca2e };
 		constexpr word Game_InitScreenAndMusic{ 0xca78 };
 		constexpr word PPU_WaitUntilFlushed{ 0xcaf7 };
+		constexpr word Screen_ResetForGamePlay{ 0xcb17 };
 		constexpr word Screen_ResetSpritesForGamePlay{ 0xcb47 };
 		constexpr word Game_InitMMCAndBank{ 0xcbbf };
+		constexpr word PPUBuffer_Draw{ 0xcf3c };
 		// Waits until the PPU queue has room for up to $24 bytes.
 		constexpr word PPUBuffer_WaitForCapacity{ 0xcfca };
+		constexpr word PPUBuffer_HasCapacity{ 0xcfd0 };
 		constexpr word PPUBuffer_WaitEmpty{ 0xcff4 };
+		constexpr word PPUBuffer_DrawAll{ 0xcffb };
 		constexpr word Sprites_FlipRanges{ 0xcba8 };
 		constexpr word MMC1_UpdateROMBank_SerialWrite{ 0xcc21 };
 		constexpr word MMC1_EnsurePRG{ 0xcc85 };
@@ -135,6 +141,7 @@ namespace fh {
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Game_Start_ClearXP_Hi{ 0xdb39 };
+		constexpr word Game_UpdateForScroll{ 0xdd0f };
 		constexpr word Screen_Load{ 0xdd46 };
 		constexpr word Game_SpawnInTemple_LDA_Palette{ 0xdd90 };
 		constexpr word Game_SpawnInTemple_SetFacing{ 0xdda6 };
@@ -250,12 +257,15 @@ namespace fh {
 		constexpr byte ZP_PPU_ScrollX{ 0x0c };
 		// Horizontal nametable page; bit 0 selects $23c0/$27c0 attributes.
 		constexpr byte ZP_CameraNametableParity{ 0x0d };
+		constexpr byte ZP_Game_InterruptHandlersEnabled{ 0x13 };
+		constexpr byte ZP_PauseInterruptCounter{ 0x14 };
 		constexpr byte ZP_Joy1_ButtonMask{ 0x16 };
 		constexpr byte ZP_Joy2_ButtonMask{ 0x17 };
 		constexpr byte ZP_Joy1_ChangedButtonMask{ 0x19 };
 		// Free-running frame counter, incremented by the NMI.
 		constexpr byte ZP_FrameCounter{ 0x1a };
 		constexpr byte ZP_Sprites_StartSlotRange{ 0x1c };
+		constexpr byte ZP_PPUBufferReadCursor{ 0x1f };
 		// Offset the vanilla GetRandom ($ca6e) reads its next table byte at; any
 		// value is a valid offset. Same byte in the US, US rev A, EU and JP ROMs.
 		constexpr byte ZP_RandomOffset{ 0xda };
@@ -290,6 +300,7 @@ namespace fh {
 		constexpr byte ZP_PPU_ScrollY{ 0x57 };
 		constexpr byte ZP_PPU_ScrollScreenHoriz{ 0x59 };
 		constexpr byte ZP_Sprites_Sprite0Mode{ 0x5a };
+		constexpr byte ZP_PPU_ForceLowerPatternTables{ 0x5b };
 		constexpr byte ZP_CurrentScreen{ 0x63 };
 		constexpr byte ZP_DoorBlockPos{ 0x6a };
 		constexpr byte ZP_Screen_ScrollLoadMode{ 0x6e };
