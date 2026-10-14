@@ -144,6 +144,7 @@ namespace {
 		{ fh::GeneralHackLib::FlagDoorRequirements, { "data", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::BankedStrings, { "copy", "sram" }},
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
+		{ fh::GeneralHackLib::PushBlockScript, { "frames", "script" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

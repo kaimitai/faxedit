@@ -175,6 +175,7 @@ namespace fh {
 		constexpr word ScreenBuffer_IsBlockImpassable{ 0xe87c };
 		constexpr word Area_GetBlockProperty{ 0xe8c6 };
 		constexpr word BLOCK_PROPERTY_IMPASSABLE_MAP{ 0xe8d9 };
+		constexpr word CheckPushBlock_CmpCounter{ 0xe99a };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
 		constexpr word ExitBuilding_SetFacing{ 0xea50 };
 		constexpr word OwTransJmpGameSetupNewArea{ 0xea91 };

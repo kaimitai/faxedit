@@ -880,6 +880,32 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	return next_cpu_addr;
 }
 
+void fh::HackManager::install_PushBlockScript(const fe::Config& p_config, std::vector<byte>& p_rom,
+	const fh::GeneralHack& p_hack) const {
+	const byte frames{ p_hack.byte_or("frames", 0x3f) };
+	const byte script{ p_hack.byte_or("script", 0xff) };
+
+	if (frames == 0)
+		throw std::runtime_error("PushBlockScript: 'frames' must be in the range 1-255");
+	if (script == 0xff)
+		throw std::runtime_error("PushBlockScript: missing or invalid 'script' parameter");
+
+	klib::Asm6502 code;
+
+	code.cmp_imm(frames);
+	code.bne("@return");
+
+	code.lda_imm(script);
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(12);
+	code.dw(ROM::IScripts_Begin - 1);
+
+	code.label("@return");
+	code.rts();
+
+	code.apply_hack_and_clear(p_rom, 15, ROM::CheckPushBlock_CmpCounter);
+}
+
 namespace {
 	struct FallProfile { std::vector<byte> curve; byte steer; };
 	const std::map<std::string, FallProfile> FALL_PROFILES{
@@ -1269,6 +1295,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 			break;
 		case fh::GeneralHackLib::StageDoorDirection:
 			cpu_addr = install_StageDoorDirection(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::PushBlockScript:
+			install_PushBlockScript(p_config, patched_rom, hack);
 			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
