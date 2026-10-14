@@ -109,7 +109,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevScreenTransition,
 			{ "left", "right", "up", "down", "h", "v", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevFastBlink, { "flag", "mode" } },
-		{ fh::GeneralHackLib::AtlasDevLandingTuck, { "profile", "flag", "mode" } },
+		{ fh::GeneralHackLib::AtlasDevLandingTuck, { "profile", "flag", "mode", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevMaskmanControl, { "spear", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevHornetControl, { "speed", "bob", "period", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevYuinaruControl, { "xspeed", "xloop", "yspeed", "yloop", "flag", "mode" } },

@@ -14,7 +14,8 @@
 // either end of a flag byte, off and mode=vanilla which install nothing, and
 // the crop taken from the player frame directory, including two gear groups
 // that crop to the same record and must share one. every refusal must write
-// nothing. the hook sites are in banks 14 and 15, the body is in bank 15
+// nothing. the hook sites are in banks 14 and 15, the body is in bank 15,
+// or in the sram code area with sram=true
 namespace {
 	constexpr word ORG{ 0xfcce };
 	constexpr std::size_t ROM_SIZE{ 0x40010 };
@@ -131,6 +132,10 @@ int main() {
 		auto flagged{ vanilla_rom() };
 		require(install(flagged, "AtlasDevLandingTuck profile=heavy flag=7") == 300, "heavy with a flag is 300 bytes");
 		require(hex_of(flagged, 15, ORG, 300) == HEAVY_FLAG_HEX, "heavy flag body");
+		// flag 8 is bit 0 of the second flag byte
+		auto second{ vanilla_rom() };
+		install(second, "AtlasDevLandingTuck flag=8");
+		require(hex_of(second, 15, ORG + 11, 5) == "ad02012901", "flag=8 tests the second flag byte");
 
 		auto off_rom{ vanilla_rom() };
 		const auto before{ off_rom };
@@ -138,6 +143,50 @@ int main() {
 		require(off_rom == before, "off must not write");
 		require(install(off_rom, "AtlasDevLandingTuck mode=vanilla") == 0, "vanilla must install nothing");
 		require(off_rom == before, "vanilla must not write");
+
+		// sram=true moves the body, the table and the records to the sram code
+		// area: every address inside the body points into the sram copy, and
+		// all seven hooks enter it at the same offsets
+		{
+			constexpr word SRAM_CODE{ 0x6806 };
+			constexpr std::size_t BODY{ 293 };
+			const auto medium{ from_hex(MEDIUM_HEX) };
+			std::vector<byte> shifted;
+			{
+				auto r{ vanilla_rom() };
+				fh::HackManager{}.install_general_hacks(config(r), r, 15, ORG + 0x20, 0xffe0,
+					fh::filter_general_hacks(15, fh::parse_general_hacks("AtlasDevLandingTuck")), nullptr);
+				const auto off{ klib::Asm6502::get_file_offset(15, ORG + 0x20) };
+				shifted.assign(r.begin() + off, r.begin() + off + BODY);
+			}
+			auto sram_rom{ vanilla_rom() };
+			const auto cfg{ config(sram_rom) };
+			fh::HackManager manager;
+			manager.init_sram_state(cfg);
+			manager.install_general_hacks(cfg, sram_rom, 15, ORG, 0xffe0,
+				fh::filter_general_hacks(15, fh::parse_general_hacks("AtlasDevLandingTuck sram=true")), nullptr);
+			// the address bytes are the ones that change when the body is
+			// installed $20 higher; the sram copy is backed in bank 9 at $a700
+			const auto backing{ klib::Asm6502::get_file_offset(9, 0xa700) };
+			for (std::size_t i{ 0 }; i + 1 < BODY; ++i) {
+				if (shifted[i] == medium[i])
+					continue;
+				const word from{ static_cast<word>(medium[i] | (medium[i + 1] << 8)) };
+				const word to{ static_cast<word>(sram_rom[backing + i] | (sram_rom[backing + i + 1] << 8)) };
+				require(to == from - ORG + SRAM_CODE, "sram=true: an address in the sram copy does not point into it");
+				++i;
+			}
+			struct Hook { byte bank; word cpu; word plain; };
+			const Hook hooks[]{ { 15, 0xe0d3, 0xfcce }, { 15, 0xec43, 0xfd1f }, { 14, 0xb9d1, 0xfd45 },
+				{ 14, 0xb875, 0xfd5c }, { 15, 0xd127, 0xfd73 }, { 15, 0xe0aa, 0xfd7b }, { 15, 0xd8f4, 0xfd81 } };
+			for (const Hook& h : hooks) {
+				const auto off{ klib::Asm6502::get_file_offset(h.bank, h.cpu) };
+				const word to{ static_cast<word>(sram_rom[off + 1] | (sram_rom[off + 2] << 8)) };
+				require(to == h.plain - ORG + SRAM_CODE, "sram=true: a hook does not enter sram");
+			}
+		}
+		refused(vanilla_rom(), "AtlasDevLandingTuck sram=true", "sram=true without sram support");
+		refused(vanilla_rom(), "AtlasDevLandingTuck bank=9", "bank: its records must stay readable with bank 14 mapped");
 
 		refused(vanilla_rom(), "AtlasDevLandingTuck profile=deep", "an unknown profile");
 		refused(vanilla_rom(), "AtlasDevLandingTuck mode=off", "mode must be vanilla");
@@ -169,6 +218,10 @@ int main() {
 		auto full{ vanilla_rom() };
 		full[klib::Asm6502::get_file_offset(15, 0xfd00)] = 0x00;
 		refused(full, "AtlasDevLandingTuck", "occupied bank 15 space");
+		// and the byte after the body is not needed
+		auto tight{ vanilla_rom() };
+		tight[klib::Asm6502::get_file_offset(15, ORG + 293)] = 0x00;
+		require(install(tight, "AtlasDevLandingTuck") == 293, "the byte after the body may be used");
 
 		std::cout << "atlas_landing_tuck_regression: ok\n";
 		return 0;

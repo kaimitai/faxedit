@@ -1717,6 +1717,7 @@ Gear groups whose jump frames crop to the same bytes share one record.
 | `profile` | `medium` | `off`, `light`, `medium` or `heavy`: the pose is held 0, 3, 4 or 6 frames |
 | `flag` | | extended flag 0 to 247 that switches the pose on at runtime |
 | `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
 
 `profile=off` installs nothing at all, so a hack listed that way leaves
 the ROM byte identical. `flag=n` lets a script turn the pose on and off
@@ -1725,8 +1726,8 @@ the way he always did.
 
 Uses 299 bytes of bank 15 free space with vanilla art, 306 with a
 flag. Roughly a third of that is the cropped records themselves, so a
-project whose eight gear groups share more art uses less. It rewrites
-seven instructions in place: the per frame tick at $E0D3, the pose
+project whose eight gear groups share more art uses less. It hooks
+seven places: the per frame tick at $E0D3, the pose
 picker at $EC43, the weapon and shield drawers at $B875 and $B9D1 in
 bank 14, and the three places that end a life or a screen, $D127, $E0AA
 and $D8F4. One RAM byte at $04FE holds the state: bit 7 says the hero
@@ -1738,10 +1739,16 @@ US, US rev A, EU and JP ROMs. It reads the player frame directory the
 project exported, so it must run after the sprite graphics are written,
 which it does. Does not require AtlasDevFrameScheduler.
 
+With `sram=true` the code, the table and the records run from the SRAM
+code area, and bank 15 keeps no bytes of its own. There is no `bank`:
+the drawer reads the records while bank 14 is still mapped, so they can
+only be in bank 15 or in SRAM.
+
 ```
 AtlasDevLandingTuck
 AtlasDevLandingTuck profile=light
 AtlasDevLandingTuck profile=heavy flag=24
+AtlasDevLandingTuck sram=true
 ```
 
 <hr>
