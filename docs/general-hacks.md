@@ -1137,6 +1137,8 @@ the clear-flag path still uses the displaced vanilla instructions.
 nothing to switch. `flag` and `attackflag` are independent and may name the
 same flag or different ones.
 
+With `sram=true` the stubs run from the SRAM code area.
+
 Every site is verified against its exact vanilla bytes before anything is
 written, and all of them are identical in the US, US rev A, EU and JP ROMs.
 Does not require AtlasDevFrameScheduler.

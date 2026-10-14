@@ -68,6 +68,7 @@ namespace fh {
 		constexpr word SpriteBoundingBoxTable{ 0xb273 };
 		constexpr word SpriteTypeTable{ 0xb544 };
 		constexpr word Player_DrawWeapon{ 0xb7d6 };
+		constexpr word Maybe_Player_CalcAnimFrame{ 0xb927 };
 		constexpr word Player_DrawShield{ 0xb982 };
 
 		// bank 15 addresses
@@ -172,6 +173,8 @@ namespace fh {
 		constexpr word Player_SetInitialState{ 0xe0aa };
 		constexpr word Player_SetInitialState_SetFlags{ 0xe0bc };
 		constexpr word Player_HandleIFrames{ 0xe0e8 };
+		constexpr word Player_CheckHandleAttack_JSR_IsClimbing{ 0xe107 };
+		constexpr word Player_CheckHandleAttack_BCS_Climbing{ 0xe10a };
 		constexpr word Player_TryMoveRight{ 0xe1cf };
 		constexpr word Player_TryMoveLeft{ 0xe220 };
 		constexpr word Player_SetStandardAcceleration{ 0xe27f };
@@ -201,6 +204,8 @@ namespace fh {
 		constexpr word Game_UnlockDoorWithKey_afterUse{ 0xebd9 };
 		constexpr word Game_UnlockDoorWithSoundEffect{ 0xebe1 };
 		constexpr word Player_DrawBody{ 0xebee };
+		constexpr word Player_GetBodySpriteFrameOffset{ 0xecac };
+		constexpr word Player_IsClimbing{ 0xecf6 };
 		constexpr word Player_SetWeapon_CMP_BuildingsWorldNo{ 0xedf0 };
 		constexpr word GameLoop_RunScreenEventHandlers_CMP_06{ 0xef55 };
 		constexpr word GameLoop_RunScreenEventHandlers_LDA_EventTable{ 0xef5a };

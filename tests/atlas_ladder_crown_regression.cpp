@@ -642,7 +642,7 @@ void test_ladder_control_composition() {
             const std::string spec{crown + "\nAtlasDevLadderControl attackflag=4"};
             refuses(source, spec, ORG, ORG + body + 13, "us", "overflow");
             // reject before the helper scans past the physical bank end.
-            refuses(source, spec, 0x10000 - body - 7, 0x10000, "us", "overflow");
+            refuses(source, spec, 0x10000 - body - 7, 0x10000, "us", "bank 15 space");
         }
     }
 }

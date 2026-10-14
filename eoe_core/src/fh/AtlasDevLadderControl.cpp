@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include "fh_constants.h"
 #include <array>
 #include <format>
 #include <stdexcept>
@@ -13,8 +14,9 @@
 // climb speed is four independent constants, one pair per direction and a
 // second pair for wing boots flight; stock climbs up at $00a0 and down at
 // $00c0 subpixels per frame. seven operand bytes carry them, the immediates
-// of the add and subtract pairs at $e31e and $e325 for up, $e36c and $e373
-// for down, $e314 for wing boots up and $e35c and $e363 for wing boots down.
+// of the add and subtract pairs in Player_CheckHandleClimbUp and
+// Player_CheckHandleClimbDown: $e31e and $e325 for up, $e36c and $e373 for
+// down, $e314 for wing boots up and $e35c and $e363 for wing boots down.
 // each operand is pinned below, and so is the instruction around it. wing
 // boots ascent is whole pixels rather than subpixels because vanilla
 // subtracts from the whole pixel byte only, and widening it needs 14 bytes
@@ -30,40 +32,47 @@
 // code after each block reads them (bcs at $e32b, cmp at $e379). blocks left
 // at their vanilla speed are not touched, and no jump lands inside a block.
 //
-// attacking while climbing is refused by one branch, the bcs at $e10a, whose
-// target clears the attack request; attack=1 turns it into a two byte no op.
-// the refusal outlasts the input, because $e2e5 is the only place that sets
-// the climbing bit and it has no clear on release.
+// attacking while climbing is refused by one branch, the bcs after the
+// Player_IsClimbing call in Player_CheckHandleAttack, whose target clears the
+// attack request; attack=1 turns it into a two byte no op. the refusal
+// outlasts the input, because $e2e5 is the only place that sets the climbing
+// bit and it has no clear on release.
 //
 // two frame selectors choose the hero's appearance and must move together:
-// $b927 in bank 14 for the weapon and shield overlays, $ecac in bank 15 for
-// the body. each asks whether he is climbing before it asks whether he is
+// Maybe_Player_CalcAnimFrame in bank 14 for the weapon and shield overlays,
+// Player_GetBodySpriteFrameOffset in bank 15 for the body. each asks whether he is climbing before it asks whether he is
 // attacking, so reordering only one draws him with three arms, the overlays
 // swinging while the body still holds the rungs. attackpose=1 reorders both
 // to test the attack bit first, in place, padding the spare bytes so every
 // following address stays put.
 //
 // attackflag=n gates the attack on extended flag n at runtime. only the two
-// operand bytes of the call at $e107 are retargeted, so the other callers of
-// the climbing predicate keep vanilla behavior: jumping off a ladder,
+// operand bytes of the Player_IsClimbing call in Player_CheckHandleAttack are
+// retargeted, so the other callers of the climbing predicate keep vanilla
+// behavior: jumping off a ladder,
 // casting magic and the body's own climb pose are left alone. a clear flag
 // is indistinguishable from stock and the flag page is cleared at reset.
+//
+// the stubs go in bank 15, or with sram=true in the sram code area. no bank
+// option: the climb code reads the carry a stub returns.
 //
 // every site is verified against its exact vanilla bytes before anything is
 // written, and all of them are byte identical in the us, us rev a, eu and jp
 // roms.
 
 namespace {
-	// extended flags: flag n lives at $0101 + (n >> 3), mask 1 << (n & 7)
-	constexpr word FLAG_BASE{ 0x0101 };
+	namespace ROM = fh::ROM;
+	namespace RAM = fh::RAM;
+
+	// extended flags: flag n lives at Flags + (n >> 3), mask 1 << (n & 7)
 	constexpr byte MAX_FLAG{ 247 };
 	constexpr byte NO_FLAG{ 0xff };
 
-	constexpr word LADDER{ 0xecf6 };        // carry set while actively climbing
-	constexpr word ATTACK_CALL{ 0xe107 };   // jsr $ecf6 inside the attack handler
+	// jsr Player_IsClimbing, which sets carry while actively climbing
 	constexpr byte ATTACK_CALL_ORIG[3]{ 0x20, 0xf6, 0xec };
 
-	constexpr word ATTACK_BRANCH{ 0xe10b }; // the bcs operand that refuses it
+	// the bcs operand that refuses the attack
+	constexpr word ATTACK_BRANCH{ ROM::Player_CheckHandleAttack_BCS_Climbing + 1 };
 	constexpr byte ATTACK_BRANCH_ORIG{ 0x0d };
 
 	// a climb step must stay inside one eight pixel block per frame. the
@@ -128,9 +137,9 @@ namespace {
 		byte orig[12];
 	};
 	constexpr Pose POSE[2]{
-		{ 14, 0xb927, 12, 0xb958, 0xb933,
+		{ 14, ROM::Maybe_Player_CalcAnimFrame, 12, 0xb958, 0xb933,
 			{ 0xa5, 0xa4, 0x4a, 0x90, 0x07, 0xa5, 0xa4, 0x30, 0x28, 0xa9, 0x03, 0x60 } },
-		{ 15, 0xecac, 12, 0xeccc, 0xecb8,
+		{ 15, ROM::Player_GetBodySpriteFrameOffset, 12, 0xeccc, 0xecb8,
 			{ 0xa5, 0xa4, 0x4a, 0x90, 0x07, 0xa5, 0xa4, 0x30, 0x17, 0xa9, 0x03, 0x60 } },
 	};
 
@@ -207,7 +216,7 @@ namespace {
 	// test the attack bit once, before the jump and climb paths split, so an
 	// attack always picks the attack frames
 	void emit_pose(klib::Asm6502& p_code, const Pose& p_pose) {
-		p_code.lda_zp(0xa4);
+		p_code.lda_zp(RAM::ZP_PlayerState);
 		p_code.bmi(branch_to(static_cast<word>(p_pose.org + 4), p_pose.attack_frames, "attack"));
 		p_code.lsr_a();
 		p_code.bcc(branch_to(static_cast<word>(p_pose.org + 7), p_pose.climb_path, "climb"));
@@ -219,9 +228,9 @@ namespace {
 	// not climbing leaves it clear, a clear flag leaves it set and the attack
 	// is refused exactly as stock refuses it, a set flag clears it
 	void emit_runtime(klib::Asm6502& p_code, byte p_flag) {
-		p_code.jsr(LADDER);
+		p_code.jsr(ROM::Player_IsClimbing);
 		p_code.bcc("@out");
-		p_code.lda_abs(static_cast<word>(FLAG_BASE + (p_flag >> 3)));
+		p_code.lda_abs(static_cast<word>(RAM::Flags + (p_flag >> 3)));
 		p_code.and_imm(static_cast<byte>(1 << (p_flag & 7)));
 		p_code.beq("@out");
 		p_code.clc();
@@ -233,20 +242,20 @@ namespace {
 	// orders it, so the vanilla branch of a stub is the displaced code itself
 	void emit_step(klib::Asm6502& p_code, const Block& p_block, word p_value) {
 		if (p_block.wide) {
-			p_code.lda_zp(0xa0);
+			p_code.lda_zp(RAM::ZP_PlayerClimbFlySpeedModifier);
 			if (p_block.subtract) { p_code.sec(); p_code.sbc_imm(static_cast<byte>(p_value & 0xff)); }
 			else { p_code.clc(); p_code.adc_imm(static_cast<byte>(p_value & 0xff)); }
-			p_code.sta_zp(0xa0);
-			p_code.lda_zp(0xa1);
+			p_code.sta_zp(RAM::ZP_PlayerClimbFlySpeedModifier);
+			p_code.lda_zp(RAM::ZP_PlayerPosY);
 			if (p_block.subtract) p_code.sbc_imm(static_cast<byte>(p_value >> 8));
 			else p_code.adc_imm(static_cast<byte>(p_value >> 8));
-			p_code.sta_zp(0xa1);
+			p_code.sta_zp(RAM::ZP_PlayerPosY);
 		}
 		else {
-			p_code.lda_zp(0xa1);
+			p_code.lda_zp(RAM::ZP_PlayerPosY);
 			p_code.sec();
 			p_code.sbc_imm(static_cast<byte>(p_value));
-			p_code.sta_zp(0xa1);
+			p_code.sta_zp(RAM::ZP_PlayerPosY);
 		}
 	}
 
@@ -254,10 +263,10 @@ namespace {
 	// and its next tick. cap it before the sideways collision sees a third row.
 	void emit_floor_cap(klib::Asm6502& p_code) {
 		p_code.cmp_imm(0xc1); p_code.bcs("@floor_done");
-		p_code.ldx_imm(3); p_code.jsr(0xe6c8); p_code.beq("@floor_done");
-		p_code.lda_zp(0xa1); p_code.and_imm(0xf0); p_code.sta_zp(0xa1);
-		p_code.lda_imm(0); p_code.sta_zp(0xa0);
-		p_code.label("@floor_done"); p_code.lda_zp(0xa1);
+		p_code.ldx_imm(3); p_code.jsr(ROM::Player_CheckIfPassable); p_code.beq("@floor_done");
+		p_code.lda_zp(RAM::ZP_PlayerPosY); p_code.and_imm(0xf0); p_code.sta_zp(RAM::ZP_PlayerPosY);
+		p_code.lda_imm(0); p_code.sta_zp(RAM::ZP_PlayerClimbFlySpeedModifier);
+		p_code.label("@floor_done"); p_code.lda_zp(RAM::ZP_PlayerPosY);
 	}
 
 	// one stub per changed block: flag set runs the new constants, clear runs
@@ -268,7 +277,7 @@ namespace {
 				continue;
 			const std::string vanilla{ std::string{ block.label } + "_v" };
 			p_code.label(block.label);
-			p_code.lda_abs(static_cast<word>(FLAG_BASE + (s.speed_flag >> 3)));
+			p_code.lda_abs(static_cast<word>(RAM::Flags + (s.speed_flag >> 3)));
 			p_code.and_imm(static_cast<byte>(1 << (s.speed_flag & 7)));
 			p_code.beq(vanilla);
 			emit_step(p_code, block, s.value_of(block));
@@ -282,8 +291,9 @@ namespace {
 	}
 }
 
-word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vector<byte>& p_rom,
+word fh::HackManager::install_AtlasDevLadderControl(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
+	const std::string name{ "AtlasDevLadderControl" };
 	const LadderProfile& base{ ladder_profile(p_hack) };
 	const Settings s{
 		p_hack.word_or("up", base.up),
@@ -333,20 +343,20 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	if (sram && !sram_state)
 		throw std::runtime_error("AtlasDevLadderControl: sram=true requires a rom with sram support, or the SRAM hack");
 
-	klib::Asm6502 runtime;
-	if (s.want_runtime())
-		emit_runtime(runtime, s.attack_flag);
-	klib::Asm6502 speeds;
-	if (s.want_speed_gate())
-		emit_speed_stubs(speeds, s);
-	else if (s.down > 0x0100) {
-		speeds.label("@down");
-		emit_step(speeds, BLOCK_DOWN, s.down);
-		emit_floor_cap(speeds);
-		speeds.rts();
+	// the attack stub first, then the speed stubs
+	klib::Asm6502 code;
+	if (s.want_runtime()) {
+		code.label("@attack");
+		emit_runtime(code, s.attack_flag);
 	}
-	const auto runtime_size{ s.want_runtime() ? runtime.size() : 0 };
-	const auto size{ runtime_size + speeds.size() };
+	if (s.want_speed_gate())
+		emit_speed_stubs(code, s);
+	else if (s.down > 0x0100) {
+		code.label("@down");
+		emit_step(code, BLOCK_DOWN, s.down);
+		emit_floor_cap(code);
+		code.rts();
+	}
 
 	// every ownership and capacity check is complete before any mutation
 	for (std::size_t i{ 0 }; i < 7; ++i)
@@ -354,27 +364,29 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 	for (const Site& site : { UP_LO, UP_HI, DOWN_LO, DOWN_HI, WING_UP, WING_DOWN_LO, WING_DOWN_HI })
 		require_operand(p_rom, site);
 	if (s.attack || s.want_runtime())
-		require_site(p_rom, 15, ATTACK_CALL, ATTACK_CALL_ORIG, sizeof(ATTACK_CALL_ORIG));
+		require_site(p_rom, 15, ROM::Player_CheckHandleAttack_JSR_IsClimbing, ATTACK_CALL_ORIG,
+			sizeof(ATTACK_CALL_ORIG));
 	if (s.attack_pose)
 		for (const Pose& pose : POSE)
 			require_site(p_rom, pose.bank, pose.org, pose.orig, sizeof(pose.orig));
-	if (size > 0 && !sram) {
-		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
-		if (off > p_rom.size() || size > p_rom.size() - off)
-			throw std::runtime_error(std::format(
-				"AtlasDevLadderControl: {} bytes at ${:04x} overflow the ROM image", size, cpu_addr));
-		for (std::size_t i{ 0 }; i < size; ++i)
-			if (p_rom[off + i] != 0xff)
-				throw std::runtime_error(std::format(
-					"AtlasDevLadderControl: no free space for {} bytes at ${:04x}", size, cpu_addr));
-	}
+	const Block blocks[4]{ BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN };
+	const auto stubbed = [&](const Block& p_block) {
+		return s.want_speed_gate() ? s.changed(p_block) : p_block.addr == BLOCK_DOWN.addr && s.down > 0x0100;
+	};
 
-	// with sram the runtime stub and the speed stubs run from the shared sram
-	// code area, in the same order as in bank 15, and bank 15 keeps only the
-	// retargeted calls.
-	const word body{ sram ? sram_hack_addr() : cpu_addr };
-	if (sram && s.want_runtime())
-		install_sram_hack(p_rom, runtime);
+	// in bank 15, or with sram=true in the sram code area; label addresses are
+	// read before the install clears them
+	word next{ cpu_addr };
+	word attack{}, stubs[4]{};
+	if (code.size() > 0) {
+		const auto place{ place_hack(p_config, p_rom, p_hack, name, cpu_addr, code.size(), 0) };
+		if (s.want_runtime())
+			attack = code.label_addr("@attack", place.addr);
+		for (std::size_t i{ 0 }; i < 4; ++i)
+			if (stubbed(blocks[i]))
+				stubs[i] = code.label_addr(blocks[i].label, place.addr);
+		next = install_placed(p_rom, code, place, cpu_addr, name);
+	}
 
 	if (!s.want_speed_gate()) {
 		put(p_rom, UP_LO.addr, static_cast<byte>(s.up & 0xff));
@@ -385,46 +397,33 @@ word fh::HackManager::install_AtlasDevLadderControl(const fe::Config&, std::vect
 		put(p_rom, WING_DOWN_LO.addr, static_cast<byte>(s.wing_down & 0xff));
 		put(p_rom, WING_DOWN_HI.addr, static_cast<byte>(s.wing_down >> 8));
 	}
-	if (speeds.size() > 0) {
-		// label positions are read before the apply clears them
-		const word base{ static_cast<word>(body + runtime_size) };
-		word stubs[4]{};
-		const Block blocks[4]{ BLOCK_UP, BLOCK_DOWN, BLOCK_WING_UP, BLOCK_WING_DOWN };
-		for (std::size_t i{ 0 }; i < 4; ++i)
-			if (s.want_speed_gate() ? s.changed(blocks[i]) : blocks[i].addr == BLOCK_DOWN.addr)
-				stubs[i] = static_cast<word>(base + speeds.label_position(blocks[i].label));
-		if (sram) install_sram_hack(p_rom, speeds);
-		else speeds.apply_hack_and_clear(p_rom, 15, base);
-		for (std::size_t i{ 0 }; i < 4; ++i) {
-			const Block& block{ blocks[i] };
-			if (!(s.want_speed_gate() ? s.changed(block) : block.addr == BLOCK_DOWN.addr))
-				continue;
-			const word stub{ stubs[i] };
-			put(p_rom, block.addr, 0x20);
-			put(p_rom, static_cast<word>(block.addr + 1), static_cast<byte>(stub & 0xff));
-			put(p_rom, static_cast<word>(block.addr + 2), static_cast<byte>(stub >> 8));
-			for (std::size_t i{ 3 }; i < block.len; ++i)
-				put(p_rom, static_cast<word>(block.addr + i), 0xea);
-		}
+	for (std::size_t i{ 0 }; i < 4; ++i) {
+		const Block& block{ blocks[i] };
+		if (!stubbed(block))
+			continue;
+		put(p_rom, block.addr, 0x20);
+		put(p_rom, static_cast<word>(block.addr + 1), static_cast<byte>(stubs[i] & 0xff));
+		put(p_rom, static_cast<word>(block.addr + 2), static_cast<byte>(stubs[i] >> 8));
+		for (std::size_t j{ 3 }; j < block.len; ++j)
+			put(p_rom, static_cast<word>(block.addr + j), 0xea);
 	}
 	if (s.attack)
 		put(p_rom, ATTACK_BRANCH, 0x00);
 
 	if (s.attack_pose)
 		for (const Pose& pose : POSE) {
-			klib::Asm6502 code;
-			emit_pose(code, pose);
+			klib::Asm6502 pose_code;
+			emit_pose(pose_code, pose);
 			// pad rather than shorten, so every following address stays put
-			code.nop(pose.room - code.size());
-			code.apply_hack_and_clear(p_rom, pose.bank, pose.org);
+			pose_code.nop(pose.room - pose_code.size());
+			pose_code.apply_hack_and_clear(p_rom, pose.bank, pose.org);
 		}
 
+	// retarget only the operand of the existing call
 	if (s.want_runtime()) {
-		if (!sram) runtime.apply_hack_and_clear(p_rom, 15, cpu_addr);
-		// retarget only the operand of the existing call
-		put(p_rom, static_cast<word>(ATTACK_CALL + 1), static_cast<byte>(body & 0xff));
-		put(p_rom, static_cast<word>(ATTACK_CALL + 2), static_cast<byte>(body >> 8));
+		put(p_rom, static_cast<word>(ROM::Player_CheckHandleAttack_JSR_IsClimbing + 1), static_cast<byte>(attack & 0xff));
+		put(p_rom, static_cast<word>(ROM::Player_CheckHandleAttack_JSR_IsClimbing + 2), static_cast<byte>(attack >> 8));
 	}
 
-	return sram ? cpu_addr : static_cast<word>(cpu_addr + size);
+	return next;
 }
