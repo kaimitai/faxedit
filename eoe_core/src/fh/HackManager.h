@@ -364,7 +364,8 @@ namespace fh {
 		void install_SRAM(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::GeneralHack& p_hack) const;
 		word get_SRAM_savefile_end_addr(void) const;
-		void install_BugFixes(std::vector<byte>& p_rom) const;
+		void install_BugFixes(const fe::Config& p_config, std::vector<byte>& p_rom,
+			const fh::GeneralHack& p_hack) const;
 		word install_ItemScripts(const fe::Config& p_config, std::vector<byte>& p_rom,
 			word cpu_addr, const fh::GeneralHack& p_hack);
 		word install_PermaDoors(const fe::Config& p_config, std::vector<byte>& p_rom,
