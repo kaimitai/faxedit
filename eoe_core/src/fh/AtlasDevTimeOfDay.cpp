@@ -1,4 +1,5 @@
 #include "AtlasDevFrameScheduler.h"
+#include "AtlasDevVerticalScroll.h"
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
@@ -32,6 +33,8 @@ word fh::HackManager::install_AtlasDevTimeOfDay(const fe::Config&, std::vector<b
 	const word base{ find_base(p_rom) };
 	if (base == 0)
 		throw std::runtime_error("AtlasDevTimeOfDay requires the AtlasDevFrameScheduler hack installed first");
+	if (fh::vertical_scroll_installed(p_rom))
+		throw std::runtime_error("AtlasDevTimeOfDay: shares ram $04e2-$04ec with AtlasDevVerticalScroll");
 	const word hourlength{ p_hack.word_or("hourlength", 300) };
 	if (hourlength < 8)
 		throw std::runtime_error("AtlasDevTimeOfDay: hourlength must be at least 8");

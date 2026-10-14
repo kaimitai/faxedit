@@ -1,4 +1,5 @@
 #include "AtlasDevFrameScheduler.h"
+#include "AtlasDevVerticalScroll.h"
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
@@ -34,6 +35,8 @@ word fh::HackManager::install_AtlasDevDayNightCycle(const fe::Config& p_config, 
 	const word base{ find_base(p_rom) };
 	if (base == 0)
 		throw std::runtime_error("AtlasDevDayNightCycle requires the AtlasDevFrameScheduler hack installed first");
+	if (fh::vertical_scroll_installed(p_rom))
+		throw std::runtime_error("AtlasDevDayNightCycle: shares ram $04e2-$04ec with AtlasDevVerticalScroll");
 	const word length{ p_hack.word_or("length", 2048) };
 	if (length < 8 || length % 8)
 		throw std::runtime_error("AtlasDevDayNightCycle: length must be a multiple of 8");

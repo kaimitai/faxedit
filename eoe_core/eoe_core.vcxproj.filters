@@ -384,6 +384,9 @@
     <ClInclude Include="src\fh\AtlasDevFrameScheduler.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
+    <ClInclude Include="src\fh\AtlasDevVerticalScroll.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
     <ClInclude Include="src\fh\GeneralHack.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
@@ -738,6 +741,9 @@
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevShadowEuraControl.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevVerticalScroll.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">

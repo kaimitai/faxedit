@@ -1,4 +1,5 @@
 #include "AtlasDevFrameScheduler.h"
+#include "AtlasDevVerticalScroll.h"
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
@@ -82,6 +83,8 @@ word fh::HackManager::install_AtlasDevInfectedTint(const fe::Config&, std::vecto
 	const word base{ find_base(p_rom) };
 	if (base == 0)
 		throw std::runtime_error("AtlasDevInfectedTint requires the AtlasDevFrameScheduler hack installed first");
+	if (fh::vertical_scroll_installed(p_rom))
+		throw std::runtime_error("AtlasDevInfectedTint: shares ram $04e2-$04ec with AtlasDevVerticalScroll");
 	byte colors[3]{ DEFAULT_COLORS[0], DEFAULT_COLORS[1], DEFAULT_COLORS[2] };
 	if (p_hack.has_param("colors")) {
 		const auto given{ p_hack.split_byte_optional_byte("colors") };

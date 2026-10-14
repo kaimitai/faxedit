@@ -96,6 +96,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevNashControl](#atlasdevnashcontrol)
   - [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol)
   - [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol)
+  - [AtlasDevVerticalScroll](#atlasdevverticalscroll)
 
 <hr>
 
@@ -2705,6 +2706,58 @@ AtlasDevShadowEuraControl walk=10 pause=60
 AtlasDevShadowEuraControl fire1=2 fire2=6 step=12
 AtlasDevShadowEuraControl body=1 flag=16
 ```
+
+<hr>
+
+### AtlasDevVerticalScroll
+
+Vertical room changes scroll instead of cutting to black. The destination
+room streams in below or above the current one at 4 px per frame with the
+HUD fixed, in both directions. When the room you are leaving sits on the
+wrong nametable page for the direction, it is first repainted onto the
+other page (33 frames, nothing visible moves), so nearly every vertical
+transition in the game scrolls. The weapon and shield follow the hero
+during the slide.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `up` | `true` | scroll ascents |
+| `down` | `true` | scroll descents |
+| `flip` | `true` | repaint onto the other page when the room is on the wrong one; `false` scrolls only the transitions that are already aligned |
+| `bias` | `32` | scroll calibration line, 0 to 255; lower it by 1 or 2 if the picture sits 2 px low during the slide |
+| `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set; while it is clear every hooked site behaves as stock |
+| `bank` | `9` | ROM bank for the banked part, not 12, 14 or a string bank; `15` puts it after the rest, which needs more free space than a stock ROM has |
+| `addr` | `auto` | CPU address for the banked part; not with `bank=15` |
+| `sram` | `false` | Add SRAM backing |
+| `mode` | | `vanilla` installs nothing |
+
+Uses 391 bytes of bank 15 (408 with `flag`) and 529 bytes of `bank`. With
+`sram=true` both parts run from the SRAM code area and bank 15 keeps 32
+bytes, the mirroring reset the boot code calls before SRAM is filled.
+`sram` cannot be combined with `bank` or `addr`. In bank 9 the banked part
+goes at the start of the free space at the end of the bank. On a 256 KiB
+ROM that is below the SRAM backing area at $A700, unless another hack's
+`sram=true` code already fills the start of that area; then the install is
+refused, and `addr` or `sram=true` places it.
+
+Uses 11 bytes of RAM at $04E2-$04EC and the unused zero page byte $9C,
+which holds the mirroring in force. AtlasDevDayNightCycle,
+AtlasDevInfectedTint, AtlasDevTimeOfDay and AtlasDevEnemyHud also use
+$04E2-$04EC, so it refuses to install beside them and they refuse beside
+it, in either order. AtlasDevLandingTuck changes the same code at $D127 and
+the weapon and shield tails, so the two refuse each other too. List it
+before AtlasDevScreenTransition, whose `up=scroll` and `down=scroll` need
+it. Every hooked site is checked against its stock bytes first, and they
+are the same in the US, US rev A, EU and JP ROMs. Tested in play on US
+revision 0 only.
+
+```
+AtlasDevVerticalScroll
+AtlasDevVerticalScroll flip=false flag=24
+AtlasDevVerticalScroll sram=true
+```
+
+<hr>
 
 ### AtlasDevStatusWard
 

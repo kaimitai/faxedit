@@ -1,3 +1,4 @@
+#include "AtlasDevVerticalScroll.h"
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
@@ -118,6 +119,7 @@ word fh::HackManager::install_AtlasDevEnemyHud(const fe::Config& config, std::ve
 	if (rom.size() != 0x40010 || rom[0] != 'N' || rom[1] != 'E' || rom[2] != 'S' || rom[3] != 0x1a ||
 		rom[4] != 16 || rom[5] != 0 || (rom[6] & 0xf4) != 0x10 || (rom[7] & 0xf0) != 0)
 		fail("requires an unexpanded MMC1 cartridge without a trainer");
+	if (fh::vertical_scroll_installed(rom)) fail("shares ram $04e3-$04e9 with AtlasDevVerticalScroll");
 	site(rom,14,0x8897,{0x9d,0x44,0x03}); site(rom,14,0x8203,{0x9d,0x44,0x03});
 	site(rom,15,0xc134,{0x9d,0xcc,0x02}); site(rom,15,0xc238,{0x9d,0x44,0x03});
 	site(rom,15,0xdb6e,{0x20,0x16,0xe0});

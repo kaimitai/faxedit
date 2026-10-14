@@ -119,6 +119,7 @@ namespace fh {
 		constexpr word Area_LoadScrollData{ 0xd127 };
 		constexpr word Screen_LoadBlockDataVert{ 0xd3ba };
 		constexpr word SET_BLOCKS_TILEMAP_OFFSETS_L{ 0xd4cf };
+		constexpr word SET_BLOCKS_TILEMAP_OFFSETS_U{ 0xd4d1 };
 		// item menu effect tails: clear the selection, use sound, effect, return.
 		// same address in us, us rev a, eu and jp
 		constexpr word UseRedPotionEffect{ 0xc53b };

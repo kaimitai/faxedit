@@ -87,6 +87,7 @@
     <ClInclude Include="src\fe\xml\Xml_helper_settings.h" />
     <ClInclude Include="src\fh\fh_constants.h" />
     <ClInclude Include="src\fh\AtlasDevFrameScheduler.h" />
+    <ClInclude Include="src\fh\AtlasDevVerticalScroll.h" />
     <ClInclude Include="src\fh\GeneralHack.h" />
     <ClInclude Include="src\fh\HackManager.h" />
     <ClInclude Include="src\fh\TilemapChanges.h" />
@@ -214,6 +215,7 @@
     <ClCompile Include="src\fh\AtlasDevNashControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevExecutionHoodControl.cpp" />
     <ClCompile Include="src\fh\AtlasDevShadowEuraControl.cpp" />
+    <ClCompile Include="src\fh\AtlasDevVerticalScroll.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />
