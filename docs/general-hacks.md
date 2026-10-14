@@ -898,6 +898,15 @@ The `Misc` hack acts as a home for minor gameplay and quality-of-life changes wh
 
 A neutral frame scheduler other hacks build on: an NMI tick with three role slots and one physical post-deadline vector for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
 
+| | |
+| --- | --- |
+| space | 156 bytes of bank 15 |
+| ram | $04D8-$04DE |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | before its roles: DayNightCycle, InfectedTint, TimeOfDay, StatusWard, and JumpControl, FallControl or RunControl when they use the scheduler |
+| refused with | EnemyHud |
+
 The three slots are RAM, so scripts can switch roles on and off at runtime with the AtlasDevArmRole and AtlasDevDayNight opcodes. At build time, a boot slot is unclaimed only when its arm byte is zero and its PRE vector still points to the scheduler's default stub. A role installer reuses only a compatible existing kind or claims the first unclaimed slot, refusing without modifying the ROM when none is available. The first POST role requires marker 0 and the default stub. A later compatible role takes the vector and ends with `JMP` to the previous bank 9 handler, so both run in order. Before chaining, the installer checks for marker 1 and an occupied address in bank 9. Those checks catch malformed lane state; each role still has to be compatible with the handler it follows.
 
 Kinds `$80` to `$ff` are gate only: a slot holding one is armed, cleared and tested exactly like any other kind, but the tick never calls its vector, so a hack that only needs a runtime switch costs the tick nothing beyond the slot test. AtlasDevJumpControl with `switchable=1` is such a client, on kind `$86`.
@@ -913,6 +922,15 @@ AtlasDevFrameScheduler
 ### AtlasDevDayNightCycle
 
 A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list and must be the first owner of its POST vector; chainable roles such as tint and time-of-day follow it in the hack list. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
+
+| | |
+| --- | --- |
+| space | about 160 bytes of bank 9 |
+| ram | $04E2-$04E6 |
+| roms | US, US rev A, EU, JP |
+| switch | AtlasDevArmRole 2 |
+| order | after FrameScheduler; before InfectedTint, TimeOfDay, StatusWard and FaxOptions |
+| refused with | EnemyHud, VerticalScroll |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -931,6 +949,15 @@ AtlasDevArmRole 3, and switching off restores the palette from the
 engine's shadow. When combined with AtlasDevDayNightCycle, list the
 tint after it - the tint chains onto a claimed post lane, while the
 day cycle demands an unclaimed one.
+
+| | |
+| --- | --- |
+| space | about 125 bytes of bank 9 |
+| ram | $04E7-$04E8 |
+| roms | US, US rev A, EU, JP |
+| switch | AtlasDevArmRole 3 |
+| order | after FrameScheduler and DayNightCycle; before StatusWard |
+| refused with | EnemyHud, VerticalScroll |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -953,6 +980,15 @@ clock can all run in the same frame. Scripts switch it with
 AtlasDevArmRole 4; switching off blanks the readout and resets the
 clock, so re-arming starts the day at the start hour again.
 
+| | |
+| --- | --- |
+| space | about 211 bytes of bank 9 |
+| ram | $04E9-$04EC |
+| roms | US, US rev A, EU, JP |
+| switch | AtlasDevArmRole 4 |
+| order | after FrameScheduler and DayNightCycle; before StatusWard |
+| refused with | EnemyHud, VerticalScroll |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `hourlength` | `300` | frames per in-game hour |
@@ -973,6 +1009,15 @@ eight-pixel dead zone. The trigger is the game's own status counter, so any
 ordinary item, shop or script that grants that effect also grants the ward.
 Requires AtlasDevFrameScheduler earlier in the list. Scripts switch the role
 with AtlasDevArmRole 5.
+
+| | |
+| --- | --- |
+| space | about 94 bytes of bank 9; with `fieldfx`, 116 to 511 bytes of bank 15 depending on its options, and up to about 180 of bank 9 |
+| ram | none; with `fieldfx`, sprite slots $07F0-$07FF |
+| roms | US, US rev A, EU, JP; settings over about 370 bytes are refused on JP |
+| switch | AtlasDevArmRole 5 |
+| order | after FrameScheduler, DayNightCycle, InfectedTint and TimeOfDay; before PpuDrainUnroll |
+| refused with | EnemyHud, VerticalScroll |
 
 The role body uses no additional RAM and joins the existing POST chain. If
 all three scheduler kinds are occupied, it installs dormant without
@@ -1039,8 +1084,8 @@ its scheduler. The scheduler uses 156 bytes and seven RAM bytes; the ward
 adds zero RAM. A basic four-orb field adds 236 fixed-bank bytes. A tested
 expanded, clipped, four-tile field adds 461 bytes (617 including scheduler).
 Byte checks at build time decide whether a configuration fits. The fixed bank
-has 780 free bytes on US, US Rev A and EU, and 551 on JP: the default and the
-basic orbit fit all four, while the 617-byte configuration is refused on JP.
+has 780 free bytes on US, US Rev A and EU, and 551 on JP: settings up to about
+370 bytes fit all four, larger ones are refused on JP.
 Tested in play on US revision 0 only.
 
 The force tests horizontal distance only; the circular graphic does not add
@@ -1060,6 +1105,15 @@ went up, so a tap is a one-tile hop and a hold is the full jump.
 `airjumps` extra jumps are allowed in the air, reloaded on landing and
 never while the Wing Boots are flying. Each parameter is 0 to 15 and 0
 turns that feature off; with all four at 0 nothing is installed.
+
+| | |
+| --- | --- |
+| space | 214 bytes of bank 15 (234 with `switchable=1`, 254 with `flag`); with `sram=true`, the same in SRAM |
+| ram | $04DF |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, AtlasDevArmRole with `switchable=1` |
+| order | with `switchable=1`, after FrameScheduler |
+| refused with | none |
 
 Three vanilla instructions in the bank 15 jump code are retargeted to
 stubs placed with the other general hacks, 152 bytes with the defaults
@@ -1128,6 +1182,15 @@ AtlasDevJumpControl flag=20
 
 Replaces the constant 8 px-per-frame drop with a fall curve, and reads Left/Right while the hero is in the air. Profiles expand to both knobs; an explicit `curve=` or `steer=` overrides one of them. `profile=vanilla` installs nothing. No RAM is used: the fall phase lives in the jump-phase byte, which is idle during free fall.
 
+| | |
+| --- | --- |
+| space | 60 to 80 bytes of bank 15 depending on the curve (105 with `flag`, 139 with `kind`); with `sram=true`, the same in SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, AtlasDevArmRole with `kind` |
+| order | with `kind`, after FrameScheduler |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `profile` | `arc` | `vanilla`, `arc`, `zelda2`, `floaty`, `moon`, or a shared feel name from the table below |
@@ -1176,6 +1239,15 @@ How fast the hero climbs, and whether he may attack while on a ladder.
 Climb speed is four numbers the vanilla ROM already holds as constants, so
 with default parameters this hack writes nothing at all and the patched ROM
 is byte identical to the source.
+
+| | |
+| --- | --- |
+| space | none when only `up` or the Wing Boots speeds change; 14 bytes of bank 15 for `attackflag`, 37 for a `down` above 256, up to 93 with `flag`; with `sram=true`, the same in SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `attackflag=n` |
+| order | any |
+| refused with | none |
 
 Stock climbs up at 160 subpixels per frame and down at 192, so descent is a
 fifth faster than ascent, and the two are separate numbers rather than one
@@ -1271,6 +1343,15 @@ supported top rung lets the hero stand with their feet on it, walk away,
 jump, or press Down to climb back. Support is earned by climbing Up; falling
 past a ladder or jumping back onto it does not create a platform. Wing Boots
 flight and ordinary falls keep their usual behavior.
+
+| | |
+| --- | --- |
+| space | 605 bytes of bank 15; with `sram=true`, 605 bytes of SRAM |
+| ram | $04E0 |
+| roms | US, US rev A, EU; JP only with `mode=floor` or `sram=true` |
+| switch | `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 `floor` mode stops ascent at the adjacent floor height without adding a
 standing surface. `vanilla` installs nothing. Omitting the hack entirely also
@@ -1416,6 +1497,15 @@ making the player select it first, and without disturbing whatever item is
 currently selected. Keys are still spent one per door, still counted and
 still bought in shops; only the trip to the item menu goes away.
 
+| | |
+| --- | --- |
+| space | no free space, 79 stock bytes rewritten in bank 15 (84 with `flag`) |
+| ram | none |
+| roms | US, US rev A, EU |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | after PermaDoors |
+| refused with | none |
+
 The door gate checks a ring by asking whether the hero owns it, and a key
 by asking whether it is the selected item. With this hack a carried key is
 accepted the way a ring is, and it is still spent.
@@ -1470,6 +1560,15 @@ damage, experience reward and coin drop are byte tables in the ROM, one entry
 per enemy type, and this hack multiplies each table by a percent. The stun an
 enemy takes when hit is a single byte and can be set directly.
 
+| | |
+| --- | --- |
+| space | no free space, stock values rewritten in bank 14 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | before EnemyHud |
+| refused with | none |
+
 `hp`, `damage`, `xp` and `gold` are percents of vanilla, 1 to 400, applied to
 every entry of the table named. Entries that are zero stay zero, since those
 are the ids that are not monsters; everything else rounds to nearest, never
@@ -1505,6 +1604,15 @@ Shows the health of the last enemy hit by a sword or spell. The bar sits
 above the player meters, aligned with them, with an E on the left and the
 enemy name on the right. Names use community names, shortened where needed
 to fit fifteen characters.
+
+| | |
+| --- | --- |
+| space | 95 bytes of bank 15, about 3,186 bytes of bank 9 |
+| ram | $04E3-$04E9 |
+| roms | US, US rev A, EU, JP |
+| switch | `mode=vanilla` installs nothing |
+| order | after EnemyStats; before Misc and FaxOptions |
+| refused with | FrameScheduler and its roles, VerticalScroll |
 
 | Parameter | Default | Meaning |
 |---|---|---|
@@ -1546,6 +1654,15 @@ How the hero walks, how long he is safe after a hit, how far he is shoved,
 and how fast he swings. Every knob is an operand byte the vanilla ROM already
 holds, so with default parameters this hack writes nothing at all and the
 patched ROM is byte identical to the source.
+
+| | |
+| --- | --- |
+| space | none, or 57 bytes of bank 15 when the profile centres the hero on ladders; with `sram=true`, the same in SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | any |
+| refused with | RunControl |
 
 The walk is not one speed. The hero starts every walk at 192 subpixels per
 frame, three quarters of a pixel, and accelerates every frame by an amount
@@ -1607,6 +1724,15 @@ AtlasDevCombatFeel walk=256 walkmax=512 ramp=4+4+4+4
 
 Double tap a direction to run. The second tap inside the window raises the walk speed cap from 1.5 px per frame to ```speed``` eighths and adds ```accel``` each running frame; letting go, turning on the ground, a hit or a ladder drop back to walking. A running jump keeps its speed in the air. One RAM byte at ```$04f6``` holds the state.
 
+| | |
+| --- | --- |
+| space | 164 to 172 bytes of bank 15 (207 with `kind`); with `sram=true`, the same in SRAM |
+| ram | $04F6 |
+| roms | US, US rev A, EU, JP |
+| switch | AtlasDevArmRole with `kind` |
+| order | with `kind`, after FrameScheduler |
+| refused with | CombatFeel |
+
 With ```tap=hold``` there is no double tap: any held direction runs from its first frame, a turn keeps running, and only letting go ends it. A hit still takes over, as in the vanilla game, until the direction is released.
 
 | parameter | default | meaning |
@@ -1634,6 +1760,15 @@ Digs a rock with a mattock the hero is carrying, without making the player
 select it first, and without disturbing whatever item is selected. One
 mattock is still spent per rock, and the dig is the vanilla dig: the same
 message, sound and crumble.
+
+| | |
+| --- | --- |
+| space | 144 bytes of bank 15 for `mode=press`, 167 for `push`, 181 for `both` (195 with `flag`); with `sram=true`, the same in SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 `mode=press` digs on Down and B facing the rock. `mode=push` digs after the
 hero has walked into the rock for `push` frames, and lets go of it the moment
@@ -1684,6 +1819,15 @@ lunges with the sword out, then recovers. Only the thrust hurts, and only
 within `sword` pixels, so stepping back when it steps back makes the lunge
 miss, and the recovery is the moment to strike. Hitting it restarts its wind
 up. While the hero is jumping it may still rush in, but a rush never hurts.
+
+| | |
+| --- | --- |
+| space | 360 bytes of bank 14, shared with WolfmanControl when both are listed; with `sram=true`, 360 bytes of SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 `AtlasDevWolfmanControl` takes the same parameters for Wolfman. Either name
 alone changes one monster and leaves the other with the vanilla timing and
@@ -1736,6 +1880,15 @@ The same as [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol), for
 Wolfman: the same parameters, defaults and behavior. List both names to
 change both dwarves.
 
+| | |
+| --- | --- |
+| space | 360 bytes of bank 14, shared with SirGawaineControl when both are listed; with `sram=true`, 360 bytes of SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 ```
 AtlasDevWolfmanControl
 AtlasDevSirGawaineControl
@@ -1751,6 +1904,15 @@ the next screen in, which takes about a second with everything frozen.
 Going up or down it blanks the screen and redraws it at once instead, which
 takes about a quarter of a second. This hack picks one of the two for each
 direction, so a horizontal screen change can blank as well.
+
+| | |
+| --- | --- |
+| space | 26 bytes of bank 15 (33 with `flag`) |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | after VerticalScroll; before FastBlink |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -1799,6 +1961,15 @@ video chip and for the display to go dark. This hack turns the display
 off first and runs the same steps back to back, so a change takes about
 half as long. The screen that comes up is the same.
 
+| | |
+| --- | --- |
+| space | 68 bytes of bank 15 (105 with `flag`); with `sram=true`, 68 bytes of SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | after ScreenTransition |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `flag` | none | extended flag `n`, 0 to 247: the hack is on only while the flag is set |
@@ -1841,6 +2012,15 @@ few frames and then lets go. It is only how he is drawn. Nothing about
 movement, physics, damage or collision changes, and pressing jump or
 attack drops the pose on the same frame.
 
+| | |
+| --- | --- |
+| space | 315 bytes of bank 15 (322 with `flag`); with `sram=true`, 315 bytes of SRAM |
+| ram | $04FE |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | VerticalScroll |
+
 The pose is not new art. Every gear group's jump frame is already a
 16x32 record, so the hack crops each one to its top 24 pixels and draws
 it eight pixels lower. That is a hero with his knees up, built from
@@ -1860,7 +2040,7 @@ the ROM byte identical. `flag=n` lets a script turn the pose on and off
 with `SetFlag` and `ClearFlag`; while the flag is clear the hero lands
 the way he always did.
 
-Uses 299 bytes of bank 15 free space with vanilla art, 306 with a
+Uses 315 bytes of bank 15 free space with vanilla art, 322 with a
 flag. Roughly a third of that is the cropped records themselves, so a
 project whose eight gear groups share more art uses less. It hooks
 seven places: the per frame tick at $E0D3, the pose
@@ -1895,6 +2075,15 @@ Reduces the CPU time spent building sprites. It keeps every monster update,
 collision check and draw request, including clipping, background priority,
 sprite ordering and the HUD's sprite-zero split. It does not change the monster
 limit or remove the NES eight-sprites-per-scanline limit.
+
+| | |
+| --- | --- |
+| space | 204 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | any |
+| refused with | none |
 
 ```text
 AtlasDevSpriteSpeed
@@ -1935,6 +2124,15 @@ Speeds up full-tile transfers from the graphics queue to the PPU. Short records
 and records crossing the queue boundary use the original byte loop. This helps
 graphics uploads; it does not reduce monster AI or remove sprite flicker.
 
+| | |
+| --- | --- |
+| space | 175 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | after StatusWard |
+| refused with | none |
+
 ```text
 AtlasDevPpuDrainUnroll
 ```
@@ -1971,6 +2169,15 @@ When a higher, already-loaded slot has the same entity ID, the next slot reuses
 its CHR tile base. The entities still update and draw independently. ID `$30`
 keeps its normal upload because it also loads a companion graphics set.
 
+| | |
+| --- | --- |
+| space | 32 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | any |
+| refused with | none |
+
 ```text
 AtlasDevQueueLess
 ```
@@ -2003,6 +2210,15 @@ compatibility; tested in play on US revision 0 only.
 
 Lets an interaction script run with no textbox. A script whose textbox value is `$7f` draws no window when it starts and erases none when it ends; everything else in the script runs as before. Useful for cutscenes and for scripts that only move entities, change tiles or play music, for example on an invisible trigger entity.
 
+| | |
+| --- | --- |
+| space | 22 bytes of bank 15; with `sram=true`, 22 bytes of SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none |
+| order | any |
+| refused with | none |
+
 ```text
 AtlasDevPreventTextbox
 ```
@@ -2034,6 +2250,15 @@ stride his body hurts and so does his spear, `spear` pixels past his body on
 the side he faces, never behind him. The default is the length of the spear
 as drawn. The rest of his moves are unchanged.
 
+| | |
+| --- | --- |
+| space | 34 bytes of bank 14 (52 with `flag`) |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `spear` | `16` | how far the spear reaches past his body, 0 to 64 pixels; 0 is his body only |
@@ -2064,6 +2289,15 @@ repeats every 64 frames, turning at walls and blocks. With this hack you set
 its sideways speed, how hard it bobs and how quickly the wave repeats. The
 defaults are the stock numbers, so the hack changes nothing until you set a
 value. Walls and blocks still turn it the stock way.
+
+| | |
+| --- | --- |
+| space | none for most settings, up to 7 bytes of bank 14; with `flag`, up to 64 bytes of bank 14 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2101,6 +2335,15 @@ reaches about 2 pixels per frame over 128 frames. It flies through walls and
 turns at the screen edges. With this hack you set the peak speed and the
 length of the swoop on each axis. The defaults are the stock numbers, so the
 hack changes nothing until you set a value.
+
+| | |
+| --- | --- |
+| space | none for most settings, up to 18 bytes of bank 14; with `flag`, up to 70 bytes of bank 14 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2144,6 +2387,15 @@ With this hack you set the peak speed and the length of the swoop on each
 axis. The defaults are the stock numbers, so the hack changes nothing until
 you set a value.
 
+| | |
+| --- | --- |
+| space | none for most settings, up to 18 bytes of bank 14; with `flag`, up to 70 bytes of bank 14 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `xspeed` | `16` | peak sideways speed in eighths of a pixel per frame: 4, 8, 16, 32 or 64 (16 is the stock 2 pixels) |
@@ -2186,6 +2438,15 @@ how long it lasts. The defaults are the stock numbers, so the hack changes
 nothing until you set a value. The speed-up and slow-down stay as they are,
 because another routine uses the same code.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 37 bytes of bank 14 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `dash` | `16` | dash speed in eighths of a pixel per frame, 1 to 64 (16 is the stock 2 pixels) |
@@ -2220,6 +2481,15 @@ frames and fires a shot every 64 frames before it rises again. With this
 hack you set how fast it drifts, how long it sits and how often it fires.
 The defaults are the stock numbers, so the hack changes nothing until you
 set a value. The climb and the slam stay as they are.
+
+| | |
+| --- | --- |
+| space | none for most settings, up to 10 bytes of bank 15; with `flag`, up to 65 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2262,6 +2532,15 @@ set how fast it creeps and how big a height gap it ignores. The defaults are
 the stock numbers, so the hack changes nothing until you set a value. The
 bob stays as it is.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 44 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `chase` | `6` | creep speed in eighths of a pixel per frame, 1 to 64 (6 is the stock 0.75 pixels) |
@@ -2296,6 +2575,15 @@ most 3 alive at once, over and over. With this hack you set how long it
 waits, how many Liliths may be alive and how long each windup step takes.
 The defaults are the stock numbers, so the hack changes nothing until you
 set a value.
+
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 63 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2335,6 +2623,15 @@ curse takes and how many frames the screen stays gray before it lands. The
 defaults are the stock numbers, so the hack changes nothing until you set a
 value. Its walk stays as it is.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 38 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | OintmentFix |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `damage` | `10` | HP the curse takes, 0 to 255 |
@@ -2373,6 +2670,15 @@ and how long it hovers. The defaults are the stock numbers, so the hack
 changes nothing until you set a value. The dive's fall, the bob while it
 hovers and its hitbox stay as they are.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 59 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `rise` | `4` | pixels per frame it climbs, 1 to 8 |
@@ -2410,6 +2716,15 @@ fall. You can also give it a box that covers its whole body: the stock box
 covers only the left half of what is drawn, so the right half can neither
 touch you nor be hit. The defaults are the stock numbers, so the hack
 changes nothing until you set a value.
+
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 80 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2453,6 +2768,15 @@ this hack you set how fast it climbs, how fast it walks once it drops, and
 whether it keeps climbing after it hits you. The defaults are the stock
 numbers, so the hack changes nothing until you set a value. The way it
 turns, its fall and its hitbox stay as they are.
+
+| | |
+| --- | --- |
+| space | none for most settings, up to 19 bytes of bank 15; with `flag`, up to 67 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2498,6 +2822,15 @@ even when you are not facing it. The defaults are the stock numbers, so the
 hack changes nothing until you set a value. The throw itself and what it
 throws stay as they are, since other monsters use the same throw.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 132 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `walk` | `3` | walk speed in quarter pixels per frame, 1 to 8 |
@@ -2538,6 +2871,15 @@ and how long the warning blinks before it rises. The defaults are the stock
 numbers, so the hack changes nothing until you set a value. The rise and the
 sink keep their stock length.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 74 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `hide` | `60` | frames underground, 16 to 255 |
@@ -2576,6 +2918,15 @@ toward you, so it can glide past you and give you an opening. `body=32` makes
 its box as wide as its wings, so a hit on a wing tip counts, and so does a
 wing tip touching you. The defaults are the stock numbers, so the hack
 changes nothing until you set a value.
+
+| | |
+| --- | --- |
+| space | none for most settings, up to 33 bytes of bank 15; with `flag`, up to 66 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2618,6 +2969,15 @@ stays hidden, how long it stays out, and how far in front of you it appears.
 The defaults are the stock numbers, so the hack changes nothing until you set
 a value.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 88 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `hide` | `60` | frames hidden, 16 to 255 |
@@ -2654,6 +3014,15 @@ and how long it rests. `body=1` makes its box cover its body: the stock box
 covers only about half of what is drawn, so many hits that look like they
 land go through it. The defaults are the stock numbers, so the hack changes
 nothing until you set a value.
+
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 71 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2696,6 +3065,15 @@ attack it throws. The defaults are the stock numbers, so the hack changes
 nothing until you set a value. What it throws stays as it is, since other
 monsters throw the same thing.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 97 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `hide` | `120` | frames hidden, 16 to 255 |
@@ -2734,6 +3112,15 @@ before each throw. The defaults are the stock numbers, so the hack changes
 nothing until you set a value. What it throws stays as it is, since other
 monsters throw the same thing.
 
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 85 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
 | parameter | default | meaning |
 | --- | --- | --- |
 | `walk` | `4` | walk speed in eighths of a pixel per frame, 1 to 16 (4 is half a pixel) |
@@ -2771,6 +3158,15 @@ stands, which two steps it throws on, and how far each moving step goes.
 on the left and the top of its head. The defaults are the stock numbers,
 so the hack changes nothing until you set a value. What it throws stays as
 it is.
+
+| | |
+| --- | --- |
+| space | no free space, stock instructions rewritten in bank 14; with `flag`, up to 90 bytes of bank 15 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2813,6 +3209,15 @@ wrong nametable page for the direction, it is first repainted onto the
 other page (33 frames, nothing visible moves), so nearly every vertical
 transition in the game scrolls. The weapon and shield follow the hero
 during the slide.
+
+| | |
+| --- | --- |
+| space | 391 bytes of bank 15 (408 with `flag`), about 528 bytes of bank 9; with `sram=true`, 920 bytes of SRAM and 32 of bank 15 |
+| ram | $04E2-$04EC, zero page $9C |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | before ScreenTransition |
+| refused with | DayNightCycle, InfectedTint, TimeOfDay, StatusWard, EnemyHud, LandingTuck |
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -2866,6 +3271,15 @@ reads `ON` while its flag is set and `OFF` while it is clear. Every row is
 `ON` the first time. Only AtlasDev hacks get a row, and only their `flag`
 counts; other hacks are ignored even if they take a flag. The hack can list
 up to 64 rows.
+
+| | |
+| --- | --- |
+| space | 105 bytes of bank 15 and about 872 of bank 9, plus 4 and about 21 per row; with `sram=true`, 1,056 bytes of SRAM plus 25 per row |
+| ram | none; with the SRAM hack, $7FF0-$7FFF of SRAM |
+| roms | US, US rev A, EU |
+| switch | none |
+| order | after DayNightCycle and EnemyHud |
+| refused with | KillSwitch |
 
 Controls: Up and Down move the cursor, and repeat when held. Left, Right or A
 switch the row, and the change applies at once. The last row, `DEFAULTS`,
