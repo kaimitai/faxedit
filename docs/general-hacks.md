@@ -1246,6 +1246,12 @@ AtlasDevLadderCrown flush=true align=8
 Any impassable block beside the top rung counts as the floor, walls
 included.
 
+A flush top needs a ladder at least two blocks tall on its screen, the top
+rung included. With a single block the hero climbs, slips back and grabs it
+again forever, with or without this hack: the original game only climbs while
+a ladder block is under him. This also applies to a ladder that continues on
+the screen below, counting only the blocks on the top screen.
+
 With it, climbing up stops with the hero's feet at floor level, and he can
 walk off to either side, jump, or press Down to climb back. Walking onto the
 top from the floor stands on it instead of sinking, and Down climbs from
