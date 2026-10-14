@@ -1388,6 +1388,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - `OintmentFix`: Added optional protection against poison damage.
 - `FastStart`: Fixed starting mana initialization and the initial HUD display.
 - `KillSwitch`: Added optional iScript execution when pressing Select while paused (providing what is essentially a programmable debug button).
+- `BugFixes`: Added `silent_note_fix` to restore very low square-wave notes that can be incorrectly muted by the NES APU sweep unit.
 
 **Documentation**
 - Expanded general hack documentation, including SRAM-backed hack configuration and examples.

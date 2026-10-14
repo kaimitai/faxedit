@@ -135,7 +135,7 @@ namespace {
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies", "sram" }},
 		{ fh::GeneralHackLib::DynamicTilesets, { "data", "bank", "addr", "enter_building", "exit_building", "sameworld", "otherworld", "start_screen", "stage_doors", "sram" }},
 		{ fh::GeneralHackLib::SRAM, { "ranges", "save_gold", "keep_gold", "color", "absolute_spawn" }},
-		{ fh::GeneralHackLib::BugFixes, {} },
+		{ fh::GeneralHackLib::BugFixes, { "silent_note_fix" }},
 		{ fh::GeneralHackLib::Misc, { "start_menu", "safe_hourglass", "trigger_size" }},
 		{ fh::GeneralHackLib::ConditionalScript, { "trigger", "npc", "sram" }},
 		{ fh::GeneralHackLib::ItemScripts, { "data", "sram" }},
