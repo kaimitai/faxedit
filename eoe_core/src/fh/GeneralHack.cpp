@@ -37,6 +37,7 @@ namespace {
 		fh::GeneralHackLib::SRAM, fh::GeneralHackLib::BugFixes, fh::GeneralHackLib::ItemScripts,
 		fh::GeneralHackLib::PermaDoors, fh::GeneralHackLib::FlagDoorRequirements,
 		fh::GeneralHackLib::BuildingScreenConfig, fh::GeneralHackLib::OtherWorldTransPal2Mus,
+		fh::GeneralHackLib::PushBlockScript,
 		fh::GeneralHackLib::BankedStrings, fh::GeneralHackLib::Misc, fh::GeneralHackLib::StageDoorDirection,
 		fh::GeneralHackLib::AtlasDevFrameScheduler,	fh::GeneralHackLib::AtlasDevDayNightCycle,
 		fh::GeneralHackLib::AtlasDevInfectedTint,

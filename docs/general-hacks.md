@@ -50,6 +50,7 @@ This document describes the hacks in the current library and their parameters. I
   - [BuildingScreenConfig](#buildingscreenconfig)
   - [BankedStrings](#bankedstrings)
   - [StageDoorDirectionHack](#stagedoordirectionhack)
+  - [PushBlockScript](#pushblockscript)
   - [Misc](#misc)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
@@ -821,6 +822,33 @@ If the **SameWorld-to-StageDoor** hack is installed, these direction rules also 
 This is a specialized hack, primarily useful for custom stage layouts and door transitions. Most users will not need to configure individual screens.
 
 The routine can be installed in bank 15, another ROM bank using the vanilla far-call mechanism, or SRAM. When `sram=true`, `bank` and `addr` cannot be specified.
+
+---
+
+### PushBlockScript
+
+Executes an iScript when the player pushes against a pushable block (block with metatile property 6) for a specified number of frames.
+
+Normally, pushing blocks requires a specific item and quest progression, and eventually opens the path to Mascon. This hack replaces that behavior with a configurable script, allowing custom interactions with pushable blocks.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `frames` | `63` | Number of consecutive frames required to trigger the script (1–255) |
+| `script` | none, required | Index of the iScript to execute |
+
+`PushBlockScript frames=100 script=154`
+
+In this example, pushing against a block for 100 consecutive frames executes iScript 154.
+
+The push counter resets when the player stops pushing or is no longer facing a pushable block. The script executes when the counter reaches the specified value.
+
+The hack does not check the vanilla item or quest requirements, allowing pushable blocks to be used anywhere in the game.
+
+Although only one script can be configured, **the script can use `IfWorld` and `IfScreen` to execute different logic depending on the current location**. This allows the same hack to support independent push-block puzzles across multiple worlds and screens.
+
+**PushBlockScript works particularly well with dynamic tilemap changes and `AtlasDevPreventTextBox`.** Together, these allow scripts to modify the screen directly when a block is pushed, without displaying a textbox or interrupting gameplay. This makes it possible to create custom block puzzles, open passages, and trigger environmental changes.
+
+**Note:** The push counter is an 8-bit value and wraps around after 255 frames. Holding against a block long enough may therefore execute the script again. Scripts should use flags or other conditions to prevent unwanted repeated effects.
 
 ---
 

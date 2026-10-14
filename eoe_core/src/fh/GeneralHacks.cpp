@@ -901,9 +901,39 @@ void fh::HackManager::install_PushBlockScript(const fe::Config& p_config, std::v
 
 	klib::Asm6502 code;
 
+	code.lda_zp(RAM::ZP_Joy1_ButtonMask);
+	code.and_imm(0b00000011);
+	code.beq("@reset");
+
+	// left or right button held
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0b01000000);
+	code.rol_a();
+	code.rol_a();
+	code.rol_a();
+	// isolate direction; right=1, left=0
+	code.and_imm(0b00000001);
+	code.tax();
+	code.lda_zp(RAM::ZP_PlayerY);
+	code.sta_zp(RAM::ZP_PlayerPosArgY);
+	code.lda_zp(RAM::ZP_PlayerX);
+	code.clc();
+	code.adc_abs_x("@delta_x");
+	code.sta_zp(RAM::ZP_PlayerPosArgX);
+
+	code.jsr(ROM::Area_ConvertPixelsToBlockPos);
+	code.ldy_abs_x(RAM::ScreenBuffer);
+	code.jsr(ROM::Area_GetBlockProperty);
+	// is the next block of type 6, push-block?
+	code.cmp_imm(0x06);
+	code.bne("@reset");
+
+	code.inc_zp(RAM::ZP_BlockPushCounter);
+	code.lda_zp(RAM::ZP_BlockPushCounter);
 	code.cmp_imm(frames);
 	code.bne("@return");
 
+	// we've pushed for the required amount of frames, call the given script
 	code.lda_imm(script);
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(12);
@@ -912,7 +942,16 @@ void fh::HackManager::install_PushBlockScript(const fe::Config& p_config, std::v
 	code.label("@return");
 	code.rts();
 
-	code.apply_hack_and_clear(p_rom, 15, ROM::CheckPushBlock_CmpCounter);
+	code.label("@reset");
+	code.lda_imm(0x00);
+	code.sta_zp(RAM::ZP_BlockPushCounter);
+	code.rts();
+
+	code.label("@delta_x");
+	code.db(0xff); // -1
+	code.db(0x10);
+
+	code.apply_hack_and_clear(p_rom, 15, ROM::CheckPushBlock);
 }
 
 namespace {

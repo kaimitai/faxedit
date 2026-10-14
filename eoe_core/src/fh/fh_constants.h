@@ -178,7 +178,7 @@ namespace fh {
 		constexpr word ScreenBuffer_IsBlockImpassable{ 0xe87c };
 		constexpr word Area_GetBlockProperty{ 0xe8c6 };
 		constexpr word BLOCK_PROPERTY_IMPASSABLE_MAP{ 0xe8d9 };
-		constexpr word CheckPushBlock_CmpCounter{ 0xe99a };
+		constexpr word CheckPushBlock{ 0xe95d };
 		constexpr word SwTransJmpSetupEnterScreen{ 0xea2c };
 		constexpr word ExitBuilding_SetFacing{ 0xea50 };
 		constexpr word OwTransJmpGameSetupNewArea{ 0xea91 };
@@ -307,6 +307,7 @@ namespace fh {
 		constexpr byte ZP_PlayerMovementTick{ 0xa3 };
 		constexpr byte ZP_PlayerPosArgX = 0xb5;
 		constexpr byte ZP_PlayerPosArgY = 0xb6;
+		constexpr byte ZP_BlockPushCounter{ 0xd7 };
 		constexpr byte ZP_ScriptAddr{ 0xdb };
 		constexpr byte ZP_ScriptAddrU{ 0xdc };
 		constexpr byte ZP_ScriptOffset{ 0xdd };

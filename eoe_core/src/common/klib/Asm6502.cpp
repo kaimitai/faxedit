@@ -756,6 +756,11 @@ void klib::Asm6502::adc_abs_x(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::adc_abs_x(const std::string& p_label, int p_offset) {
+	emit(OP_ADC_ABS_X);
+	dw(p_label);
+}
+
 void klib::Asm6502::adc_ind_y(byte p_addr) {
 	emit(OP_ADC_IND_Y);
 	emit(p_addr);
