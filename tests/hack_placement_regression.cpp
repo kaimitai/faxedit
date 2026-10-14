@@ -72,6 +72,7 @@ int main() {
 			word cursor{ m.install_placed(rom, code, p, ORG, "Test") };
 			require(cursor == ORG + 8 && at(rom, 15, ORG + 6) == 0xce, "bank 15");
 			require(m.far_entry(cfg, rom, p, ORG, cursor, "Test") == ORG && cursor == ORG + 8, "bank 15: no trampoline");
+			require(m.far_entry_nmi(rom, p, ORG, cursor, "Test") == ORG && cursor == ORG + 8, "bank 15: no nmi trampoline");
 		}
 		// bank=11: the trailing free space, and a trampoline at the cursor
 		{
@@ -90,6 +91,21 @@ int main() {
 				require(at(rom, 15, static_cast<word>(ORG + i)) == want[i], "bank=11: trampoline bytes");
 			refuses(rom, "more far entries", [&] { m.far_entry(cfg, rom, p, 0x8010, cursor, "Test"); });
 		}
+		// bank=11 from the nmi: the bank switch the vanilla nmi uses for the sound engine
+		{
+			auto rom{ blank_rom() };
+			const auto cfg{ config(rom) };
+			fh::HackManager m;
+			auto p{ m.place_hack(cfg, rom, hack("bank=11"), "Test", ORG, 8) };
+			auto code{ body(8) };
+			word cursor{ m.install_placed(rom, code, p, ORG, "Test") };
+			require(m.far_entry_nmi(rom, p, 0x8013, cursor, "Test") == ORG && cursor == ORG + 18, "nmi: trampoline");
+			const byte want[]{ 0xad, 0x00, 0x01, 0x48, 0xa2, 0x0b, 0x20, 0x85, 0xcc, 0x20, 0x13, 0x80,
+				0x68, 0xaa, 0x20, 0x85, 0xcc, 0x60 };
+			for (std::size_t i{ 0 }; i < sizeof want; ++i)
+				require(at(rom, 15, static_cast<word>(ORG + i)) == want[i], "nmi: trampoline bytes");
+			refuses(rom, "more far entries", [&] { m.far_entry_nmi(rom, p, 0x8013, cursor, "Test"); });
+		}
 		// sram=true: backed in bank 9 at $a700, or bank 27 at $8000
 		for (const bool expand : { false, true }) {
 			auto rom{ blank_rom(expand) };
@@ -99,8 +115,9 @@ int main() {
 			auto p{ m.place_hack(cfg, rom, hack("sram=true"), "Test", ORG, 8) };
 			require(p.addr == 0x6806, "sram: placement");
 			auto code{ body(8) };
-			m.install_placed(rom, code, p, ORG, "Test");
+			word cursor{ m.install_placed(rom, code, p, ORG, "Test") };
 			require(at(rom, expand ? 27 : 9, static_cast<word>((expand ? 0x8000 : 0xa700) + 6)) == 0x06, "sram: backing copy");
+			require(m.far_entry_nmi(rom, p, 0x6806, cursor, "Test") == 0x6806 && cursor == ORG, "sram: no nmi trampoline");
 		}
 		// placement refusals
 		{

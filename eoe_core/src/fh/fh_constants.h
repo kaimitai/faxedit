@@ -110,6 +110,7 @@ namespace fh {
 		constexpr word PPUBuffer_QueuePaletteUpload{ 0xd090 };
 		constexpr word Screen_SetFadePalette{ 0xd0ad };
 		constexpr word Sound_PlayEffect{ 0xd0e4 };
+		constexpr word Area_LoadScrollData{ 0xd127 };
 		constexpr word Screen_LoadBlockDataVert{ 0xd3ba };
 		constexpr word SET_BLOCKS_TILEMAP_OFFSETS_L{ 0xd4cf };
 		// item menu effect tails: clear the selection, use sound, effect, return.
@@ -157,7 +158,9 @@ namespace fh {
 		constexpr word Fog_OnTick_CMP_02{ 0xdfc7 };
 		constexpr word GameLoop_CheckShowPlayerMenu{ 0xe016 };
 		constexpr word GameLoop_CheckPauseGame_JSR_Sprites_FlipRanges{ 0xe039 };
+		constexpr word Player_SetInitialState{ 0xe0aa };
 		constexpr word Player_SetInitialState_SetFlags{ 0xe0bc };
+		constexpr word Player_HandleIFrames{ 0xe0e8 };
 		constexpr word Player_TryMoveRight{ 0xe1cf };
 		constexpr word Player_TryMoveLeft{ 0xe220 };
 		constexpr word Player_SetStandardAcceleration{ 0xe27f };
@@ -298,6 +301,7 @@ namespace fh {
 		constexpr byte ZP_CurrentSprite_StartPPUTileOffset{ 0x9a };
 		constexpr byte ZP_PlayerPosX_Frac{ 0x9d };
 		constexpr byte ZP_PlayerPosX = 0x9e;
+		constexpr byte ZP_Screen_Maybe_ScrollXCounter{ 0x9f };
 		constexpr byte ZP_PlayerClimbFlySpeedModifier = 0xa0;
 		constexpr byte ZP_PlayerPosY = 0xa1;
 		constexpr byte ZP_PlayerMovementTick{ 0xa3 };

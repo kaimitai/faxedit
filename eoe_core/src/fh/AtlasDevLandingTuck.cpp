@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "fe/sprite/fe_sprite_constants.h"
+#include "fh_constants.h"
 #include "common/klib/Asm6502.h"
 
 #include <algorithm>
@@ -24,13 +25,14 @@
 // project already exports, so edited graphics follow automatically and no
 // chr, no xml frame and no tile budget is touched.
 //
-// seven instructions are replaced. the per frame tick at $e0d3 gains a call
-// to the state machine; the pose picker at $ec43 and the weapon and shield
-// drawers at bank 14 $b875 and $b9d1 get sent through a chooser that hands
-// the stock drawer a different record while the pose is up; and the three
-// places that end a life or a screen, $d127, $e0aa and $d8f4, clear the state
-// first. all seven are checked against their vanilla bytes before anything is
-// written, and they are identical in the us, us rev a, eu and jp roms.
+// seven sites are hooked. the per frame player update gains a call to the
+// state machine; the pose picker in Player_DrawBody and the tails of
+// Player_DrawWeapon and Player_DrawShield get sent through a chooser that
+// hands the stock drawer a different record while the pose is up; and the
+// three places that end a life or a screen, Area_LoadScrollData,
+// Player_SetInitialState and Player_HandleDeath, clear the state first. all
+// seven are checked against their vanilla bytes before anything is written,
+// and they are identical in the us, us rev a, eu and jp roms.
 //
 // one ram byte at $04fe holds it: bit 7 says the hero was in the air last
 // frame, bit 6 says the pose is up, and the low three bits count it down.
@@ -41,17 +43,23 @@
 // identical. with a flag the pose appears only while the flag is set; clear,
 // the hero lands the way he always did.
 namespace {
+	namespace ROM = fh::ROM;
+	namespace RAM = fh::RAM;
+
 	constexpr byte BANK14{ 14 }, BANK15{ 15 };
 
 	// the state byte and its bits
 	constexpr word STATE{ 0x04fe };
 	constexpr byte PREVIOUS_AIR{ 0x80 }, ACTIVE{ 0x40 }, REMAINING{ 0x07 };
 
-	// the seven sites, and the stock routines the hooks hand control back to
-	constexpr word TICK{ 0xe0d3 }, POSE{ 0xec43 }, CLEAR_TRANSITION{ 0xd127 },
-		CLEAR_INIT{ 0xe0aa }, CLEAR_DEATH{ 0xd8f4 };
-	constexpr word SHIELD_DRAW{ 0xb9d1 }, WEAPON_DRAW{ 0xb875 };
-	constexpr word STOCK_TICK{ 0xe0e8 }, STOCK_DRAW{ 0xf039 }, DRAW_FROM_POINTER{ 0xf07d };
+	// the seven sites, named after the routine they sit in
+	constexpr word GameLoop_UpdatePlayer_handleIFrames{ 0xe0d3 };
+	constexpr word Player_DrawBody_setAppearance{ 0xec43 };
+	constexpr word Player_DrawShield_tail{ 0xb9d1 };      // bank 14
+	constexpr word Player_DrawWeapon_tail{ 0xb875 };      // bank 14
+	constexpr word Player_HandleDeath_checkState{ 0xd8f4 };
+	// Sprite_Draw past its own record lookup, with the record in $3a
+	constexpr word Sprite_Draw_fromPointer{ 0xf07d };
 
 	// jsr $e0e8
 	constexpr std::array<byte, 3> TICK_ORIG{ 0x20, 0xe8, 0xe0 };
@@ -66,7 +74,6 @@ namespace {
 	// lda $a4 / and #$40
 	constexpr std::array<byte, 4> CLEAR_DEATH_ORIG{ 0xa5, 0xa4, 0x29, 0x40 };
 
-	constexpr word FLAG_BASE{ 0x0101 };
 	constexpr int MAX_FLAG{ 247 };
 
 	// the jump frame of each gear group, and the crop taken from it
@@ -153,7 +160,7 @@ namespace {
 }
 
 word fh::HackManager::install_AtlasDevLandingTuck(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
-	const fh::GeneralHack& p_hack) const {
+	const fh::GeneralHack& p_hack) {
 	const std::string name{ "AtlasDevLandingTuck" };
 	// every parameter is judged in every mode, vanilla included, so a typo is
 	// caught even when the hack installs nothing
@@ -173,135 +180,152 @@ word fh::HackManager::install_AtlasDevLandingTuck(const fe::Config& p_config, st
 		return cpu_addr;
 
 	// ownership checks first, so a refused install leaves the rom byte identical
-	require_site(p_rom, BANK15, TICK, TICK_ORIG, name);
-	require_site(p_rom, BANK15, POSE, POSE_ORIG, name);
-	require_site(p_rom, BANK14, SHIELD_DRAW, DRAW_ORIG, name);
-	require_site(p_rom, BANK14, WEAPON_DRAW, DRAW_ORIG, name);
-	require_site(p_rom, BANK15, CLEAR_TRANSITION, CLEAR_TRANSITION_ORIG, name);
-	require_site(p_rom, BANK15, CLEAR_INIT, CLEAR_INIT_ORIG, name);
-	require_site(p_rom, BANK15, CLEAR_DEATH, CLEAR_DEATH_ORIG, name);
+	require_site(p_rom, BANK15, GameLoop_UpdatePlayer_handleIFrames, TICK_ORIG, name);
+	require_site(p_rom, BANK15, Player_DrawBody_setAppearance, POSE_ORIG, name);
+	require_site(p_rom, BANK14, Player_DrawShield_tail, DRAW_ORIG, name);
+	require_site(p_rom, BANK14, Player_DrawWeapon_tail, DRAW_ORIG, name);
+	require_site(p_rom, BANK15, ROM::Area_LoadScrollData, CLEAR_TRANSITION_ORIG, name);
+	require_site(p_rom, BANK15, ROM::Player_SetInitialState, CLEAR_INIT_ORIG, name);
+	require_site(p_rom, BANK15, Player_HandleDeath_checkState, CLEAR_DEATH_ORIG, name);
 	const auto records{ crop_jump_frames(p_config, p_rom, name) };
 
 	klib::Asm6502 code;
-	const auto raw = [&code](std::initializer_list<byte> p_bytes) {
-		for (byte b : p_bytes) code.db(b);
-	};
 
 	// the stock call this replaces runs first, then the state machine, and the
 	// stock routine's own flags and accumulator are handed back untouched
-	code.label("tick");
-	code.jsr(STOCK_TICK);
-	raw({ 0x08, 0x48 });                       // php / pha
-	code.jsr("evaluate");
-	raw({ 0x68, 0x28, 0x60 });                 // pla / plp / rts
+	code.label("@tick");
+	code.jsr(ROM::Player_HandleIFrames);
+	code.php();
+	code.pha();
+	code.jsr("@evaluate");
+	code.pla();
+	code.plp();
+	code.rts();
 
-	code.label("evaluate");
+	code.label("@evaluate");
 	if (flag >= 0) {
-		code.lda_abs(static_cast<word>(FLAG_BASE + (flag >> 3)));
+		code.lda_abs(static_cast<word>(RAM::Flags + (flag >> 3)));
 		code.and_imm(static_cast<byte>(1 << (flag & 7)));
-		code.beq("cancel");
+		code.beq("@cancel");
 	}
-	code.lda_zp(0x54);                         // a screen change is under way
+	code.lda_zp(RAM::ZP_Screen_ScrollDirection);    // a screen change is under way
 	code.cmp_imm(0xff);
-	code.bne("cancel");
-	code.lda_abs(0x0438);                      // a cutscene owns the hero
-	code.bne("cancel");
-	code.lda_zp(0xa4);                         // climbing, or already crouched
+	code.bne("@cancel");
+	code.lda_abs(RAM::PlayerIsDead);
+	code.bne("@cancel");
+	code.lda_zp(RAM::ZP_PlayerState);               // climbing, or already crouched
 	code.and_imm(0x98);
-	code.bne("cancel");
-	code.lda_zp(0xa5);                         // wing boots, attacking, hurt
+	code.bne("@cancel");
+	code.lda_zp(RAM::ZP_PlayerStatus);              // wing boots, attacking, hurt
 	code.and_imm(0x83);
-	code.bne("cancel");
-	code.lda_zp(0x19);                         // jump or attack pressed this frame
+	code.bne("@cancel");
+	code.lda_zp(RAM::ZP_Joy1_ChangedButtonMask);    // jump or attack pressed this frame
 	code.and_imm(0xf0);
-	code.bne("cancel");
-	code.lda_zp(0xa4);
-	code.and_imm(0x05);                        // in the air
-	code.beq("grounded");
+	code.bne("@cancel");
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x05);                             // in the air
+	code.beq("@grounded");
 	code.lda_imm(PREVIOUS_AIR);
 	code.sta_abs(STATE);
 	code.rts();
 
-	code.label("grounded");
+	code.label("@grounded");
 	code.lda_abs(STATE);
-	code.bmi("touchdown");                     // he was in the air last frame
+	code.bmi("@touchdown");                         // he was in the air last frame
 	code.and_imm(REMAINING);
-	code.jmp("count");
-	code.label("touchdown");
+	code.jmp("@count");
+	code.label("@touchdown");
 	code.lda_imm(frames);
-	code.label("count");
-	code.beq("cancel");
+	code.label("@count");
+	code.beq("@cancel");
 	code.sec();
 	code.sbc_imm(1);
 	code.ora_imm(ACTIVE);
 	code.sta_abs(STATE);
 	code.rts();
-	code.label("cancel");
+	code.label("@cancel");
 	code.lda_imm(0);
 	code.sta_abs(STATE);
 	code.rts();
 
 	// the chooser. while the pose is up the stock drawer is entered past its
 	// own record lookup, with the crop's address in $3a
-	code.label("pose");
-	raw({ 0x08, 0x48 });
+	code.label("@pose");
+	code.php();
+	code.pha();
 	code.lda_abs(STATE);
 	code.and_imm(ACTIVE);
-	code.bne("pose_tuck");
-	raw({ 0x68, 0x28 });
-	code.jmp(STOCK_DRAW);
-	code.label("pose_tuck");
-	raw({ 0x68, 0x28, 0x4a, 0x4a, 0x4a, 0x0a, 0xaa });   // pla / plp / gear group * 2 into x
-	code.lda_abs_x("pose_table");
-	code.sta_zp(0x3a);
-	code.lda_abs_x("pose_table_hi");
-	code.sta_zp(0x3b);
-	code.lda_abs(0x0100);                      // the bank the drawer returns to
+	code.bne("@pose_tuck");
+	code.pla();
+	code.plp();
+	code.jmp(ROM::Sprite_SetPlayerAppearanceAddr);
+	code.label("@pose_tuck");
+	code.pla();
+	code.plp();
+	code.lsr_a(3);                                  // gear group * 2 into x
+	code.asl_a();
+	code.tax();
+	code.lda_abs_x("@pose_table");
+	code.sta_zp(RAM::ZP_Sprite_TileInfo_ReadAddr_L);
+	code.lda_abs_x("@pose_table", 1);
+	code.sta_zp(RAM::ZP_Sprite_TileInfo_ReadAddr_U);
+	code.lda_abs(RAM::CurrentROMBank);              // the bank the drawer returns to
 	code.pha();
-	code.jmp(DRAW_FROM_POINTER);
+	code.jmp(Sprite_Draw_fromPointer);
 
 	// the shield hangs off the body, so it comes down with it
-	code.label("shield_draw");
-	raw({ 0x08, 0x48 });
+	code.label("@shield_draw");
+	code.php();
+	code.pha();
 	code.lda_abs(STATE);
 	code.and_imm(ACTIVE);
-	code.beq("shield_stock");
-	code.lda_zp(0x28);
+	code.beq("@shield_stock");
+	code.lda_zp(RAM::ZP_Arg_DrawSprite_PosY);
 	code.clc();
 	code.adc_imm(8);
-	code.bcs("shield_stock");
-	code.sta_zp(0x28);
-	code.label("shield_stock");
-	raw({ 0x68, 0x28 });
-	code.jmp(STOCK_DRAW);
+	code.bcs("@shield_stock");
+	code.sta_zp(RAM::ZP_Arg_DrawSprite_PosY);
+	code.label("@shield_stock");
+	code.pla();
+	code.plp();
+	code.jmp(ROM::Sprite_SetPlayerAppearanceAddr);
 
 	// the weapon is not drawn at all while he is tucked
-	code.label("weapon_draw");
-	raw({ 0x08, 0x48 });
+	code.label("@weapon_draw");
+	code.php();
+	code.pha();
 	code.lda_abs(STATE);
 	code.and_imm(ACTIVE);
-	code.beq("weapon_stock");
-	raw({ 0x68, 0x28, 0x60 });
-	code.label("weapon_stock");
-	raw({ 0x68, 0x28 });
-	code.jmp(STOCK_DRAW);
+	code.beq("@weapon_stock");
+	code.pla();
+	code.plp();
+	code.rts();
+	code.label("@weapon_stock");
+	code.pla();
+	code.plp();
+	code.jmp(ROM::Sprite_SetPlayerAppearanceAddr);
 
 	// the three lifecycle stubs each clear the byte and then run the vanilla
 	// instructions they displaced. clear_all leaves a zero, which is the value
 	// the init site was storing anyway
-	code.label("clear_all");
+	code.label("@clear_all");
 	code.lda_imm(0);
 	code.sta_abs(STATE);
 	code.rts();
-	code.label("clear_transition");
-	code.jsr("clear_all");
-	raw({ 0x86, 0x54, 0xa5, 0x0d, 0x60 });
-	code.label("clear_init");
-	code.jsr("clear_all");
-	raw({ 0x85, 0x9f, 0x60 });
-	code.label("clear_death");
-	code.jsr("clear_all");
-	raw({ 0xa5, 0xa4, 0x29, 0x40, 0x60 });
+	code.label("@clear_transition");
+	code.jsr("@clear_all");
+	code.stx_zp(RAM::ZP_Screen_ScrollDirection);
+	code.lda_zp(RAM::ZP_CameraNametableParity);
+	code.rts();
+	code.label("@clear_init");
+	code.jsr("@clear_all");
+	code.sta_zp(RAM::ZP_Screen_Maybe_ScrollXCounter);
+	code.rts();
+	code.label("@clear_death");
+	code.jsr("@clear_all");
+	code.lda_zp(RAM::ZP_PlayerState);
+	code.and_imm(0x40);
+	code.rts();
 
 	// gear groups that crop to the same bytes share one record
 	std::vector<std::vector<byte>> unique;
@@ -312,55 +336,56 @@ word fh::HackManager::install_AtlasDevLandingTuck(const fe::Config& p_config, st
 		if (found == unique.end())
 			unique.push_back(records[i]);
 	}
-	const word table{ static_cast<word>(cpu_addr + code.size()) };
+	// the body, the table and the records go in one piece: at the bank 15
+	// cursor, or with sram=true in the sram code area. the drawer is entered
+	// past its switch to bank 7, so it reads the records with bank 14 still
+	// mapped, and only bank 15 or sram can hold them
+	const std::size_t size{ code.size() + 2 * fe::c::PLAYER_TYPE_COUNT + [&] {
+		std::size_t n{ 0 };
+		for (const auto& record : unique) n += record.size();
+		return n;
+	}() };
+	const auto place{ place_hack(p_config, p_rom, p_hack, name, cpu_addr, size, 0) };
+	const word table{ static_cast<word>(place.addr + code.size()) };
 	std::vector<word> at(unique.size());
 	word next{ static_cast<word>(table + 2 * fe::c::PLAYER_TYPE_COUNT) };
 	for (std::size_t i{ 0 }; i < unique.size(); ++i) {
 		at[i] = next;
 		next = static_cast<word>(next + unique[i].size());
 	}
-	code.label("pose_table");
-	code.db(static_cast<byte>(at[alias[0]]));
-	code.label("pose_table_hi");
-	code.db(static_cast<byte>(at[alias[0]] >> 8));
-	for (std::size_t i{ 1 }; i < alias.size(); ++i)
-		code.dw(at[alias[i]]);
+	code.label("@pose_table");
+	for (const auto a : alias)
+		code.dw(at[a]);
 	for (const auto& record : unique)
 		for (byte b : record)
 			code.db(b);
 
-	const std::size_t size{ code.size() };
-	const auto off{ klib::Asm6502::get_file_offset(BANK15, cpu_addr) };
-	for (std::size_t i{ 0 }; i < size; ++i)
-		if (off + i >= p_rom.size() || p_rom[off + i] != 0xff)
-			throw std::runtime_error(std::format("{}: bank 15 space at ${:04x} is not free", name, cpu_addr + i));
-
-	const word tick{ static_cast<word>(cpu_addr + code.label_position("tick")) };
-	const word pose{ static_cast<word>(cpu_addr + code.label_position("pose")) };
-	const word shield{ static_cast<word>(cpu_addr + code.label_position("shield_draw")) };
-	const word weapon{ static_cast<word>(cpu_addr + code.label_position("weapon_draw")) };
-	const word transition{ static_cast<word>(cpu_addr + code.label_position("clear_transition")) };
-	const word init{ static_cast<word>(cpu_addr + code.label_position("clear_init")) };
-	const word death{ static_cast<word>(cpu_addr + code.label_position("clear_death")) };
-	code.apply_hack_and_clear(p_rom, BANK15, cpu_addr);
+	const word tick{ code.label_addr("@tick", place.addr) };
+	const word pose{ code.label_addr("@pose", place.addr) };
+	const word shield{ code.label_addr("@shield_draw", place.addr) };
+	const word weapon{ code.label_addr("@weapon_draw", place.addr) };
+	const word transition{ code.label_addr("@clear_transition", place.addr) };
+	const word init{ code.label_addr("@clear_init", place.addr) };
+	const word death{ code.label_addr("@clear_death", place.addr) };
+	const word cursor{ install_placed(p_rom, code, place, cpu_addr, name) };
 
 	code.jsr(tick);
-	code.apply_hack_and_clear(p_rom, BANK15, TICK);
+	code.apply_hack_and_clear(p_rom, BANK15, GameLoop_UpdatePlayer_handleIFrames);
 	code.jsr(pose);
-	code.apply_hack_and_clear(p_rom, BANK15, POSE);
+	code.apply_hack_and_clear(p_rom, BANK15, Player_DrawBody_setAppearance);
 	code.jmp(shield);
-	code.apply_hack_and_clear(p_rom, BANK14, SHIELD_DRAW);
+	code.apply_hack_and_clear(p_rom, BANK14, Player_DrawShield_tail);
 	code.jmp(weapon);
-	code.apply_hack_and_clear(p_rom, BANK14, WEAPON_DRAW);
+	code.apply_hack_and_clear(p_rom, BANK14, Player_DrawWeapon_tail);
 	code.jsr(transition);
 	code.nop();
-	code.apply_hack_and_clear(p_rom, BANK15, CLEAR_TRANSITION);
+	code.apply_hack_and_clear(p_rom, BANK15, ROM::Area_LoadScrollData);
 	code.jsr(init);
 	code.nop();
-	code.apply_hack_and_clear(p_rom, BANK15, CLEAR_INIT);
+	code.apply_hack_and_clear(p_rom, BANK15, ROM::Player_SetInitialState);
 	code.jsr(death);
 	code.nop();
-	code.apply_hack_and_clear(p_rom, BANK15, CLEAR_DEATH);
+	code.apply_hack_and_clear(p_rom, BANK15, Player_HandleDeath_checkState);
 
-	return static_cast<word>(cpu_addr + size);
+	return cursor;
 }
