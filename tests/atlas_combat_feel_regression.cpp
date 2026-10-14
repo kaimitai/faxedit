@@ -221,6 +221,12 @@ namespace {
 		install(over, "AtlasDevCombatFeel profile=megaman iframes=99");
 		require(over[off(15, 0xc84a)] == 99 && over[off(15, 0xe0f1)] == 97, "explicit iframes did not override the profile");
 		require(over[off(15, 0xe280)] == (352 & 0xff), "the profile's walk was lost under an override");
+		// PoisonPickup listed first: the poison touch is lda #item, jsr Player_PickUpItem
+		auto poison{ vanilla_rom() };
+		const std::array<byte, 5> pickup{ 0xa9, 0x10, 0x20, 0xcd, 0xc8 };
+		std::copy(pickup.begin(), pickup.end(), poison.begin() + off(15, 0xc849));
+		install(poison, "AtlasDevCombatFeel iframes=99");
+		require(poison[off(15, 0xc84a)] == 0x10 && poison[off(14, 0x89d6)] == 99, "PoisonPickup's poison touch was not left alone");
 	}
 
 	void test_centering_refusals() {

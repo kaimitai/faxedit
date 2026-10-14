@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include "fh_constants.h"
 
 #include <algorithm>
 #include <array>
@@ -168,10 +169,18 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 	klib::Asm6502 center;
 	if (walk > 0x0100) emit_center(center);
 
+	// PoisonPickup turns the poison touch into an item pickup: lda #item,
+	// jsr Player_PickUpItem where the mercy time was set. nobody is hurt
+	// there, so that site is left as it is, whichever hack comes first
+	const auto poison{ klib::Asm6502::get_file_offset(IFRAMES_C.bank, IFRAMES_C.addr) };
+	const bool poison_item{ rom[poison] == 0xa9 && rom[poison + 2] == 0x20
+		&& rom[poison + 3] == (fh::ROM::Player_PickUpItem & 0xff) && rom[poison + 4] == (fh::ROM::Player_PickUpItem >> 8) };
+
 	// every check is complete before any mutation
 	for (const Site* s : { &WALK_BASE, &WALK_CAP, &RAMP, &RAMP_READER, &IFRAMES_A, &IFRAMES_B,
 		&IFRAMES_C, &RELEASE, &KNOCKBACK, &ATTACK, &ATTACK_READER, &MOVEATTACK })
-		require(rom, *s);
+		if (s != &IFRAMES_C || !poison_item)
+			require(rom, *s);
 	if (center.size() > 0) {
 		require(rom, CENTER);
 		const auto off{ klib::Asm6502::get_file_offset(15, cpu_addr) };
@@ -185,7 +194,9 @@ word fh::HackManager::install_AtlasDevCombatFeel(const fe::Config&, std::vector<
 	put(rom, WALK_CAP, 3, static_cast<byte>(walkmax & 0xff));
 	put(rom, WALK_CAP, 7, static_cast<byte>(walkmax >> 8));
 	for (std::size_t i{ 0 }; i < 4; ++i) put(rom, RAMP, i, ramp[i]);
-	for (const Site* s : { &IFRAMES_A, &IFRAMES_B, &IFRAMES_C }) put(rom, *s, 1, static_cast<byte>(iframes));
+	for (const Site* s : { &IFRAMES_A, &IFRAMES_B, &IFRAMES_C })
+		if (s != &IFRAMES_C || !poison_item)
+			put(rom, *s, 1, static_cast<byte>(iframes));
 	put(rom, RELEASE, 9, static_cast<byte>(iframes - shove));
 	put(rom, KNOCKBACK, 1, static_cast<byte>(knockback & 0xff));
 	put(rom, KNOCKBACK, 5, static_cast<byte>(knockback >> 8));

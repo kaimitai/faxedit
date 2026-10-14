@@ -1,6 +1,7 @@
 #include "HackManager.h"
 #include "fe/Config.h"
 #include "common/klib/Asm6502.h"
+#include "fh_constants.h"
 
 #include <algorithm>
 #include <cctype>
@@ -20,11 +21,15 @@
 // reads, and a zero id is refused, so the empty tile dig outside trunk does
 // not happen while the hack is on.
 //
-// three vanilla instructions in bank 15 are retargeted: the selected item
-// load at $c48b in the down and b check, the counter reset at $e9b9 that
+// three vanilla instructions in bank 15 are retargeted: the b button load
+// at $c484 in the down and b check, the counter reset at $e9b9 that
 // every non fountain frame of the push check reaches, and the spend call at
 // $c64c inside the dig. no ram is claimed: $d7 is the push counter the
 // mascon fountain uses, and its branch never reaches the reset.
+//
+// the press hook takes the b button load, not the selected item load after
+// it, and goes on there when it does not dig, so ItemScripts, which takes
+// the selected item load, works listed before or after this hack.
 //
 // flag=n gates the hack on extended flag n at run time; a clear flag is
 // vanilla at every entry.
@@ -38,12 +43,12 @@ namespace {
 	constexpr byte MAX_FLAG{ 247 };
 	constexpr byte MATTOCK{ 0x09 };
 	constexpr word ITEMS{ 0x03ad }, COUNT{ 0x03c6 }, SELECTED{ 0x03c1 };
-	constexpr byte ZP_JOY{ 0x16 }, ZP_A4{ 0xa4 }, ZP_X{ 0x9e }, ZP_Y{ 0xa1 }, ZP_AREA{ 0x24 }, ZP_PUSH{ 0xd7 };
+	constexpr byte ZP_PRESSED{ 0x19 }, ZP_JOY{ 0x16 }, ZP_A4{ 0xa4 }, ZP_X{ 0x9e }, ZP_Y{ 0xa1 }, ZP_AREA{ 0x24 }, ZP_PUSH{ 0xd7 };
 	constexpr byte ARG_X{ 0xb5 }, ARG_Y{ 0xb6 };
 	constexpr word SCREEN{ 0x0600 }, DIST_TABLE{ 0xc68d }, ROCK_TABLE{ 0xc68f };
-	constexpr word V_DIG{ 0xc616 }, V_AFTER_LDA{ 0xc48e }, V_CLEAR{ 0xc4bf }, V_TO_BLOCK{ 0xe86c };
-	constexpr word SITE_PRESS{ 0xc48b }, SITE_PUSH{ 0xe9b9 }, SITE_SPEND{ 0xc64c };
-	constexpr byte PRESS_ORIG[3]{ 0xad, 0xc1, 0x03 };
+	constexpr word V_DIG{ 0xc616 }, V_CLEAR{ 0xc4bf }, V_TO_BLOCK{ 0xe86c };
+	constexpr word SITE_PRESS{ fh::ROM::GameLoop_CheckUseCurrentItem_LDA_Pressed }, SITE_PUSH{ 0xe9b9 }, SITE_SPEND{ 0xc64c };
+	constexpr byte PRESS_ORIG[3]{ 0xad, 0x19, 0x00 };
 	constexpr byte PUSH_ORIG[4]{ 0xa9, 0x00, 0x85, 0xd7 };
 	constexpr byte SPEND_ORIG[3]{ 0x20, 0xbf, 0xc4 };
 	constexpr byte TO_BLOCK_ORIG[16]{ 0xa5, 0xb6, 0x29, 0xf0, 0x85, 0x00, 0xa5, 0xb5, 0x4a, 0x4a, 0x4a, 0x4a, 0x05, 0x00, 0xaa, 0x60 };
@@ -101,11 +106,14 @@ namespace {
 		code.sec(); code.rts();
 		code.label("@no"); code.clc(); code.rts();
 
+		// b not pressed returns as the stock check does; no dig goes on to the
+		// selected item load, whoever owns it
 		code.label("@press");
-		flag_test(code, s, "@press_vanilla");
+		code.lda_zp(ZP_PRESSED); code.and_imm(0x40); code.beq("@press_ret");
+		flag_test(code, s, "@press_item");
 		code.jsr("@can_dig"); code.bcs("@press_dig");
 		code.lda_abs(SELECTED); code.cmp_imm(MATTOCK); code.beq("@press_ret");
-		code.label("@press_vanilla"); code.lda_abs(SELECTED); code.jmp(V_AFTER_LDA);
+		code.label("@press_item"); code.jmp(fh::ROM::GameLoop_CheckUseCurrentItem_LDA_Item);
 		code.label("@press_dig"); code.jmp(V_DIG);
 		code.label("@press_ret"); code.rts();
 

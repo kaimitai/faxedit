@@ -75,6 +75,7 @@ namespace fh {
 		constexpr word Screen_ClearSprites{ 0xc130 };
 		constexpr word Screen_LoadSpriteInfo{ 0xc1b4 };
 		constexpr word GameLoop_CheckUseCurrentItem_BNE_Return{ 0xc47c };
+		constexpr word GameLoop_CheckUseCurrentItem_LDA_Pressed{ 0xc484 };
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
 		constexpr word UseItem_JumpTable{ 0xc49d };
