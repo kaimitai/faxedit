@@ -27,6 +27,7 @@ This document describes the hacks in the current library and their parameters. I
   - [Requirements](#requirements)
   - [Backing ROM configuration](#backing-rom-configuration)
   - [Choosing which hacks to install in SRAM](#choosing-which-hacks-to-install-in-sram)
+- [Hacks by Purpose](#hacks-by-purpose)
 - [The Library](#the-library)
   - [KillSwitch](#killswitch)
   - [SameWorldTransPal2Mus](#sameworldtranspal2mus)
@@ -194,6 +195,131 @@ SRAM-backed hacks have several advantages:
 The available SRAM space is limited to approximately 6 KB. If this becomes exhausted, some hacks must be installed normally instead. ROM banks 12, 14 and the fixed bank 15 can still be used for hacks, subject to their available space.
 
 Expanded ROMs are particularly convenient because they provide additional free banks. Standard ROMs have much tighter constraints, with several features competing for the available space in bank 9.
+
+<hr>
+
+## Hacks by Purpose
+
+Every hack in the library, grouped by what it changes.
+
+### Saving and starting
+
+| hack | what it does |
+| --- | --- |
+| [SRAM](#sram) | battery saves instead of passwords |
+| [FastStart](#faststart) | more health, mana and gold at the start, and the Ring of Elf |
+| [KillSwitch](#killswitch) | Select while paused kills the hero, a way out of softlocks |
+| [BuildingScreenConfig](#buildingscreenconfig) | building screens for spawn points and the ending, and the way the hero faces at building doors |
+
+### The hero
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevJumpControl](#atlasdevjumpcontrol) | coyote time, a jump buffer, a short hop and air jumps |
+| [AtlasDevFallControl](#atlasdevfallcontrol) | a fall curve, and steering in the air |
+| [AtlasDevRunControl](#atlasdevruncontrol) | double tap a direction to run |
+| [AtlasDevCombatFeel](#atlasdevcombatfeel) | walk speed, mercy time after a hit, the shove and the swing |
+| [AtlasDevLadderControl](#atlasdevladdercontrol) | climb speed, and attacking on ladders |
+| [AtlasDevLadderCrown](#atlasdevladdercrown) | stand on a ladder top and walk off it |
+| [AtlasDevLandingTuck](#atlasdevlandingtuck) | a short crouch pose on landing |
+
+### Items
+
+| hack | what it does |
+| --- | --- |
+| [FlexibleItems](#flexibleitems) | use items indoors, and sell any item in shops |
+| [ItemScripts](#itemscripts) | items that run an iScript when used |
+| [PoisonPickup](#poisonpickup) | poison gives an item instead of hurting |
+| [QuestFlagItemDrops](#questflagitemdrops) | the mattock and Wing Boots drops can be earned again |
+| [BossLockedItems](#bosslockeditems) | any boss can guard any locked item |
+| [AtlasDevSmartMattock](#atlasdevsmartmattock) | dig with a carried mattock, without selecting it |
+
+### Doors
+
+| hack | what it does |
+| --- | --- |
+| [PermaDoors](#permadoors) | doors stay open once unlocked |
+| [FlagDoorRequirements](#flagdoorrequirements) | doors that need extended flags |
+| [AtlasDevSmartKeys](#atlasdevsmartkeys) | open doors with a carried key, without selecting it |
+| [StageDoorDirection](#stagedoordirection) | the way the hero faces after a stage door |
+
+### Enemies
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevEnemyStats](#atlasdevenemystats) | scale enemy hit points, damage, experience and gold |
+| [AtlasDevEnemyHud](#atlasdevenemyhud) | a health bar for the last enemy hit |
+| [AtlasDevStatusWard](#atlasdevstatusward) | a timed status effect pushes monsters away, or pulls them in |
+
+### Monsters
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevSirGawaineControl](#atlasdevsirgawainecontrol) | Sir Gawaine announces his sword attack |
+| [AtlasDevWolfmanControl](#atlasdevwolfmancontrol) | the same for Wolfman |
+| [AtlasDevMaskmanControl](#atlasdevmaskmancontrol) | Maskman's spear hurts where it is drawn |
+| [AtlasDevHornetControl](#atlasdevhornetcontrol) | the Hornet's speed and bob |
+| [AtlasDevYuinaruControl](#atlasdevyuinarucontrol) | how Yuinaru swoops |
+| [AtlasDevBihorudaControl](#atlasdevbihorudacontrol) | how Bihoruda swoops |
+| [AtlasDevYareekaControl](#atlasdevyareekacontrol) | Yareeka's dash |
+| [AtlasDevRipasheikuControl](#atlasdevripasheikucontrol) | Ripasheiku's drift, rest and shots |
+| [AtlasDevNagaControl](#atlasdevnagacontrol) | how Naga chases your height |
+| [AtlasDevPakukameControl](#atlasdevpakukamecontrol) | how Pakukame spawns Liliths |
+| [AtlasDevSugataControl](#atlasdevsugatacontrol) | Sugata's curse |
+| [AtlasDevGiantBeesControl](#atlasdevgiantbeescontrol) | the Giant Bees' climb, dive and hover |
+| [AtlasDevZorugeriruControl](#atlasdevzorugerirucontrol) | Zorugeriru's rock drops |
+| [AtlasDevNecronAidesControl](#atlasdevnecronaidescontrol) | the Necron Aides' climb and walk |
+| [AtlasDevIshiisuControl](#atlasdevishiisucontrol) | Ishiisu's walk, reach and throw |
+| [AtlasDevTamazutsuControl](#atlasdevtamazutsucontrol) | how long Tamazutsu hides, stays up and warns |
+| [AtlasDevBorabohraControl](#atlasdevborabohracontrol) | Borabohra's glide |
+| [AtlasDevMagmanControl](#atlasdevmagmancontrol) | how long Magman hides and stays out |
+| [AtlasDevKingGrieveControl](#atlasdevkinggrievecontrol) | King Grieve's shots, hover and rest |
+| [AtlasDevNashControl](#atlasdevnashcontrol) | Nash's hide, attack and throw |
+| [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol) | Execution Hood's walk and throw |
+| [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol) | Shadow Eura's steps, rests and throws |
+
+### Screens, palettes and music
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevScreenTransition](#atlasdevscreentransition) | slide or blink, for each direction of a screen change |
+| [AtlasDevFastBlink](#atlasdevfastblink) | shorter blinking screen changes |
+| [AtlasDevVerticalScroll](#atlasdevverticalscroll) | vertical room changes scroll instead of cutting to black |
+| [SameWorldTransPal2Mus](#sameworldtranspal2mus) | palette-to-music rules on screen changes inside a world |
+| [OtherWorldTransPal2Mus](#otherworldtranspal2mus) | palette-to-music rules on screen changes between worlds |
+| [FogRules](#fogrules) | fog on any world and palette |
+| [DynamicTilesets](#dynamictilesets) | a tileset per screen |
+| [AtlasDevDayNightCycle](#atlasdevdaynightcycle) | the background dims and returns over a day |
+| [AtlasDevInfectedTint](#atlasdevinfectedtint) | a pulsing tint on the hero |
+| [AtlasDevTimeOfDay](#atlasdevtimeofday) | an in-game clock in the HUD |
+
+### Scripts and text
+
+| hack | what it does |
+| --- | --- |
+| [ConditionalScript](#conditionalscript) | sprite iScripts that depend on extended flags |
+| [PushBlockScript](#pushblockscript) | pushing a block runs an iScript |
+| [AtlasDevPreventTextbox](#atlasdevpreventtextbox) | scripts that run without a textbox |
+| [BankedStrings](#bankedstrings) | message text in several banks |
+| [TextSpeed](#textspeed) | text speed |
+
+### Speed
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevSpriteSpeed](#atlasdevspritespeed) | less CPU time building sprites |
+| [AtlasDevPpuDrainUnroll](#atlasdevppudrainunroll) | faster tile uploads |
+| [AtlasDevQueueLess](#atlasdevqueueless) | no repeated entity graphics uploads when a room loads |
+
+### Menus, switches and fixes
+
+| hack | what it does |
+| --- | --- |
+| [AtlasDevFaxOptions](#atlasdevfaxoptions) | a pause menu that switches hacks on and off |
+| [AtlasDevFrameScheduler](#atlasdevframescheduler) | the shared frame tick DayNightCycle, InfectedTint, TimeOfDay and StatusWard run on |
+| [BugFixes](#bugfixes) | fixes for known bugs of the original game |
+| [OintmentFix](#ointmentfix) | the Ointment makes the hero fully invincible |
+| [Misc](#misc) | small gameplay and quality of life tweaks |
 
 <hr>
 
@@ -1506,6 +1632,11 @@ still bought in shops; only the trip to the item menu goes away.
 | order | after PermaDoors |
 | refused with | none |
 
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mode` | `carried` | `carried` opens a door with a key the hero is carrying; `vanilla` installs nothing |
+| `flag` | none | extended flag 6, 7, 14, 15 and so on up to 247: the carried key works only while the flag is set |
+
 The door gate checks a ring by asking whether the hero owns it, and a key
 by asking whether it is the selected item. With this hack a carried key is
 accepted the way a ring is, and it is still spent.
@@ -1534,8 +1665,6 @@ or 7 modulo 8: 6, 7, 14, 15 and so on up to 247. Other flags are refused.
 ```
 AtlasDevSmartKeys flag=7
 ```
-
-`mode=vanilla` installs nothing. The default is `mode=carried`.
 
 With [PermaDoors](#permadoors) listed before it, a door opened with a
 carried key is remembered too: the carried path calls PermaDoors' remember
@@ -1569,8 +1698,16 @@ enemy takes when hit is a single byte and can be set directly.
 | order | before EnemyHud |
 | refused with | none |
 
-`hp`, `damage`, `xp` and `gold` are percents of vanilla, 1 to 400, applied to
-every entry of the table named. Entries that are zero stay zero, since those
+| parameter | default | meaning |
+| --- | --- | --- |
+| `profile` | `normal` | `normal`, `easy`, `hard`, `nightmare` or `grind`, from the table below |
+| `hp` | `100` | enemy hit points, percent of vanilla, 1 to 400 |
+| `damage` | `100` | contact damage, percent of vanilla, 1 to 400 |
+| `xp` | `100` | experience reward, percent of vanilla, 1 to 400 |
+| `gold` | `100` | coin drops, percent of vanilla, 1 to 400 |
+| `stagger` | `8` | the stun after a hit in frames, 1 to 255 |
+
+Each percent applies to every entry of its table. Entries that are zero stay zero, since those
 are the ids that are not monsters; everything else rounds to nearest, never
 drops below one, and saturates at 255, so a boss already at 250 hit points
 does not grow past that. `gold` scales the coin drops only; bread is left
@@ -1663,6 +1800,19 @@ patched ROM is byte identical to the source.
 | switch | none |
 | order | any |
 | refused with | RunControl |
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `profile` | `vanilla` | a profile from the table below |
+| `walk` | `192` | the speed every walk starts at, subpixels per frame, 1 to `walkmax` |
+| `walkmax` | `384` | the top walk speed, subpixels per frame, up to 2048 |
+| `ramp` | `2+4+6+8` | the speed added every frame by title tier, four values 0 to 255 |
+| `iframes` | `60` | the mercy time after a hit, 1 to 255 frames |
+| `knockbackframes` | `3` | frames of the shove after a hit, 0 to `iframes` |
+| `knockback` | `2048` | the shove speed, subpixels per frame, 1 to 2048 |
+| `attack` | `8+3+8` | the three phases of a swing, 1 to 255 frames each |
+| `moveattack` | `0` | `1` lets the hero walk during a swing |
+| `sram` | `false` | Add SRAM backing |
 
 The walk is not one speed. The hero starts every walk at 192 subpixels per
 frame, three quarters of a pixel, and accelerates every frame by an amount
@@ -1770,14 +1920,20 @@ message, sound and crumble.
 | order | any |
 | refused with | none |
 
+| parameter | default | meaning |
+| --- | --- | --- |
+| `mode` | `both` | `press`, `push` or `both`; `vanilla` installs nothing |
+| `push` | `48` | frames the hero walks into the rock before it gives, 1 to 255; only with `push` or `both` |
+| `flag` | none | extended flag 0 to 247: the hack is on only while the flag is set |
+| `sram` | `false` | Add SRAM backing |
+
 `mode=press` digs on Down and B facing the rock. `mode=push` digs after the
 hero has walked into the rock for `push` frames, and lets go of it the moment
 he releases the direction, leaves the ground or turns. `mode=both`, the
 default, does either. `mode=vanilla` installs nothing.
 
-`push=n` is the number of frames the hero walks into the rock before it
-gives, 1 to 255; the default is 48, about eight tenths of a second. The
-Mascon fountain takes 96 with the same counter.
+48 frames is about eight tenths of a second; the Mascon fountain takes 96
+with the same counter.
 
 When the selected item is the mattock it is spent as it always was. When it
 is not, one mattock is taken from the item list, the list closes up around
