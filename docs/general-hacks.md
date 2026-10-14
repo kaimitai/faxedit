@@ -1022,7 +1022,7 @@ The `Misc` hack acts as a home for minor gameplay and quality-of-life changes wh
 
 ### AtlasDevFrameScheduler
 
-A neutral frame scheduler other hacks build on: an NMI tick with three role slots and one physical post-deadline vector for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI. Role hacks like AtlasDevDayNightCycle require it and refuse to build without it.
+A neutral frame scheduler other hacks build on: an NMI tick with three role slots and one physical post-deadline vector for work that must run after the frame's last critical PPU write. PRE roles run only when both the PPU queue and nametable-strip work are idle. On its own it changes nothing visible — it exists so per-frame hacks can share one hook instead of each patching the NMI.
 
 | | |
 | --- | --- |
@@ -1047,7 +1047,7 @@ AtlasDevFrameScheduler
 
 ### AtlasDevDayNightCycle
 
-A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Requires AtlasDevFrameScheduler earlier in the list and must be the first owner of its POST vector; chainable roles such as tint and time-of-day follow it in the hack list. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
+A day and night cycle: the three background palette rows dim from the engine's own palette shadow and return on a configurable day length, with the HUD row untouched. Scripts can stop and start the cycle with AtlasDevDayNight or AtlasDevArmRole 2; stopping always completes an eight-call full-daylight sweep before going quiet, even when stopped during dawn.
 
 | | |
 | --- | --- |
@@ -1069,12 +1069,10 @@ AtlasDevDayNightCycle length=7200
 ### AtlasDevInfectedTint
 
 Tints sprite palette 0 with three configurable colors and a pulse, for a
-poisoned or cursed look on the hero. Requires AtlasDevFrameScheduler.
+poisoned or cursed look on the hero.
 Runs beside other roles on the same scheduler; scripts switch it with
 AtlasDevArmRole 3, and switching off restores the palette from the
-engine's shadow. When combined with AtlasDevDayNightCycle, list the
-tint after it - the tint chains onto a claimed post lane, while the
-day cycle demands an unclaimed one.
+engine's shadow.
 
 | | |
 | --- | --- |
@@ -1100,7 +1098,7 @@ AtlasDevInfectedTint colors=$0C+$1C+$2C pulse=0
 An in-game clock with a two-digit hour readout in the HUD, running as a
 role on the AtlasDevFrameScheduler. The readout uses the engine's own
 digit convention, so it inherits the HUD font and palette automatically.
-Requires AtlasDevFrameScheduler. Like the tint, it chains onto a post
+Like the tint, it chains onto a post
 lane another role already holds, so the day cycle, the tint and the
 clock can all run in the same frame. Scripts switch it with
 AtlasDevArmRole 4; switching off blanks the readout and resets the
@@ -1133,7 +1131,7 @@ selected timer is active, living monsters inside the field radius are pushed
 away from the player; pull mode turns the same rule into a magnet with an
 eight-pixel dead zone. The trigger is the game's own status counter, so any
 ordinary item, shop or script that grants that effect also grants the ward.
-Requires AtlasDevFrameScheduler earlier in the list. Scripts switch the role
+Scripts switch the role
 with AtlasDevArmRole 5.
 
 | | |
@@ -1209,9 +1207,7 @@ The default role uses 96 bytes in bank 9 and no fixed-bank bytes beyond
 its scheduler. The scheduler uses 156 bytes and seven RAM bytes; the ward
 adds zero RAM. A basic four-orb field adds 236 fixed-bank bytes. A tested
 expanded, clipped, four-tile field adds 461 bytes (617 including scheduler).
-Byte checks at build time decide whether a configuration fits. The fixed bank
-has 780 free bytes on US, US Rev A and EU, and 551 on JP: settings up to about
-370 bytes fit all four, larger ones are refused on JP.
+Byte checks at build time decide whether a configuration fits.
 Tested in play on US revision 0 only.
 
 The force tests horizontal distance only; the circular graphic does not add
@@ -1246,10 +1242,7 @@ stubs placed with the other general hacks, 152 bytes with the defaults
 and 214 with every feature on. The stubs run in the main loop and cost
 nothing in vblank. One RAM byte at $04df holds the buffer countdown and
 the air jumps left; the fall grace counter at $b1 and bit 1 of $a4 are
-used with their vanilla meaning. The sites are identical in the US, US
-rev A, EU and JP ROMs; the installer verifies them and refuses a ROM
-where they differ. Jumps made with A held are unchanged frame for frame.
-Does not require AtlasDevFrameScheduler unless `switchable` is set.
+used with their vanilla meaning. Jumps made with A held are unchanged frame for frame.
 
 With `sram=true` the stubs run from the SRAM code area instead, and bank 15
 keeps only the three retargeted instructions.
@@ -1349,7 +1342,7 @@ each composes into one feel. Each is a first pick in the spirit of the game
 named, not a port of its numbers; several share a curve for now, and the
 values will be tuned by play.
 
-Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the scheduler must be installed first; the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available. With `flag` set the same gated stubs test the extended flag instead of the slots; the flag page is cleared at reset, so a `flag` install is off until a script sets the flag, and a clear flag is indistinguishable from stock.
+Steering changes which gaps can be crossed; mode 1 keeps every vanilla jump as it was until a direction is pressed. A jump that runs out over a pit keeps its speed, and a phase left over from a longer curve is clamped before use, so switching the hack on mid fall is safe. Knockback in the air restarts the curve. The Wing Boots slow fall is untouched. With `kind` set, the installer reuses a slot already holding the kind or claims the first free boot slot, and refuses without modifying the ROM when none is available. With `flag` set the same gated stubs test the extended flag instead of the slots; the flag page is cleared at reset, so a `flag` install is off until a script sets the flag, and a clear flag is indistinguishable from stock.
 
 ```text
 AtlasDevFallControl profile=zelda2
@@ -1422,10 +1415,6 @@ nothing to switch. `flag` and `attackflag` are independent and may name the
 same flag or different ones.
 
 With `sram=true` the stubs run from the SRAM code area.
-
-Every site is verified against its exact vanilla bytes before anything is
-written, and all of them are identical in the US, US rev A, EU and JP ROMs.
-Does not require AtlasDevFrameScheduler.
 
 | parameter | default | meaning |
 | --- | --- | --- |
@@ -1649,10 +1638,7 @@ its usual message.
 
 The five key checks in vanilla are replaced by one shared check that lives in
 the same bytes they occupied, so this hack uses no general hack space at all.
-The unlocked case and the three ring checks are not touched. Every site is
-verified against its exact vanilla bytes before anything is written; the gate
-is identical in the US, US rev A and EU ROMs, and the JP ROM, where it
-differs, is refused. ROMs expanded to 512 KiB by the editor work the same way,
+The unlocked case and the three ring checks are not touched. ROMs expanded to 512 KiB by the editor work too,
 since the expanded regions copy bank 15 into bank 31.
 
 `flag=n` gates the carried key on extended flag `n` at runtime, so a script
@@ -1669,9 +1655,7 @@ AtlasDevSmartKeys flag=7
 With [PermaDoors](#permadoors) listed before it, a door opened with a
 carried key is remembered too: the carried path calls PermaDoors' remember
 routine through a 14-byte stub in general hack space, with the selected item
-kept, since that routine assumes the selected key was spent. Listed after
-AtlasDevSmartKeys, PermaDoors would never see a carried key, so that order is
-refused with a message saying which way round to list them.
+kept, since that routine assumes the selected key was spent.
 
 ```
 PermaDoors
@@ -1724,10 +1708,7 @@ of the hit flash, since one counter drives both.
 | `nightmare` | 200 | 200 | 75 | 75 | 4 |
 | `grind` | 100 | 100 | 200 | 200 | 8 |
 
-The default is `normal` and writes nothing. No code, RAM or general hack
-space is used. Every table is verified against its vanilla bytes before
-anything is written, and the tables are identical in the US, US rev A, EU and
-JP ROMs.
+The default is `normal` and writes nothing.
 
 ```
 AtlasDevEnemyStats profile=hard
@@ -1770,19 +1751,16 @@ AtlasDevEnemyHud names=false visibility=always
 
 Uses 3187 bytes in bank 9 at $8000 with names, or 1577 without names, plus
 95 bytes in bank 15 and 15 bytes for hooks. `visibility=always` saves another
-five bytes. Reserves seven RAM bytes at $04E3..$04E9. Uses the existing
+five bytes. Uses the existing
 graphics and does not change combat stats.
 
-Supports USA Rev 0 (`us`), USA Rev 1 (`us-rev-a`), Europe (`eu`) and Japan
-(`jp`). Names are English in all versions. Translations, randomizers and
+Names are English in all versions. Translations, randomizers and
 expanded ROMs are not supported. The configuration must enable
 `hack_enemy_hud_enabled`; required game code and free space are checked
 before applying the hack.
 
-Cannot be combined with AtlasDevFrameScheduler, AtlasDevDayNightCycle,
-AtlasDevInfectedTint or AtlasDevTimeOfDay. Other hacks must leave the HUD
-row and its RAM and ROM space free. If using AtlasDevEnemyStats, list it
-before AtlasDevEnemyHud so the bar uses the modified HP values. Build from
+Other hacks must leave the HUD
+row and its RAM and ROM space free. Build from
 the clean source ROM each time; the hack cannot be applied twice.
 
 ### AtlasDevCombatFeel
@@ -1825,7 +1803,7 @@ uses for the shove.
 
 `walk` above 256 adds a 57-byte ladder-centering helper. It stops at the
 alignment point instead of stepping past it repeatedly; ordinary walking
-keeps the configured speed. No persistent RAM is used. `sram=true` runs the
+keeps the configured speed. `sram=true` runs the
 helper from the SRAM code area instead, and bank 15 keeps only its hook.
 
 `iframes` is the mercy time after a hit in frames, vanilla 60, written to all
@@ -1860,9 +1838,6 @@ explicitly overrides the profile.
 | `kidicarus` | 288 flat | 0 | 60 | 3 | 1280 | 5+3+5 | 1 |
 | `contra` | 384 to 448 | 8+8+8+8 | 30 | 2 | 1024 | 4+3+4 | 1 |
 | `arcade` | 320 to 512 | 8+8+8+8 | 30 | 2 | 1024 | 6+3+6 | 1 |
-
-Every site is verified against its exact vanilla bytes before anything is
-written, and all of them are identical in the US, US rev A, EU and JP ROMs.
 
 ```
 AtlasDevCombatFeel profile=zelda2
@@ -1955,9 +1930,7 @@ only the three retargeted instructions.
 
 Three vanilla instructions in bank 15 are retargeted, at the Down and B
 check, at the push check every non fountain frame reaches, and at the spend
-inside the dig. No RAM is claimed. Every site is verified against its exact
-vanilla bytes before anything is written, and all of them are identical in
-the US, US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+inside the dig.
 
 ```
 AtlasDevSmartMattock
@@ -2019,10 +1992,7 @@ installed once, whichever name comes first. With `sram=true` on the first
 name, the code and both rows go to the SRAM code area instead and bank 14
 keeps only the two retargeted instructions; the second name follows the first
 name's placement. No RAM is claimed: the attack
-timer is a per sprite behavior byte these two monsters never use. Every site
-is verified against its exact vanilla bytes before anything is written, and
-all of them are identical in the US, US rev A, EU and JP ROMs. Does not
-require AtlasDevFrameScheduler.
+timer is a per sprite behavior byte these two monsters never use.
 
 ```
 AtlasDevSirGawaineControl
@@ -2093,11 +2063,7 @@ are refused. Every parameter is checked, even with `mode=vanilla`.
 Uses 26 bytes of bank 15 free space, or 33 with a flag, and rewrites the
 six bytes at $DB8B that choose between the two, which become a call to the
 new code. When every direction keeps its stock choice nothing is
-installed. No RAM is claimed. Every site is verified against its exact
-vanilla bytes before anything is written, and all of them are identical in
-the US, US rev A, EU and JP ROMs. AtlasDevFastBlink changes the blank path
-this hack checks, so list this hack first. Does not require
-AtlasDevFrameScheduler.
+installed.
 
 ```
 AtlasDevScreenTransition h=blink
@@ -2138,12 +2104,7 @@ half as long. The screen that comes up is the same.
 Uses 68 bytes of bank 15 free space, or 105 with a flag, and rewrites 43
 bytes of stock code in place: the blank path at $DB91 and the two waits
 of the video queue at $CFCA and $CFF4, which become jumps to the new
-code. With the frame handlers on the two waits behave as before. No RAM
-is claimed. Every site is verified against its exact vanilla bytes before
-anything is written, and all of them are identical in the US, US rev A,
-EU and JP ROMs. AtlasDevScreenTransition checks the stock blank path when
-it installs, so list it before this hack. Does not require
-AtlasDevFrameScheduler.
+code. With the frame handlers on the two waits behave as before.
 
 With `sram=true` the code runs from the SRAM code area, and bank 15
 keeps no bytes of its own; the code takes 68 bytes of the SRAM code
@@ -2205,11 +2166,9 @@ bank 14, and the three places that end a life or a screen, $D127, $E0AA
 and $D8F4. One RAM byte at $04FE holds the state: bit 7 says the hero
 was in the air last frame, bit 6 says the pose is up, and the low three
 bits count it down. $04FE and $04FF are the last two bytes of the free
-tail and the only pair nothing else has taken. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the
-US, US rev A, EU and JP ROMs. It reads the player frame directory the
+tail and the only pair nothing else has taken. It reads the player frame directory the
 project exported, so it must run after the sprite graphics are written,
-which it does. Does not require AtlasDevFrameScheduler.
+which it does.
 
 With `sram=true` the code, the table and the records run from the SRAM
 code area, and bank 15 keeps no bytes of its own. There is no `bank`:
@@ -2344,8 +2303,7 @@ AtlasDevQueueLess
 
 Uses 32 bytes from the normal bank 15 allocation cursor and replaces the
 three-byte upload call at `$c2a6`. No extra RAM, scheduler vectors or NMI work
-are needed. It can be combined with Sprite Speed and PPU Drain Unroll when
-enough bank space remains. Hook, uploader and allocation checks reject altered
+are needed. Hook, uploader and allocation checks reject altered
 or occupied inputs without changing the ROM. Rebuild from a clean project
 source; installing this hook twice is rejected.
 
@@ -2392,7 +2350,7 @@ The value must be 1 to 127: 0 is the plain box and 128 and up are the portraits.
 
 Messages in such a script still run and still wait for a button, but they cannot be seen, so leave them out or open a window yourself. Item grants, the sell menu and the shops open their own window and still do.
 
-Uses 22 bytes from the normal bank 15 allocation cursor, or from the SRAM code area with `sram=true`, and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. No extra RAM is needed. Both sites are checked against their stock bytes first, which are the same in the US, US rev A, EU and JP ROMs; an altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
+Uses 22 bytes from the normal bank 15 allocation cursor, or from the SRAM code area with `sram=true`, and replaces the textbox open call at `$8267` and the textbox close jump at `$82c2`. An altered site or occupied space rejects the build without changing the ROM, and installing it twice is rejected.
 
 <hr>
 
@@ -2426,10 +2384,7 @@ as drawn. The rest of his moves are unchanged.
 
 One vanilla instruction sequence in bank 14 is retargeted, inside the
 routine that picks each sprite's hitbox, and 34 bytes of bank 14 free space
-are used (52 with a flag). No RAM is claimed. Every site is verified against
-its exact vanilla bytes before anything is written, and all of them are
-identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+are used (52 with a flag).
 
 ```
 AtlasDevMaskmanControl
@@ -2471,10 +2426,7 @@ straight into the stock routine in bank 14: its two speed loads, its timer
 shifts and its two speed tables. No free space is used. A period of 16 is the
 one shift that does not fit, and takes seven bytes of bank 14 free space. A
 flag with a value changed retargets one instruction to a hook there, which
-covers only the values that differ: 26 bytes for the speed alone, up to 64. At the default values nothing is written. No RAM is claimed.
-Every site is verified against its exact vanilla bytes before anything is
-written, and all of them are identical in the US, US rev A, EU and JP ROMs.
-Does not require AtlasDevFrameScheduler.
+covers only the values that differ: 26 bytes for the speed alone, up to 64. At the default values nothing is written.
 
 ```
 AtlasDevHornetControl speed=8
@@ -2523,10 +2475,7 @@ in bank 14, and no free space is used. A half-pixel peak on a 256-frame loop
 takes a nine byte routine in bank 14 free space, 18 for both axes. A flag
 with a value changed retargets the load of the axis that differs to a hook
 there, which covers only that axis: 26 bytes for a loop alone, up to 70. At the
-default values nothing is written. No RAM is claimed. Every site is verified
-against its exact vanilla bytes before anything is written, and all of them
-are identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+default values nothing is written.
 
 ```
 AtlasDevYuinaruControl xspeed=16
@@ -2574,10 +2523,7 @@ in bank 14, and no free space is used. A half-pixel peak on a 256-frame loop
 takes a nine byte routine in bank 14 free space, 18 for both axes. A flag
 with a value changed retargets the load of the axis that differs to a hook
 there, which covers only that axis: 26 bytes for a loop alone, up to 70. At the
-default values nothing is written. No RAM is claimed. Every site is verified
-against its exact vanilla bytes before anything is written, and all of them
-are identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+default values nothing is written.
 
 ```
 AtlasDevBihorudaControl xspeed=32
@@ -2616,10 +2562,7 @@ because another routine uses the same code.
 Without a flag the dash length and the dash speed are written straight into
 the stock instructions in bank 14, and no free space is used. With a flag
 and a value changed, only the instruction whose value differs is retargeted,
-to 15 to 37 bytes of bank 14 free space. At the default values nothing is written. No RAM is claimed.
-Every site is verified against its exact vanilla bytes before anything is
-written, and all of them are identical in the US, US rev A, EU and JP ROMs.
-Does not require AtlasDevFrameScheduler.
+to 15 to 37 bytes of bank 14 free space. At the default values nothing is written.
 
 ```
 AtlasDevYareekaControl dash=32
@@ -2666,10 +2609,7 @@ the stock instructions in bank 14, and no free space is used; a changed sit
 length retargets the instruction where it is set, to 10 bytes of bank 15
 free space. With a flag, only the instructions whose values you change are
 retargeted, to at most 65 bytes of bank 15 free space. At the default values
-nothing is written. No RAM is claimed. Every site is verified against its
-exact vanilla bytes before anything is written, and all of them are
-identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+nothing is written.
 
 ```
 AtlasDevRipasheikuControl drift=16
@@ -2710,10 +2650,7 @@ bob stays as it is.
 Without a flag the new height gap and creep speed are written straight into
 the stock instructions in bank 14, and no free space is used. With a flag,
 only the instructions whose values you change are retargeted, to at most 44
-bytes of bank 15 free space. At the default values nothing is written. No
-RAM is claimed. Every site is verified against its exact vanilla bytes
-before anything is written, and all of them are identical in the US, US rev
-A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+bytes of bank 15 free space. At the default values nothing is written.
 
 ```
 AtlasDevNagaControl chase=16
@@ -2758,9 +2695,7 @@ Without a flag the new wait, windup step and Lilith count are written
 straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 63 bytes of bank 15 free space. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevPakukameControl delay=32
@@ -2805,9 +2740,7 @@ Without a flag the new wait and damage of the curse are written straight
 into the stock instructions in bank 14, and no free space is used. With a
 flag, only the instructions whose values you change are retargeted, to at
 most 38 bytes of bank 15 free space. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevSugataControl damage=4
@@ -2850,9 +2783,7 @@ Without a flag the new climb speed, dive speed and hover length are written
 straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 59 bytes of bank 15 free space. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevGiantBeesControl rise=8
@@ -2903,10 +2834,7 @@ Without a flag the new windup, rest, rock count and fall speed are written
 straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 80 bytes of bank 15 free space. `body=32` changes one byte of
-Zorugeriru's box. At the default values nothing is written. No RAM is
-claimed. Every site is verified against its exact vanilla bytes before
-anything is written, and all of them are identical in the US, US rev A, EU
-and JP ROMs. Does not require AtlasDevFrameScheduler.
+Zorugeriru's box. At the default values nothing is written.
 
 ```
 AtlasDevZorugeriruControl rest=4 windup=16
@@ -2955,10 +2883,7 @@ space. `cling=1` retargets the one instruction in the enemy touch code that
 makes a Necron Aide let go; without a flag that needs no free space. With a
 flag, only the instructions whose values you change are retargeted, to at
 most 51 bytes of bank 15 free space, 16 more with `cling=1`. At the default
-values nothing is written. No RAM is claimed. Every site is verified against
-its exact vanilla bytes before anything is written, and all of them are
-identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+values nothing is written.
 
 ```
 AtlasDevNecronAidesControl climb=4
@@ -3006,9 +2931,7 @@ in bank 14, and no free space is used. `face=1` retargets the start of the
 facing test; without a flag that needs no free space. With a flag, only the
 instructions whose values you change are retargeted, to at most 118 bytes of
 bank 15 free space, 14 more with `face=1`. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevIshiisuControl walk=6
@@ -3051,10 +2974,7 @@ Without a flag the new times underground, time above ground and warning
 blink are written straight into the stock instructions in bank 14, and no
 free space is used. With a flag, only the instructions whose values you
 change are retargeted, to at most 74 bytes of bank 15 free space. At the
-default values nothing is written. No RAM is claimed. Every site is verified
-against its exact vanilla bytes before anything is written, and all of them
-are identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+default values nothing is written.
 
 ```
 AtlasDevTamazutsuControl hide=30
@@ -3103,10 +3023,7 @@ loop=256`) needs a small rewrite of the glide, 20 bytes of bank 15 free
 space, and `turn` above 1 retargets the turn test to 13 bytes. With a flag,
 only the instructions whose values you change are retargeted, to at most 66
 bytes of bank 15 free space. `body=32` changes two bytes of its box. At the
-default values nothing is written. No RAM is claimed. Every site is verified
-against its exact vanilla bytes before anything is written, and all of them
-are identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+default values nothing is written.
 
 ```
 AtlasDevBorabohraControl speed=16
@@ -3149,9 +3066,7 @@ Without a flag the new times hidden, time out and distance are written
 straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 88 bytes of bank 15 free space. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevMagmanControl hide=30
@@ -3198,10 +3113,7 @@ written straight into the stock instructions in bank 14, and no free space
 is used. With a flag, only the instructions whose values you change are
 retargeted, to at most 71 bytes of bank 15 free space. `body=1` rewrites its
 box, whose top stops just short of the top of the screen at its highest
-point. At the default values nothing is written. No RAM is claimed. Every
-site is verified against its exact vanilla bytes before anything is written,
-and all of them are identical in the US, US rev A, EU and JP ROMs. Does not
-require AtlasDevFrameScheduler.
+point. At the default values nothing is written.
 
 ```
 AtlasDevKingGrieveControl shots=8
@@ -3246,10 +3158,7 @@ Without a flag the new times hidden, throw moment, windup and attack length
 are written straight into the stock instructions in bank 14, and no free
 space is used. With a flag, only the instructions whose values you change
 are retargeted, to at most 97 bytes of bank 15 free space. At the default
-values nothing is written. No RAM is claimed. Every site is verified against
-its exact vanilla bytes before anything is written, and all of them are
-identical in the US, US rev A, EU and JP ROMs. Does not require
-AtlasDevFrameScheduler.
+values nothing is written.
 
 ```
 AtlasDevNashControl hide=60
@@ -3292,9 +3201,7 @@ Without a flag the new walk speed, walk length and pause are written
 straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 85 bytes of bank 15 free space. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevExecutionHoodControl walk=8
@@ -3344,9 +3251,7 @@ straight into the stock instructions in bank 14, and no free space is used.
 With a flag, only the instructions whose values you change are retargeted,
 to at most 90 bytes of bank 15 free space. `step` rewrites six bytes of its
 step table and `body=1` its four box bytes. At the default values nothing is
-written. No RAM is claimed. Every site is verified against its exact vanilla
-bytes before anything is written, and all of them are identical in the US,
-US rev A, EU and JP ROMs. Does not require AtlasDevFrameScheduler.
+written.
 
 ```
 AtlasDevShadowEuraControl walk=10 pause=60
@@ -3397,14 +3302,7 @@ ROM that is below the SRAM backing area at $A700, unless another hack's
 refused, and `addr` or `sram=true` places it.
 
 Uses 11 bytes of RAM at $04E2-$04EC and the unused zero page byte $9C,
-which holds the mirroring in force. AtlasDevDayNightCycle,
-AtlasDevInfectedTint, AtlasDevTimeOfDay and AtlasDevEnemyHud also use
-$04E2-$04EC, so it refuses to install beside them and they refuse beside
-it, in either order. AtlasDevLandingTuck changes the same code at $D127 and
-the weapon and shield tails, so the two refuse each other too. List it
-before AtlasDevScreenTransition, whose `up=scroll` and `down=scroll` need
-it. Every hooked site is checked against its stock bytes first, and they
-are the same in the US, US rev A, EU and JP ROMs. Tested in play on US
+which holds the mirroring in force. Tested in play on US
 revision 0 only.
 
 ```
@@ -3471,8 +3369,6 @@ every row on.
 
 Refused, with the ROM left as it was:
 
-- KillSwitch is listed, before or after this hack. They share the pause
-  screen.
 - No listed AtlasDev hack has a `flag`, or more than 64 do.
 - A label does not fit 19 characters, or two listed hacks have the same
   `flag`.
@@ -3483,9 +3379,7 @@ Refused, with the ROM left as it was:
 - `sram=true` without the SRAM hack.
 - A hook site in the game is not intact.
 
-Works with the US, US rev A and EU ROMs; the game code it calls is checked
-first, and the JP ROM, where it differs, is refused, as is a ROM that keeps the
-flags in SRAM. ROMs expanded to 512 KiB by the editor work too, and there
+A ROM that keeps the flags in SRAM is refused. ROMs expanded to 512 KiB by the editor work too, and there
 `sram=true` copies the image from bank 27.
 
 The menu draws in the pause window. When it closes, the window and the
@@ -3493,8 +3387,7 @@ sprites are put back, and the pause screen is as it was.
 
 FaxOptions' own bytes, measured from builds of the US ROM. Bank 15 is the
 resident part (the hooks, the apply routine, the table of rows); it grows by
-4 bytes per row. The menu in bank 9 grows by 21 bytes per row. No RAM is claimed; with an SRAM save
-the 16 bytes at `$7FF0-$7FFF` are reserved for the state.
+4 bytes per row. The menu in bank 9 grows by 21 bytes per row.
 
 | listed | bank 15 | bank 9 (menu) | SRAM |
 | --- | --- | --- | --- |
