@@ -88,6 +88,7 @@ namespace fh {
 		word rom_cursor;
 		word sram_begin;
 		word sram_cursor;
+		word sram_limit{ 0x8000 };      // sram code stops below this; blocks above it are reserved
 	};
 
 	// where a hack's relocatable code goes: the sram code area, or a rom bank
@@ -110,6 +111,9 @@ namespace fh {
 		std::optional<SramState> sram_state;
 		word install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502& p_code);
 		word sram_hack_addr(void) const;
+
+		// the project's whole general hack list, every bank group
+		std::vector<GeneralHack> m_project_hacks;
 
 		// script action library
 		word apply_SetFlag(const fe::Config& p_config, std::vector<byte>& p_rom,
@@ -480,6 +484,8 @@ namespace fh {
 			const fh::GeneralHack&) const;
 		word install_AtlasDevVerticalScroll(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&);
+		word install_AtlasDevFaxOptions(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack);
 		// bank 12 general hacks
 		word install_AtlasDevStatusWard(const fe::Config&, std::vector<byte>&, word, const fh::GeneralHack&) const;
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -496,6 +502,9 @@ namespace fh {
 	public:
 		HackManager(void) = default;
 		void init_sram_state(const fe::Config& p_config);
+		// reserves p_size bytes at the top of sram that no sram code may use
+		word reserve_sram_top(std::size_t p_size);
+		void set_project_hacks(const std::vector<GeneralHack>& p_hacks) { m_project_hacks = p_hacks; }
 
 		// relocatable placement
 		HackPlacement place_hack(const fe::Config& p_config, const std::vector<byte>& p_rom,

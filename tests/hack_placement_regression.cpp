@@ -169,6 +169,30 @@ int main() {
 			for (std::size_t i{ 0 }; i < 17; ++i) d.db(0xff);
 			refuses(rom, "read as free space", [&] { m.install_placed(rom, d, t, ORG, "Test"); });
 		}
+		// a block reserved at the top of sram stops sram code below it
+		{
+			auto rom{ blank_rom() };
+			const auto cfg{ config(rom) };
+			fh::HackManager m;
+			m.init_sram_state(cfg);
+			require(m.reserve_sram_top(16) == 0x7ff0, "reserve: the top 16 bytes");
+			const std::size_t room{ 0x7ff0 - 0x6806 };
+			const auto p{ m.place_hack(cfg, rom, hack("sram=true"), "Test", ORG, room) };
+			require(p.addr == 0x6806, "reserve: code up to the block is placed");
+			refuses(rom, "do not fit the sram code area",
+				[&] { m.place_hack(cfg, rom, hack("sram=true"), "Test", ORG, room + 1); });
+			refuses(rom, "SRAM overflow when reserving", [&] { m.reserve_sram_top(room + 1); });
+		}
+		// the limit also stops code installed straight into sram
+		{
+			auto rom{ blank_rom() };
+			const auto cfg{ config(rom) };
+			fh::HackManager m;
+			m.init_sram_state(cfg);
+			m.reserve_sram_top(0x8000 - 0x6806 - 1);
+			const auto hacks{ fh::filter_general_hacks(15, fh::parse_general_hacks("KillSwitch sram=true")) };
+			refuses(rom, "SRAM overflow", [&] { m.install_general_hacks(cfg, rom, 15, ORG, 0xffe0, hacks, nullptr); });
+		}
 		std::cout << "hack_placement_regression: ok\n";
 	}
 	catch (const std::exception& e) { std::cerr << "hack_placement_regression: " << e.what() << "\n"; return 1; }

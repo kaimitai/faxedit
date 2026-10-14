@@ -33,7 +33,7 @@ word fh::HackManager::install_sram_hack(std::vector<byte>& p_rom, klib::Asm6502&
 
 	const word runtime_addr{ state.sram_cursor };
 
-	if (static_cast<std::size_t>(state.sram_cursor) + p_code.size() > 0x8000)
+	if (static_cast<std::size_t>(state.sram_cursor) + p_code.size() > state.sram_limit)
 		throw std::runtime_error("SRAM overflow when installing asm routine");
 
 	const std::size_t rom_end{ state.rom_bank == 15 || state.rom_bank == 31 ? 0x10000u : 0xc000u };
@@ -53,6 +53,16 @@ word fh::HackManager::sram_hack_addr() const {
 	if (!sram_state)
 		throw std::runtime_error("SRAM state not initialized");
 	return sram_state->sram_cursor;
+}
+
+word fh::HackManager::reserve_sram_top(std::size_t p_size) {
+	if (!sram_state)
+		throw std::runtime_error("SRAM state not initialized");
+	auto& state{ *sram_state };
+	if (state.sram_cursor + p_size > state.sram_limit)
+		throw std::runtime_error("SRAM overflow when reserving a block");
+	state.sram_limit = static_cast<word>(state.sram_limit - p_size);
+	return state.sram_limit;
 }
 
 // shared helpers for script library hacks

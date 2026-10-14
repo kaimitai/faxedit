@@ -54,6 +54,7 @@ namespace fh {
 		AtlasDevExecutionHoodControl,
 		AtlasDevShadowEuraControl,
 		AtlasDevVerticalScroll,
+		AtlasDevFaxOptions,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 

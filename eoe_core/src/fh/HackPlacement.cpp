@@ -49,7 +49,7 @@ fh::HackPlacement fh::HackManager::place_hack(const fe::Config& p_config, const 
 		// same limits as install_sram_hack, before anything is written
 		const auto& state{ *sram_state };
 		const std::size_t rom_end{ state.rom_bank == 15 || state.rom_bank == 31 ? 0x10000u : 0xc000u };
-		if (static_cast<std::size_t>(state.sram_cursor) + p_size > 0x8000
+		if (static_cast<std::size_t>(state.sram_cursor) + p_size > state.sram_limit
 			|| static_cast<std::size_t>(state.rom_cursor) + p_size > rom_end)
 			throw std::runtime_error(std::format("{}: {} bytes do not fit the sram code area", p_name, p_size));
 

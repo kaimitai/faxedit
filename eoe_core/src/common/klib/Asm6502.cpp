@@ -364,9 +364,9 @@ void klib::Asm6502::lda_abs_y(word p_addr) {
 	emit_word(p_addr);
 }
 
-void klib::Asm6502::lda_abs_y(const std::string& p_label) {
+void klib::Asm6502::lda_abs_y(const std::string& p_label, int p_offset) {
 	emit(OP_LDA_ABS_Y);
-	dw(p_label);
+	dw(p_label, p_offset);
 }
 
 void klib::Asm6502::lda_ind_y(byte p_addr) {
@@ -799,6 +799,11 @@ void klib::Asm6502::ldy_abs_x(word p_addr) {
 void klib::Asm6502::eor_abs_x(word p_addr) {
 	emit(OP_EOR_ABS_X);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::eor_abs_x(const std::string& p_label, int p_offset) {
+	emit(OP_EOR_ABS_X);
+	dw(p_label, p_offset);
 }
 
 void klib::Asm6502::and_abs_x(word p_addr) {

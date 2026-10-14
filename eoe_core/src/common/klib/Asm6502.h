@@ -121,7 +121,7 @@ namespace klib {
 		void lda_abs(word p_addr);
 		void lda_abs_x(word p_addr);
 		void lda_abs_y(word p_addr);
-		void lda_abs_y(const std::string& p_label);
+		void lda_abs_y(const std::string& p_label, int p_offset = 0);
 		void lda_ind_y(byte p_addr);
 		void lda_imm_lo(const std::string& p_label);
 		void lda_imm_hi(const std::string& p_label);
@@ -227,6 +227,7 @@ namespace klib {
 		void sta_abs_y(word p_addr);
 		void ldy_abs_x(word p_addr);
 		void eor_abs_x(word p_addr);
+		void eor_abs_x(const std::string& p_label, int p_offset = 0);
 		void and_abs_x(word p_addr);
 		void and_abs_x(const std::string& p_label, int p_offset = 0);
 		void ora_abs_x(word p_addr);

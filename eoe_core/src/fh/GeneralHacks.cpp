@@ -1490,6 +1490,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::AtlasDevVerticalScroll:
 			cpu_addr = install_AtlasDevVerticalScroll(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevFaxOptions:
+			cpu_addr = install_AtlasDevFaxOptions(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}
@@ -1507,7 +1510,7 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 
 	if (p_bank == 15 && sram_state.has_value() && sram_state->sram_begin != sram_state->sram_cursor) {
 		usage.sram_used = static_cast<std::size_t>(sram_state->sram_cursor - sram_state->sram_begin);
-		usage.sram_available = static_cast<std::size_t>(0x8000 - sram_state->sram_begin);
+		usage.sram_available = static_cast<std::size_t>(sram_state->sram_limit - sram_state->sram_begin);
 
 		const word sram_init_addr{ cpu_addr };
 

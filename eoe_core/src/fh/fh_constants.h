@@ -78,6 +78,7 @@ namespace fh {
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
 		constexpr word UseItem_JumpTable{ 0xc49d };
 		constexpr word Player_UseMattock{ 0xc616 };
+		constexpr word Game_ClearTimedItems{ 0xc6af };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpBattleSuit_WeaponsCountBug{ 0xc6f8 };
 		constexpr word Player_PickUpDragonSlayer_ArmoursCountBug{ 0xc738 };
@@ -135,10 +136,12 @@ namespace fh {
 		constexpr word EntityChrPass{ 0xc28d };
 		constexpr word Player_HandleDeath_InitGoldXP{ 0xd99a };
 		constexpr word Player_HandleDeath_Respawn{ 0xd9a0 };
+		constexpr word Game_InitStateForStartScreen_STA_CurrentStage{ 0xda71 };
 		constexpr word Game_SetupNewArea_JSR_Screen_ResetForGamePlay{ 0xdad3 };
 		constexpr word Game_SetupAndLoadOutsideArea{ 0xdadc };
 		constexpr word Player_Spawn{ 0xdb0a };
 		constexpr word Player_Spawn_LDA_Quests{ 0xdb12 };
+		constexpr word Game_Start{ 0xdb26 };
 		constexpr word Game_Start_JSR_Game_LoadFirstLevel{ 0xdb2c };
 		constexpr word Start_Mana{ 0xdb30 };
 		constexpr word Game_Start_ClearXP_Hi{ 0xdb39 };
@@ -323,6 +326,11 @@ namespace fh {
 		constexpr byte ZP_ScriptAddr{ 0xdb };
 		constexpr byte ZP_ScriptAddrU{ 0xdc };
 		constexpr byte ZP_ScriptOffset{ 0xdd };
+		// the vanilla far call keeps a, x and y here while it switches banks, on
+		// the US ROM; US rev A and EU keep them at $e2-$e4
+		constexpr byte ZP_BankedCallSavedA{ 0xde };
+		constexpr byte ZP_BankedCallSavedX{ 0xdf };
+		constexpr byte ZP_BankedCallSavedY{ 0xe0 };
 		constexpr byte ZP_e2{ 0xe2 };
 		constexpr byte ZP_e3{ 0xe3 };
 		constexpr byte ZP_e4{ 0xe4 };
@@ -360,6 +368,13 @@ namespace fh {
 		// textbox. Vanilla root $1f is reserved for the death dialogue.
 		constexpr word CurrentIScriptRoot{ 0x0200 };
 		constexpr word IScriptTextBoxContext{ 0x0201 };
+		// the window OpenWindowDraw draws and WindowClose clears, in tiles;
+		// WindowClose sets TextBox_Closed
+		constexpr word TextBox_X{ 0x0208 };
+		constexpr word TextBox_Y{ 0x0209 };
+		constexpr word TextBox_Width{ 0x020a };
+		constexpr word TextBox_Height{ 0x020b };
+		constexpr word TextBox_Closed{ 0x020c };
 		// The eight-slot entity arrays.  Every one of these is the game's own
 		// RAM rather than space a hack must reserve: counting absolute
 		// references in the vanilla PRG gives 72 for $02cc, 141 for $02dc and

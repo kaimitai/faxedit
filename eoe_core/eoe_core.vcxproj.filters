@@ -387,6 +387,9 @@
     <ClInclude Include="src\fh\AtlasDevVerticalScroll.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
+    <ClInclude Include="src\fh\AtlasDevFaxOptions.h">
+      <Filter>Header Files\fh</Filter>
+    </ClInclude>
     <ClInclude Include="src\fh\GeneralHack.h">
       <Filter>Header Files\fh</Filter>
     </ClInclude>
@@ -744,6 +747,12 @@
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevVerticalScroll.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevFaxOptions.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fh\AtlasDevFaxOptionsMenu.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp">

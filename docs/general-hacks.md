@@ -97,6 +97,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevExecutionHoodControl](#atlasdevexecutionhoodcontrol)
   - [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol)
   - [AtlasDevVerticalScroll](#atlasdevverticalscroll)
+  - [AtlasDevFaxOptions](#atlasdevfaxoptions)
 
 <hr>
 
@@ -2843,3 +2844,111 @@ a vertical collision test. Entries with zero HP and the configured exempt ID
 are skipped. `aura=true` can displace another role in slot 2; reserve that
 slot for tint and use a single aura owner. The graphic shares the engine's
 sprite limit and costs up to four additional sprites on a scanline.
+
+<hr>
+
+### AtlasDevFaxOptions
+
+A menu on the pause screen that lets the player turn hacks on and off while
+playing. Press Select on the pause screen to open it. There is one row for
+every listed AtlasDev hack that has `flag=n`, in list order, with the hack
+name as the label: `AtlasDevLandingTuck` becomes `LANDING TUCK`. A label is
+at most 19 characters, so a trailing ` CONTROL` is dropped when the label
+would be longer (`EXECUTION HOOD CONTROL` becomes `EXECUTION HOOD`). A row
+reads `ON` while its flag is set and `OFF` while it is clear. Every row is
+`ON` the first time. Only AtlasDev hacks get a row, and only their `flag`
+counts; other hacks are ignored even if they take a flag. The hack can list
+up to 64 rows.
+
+Controls: Up and Down move the cursor, and repeat when held. Left, Right or A
+switch the row, and the change applies at once. The last row, `DEFAULTS`,
+turns every row on. Select, B or Start close the menu and return to the pause
+screen; the game stays paused. The bottom line reads `LR SET START OR B BACK`.
+The list shows 10 rows at a time, scrolls, and wraps round; on `DEFAULTS` only
+A acts.
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `bank` | `9` | bank of the menu. The small part that hooks the game stays in bank 15. The bank must be switchable (below the last one) and not 12, 14 or a string bank |
+| `addr` | free space | address of the menu in `bank` |
+| `sram` | `false` | `true` puts the hack in SRAM; needs the SRAM hack. Cannot be combined with `bank` or `addr` |
+
+A flag given to a row belongs to the menu. With an SRAM save the choices are
+applied again at the start of a new game, after CONTINUE and after a respawn,
+so a script `SetFlag` or `ClearFlag` on that flag is overridden at the next of
+those; without one, the next title screen sets it again. Only
+the row's own bit is ever written; other flags in the same byte stay as they
+are. Do not use a row's flag for anything else.
+
+Without an SRAM save, the flags themselves hold the choices. Every row is
+turned back on whenever the title screen comes up: at power-on and after a
+reset. A death does not pass there, so the choices stay through it.
+
+With the SRAM hack in the project, the choices are kept in battery RAM and
+survive power-off. They sit in a block at the top of SRAM, starting at
+`$7FF0`, that is reserved: SRAM code stops below it. The block holds a
+signature, a version, a value worked out from the rows' flags and their
+order, and one bit per row. A block that
+does not match, from a fresh cart or from another build with other rows, turns
+every row on.
+
+Refused, with the ROM left as it was:
+
+- KillSwitch is listed, before or after this hack. They share the pause
+  screen.
+- No listed AtlasDev hack has a `flag`, or more than 64 do.
+- A label does not fit 19 characters, or two listed hacks have the same
+  `flag`.
+- A listed hack's `flag` is over 247.
+- `bank` is 12, 14, 15, a string bank, or not below the last bank; or `sram`
+  with `bank` or `addr`. Bank 15 is refused because the menu does not fit its
+  free space.
+- `sram=true` without the SRAM hack.
+- A hook site in the game is not intact.
+
+Works with the US, US rev A and EU ROMs; the game code it calls is checked
+first, and the JP ROM, where it differs, is refused, as is a ROM that keeps the
+flags in SRAM. ROMs expanded to 512 KiB by the editor work too, and there
+`sram=true` copies the image from bank 27.
+
+The menu draws in the pause window. When it closes, the window and the
+sprites are put back, and the pause screen is as it was.
+
+FaxOptions' own bytes, measured from builds of the US ROM. Bank 15 is the
+resident part (the hooks, the apply routine, the table of rows); it grows by
+4 bytes per row. The menu in bank 9 grows by 21 bytes per row. No RAM is claimed; with an SRAM save
+the 16 bytes at `$7FF0-$7FFF` are reserved for the state.
+
+| listed | bank 15 | bank 9 (menu) | SRAM |
+| --- | --- | --- | --- |
+| `AtlasDevFaxOptions` with LandingTuck, one row | 109 | 893 | |
+| `AtlasDevFaxOptions` with FastBlink, one row | 109 | 893 | |
+| `AtlasDevFaxOptions` with both, two rows | 113 | 914 | |
+| the same with `SRAM` listed | 218 | 914 | 0 |
+| the same with `SRAM` listed and `sram=true` | 9 | 1149 | 1106 |
+
+With `sram=true` the resident part and the menu are SRAM code. Bank 9 then
+holds the 1106 bytes that are copied into SRAM at start, plus 43 bytes of the
+routine that copies them. Bank 15 holds only the 9 bytes that call that
+routine; the SRAM hack's other hacks share it. The reserved 16 bytes for the
+state are above the SRAM code area.
+
+```
+AtlasDevLandingTuck flag=24
+AtlasDevFastBlink flag=25
+AtlasDevFaxOptions
+```
+
+```
+SRAM
+AtlasDevLandingTuck flag=24
+AtlasDevFastBlink flag=25
+AtlasDevFaxOptions
+```
+
+```
+SRAM
+AtlasDevLandingTuck flag=24
+AtlasDevFastBlink flag=25
+AtlasDevFaxOptions sram=true
+```

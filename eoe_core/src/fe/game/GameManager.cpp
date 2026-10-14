@@ -867,6 +867,7 @@ std::vector<byte> fe::game::patch_rom(
 	// install general hacks, if any
 	if (!general_hacks.empty()) {
 		fh::HackManager hack_mgr;
+		hack_mgr.set_project_hacks(general_hacks);
 
 		// if the rom has, or will have, SRAM support - prepare cursor for code-from-sram
 		if (fe::ROM_Manager::is_sram_enabled(x_rom) ||
