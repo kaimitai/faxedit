@@ -1376,7 +1376,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 **New General Hacks**
 - `BuildingScreenConfig`: Configure building entry/exit directions, temple spawn rooms and the endgame room.
 - `StageDoorDirection`: Preserve or override player facing direction during stage transitions via doors.
-- `PushBlockScript`: Execute an iScript after pushing against a block for a configurable number of frames, enabling custom block puzzles and scripted events.
+- `PushBlockScript`: Execute an iScript after pushing against a block for a configurable number of frames, with optional sound effects at an earlier threshold. Replaces vanilla push-block behavior, enabling dynamic tilemap changes and scripted events.
 - `OtherWorldTransPal2Mus`: Apply palette-to-music rules during transitions between worlds.
 - `Misc`: Added options for opening the inventory on the starting screen, removing the Hour Glass HP penalty and configuring invisible dialogue trigger dimensions.
 

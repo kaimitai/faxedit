@@ -958,28 +958,35 @@ The routine can be installed in bank 15, another ROM bank using the vanilla far-
 
 ### PushBlockScript
 
-Executes an iScript when the player pushes against a pushable block (block with metatile property 6) for a specified number of frames.
+Executes an iScript when the player pushes against a pushable block (metatile property 6) for a specified number of frames. Optionally plays a sound effect before executing the script.
 
-Normally, pushing blocks requires a specific item and quest progression, and eventually opens the path to Mascon. This hack replaces that behavior with a configurable script, allowing custom interactions with pushable blocks.
+Normally, pushing blocks requires a specific item and quest progression, plays a sound after 63 frames, and opens the path to Mascon after 96 frames. This hack replaces that behavior with a configurable script and sound effect, allowing custom interactions with pushable blocks.
 
 | parameter | default | meaning |
 | --------- | ------- | ------- |
-| `frames` | `63` | Number of consecutive frames required to trigger the script (1–255) |
+| `frames` | `96` | Number of consecutive frames required to execute the script (1–255) |
 | `script` | none, required | Index of the iScript to execute |
+| `sound` | `true` | Play a sound effect while pushing |
+| `sound_id` | `15` | ID of the sound effect to play |
+| `sound_frames` | `63` | Number of frames before playing the sound effect (must be less than `frames`) |
 
-`PushBlockScript frames=100 script=154`
+`PushBlockScript frames=90 script=154 sound=true sound_frames=25 sound_id=6`
 
-In this example, pushing against a block for 100 consecutive frames executes iScript 154.
+In this example, pushing against a block for 25 consecutive frames plays sound effect 6. Continuing to push for 90 frames executes iScript 154.
 
-The push counter resets when the player stops pushing or is no longer facing a pushable block. The script executes when the counter reaches the specified value.
+The push counter resets when the player stops pushing or is no longer facing a pushable block. Both the sound effect and script execute when the counter reaches their respective thresholds. Setting `sound=false` disables the sound effect entirely.
 
-The hack does not check the vanilla item or quest requirements, allowing pushable blocks to be used anywhere in the game.
+The default timing and sound match vanilla behavior. The hack does not check the vanilla item or quest requirements, allowing pushable blocks to be used anywhere in the game.
 
-Although only one script can be configured, **the script can use `IfWorld` and `IfScreen` to execute different logic depending on the current location**. This allows the same hack to support independent push-block puzzles across multiple worlds and screens.
+**PushBlockScript completely replaces the vanilla push-block behavior**, including the event that opens the path to Mascon. If pushing a block should still trigger a tilemap change on the same screen, use **screen event handler 3 (custom dynamic tilemap changes)** instead of **handler 1 (vanilla push-block final spring opening)**. The script can then set the appropriate flag and call `RunScreenHandler` to apply the tilemap changes.
 
-**PushBlockScript works particularly well with dynamic tilemap changes and `AtlasDevPreventTextBox`.** Together, these allow scripts to modify the screen directly when a block is pushed, without displaying a textbox or interrupting gameplay. This makes it possible to create custom block puzzles, open passages, and trigger environmental changes.
+Although only one script can be configured, **the script can use `IfWorld` and `IfScreen` to execute different logic depending on the current location**. This allows the same hack to support independent push-block behavior across multiple worlds and screens.
 
-**Note:** The push counter is an 8-bit value and wraps around after 255 frames. Holding against a block long enough may therefore execute the script again. Scripts should use flags or other conditions to prevent unwanted repeated effects.
+**PushBlockScript works particularly well with dynamic tilemap changes and `AtlasDevPreventTextBox`.** Together, these allow scripts to modify the screen directly when a block is pushed, without displaying a textbox or interrupting gameplay. This makes it possible to seamlessly open passages and trigger environmental changes.
+
+For scripts that only need to display text under certain conditions, **`AtlasDevOpenTextbox` and `AtlasDevHideTextbox`** can be used to show and hide the textbox explicitly. For example, a script could open a passage the first time a block is pushed, but display a message on subsequent attempts. This allows most interactions to run without a textbox while still providing feedback when needed.
+
+**Note:** The push counter is an 8-bit value and wraps around after 255 frames. Holding against a block long enough may therefore play the sound or execute the script again. Scripts should use flags or other conditions to prevent unwanted repeated effects. It is also possible to have the script execute a tilemap change which removes or replaces the push-blocks, like in the vanilla game.
 
 ---
 

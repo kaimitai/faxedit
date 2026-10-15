@@ -891,13 +891,18 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 
 void fh::HackManager::install_PushBlockScript(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
-	const byte frames{ p_hack.byte_or("frames", 0x3f) };
+	const byte frames{ p_hack.byte_or("frames", 0x60) };
 	const byte script{ p_hack.byte_or("script", 0xff) };
+	const bool sound{ p_hack.bool_or("sound", true) };
+	const byte sound_id{ p_hack.byte_or("sound_id", 0x0f) };
+	const byte sound_frames{ p_hack.byte_or("sound_frames", 0x3f) };
 
 	if (frames == 0)
 		throw std::runtime_error("PushBlockScript: 'frames' must be in the range 1-255");
 	if (script == 0xff)
 		throw std::runtime_error("PushBlockScript: missing or invalid 'script' parameter");
+	if (sound && (sound_frames == 0 || sound_frames >= frames))
+		throw std::runtime_error("PushBlockScript: 'sound_frames' must be in the range 1 to frames-1");
 
 	klib::Asm6502 code;
 
@@ -929,6 +934,16 @@ void fh::HackManager::install_PushBlockScript(const fe::Config& p_config, std::v
 	code.bne("@reset");
 
 	code.inc_zp(RAM::ZP_BlockPushCounter);
+
+	if (sound) {
+		code.lda_zp(RAM::ZP_BlockPushCounter);
+		code.cmp_imm(sound_frames);
+		code.bne("@no_sound");
+		code.lda_imm(sound_id);
+		code.jsr(ROM::Sound_PlayEffect);
+		code.label("@no_sound");
+	}
+
 	code.lda_zp(RAM::ZP_BlockPushCounter);
 	code.cmp_imm(frames);
 	code.bne("@return");
