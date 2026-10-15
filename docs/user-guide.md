@@ -1361,7 +1361,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 # Changelog
 
-### 2026-10-??: version beta-9.4 - "Bank Heist"
+### 2026-10-15: version beta-9.4 - "Bank Heist"
 
 **SRAM-Backed Hacks**
 - Added support for storing hack code in ROM and copying it to SRAM at startup, allowing routines to execute without consuming precious ROM space, and without bank switching.
@@ -1369,11 +1369,14 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - Bank 15 overhead for SRAM initialization is as little as 9 bytes, and SRAM usage is reported.
 
 **Extended Strings and Scripting**
-- Added `MsgEx`, `MsgNoskipEx`, `MsgPromptEx` and `IfMsgPromptEx` script opcodes, allowing strings to be stored in additional banks in expanded ROMS.
+- Added `MsgEx`, `MsgNoskipEx`, `MsgPromptEx` and `IfMsgPromptEx` script opcodes, allowing strings to be stored in additional banks in expanded ROMs.
 - Added automatic allocation and deduplication of extended strings across configurable banks.
 - Added assembly and disassembly support for extended strings.
 
 **New General Hacks**
+- `AtlasDevVerticalScroll`: Add vertical screen scrolling, with configurable bank and SRAM placement.
+- `AtlasDevWindowFrame`: Configure window frames using custom color bands, corner shapes or one of eight predefined styles, without additional graphics, code or RAM.
+- `AtlasDevFaxOptions`: Add a pause-screen menu for enabling and disabling supported AtlasDev hacks, with optional persistent settings in SRAM.
 - `BuildingScreenConfig`: Configure building entry/exit directions, temple spawn rooms and the endgame room.
 - `StageDoorDirection`: Preserve or override player facing direction during stage transitions via doors.
 - `PushBlockScript`: Execute an iScript after pushing against a block for a configurable number of frames, with optional sound effects at an earlier threshold. Replaces vanilla push-block behavior, enabling dynamic tilemap changes and scripted events.
@@ -1383,7 +1386,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 **General Hack Improvements and Fixes**
 - `AtlasDevLadderControl`: Fixed ladder bottom exits.
 - `AtlasDevCombatFeel`: Fixed fast-walk centering.
-- Added expanded ROM compatibility to `AtlasDevLadderCrown`.
+- `AtlasDevLadderCrown`: Added expanded ROM compatibility, support for flush ladder tops and alignment values up to 8.
 - `AtlasDevSetMusic` and `AtlasDevIfMusic` now automatically recognize the ROM's song count, with an optional override.
 - `PermaDoors`: Added optional unlock sound and iScript execution when entering previously unlocked doors.
 - `OintmentFix`: Added optional protection against poison damage.
