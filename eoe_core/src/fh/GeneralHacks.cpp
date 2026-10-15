@@ -1493,6 +1493,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::AtlasDevFaxOptions:
 			cpu_addr = install_AtlasDevFaxOptions(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevWindowFrame:
+			cpu_addr = install_AtlasDevWindowFrame(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}

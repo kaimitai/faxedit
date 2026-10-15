@@ -100,6 +100,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevShadowEuraControl](#atlasdevshadoweuracontrol)
   - [AtlasDevVerticalScroll](#atlasdevverticalscroll)
   - [AtlasDevFaxOptions](#atlasdevfaxoptions)
+  - [AtlasDevWindowFrame](#atlasdevwindowframe)
 
 <hr>
 
@@ -302,6 +303,7 @@ Every hack in the library, grouped by what it changes.
 | [AtlasDevPreventTextbox](#atlasdevpreventtextbox) | scripts that run without a textbox |
 | [BankedStrings](#bankedstrings) | message text in several banks |
 | [TextSpeed](#textspeed) | text speed |
+| [AtlasDevWindowFrame](#atlasdevwindowframe) | the frame around dialogue boxes, shops and menus |
 
 ### Speed
 
@@ -3421,4 +3423,62 @@ SRAM
 AtlasDevLandingTuck flag=24
 AtlasDevFastBlink flag=25
 AtlasDevFaxOptions sram=true
+```
+
+<hr>
+
+### AtlasDevWindowFrame
+
+The frame around every window: dialogue boxes, shops, menus and the status
+window. A band of colors and a corner shape, or one of eight styles, replace
+the six tiles the frame is drawn with. It is only how the frame looks: the
+window palette, the text and the box stay as they are.
+
+| | |
+| --- | --- |
+| space | none: rewrites the frame's six tiles, 96 bytes at bank 10 $8150 |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | none: the frame is set when the ROM is built |
+| order | any |
+| refused with | none |
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `style` | none | a ready frame from the list below |
+| `band` | none | four colors from the outside of the frame in, each `0` to `3`; the inner half mirrors them |
+| `corner` | `square` | how the band turns the corner: `square`, `rounded`, `cut` or `diamond` |
+| `diamond` | `2` | the color of the ornament with `corner=diamond`, `1` to `3` |
+| `tl`, `top`, `tr`, `side`, `bl`, `br` | none | one tile, drawn pixel by pixel |
+
+Colors are the window palette's: `0` is transparent, `1` to `3` its three
+colors. With no parameters the frame stays the original. The hack holds no
+graphics of its own. A ROM whose frame tiles were already changed is refused.
+
+A style is a name for a band and a corner, so it can be the start of your own.
+Use `style`, or `band` with `corner` and `diamond`, not both.
+
+| style | same as |
+| --- | --- |
+| `thin` | `band=0030` |
+| `bevel` | `band=0123` |
+| `inset` | `band=3210` |
+| `rounded` | `band=0003 corner=rounded` |
+| `double` | `band=0203` |
+| `chamfer` | `band=0203 corner=cut` |
+| `soft` | `band=0102 corner=rounded` |
+| `ornate` | `band=0003 corner=diamond diamond=1` |
+
+The tile parameters replace one tile each, over the original frame or the band:
+`tl` the top-left corner, `top` the top and bottom edge, `tr` the top-right
+corner, `side` both sides, `bl` and `br` the bottom corners. A tile is eight
+rows of eight pixels, top to bottom, each `0` to `3` (or `.` for `0`), rows
+optionally separated by `/`. The game draws the top and the bottom with the same
+tile, and both sides with the same tile, so draw `top` and `side` symmetric.
+
+```
+AtlasDevWindowFrame style=rounded
+AtlasDevWindowFrame band=0123
+AtlasDevWindowFrame band=0302 corner=cut
+AtlasDevWindowFrame band=0003 corner=diamond diamond=3
 ```

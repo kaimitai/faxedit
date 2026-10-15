@@ -76,6 +76,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevShadowEuraControl,
 		fh::GeneralHackLib::AtlasDevVerticalScroll,
 		fh::GeneralHackLib::AtlasDevFaxOptions,
+		fh::GeneralHackLib::AtlasDevWindowFrame,
 	}},
 	};
 
@@ -135,6 +136,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevShadowEuraControl, { "walk", "pause", "fire1", "fire2", "step", "body", "flag", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevVerticalScroll, { "up", "down", "flip", "bias", "flag", "bank", "addr", "sram", "mode" } },
 		{ fh::GeneralHackLib::AtlasDevFaxOptions, { "bank", "addr", "sram" } },
+		{ fh::GeneralHackLib::AtlasDevWindowFrame, { "style", "band", "corner", "diamond", "tl", "top", "tr", "side", "bl", "br" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf", "sram" }},
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type", "sram" }},
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies", "sram" }},

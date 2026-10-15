@@ -202,6 +202,11 @@ target_link_libraries(atlas_vertical_scroll_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_vertical_scroll_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_vertical_scroll_regression COMMAND atlas_vertical_scroll_regression)
 
+add_executable(atlas_window_frame_regression atlas_window_frame_regression.cpp)
+target_link_libraries(atlas_window_frame_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_window_frame_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_window_frame_regression COMMAND atlas_window_frame_regression)
+
 add_executable(atlas_music_limit_regression atlas_music_limit_regression.cpp)
 target_link_libraries(atlas_music_limit_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_music_limit_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
