@@ -133,6 +133,7 @@ add_library(eoe_core STATIC
     src/fh/AtlasDevFaxOptions.cpp
     src/fh/AtlasDevFaxOptionsMenu.cpp
     src/fh/AtlasDevWindowFrame.cpp
+    src/fh/AtlasDevItemBonus.cpp
     src/fh/AtlasDevFrameScheduler.cpp
     src/fh/GeneralHacks.cpp
     src/fh/GeneralHack.cpp

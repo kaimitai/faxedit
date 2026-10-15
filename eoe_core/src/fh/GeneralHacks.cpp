@@ -1534,6 +1534,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::AtlasDevWindowFrame:
 			cpu_addr = install_AtlasDevWindowFrame(p_config, patched_rom, cpu_addr, hack);
 			break;
+		case fh::GeneralHackLib::AtlasDevItemBonus:
+			cpu_addr = install_AtlasDevItemBonus(p_config, patched_rom, cpu_addr, hack);
+			break;
 		default:
 			throw std::runtime_error("Unsupported general hack library routine.");
 		}

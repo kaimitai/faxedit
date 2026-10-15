@@ -488,6 +488,8 @@ namespace fh {
 			const fh::GeneralHack& p_hack);
 		word install_AtlasDevWindowFrame(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack) const;
+		word install_AtlasDevItemBonus(const fe::Config&, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack);
 		// bank 12 general hacks
 		word install_AtlasDevStatusWard(const fe::Config&, std::vector<byte>&, word, const fh::GeneralHack&) const;
 		word install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,

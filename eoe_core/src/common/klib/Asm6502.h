@@ -217,6 +217,7 @@ namespace klib {
 		void adc_zp(byte p_addr);
 		void adc_abs(word p_addr);
 		void adc_abs_y(word p_addr);
+		void adc_abs_y(const std::string& p_label, int p_offset = 0);
 		void adc_abs_x(word p_addr);
 		void adc_abs_x(const std::string& p_label, int p_offset = 0);
 		void adc_ind_y(byte p_addr);
@@ -224,6 +225,7 @@ namespace klib {
 		void sbc_abs(word p_addr);
 		void sbc_zp(byte p_addr);
 		void sbc_abs_x(word p_addr);
+		void sbc_abs_y(const std::string& p_label, int p_offset = 0);
 		void sta_abs_y(word p_addr);
 		void ldy_abs_x(word p_addr);
 		void eor_abs_x(word p_addr);

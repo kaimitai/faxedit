@@ -464,6 +464,7 @@ namespace fh {
 		constexpr word Inventory_Shields{ 0x03a5 };
 		constexpr word Inventory_Magics{ 0x03a9 };
 		constexpr word Inventory_Items{ 0x03ad };
+		constexpr word EquippedArmor{ 0x03be };
 		constexpr word EquippedShield{ 0x03bf };
 		constexpr word Inventory_WeaponsCount{ 0x03c2 };
 		constexpr word Inventory_ArmorsCount{ 0x03c3 };

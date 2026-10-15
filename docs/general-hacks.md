@@ -101,6 +101,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevVerticalScroll](#atlasdevverticalscroll)
   - [AtlasDevFaxOptions](#atlasdevfaxoptions)
   - [AtlasDevWindowFrame](#atlasdevwindowframe)
+  - [AtlasDevItemBonus](#atlasdevitembonus)
 
 <hr>
 
@@ -234,6 +235,7 @@ Every hack in the library, grouped by what it changes.
 | [QuestFlagItemDrops](#questflagitemdrops) | the mattock and Wing Boots drops can be earned again |
 | [BossLockedItems](#bosslockeditems) | any boss can guard any locked item |
 | [AtlasDevSmartMattock](#atlasdevsmartmattock) | dig with a carried mattock, without selecting it |
+| [AtlasDevItemBonus](#atlasdevitembonus) | equipment that adds attack or defense |
 
 ### Doors
 
@@ -3494,3 +3496,46 @@ AtlasDevWindowFrame band=0123
 AtlasDevWindowFrame band=0302 corner=cut
 AtlasDevWindowFrame band=0003 corner=diamond diamond=3
 ```
+
+<hr>
+
+### AtlasDevItemBonus
+
+Gives equipment extra stats: a shield that adds attack power, a weapon that
+adds defense. The equipped weapon, armor and shield each add to the damage
+the hero's sword does, and take from the damage an enemy does by touching
+him.
+
+| | |
+| --- | --- |
+| space | 30 bytes of bank 14 for one attack table, 31 for one defense table, 17 more for each other table (7 more per side with `flag`); with `sram=true`, the same in SRAM |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `weapon_attack` | `0+0+0+0` | sword damage added by the Hand Dagger, Long Sword, Giant Blade and Dragon Slayer, 0 to 255 each |
+| `armor_attack` | `0+0+0+0` | the same for the Leather Armor, Studded Mail, Full Plate and Battle Suit |
+| `shield_attack` | `0+0+0+0` | the same for the Small Shield, Large Shield, Magic Shield and Battle Helmet |
+| `weapon_defense` | `0+0+0+0` | contact damage taken off by each weapon, 0 to 255 each |
+| `armor_defense` | `0+0+0+0` | the same for each armor |
+| `shield_defense` | `0+0+0+0` | the same for each shield |
+| `flag` | none | extended flag 0 to 247: the bonuses count only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
+
+Bonuses from the three slots add up. Attack is added after the Pendant and
+the Glove and stops at 255. Defense is taken off after the armor and the
+Black Onyx and stops at zero, which is no damage at all; knockback and the
+mercy time after a hit still happen. Magic and scripted damage are not
+changed. With no table set, nothing is written.
+
+```
+AtlasDevItemBonus shield_attack=0+0+5+0 shield_defense=0+0+3+0
+AtlasDevItemBonus weapon_defense=0+0+0+2 flag=40
+```
+
+The first line gives the Magic Shield 5 attack and 3 defense, in 61 bytes.

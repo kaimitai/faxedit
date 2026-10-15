@@ -224,6 +224,7 @@ namespace {
 	constexpr byte OP_SBC_ABS{ 0xed };
 	constexpr byte OP_NOP{ 0xea };
 	constexpr byte OP_BEQ{ 0xf0 };
+	constexpr byte OP_SBC_ABS_Y{ 0xf9 };
 	constexpr byte OP_SBC_ABS_X{ 0xfd };
 	constexpr byte OP_INC_ABS_X{ 0xfe };
 	constexpr byte OP_STA_ABS_Y{ 0x99 };
@@ -751,6 +752,11 @@ void klib::Asm6502::adc_abs_y(word p_addr) {
 	emit_word(p_addr);
 }
 
+void klib::Asm6502::adc_abs_y(const std::string& p_label, int p_offset) {
+	emit(OP_ADC_ABS_Y);
+	dw(p_label, p_offset);
+}
+
 void klib::Asm6502::adc_abs_x(word p_addr) {
 	emit(OP_ADC_ABS_X);
 	emit_word(p_addr);
@@ -784,6 +790,11 @@ void klib::Asm6502::sbc_zp(byte p_addr) {
 void klib::Asm6502::sbc_abs_x(word p_addr) {
 	emit(OP_SBC_ABS_X);
 	emit_word(p_addr);
+}
+
+void klib::Asm6502::sbc_abs_y(const std::string& p_label, int p_offset) {
+	emit(OP_SBC_ABS_Y);
+	dw(p_label, p_offset);
 }
 
 void klib::Asm6502::sta_abs_y(word p_addr) {
