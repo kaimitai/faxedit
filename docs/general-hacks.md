@@ -329,15 +329,16 @@ Every hack in the library, grouped by what it changes.
 
 ### KillSwitch
 
-> by [Notlob](https://github.com/Notlobb/Randumizer)
+> based on a hack by [Notlob](https://github.com/Notlobb/Randumizer)
 
-Pressing Select while the game is paused kills the player when the game is unpaused. This gives players a way out of softlocks without resetting the console and losing progress since the last password.
+Pressing Select while the game is paused kills the player when the game is unpaused. This gives players a way out of softlocks without resetting the console and losing progress since the last save or password.
 
-Optionally, an iScript can be executed instead of killing the player. This is particularly useful for debugging, allowing Select to trigger custom actions such as granting items, setting quest flags, or teleporting to specific locations.
+Optionally, pressing A or B while paused can execute configurable iScripts. This is particularly useful for debugging, allowing custom actions such as granting items, setting quest flags, or teleporting to specific locations.
 
 | parameter | default | meaning |
 | --- | --- | --- |
-| `script` | `0xff (disabled)` | iScript to execute when pressing Select while paused. `0xff` retains the original behavior. |
+| `script_a` | `0xff` (disabled) | iScript to execute when pressing A while paused |
+| `script_b` | `0xff` (disabled) | iScript to execute when pressing B while paused |
 | `sram` | `false` | Add SRAM backing |
 
 ```text
@@ -345,8 +346,12 @@ KillSwitch
 ```
 
 ```text
-KillSwitch script=12
+KillSwitch script_a=12 script_b=15
 ```
+
+In the second example, pressing A while paused executes iScript 12, while pressing B executes iScript 15. If both buttons are pressed simultaneously, A takes priority and only its script executes.
+
+**Select always retains its original kill-switch behavior**, regardless of the configured scripts. If neither script is specified, the hack generates no additional code beyond the original kill switch.
 
 **Note:** Scripts using portraits will hide all sprites until the game is unpaused.
 

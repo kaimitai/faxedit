@@ -1388,7 +1388,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 - `PermaDoors`: Added optional unlock sound and iScript execution when entering previously unlocked doors.
 - `OintmentFix`: Added optional protection against poison damage.
 - `FastStart`: Fixed starting mana initialization and the initial HUD display.
-- `KillSwitch`: Added optional iScript execution when pressing Select while paused (providing what is essentially a programmable debug button).
+- `KillSwitch`: Added optional iScript execution when pressing A or B while paused, providing two programmable debug buttons.
 - `BugFixes`: Added `silent_note_fix` to restore very low square-wave notes that can be incorrectly muted by the NES APU sweep unit.
 
 **Documentation**
