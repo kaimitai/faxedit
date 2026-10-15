@@ -36,8 +36,8 @@
 //
 // one ram byte at $04fe holds it: bit 7 says the hero was in the air last
 // frame, bit 6 says the pose is up, and the low three bits count it down.
-// $04fe and $04ff are the last two bytes of the free tail and the only pair
-// nothing else has taken; the game never touches either in any region.
+// $04fe and $04ff are the last two bytes of the free tail, and the game never
+// touches either in any region; AtlasDevFlickerShare holds $04ff.
 //
 // profile=off installs nothing, so a hack listed that way leaves the rom byte
 // identical. with a flag the pose appears only while the flag is set; clear,

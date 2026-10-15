@@ -102,6 +102,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevFaxOptions](#atlasdevfaxoptions)
   - [AtlasDevWindowFrame](#atlasdevwindowframe)
   - [AtlasDevItemBonus](#atlasdevitembonus)
+  - [AtlasDevFlickerShare](#atlasdevflickershare)
 
 <hr>
 
@@ -253,6 +254,7 @@ Every hack in the library, grouped by what it changes.
 | [AtlasDevEnemyStats](#atlasdevenemystats) | scale enemy hit points, damage, experience and gold |
 | [AtlasDevEnemyHud](#atlasdevenemyhud) | a health bar for the last enemy hit |
 | [AtlasDevStatusWard](#atlasdevstatusward) | a timed status effect pushes monsters away, or pulls them in |
+| [AtlasDevFlickerShare](#atlasdevflickershare) | two big monsters take turns when they run out of sprites |
 
 ### Monsters
 
@@ -3539,3 +3541,38 @@ AtlasDevItemBonus weapon_defense=0+0+0+2 flag=40
 ```
 
 The first line gives the Magic Shield 5 attack and 3 defense, in 61 bytes.
+
+<hr>
+
+### AtlasDevFlickerShare
+
+Lets two big monsters share the sprites. The game draws its entities in the
+same order every time, so when two big ones, such as two Shadow Euras, do not
+fit in the 64 sprites together, the one drawn second is cut down every time.
+With this hack, after a pass that ran out of sprites the next one goes the
+other way round, so they take turns and both show, flickering. A screen that
+fits keeps the stock order.
+
+| | |
+| --- | --- |
+| space | 64 bytes of bank 14 (71 with `flag`); with `sram=true`, the same in SRAM |
+| ram | $04FF |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `flag` | none | extended flag 0 to 247: the hack is on only while the flag is set |
+| `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
+
+Every entity is still updated on every pass; the order they are updated in
+turns with the drawing order. Where two of them overlap, the one on top
+changes too.
+
+```
+AtlasDevFlickerShare
+AtlasDevFlickerShare flag=60
+```

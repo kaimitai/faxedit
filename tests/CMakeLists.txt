@@ -221,3 +221,8 @@ add_executable(atlas_item_bonus_regression atlas_item_bonus_regression.cpp)
 target_link_libraries(atlas_item_bonus_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_item_bonus_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_item_bonus_regression COMMAND atlas_item_bonus_regression)
+
+add_executable(atlas_flicker_share_regression atlas_flicker_share_regression.cpp)
+target_link_libraries(atlas_flicker_share_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_flicker_share_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_flicker_share_regression COMMAND atlas_flicker_share_regression)

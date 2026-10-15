@@ -30,6 +30,7 @@ namespace {
 		fh::GeneralHackLib::AtlasDevBihorudaControl,
 		fh::GeneralHackLib::AtlasDevYareekaControl,
 		fh::GeneralHackLib::AtlasDevItemBonus,
+		fh::GeneralHackLib::AtlasDevFlickerShare,
 	}},
 	{ 15, {
 		fh::GeneralHackLib::KillSwitch,	fh::GeneralHackLib::SameWorldTransPal2Mus,
@@ -140,6 +141,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevWindowFrame, { "style", "band", "corner", "diamond", "tl", "top", "tr", "side", "bl", "br" } },
 		{ fh::GeneralHackLib::AtlasDevItemBonus, { "weapon_attack", "armor_attack", "shield_attack", "weapon_defense",
 			"armor_defense", "shield_defense", "flag", "mode", "sram" } },
+		{ fh::GeneralHackLib::AtlasDevFlickerShare, { "flag", "mode", "sram" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf", "sram" }},
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type", "sram" }},
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies", "sram" }},
