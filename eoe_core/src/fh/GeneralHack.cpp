@@ -17,7 +17,7 @@ namespace {
 
 	const std::map<byte, std::set<fh::GeneralHackLib>> GENERAL_HACK_BANKS{
 	{ 12, {
-		fh::GeneralHackLib::FlexibleItems,
+		fh::GeneralHackLib::FlexibleItems, fh::GeneralHackLib::ExtraTitleScreenChr,
 	}},
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
@@ -157,6 +157,7 @@ namespace {
 		{ fh::GeneralHackLib::BankedStrings, { "copy", "sram" }},
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::PushBlockScript, { "frames", "script", "sound", "sound_id", "sound_frames" }},
+		{ fh::GeneralHackLib::ExtraTitleScreenChr, { "file", "sram" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

@@ -176,6 +176,7 @@
     <ClCompile Include="src\fh\AtlasDevSpriteSpeed.cpp" />
     <ClCompile Include="src\fh\BankedStringsHack.cpp" />
     <ClCompile Include="src\fh\DynamicTilesetsHack.cpp" />
+    <ClCompile Include="src\fh\ExtraTitleScreenChrHack.cpp" />
     <ClCompile Include="src\fh\FlagDoorRequirements.cpp" />
     <ClCompile Include="src\fh\GeneralHack.cpp" />
     <ClCompile Include="src\fh\AtlasDevDayNightCycle.cpp" />

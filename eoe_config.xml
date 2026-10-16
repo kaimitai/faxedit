@@ -436,6 +436,9 @@
 		<const name="rom_startscreen_draw" region="jp,en-transl" value="$a236" />
 		<const name="rom_startscreen_draw" region="us-rev-a,eu" value="$9e6c" />
 		<const name="rom_startscreen_draw" value="$9e21" />
+		<const name="rom_startscreen_draw_jsr_ppu_clearalltilemaps" region="jp,en-transl" value="$a27e" />
+		<const name="rom_startscreen_draw_jsr_ppu_clearalltilemaps" region="us-rev-a,eu" value="$9eb4" />
+		<const name="rom_startscreen_draw_jsr_ppu_clearalltilemaps" value="$9e69" />
 		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="us" value="$9e80" />
 		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="us-rev-a,eu" value="$9ecb" />
 		<const name="rom_startscreen_draw_jsr_ppu_writetilesfromchrram" region="jp,en-transl" value="$a295" />
@@ -467,6 +470,8 @@
 		<const name="rom_choosecontinue_targetaddr" value="$fc8d" />
 		<const name="rom_continue_init_xp_gold" region="jp,en-transl" value="$fd57" />
 		<const name="rom_continue_init_xp_gold" value="$fc8f" />
+		<const name="rom_ppu_clearalltilemaps" region="jp,en-transl" value="$fd9e" />
+		<const name="rom_ppu_clearalltilemaps" value="$fcb9" />
 		<!-- inventory routines and tables for the AtlasDev inventory opcodes -->
 		<const name="rom_item_decodecategory" region="us,randum,eu,us-rev-a" value="$f785" />
 		<const name="rom_item_decodecategory" region="jp,en-transl" value="$f84d" />

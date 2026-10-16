@@ -146,6 +146,7 @@ add_library(eoe_core STATIC
     src/fh/BuildingScreenConfigHack.cpp
     src/fh/BankedStringsHack.cpp
     src/fh/StageDoorDirectionHack.cpp
+    src/fh/ExtraTitleScreenChrHack.cpp
 
     # fv
     src/fv/MiscWriter.cpp

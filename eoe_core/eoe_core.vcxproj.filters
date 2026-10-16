@@ -809,5 +809,8 @@
     <ClCompile Include="src\fh\StageDoorDirectionHack.cpp">
       <Filter>Source Files\fh</Filter>
     </ClCompile>
+    <ClCompile Include="src\fh\ExtraTitleScreenChrHack.cpp">
+      <Filter>Source Files\fh</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

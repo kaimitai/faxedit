@@ -18,7 +18,7 @@ namespace fh {
 		KillSwitch, SameWorldTransPal2Mus, FogRules, PoisonPickup, TextSpeed,
 		SRAM, BugFixes, ItemScripts, PermaDoors, OintmentFix, FlagDoorRequirements,
 		BuildingScreenConfig, OtherWorldTransPal2Mus, BankedStrings, Misc,
-		PushBlockScript,
+		PushBlockScript, ExtraTitleScreenChr,
 		AtlasDevFrameScheduler, AtlasDevDayNightCycle, AtlasDevInfectedTint,
 		AtlasDevTimeOfDay, AtlasDevJumpControl, AtlasDevFallControl,
 		AtlasDevStatusWard,

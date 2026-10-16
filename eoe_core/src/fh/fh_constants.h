@@ -577,6 +577,7 @@ namespace fh {
 		constexpr char ID_ROM_TEXT_QUESTION_CONTINUEGATE[]{ "rom_text_question_continuegate" };
 		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
 		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };
+		constexpr char ID_STARTSCREEN_DRAW_JSR_CLEARALLTILEMAPS[]{ "rom_startscreen_draw_jsr_ppu_clearalltilemaps" };
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
 		constexpr char ID_STARTSCREEN_DEFAULTSELECTION[]{ "rom_startscreen_defaultselection" };
 		constexpr char ID_STARTSCREEN_INPUTSELECT[]{ "rom_startscreen_inputselect" };
@@ -589,6 +590,7 @@ namespace fh {
 		constexpr char ID_CHOOSECONTINUE_TARGETADDR[]{ "rom_choosecontinue_targetaddr" };
 		constexpr char ID_CONTINUE_INIT_XP_GOLD[]{ "rom_continue_init_xp_gold" };
 		constexpr char ID_PPU_WRITETILESFROMCHRRAM[]{ "rom_ppu_writetilesfromchrram" };
+		constexpr char ID_ROM_PPU_CLEARALLTILEMAPS[]{ "rom_ppu_clearalltilemaps" };
 
 		constexpr char ID_HACK_CLEAR_PERSISTENT_FLAGS[]{ "hack_clear_persistent_flags" };
 		constexpr char ID_TM_CHANGE_BANK[]{ "hack_tm_change_bank" };
