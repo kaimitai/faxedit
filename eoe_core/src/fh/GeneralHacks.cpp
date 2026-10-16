@@ -1385,6 +1385,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 		case fh::GeneralHackLib::PushBlockScript:
 			install_PushBlockScript(p_config, patched_rom, hack);
 			break;
+		case fh::GeneralHackLib::ExtraTitleScreenChr:
+			cpu_addr = install_ExtraTitleScreenChr(p_config, patched_rom, cpu_addr, hack);
+			break;
 		case fh::GeneralHackLib::AtlasDevFrameScheduler:
 			cpu_addr = install_AtlasDevFrameScheduler(p_config, patched_rom, cpu_addr, hack);
 			break;
