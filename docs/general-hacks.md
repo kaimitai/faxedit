@@ -1052,6 +1052,7 @@ A collection of small gameplay and quality-of-life tweaks that do not warrant th
 | `start_menu` | `false` | Allow the player menu to be opened immediately when starting a new game |
 | `safe_hourglass` | `false` | Prevent the Hourglass from reducing the player's HP |
 | `trigger_size` | `none` | Set the invisible dialogue trigger sprite's bounding box width and height in pixels, in the form `w:h` |
+| `intro_steps` | `none` | Change the intro footstep sound effect ID, or use `$ff` to disable the footsteps entirely |
 
 Any parameter may be omitted to leave the corresponding game behavior unchanged.
 

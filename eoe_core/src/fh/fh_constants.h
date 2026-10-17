@@ -581,6 +581,7 @@ namespace fh {
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
 		constexpr char ID_STARTSCREEN_DEFAULTSELECTION[]{ "rom_startscreen_defaultselection" };
 		constexpr char ID_STARTSCREEN_INPUTSELECT[]{ "rom_startscreen_inputselect" };
+		constexpr char ID_ROM_INTRO_PLAY_STEPS[]{ "rom_intro_play_steps" };
 
 		// bank 15 cpu addresses
 		constexpr char ID_ROM_MESSAGES_LOAD_JSR_MMC1_UPDATEROMBANK[]{ "rom_messages_load_jsr_mmc1_updaterombank" };

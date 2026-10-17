@@ -807,6 +807,7 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	const bool startmenu{ p_hack.bool_or("start_menu", false) };
 	const bool safe_hourglass{ p_hack.bool_or("safe_hourglass", false) };
 	const bool trigger_size{ p_hack.has_param("trigger_size") };
+	const bool has_intro_steps{ p_hack.has_param("intro_steps") };
 
 	klib::Asm6502 code;
 
@@ -828,6 +829,15 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 		word trigger_offset{ ROM::SpriteBoundingBoxTable + DIALOGUE_TRIGGER_SPRITE_ID * 4 };
 		klib::Asm6502::apply_byte(p_rom, dims[0], 14, trigger_offset + 2); // w
 		klib::Asm6502::apply_byte(p_rom, dims[1], 14, trigger_offset + 3); // h
+	}
+	if (has_intro_steps) {
+		const byte sound_id{ p_hack.get_byte("intro_steps") };
+
+		if (sound_id == 0xff)
+			code.nop(5);
+		else
+			code.lda_imm(sound_id);
+		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_INTRO_PLAY_STEPS));
 	}
 
 	return cpu_addr;
