@@ -52,6 +52,7 @@ This document describes the hacks in the current library and their parameters. I
   - [BankedStrings](#bankedstrings)
   - [StageDoorDirection](#stagedoordirection)
   - [PushBlockScript](#pushblockscript)
+  - [ExtraTitleScreenChr](#extratitlescreenchr)
   - [Misc](#misc)
   - [AtlasDevFrameScheduler](#atlasdevframescheduler)
   - [AtlasDevDayNightCycle](#atlasdevdaynightcycle)
@@ -294,6 +295,7 @@ Every hack in the library, grouped by what it changes.
 | [OtherWorldTransPal2Mus](#otherworldtranspal2mus) | palette-to-music rules on screen changes between worlds |
 | [FogRules](#fogrules) | fog on any world and palette |
 | [DynamicTilesets](#dynamictilesets) | a tileset per screen |
+| [ExtraTitleScreenChr](#extratitlescreenchr) | additional chr-tiles on the Title screen |
 | [AtlasDevDayNightCycle](#atlasdevdaynightcycle) | the background dims and returns over a day |
 | [AtlasDevInfectedTint](#atlasdevinfectedtint) | a pulsing tint on the hero |
 | [AtlasDevTimeOfDay](#atlasdevtimeofday) | an in-game clock in the HUD |
@@ -996,6 +998,47 @@ Although only one script can be configured, **the script can use `IfWorld` and `
 For scripts that only need to display text under certain conditions, **`AtlasDevOpenTextbox` and `AtlasDevHideTextbox`** can be used to show and hide the textbox explicitly. For example, a script could open a passage the first time a block is pushed, but display a message on subsequent attempts. This allows most interactions to run without a textbox while still providing feedback when needed.
 
 **Note:** The push counter is an 8-bit value and wraps around after 255 frames. Holding against a block long enough may therefore play the sound or execute the script again. Scripts should use flags or other conditions to prevent unwanted repeated effects. It is also possible to have the script execute a tilemap change which removes or replaces the push-blocks, like in the vanilla game.
+
+---
+
+### ExtraTitleScreenChr
+
+Adds up to five custom CHR tiles to the title screen, loaded from an external binary file.
+
+The original game does not populate CHR tiles `$FB`–`$FF` on the title screen, leaving these slots available for custom graphics. This hack loads 1–5 tiles (16 bytes per tile) into these slots when the title screen is initialized.
+
+The new tiles can be used in the [Misc interface](./cli-guide.md#miscellaneous-data), where characters can be referenced using `<N>` or `<$N>` syntax (decimal or hexadecimal tile indices).
+
+For example, the original title screen string:
+
+```text
+TitleString0.Text "START"
+```
+
+Can be changed to:
+
+```text
+TitleString0.Text "<$fb><$fc><$fd><$fe><$ff>"
+```
+
+This displays all five custom tiles in place of the original text.
+
+The CHR file must contain between 16 and 80 bytes, in multiples of 16.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `file` | required | Path to a binary file containing 1–5 CHR tiles |
+| `sram` | `false` | Add SRAM backing |
+
+```text
+ExtraTitleScreenChr file=title.chr
+```
+
+To use SRAM backing:
+
+```text
+ExtraTitleScreenChr file=title.chr sram=true
+```
 
 ---
 

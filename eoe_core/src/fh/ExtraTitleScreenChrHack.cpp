@@ -5,6 +5,10 @@
 #include <format>
 #include <stdexcept>
 
+// TODO: Improve the filename parameter by having the hack manager orchestrator take a base path, which should correspond
+// to project base path - and then resolve all file parameters relative to it (unless an absolute path param is given)
+// this resolution should happen in a centralized hackmanager helper
+
 word fh::HackManager::install_ExtraTitleScreenChr(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
 	const auto filename{ p_hack.get_string("file") };

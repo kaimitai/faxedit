@@ -265,6 +265,36 @@ namespace {
 
 		return result;
 	}
+
+	std::vector<std::string> split_quoted_whitespace(const std::string& str) {
+		std::vector<std::string> result;
+		std::string token;
+		bool quoted{ false };
+
+		for (char c : str) {
+			if (c == '"') {
+				quoted = !quoted;
+				continue;
+			}
+
+			if (!quoted && std::isspace(static_cast<unsigned char>(c))) {
+				if (!token.empty()) {
+					result.push_back(token);
+					token.clear();
+				}
+			}
+			else
+				token += c;
+		}
+
+		if (quoted)
+			throw std::runtime_error("Unterminated quoted string");
+
+		if (!token.empty())
+			result.push_back(token);
+
+		return result;
+	}
 }
 
 fh::GeneralHack::GeneralHack(const std::string& p_type) :
@@ -382,7 +412,7 @@ std::vector<fh::GeneralHack> fh::parse_general_hacks(const std::string& p_str) {
 		if (entry.empty())
 			continue;
 
-		const auto tokens{ klib::str::split_whitespace(entry) };
+		const auto tokens{ split_quoted_whitespace(entry) };
 
 		if (tokens.empty())
 			continue;
