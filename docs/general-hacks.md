@@ -567,6 +567,7 @@ By default, the saved state matches the progress preserved by the vanilla passwo
 | `keep_gold` | `false` | Keep Gold and XP on death |
 | `absolute_spawn` | `true` | iScript opcode `SetSpawn` always updates your spawn point |
 | `color` | `true` | Color `CONTINUE` according to whether a valid save is available |
+| `fix_intro_music` | `false` | Prevent a brief burst of music when starting a new game (non-JP ROMs only) |
 
 Custom save ranges can be supplied if needed, but the default value should be a sensible choice for most:
 

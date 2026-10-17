@@ -445,6 +445,7 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 	const bool keep_gold_xp_on_death{ p_hack.bool_or("keep_gold", false) };
 	const bool color_text{ p_hack.bool_or("color", true) };
 	const bool abs_spawn{ p_hack.bool_or("absolute_spawn", true) };
+	const bool fix_intro_music{ p_hack.bool_or("fix_intro_music", false) };
 
 	if (keep_gold_xp_on_sram_load)
 		install_static_NoGoldXPReload(p_rom, cfg_word(p_config, c::ID_CONTINUE_INIT_XP_GOLD));
@@ -452,6 +453,12 @@ void fh::HackManager::install_SRAM(const fe::Config& p_config, std::vector<byte>
 		install_static_NoGoldXPReload(p_rom, ROM::Player_HandleDeath_InitGoldXP);
 	if (abs_spawn)
 		install_static_AbsoluteSpawn(p_config, p_rom);
+	if (fix_intro_music) {
+		klib::Asm6502 code;
+		code.lda_imm(0x00);
+		code.sta_zp(RAM::ZP_MusicCurrent);
+		code.apply_hack_and_clear(p_rom, 15, cfg_word(p_config, c::ID_ROM_STARTSCREEN_PLAYMUSIC));
+	}
 
 	// dynamic block
 	word cpu_addr{ cfg_word(p_config, c::ID_MANTRALOAD) };

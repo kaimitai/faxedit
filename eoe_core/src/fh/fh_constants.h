@@ -587,6 +587,7 @@ namespace fh {
 		constexpr char ID_ROM_TEXTBOX_SHOWNEXTCHAR_JSR_MMC1_UPDATEROMBANK[]{ "rom_textbox_shownextchar_jsr_mmc1_updaterombank" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_LDA_01[]{ "textbox_show_next_char_lda_01" };
 		constexpr char ID_TEXTBOX_SHOW_NEXT_CHAR_IF_READY_TIMER_CONST[]{ "textbox_show_next_char_if_ready_timer_const" };
+		constexpr char ID_ROM_STARTSCREEN_PLAYMUSIC[]{ "rom_startscreen_playmusic" };
 		constexpr char ID_CHOOSECONTINUE_TARGETADDR[]{ "rom_choosecontinue_targetaddr" };
 		constexpr char ID_CONTINUE_INIT_XP_GOLD[]{ "rom_continue_init_xp_gold" };
 		constexpr char ID_PPU_WRITETILESFROMCHRRAM[]{ "rom_ppu_writetilesfromchrram" };

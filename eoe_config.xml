@@ -466,6 +466,8 @@
 		<const name="rom_player_isclimbing" value="$ecf6" />
 		<const name="rom_ppu_writetilesfromchrram" region="jp,en-transl" value="$f966" />
 		<const name="rom_ppu_writetilesfromchrram" value="$f89e" />
+		<const name="rom_startscreen_playmusic" region="jp,en-transl" value="$fd48" />
+		<const name="rom_startscreen_playmusic" value="$fc80" />
 		<const name="rom_choosecontinue_targetaddr" region="jp,en-transl" value="$fd55" />
 		<const name="rom_choosecontinue_targetaddr" value="$fc8d" />
 		<const name="rom_continue_init_xp_gold" region="jp,en-transl" value="$fd57" />
