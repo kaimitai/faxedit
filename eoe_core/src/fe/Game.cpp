@@ -152,19 +152,9 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	cinematic.parse_rom(p_config, p_rom_data);
 }
 
-// generate PPU tiles 0-58 which are static and available for any world
-std::vector<klib::NES_tile> fe::Game::get_hud_chr_tiles(
-	const fe::Config& p_config) const {
-	std::size_t l_chr_hud_offset{ p_config.constant(c::ID_CHR_HUD_TILE_OFFSET) };
-
-	// HUD header is the same for all tilesets
-	std::vector<klib::NES_tile> l_hud_tiles;
-	for (std::size_t i{ 0 }; i < c::CHR_HUD_TILE_COUNT; ++i) {
-		l_hud_tiles.push_back(klib::NES_tile(m_rom_data,
-			l_chr_hud_offset + 16 * i));
-	}
-
-	return l_hud_tiles;
+// return the 60 shared HUD CHR tiles (PPU indices 0-59)
+const std::vector<klib::NES_tile>& fe::Game::get_hud_chr_tiles(void) const {
+	return m_gfx_manager.chrbanks.at(c::CHR_BANK_HUD);
 }
 
 std::size_t fe::Tileset::end_index(void) const {

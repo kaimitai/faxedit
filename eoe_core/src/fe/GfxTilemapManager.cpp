@@ -66,13 +66,9 @@ std::string fe::GfxTilemapManager::get_label(const std::string& p_gfx_id) const 
 void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) {
 
-	// extract alphabet chr-tiles (A-Z + copyright symbol)
-	load_chr_bank(c::CHR_BANK_ALPHA, p_rom,
-		p_config.constant(c::ID_ALPHABET_CHR_OFFSET), c::CHR_BANK_ALPHA_COUNT);
-	// extract numeric chr-tiles (0-9)
-	load_chr_bank(c::CHR_BANK_NUMERIC, p_rom,
-		p_config.constant(c::ID_NUMERIC_CHR_OFFSET), c::CHR_BANK_NUMERIC_COUNT);
-
+	// extract HUD tiles, which include the uppercase alphabet and number tiles
+	load_chr_bank(c::CHR_BANK_HUD, p_rom,
+		p_config.constant(c::ID_CHR_HUD_TILE_OFFSET), c::CHR_HUD_TILE_COUNT);
 	// title screen bank
 	load_chr_bank(c::CHR_BANK_TITLE, p_rom,
 		p_config.constant(c::ID_TITLE_CHR_OFFSET),
@@ -139,6 +135,8 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET)));
 	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_ITEMS,
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_OFFSET)));
+	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_HUD,
+		p_config.constant(c::ID_CHR_HUD_TILE_OFFSET)));
 
 	// load tilemap data from rom - tilemaps, attributes and palettes
 	load_tilemap_data_from_rom(p_rom, c::CHR_GFX_ID_TITLE);
@@ -387,19 +385,19 @@ std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md
 
 	// add alphanumeric tiles if required, these come after the editable tiles
 	if (md.m_add_alphanumeric) {
-		const auto& alphabank{ chrbanks.at(c::CHR_BANK_ALPHA) };
-		const auto& numbank{ chrbanks.at(c::CHR_BANK_NUMERIC) };
+		const auto& hud{ chrbanks.at(c::CHR_BANK_HUD) };
 
 		std::size_t l_chr_ppu_idx{ md.m_chr_ppu_index + chrbank.size() };
 
 		// 0-9
-		for (std::size_t i{ 0 }; i < numbank.size() &&
-			l_chr_ppu_idx < 256; ++i)
-			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(numbank[i], true, true);
+		for (std::size_t i{ c::CHR_BANK_HUD_NUMERIC_START };
+			i < c::CHR_BANK_HUD_NUMERIC_START + 10 && l_chr_ppu_idx < 256; ++i)
+			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(hud[i], true, true);
 
 		// A-Z + copyright symbol
-		for (std::size_t i{ 0 }; i < alphabank.size() && l_chr_ppu_idx < 256; ++i)
-			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(alphabank[i], true, true);
+		for (std::size_t i{ c::CHR_BANK_HUD_ALPHA_START };
+			(i < c::CHR_BANK_HUD_ALPHA_START + 26 + 1) && l_chr_ppu_idx < 256; ++i)
+			l_tiles[l_chr_ppu_idx++] = fe::ChrGfxTile(hud[i], true, true);
 	}
 
 	// next - lock all tiles referenced by other images using this char bank if required
@@ -424,14 +422,6 @@ std::vector<klib::NES_tile> fe::GfxTilemapManager::get_complete_chr_tileset(
 		result.push_back(tile.m_tile);
 
 	return result;
-}
-
-// helpers for the xml import and export
-bool fe::GfxTilemapManager::is_chr_bank_dynamic(const std::string& p_chr_bank_id) const {
-	for (const auto& md : metadata)
-		if (md.second.m_chr_bank_id == p_chr_bank_id)
-			return true;
-	return false;
 }
 
 bool fe::GfxTilemapManager::is_palette_dynamic(const std::string& p_gfx_id) const {
@@ -519,15 +509,15 @@ void fe::GfxTilemapManager::apply_canonicalization(const std::string& p_bank_id,
 
 	if (iter != end(chrbanks)) {
 
-		for(auto& kv : metadata)
+		for (auto& kv : metadata)
 			if (kv.second.m_chr_bank_id == p_bank_id) {
 				idx_offset = static_cast<byte>(kv.second.m_chr_ppu_index);
 
 				auto& tilemap{ this->tilemapdata.at(kv.first).tilemap };
 
-				for(auto& row : tilemap)
+				for (auto& row : tilemap)
 					for (byte& b : row) {
-						
+
 						// index too low
 						if (b < idx_offset)
 							continue;

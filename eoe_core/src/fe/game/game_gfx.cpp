@@ -472,7 +472,7 @@ std::vector<klib::NES_tile> fe::game::gfx::gen_world_tileset(const fe::Game& p_g
 	const fe::Config& p_config, std::size_t p_tileset_no) {
 
 	const auto& wtileset{ p_game.m_tilesets.at(p_tileset_no) };
-	std::vector<klib::NES_tile> result{ p_game.get_hud_chr_tiles(p_config) };
+	std::vector<klib::NES_tile> result{ p_game.get_hud_chr_tiles() };
 
 	while (result.size() < wtileset.start_idx)
 		result.push_back(klib::NES_tile());

@@ -113,18 +113,16 @@ namespace fe {
 		fe::ChrTilemap get_chrtilemap(const std::string& p_gfx_id) const;
 
 		// helpers
-		bool is_chr_bank_dynamic(const std::string& p_chr_bank_id) const;
 		bool is_palette_dynamic(const std::string& p_gfx_id) const;
 		bool is_attr_table_dynamic(const std::string& p_gfx_id) const;
 		std::string get_tilemap_chr_bank_id(const std::string& p_gfx_id) const;
 	};
 
 	namespace c {
-		// read-only chr banks from ROM
-		constexpr char CHR_BANK_ALPHA[]{ "chr_alpha" };
-		constexpr char CHR_BANK_NUMERIC[]{ "chr_numeric" };
-		constexpr std::size_t CHR_BANK_ALPHA_COUNT{ 27 };
-		constexpr std::size_t CHR_BANK_NUMERIC_COUNT{ 10 };
+		// chr banks not tied to a particular tilemap
+		constexpr char CHR_BANK_HUD[]{ "chr_hud" };
+		constexpr std::size_t CHR_BANK_HUD_ALPHA_START{ 0x10 };
+		constexpr std::size_t CHR_BANK_HUD_NUMERIC_START{ 0x30 };
 		// dynamic editable chr banks, counts implicit from vector sizes (xml load) or config (ROM load)
 		constexpr char CHR_BANK_INTRO_OUTRO[]{ "chr_intro_outro" };
 		constexpr char CHR_BANK_TITLE[]{ "chr_title" };

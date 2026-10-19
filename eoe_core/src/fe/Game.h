@@ -129,7 +129,7 @@ namespace fe {
 		std::size_t delete_unreferenced_metatiles(std::size_t p_chunk_no);
 		std::size_t delete_unreferenced_screens(std::size_t p_chunk_no);
 
-		std::vector<klib::NES_tile> get_hud_chr_tiles(const fe::Config& p_config) const;
+		const std::vector<klib::NES_tile>& get_hud_chr_tiles(void) const;
 		void generate_tilesets(const fe::Config& p_config);
 
 		std::size_t get_default_tileset_no(std::size_t p_chunk_no, std::size_t p_screen_no) const;

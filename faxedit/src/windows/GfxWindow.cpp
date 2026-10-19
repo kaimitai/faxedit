@@ -632,7 +632,8 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 }
 
 void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
-	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO, c::CHR_BANK_ITEMS };
+	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO,
+		c::CHR_BANK_ITEMS, c::CHR_BANK_HUD };
 	static std::size_t ls_sel_bank{ 0 };
 	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
@@ -646,6 +647,18 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 		}
 
 		return std::make_pair(tiles, fixed_tiles);
+		};
+
+	const auto render_bank = [&](const std::string& p_bank_id) {
+		if (p_bank_id == c::CHR_BANK_HUD) {
+			m_gfx.gen_bank_chr_gfx_no_tilemap(p_rnd, p_bank_id,
+				m_game->m_gfx_manager.chrbanks.at(p_bank_id), 20);
+		}
+		else {
+			auto completebank{ bank_chr_w_metadata(p_bank_id) };
+			m_gfx.gen_bank_chr_gfx(p_rnd, p_bank_id,
+				completebank.first, completebank.second);
+		}
 		};
 
 	ImGui::SeparatorText("chr-bank");
@@ -671,9 +684,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	ImGui::Separator();
 
 	if (ui::imgui_button("Re-render", 2) || banktxt == nullptr) {
-		auto completebank{ bank_chr_w_metadata(bank_id) };
-		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
-			completebank.first, completebank.second);
+		render_bank(bank_id);
 	}
 
 	if (ui::imgui_button("Export chr", 4)) {
@@ -686,9 +697,12 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 			load_chr(bank_id, m_game->m_gfx_manager.chrbanks.at(bank_id).size())
 		);
 		undo_tiles[bank_id] = tmpundo;
-		auto completebank{ bank_chr_w_metadata(bank_id) };
-		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
-			completebank.first, completebank.second);
+		render_bank(bank_id);
+
+		if (bank_id == c::CHR_BANK_HUD) {
+			generate_world_tilesets();
+			m_atlas_force_update = true;
+		}
 	}
 	/*
 	ImGui::SameLine();
@@ -702,24 +716,27 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 			completebank.first, completebank.second);
 	}
 	*/
-	ImGui::Separator();
 
-	imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
+	if (bank_id != c::CHR_BANK_HUD) {
+		ImGui::Separator();
 
-	bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
+		imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");
 
-	if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank",
-		!l_shift)) {
-		auto completebank{ bank_chr_w_metadata(bank_id) };
-		std::vector<klib::NES_tile> banktiles;
-		for (const auto& mdtile : completebank.first)
-			if (mdtile.m_allowed && !mdtile.m_readonly)
-				banktiles.push_back(mdtile.m_tile);
+		bool l_shift{ ImGui::IsKeyDown(ImGuiMod_Shift) };
 
-		m_game->m_gfx_manager.apply_canonicalization(bank_id, reorder_chr_tiles(banktiles, completebank.second));
-		completebank = bank_chr_w_metadata(bank_id);
-		m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
-			completebank.first, completebank.second);
+		if (ui::imgui_button("Canonicalize", 4, "Sort and deduplicate the editable portion of the chr bank",
+			!l_shift)) {
+			auto completebank{ bank_chr_w_metadata(bank_id) };
+			std::vector<klib::NES_tile> banktiles;
+			for (const auto& mdtile : completebank.first)
+				if (mdtile.m_allowed && !mdtile.m_readonly)
+					banktiles.push_back(mdtile.m_tile);
+
+			m_game->m_gfx_manager.apply_canonicalization(bank_id, reorder_chr_tiles(banktiles, completebank.second));
+			completebank = bank_chr_w_metadata(bank_id);
+			m_gfx.gen_bank_chr_gfx(p_rnd, bank_id,
+				completebank.first, completebank.second);
+		}
 	}
 
 }

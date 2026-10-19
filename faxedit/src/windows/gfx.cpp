@@ -618,6 +618,30 @@ void fe::gfx::gen_bank_chr_gfx(SDL_Renderer* p_rnd, const std::string& p_bank_id
 	m_chr_bank_gfx[p_bank_id] = banktxt;
 }
 
+// same functions as above, but for chr-banks which are not related to any particular tilemap
+void fe::gfx::gen_bank_chr_gfx_no_tilemap(SDL_Renderer* p_rnd, const std::string& p_bank_id,
+	const std::vector<klib::NES_tile>& p_tiles, std::size_t p_chr_width) {
+	static const std::vector<byte> lcs_palette{ 0x0f, 0x17, 0x28, 0x39 };
+
+	if (p_chr_width == 0 || p_tiles.empty())
+		throw std::runtime_error("Invalid CHR dimensions");
+	const std::size_t rows{ (p_tiles.size() - 1) / p_chr_width + 1 };
+	auto srf{ create_sdl_surface(static_cast<int>(8 * p_chr_width), static_cast<int>(8 * rows), true) };
+
+	for (std::size_t i{ 0 }; i < p_tiles.size(); ++i) {
+		const int x{ static_cast<int>(8 * (i % p_chr_width)) };
+		const int y{ static_cast<int>(8 * (i / p_chr_width)) };
+		draw_nes_tile_on_surface(srf, x, y, p_tiles[i], lcs_palette);
+	}
+
+	auto banktxt{ surface_to_texture(p_rnd, srf) };
+
+	if (m_chr_bank_gfx.contains(p_bank_id))
+		delete_texture(m_chr_bank_gfx.at(p_bank_id));
+
+	m_chr_bank_gfx[p_bank_id] = banktxt;
+}
+
 SDL_Texture* fe::gfx::get_bank_chr_gfx(const std::string& p_bank_id) const {
 	auto iter{ m_chr_bank_gfx.find(p_bank_id) };
 	if (iter == end(m_chr_bank_gfx))

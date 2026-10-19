@@ -133,9 +133,6 @@ namespace fe {
 		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_W[]{ "item_vscreen_mt_w" };
 		constexpr char ID_ITEM_VSCREEN_TILEMAP_MT_H[]{ "item_vscreen_mt_h" };
 
-		constexpr char ID_ALPHABET_CHR_OFFSET[]{ "alphabet_chr_offset" };
-		constexpr char ID_NUMERIC_CHR_OFFSET[]{ "numeric_chr_offset" };
-
 		constexpr char ID_CINEMATIC_SPRITE_CHR_OFFSET[]{ "cinematic_sprite_chr_offset" };
 		constexpr char ID_CINEMATIC_SPRITE_CHR_COUNT[]{ "cinematic_sprite_chr_count" };
 		constexpr char ID_CINEMATIC_MIN_ANIM_FRAME_COUNT[]{ "cinematic_min_anim_frame_count" };
@@ -210,7 +207,7 @@ namespace fe {
 		// move them to xml if it becomes necessary
 		constexpr std::size_t CHUNK_IDX_TOWNS{ 0x03 };
 		constexpr std::size_t CHUNK_IDX_BUILDINGS{ 0x04 };
-		constexpr std::size_t CHR_HUD_TILE_COUNT{ 0x3b };
+		constexpr std::size_t CHR_HUD_TILE_COUNT{ 60 };
 
 		constexpr std::size_t PALETTE_SPRITES_NON_BUILDING{ 28 };
 		constexpr std::size_t PALETTE_SPRITES_BUILDINGS{ 29 };

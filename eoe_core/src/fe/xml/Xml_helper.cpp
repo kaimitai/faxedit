@@ -872,24 +872,22 @@ pugi::xml_document fe::xml::save_game_xml(const fe::Game& p_game) {
 		}
 	}
 
-	// for each dynamic chr-tile bank
+	// for each chr-tile bank
 	auto n_chrbanks{ n_metadata.append_child(c::TAG_CHR_BANKS) };
 	for (const auto& chrbank : gfx_mgr.chrbanks) {
-		if (gfx_mgr.is_chr_bank_dynamic(chrbank.first)) {
 
-			auto n_chrbank{ n_chrbanks.append_child(c::TAG_CHR_BANK) };
-			n_chrbank.append_attribute(c::ATTR_ID);
-			n_chrbank.attribute(c::ATTR_ID).set_value(chrbank.first);
+		auto n_chrbank{ n_chrbanks.append_child(c::TAG_CHR_BANK) };
+		n_chrbank.append_attribute(c::ATTR_ID);
+		n_chrbank.attribute(c::ATTR_ID).set_value(chrbank.first);
 
-			// for each chr-tile in the bank
-			for (std::size_t i{ 0 }; i < chrbank.second.size(); ++i) {
-				auto n_chr_tile{ n_chrbank.append_child(c::TAG_CHR_TILE) };
-				n_chr_tile.append_attribute(c::ATTR_NO);
-				n_chr_tile.attribute(c::ATTR_NO).set_value(i);
+		// for each chr-tile in the bank
+		for (std::size_t i{ 0 }; i < chrbank.second.size(); ++i) {
+			auto n_chr_tile{ n_chrbank.append_child(c::TAG_CHR_TILE) };
+			n_chr_tile.append_attribute(c::ATTR_NO);
+			n_chr_tile.attribute(c::ATTR_NO).set_value(i);
 
-				n_chr_tile.append_attribute(c::ATTR_BYTES);
-				n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(chrbank.second[i].to_bytes(), true));
-			}
+			n_chr_tile.append_attribute(c::ATTR_BYTES);
+			n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(chrbank.second[i].to_bytes(), true));
 		}
 	}
 
