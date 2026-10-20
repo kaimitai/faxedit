@@ -10,13 +10,16 @@ using byte = unsigned char;
 
 void fe::GfxTilemapManager::load_chr_bank(const std::string& p_chr_bank_id,
 	const std::vector<byte>& p_rom, std::size_t p_rom_offset,
-	std::size_t p_chr_tile_count) {
+	std::size_t p_chr_tile_count, klib::NESTileFormat p_format) {
 
 	if (chrbanks.find(p_chr_bank_id) == end(chrbanks)) {
 		ChrTileBank banktiles;
+		banktiles.format = p_format;
+
+		const std::size_t tile_size{ p_format == klib::NESTileFormat::OneBPP ? 8 : 16 };
 
 		for (std::size_t i{ 0 }; i < p_chr_tile_count; ++i)
-			banktiles.push_back(klib::NES_tile(p_rom, p_rom_offset + 16 * i));
+			banktiles.tiles.push_back(klib::NES_tile(p_rom, p_rom_offset + tile_size * i, p_format));
 
 		chrbanks.insert(std::make_pair(p_chr_bank_id, banktiles));
 	}
@@ -235,7 +238,12 @@ void fe::GfxTilemapManager::verify_chr_gfx_id(const std::string& p_gfx_id) const
 // helpers for xml import
 void fe::GfxTilemapManager::set_chr_bank(const std::string& p_chr_bank_id,
 	const std::vector<klib::NES_tile>& p_tiles) {
-	chrbanks[p_chr_bank_id] = p_tiles;
+	chrbanks[p_chr_bank_id].tiles = p_tiles;
+}
+
+void fe::GfxTilemapManager::set_chr_bank_format(const std::string& p_chr_bank_id,
+	klib::NESTileFormat p_format) {
+	chrbanks[p_chr_bank_id].format = p_format;
 }
 
 void fe::GfxTilemapManager::set_tilemap(const std::string& p_gfx_id,
@@ -259,7 +267,7 @@ void fe::GfxTilemapManager::commit_import(const std::string& p_gfx_id,
 	auto& tilemap{ tilemapdata.at(p_gfx_id).tilemap };
 	auto& attrmap{ tilemapdata.at(p_gfx_id).attrmap };
 	const auto& md{ metadata.at(p_gfx_id) };
-	auto& chrbank{ chrbanks.at(md.m_chr_bank_id) };
+	auto& chrbank{ chrbanks.at(md.m_chr_bank_id).tiles };
 
 	const auto& rtm{ p_result.m_tilemap };
 
@@ -368,7 +376,7 @@ std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md
 	std::vector<fe::ChrGfxTile> l_tiles;
 
 	const auto& md{ metadata.at(p_gfx_id) };
-	const auto& chrbank{ chrbanks.at(md.m_chr_bank_id) };
+	const auto& chrbank{ chrbanks.at(md.m_chr_bank_id).tiles };
 
 	// anything up to the ppu idx is disallowed empty tiles (read-only or not doesn't matter then)
 	for (std::size_t i{ 0 }; i < md.m_chr_ppu_index; ++i)
@@ -385,7 +393,7 @@ std::vector<fe::ChrGfxTile> fe::GfxTilemapManager::get_complete_chr_tileset_w_md
 
 	// add alphanumeric tiles if required, these come after the editable tiles
 	if (md.m_add_alphanumeric) {
-		const auto& hud{ chrbanks.at(c::CHR_BANK_HUD) };
+		const auto& hud{ chrbanks.at(c::CHR_BANK_HUD).tiles };
 
 		std::size_t l_chr_ppu_idx{ md.m_chr_ppu_index + chrbank.size() };
 
@@ -494,10 +502,11 @@ std::vector<byte> fe::GfxTilemapManager::serialize_attr_table(
 
 void fe::GfxTilemapManager::patch_chr_banks(std::vector<byte>& p_rom) const {
 	for (const auto& kv : chrbank_rom_offsets) {
-		const auto& tiles{ chrbanks.at(kv.first) };
-		for (std::size_t i{ 0 }; i < tiles.size(); ++i) {
-			const auto& chrbytes{ tiles[i].to_bytes() };
-			std::copy(begin(chrbytes), end(chrbytes), begin(p_rom) + kv.second + 16 * i);
+		const auto& bank{ chrbanks.at(kv.first) };
+		const auto tile_size{ bank.format == klib::NESTileFormat::OneBPP ? 8 : 16 };
+		for (std::size_t i{ 0 }; i < bank.tiles.size(); ++i) {
+			const auto& chrbytes{ bank.tiles[i].to_bytes(bank.format) };
+			std::copy(begin(chrbytes), end(chrbytes), begin(p_rom) + kv.second + tile_size * i);
 		}
 	}
 }

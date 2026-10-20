@@ -7,6 +7,8 @@ using byte = unsigned char;
 
 namespace klib {
 
+	enum class NESTileFormat { OneBPP, TwoBPP };
+
 	struct CanonChoice {
 		bool h = false;
 		bool v = false;
@@ -17,7 +19,8 @@ namespace klib {
 		std::vector<std::vector<byte>> m_tile_data;
 
 	public:
-		NES_tile(const std::vector<byte>& p_rom_data, std::size_t p_offset = 0);
+		NES_tile(const std::vector<byte>& p_rom_data, std::size_t p_offset = 0,
+			NESTileFormat format = NESTileFormat::TwoBPP);
 		NES_tile(void);
 		void flip_h(void);
 		void flip_v(void);
@@ -27,7 +30,7 @@ namespace klib {
 
 		bool operator<(const klib::NES_tile& rhs) const;
 		bool operator==(const klib::NES_tile& rhs) const;
-		std::vector<byte> to_bytes(void) const;
+		std::vector<byte> to_bytes(NESTileFormat format = NESTileFormat::TwoBPP) const;
 
 		std::size_t w(void) const;
 		std::size_t h(void) const;

@@ -132,6 +132,8 @@ namespace fe {
 			constexpr char TAG_CHR_BANKS[]{ "chr_banks" };
 			constexpr char TAG_CHR_BANK[]{ "chr_bank" };
 			constexpr char TAG_GFX_ATTRTABLE[]{ "attribute_table" };
+			constexpr char ATTR_FORMAT[]{ "format" };
+			constexpr char ATTR_FONT_VARIANT[]{ "font_variant" };
 
 			constexpr char TAG_CHUNKS[]{ "worlds" };
 			constexpr char TAG_CHUNK[]{ "world" };

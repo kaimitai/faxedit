@@ -154,7 +154,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 
 // return the 60 shared HUD CHR tiles (PPU indices 0-59)
 const std::vector<klib::NES_tile>& fe::Game::get_hud_chr_tiles(void) const {
-	return m_gfx_manager.chrbanks.at(c::CHR_BANK_HUD);
+	return m_gfx_manager.chrbanks.at(c::CHR_BANK_HUD).tiles;
 }
 
 std::size_t fe::Tileset::end_index(void) const {

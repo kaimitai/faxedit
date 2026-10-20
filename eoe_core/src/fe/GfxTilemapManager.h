@@ -9,12 +9,17 @@
 #include "ChrStructures.h"
 
 using byte = unsigned char;
-using ChrTileBank = std::vector<klib::NES_tile>;
 using GfxTilemap = std::vector<std::vector<byte>>;
 using GfxAttrmap = std::vector<std::vector<byte>>;
 using GfxPalette = std::vector<byte>;
 
 namespace fe {
+
+	// type used for chr tile banks
+	struct ChrTileBank {
+		std::vector<klib::NES_tile> tiles;
+		klib::NESTileFormat format{ klib::NESTileFormat::TwoBPP };
+	};
 
 	// type used for canonicalization of chr banks
 	struct ChrReorderResult {
@@ -41,6 +46,8 @@ namespace fe {
 			m_add_alphanumeric;
 	};
 
+	enum class ScriptFontVariant { None, LatinSmall, LatinBig, Japanese };
+
 	class Config;
 
 	struct GfxTilemapManager {
@@ -49,10 +56,11 @@ namespace fe {
 		std::map<std::string, std::size_t> chrbank_rom_offsets;
 		std::map<std::string, GfxTilemapMetadata> metadata;
 		std::map<std::string, GfxTilemapData> tilemapdata;
+		ScriptFontVariant m_font_variant{ ScriptFontVariant::None };
 
 		void load_chr_bank(const std::string& p_chr_bank_id,
 			const std::vector<byte>& p_rom, std::size_t p_rom_offset,
-			std::size_t p_chr_tile_count);
+			std::size_t p_chr_tile_count, klib::NESTileFormat p_format = klib::NESTileFormat::TwoBPP);
 		void load_chr_metadata(const std::string& p_gfx_id,
 			const std::string& p_label, const std::string& p_chr_bank_id,
 			std::size_t p_gfx_numeric_key,
@@ -98,6 +106,8 @@ namespace fe {
 		// xml procedures
 		void set_chr_bank(const std::string& p_chr_bank_id,
 			const std::vector<klib::NES_tile>& p_tiles);
+		void set_chr_bank_format(const std::string& p_chr_bank_id,
+			klib::NESTileFormat p_format);
 		void set_tilemap(const std::string& p_gfx_id,
 			const std::vector<std::vector<byte>>& p_tilemap);
 		void set_attribute_table(const std::string& p_gfx_id,
@@ -123,6 +133,7 @@ namespace fe {
 		constexpr char CHR_BANK_HUD[]{ "chr_hud" };
 		constexpr std::size_t CHR_BANK_HUD_ALPHA_START{ 0x10 };
 		constexpr std::size_t CHR_BANK_HUD_NUMERIC_START{ 0x30 };
+		constexpr char CHR_FONT[]{ "chr_font" };
 		// dynamic editable chr banks, counts implicit from vector sizes (xml load) or config (ROM load)
 		constexpr char CHR_BANK_INTRO_OUTRO[]{ "chr_intro_outro" };
 		constexpr char CHR_BANK_TITLE[]{ "chr_title" };

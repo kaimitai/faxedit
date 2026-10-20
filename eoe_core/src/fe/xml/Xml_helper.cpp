@@ -258,17 +258,29 @@ fe::Game fe::xml::load_game_xml(const pugi::xml_document& l_doc) {
 	// if tilesets are not defined, extract from rom post-import
 	auto n_chrbanks{ n_root.child(c::TAG_CHR_BANKS) };
 	if (n_chrbanks) {
+		// set the script font variant if it exists
+		if (n_chrbanks.attribute(c::ATTR_FONT_VARIANT))
+			l_game.m_gfx_manager.m_font_variant = klib::str::parse_enum_ci<fe::ScriptFontVariant>(
+				n_chrbanks.attribute(c::ATTR_FONT_VARIANT).as_string());
+		else
+			l_game.m_gfx_manager.m_font_variant = fe::ScriptFontVariant::None;
+
 		for (auto n_chrbank{ n_chrbanks.child(c::TAG_CHR_BANK) }; n_chrbank;
 			n_chrbank = n_chrbank.next_sibling(c::TAG_CHR_BANK)) {
 
 			std::string chrbankid{ n_chrbank.attribute(c::ATTR_ID).as_string() };
+			klib::NESTileFormat format{ klib::NESTileFormat::TwoBPP };
+			if (n_chrbank.attribute(c::ATTR_FORMAT))
+				format = klib::str::parse_enum_ci<klib::NESTileFormat>(n_chrbank.attribute(c::ATTR_FORMAT).as_string());
+
 			std::vector<klib::NES_tile> l_tiles;
 
 			for (auto n_chr_tile{ n_chrbank.child(c::TAG_CHR_TILE) }; n_chr_tile;
 				n_chr_tile = n_chr_tile.next_sibling(c::TAG_CHR_TILE)) {
-				l_tiles.push_back(klib::NES_tile(parse_byte_list(n_chr_tile.attribute(c::ATTR_BYTES).as_string())));
+				l_tiles.push_back(klib::NES_tile(parse_byte_list(n_chr_tile.attribute(c::ATTR_BYTES).as_string()), 0, format));
 			}
 			l_game.m_gfx_manager.set_chr_bank(chrbankid, l_tiles);
+			l_game.m_gfx_manager.set_chr_bank_format(chrbankid, format);
 		}
 	}
 
@@ -874,20 +886,24 @@ pugi::xml_document fe::xml::save_game_xml(const fe::Game& p_game) {
 
 	// for each chr-tile bank
 	auto n_chrbanks{ n_metadata.append_child(c::TAG_CHR_BANKS) };
-	for (const auto& chrbank : gfx_mgr.chrbanks) {
+	n_chrbanks.append_attribute(c::ATTR_FONT_VARIANT);
+	n_chrbanks.attribute(c::ATTR_FONT_VARIANT).set_value(klib::str::enum_to_string(gfx_mgr.m_font_variant));
 
+	for (const auto& chrbank : gfx_mgr.chrbanks) {
 		auto n_chrbank{ n_chrbanks.append_child(c::TAG_CHR_BANK) };
 		n_chrbank.append_attribute(c::ATTR_ID);
 		n_chrbank.attribute(c::ATTR_ID).set_value(chrbank.first);
+		n_chrbank.append_attribute(c::ATTR_FORMAT);
+		n_chrbank.attribute(c::ATTR_FORMAT).set_value(klib::str::enum_to_string(chrbank.second.format));
 
 		// for each chr-tile in the bank
-		for (std::size_t i{ 0 }; i < chrbank.second.size(); ++i) {
+		for (std::size_t i{ 0 }; i < chrbank.second.tiles.size(); ++i) {
 			auto n_chr_tile{ n_chrbank.append_child(c::TAG_CHR_TILE) };
 			n_chr_tile.append_attribute(c::ATTR_NO);
 			n_chr_tile.attribute(c::ATTR_NO).set_value(i);
 
 			n_chr_tile.append_attribute(c::ATTR_BYTES);
-			n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(chrbank.second[i].to_bytes(), true));
+			n_chr_tile.attribute(c::ATTR_BYTES).set_value(join_bytes(chrbank.second.tiles[i].to_bytes(chrbank.second.format), true));
 		}
 	}
 
