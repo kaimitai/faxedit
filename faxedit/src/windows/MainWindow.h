@@ -279,8 +279,10 @@ namespace fe {
 			const std::set<std::size_t>& fixed_indexes = std::set<std::size_t>()) const;
 		std::string get_chr_folder(void) const;
 		std::string get_chr_file_path(const std::string& p_bank_id) const;
-		void save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id);
-		std::vector<klib::NES_tile> load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count);
+		void save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id,
+			klib::NESTileFormat p_format = klib::NESTileFormat::TwoBPP);
+		std::vector<klib::NES_tile> load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count,
+			klib::NESTileFormat p_format = klib::NESTileFormat::TwoBPP);
 
 		// sprite gfx functions and procedures
 		void show_sprite_gfx_editor(SDL_Renderer* p_rnd,

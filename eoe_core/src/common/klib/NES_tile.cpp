@@ -96,6 +96,13 @@ void klib::NES_tile::set_color(std::size_t p_x, std::size_t p_y, byte p_pal_idx)
 	m_tile_data.at(p_y).at(p_x) = p_pal_idx;
 }
 
+std::size_t klib::NES_tile::byte_size(NESTileFormat p_format) {
+	switch (p_format) {
+	case NESTileFormat::OneBPP: return 8;
+	default: return 16;
+	}
+}
+
 std::vector<byte> klib::NES_tile::to_bytes(NESTileFormat format) const {
 	if (m_tile_data.size() != 8 || m_tile_data[0].size() != 8)
 		throw std::runtime_error("NES_tile must be 8x8");

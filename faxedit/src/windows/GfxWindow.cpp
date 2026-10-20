@@ -652,7 +652,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	const auto render_bank = [&](const std::string& p_bank_id) {
 		if (p_bank_id == c::CHR_BANK_HUD) {
 			m_gfx.gen_bank_chr_gfx_no_tilemap(p_rnd, p_bank_id,
-				m_game->m_gfx_manager.chrbanks.at(p_bank_id), 20);
+				m_game->m_gfx_manager.chrbanks.at(p_bank_id).tiles, 16);
 		}
 		else {
 			auto completebank{ bank_chr_w_metadata(p_bank_id) };
@@ -688,15 +688,17 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	}
 
 	if (ui::imgui_button("Export chr", 4)) {
-		save_chr(m_game->m_gfx_manager.chrbanks.at(bank_id), bank_id);
+		const auto& lr_chr_bank{ m_game->m_gfx_manager.chrbanks.at(bank_id) };
+		save_chr(lr_chr_bank.tiles, bank_id, lr_chr_bank.format);
 	}
 	ImGui::SameLine();
 	if (ui::imgui_button("Import chr", 4)) {
-		auto tmpundo{ m_game->m_gfx_manager.chrbanks.at(bank_id) };
+		auto& lr_chr_bank{ m_game->m_gfx_manager.chrbanks.at(bank_id) };
+		auto tmpundo{ lr_chr_bank };
 		m_game->m_gfx_manager.set_chr_bank(bank_id,
-			load_chr(bank_id, m_game->m_gfx_manager.chrbanks.at(bank_id).size())
+			load_chr(bank_id, lr_chr_bank.tiles.size(), lr_chr_bank.format)
 		);
-		undo_tiles[bank_id] = tmpundo;
+		undo_tiles[bank_id] = tmpundo.tiles;
 		render_bank(bank_id);
 
 		if (bank_id == c::CHR_BANK_HUD) {
@@ -1045,11 +1047,12 @@ std::string fe::MainWindow::get_chr_file_path(const std::string& p_bank_id) cons
 	return std::format("{}/{}.chr", get_chr_folder(), p_bank_id);
 }
 
-void fe::MainWindow::save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id) {
+void fe::MainWindow::save_chr(const std::vector<klib::NES_tile>& tiles, const std::string& p_bank_id,
+	klib::NESTileFormat p_format) {
 	klib::file::create_directories(get_chr_folder());
 	std::vector<byte> out_data;
 	for (const auto& tile : tiles) {
-		auto tilebytes{ tile.to_bytes() };
+		auto tilebytes{ tile.to_bytes(p_format) };
 		out_data.insert(end(out_data), begin(tilebytes), end(tilebytes));
 	}
 	std::string out_file{ get_chr_file_path(p_bank_id) };
@@ -1057,16 +1060,18 @@ void fe::MainWindow::save_chr(const std::vector<klib::NES_tile>& tiles, const st
 	add_message(std::format("chr-data written to '{}' ({} chr-tiles, {} bytes)", out_file, tiles.size(), out_data.size()), fe::MsgType::Success);
 }
 
-std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count) {
+std::vector<klib::NES_tile> fe::MainWindow::load_chr(const std::string& p_bank_id, std::size_t p_chr_tile_count,
+	klib::NESTileFormat p_format) {
 	std::vector<klib::NES_tile> out_tiles;
 	std::string in_file{ get_chr_file_path(p_bank_id) };
+	const auto tile_byte_size{ klib::NES_tile::byte_size(p_format) };
 	auto chrbytes{ klib::file::read_file_as_bytes(in_file) };
-	if (chrbytes.size() != 16 * p_chr_tile_count)
+	if (chrbytes.size() != tile_byte_size * p_chr_tile_count)
 		throw std::runtime_error(std::format("Expected file size '{}' to be {} ({} chr-tiles), but actual size was {}",
-			in_file, 16 * p_chr_tile_count, p_chr_tile_count, chrbytes.size()));
+			in_file, tile_byte_size * p_chr_tile_count, p_chr_tile_count, chrbytes.size()));
 
-	for (std::size_t i{ 0 }; i < chrbytes.size(); i += 16)
-		out_tiles.push_back(klib::NES_tile(chrbytes, i));
+	for (std::size_t i{ 0 }; i < chrbytes.size(); i += tile_byte_size)
+		out_tiles.push_back(klib::NES_tile(chrbytes, i, p_format));
 
 	add_message(std::format("Loaded {} chr-tiles from '{}'", out_tiles.size(), in_file), fe::MsgType::Success);
 

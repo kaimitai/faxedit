@@ -16,7 +16,7 @@ void fe::GfxTilemapManager::load_chr_bank(const std::string& p_chr_bank_id,
 		ChrTileBank banktiles;
 		banktiles.format = p_format;
 
-		const std::size_t tile_size{ p_format == klib::NESTileFormat::OneBPP ? 8 : 16 };
+		const std::size_t tile_size{ klib::NES_tile::byte_size(p_format) };
 
 		for (std::size_t i{ 0 }; i < p_chr_tile_count; ++i)
 			banktiles.tiles.push_back(klib::NES_tile(p_rom, p_rom_offset + tile_size * i, p_format));
@@ -503,7 +503,7 @@ std::vector<byte> fe::GfxTilemapManager::serialize_attr_table(
 void fe::GfxTilemapManager::patch_chr_banks(std::vector<byte>& p_rom) const {
 	for (const auto& kv : chrbank_rom_offsets) {
 		const auto& bank{ chrbanks.at(kv.first) };
-		const auto tile_size{ bank.format == klib::NESTileFormat::OneBPP ? 8 : 16 };
+		const auto tile_size{ klib::NES_tile::byte_size(bank.format) };
 		for (std::size_t i{ 0 }; i < bank.tiles.size(); ++i) {
 			const auto& chrbytes{ bank.tiles[i].to_bytes(bank.format) };
 			std::copy(begin(chrbytes), end(chrbytes), begin(p_rom) + kv.second + tile_size * i);

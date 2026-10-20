@@ -37,6 +37,8 @@ namespace klib {
 		byte get_color(std::size_t p_x, std::size_t p_y) const;
 
 		void set_color(std::size_t p_x, std::size_t p_y, byte p_pal_idx);
+
+		static std::size_t byte_size(NESTileFormat p_format);
 	};
 
 }
