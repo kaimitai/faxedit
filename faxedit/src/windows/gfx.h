@@ -163,7 +163,8 @@ namespace fe {
 			const std::vector<fe::ChrGfxTile> tiles,
 			const std::set<std::size_t>& p_fixed_idx_tiles = std::set<std::size_t>());
 		void gen_bank_chr_gfx_no_tilemap(SDL_Renderer* p_rnd, const std::string& p_bank_id,
-			const std::vector<klib::NES_tile>& p_tiles, std::size_t p_chr_width);
+			const std::vector<klib::NES_tile>& p_tiles, std::size_t p_chr_width,
+			bool p_interleaved = false);
 		SDL_Texture* get_bank_chr_gfx(const std::string& p_bank_id) const;
 		void clear_bank_chr_textures(void);
 

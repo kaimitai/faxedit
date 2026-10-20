@@ -133,11 +133,15 @@ namespace fe {
 		constexpr char CHR_BANK_HUD[]{ "chr_hud" };
 		constexpr std::size_t CHR_BANK_HUD_ALPHA_START{ 0x10 };
 		constexpr std::size_t CHR_BANK_HUD_NUMERIC_START{ 0x30 };
-		constexpr char CHR_FONT[]{ "chr_font" };
+		constexpr char CHR_BANK_FONT[]{ "chr_font" };
 		// dynamic editable chr banks, counts implicit from vector sizes (xml load) or config (ROM load)
 		constexpr char CHR_BANK_INTRO_OUTRO[]{ "chr_intro_outro" };
 		constexpr char CHR_BANK_TITLE[]{ "chr_title" };
 		constexpr char CHR_BANK_ITEMS[]{ "chr_items" };
+		// config constants
+		constexpr char ID_SCRIPT_FONT_CHR_OFFSET[]{ "script_font_chr_offset" };
+		constexpr char ID_SCRIPT_FONT_CHR_COUNT[]{ "script_font_chr_count" };
+		constexpr char ID_SCRIPT_FONT_VARIANT[]{ "script_font_variant" };
 
 		constexpr char CHR_GFX_LABEL_TITLE[]{ "Title Screen" };
 		constexpr char CHR_GFX_LABEL_INTRO[]{ "Intro Animation Screen" };

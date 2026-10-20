@@ -620,17 +620,33 @@ void fe::gfx::gen_bank_chr_gfx(SDL_Renderer* p_rnd, const std::string& p_bank_id
 
 // same functions as above, but for chr-banks which are not related to any particular tilemap
 void fe::gfx::gen_bank_chr_gfx_no_tilemap(SDL_Renderer* p_rnd, const std::string& p_bank_id,
-	const std::vector<klib::NES_tile>& p_tiles, std::size_t p_chr_width) {
+	const std::vector<klib::NES_tile>& p_tiles, std::size_t p_chr_width, bool p_interleaved) {
 	static const std::vector<byte> lcs_palette{ 0x0f, 0x17, 0x28, 0x39 };
 
 	if (p_chr_width == 0 || p_tiles.empty())
 		throw std::runtime_error("Invalid CHR dimensions");
-	const std::size_t rows{ (p_tiles.size() - 1) / p_chr_width + 1 };
+	const std::size_t rows{ p_interleaved ?
+		((p_tiles.size() + 31) / 32) * 2 :
+		(p_tiles.size() - 1) / p_chr_width + 1 };
+
 	auto srf{ create_sdl_surface(static_cast<int>(8 * p_chr_width), static_cast<int>(8 * rows), true) };
 
 	for (std::size_t i{ 0 }; i < p_tiles.size(); ++i) {
-		const int x{ static_cast<int>(8 * (i % p_chr_width)) };
-		const int y{ static_cast<int>(8 * (i / p_chr_width)) };
+		std::size_t pos{ i };
+
+		if (p_interleaved) {
+			const std::size_t group{ i / 32 };
+			const std::size_t character{ (i % 32) / 4 };
+			const std::size_t tile{ i % 4 };
+
+			pos = group * 32 +
+				(tile % 2) * 16 +
+				character * 2 +
+				tile / 2;
+		}
+
+		const int x{ static_cast<int>(8 * (pos % p_chr_width)) };
+		const int y{ static_cast<int>(8 * (pos / p_chr_width)) };
 		draw_nes_tile_on_surface(srf, x, y, p_tiles[i], lcs_palette);
 	}
 

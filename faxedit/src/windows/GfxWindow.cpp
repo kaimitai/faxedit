@@ -633,7 +633,7 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 
 void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO,
-		c::CHR_BANK_ITEMS, c::CHR_BANK_HUD };
+		c::CHR_BANK_ITEMS, c::CHR_BANK_HUD, c::CHR_BANK_FONT };
 	static std::size_t ls_sel_bank{ 0 };
 	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
@@ -650,9 +650,15 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 		};
 
 	const auto render_bank = [&](const std::string& p_bank_id) {
-		if (p_bank_id == c::CHR_BANK_HUD) {
+		if (p_bank_id == c::CHR_BANK_HUD || p_bank_id == c::CHR_BANK_FONT) {
+			const auto font_variant{ m_game->m_gfx_manager.m_font_variant };
+			const auto& lr_bank{ m_game->m_gfx_manager.chrbanks.at(p_bank_id) };
+
 			m_gfx.gen_bank_chr_gfx_no_tilemap(p_rnd, p_bank_id,
-				m_game->m_gfx_manager.chrbanks.at(p_bank_id).tiles, 16);
+				lr_bank.tiles, 16,
+				p_bank_id == c::CHR_BANK_FONT && lr_bank.tiles.size() % 4 == 0 &&
+				(font_variant == fe::ScriptFontVariant::Japanese ||
+					font_variant == fe::ScriptFontVariant::LatinBig));
 		}
 		else {
 			auto completebank{ bank_chr_w_metadata(p_bank_id) };
@@ -719,7 +725,7 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 	}
 	*/
 
-	if (bank_id != c::CHR_BANK_HUD) {
+	if (bank_id != c::CHR_BANK_HUD && bank_id != c::CHR_BANK_FONT) {
 		ImGui::Separator();
 
 		imgui_text("Warning! This will re-index tilemaps - only use if you want deterministic chr ordering");

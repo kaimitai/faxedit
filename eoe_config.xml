@@ -173,6 +173,10 @@
 		<const name="string_data_end" region="jp" value="0x37a50" />
 		<const name="string_data_start" region="en-transl" value="0x40010" />
 		<const name="string_data_end" region="en-transl" value="0x43d5a" />
+		<!-- info on the 1bpp script font -->
+		<const name="script_font_chr_offset" value="0x34010" />
+		<const name="script_font_chr_count" region="jp,en-transl" value="1000" />
+		<const name="script_font_chr_count" value="96" />
 		<!-- the reference to the start of the iscript ptr hi bytes (NOT the offset to the hi bytes themselves) -->
 		<const name="iscript_ptr_hi_ref_offset" value="0x30262" />
 		<!-- the end of iScript data region 1 -->
@@ -1890,6 +1894,9 @@
 	<strings>
 		<string name="sram_start_screen_attrs" region="us,eu,us-rev-a" value="addr=$23ec,valid=$50+$50,invalid=$5f+$5f" />
 		<string name="sram_start_screen_attrs" region="jp,en-transl" value="addr=$23eb,valid=$05+$05+$40,invalid=$f5+$f5+$75" />
+		<string name="script_font_variant" region="jp" value="Japanese" />
+		<string name="script_font_variant" region="en-transl" value="LatinBig" />
+		<string name="script_font_variant" value="LatinSmall" />
 	</strings>
 	<string_to_string_maps>
 		<!-- built-in extended script opcode signatures - do not modify! -->

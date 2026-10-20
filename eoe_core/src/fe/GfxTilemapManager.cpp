@@ -1,6 +1,7 @@
 #include "GfxTilemapManager.h"
 #include "fe_constants.h"
 #include "Config.h"
+#include "common/klib/Kstring.h"
 #include <algorithm>
 #include <format>
 #include <stdexcept>
@@ -68,6 +69,23 @@ std::string fe::GfxTilemapManager::get_label(const std::string& p_gfx_id) const 
 
 void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) {
+
+	// extract the font used in the script engine
+	const auto font_variant{ klib::str::parse_enum_ci<ScriptFontVariant>(p_config.string(c::ID_SCRIPT_FONT_VARIANT)) };
+	const auto font_count{ p_config.constant(c::ID_SCRIPT_FONT_CHR_COUNT) };
+
+	auto it{ chrbanks.find(c::CHR_BANK_FONT) };
+
+	// if the script font metadata does not match the expected metadata, re-parse it from ROM
+	if (it != chrbanks.end() &&
+		(m_font_variant != font_variant || it->second.tiles.size() != font_count))
+		chrbanks.erase(it);
+
+	load_chr_bank(c::CHR_BANK_FONT, p_rom,
+		p_config.constant(c::ID_SCRIPT_FONT_CHR_OFFSET),
+		font_count, klib::NESTileFormat::OneBPP);
+
+	m_font_variant = font_variant;
 
 	// extract HUD tiles, which include the uppercase alphabet and number tiles
 	load_chr_bank(c::CHR_BANK_HUD, p_rom,
@@ -140,6 +158,8 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_OFFSET)));
 	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_HUD,
 		p_config.constant(c::ID_CHR_HUD_TILE_OFFSET)));
+	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_FONT,
+		p_config.constant(c::ID_SCRIPT_FONT_CHR_OFFSET)));
 
 	// load tilemap data from rom - tilemaps, attributes and palettes
 	load_tilemap_data_from_rom(p_rom, c::CHR_GFX_ID_TITLE);
