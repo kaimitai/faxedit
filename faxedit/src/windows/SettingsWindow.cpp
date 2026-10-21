@@ -119,7 +119,8 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 		}
 
 		if (ImGui::BeginTabItem("Advanced")) {
-			const static bool ls_secondary_chr_bank{ m_config.has_constant(c::ID_TILESET_SECONDARY_BANK) };
+			const bool ls_secondary_chr_bank{ m_config.has_constant(c::ID_TILESET_SECONDARY_BANK) };
+			const bool ls_expanded_io_chr{ m_config.has_constant(c::ID_EXPANDED_INTRO_OUTRO_BANK) };
 
 			ImGui::SeparatorText("Debug");
 			ui::imgui_checkbox("Enable Debug Features", m_settings.m_enable_config_dump);
@@ -163,6 +164,19 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 					fe::game::migrate_double_tileset_data(m_game.value());
 					generate_world_tilesets();
 					add_message("Double Tileset enabled!", fe::MsgType::Success);
+				}
+				catch (const std::exception& ex) {
+					add_message(ex.what(), fe::MsgType::Error);
+				}
+			}
+
+			if (ls_expanded_io_chr) {
+				ImGui::SeparatorText("Apply Cinematic CHR Expansion Hack");
+
+				if (ui::imgui_button("Enable Expansion", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
+					m_game->m_gfx_manager.m_io_chr_type != fe::IntroOutroChrType::Normal)) try {
+					m_game->m_gfx_manager.apply_expanded_intro_outro_chr(m_config);
+					add_message("Cinematic CHR Expansion enabled!", fe::MsgType::Success);
 				}
 				catch (const std::exception& ex) {
 					add_message(ex.what(), fe::MsgType::Error);

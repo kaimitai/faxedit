@@ -705,6 +705,9 @@ std::vector<byte> fe::game::patch_rom(
 	// install doubled tileset hack if enabled
 	if (p_game.m_tileset_type == fe::TilesetType::Doubled)
 		fh::HackManager::install_hack_double_tileset(p_config, x_rom);
+	// install expanded cinematic background chr if enabled
+	if (p_game.m_gfx_manager.m_io_chr_type == fe::IntroOutroChrType::Expanded)
+		fh::HackManager::install_hack_expanded_intro_outro_chr(p_config, x_rom);
 
 	// world tileset chr
 	if (p_options.world_chr_data) {

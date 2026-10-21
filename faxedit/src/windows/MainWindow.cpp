@@ -798,6 +798,8 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 			add_message("Door hack detected; Sameworld doors are stage doors!", fe::MsgType::Info);
 		if (m_game->m_tileset_type == TilesetType::Doubled)
 			add_message("Double tileset hack deteded!", MsgType::Info);
+		if (m_game->m_gfx_manager.m_io_chr_type == fe::IntroOutroChrType::Expanded)
+			add_message("Expanded Cinematic Background CHR hack detected!", MsgType::Info);
 
 		if (!m_game->m_chunks.empty()) {
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);

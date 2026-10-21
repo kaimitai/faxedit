@@ -570,6 +570,10 @@
 		<bool name="randomizer_doors" condition="0x3e575=$4c,$99,$df 0x3e85c=$20,$a8,$df" />
 		<!-- detect the double tileset hack -->
 		<bool name="double_tileset" condition="0x3c043=$4b,$46,$00" />
+		<!-- detect the expanded cinematic bg chr hack -->
+		<bool name="expanded_cinematic_bg_chr" region="jp,en-transl" condition="0x32b6b=$a0,$00" />
+		<bool name="expanded_cinematic_bg_chr" region="us-rev-a,eu" condition="0x327ba=$a0,$00" />
+		<bool name="expanded_cinematic_bg_chr" condition="0x3276f=$a0,$00" />
 		<!-- duplicate bank 15 into bank 31 for expanded ROMs -->
 		<bool name="duplicate_static_bank" value="true" region="en-transl,512" />
 		<!-- whether to clear unused rom data with $ff in the sprite gfx banks -->

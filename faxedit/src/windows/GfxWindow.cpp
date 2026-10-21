@@ -632,9 +632,22 @@ void fe::MainWindow::generate_door_req_gfx(SDL_Renderer* p_rnd) {
 }
 
 void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
-	static const std::vector<std::string> lcs_chr_banks{ c::CHR_BANK_TITLE, c::CHR_BANK_INTRO_OUTRO,
-		c::CHR_BANK_ITEMS, c::CHR_BANK_HUD, c::CHR_BANK_FONT };
-	static std::size_t ls_sel_bank{ 0 };
+	std::vector<std::string> chr_banks{ c::CHR_BANK_TITLE };
+	const auto& banks{ m_game->m_gfx_manager.chrbanks };
+
+	if (banks.contains(c::CHR_BANK_INTRO_OUTRO))
+		chr_banks.push_back(c::CHR_BANK_INTRO_OUTRO);
+	else {
+		chr_banks.push_back(c::CHR_BANK_INTRO);
+		chr_banks.push_back(c::CHR_BANK_OUTRO);
+	}
+	chr_banks.insert(chr_banks.end(), { c::CHR_BANK_ITEMS, c::CHR_BANK_HUD, c::CHR_BANK_FONT });
+
+	static std::string sel_bank{ c::CHR_BANK_TITLE };
+	if (!banks.contains(sel_bank))
+		sel_bank = c::CHR_BANK_TITLE;
+
+
 	static std::unordered_map<std::string, std::vector<klib::NES_tile>> undo_tiles;
 
 	const auto bank_chr_w_metadata = [this](const std::string& p_bank_id) ->
@@ -669,16 +682,15 @@ void fe::MainWindow::show_gfx_chr_bank_screen(SDL_Renderer* p_rnd) {
 
 	ImGui::SeparatorText("chr-bank");
 
-	for (std::size_t i{ 0 }; i < lcs_chr_banks.size(); ++i) {
-		if (ImGui::RadioButton(lcs_chr_banks[i].c_str(),
-			ls_sel_bank == i))
-			ls_sel_bank = i;
+	for (const auto& bank_id : chr_banks) {
+		if (ImGui::RadioButton(bank_id.c_str(), sel_bank == bank_id))
+			sel_bank = bank_id;
 		ImGui::SameLine();
 	}
 
 	ImGui::NewLine();
 
-	const std::string bank_id{ lcs_chr_banks[ls_sel_bank] };
+	const std::string bank_id{ sel_bank };
 	auto banktxt{ m_gfx.get_bank_chr_gfx(bank_id) };
 	if (banktxt != nullptr) {
 		ImGui::Image(banktxt, ImVec2(

@@ -203,6 +203,7 @@ namespace fe {
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
 		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
 		constexpr char ID_DOUBLE_TILESET[]{ "double_tileset" };
+		constexpr char ID_EXPANDED_CINEMATIC_BG_CHR[]{ "expanded_cinematic_bg_chr" };
 		constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 
 		// constants not stored in the config xml

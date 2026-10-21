@@ -21,6 +21,9 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	m_sw_door_type{ SameWorldDoorType::Normal },
 	m_tileset_type{ p_config.boolean_or(c::ID_DOUBLE_TILESET, false) ? TilesetType::Doubled : TilesetType::Normal }
 {
+	if (p_config.boolean_or(c::ID_EXPANDED_CINEMATIC_BG_CHR, false))
+		m_gfx_manager.m_io_chr_type = fe::IntroOutroChrType::Expanded;
+
 	// start of 8-byte map from world to bank no
 	std::size_t l_world_to_bank{ p_config.constant(c::ID_WORLD_TILEMAP_MD) };
 	// start of 8-byte map from world to ptr in that bank

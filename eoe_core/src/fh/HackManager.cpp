@@ -6875,7 +6875,7 @@ void fh::HackManager::install_hack_expanded_intro_outro_chr(const fe::Config& p_
 	// install hook
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(cfg_byte(p_config, fe::c::ID_EXPANDED_INTRO_OUTRO_BANK));
-	code.dw(loader_addr);
+	code.dw(loader_addr - 1);
 	code.nop(2);
 	code.lda_imm(0x00);
 	code.sta_zp(RAM::ZP_e8);
