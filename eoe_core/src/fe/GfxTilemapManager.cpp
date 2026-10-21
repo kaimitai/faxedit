@@ -69,6 +69,8 @@ std::string fe::GfxTilemapManager::get_label(const std::string& p_gfx_id) const 
 
 void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 	const std::vector<byte>& p_rom) {
+	const bool io_expanded{ m_io_chr_type == IntroOutroChrType::Expanded };
+	const auto layout{ get_intro_outro_layout(p_config, io_expanded) };
 
 	// extract the font used in the script engine
 	const auto font_variant{ klib::str::parse_enum_ci<ScriptFontVariant>(p_config.string(c::ID_SCRIPT_FONT_VARIANT)) };
@@ -95,9 +97,11 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_TITLE_CHR_OFFSET),
 		p_config.constant(c::ID_TITLE_CHR_PPU_COUNT));
 	// intro and outro screen banks
-	load_chr_bank(c::CHR_BANK_INTRO_OUTRO, p_rom,
-		p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET),
-		p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_COUNT));
+	load_chr_bank(layout.intro_chr_bank, p_rom,
+		layout.intro_offset, layout.intro_chr_count);
+	if (io_expanded)
+		load_chr_bank(layout.outro_chr_bank, p_rom,
+			layout.outro_offset, layout.outro_chr_count);
 	// item gfx banks
 	load_chr_bank(c::CHR_BANK_ITEMS, p_rom,
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_OFFSET),
@@ -115,7 +119,7 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_TITLE_PALETTE_OFFSET),
 		p_config.constant(c::ID_TITLE_CHR_PPU_INDEX),
 		true, true, true, true);
-	load_chr_metadata(c::CHR_GFX_ID_INTRO, c::CHR_GFX_LABEL_INTRO, c::CHR_BANK_INTRO_OUTRO,
+	load_chr_metadata(c::CHR_GFX_ID_INTRO, c::CHR_GFX_LABEL_INTRO, layout.intro_chr_bank,
 		c::CHR_GFX_NUM_ID_INTRO,
 		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_X),
 		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_MT_Y),
@@ -124,7 +128,7 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_INTRO_ANIM_TILEMAP_OFFSET),
 		p_config.constant(c::ID_INTRO_ANIM_ATTRIBUTE_OFFSET),
 		p_config.constant(c::ID_INTRO_ANIM_PALETTE_OFFSET),
-		p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_INDEX),
+		layout.intro_ppu_index,
 		true, true, false, false);
 	load_chr_metadata(c::CHR_GFX_ID_ITEMS, c::CHR_GFX_LABEL_ITEMS, c::CHR_BANK_ITEMS,
 		c::CHR_GFX_NUM_ID_ITEMS,
@@ -137,7 +141,7 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		0, // no palette
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_PPU_INDEX),
 		false, false, false, false);
-	load_chr_metadata(c::CHR_GFX_ID_OUTRO, c::CHR_GFX_LABEL_OUTRO, c::CHR_BANK_INTRO_OUTRO,
+	load_chr_metadata(c::CHR_GFX_ID_OUTRO, c::CHR_GFX_LABEL_OUTRO, layout.outro_chr_bank,
 		c::CHR_GFX_NUM_ID_OUTRO,
 		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_X),
 		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_MT_Y),
@@ -146,14 +150,13 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_OUTRO_ANIM_TILEMAP_OFFSET),
 		p_config.constant(c::ID_OUTRO_ANIM_ATTRIBUTE_OFFSET),
 		p_config.constant(c::ID_OUTRO_ANIM_PALETTE_OFFSET),
-		p_config.constant(c::ID_OUTRO_ANIM_CHR_PPU_INDEX),
+		layout.outro_ppu_index,
 		true, true, false, false);
 
 	// needed when patching ROM
+	assign_intro_outro_offsets(p_config, io_expanded);
 	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_TITLE,
 		p_config.constant(c::ID_TITLE_CHR_OFFSET)));
-	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_INTRO_OUTRO,
-		p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET)));
 	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_ITEMS,
 		p_config.constant(c::ID_ITEM_VSCREEN_CHR_OFFSET)));
 	chrbank_rom_offsets.insert(std::make_pair(c::CHR_BANK_HUD,
@@ -529,6 +532,75 @@ void fe::GfxTilemapManager::patch_chr_banks(std::vector<byte>& p_rom) const {
 			std::copy(begin(chrbytes), end(chrbytes), begin(p_rom) + kv.second + tile_size * i);
 		}
 	}
+}
+
+fe::IntroOutroLayout fe::GfxTilemapManager::get_intro_outro_layout(const fe::Config& p_config, bool p_expanded) const {
+	if (p_expanded) {
+		const auto expand_addr{ p_config.constant(c::ID_EXPANDED_INTRO_OUTRO_ADDR) };
+		const byte expand_bank{ static_cast<byte>(p_config.constant(c::ID_EXPANDED_INTRO_OUTRO_BANK)) };
+
+		const std::size_t intro_chr_offset{ 0x10 + expand_bank * 0x4000 + expand_addr - 0x8000 };
+		const std::size_t outro_chr_offset{ intro_chr_offset + 0x1000 };
+
+		return IntroOutroLayout{
+			.intro_offset = intro_chr_offset,
+			.outro_offset = outro_chr_offset,
+			.intro_chr_count = 256,
+			.outro_chr_count = 256,
+			.intro_ppu_index = 0,
+			.outro_ppu_index = 0,
+			.intro_chr_bank = c::CHR_BANK_INTRO,
+			.outro_chr_bank = c::CHR_BANK_OUTRO
+		};
+	}
+	else
+		return IntroOutroLayout{
+			.intro_offset = p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET),
+			.outro_offset = p_config.constant(c::ID_INTRO_ANIM_CHR_OFFSET),
+			.intro_chr_count = p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_COUNT),
+			.outro_chr_count = p_config.constant(c::ID_OUTRO_ANIM_CHR_PPU_COUNT),
+			.intro_ppu_index = p_config.constant(c::ID_INTRO_ANIM_CHR_PPU_INDEX),
+			.outro_ppu_index = p_config.constant(c::ID_OUTRO_ANIM_CHR_PPU_INDEX),
+			.intro_chr_bank = c::CHR_BANK_INTRO_OUTRO,
+			.outro_chr_bank = c::CHR_BANK_INTRO_OUTRO
+	};
+}
+
+void fe::GfxTilemapManager::assign_intro_outro_offsets(const fe::Config& p_config, bool p_expanded) {
+	const auto layout{ get_intro_outro_layout(p_config, p_expanded) };
+	chrbank_rom_offsets[layout.intro_chr_bank] = layout.intro_offset;
+
+	if (p_expanded)
+		chrbank_rom_offsets[layout.outro_chr_bank] = layout.outro_offset;
+}
+
+void fe::GfxTilemapManager::apply_expanded_intro_outro_chr(const fe::Config& p_config) {
+	if (m_io_chr_type == IntroOutroChrType::Expanded)
+		throw std::runtime_error("Cinematic CHR already expanded");
+
+	const auto layout{ get_intro_outro_layout(p_config, true) };
+	const auto old_ppu_start{ metadata.at(c::CHR_GFX_ID_INTRO).m_chr_ppu_index };
+	const auto old_bank{ chrbanks.at(c::CHR_BANK_INTRO_OUTRO).tiles };
+
+	chrbanks[layout.intro_chr_bank].tiles = std::vector<klib::NES_tile>(256);
+	chrbanks[layout.outro_chr_bank].tiles = std::vector<klib::NES_tile>(256);
+
+	for (std::size_t i{ 0 }; i < old_bank.size(); ++i) {
+		chrbanks[layout.intro_chr_bank].tiles[i + old_ppu_start] = old_bank[i];
+		chrbanks[layout.outro_chr_bank].tiles[i + old_ppu_start] = old_bank[i];
+	}
+
+	metadata.at(c::CHR_GFX_ID_INTRO).m_chr_bank_id = layout.intro_chr_bank;
+	metadata.at(c::CHR_GFX_ID_OUTRO).m_chr_bank_id = layout.outro_chr_bank;
+	metadata.at(c::CHR_GFX_ID_INTRO).m_chr_ppu_index = layout.intro_ppu_index;
+	metadata.at(c::CHR_GFX_ID_OUTRO).m_chr_ppu_index = layout.outro_ppu_index;
+
+	assign_intro_outro_offsets(p_config, true);
+
+	chrbanks.erase(c::CHR_BANK_INTRO_OUTRO);
+	chrbank_rom_offsets.erase(c::CHR_BANK_INTRO_OUTRO);
+
+	m_io_chr_type = IntroOutroChrType::Expanded;
 }
 
 void fe::GfxTilemapManager::apply_canonicalization(const std::string& p_bank_id,

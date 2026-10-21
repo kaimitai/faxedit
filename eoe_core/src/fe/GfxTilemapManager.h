@@ -46,7 +46,14 @@ namespace fe {
 			m_add_alphanumeric;
 	};
 
+	struct IntroOutroLayout {
+		std::size_t intro_offset, outro_offset, intro_chr_count, outro_chr_count,
+			intro_ppu_index, outro_ppu_index;
+		std::string intro_chr_bank, outro_chr_bank;
+	};
+
 	enum class ScriptFontVariant { None, LatinSmall, LatinBig, Japanese };
+	enum class IntroOutroChrType { Normal, Expanded };
 
 	class Config;
 
@@ -57,6 +64,7 @@ namespace fe {
 		std::map<std::string, GfxTilemapMetadata> metadata;
 		std::map<std::string, GfxTilemapData> tilemapdata;
 		ScriptFontVariant m_font_variant{ ScriptFontVariant::None };
+		IntroOutroChrType m_io_chr_type{ IntroOutroChrType::Normal };
 
 		void load_chr_bank(const std::string& p_chr_bank_id,
 			const std::vector<byte>& p_rom, std::size_t p_rom_offset,
@@ -85,6 +93,8 @@ namespace fe {
 			bool p_determine_fixed = true) const;
 		std::vector<fe::ChrGfxTile> get_complete_bank_chr_tileset_w_md(const std::string& p_bank_id) const;
 		bool is_bank_tile_0_fixed(const std::string& p_bank_id) const;
+		IntroOutroLayout get_intro_outro_layout(const fe::Config& p_config, bool p_expanded) const;
+		void assign_intro_outro_offsets(const fe::Config& p_config, bool p_expanded);
 
 		// rom patching
 		void patch_chr_banks(std::vector<byte>& p_rom) const;
@@ -98,6 +108,7 @@ namespace fe {
 		std::size_t get_gfx_numeric_key(const std::string& p_gfx_id) const;
 		std::string get_label(const std::string& p_gfx_id) const;
 
+		void apply_expanded_intro_outro_chr(const fe::Config& p_config);
 		void apply_canonicalization(const std::string& p_bank_id, const fe::ChrReorderResult& result);
 
 		// rom patching
@@ -136,6 +147,8 @@ namespace fe {
 		constexpr char CHR_BANK_FONT[]{ "chr_font" };
 		// dynamic editable chr banks, counts implicit from vector sizes (xml load) or config (ROM load)
 		constexpr char CHR_BANK_INTRO_OUTRO[]{ "chr_intro_outro" };
+		constexpr char CHR_BANK_INTRO[]{ "chr_intro" };
+		constexpr char CHR_BANK_OUTRO[]{ "chr_outro" };
 		constexpr char CHR_BANK_TITLE[]{ "chr_title" };
 		constexpr char CHR_BANK_ITEMS[]{ "chr_items" };
 		// config constants

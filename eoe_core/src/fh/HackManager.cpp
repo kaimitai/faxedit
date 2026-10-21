@@ -6843,6 +6843,50 @@ void fh::HackManager::install_hack_double_tileset(const fe::Config& p_config, st
 	code.apply_hack_and_clear(p_rom, 15, ROM::Area_LoadTiles_LDX_Bank);
 }
 
+void fh::HackManager::install_hack_expanded_intro_outro_chr(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	const auto expand_addr{ p_config.constant(fe::c::ID_EXPANDED_INTRO_OUTRO_ADDR) };
+	const byte expand_bank{ cfg_byte(p_config, fe::c::ID_EXPANDED_INTRO_OUTRO_BANK) };
+
+	const word intro_chr_addr{ static_cast<word>(expand_addr) };
+	const word outro_chr_addr{ static_cast<word>(intro_chr_addr + 0x1000) };
+	const word loader_addr{ static_cast<word>(outro_chr_addr + 0x1000) };
+
+	klib::Asm6502 code;
+
+	// new routine next to the chr data - returns ptr to the chr data depending on scenery index
+	code.lda_abs(RAM::SplashAnimation_SceneIndex);
+	code.beq("@intro");
+
+	code.lda_imm(outro_chr_addr % 256);
+	code.sta_zp(RAM::ZP_ScriptAddr);
+	code.lda_imm(outro_chr_addr / 256);
+	code.sta_zp(RAM::ZP_ScriptAddrU);
+	code.rts();
+
+	code.label("@intro");
+	code.lda_imm(intro_chr_addr % 256);
+	code.sta_zp(RAM::ZP_ScriptAddr);
+	code.lda_imm(intro_chr_addr / 256);
+	code.sta_zp(RAM::ZP_ScriptAddrU);
+	code.rts();
+
+	code.apply_hack_and_clear(p_rom, expand_bank, loader_addr);
+
+	// install hook
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(cfg_byte(p_config, fe::c::ID_EXPANDED_INTRO_OUTRO_BANK));
+	code.dw(loader_addr);
+	code.nop(2);
+	code.lda_imm(0x00);
+	code.sta_zp(RAM::ZP_e8);
+	code.lda_imm(0x10);
+	code.sta_zp(RAM::ZP_e9);
+	code.ldx_imm(expand_bank);
+	code.ldy_imm(0x00);
+
+	code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_SCENERY_LOAD_BG_TILES));
+}
+
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
 void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const {
 	const word HackStaticExtraSave{ 0x90c0 };

@@ -20,6 +20,7 @@ namespace fe {
 			constexpr char ATTR_ROOT_VERSION[]{ "version" };
 			constexpr char ATTR_ROOT_SW_DOOR_TYPE[]{ "sameworld_door_type" };
 			constexpr char ATTR_ROOT_TILESET_TYPE[]{ "tileset_type" };
+			constexpr char ATTR_ROOT_IO_CHR_TYPE[]{ "cinematic_chr_type" };
 			constexpr char COMMENTS_ROOT[]{ "Faxanadu project file created with Echoes of Eolis (https://github.com/kaimitai/faxedit) " };
 
 			constexpr char TAG_SETTINGS_ROOT[]{ "eoe_settings" };

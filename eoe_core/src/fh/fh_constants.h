@@ -501,6 +501,7 @@ namespace fh {
 		constexpr word DurationWingBoots{ 0x0429 };
 		constexpr word DurationHourGlass{ 0x042a };
 		constexpr word StartScreenSelection{ 0x0687 }; // 0=START, 1=CONTINUE
+		constexpr word SplashAnimation_SceneIndex{ 0x06a5 };
 		constexpr word SPRITE0_Y{ 0x0700 };
 		constexpr word SPRITE0_TILE{ 0x0701 };
 		constexpr word SPRITE0_ATTRS{ 0x0702 };
@@ -581,6 +582,7 @@ namespace fh {
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };
 		constexpr char ID_STARTSCREEN_DEFAULTSELECTION[]{ "rom_startscreen_defaultselection" };
 		constexpr char ID_STARTSCREEN_INPUTSELECT[]{ "rom_startscreen_inputselect" };
+		constexpr char ID_ROM_SCENERY_LOAD_BG_TILES[]{ "rom_scenery_load_bg_tiles" };
 		constexpr char ID_ROM_INTRO_PLAY_STEPS[]{ "rom_intro_play_steps" };
 
 		// bank 15 cpu addresses

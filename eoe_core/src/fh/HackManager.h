@@ -527,6 +527,7 @@ namespace fh {
 
 		static void install_hack_sameworld_to_stage_doors(const fe::Config& p_config, std::vector<byte>& p_rom);
 		static void install_hack_double_tileset(const fe::Config& p_config, std::vector<byte>& p_rom);
+		static void install_hack_expanded_intro_outro_chr(const fe::Config& p_config, std::vector<byte>& p_rom);
 		std::size_t apply_tilemap_change_subsystem(const fe::Config& p_config, std::vector<byte>& p_rom,
 			const fh::TilemapChanges& tm_changes) const;
 		std::size_t apply_script_library(const fe::Config& p_config, std::vector<byte>& p_rom,

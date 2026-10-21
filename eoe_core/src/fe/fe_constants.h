@@ -188,6 +188,8 @@ namespace fe {
 		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
 		constexpr char ID_TILESET_PRIMARY_BANK[]{ "tileset_primary_bank" };
 		constexpr char ID_TILESET_SECONDARY_BANK[]{ "tileset_secondary_bank" };
+		constexpr char ID_EXPANDED_INTRO_OUTRO_BANK[]{ "expanded_intro_outro_bank" };
+		constexpr char ID_EXPANDED_INTRO_OUTRO_ADDR[]{ "expanded_intro_outro_addr" };
 
 		// other
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
