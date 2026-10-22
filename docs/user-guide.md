@@ -49,7 +49,8 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Background gfx](#background-gfx)
   - [Background palettes](#background-palettes)
   - [HUD](#hud)
-  - [chr banks](#chr-banks)
+  - [CHR banks](#chr-banks)
+    - [Special CHR banks](#special-chr-banks)
   - [Tips for bmp import](#tips-for-bmp-import)
 - [Sprite Graphics](#sprite-graphics)
   - [Frame-Centric Viewing, Bank-Centric Editing](#frame-centric-viewing)
@@ -666,11 +667,11 @@ The original game only uses 4 different HUD attributte indexes, although there a
 
 Note that the top left and top right attributes also matter, as the HUD attributes are applied to textboxes which may contain both text and item graphics. (when items are received or shop interfaces are open in the game)
 
-## chr banks
+## CHR banks
 
-![HUD](./img/win_gfx_world_chr.png)
+![CHR banks](./img/win_gfx_world_chr.png)
 
-There are two screens for viewing the tile chr banks - one for world tilesets, and one for gfx images. The entire 256-entry tilebank loaded into the PPU will be visible here, with color coding as follows:
+There are two screens for viewing the tile CHR banks - one for world tilesets, and one for gfx images. The entire 256-entry tilebank loaded into the PPU will be visible here, with color coding as follows:
 * Black outline: Editable chr-tiles. These make up the tileset-specific bank
 * Yellow outline: Read-only chr-tiles. These can be used as part of tilemaps, and the bmp import will read these - but never change them.
 * Red: Unusable chr-tiles. These change during runtime and there is no guarantee what these will actually look like, so they are ignored.
@@ -689,6 +690,24 @@ In general, if you export a bank as a chr-file, and then perform actions that ch
 The bmp import is image-centric, and changes tilemaps, attribute tables and chr-banks. The chr-import is bank-centric and only changes the chr-tiles themselves, regardless of how many tilemaps use the bank.
 
 If you import a chr-file to a bank, you can re-render all images using that bank to see the new result. For world tilesets the re-rendering will be automatically seen in the screen tilemap editor.
+
+### Special CHR banks
+
+The `chr_hud` and `chr_font` banks are not tied to any particular tilemap and are therefore shown using a dedicated preview mode.
+
+#### chr_hud
+
+The `chr_hud` bank contains the shared HUD graphics, including the alphanumeric glyphs used throughout the game. Changes to this bank may affect multiple graphics and tilesets simultaneously.
+
+#### chr_font
+
+The `chr_font` bank contains the script font graphics used by the text engine.
+
+Unlike the other CHR banks, this bank uses **1bpp graphics** (8 bytes per tile) rather than the standard NES **2bpp graphics** (16 bytes per tile). Import and export automatically use the correct format for the selected bank.
+
+For ROMs using the `Japanese` or `LatinBig` font variants, the preview is displayed in an interleaved layout to make multi-tile characters easier to view and edit. This visual arrangement is only used by the editor preview. Exported and imported CHR files always use the original tile ordering stored by the game.
+
+If a project XML contains script font data whose metadata does not match the currently loaded ROM (font variant or tile count), the font bank will be reloaded from ROM rather than from the XML data.
 
 <hr>
 
