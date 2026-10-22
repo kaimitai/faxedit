@@ -316,9 +316,20 @@ Note how bank 9 is no longer congested. Tilemaps, SRAM runtime data and dynamic 
 │ Extended Strings             │
 └──────────────────────────────┘
 ┌──────────────────────────────┐
-│ Banks 25, 26                 │
+│ Bank 25                      │
 ├──────────────────────────────┤
 │ Unused                       │
+└──────────────────────────────┘
+┌──────────────────────────────┐
+│ Bank 26                      │
+├──────────────────────────────┤
+│                              │
+├─────────── $9fc0 ────────────┤
+│ Expanded Intro CHR bank      │
+├─────────── $afc0 ────────────┤
+│ Expanded Outro CHR bank      │
+├─────────── $bfc0 ────────────┤
+│ Expanded CHR Loader code     │
 └──────────────────────────────┘
 ┌──────────────────────────────┐
 │ Bank 27                      │
@@ -362,7 +373,8 @@ You can change which banks, and in some case cpu-addresses, are used for differe
 
 - [Screen Tilemaps](user-guide.md#screen-tilemap): `tilemap_banks`
 - [Extended Strings](./advanced-modding.md#banked-string-opcodes): `string_banks`
-- [Double Tileset](./user-guide.md#settings): `tileset_secondary_bank`
+- [Double Tileset](./user-guide.md#managed-hacks): `tileset_secondary_bank`
+- [Cinematic CHR Expansion](./user-guide.md#managed-hacks): `expanded_intro_outro_bank`, `expanded_intro_outro_addr`
 - [Dynamic Tilemap Changes](./advanced-modding.md#tilemap-change-system): `hack_tm_change_bank`, `hack_tm_change_cpu_addr`
 - [SRAM Runtime](general-hacks.md#sram-backed-hacks): `sram_code_bank`, `sram_code_addr`
 

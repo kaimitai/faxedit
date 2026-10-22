@@ -66,6 +66,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
 - [World Visualizer](#world-visualizer)
 - [Stage Door Hack](#stage-door-hack)
 - [Settings Window](#settings)
+  - [Managed Hacks](#managed-hacks)
 - [Configuration Files](#configuration-files)
 - [Randomizer](#randomizer)
 - [Changelog](#changelog)
@@ -1321,11 +1322,15 @@ will be considered transparent.
 - Show Door Padding Byte: Allows users to change the unused padding byte stored in door data. Not used by anything in the original game, but we do store it in the data xml - and it is conceivable a hack could make use of it one day.
 - Generate asm: For use with the advanced scripting features. See [separate documentation](./advanced-modding.md).
 
-The **Enable Stage Doors** button will turn sameworld doors into other-stage doors. Shift must be held to use this button, and can only be used if the hack is not already applied. See [separate documentation](#stage-door-hack) before using this.
+#### Managed Hacks
 
-The **Enable Double Tileset** button will double your tilesets. It will create a copy of your 9 tilesets and add them to your existing tilesets, allowing you to edit and assign them separately. This requires a free bank for the new chr data, and installs a hack which loads CHR-data from the appropriate bank depending on tileset index.
+Managed hacks permanently extend the project with additional capabilities. The required runtime patches are installed when building the output ROM. Hold Shift when enabling a hack.
 
-The Double Tileset hack is only available for expanded ROMs by default, depending on configuration parameter `tileset_secondary_bank` being present for the currently loaded ROM's region.
+- **Enable Stage Doors:** Converts same-world doors into flexible stage doors, allowing them to connect to any stage in the game. See the [Stage Door Hack](#stage-door-hack) documentation.
+
+- **Enable Double Tileset:** Duplicates the 9 existing tilesets, allowing all 18 tilesets to be edited and assigned independently. Requires an additional ROM bank for CHR data and installs runtime code to load tileset graphics from the appropriate bank. Available for expanded ROMs by default, depending on the `tileset_secondary_bank` configuration parameter.
+
+- **Enable Cinematic CHR Expansion:** Separates the intro and outro graphics into independent CHR banks and increases each from 128 to 256 tiles. This quadruples the total CHR capacity available across both cinematics, allowing their graphics to be edited independently. Available only for expanded ROMs.
 
 <hr>
 

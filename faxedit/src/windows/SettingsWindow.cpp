@@ -138,13 +138,9 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ui::imgui_button("Reset to Defaults###advanced", 4))
 				m_settings.set_advanced_defaults();
 
-			ImGui::SeparatorText("Apply Stage Door Hack");
-
-			imgui_text("Turns same-world doors into flexible stage doors.");
-			imgui_text("Allows doors to connect to any stage in the game.");
-			imgui_text("Hold Shift while clicking to apply.");
-			imgui_text("Warning: This permanently modifies the loaded ROM.");
-			imgui_text("See the documentation for details.");
+			ImGui::SeparatorText("Managed Hacks");
+			imgui_text("Permanently extends the project with additional capabilities.");
+			imgui_text("Hold Shift to enable. See documentation for details.");
 
 			if (ui::imgui_button("Enable Stage Doors", 4, "",
 				!ImGui::IsKeyDown(ImGuiMod_Shift) ||
@@ -157,8 +153,6 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			}
 
 			if (ls_secondary_chr_bank) {
-				ImGui::SeparatorText("Apply Double Tileset Hack");
-
 				if (ui::imgui_button("Enable Double Tileset", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
 					m_game->m_tileset_type != fe::TilesetType::Normal)) try {
 					fe::game::migrate_double_tileset_data(m_game.value());
@@ -171,9 +165,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			}
 
 			if (ls_expanded_io_chr) {
-				ImGui::SeparatorText("Apply Cinematic CHR Expansion Hack");
-
-				if (ui::imgui_button("Enable Expansion", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
+				if (ui::imgui_button("Enable Cinematic CHR Expansion", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
 					m_game->m_gfx_manager.m_io_chr_type != fe::IntroOutroChrType::Normal)) try {
 					m_game->m_gfx_manager.apply_expanded_intro_outro_chr(m_config);
 					add_message("Cinematic CHR Expansion enabled!", fe::MsgType::Success);
