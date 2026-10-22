@@ -794,21 +794,9 @@ void fe::MainWindow::load_rom(SDL_Renderer* p_rnd, const std::string& p_filepath
 
 		refresh_rom_caches(m_game->m_rom_data);
 
-		std::string managed_hacks;
-
-		const auto add_extension = [&](std::string_view name) {
-			if (!managed_hacks.empty())
-				managed_hacks += ", ";
-			managed_hacks += name;
-			};
-		if (m_game->m_sw_door_type == fe::SameWorldDoorType::Randumizer_0_30)
-			add_extension("Stage doors");
-		if (m_game->m_tileset_type == TilesetType::Doubled)
-			add_extension("Double tilesets");
-		if (m_game->m_gfx_manager.m_io_chr_type == fe::IntroOutroChrType::Expanded)
-			add_extension("Expanded cinematic CHR");
-		if (!managed_hacks.empty())
-			add_message(std::format("Managed Hacks: {}", managed_hacks), MsgType::Info);
+		const auto hacks{ m_game->get_managed_hacks_description() };
+		if (!hacks.empty())
+			add_message(std::format("Managed Hacks: {}", hacks), MsgType::Info);
 
 		if (!m_game->m_chunks.empty()) {
 			m_atlas_new_palette_no = m_game->get_default_palette_no(0, 0);

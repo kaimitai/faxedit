@@ -82,10 +82,9 @@ fe::Game fe::game::load_game_xml(
 
 	game.cinematic.parse_rom(p_config, game.m_rom_data);
 
-	if (game.m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
-		send_message(p_message, { "Loaded XML uses the sameworld-door to stage-door hack", MsgType::Info });
-	if (game.m_tileset_type == TilesetType::Doubled)
-		send_message(p_message, { "Loaded XML uses the double tileset hack", MsgType::Info });
+	const auto hacks{ game.get_managed_hacks_description() };
+	if (!hacks.empty())
+		send_message(p_message, { std::format("Managed Hacks: {}", hacks), MsgType::Info });
 
 	return game;
 }

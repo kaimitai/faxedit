@@ -6,6 +6,7 @@
 #include "ROM_Manager.h"
 #include <algorithm>
 #include <format>
+#include <string_view>
 #include <utility>
 
 fe::Game::Game(void) :
@@ -370,6 +371,27 @@ void fe::Game::set_interchunk_scrolling(const fe::Config& p_config, std::size_t 
 				m_rom_data.at(l_ptr_to_screens + i + 3)
 			);
 	}
+}
+
+std::string fe::Game::get_managed_hacks_description() const {
+	std::string result;
+
+	const auto add = [&](std::string_view name) {
+		if (!result.empty())
+			result += ", ";
+		result += name;
+		};
+
+	if (m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
+		add("Stage doors");
+
+	if (m_tileset_type == TilesetType::Doubled)
+		add("Double tilesets");
+
+	if (m_gfx_manager.m_io_chr_type == IntroOutroChrType::Expanded)
+		add("Expanded cinematic CHR");
+
+	return result;
 }
 
 // find all guru (with spawn point) door entrances

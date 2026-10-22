@@ -109,6 +109,7 @@ namespace fe {
 		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);
 
+		std::string get_managed_hacks_description(void) const;
 		int calculate_spawn_locations_by_guru(const std::map<byte, byte>& p_spawn_to_script_no);
 		bool calculate_push_block_parameters(void);
 
