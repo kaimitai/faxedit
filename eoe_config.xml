@@ -432,6 +432,13 @@
 		<const name="rom_text_continuegate" region="jp,en-transl" value="$9d7a" />
 		<const name="rom_text_continuegate" region="us-rev-a,eu" value="$999a" />
 		<const name="rom_text_continuegate" value="$9956" />
+		<const name="rom_text_releasepause" region="jp,en-transl" value="$9d6b" />
+		<const name="rom_text_releasepause" region="us-rev-a,eu" value="$998d" />
+		<const name="rom_text_releasepause" value="$9949" />
+		<const name="rom_messages_load" region="jp,en-transl" value="$f505" />
+		<const name="rom_messages_load" value="$f3f5" />
+		<const name="rom_textbox_shownextchar" region="jp,en-transl" value="$f55a" />
+		<const name="rom_textbox_shownextchar" value="$f466" />
 		<const name="rom_text_question_continuegate" region="jp,en-transl" value="$9dae" />
 		<const name="rom_text_question_continuegate" region="us-rev-a,eu" value="$99c4" />
 		<const name="rom_text_question_continuegate" value="$9980" />
@@ -2090,6 +2097,7 @@
 			<entry key="AtlasDevReadFlagToVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevWriteVarToMetatile" value="Args=Byte+Byte" />
 			<entry key="AtlasDevShowInventoryMenu" />
+			<entry key="AtlasDevShowMessageTimed" value="Args=Byte:TextString+Byte+Byte" />
 		</string_to_string_map>
 	</string_to_string_maps>
 </eoe_config>

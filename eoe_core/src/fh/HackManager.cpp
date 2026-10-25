@@ -5564,6 +5564,71 @@ word fh::HackManager::apply_AtlasDevShowInventoryMenu(const fe::Config& p_config
 		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
 }
 
+// AtlasDevShowMessageTimed Message Frames Skip: Msg, but every wait for A, at
+// a <p> and at the end, is a wait of Frames frames. A new press of a button in
+// Skip ends a wait early. Message id 0 only waits.
+word fh::HackManager::apply_AtlasDevShowMessageTimed(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+	// The operands stay on the stack: the reveal clobbers A, X and Y.
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // message id
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // frames
+	code.pha();
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // skip mask
+	code.pha();
+	code.tsx();
+	code.lda_abs_x(0x0103); // message id
+	code.beq("@finish");
+	code.jsr(cfg_word(p_config, c::ID_ROM_MESSAGES_LOAD));
+
+	code.label("@reveal");
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+	code.jsr(cfg_word(p_config, c::ID_ROM_TEXTBOX_SHOWNEXTCHAR));
+	code.lda_abs(RAM::TextBox_Paused);
+	code.bne("@page");
+	code.lda_abs(RAM::StringID); // 0 once the message ends
+	code.bne("@reveal");
+	code.beq("@finish"); // always taken
+
+	code.label("@page"); // with no A gate, nothing else releases a <p>
+	code.jsr("@hold");
+	code.jsr(cfg_word(p_config, c::ID_ROM_TEXT_RELEASEPAUSE));
+	code.jmp("@reveal");
+
+	code.label("@finish");
+	code.jsr("@hold");
+	code.pla();
+	code.pla();
+	code.pla();
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	// Frames is at $0104,X here, and Skip once the count is pushed.
+	code.label("@hold");
+	code.tsx();
+	code.lda_abs_x(0x0104);
+	code.beq("@held");
+	code.label("@tick");
+	code.pha(); // Portrait_Pump clobbers X and Y
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_UPDATEPORTRAITANIMATION));
+	code.tsx();
+	code.lda_abs_x(0x0104);
+	code.and_zp(0x19); // new presses this frame
+	code.bne("@skipped");
+	code.pla();
+	code.sec();
+	code.sbc_imm(0x01);
+	code.bne("@tick");
+	code.rts();
+	code.label("@skipped");
+	code.pla();
+	code.label("@held");
+	code.rts();
+
+	return get_next_cpu_addr(cpu_addr,
+		code.apply_hack_and_clear(p_rom, 12, cpu_addr));
+}
+
 word fh::HackManager::install_script_variable_reset(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr) const {
 	klib::Asm6502 code;
@@ -6429,6 +6494,9 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::AtlasDevShowInventoryMenu:
 			cpu_addr = apply_AtlasDevShowInventoryMenu(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::AtlasDevShowMessageTimed:
+			cpu_addr = apply_AtlasDevShowMessageTimed(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::Count:

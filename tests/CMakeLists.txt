@@ -3,6 +3,11 @@ target_link_libraries(atlas_inventory_menu_regression PRIVATE eoe_core)
 target_compile_definitions(atlas_inventory_menu_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME atlas_inventory_menu_regression COMMAND atlas_inventory_menu_regression)
 
+add_executable(atlas_show_message_timed_regression atlas_show_message_timed_regression.cpp)
+target_link_libraries(atlas_show_message_timed_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_show_message_timed_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_show_message_timed_regression COMMAND atlas_show_message_timed_regression)
+
 add_executable(atlas_scheduler_regression
     atlas_scheduler_regression.cpp
 )

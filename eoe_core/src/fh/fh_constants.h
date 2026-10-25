@@ -215,8 +215,8 @@ namespace fh {
 		constexpr word Sprites_IncNextSpriteSlot{ 0xf228 };
 		constexpr word Portrait_LoadTiles{ 0xf24d };
 		constexpr word Portrait_Clear{ 0xf281 };
-		constexpr word Messages_Load{ 0xf3f5 };
-		constexpr word Text_ShowNextChar{ 0xf466 };
+		constexpr word Messages_Load{ 0xf3f5 }; // ID_ROM_MESSAGES_LOAD
+		constexpr word Text_ShowNextChar{ 0xf466 }; // ID_ROM_TEXTBOX_SHOWNEXTCHAR
 		constexpr word TextGridRowQueue{ 0xf5d9 };
 		constexpr word PPUAddressFromPos{ 0xf804 };
 		constexpr word PPUAdvanceRow{ 0xf826 };
@@ -426,6 +426,7 @@ namespace fh {
 		constexpr word SelectedMagic{ 0x03c0 };
 		constexpr word TextBox_PlayTextSound{ 0x0212 };
 		constexpr word StringID{ 0x0213 };
+		constexpr word TextBox_Paused{ 0x0215 };
 		constexpr word TextBox_Timer{ 0x021d };
 		constexpr word Screen_ScrollVertPPUAttrData{ 0x028a };
 		constexpr word VisibleMagicState{ 0x02b3 };
@@ -575,6 +576,9 @@ namespace fh {
 		constexpr char ID_ISCRIPTACTIONSHOWMANTRA[]{ "rom_iscriptactionshowmantra" };
 		constexpr char ID_ROM_TEXT_CHECK_CONTINUEGATE[]{ "rom_text_check_continuegate" };
 		constexpr char ID_ROM_TEXT_CONTINUEGATE[]{ "rom_text_continuegate" };
+		constexpr char ID_ROM_TEXT_RELEASEPAUSE[]{ "rom_text_releasepause" };
+		constexpr char ID_ROM_MESSAGES_LOAD[]{ "rom_messages_load" };
+		constexpr char ID_ROM_TEXTBOX_SHOWNEXTCHAR[]{ "rom_textbox_shownextchar" };
 		constexpr char ID_ROM_TEXT_QUESTION_CONTINUEGATE[]{ "rom_text_question_continuegate" };
 		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
 		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };

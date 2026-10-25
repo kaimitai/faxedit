@@ -250,6 +250,7 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevEntitySayMessage | Byte, string | Gives the message to the entity in the given slot, so it is spoken with that entity's own portrait context | AtlasDevEntitySayMessage 2 "Who goes there?" |
 | AtlasDevShowSequentialMessages | string, string, string, string | Shows up to four messages in order, one A press between each. An unused slot is a plain 0. B skips the rest; the remaining operands are still consumed, so the stream never desyncs | AtlasDevShowSequentialMessages "One." "Two." "Three." 0 |
 | AtlasDevShowNumberInMessage | string, Byte | Reveals the message without its A wait, renders a script register as three digits at the text cursor, then runs the engine's own A wait. Message id 0 does nothing and still takes both operands | AtlasDevShowNumberInMessage "You have" 0 |
+| AtlasDevShowMessageTimed | string, Byte, Byte | Shows a message that waits the given number of frames wherever Msg would wait for A, at a page break and at the end. Skip is a button mask as for AtlasDevWaitForButtonPress: a new press of one of those buttons ends a wait early, and 0 lets nothing hurry it. Message id 0 reveals nothing and still waits | AtlasDevShowMessageTimed "Wait here." 90 0 |
 | AtlasDevShowChoiceToVar | Byte, Byte | Runs the vanilla menu selection loop over Count rows and stores the chosen index in a script register, or $FF if the player cancels with B. Count is clamped to 1-8. The script draws its own choice text | AtlasDevShowChoiceToVar 3 0 ; three rows, result into register 0 |
 | AtlasDevShowMessageFromVar | Byte | Shows the message whose id is held in a script register. An out-of-range register, or an id outside 1-193, is a no-op | AtlasDevShowMessageFromVar 0 |
 | AtlasDevIfEntityCountAtLeast | Byte, Label | Jumps when at least Count of the eight entity slots hold a live entity. Count 0 always jumps; Count above 8 never does | AtlasDevIfEntityCountAtLeast 1 @some_left |
@@ -508,6 +509,9 @@ gameplay correctly.
 limitation in ```AtlasDevShowNumberInMessage```: the digits are drawn as plain
 tiles at the text cursor and nothing restores the text grid underneath them,
 so they remain visible over a following shorter message.
+
+Two ```AtlasDevShowMessageTimed``` in a row clear the box between pages with no
+input, because loading a message blanks the text grid.
 
 #### AtlasDev entity opcodes
 
