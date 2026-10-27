@@ -11,6 +11,7 @@
 #include "fh/HackManager.h"
 #include "fb/BScriptLoader.h"
 #include "common/klib/IPS_Patch.h"
+#include "common/lodepng.h"
 #include <algorithm>
 #include <format>
 
@@ -665,6 +666,27 @@ namespace {
 	}
 }
 
+// sprite 0 is drawn behind the hud's P as an exact copy (sprite tile $7f, tile
+// $3f of the common sprite chr), so the split's sprite 0 hit comes on the P
+// and the sprite never shows. where an edited P is see-through and the copy
+// is not, the copy shows, so an original copy follows the hud's P. a copy
+// edited on its own is left alone
+bool fe::game::sync_status_bar_sprite(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	constexpr std::size_t TILE_BYTES{ 16 }, HUD_TILE_P{ 0x1f }, COMMON_TILE_SPRITE0{ 0x3f };
+	constexpr unsigned ORIGINAL_P_CRC{ 0x4163ee6a };
+
+	const std::size_t from{ p_config.constant(c::ID_CHR_HUD_TILE_OFFSET) + HUD_TILE_P * TILE_BYTES };
+	const std::size_t to{ fe::ROM_Manager().get_ptr_to_rom_offset(p_rom, p_config.pointer(c::ID_GFX_COMMON_CHR_PTR)) +
+		COMMON_TILE_SPRITE0 * TILE_BYTES };
+	if (from + TILE_BYTES > p_rom.size() || to + TILE_BYTES > p_rom.size() ||
+		lodepng_crc32(p_rom.data() + to, TILE_BYTES) != ORIGINAL_P_CRC ||
+		std::equal(p_rom.begin() + from, p_rom.begin() + from + TILE_BYTES, p_rom.begin() + to))
+		return false;
+
+	std::copy_n(p_rom.begin() + from, TILE_BYTES, p_rom.begin() + to);
+	return true;
+}
+
 std::vector<byte> fe::game::patch_rom(
 	const Config& p_config,
 	Game& p_game,
@@ -799,6 +821,9 @@ std::vector<byte> fe::game::patch_rom(
 		else
 			send_message(p_message, { "Could not patch Sprite Gfx data", fe::MsgType::Error });
 	}
+
+	if (sync_status_bar_sprite(p_config, x_rom))
+		send_message(p_message, { "Copied the edited HUD P to its hidden status bar sprite", fe::MsgType::Success });
 
 	// bank 15 - coupled dynamic data
 	if (p_options.bank15_data) {

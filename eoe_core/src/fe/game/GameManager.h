@@ -98,6 +98,9 @@ namespace fe::game {
 	void migrate_stage_door_hack_data(Game& p_game);
 	void migrate_double_tileset_data(Game& p_game);
 
+	// sprite 0, which times the status bar split, is a hidden copy of the hud's P
+	bool sync_status_bar_sprite(const Config& p_config, std::vector<byte>& p_rom);
+
 	// rom patching - the MacDaddy!
 	std::vector<byte> patch_rom(
 		const Config& p_config,
