@@ -302,13 +302,13 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
 | AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
 | AtlasDevOpenWindow | Byte, Byte, Byte, Byte | Draws a bordered window at X, Y, width, height | AtlasDevOpenWindow 4 8 20 10 |
-| AtlasDevShowIcon | Byte, Byte, Byte | Draws item picture 0-19 at X, Y from the current window's corner; the pictures are listed below | AtlasDevShowIcon 3 2 2 |
+| AtlasDevShowIcon | Byte, Byte, Byte | Draws item picture 0-19 at X, Y from the current window's corner; next to text use pictures 16-19 ([list](#atlasdev-windows-icons-and-text-grids)) | AtlasDevShowIcon 17 2 2 ; the elf ring |
 | AtlasDevCloseWindow | — | Restores the game background beneath the current window rectangle | AtlasDevCloseWindow |
 | AtlasDevLayText | — | Lays the vanilla 16x4 text grid inside the current window | AtlasDevLayText |
 | AtlasDevOpenWindowAtEntity | Byte, Byte, Byte, Byte, Byte | Opens an even-sized window relative to an entity slot, or the player for slots 8+ | AtlasDevOpenWindowAtEntity 0 4 248 20 8 |
 | AtlasDevRestoreRect | Byte, Byte, Byte, Byte | Restores an explicit even-aligned rectangle from the game background | AtlasDevRestoreRect 4 8 20 10 |
 | AtlasDevShowItemName | Item, Byte, Byte | Draws an item's canonical resident-font name at an absolute tile position | AtlasDevShowItemName WEAPON_HAND_DAGGER 4 12 |
-| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Loads item picture 0-31 into tile slot 0-19 and draws it at X, Y from the current window's corner; next to text use slots 16-19 | AtlasDevShowIconEx 19 31 2 2 ; the book |
+| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Loads item picture 0-31 into tile slot 0-19 and draws it at X, Y from the current window's corner; next to text use slots 16-19 ([list](#atlasdev-windows-icons-and-text-grids)) | AtlasDevShowIconEx 19 31 2 2 ; the book |
 | AtlasDevClearText | — | Blanks all four rows of the current text grid while keeping the window and portrait | AtlasDevClearText |
 | AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
 | AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
@@ -732,8 +732,9 @@ Wing boots, the potions, the elixir and the later special items come after 31
 and can't be drawn.
 
 Slots 0-15 share their tiles with the dialogue text, so a picture there turns
-into letters as a ```Msg``` types. Next to text use slots 16-19. The picture
-covers two letters on two lines, so leave spaces there.
+into letters as a ```Msg``` types. Next to text use slots 16-19, so
+```AtlasDevShowIcon``` only works there with pictures 16-19. The picture covers
+two letters on two lines, so leave spaces there.
 
 ```text
 .textbox GENERIC
