@@ -302,13 +302,13 @@ This minimizes ROM usage while allowing new opcode implementations to reuse comm
 | AtlasDevSetFacing | Byte | Faces the player left (0) or right (any nonzero value) | AtlasDevSetFacing 1 |
 | AtlasDevSetPlayerPosition | Byte | Moves the player to a collision-checked packed YX block coordinate | AtlasDevSetPlayerPosition $74 |
 | AtlasDevOpenWindow | Byte, Byte, Byte, Byte | Draws a bordered window at X, Y, width, height | AtlasDevOpenWindow 4 8 20 10 |
-| AtlasDevShowIcon | Byte, Byte, Byte | Draws one of the 20 resident item icons at a window-relative offset | AtlasDevShowIcon 3 2 2 |
+| AtlasDevShowIcon | Byte, Byte, Byte | Draws item picture 0-19 at X, Y from the current window's corner; the pictures are listed below | AtlasDevShowIcon 3 2 2 |
 | AtlasDevCloseWindow | — | Restores the game background beneath the current window rectangle | AtlasDevCloseWindow |
 | AtlasDevLayText | — | Lays the vanilla 16x4 text grid inside the current window | AtlasDevLayText |
 | AtlasDevOpenWindowAtEntity | Byte, Byte, Byte, Byte, Byte | Opens an even-sized window relative to an entity slot, or the player for slots 8+ | AtlasDevOpenWindowAtEntity 0 4 248 20 8 |
 | AtlasDevRestoreRect | Byte, Byte, Byte, Byte | Restores an explicit even-aligned rectangle from the game background | AtlasDevRestoreRect 4 8 20 10 |
 | AtlasDevShowItemName | Item, Byte, Byte | Draws an item's canonical resident-font name at an absolute tile position | AtlasDevShowItemName WEAPON_HAND_DAGGER 4 12 |
-| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Draws a resident icon with independent shape and palette selection | AtlasDevShowIconEx 3 1 2 2 |
+| AtlasDevShowIconEx | Byte, Byte, Byte, Byte | Loads item picture 0-31 into tile slot 0-19 and draws it at X, Y from the current window's corner; next to text use slots 16-19 | AtlasDevShowIconEx 19 31 2 2 ; the book |
 | AtlasDevClearText | — | Blanks all four rows of the current text grid while keeping the window and portrait | AtlasDevClearText |
 | AtlasDevLayTextAt | Byte, Byte | Lays the vanilla 16x4 text grid at an explicit tile position | AtlasDevLayTextAt 4 10 |
 | AtlasDevClearTextLine | Byte | Blanks one current-window text row; the row operand is masked to 0-3 | AtlasDevClearTextLine 0 |
@@ -712,10 +712,36 @@ drawing and restoration enqueue PPU work; allow several frames before drawing
 or restoring another large overlapping rectangle. A 15-frame wait is a
 conservative transition between ordinary dialogue-sized boxes.
 
-```AtlasDevShowIcon``` selects both shape and the icon's ordinary palette from
-one clamped ID, 0-19. ```AtlasDevShowIconEx``` separates shape from palette;
-shape still clamps to 19 and palette is masked to five bits by the same
-contract used by the ROM. Both positions are relative to the current window.
+```AtlasDevShowIconEx Slot Picture X Y``` loads item picture 0-31 into tile
+slot 0-19 and draws it at X, Y, counted in tiles from the current window's
+top-left corner. A dialogue box is a window too.
+```AtlasDevShowIcon Picture X Y``` uses the picture number as the slot too, so
+it only reaches pictures 0-19.
+
+| picture | item |
+|---|---|
+| 0-3 | hand dagger, long sword, giant blade, dragon slayer |
+| 4-7 | leather armor, studded mail, full plate, battle suit |
+| 8-11 | small shield, large shield, magic shield, battle helmet |
+| 12-16 | deluge, thunder, fire, death, tilte |
+| 17-20 | elf ring, ruby ring, dworf ring, demon's ring |
+| 21-25 | the ace, king, queen, jack and joker keys |
+| 26-31 | mattock, rod, crystal, lamp, hourglass, book |
+
+Wing boots, the potions, the elixir and the later special items come after 31
+and can't be drawn.
+
+Slots 0-15 share their tiles with the dialogue text, so a picture there turns
+into letters as a ```Msg``` types. Next to text use slots 16-19. The picture
+covers two letters on two lines, so leave spaces there.
+
+```text
+.textbox GENERIC
+    AtlasDevShowIconEx 19 31 2 2
+    Msg "   Bring me<n>   this book."
+    End
+```
+
 ```AtlasDevShowItemName``` instead uses the resident static font and an
 absolute tile position. Packed IDs in categories without a vanilla name table
 are consumed safely without drawing.
