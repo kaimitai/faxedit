@@ -619,6 +619,7 @@ Fixes several known bugs in the original game:
 | parameter | default | meaning |
 | --- | --- | --- |
 | `silent_note_fix` | `false` | Prevents very low notes from being muted by an NES APU sweep hardware quirk |
+| `hud_five_fix` | `false` | Removes the stray pixel from the HUD's 5. Requires the original tile |
 
 ```text
 BugFixes

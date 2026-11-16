@@ -4,6 +4,7 @@
 #include "fe/ROM_Manager.h"
 #include "common/klib/Asm6502.h"
 #include "common/klib/Kstring.h"
+#include "common/lodepng.h"
 #include "AtlasDevFrameScheduler.h"
 #include "fh_constants.h"
 #include "fe/fe_constants.h"
@@ -854,6 +855,7 @@ word fh::HackManager::install_TextSpeed(const fe::Config& p_config, std::vector<
 void fh::HackManager::install_BugFixes(const fe::Config& p_config, std::vector<byte>& p_rom,
 	const fh::GeneralHack& p_hack) const {
 	const bool sile_note_fix{ p_hack.bool_or("silent_note_fix", false) };
+	const bool hud_five_fix{ p_hack.bool_or("hud_five_fix", false) };
 
 	klib::Asm6502::apply_word(p_rom, RAM::Inventory_ArmorsCount, 15, ROM::Player_PickUpBattleSuit_WeaponsCountBug);
 	klib::Asm6502::apply_word(p_rom, RAM::Inventory_WeaponsCount, 15, ROM::Player_PickUpDragonSlayer_ArmoursCountBug);
@@ -864,6 +866,16 @@ void fh::HackManager::install_BugFixes(const fe::Config& p_config, std::vector<b
 	if (sile_note_fix) {
 		klib::Asm6502::apply_byte(p_rom, 0x08, 5, cfg_word(p_config, c::ID_ROM_MUSIC_SQ1_SWEEP_INIT));
 		klib::Asm6502::apply_byte(p_rom, 0x08, 5, cfg_word(p_config, c::ID_ROM_MUSIC_SQ2_SWEEP_INIT));
+	}
+
+	// the hud's 5 has one extra pixel in row 3
+	if (hud_five_fix) {
+		constexpr std::size_t TILE_FIVE{ 0x35 }, TILE_BYTES{ 16 };
+		constexpr unsigned ORIGINAL_CRC{ 0xc0aab9cf };
+		const std::size_t off{ p_config.constant(fe::c::ID_CHR_HUD_TILE_OFFSET) + TILE_FIVE * TILE_BYTES };
+		if (off + TILE_BYTES > p_rom.size() || lodepng_crc32(p_rom.data() + off, TILE_BYTES) != ORIGINAL_CRC)
+			throw std::runtime_error("BugFixes: hud_five_fix needs the original hud 5 tile");
+		p_rom[off + 3] = 0x06;
 	}
 }
 
