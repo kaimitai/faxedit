@@ -660,7 +660,7 @@ ConditionalScript
 
 Makes configured items execute iScripts when used.
 
-Each configured item ID is mapped to an iScript ID. When the item is used, the corresponding iScript is executed and the item is removed from the player's inventory.
+Each configured item ID is mapped to an iScript ID. When the item is used, the corresponding iScript is executed and the item is removed from the player's inventory by default.
 
 Items 0-16 normally use the game's item-use handlers. Configured items replace their normal behavior, while unconfigured items are left unchanged. Item IDs above 16 can also be configured, allowing normally unusable item slots to execute scripts.
 
@@ -669,6 +669,7 @@ This can be used to implement custom consumables and other scripted item effects
 | parameter | default  | meaning                     |
 | --------- | -------- | --------------------------- |
 | `data`    | required | List of `item:script` pairs |
+| `clear`   | `true`   | Remove the used item automatically |
 | `sram` | `false` | Add SRAM backing |
 
 For example, this makes item 14 execute iScript 90 and item 17 execute iScript 91:
@@ -691,14 +692,24 @@ The scripts might look like this:
   End
 ```
 
-If you use a script opcode which does not return to the script context, like `AtlasDevWarpAreaScreenPos` or `Respawn`, the used item will not be cleared. You can then clear it from the script yourself by setting RAM `$03c1` to `$ff` inside the script.
+Setting `clear=false` disables automatic item removal. This is useful for item scripts that do not return to the item script handler (such as `AtlasDevWarpAreaScreenPos` and `Respawn`) or when the script wants full control over when the item is consumed.
+
+When automatic clearing is disabled, the script can consume the item at any point by using the `ClearSelectedItem` opcode.
 
 ```asm
 .entrypoint 90
 .textbox GENERIC
-  SetAddr $3c1 $ff ; clear item
+  ClearSelectedItem
   Respawn
 ```
+
+Instead of `ClearSelectedItem` you can use `SetAddr` to set the RAM value for selected item directly.
+
+```asm
+  SetAddr $3c1 $ff ; clear selected item in memory
+```
+
+This will not update the selected item graphic in the UI automatically however.
 
 #### Item List
 

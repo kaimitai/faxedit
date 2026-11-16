@@ -639,6 +639,39 @@ word fh::HackManager::apply_Respawn(const fe::Config& p_config, std::vector<byte
 	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
 }
 
+word fh::HackManager::apply_ClearSelectedItem(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(ROM::Player_ClearSelectedItem);
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
+word fh::HackManager::apply_ShowItem(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = item ID
+	code.pha(); // consumed by DrawItemImage
+	code.pha(); // consumed by DrawItemName
+	code.jmp(cfg_word(p_config, c::ID_ROM_SHOWITEM_ENTRY)); // invokes next script action
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
+word fh::HackManager::apply_GetItemSilent(const fe::Config& p_config,
+	std::vector<byte>& p_rom, word cpu_addr) const {
+	klib::Asm6502 code;
+
+	code.jsr(cfg_word(p_config, c::ID_ROM_ISCRIPTS_LOADBYTE)); // A = item ID
+	code.jsr(cfg_word(p_config, c::ID_ROM_ADDTOINVENTORY));
+	code.jmp(cfg_word(p_config, c::ID_ROM_ISCRIPTS_INVOKENEXTACTION));
+
+	return code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 12, cpu_addr);
+}
+
 word fh::HackManager::apply_AtlasDevSetVar(const fe::Config& p_config,
 	std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const {
 	klib::Asm6502 code;
@@ -5971,6 +6004,15 @@ std::size_t fh::HackManager::apply_script_library(const fe::Config& p_config, st
 			break;
 		case HackLib::IfMsgPromptEx:
 			cpu_addr = apply_IfMsgPromptEx(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::ClearSelectedItem:
+			cpu_addr = apply_ClearSelectedItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::ShowItem:
+			cpu_addr = apply_ShowItem(p_config, p_rom, cpu_addr);
+			break;
+		case HackLib::GetItemSilent:
+			cpu_addr = apply_GetItemSilent(p_config, p_rom, cpu_addr);
 			break;
 
 		case HackLib::AtlasDevSetVar:

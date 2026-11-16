@@ -29,6 +29,7 @@ namespace fh {
 		JSR, Return, ForceDoor, IfYX, IfDoorYX,
 		IfAddrEquals, IfAddrBetween, SetAddr,
 		Respawn, MsgEx, MsgNoskipEx, MsgPromptEx, IfMsgPromptEx,
+		ClearSelectedItem, ShowItem, GetItemSilent,
 		AtlasDevSetVar, AtlasDevAddVar, AtlasDevSubVar,
 		AtlasDevIfVarEqual, AtlasDevIfVarLess, AtlasDevIfVarGreaterEqual, AtlasDevRandomVar, AtlasDevCopyVar,
 		AtlasDevShakeScreen, AtlasDevFadeOut, AtlasDevFadeIn,
@@ -162,6 +163,9 @@ namespace fh {
 		word apply_MsgNoskipEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_MsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 		word apply_IfMsgPromptEx(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_ClearSelectedItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_ShowItem(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
+		word apply_GetItemSilent(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr) const;
 
 		word apply_AtlasDevSetVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;
 		word apply_AtlasDevAddVar(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr, word p_var_operand_helper_addr) const;

@@ -567,6 +567,7 @@ namespace fh {
 
 		// other bank 12 cpu addresses
 		constexpr char ID_ISCRIPTACTIONSETSPAWN[]{ "rom_iscriptactionsetspawn" };
+		constexpr char ID_ROM_SHOWITEM_ENTRY[]{ "rom_showitem_entry" };
 		constexpr char ID_ROM_SHOWSELLMENU_JSR_FINDSELLMENUENTRY[]{ "rom_showsellmenu_jsr_findsellmenuentry" };
 		constexpr char ID_ROM_SHOWSELLMENU_LDX_STRINGCOUNT[]{ "rom_showsellmenu_ldx_stringcount" };
 		constexpr char ID_ROM_SHOWSELLMENU_STA_COSTHI[]{ "rom_showsellmenu_sta_costhi" };
@@ -581,6 +582,7 @@ namespace fh {
 		constexpr char ID_ROM_TEXTBOX_SHOWNEXTCHAR[]{ "rom_textbox_shownextchar" };
 		constexpr char ID_ROM_TEXT_QUESTION_CONTINUEGATE[]{ "rom_text_question_continuegate" };
 		constexpr char ID_MANTRALOAD[]{ "rom_mantraload" };
+		constexpr char ID_ROM_ADDTOINVENTORY[]{ "rom_addtoinventory" };
 		constexpr char ID_STARTSCREEN_DRAW[]{ "rom_startscreen_draw" };
 		constexpr char ID_STARTSCREEN_DRAW_JSR_CLEARALLTILEMAPS[]{ "rom_startscreen_draw_jsr_ppu_clearalltilemaps" };
 		constexpr char ID_STARTSCREEN_DRAW_JSR_PPU_WRITETILESFROMCHRRAM[]{ "rom_startscreen_draw_jsr_ppu_writetilesfromchrram" };

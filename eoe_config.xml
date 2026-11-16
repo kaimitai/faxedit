@@ -412,6 +412,8 @@
 		<!-- other bank 12 cpu addresses -->
 		<const name="rom_iscriptactionsetspawn" region="jp,en-transl" value="$838e" />
 		<const name="rom_iscriptactionsetspawn" value="$8391" />
+		<const name="rom_showitem_entry" region="jp,en-transl" value="$83a4" />
+		<const name="rom_showitem_entry" value="$83a7" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" region="jp,en-transl" value="$868e" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" value="$8691" />
 		<const name="rom_showsellmenu_ldx_stringcount" region="jp,en-transl" value="$8693" />
@@ -444,6 +446,9 @@
 		<const name="rom_text_question_continuegate" value="$9980" />
 		<const name="rom_mantraload" region="jp,en-transl" value="$99cd" />
 		<const name="rom_mantraload" value="$95e9" />
+		<const name="rom_addtoinventory" region="jp,en-transl" value="$9f2f" />
+		<const name="rom_addtoinventory" region="us-rev-a,eu" value="$9b3b" />
+		<const name="rom_addtoinventory" value="$9af7" />
 		<const name="rom_startscreen_draw" region="jp,en-transl" value="$a236" />
 		<const name="rom_startscreen_draw" region="us-rev-a,eu" value="$9e6c" />
 		<const name="rom_startscreen_draw" value="$9e21" />
@@ -1947,6 +1952,9 @@
 			<entry key="MsgNoskipEx" value="Args=Short:BankedTextString" />
 			<entry key="MsgPromptEx" value="Args=Short:BankedTextString" />
 			<entry key="IfMsgPromptEx" value="Args=Short:BankedTextString,Flow=Jump" />
+			<entry key="ClearSelectedItem" />
+			<entry key="ShowItem" value="Args=Byte:Item" />
+			<entry key="GetItemSilent" value="Args=Byte:Item" />
 			<entry key="AtlasDevSetVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevAddVar" value="Args=Byte+Byte" />
 			<entry key="AtlasDevSubVar" value="Args=Byte+Byte" />

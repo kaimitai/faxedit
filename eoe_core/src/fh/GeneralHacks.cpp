@@ -852,6 +852,7 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	if (data.size() > 32)
 		throw std::runtime_error("Invalid item IDs");
 
+	const bool clear_on_use{ p_hack.bool_or("clear", true) };
 	const bool sram{ p_hack.bool_or("sram", false) };
 
 	std::map<byte, byte> item_to_script, item_to_script_extended;
@@ -899,7 +900,10 @@ word fh::HackManager::install_ItemScripts(const fe::Config& p_config, std::vecto
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(12);
 	code.dw(ROM::IScripts_Begin - 1);
-	code.jmp(ROM::Player_ClearSelectedItem);
+	if (clear_on_use)
+		code.jmp(ROM::Player_ClearSelectedItem);
+	else
+		code.rts();
 
 	word install_addr{ cpu_addr };
 	word next_cpu_addr{ cpu_addr };
