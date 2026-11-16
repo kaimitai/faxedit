@@ -223,6 +223,7 @@
     <ClCompile Include="src\fh\AtlasDevWindowFrame.cpp" />
     <ClCompile Include="src\fh\AtlasDevItemBonus.cpp" />
     <ClCompile Include="src\fh\AtlasDevFlickerShare.cpp" />
+    <ClCompile Include="src\fh\AtlasDevLargeGolds.cpp" />
     <ClCompile Include="src\fh\AtlasDevFrameScheduler.cpp" />
     <ClCompile Include="src\fh\GeneralHacks.cpp" />
     <ClCompile Include="src\fh\HackManager.cpp" />

@@ -18,6 +18,7 @@ namespace {
 	const std::map<byte, std::set<fh::GeneralHackLib>> GENERAL_HACK_BANKS{
 	{ 12, {
 		fh::GeneralHackLib::FlexibleItems, fh::GeneralHackLib::ExtraTitleScreenChr,
+		fh::GeneralHackLib::AtlasDevLargeGolds,
 	}},
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
@@ -142,6 +143,7 @@ namespace {
 		{ fh::GeneralHackLib::AtlasDevItemBonus, { "weapon_attack", "armor_attack", "shield_attack", "weapon_defense",
 			"armor_defense", "shield_defense", "flag", "mode", "sram" } },
 		{ fh::GeneralHackLib::AtlasDevFlickerShare, { "flag", "mode", "sram" } },
+		{ fh::GeneralHackLib::AtlasDevLargeGolds, { "spend", "add", "flag", "mode", "sram" } },
 		{ fh::GeneralHackLib::FastStart, { "gold", "ring_of_elf", "sram" }},
 		{ fh::GeneralHackLib::QuestFlagItemDrops, { "type", "sram" }},
 		{ fh::GeneralHackLib::BossLockedItems, { "enemies", "sram" }},

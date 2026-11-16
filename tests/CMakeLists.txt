@@ -236,3 +236,8 @@ add_executable(status_bar_sprite_regression status_bar_sprite_regression.cpp)
 target_link_libraries(status_bar_sprite_regression PRIVATE eoe_core)
 target_compile_definitions(status_bar_sprite_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
 add_test(NAME status_bar_sprite_regression COMMAND status_bar_sprite_regression)
+
+add_executable(atlas_large_golds_regression atlas_large_golds_regression.cpp)
+target_link_libraries(atlas_large_golds_regression PRIVATE eoe_core)
+target_compile_definitions(atlas_large_golds_regression PRIVATE EOE_TEST_CONFIG_PATH="${EOE_CONFIG_SOURCE}")
+add_test(NAME atlas_large_golds_regression COMMAND atlas_large_golds_regression)

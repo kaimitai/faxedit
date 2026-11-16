@@ -414,6 +414,10 @@
 		<const name="rom_iscriptactionsetspawn" value="$8391" />
 		<const name="rom_showitem_entry" region="jp,en-transl" value="$83a4" />
 		<const name="rom_showitem_entry" value="$83a7" />
+		<const name="rom_progressivelysubtractgold" region="jp,en-transl" value="$831e" />
+		<const name="rom_progressivelysubtractgold" value="$8321" />
+		<const name="rom_progressivelyaddgold" region="jp,en-transl" value="$8534" />
+		<const name="rom_progressivelyaddgold" value="$8537" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" region="jp,en-transl" value="$868e" />
 		<const name="rom_showsellmenu_jsr_findsellmenuentry" value="$8691" />
 		<const name="rom_showsellmenu_ldx_stringcount" region="jp,en-transl" value="$8693" />

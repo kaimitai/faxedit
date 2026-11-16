@@ -105,6 +105,7 @@ This document describes the hacks in the current library and their parameters. I
   - [AtlasDevWindowFrame](#atlasdevwindowframe)
   - [AtlasDevItemBonus](#atlasdevitembonus)
   - [AtlasDevFlickerShare](#atlasdevflickershare)
+  - [AtlasDevLargeGolds](#atlasdevlargegolds)
 
 <hr>
 
@@ -329,6 +330,7 @@ Every hack in the library, grouped by what it changes.
 | [AtlasDevFrameScheduler](#atlasdevframescheduler) | the shared frame tick DayNightCycle, InfectedTint, TimeOfDay and StatusWard run on |
 | [BugFixes](#bugfixes) | fixes for known bugs of the original game |
 | [OintmentFix](#ointmentfix) | the Ointment makes the hero fully invincible |
+| [AtlasDevLargeGolds](#atlasdevlargegolds) | payments and rewards of 32,768 gold or more |
 | [Misc](#misc) | small gameplay and quality of life tweaks |
 
 <hr>
@@ -3667,4 +3669,39 @@ changes too.
 ```
 AtlasDevFlickerShare
 AtlasDevFlickerShare flag=60
+```
+
+<hr>
+
+### AtlasDevLargeGolds
+
+Allows payments and rewards from 32,768 through 65,279 gold, which the stock
+game skips. Applies to shop purchases, `LoseGold` and `GetGold`.
+
+Large amounts transfer in chunks of 20,480 immediately, then the remainder
+counts normally. Use multiples of ten for exact amounts; other values round
+up to the next ten. The largest exact amount is 65,270. Amounts of 65,280 or more do not work.
+
+| | |
+| --- | --- |
+| space | 77 bytes of bank 12: 37 for payments, 40 for rewards; `flag` adds 7 per routine. With `sram=true`, the body uses SRAM instead |
+| ram | none |
+| roms | US, US rev A, EU, JP |
+| switch | `flag=n`, `mode=vanilla` installs nothing |
+| order | any |
+| refused with | none |
+
+| parameter | default | meaning |
+| --- | --- | --- |
+| `spend` | `true` | enable large payments |
+| `add` | `true` | enable large rewards |
+| `flag` | none | extended flag 0 to 247; when clear, use stock behavior |
+| `mode` | | `vanilla` installs nothing |
+| `sram` | `false` | Add SRAM backing |
+
+At least one of `spend` and `add` must be enabled.
+
+```
+AtlasDevLargeGolds
+AtlasDevLargeGolds add=false flag=40
 ```

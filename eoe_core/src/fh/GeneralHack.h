@@ -58,6 +58,7 @@ namespace fh {
 		AtlasDevWindowFrame,
 		AtlasDevItemBonus,
 		AtlasDevFlickerShare,
+		AtlasDevLargeGolds,
 		FastStart, QuestFlagItemDrops, BossLockedItems, ConditionalScript
 	};
 
