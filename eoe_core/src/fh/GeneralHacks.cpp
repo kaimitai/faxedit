@@ -596,8 +596,10 @@ word fh::HackManager::install_EnemyScripts(const fe::Config& p_config, std::vect
 
 	klib::Asm6502 code;
 
-	// assumption; A=$ff, X=current enemy index
-	code.sta_abs_x(RAM::EntitySlotActive);
+	code.label("@common");
+	// preserve X (current enemy index)
+	code.txa();
+	code.pha();
 	code.lda_abs_x(RAM::EntityScriptRoot);
 	code.cmp_imm(0xff);
 	code.beq("@return");
@@ -605,22 +607,45 @@ word fh::HackManager::install_EnemyScripts(const fe::Config& p_config, std::vect
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(12);
 	code.dw(ROM::IScripts_Begin - 1);
-
 	code.label("@return");
+	// restore X
+	code.pla();
+	code.tax();
 	code.rts();
+
+	code.label("@enemy_weapon");
+	code.jsr("@common");
+	code.jmp(ROM::Sprite_ShowEnemyDeathByWeapon);
+
+	code.label("@enemy_magic");
+	code.jsr("@common");
+	code.jmp(ROM::Sprite_ShowNormalEnemyDeathByMagic);
+
+	code.label("@boss");
+	code.jsr("@common");
+	code.jmp(ROM::Sprite_ShowBossDeath);
+
+	const word hook_enemy_weapon{ code.label_addr("@enemy_weapon", install_addr) };
+	const word hook_enemy_magic{ code.label_addr("@enemy_magic", install_addr) };
+	const word hook_boss{ code.label_addr("@boss", install_addr) };
 
 	if (sram)
 		install_sram_hack(p_rom, code);
 	else
 		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 
+	// install hooks
 	if (enemies) {
-		code.jmp(install_addr);
-		code.apply_hack_and_clear(p_rom, 14, ROM::EnemyDeath_ClearSprite);
+		code.jmp(hook_enemy_weapon);
+		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithWeapon_JMP_EnemyDeath);
+		code.jmp(hook_enemy_magic);
+		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithMagic_JMP_EnemyDeath);
 	}
 	if (bosses) {
-		code.jmp(install_addr);
-		code.apply_hack_and_clear(p_rom, 14, ROM::BossDeath_ClearSprite);
+		code.jmp(hook_boss);
+		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithWeapon_JMP_BossDeath);
+		code.jmp(hook_boss);
+		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithMagic_JMP_BossDeath);
 	}
 
 	return cpu_addr;

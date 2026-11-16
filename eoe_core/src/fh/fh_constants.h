@@ -41,6 +41,8 @@ namespace fh {
 		constexpr word GameLoop_RunScreenEventHandlers{ 0xef4b };
 
 		// bank 14 addresses
+		constexpr word HitEnemyWithMagic_JMP_BossDeath{ 0x8227 };
+		constexpr word HitEnemyWithMagic_JMP_EnemyDeath{ 0x822a };
 		constexpr word Sprite_CalcDistanceXToPlayer{ 0x82f8 };
 		constexpr word Sprite_CalcDistanceYToPlayer{ 0x831b };
 		constexpr word Sprites_CalcHorizSpriteMovement{ 0x83c1 };
@@ -52,6 +54,8 @@ namespace fh {
 		constexpr word Sprite_CalculateNewVertPos{ 0x85ca };
 		constexpr word Player_CheckShieldHitByMagic{ 0x877c };
 		constexpr word PendantBugBNE{ 0x8879 };
+		constexpr word HitEnemyWithWeapon_JMP_BossDeath{ 0x88c0 };
+		constexpr word HitEnemyWithWeapon_JMP_EnemyDeath{ 0x88c3 };
 		constexpr word Player_CheckHandlePressUpOnNPC_STA_CurrentSprite_Value{ 0x8988 };
 		constexpr word Player_HandleTouchTrigger_STA_CurrentSprite_Value{ 0x89f2 };
 		constexpr word SPRITE_GETBOUNDS_MASKMAN{ 0x8a75 };
@@ -67,6 +71,9 @@ namespace fh {
 		constexpr word SpriteBehavior_FlashDamage_JSR_ReduceHP{ 0xab5d };
 		constexpr word BossDeath_ClearSprite{ 0xabb2 };
 		constexpr word EnemyDeath_ClearSprite{ 0xabe8 };
+		constexpr word Sprite_ShowBossDeath{ 0xabec };
+		constexpr word Sprite_ShowEnemyDeathByWeapon{ 0xabf1 };
+		constexpr word Sprite_ShowNormalEnemyDeathByMagic{ 0xabf6 };
 		constexpr word SpriteBoundingBoxTable{ 0xb273 };
 		constexpr word SpriteTypeTable{ 0xb544 };
 		constexpr word Player_DrawWeapon{ 0xb7d6 };

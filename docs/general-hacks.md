@@ -45,6 +45,7 @@ This document describes the hacks in the current library and their parameters. I
   - [ConditionalScript](#conditionalscript)
   - [ItemScripts](#itemscripts)
     - [Item List](#item-list)
+  - [EnemyScripts](#enemyscripts)
   - [PermaDoors](#permadoors)
   - [FlagDoorRequirements](#flagdoorrequirements)
   - [OintmentFix](#ointmentfix)
@@ -305,6 +306,7 @@ Every hack in the library, grouped by what it changes.
 | hack | what it does |
 | --- | --- |
 | [ConditionalScript](#conditionalscript) | sprite iScripts that depend on extended flags |
+| [EnemyScripts](#enemyscripts) | iScripts can be invoked when an enemy or boss is killed |
 | [PushBlockScript](#pushblockscript) | pushing a block runs an iScript |
 | [AtlasDevPreventTextbox](#atlasdevpreventtextbox) | scripts that run without a textbox |
 | [BankedStrings](#bankedstrings) | message text in several banks |
@@ -740,6 +742,40 @@ This will not update the selected item graphic in the UI automatically however.
 | `0x16`-`0x1f` | Glitched      | Not valid normal items                 |
 
 Items from index 0x16 and up can be stored and displayed in the inventory, but has no effect in the vanilla game. They can be given a purpose with a hack that adds or overrides item-use behavior.
+
+---
+
+### EnemyScripts
+
+Makes enemies and bosses execute assigned iScripts when killed.
+
+When an enemy or boss is defeated by a weapon or magic, the iScript assigned to that entity is executed before the game's normal death handling continues.
+
+This can be used to implement scripted events triggered by defeating enemies.
+
+| parameter | default | meaning |
+| --------- | ------- | ------- |
+| `enemies` | `true` | Execute scripts when normal enemies are killed |
+| `bosses` | `true` | Execute scripts when bosses are killed |
+| `sram` | `false` | Add SRAM backing |
+
+For example, this enables scripts for both enemies and bosses:
+
+```text
+EnemyScripts
+```
+
+To enable scripts only for bosses:
+
+```text
+EnemyScripts enemies=false
+```
+
+The hack does not assign scripts to sprites. It uses the script IDs already configured for them. (assign these in the Echoes of Eolis GUI)
+
+If no script is assigned to a sprite, no script is invoked when that sprite is killed of course.
+
+Scripts execute before the normal death routines, so the game will still perform its usual enemy or boss death handling after the script returns. Scripts that change live sprite data should be used with care.
 
 ---
 
