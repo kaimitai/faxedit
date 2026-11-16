@@ -403,6 +403,8 @@ namespace fh {
 			const fh::GeneralHack& p_hack);
 		word install_OintmentFix(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack& p_hack);
+		word install_EnemyScripts(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+			const fh::GeneralHack& p_hack);
 		// bank 15
 		word install_AtlasDevFrameScheduler(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 			const fh::GeneralHack&) const;

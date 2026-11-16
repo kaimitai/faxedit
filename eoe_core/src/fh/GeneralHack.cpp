@@ -22,7 +22,7 @@ namespace {
 	{ 14, {
 		fh::GeneralHackLib::FastStart, fh::GeneralHackLib::QuestFlagItemDrops,
 		fh::GeneralHackLib::BossLockedItems, fh::GeneralHackLib::ConditionalScript,
-		fh::GeneralHackLib::OintmentFix,
+		fh::GeneralHackLib::OintmentFix, fh::GeneralHackLib::EnemyScripts,
 		fh::GeneralHackLib::AtlasDevSirGawaineControl, fh::GeneralHackLib::AtlasDevWolfmanControl,
 		fh::GeneralHackLib::AtlasDevMaskmanControl,
 		fh::GeneralHackLib::AtlasDevHornetControl,
@@ -158,6 +158,7 @@ namespace {
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::PushBlockScript, { "frames", "script", "sound", "sound_id", "sound_frames" }},
 		{ fh::GeneralHackLib::ExtraTitleScreenChr, { "file", "sram" }},
+		{ fh::GeneralHackLib::EnemyScripts, { "bosses", "enemies", "sram" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,

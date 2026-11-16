@@ -586,6 +586,46 @@ word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vecto
 	return cpu_addr;
 }
 
+word fh::HackManager::install_EnemyScripts(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
+	const fh::GeneralHack& p_hack) {
+	const bool enemies{ p_hack.bool_or("enemies", true) };
+	const bool bosses{ p_hack.bool_or("bosses", true) };
+	const bool sram{ p_hack.bool_or("sram", false) };
+
+	const word install_addr{ sram ? sram_hack_addr() : cpu_addr };
+
+	klib::Asm6502 code;
+
+	// assumption; A=$ff, X=current enemy index
+	code.sta_abs_x(RAM::EntitySlotActive);
+	code.lda_abs_x(RAM::EntityScriptRoot);
+	code.cmp_imm(0xff);
+	code.beq("@return");
+	// the enemy had a script assigned - run it
+	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
+	code.db(12);
+	code.dw(ROM::IScripts_Begin - 1);
+
+	code.label("@return");
+	code.rts();
+
+	if (sram)
+		install_sram_hack(p_rom, code);
+	else
+		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
+
+	if (enemies) {
+		code.jmp(install_addr);
+		code.apply_hack_and_clear(p_rom, 14, ROM::EnemyDeath_ClearSprite);
+	}
+	if (bosses) {
+		code.jmp(install_addr);
+		code.apply_hack_and_clear(p_rom, 14, ROM::BossDeath_ClearSprite);
+	}
+
+	return cpu_addr;
+}
+
 // supports using items inside buildings, disregarding player state flags
 // and selling items to shops which do not sell those items for a given price
 word fh::HackManager::install_FlexibleItems(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
@@ -1383,6 +1423,9 @@ fh::GeneralHackUsage fh::HackManager::install_general_hacks(const fe::Config& p_
 			break;
 		case fh::GeneralHackLib::OintmentFix:
 			cpu_addr = install_OintmentFix(p_config, patched_rom, cpu_addr, hack);
+			break;
+		case fh::GeneralHackLib::EnemyScripts:
+			cpu_addr = install_EnemyScripts(p_config, patched_rom, cpu_addr, hack);
 			break;
 		case fh::GeneralHackLib::FlagDoorRequirements:
 			cpu_addr = install_FlagDoorRequirements(p_config, patched_rom, cpu_addr, hack);

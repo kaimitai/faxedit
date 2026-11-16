@@ -65,6 +65,8 @@ namespace fh {
 		constexpr word SpriteBehavior_BlackOnyx_CheckForBosses{ 0xa450 };
 		constexpr word SpriteBehavior_Pendant_CheckForBosses{ 0xa474 };
 		constexpr word SpriteBehavior_FlashDamage_JSR_ReduceHP{ 0xab5d };
+		constexpr word BossDeath_ClearSprite{ 0xabb2 };
+		constexpr word EnemyDeath_ClearSprite{ 0xabe8 };
 		constexpr word SpriteBoundingBoxTable{ 0xb273 };
 		constexpr word SpriteTypeTable{ 0xb544 };
 		constexpr word Player_DrawWeapon{ 0xb7d6 };
