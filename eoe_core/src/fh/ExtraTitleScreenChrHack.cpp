@@ -8,15 +8,20 @@
 // TODO: Improve the filename parameter by having the hack manager orchestrator take a base path, which should correspond
 // to project base path - and then resolve all file parameters relative to it (unless an absolute path param is given)
 // this resolution should happen in a centralized hackmanager helper
-
 word fh::HackManager::install_ExtraTitleScreenChr(const fe::Config& p_config, std::vector<byte>& p_rom,
 	word cpu_addr, const fh::GeneralHack& p_hack) {
-	const auto filename{ p_hack.get_string("file") };
-	const std::vector<byte> chr_data{ klib::file::read_file_as_bytes(filename) };
+	if (p_hack.has_param("file") == p_hack.has_param("data"))
+		throw std::runtime_error("ExtraTitleScreenChr: specify exactly one of 'file' or 'data'");
+
+	const std::vector<byte> chr_data{
+		p_hack.has_param("file") ?
+		klib::file::read_file_as_bytes(p_hack.get_string("file")) :
+		p_hack.split_bytes("data")
+	};
 	const bool sram{ p_hack.bool_or("sram", false) };
 
 	if (chr_data.empty() || chr_data.size() % 16 != 0 || chr_data.size() > static_cast<std::size_t>(5 * 16))
-		throw std::runtime_error(std::format("File '{}' must contain 1-5 chr-tiles", filename));
+		throw std::runtime_error(std::format("ExtraTitleScreenChr: input must contain 1 to 5 CHR tiles (16-80 bytes) but was {} bytes", chr_data.size()));
 
 	const byte chr_count{ static_cast<byte>(chr_data.size() / 16) };
 

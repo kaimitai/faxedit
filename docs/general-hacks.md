@@ -1054,7 +1054,7 @@ For scripts that only need to display text under certain conditions, **`AtlasDev
 
 ### ExtraTitleScreenChr
 
-Adds up to five custom CHR tiles to the title screen, loaded from an external binary file.
+Adds up to five custom CHR tiles to the title screen, optionally loaded from an external binary file.
 
 The original game does not populate CHR tiles `$FB`–`$FF` on the title screen, leaving these slots available for custom graphics. This hack loads 1–5 tiles (16 bytes per tile) into these slots when the title screen is initialized.
 
@@ -1074,15 +1074,24 @@ TitleString0.Text "<$fb><$fc><$fd><$fe><$ff>"
 
 This displays all five custom tiles in place of the original text.
 
-The CHR file must contain between 16 and 80 bytes, in multiples of 16.
+The CHR data must contain exactly one to five CHR tiles (16, 32, 48, 64 or 80 bytes total).
 
 | parameter | default | meaning |
 | --------- | ------- | ------- |
-| `file` | required | Path to a binary file containing 1–5 CHR tiles |
+| `file` | optional | Path to a binary file containing 1–5 CHR tiles |
+| `data` | optional | Binary data containing 1–5 CHR tiles, byte values separated by + |
 | `sram` | `false` | Add SRAM backing |
+
+To read from file:
 
 ```text
 ExtraTitleScreenChr file=title.chr
+```
+
+To inline binary data directly (this example adds one chr-tile, an exclamation mark, to PPU index $fb):
+
+```text
+ExtraTitleScreenChr data=$08+$18+$18+$10+$10+$00+$30+$00+$08+$18+$18+$10+$10+$00+$30+$00
 ```
 
 To use SRAM backing:

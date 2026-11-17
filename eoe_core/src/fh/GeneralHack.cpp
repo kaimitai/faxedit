@@ -159,7 +159,7 @@ namespace {
 		{ fh::GeneralHackLib::BankedStrings, { "copy", "sram" }},
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::PushBlockScript, { "frames", "script", "sound", "sound_id", "sound_frames" }},
-		{ fh::GeneralHackLib::ExtraTitleScreenChr, { "file", "sram" }},
+		{ fh::GeneralHackLib::ExtraTitleScreenChr, { "file", "data", "sram" }},
 		{ fh::GeneralHackLib::EnemyScripts, { "bosses", "enemies", "sram" }},
 	};
 
