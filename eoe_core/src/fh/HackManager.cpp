@@ -6997,6 +6997,22 @@ void fh::HackManager::install_hack_expanded_intro_outro_chr(const fe::Config& p_
 	code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_SCENERY_LOAD_BG_TILES));
 }
 
+void fh::HackManager::install_hack_expanded_palettes(const fe::Config& p_config, std::vector<byte>& p_rom) {
+	const byte expand_bank{ cfg_byte(p_config, fe::c::ID_EXPANDED_PALETTE_BANK) };
+
+	klib::Asm6502 code;
+
+	// simple hack that switches to a custom bank when retrieving palette related data
+	code.ldx_imm(expand_bank);
+	code.apply_hack_noclear(p_rom, 15, ROM::PaletteAttributeLoad_LDX_Bank);
+	code.apply_hack_noclear(p_rom, 15, ROM::PaletteDataLoad_LDX_Bank);
+	code.apply_hack_and_clear(p_rom, 15, ROM::PaletteFadeOut_LDX_Bank);
+
+	// the HUD indexes start immediately after the palettes themselves
+	code.lda_abs_y(static_cast<word>(0x8000 + 16 * 256));
+	code.apply_hack_and_clear(p_rom, 15, ROM::PaletteAttributeLoad_LDA_Index);
+}
+
 // this code ensures the flag RAM is stored and restored via SRAM for the translation hack 'en-transl' and derivatives
 void fh::HackManager::install_static_hack_flags_to_sram(const fe::Config& p_config, std::vector<byte>& p_rom) const {
 	const word HackStaticExtraSave{ 0x90c0 };

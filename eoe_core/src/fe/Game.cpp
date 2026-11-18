@@ -13,14 +13,16 @@ fe::Game::Game(void) :
 	m_jump_on_animation{ 0x34, 0x2c, 0x5c, 0x13 },
 	m_push_block(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
 	m_sw_door_type{ SameWorldDoorType::Normal },
-	m_tileset_type{ TilesetType::Normal }
+	m_tileset_type{ TilesetType::Normal },
+	m_palette_type{ PaletteType::Normal }
 {
 }
 
 fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) :
 	m_rom_data{ p_rom_data },
 	m_sw_door_type{ SameWorldDoorType::Normal },
-	m_tileset_type{ p_config.boolean_or(c::ID_DOUBLE_TILESET, false) ? TilesetType::Doubled : TilesetType::Normal }
+	m_tileset_type{ p_config.boolean_or(c::ID_DOUBLE_TILESET, false) ? TilesetType::Doubled : TilesetType::Normal },
+	m_palette_type{ p_config.boolean_or(c::ID_EXPANDED_PALETTES, false) ? PaletteType::Expanded : PaletteType::Normal }
 {
 	if (p_config.boolean_or(c::ID_EXPANDED_CINEMATIC_BG_CHR, false))
 		m_gfx_manager.m_io_chr_type = fe::IntroOutroChrType::Expanded;
@@ -100,8 +102,10 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	extract_fog_parameters(p_config);
 	extract_hud_attributes(p_config);
 
-	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
-	std::size_t l_palette_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+	const std::size_t l_palette_offset{ m_palette_type == fe::PaletteType::Normal ?
+	p_config.constant(c::ID_PALETTE_OFFSET) : 0x10 + 0x4000 * p_config.constant(c::ID_EXPANDED_PALETTE_BANK) };
+	std::size_t l_palette_count{ m_palette_type == fe::PaletteType::Normal ?
+		p_config.constant(c::ID_PALETTE_COUNT) : 256 };
 	for (std::size_t i{ 0 }; i < l_palette_count; ++i) {
 		NES_Palette l_tmp_palette;
 		for (std::size_t pidx{ l_palette_offset + 16 * i }; pidx < l_palette_offset + 16 * i + 16; ++pidx)
@@ -384,10 +388,10 @@ std::string fe::Game::get_managed_hacks_description() const {
 
 	if (m_sw_door_type == SameWorldDoorType::Randumizer_0_30)
 		add("Stage doors");
-
 	if (m_tileset_type == TilesetType::Doubled)
 		add("Double tilesets");
-
+	if (m_palette_type == PaletteType::Expanded)
+		add("Expanded palettes");
 	if (m_gfx_manager.m_io_chr_type == IntroOutroChrType::Expanded)
 		add("Expanded cinematic CHR");
 
@@ -1237,13 +1241,14 @@ void fe::Game::extract_fog_parameters(const fe::Config& p_config) {
 }
 
 void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
-	std::size_t l_palette_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+	const std::size_t l_palette_offset{ m_palette_type == fe::PaletteType::Normal ?
+		p_config.constant(c::ID_PALETTE_OFFSET) : 0x10 + 0x4000 * p_config.constant(c::ID_EXPANDED_PALETTE_BANK) };
+	const std::size_t l_palette_count{ m_palette_type == fe::PaletteType::Normal ?
+		p_config.constant(c::ID_PALETTE_COUNT) : 256 };
+
 	std::size_t l_hud_attribute_count{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_COUNT) };
 	std::size_t l_hud_attribute_offset{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_OFFSET) };
-	std::size_t l_attr_to_hud_idx_offset{
-		p_config.constant(c::ID_PALETTE_OFFSET) +
-		16 * l_palette_count
-	};
+	std::size_t l_attr_to_hud_idx_offset{ l_palette_offset + 16 * l_palette_count };
 
 	for (std::size_t i{ 0 };
 		m_hud_attributes.m_palette_to_hud_idx.size() < l_palette_count; ++i)

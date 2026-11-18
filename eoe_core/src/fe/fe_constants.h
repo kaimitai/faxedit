@@ -188,6 +188,7 @@ namespace fe {
 		constexpr char ID_WORLD_TILESET_TO_ADDR_OFFSET[]{ "world_tileset_to_addr_offset" };
 		constexpr char ID_TILESET_PRIMARY_BANK[]{ "tileset_primary_bank" };
 		constexpr char ID_TILESET_SECONDARY_BANK[]{ "tileset_secondary_bank" };
+		constexpr char ID_EXPANDED_PALETTE_BANK[]{ "expanded_palette_bank" };
 		constexpr char ID_EXPANDED_INTRO_OUTRO_BANK[]{ "expanded_intro_outro_bank" };
 		constexpr char ID_EXPANDED_INTRO_OUTRO_ADDR[]{ "expanded_intro_outro_addr" };
 
@@ -203,6 +204,7 @@ namespace fe {
 		constexpr char ID_DISABLE_PAL2MUS[]{ "disable_pal2mus" };
 		constexpr char ID_RANDOMIZER_DOORS[]{ "randomizer_doors" };
 		constexpr char ID_DOUBLE_TILESET[]{ "double_tileset" };
+		constexpr char ID_EXPANDED_PALETTES[]{ "expanded_palettes" };
 		constexpr char ID_EXPANDED_CINEMATIC_BG_CHR[]{ "expanded_cinematic_bg_chr" };
 		constexpr char ID_DUPLICATE_STATIC_BANK[]{ "duplicate_static_bank" };
 

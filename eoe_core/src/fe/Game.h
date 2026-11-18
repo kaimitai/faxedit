@@ -76,6 +76,7 @@ namespace fe {
 
 	enum class SameWorldDoorType { Normal, Randumizer_0_30 };
 	enum class TilesetType { Normal, Doubled };
+	enum class PaletteType { Normal, Expanded };
 
 	class Config;
 
@@ -88,6 +89,7 @@ namespace fe {
 		fe::PaletteMusicMap m_pal_to_music;
 		SameWorldDoorType m_sw_door_type;
 		TilesetType m_tileset_type;
+		PaletteType m_palette_type;
 
 		// stored as building chunk sprite data, but is globally referred to
 		std::vector<fe::Sprite_set> m_npc_bundles;

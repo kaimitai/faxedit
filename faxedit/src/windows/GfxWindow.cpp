@@ -248,6 +248,10 @@ void fe::MainWindow::draw_gfx_window(SDL_Renderer* p_rnd) {
 	else if (m_gfx_emode == fe::GfxEditMode::WorldPalettes) {
 		// selected game palette no
 		static std::size_t ls_sel_wpal{ 0 };
+
+		if (ls_sel_wpal >= m_game->m_palettes.size())
+			ls_sel_wpal = 0;
+
 		auto& wpal{ m_game->m_palettes.at(ls_sel_wpal) };
 
 		ui::imgui_slider_with_arrows("###wpal",

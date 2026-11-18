@@ -141,6 +141,10 @@ namespace fh {
 		// the hurt pipeline's HP step: 16-bit subtract from the damage cells,
 		// clamp, HUD bar, Elixir or death latch. same address in every region
 		constexpr word Player_ReduceHP{ 0xc08e };
+		constexpr word PaletteAttributeLoad_LDX_Bank{ 0xd040 };
+		constexpr word PaletteAttributeLoad_LDA_Index{ 0xd045 };
+		constexpr word PaletteDataLoad_LDX_Bank{ 0xd078 };
+		constexpr word PaletteFadeOut_LDX_Bank{ 0xd0be };
 		constexpr word Area_SetBlocks{ 0xd7c5 };
 		constexpr word Area_SetBlockAtPosition{ 0xd7b0 };
 		constexpr word EntityAllocate{ 0xc205 };

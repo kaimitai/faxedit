@@ -673,7 +673,10 @@ void fe::ROM_Manager::encode_chr_data(const fe::Config& p_config,
 // patch ROM in place for the palette data
 void fe::ROM_Manager::encode_palette_data(const fe::Config& p_config,
 	const fe::Game& p_game, std::vector<byte>& p_rom) const {
-	std::size_t l_palette_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
+	std::size_t l_palette_offset{ p_game.m_palette_type == fe::PaletteType::Normal ?
+		p_config.constant(c::ID_PALETTE_OFFSET) :
+		0x10 + 0x4000 * p_config.constant(c::ID_EXPANDED_PALETTE_BANK)
+	};
 	for (const auto& palette : p_game.m_palettes) {
 		patch_bytes(palette, p_rom, l_palette_offset);
 		l_palette_offset += 16;

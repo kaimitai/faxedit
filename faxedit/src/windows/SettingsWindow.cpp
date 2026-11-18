@@ -120,6 +120,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 
 		if (ImGui::BeginTabItem("Advanced")) {
 			const bool ls_secondary_chr_bank{ m_config.has_constant(c::ID_TILESET_SECONDARY_BANK) };
+			const bool ls_expanded_palettes_bank{ m_config.has_constant(c::ID_EXPANDED_PALETTE_BANK) };
 			const bool ls_expanded_io_chr{ m_config.has_constant(c::ID_EXPANDED_INTRO_OUTRO_BANK) };
 
 			ImGui::SeparatorText("Debug");
@@ -158,6 +159,17 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 					fe::game::migrate_double_tileset_data(m_game.value());
 					generate_world_tilesets();
 					add_message("Double Tileset enabled!", fe::MsgType::Success);
+				}
+				catch (const std::exception& ex) {
+					add_message(ex.what(), fe::MsgType::Error);
+				}
+			}
+
+			if (ls_expanded_palettes_bank) {
+				if (ui::imgui_button("Enable Expanded Palettes", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
+					m_game->m_palette_type != fe::PaletteType::Normal)) try {
+					fe::game::migrate_expanded_palette_data(m_game.value());
+					add_message("Expanded Palettes enabled!", fe::MsgType::Success);
 				}
 				catch (const std::exception& ex) {
 					add_message(ex.what(), fe::MsgType::Error);

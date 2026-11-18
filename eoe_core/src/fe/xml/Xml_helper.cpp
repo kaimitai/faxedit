@@ -54,6 +54,9 @@ fe::Game fe::xml::load_game_xml(const pugi::xml_document& l_doc) {
 	if (n_root.attribute(c::ATTR_ROOT_TILESET_TYPE)) {
 		l_game.m_tileset_type = klib::str::parse_enum_ci<fe::TilesetType>(n_root.attribute(c::ATTR_ROOT_TILESET_TYPE).as_string());
 	}
+	if (n_root.attribute(c::ATTR_ROOT_PALETTE_TYPE)) {
+		l_game.m_palette_type = klib::str::parse_enum_ci<fe::PaletteType>(n_root.attribute(c::ATTR_ROOT_PALETTE_TYPE).as_string());
+	}
 	if (n_root.attribute(c::ATTR_ROOT_IO_CHR_TYPE)) {
 		l_game.m_gfx_manager.m_io_chr_type = klib::str::parse_enum_ci<fe::IntroOutroChrType>(n_root.attribute(c::ATTR_ROOT_IO_CHR_TYPE).as_string());
 	}
@@ -605,6 +608,8 @@ pugi::xml_document fe::xml::save_game_xml(const fe::Game& p_game) {
 	n_metadata.attribute(c::ATTR_ROOT_SW_DOOR_TYPE).set_value(klib::str::enum_to_string(p_game.m_sw_door_type));
 	n_metadata.append_attribute(c::ATTR_ROOT_TILESET_TYPE);
 	n_metadata.attribute(c::ATTR_ROOT_TILESET_TYPE).set_value(klib::str::enum_to_string(p_game.m_tileset_type));
+	n_metadata.append_attribute(c::ATTR_ROOT_PALETTE_TYPE);
+	n_metadata.attribute(c::ATTR_ROOT_PALETTE_TYPE).set_value(klib::str::enum_to_string(p_game.m_palette_type));
 	n_metadata.append_attribute(c::ATTR_ROOT_IO_CHR_TYPE);
 	n_metadata.attribute(c::ATTR_ROOT_IO_CHR_TYPE).set_value(klib::str::enum_to_string(p_game.m_gfx_manager.m_io_chr_type));
 

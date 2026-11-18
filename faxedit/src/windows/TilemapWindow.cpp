@@ -483,7 +483,8 @@ void fe::MainWindow::draw_screen_tilemap_window(SDL_Renderer* p_rnd) {
 						if (l_dtype == fe::DoorType::SameWorld) {
 							if (ui::imgui_slider_with_arrows("doordestpal",
 								std::format("Destination palette/music: {}",
-									get_description(l_dest_palette, m_cache.m_labels_palettes)), l_dest_palette, 0, 30,
+									get_description(l_dest_palette, m_cache.m_labels_palettes)), l_dest_palette,
+								0, m_game->m_palettes.size() - 1,
 								l_dest_tooltip))
 								l_door.m_dest_palette_id = l_dest_palette;
 						}

@@ -517,6 +517,18 @@ void fe::game::migrate_double_tileset_data(Game& p_game) {
 	p_game.m_tileset_type = fe::TilesetType::Doubled;
 }
 
+void fe::game::migrate_expanded_palette_data(Game& p_game) {
+	const auto pal{ p_game.m_palettes.at(0) };
+	const byte attr_index{ p_game.m_hud_attributes.m_palette_to_hud_idx.at(0) };
+
+	while (p_game.m_palettes.size() < 256)
+		p_game.m_palettes.push_back(pal);
+	while (p_game.m_hud_attributes.m_palette_to_hud_idx.size() < 256)
+		p_game.m_hud_attributes.m_palette_to_hud_idx.push_back(attr_index);
+
+	p_game.m_palette_type = fe::PaletteType::Expanded;
+}
+
 /***** ROM PATCHING - BEGIN ****/
 
 namespace {
@@ -726,6 +738,9 @@ std::vector<byte> fe::game::patch_rom(
 	// install doubled tileset hack if enabled
 	if (p_game.m_tileset_type == fe::TilesetType::Doubled)
 		fh::HackManager::install_hack_double_tileset(p_config, x_rom);
+	// install expanded palettes hack if enabled
+	if (p_game.m_palette_type == fe::PaletteType::Expanded)
+		fh::HackManager::install_hack_expanded_palettes(p_config, x_rom);
 	// install expanded cinematic background chr if enabled
 	if (p_game.m_gfx_manager.m_io_chr_type == fe::IntroOutroChrType::Expanded)
 		fh::HackManager::install_hack_expanded_intro_outro_chr(p_config, x_rom);

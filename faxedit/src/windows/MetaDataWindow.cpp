@@ -449,7 +449,7 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 					ImGui::SeparatorText("Slot Operations");
 
 					if (ui::imgui_button("Add slot", 2, "Add a new palette-to-music mapping",
-						slots.get_slot_count() >= m_game->m_palettes.size())) {
+						slots.get_slot_count() >= std::min(static_cast<std::size_t>(128), m_game->m_palettes.size()))) {
 						slots.add_slot();
 						ls_p2m_slot = slots.get_slot_count() - 1;
 					}
