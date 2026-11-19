@@ -149,6 +149,8 @@ namespace fe {
 
 		std::map<std::size_t, std::string> get_shared_palettes(const fe::Config& p_config) const;
 		void sync_palettes(const std::map<std::size_t, std::string>& p_wpal_to_gfx);
+		std::size_t get_palette_file_offset(const fe::Config& p_config) const;
+		std::size_t get_palette_count(const fe::Config& p_config) const;
 
 	private:
 		std::size_t get_pointer_address(std::size_t p_offset, std::size_t p_zero_addr_rom_offset = 0) const;

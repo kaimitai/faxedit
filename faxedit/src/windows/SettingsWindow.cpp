@@ -168,7 +168,7 @@ void fe::MainWindow::draw_settings_window(SDL_Renderer* p_rnd) {
 			if (ls_expanded_palettes_bank) {
 				if (ui::imgui_button("Enable Expanded Palettes", 4, "", !ImGui::IsKeyDown(ImGuiMod_Shift) ||
 					m_game->m_palette_type != fe::PaletteType::Normal)) try {
-					fe::game::migrate_expanded_palette_data(m_game.value());
+					fe::game::migrate_expanded_palette_data(m_config, m_game.value());
 					add_message("Expanded Palettes enabled!", fe::MsgType::Success);
 				}
 				catch (const std::exception& ex) {

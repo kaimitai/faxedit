@@ -96,7 +96,7 @@ namespace fe {
 		constexpr char ID_TITLE_CHR_PPU_COUNT[]{ "title_screen_chr_ppu_count" };
 		constexpr char ID_TITLE_TILEMAP_OFFSET[]{ "title_screen_tilemap_offset" };
 		constexpr char ID_TITLE_ATTRIBUTE_OFFSET[]{ "title_screen_attribute_offset" };
-		constexpr char ID_TITLE_PALETTE_OFFSET[]{ "title_screen_palette_offset" };
+		constexpr char ID_TITLE_PALETTE_INDEX[]{ "title_screen_palette_index" };
 		constexpr char ID_TITLE_TILEMAP_MT_X[]{ "title_screen_mt_x" };
 		constexpr char ID_TITLE_TILEMAP_MT_Y[]{ "title_screen_mt_y" };
 		constexpr char ID_TITLE_TILEMAP_MT_W[]{ "title_screen_mt_w" };

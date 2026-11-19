@@ -76,7 +76,7 @@ fe::Game fe::game::load_game_xml(
 	game.extract_palette_to_music(p_config);
 	game.extract_hud_attributes(p_config);
 	game.generate_tilesets(p_config);
-	game.m_gfx_manager.initialize(p_config, game.m_rom_data);
+	game.m_gfx_manager.initialize(p_config, game.m_rom_data, game.get_palette_file_offset(p_config));
 
 	ROM_Manager rom_manager;
 	game.m_sprite_gfx_manager.load_rom(p_config, game.m_rom_data, rom_manager);
@@ -517,7 +517,7 @@ void fe::game::migrate_double_tileset_data(Game& p_game) {
 	p_game.m_tileset_type = fe::TilesetType::Doubled;
 }
 
-void fe::game::migrate_expanded_palette_data(Game& p_game) {
+void fe::game::migrate_expanded_palette_data(const fe::Config& p_config, Game& p_game) {
 	const auto pal{ p_game.m_palettes.at(0) };
 	const byte attr_index{ p_game.m_hud_attributes.m_palette_to_hud_idx.at(0) };
 
@@ -527,6 +527,7 @@ void fe::game::migrate_expanded_palette_data(Game& p_game) {
 		p_game.m_hud_attributes.m_palette_to_hud_idx.push_back(attr_index);
 
 	p_game.m_palette_type = fe::PaletteType::Expanded;
+	p_game.m_gfx_manager.update_title_palette_file_offset(p_config, p_game.get_palette_file_offset(p_config));
 }
 
 /***** ROM PATCHING - BEGIN ****/

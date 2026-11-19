@@ -222,7 +222,7 @@
 		<const name="title_screen_chr_ppu_count" value="214" />
 		<const name="title_screen_tilemap_offset" value="0x30010" />
 		<const name="title_screen_attribute_offset" value="0x29b70" />
-		<const name="title_screen_palette_offset" value="0x2c110" />
+		<const name="title_screen_palette_index" value="$10" />
 		<!-- intro animation screen - dimensions given in metatile-space -->
 		<const name="intro_anim_mt_x" value="0" />
 		<const name="intro_anim_mt_y" value="0" />

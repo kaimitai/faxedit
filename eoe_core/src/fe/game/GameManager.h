@@ -97,7 +97,7 @@ namespace fe::game {
 	// sameworld to stage-door data migration
 	void migrate_stage_door_hack_data(Game& p_game);
 	void migrate_double_tileset_data(Game& p_game);
-	void migrate_expanded_palette_data(Game& p_game);
+	void migrate_expanded_palette_data(const fe::Config& p_config, Game& p_game);
 
 	// sprite 0, which times the status bar split, is a hidden copy of the hud's P
 	bool sync_status_bar_sprite(const Config& p_config, std::vector<byte>& p_rom);

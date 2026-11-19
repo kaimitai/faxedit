@@ -102,10 +102,8 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	extract_fog_parameters(p_config);
 	extract_hud_attributes(p_config);
 
-	const std::size_t l_palette_offset{ m_palette_type == fe::PaletteType::Normal ?
-	p_config.constant(c::ID_PALETTE_OFFSET) : 0x10 + 0x4000 * p_config.constant(c::ID_EXPANDED_PALETTE_BANK) };
-	std::size_t l_palette_count{ m_palette_type == fe::PaletteType::Normal ?
-		p_config.constant(c::ID_PALETTE_COUNT) : 256 };
+	const std::size_t l_palette_offset{ get_palette_file_offset(p_config) };
+	std::size_t l_palette_count{ get_palette_count(p_config) };
 	for (std::size_t i{ 0 }; i < l_palette_count; ++i) {
 		NES_Palette l_tmp_palette;
 		for (std::size_t pidx{ l_palette_offset + 16 * i }; pidx < l_palette_offset + 16 * i + 16; ++pidx)
@@ -155,7 +153,7 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 		m_jump_on_animation.push_back(m_rom_data.at(l_jump_on_anim_offset + i));
 
 	// initialize gfx metadata and load gfx images
-	m_gfx_manager.initialize(p_config, p_rom_data);
+	m_gfx_manager.initialize(p_config, p_rom_data, get_palette_file_offset(p_config));
 	// initialize cinematic data
 	cinematic.parse_rom(p_config, p_rom_data);
 }
@@ -1241,10 +1239,8 @@ void fe::Game::extract_fog_parameters(const fe::Config& p_config) {
 }
 
 void fe::Game::extract_hud_attributes(const fe::Config& p_config) {
-	const std::size_t l_palette_offset{ m_palette_type == fe::PaletteType::Normal ?
-		p_config.constant(c::ID_PALETTE_OFFSET) : 0x10 + 0x4000 * p_config.constant(c::ID_EXPANDED_PALETTE_BANK) };
-	const std::size_t l_palette_count{ m_palette_type == fe::PaletteType::Normal ?
-		p_config.constant(c::ID_PALETTE_COUNT) : 256 };
+	const std::size_t l_palette_offset{ get_palette_file_offset(p_config) };
+	const std::size_t l_palette_count{ get_palette_count(p_config) };
 
 	std::size_t l_hud_attribute_count{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_COUNT) };
 	std::size_t l_hud_attribute_offset{ p_config.constant(c::ID_HUD_ATTRIBUTE_LOOKUP_OFFSET) };
@@ -1281,8 +1277,8 @@ std::vector<fe::SpriteType> fe::Game::extract_sprite_types(const fe::Config& p_c
 std::map<std::size_t, std::string> fe::Game::get_shared_palettes(const fe::Config& p_config) const {
 	std::map<std::size_t, std::string> result;
 
-	std::size_t l_wpal_offset{ p_config.constant(c::ID_PALETTE_OFFSET) };
-	std::size_t l_wpal_count{ p_config.constant(c::ID_PALETTE_COUNT) };
+	std::size_t l_wpal_offset{ get_palette_file_offset(p_config) };
+	std::size_t l_wpal_count{ get_palette_count(p_config) };
 
 	for (std::size_t i{ 0 }; i < l_wpal_count; ++i)
 		for (const auto& md : m_gfx_manager.metadata) {
@@ -1292,6 +1288,21 @@ std::map<std::size_t, std::string> fe::Game::get_shared_palettes(const fe::Confi
 		}
 
 	return result;
+}
+
+std::size_t fe::Game::get_palette_file_offset(const fe::Config& p_config) const {
+	const bool expanded_palettes{ m_palette_type == PaletteType::Expanded };
+	constexpr std::size_t NES_HEADER_SIZE{ 0x10 };
+	constexpr std::size_t NES_PRG_BANK_SIZE{ 0x4000 };
+
+	return expanded_palettes ?
+		NES_HEADER_SIZE + p_config.constant(c::ID_EXPANDED_PALETTE_BANK) * NES_PRG_BANK_SIZE :
+		p_config.constant(c::ID_PALETTE_OFFSET);
+}
+
+std::size_t fe::Game::get_palette_count(const fe::Config& p_config) const {
+	const bool expanded_palettes{ m_palette_type == PaletteType::Expanded };
+	return expanded_palettes ? 256 : p_config.constant(c::ID_PALETTE_COUNT);
 }
 
 void fe::Game::sync_palettes(const std::map<std::size_t, std::string>& p_wpal_to_gfx) {

@@ -68,7 +68,7 @@ std::string fe::GfxTilemapManager::get_label(const std::string& p_gfx_id) const 
 }
 
 void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
-	const std::vector<byte>& p_rom) {
+	const std::vector<byte>& p_rom, std::size_t p_pal_file_offset) {
 	const bool io_expanded{ m_io_chr_type == IntroOutroChrType::Expanded };
 	const auto layout{ get_intro_outro_layout(p_config, io_expanded) };
 
@@ -116,7 +116,7 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 		p_config.constant(c::ID_TITLE_TILEMAP_MT_H),
 		p_config.constant(c::ID_TITLE_TILEMAP_OFFSET),
 		p_config.constant(c::ID_TITLE_ATTRIBUTE_OFFSET),
-		p_config.constant(c::ID_TITLE_PALETTE_OFFSET),
+		get_title_palette_offset(p_config, p_pal_file_offset),
 		p_config.constant(c::ID_TITLE_CHR_PPU_INDEX),
 		true, true, true, true);
 	load_chr_metadata(c::CHR_GFX_ID_INTRO, c::CHR_GFX_LABEL_INTRO, layout.intro_chr_bank,
@@ -169,6 +169,14 @@ void fe::GfxTilemapManager::initialize(const fe::Config& p_config,
 	load_tilemap_data_from_rom(p_rom, c::CHR_GFX_ID_INTRO);
 	load_tilemap_data_from_rom(p_rom, c::CHR_GFX_ID_OUTRO);
 	load_tilemap_data_from_rom(p_rom, c::CHR_GFX_ID_ITEMS);
+}
+
+void fe::GfxTilemapManager::update_title_palette_file_offset(const fe::Config& p_config, std::size_t p_pal_file_offset) {
+	metadata.at(c::CHR_GFX_ID_TITLE).m_rom_offset_pal = get_title_palette_offset(p_config, p_pal_file_offset);
+}
+
+std::size_t fe::GfxTilemapManager::get_title_palette_offset(const fe::Config& p_config, std::size_t p_pal_file_offset) const {
+	return p_pal_file_offset + static_cast<std::size_t>(16) * p_config.constant(c::ID_TITLE_PALETTE_INDEX);
 }
 
 void fe::GfxTilemapManager::load_tilemap_data_from_rom(const std::vector<byte>& p_rom,

@@ -95,6 +95,7 @@ namespace fe {
 		bool is_bank_tile_0_fixed(const std::string& p_bank_id) const;
 		IntroOutroLayout get_intro_outro_layout(const fe::Config& p_config, bool p_expanded) const;
 		void assign_intro_outro_offsets(const fe::Config& p_config, bool p_expanded);
+		std::size_t get_title_palette_offset(const fe::Config& p_config, std::size_t p_pal_file_offset) const;
 
 		// rom patching
 		void patch_chr_banks(std::vector<byte>& p_rom) const;
@@ -104,7 +105,8 @@ namespace fe {
 	public:
 		GfxTilemapManager(void) = default;
 		void initialize(const fe::Config& p_config,
-			const std::vector<byte>& p_rom);
+			const std::vector<byte>& p_rom, std::size_t p_pal_file_offset);
+		void update_title_palette_file_offset(const fe::Config& p_config, std::size_t p_offset);
 		std::size_t get_gfx_numeric_key(const std::string& p_gfx_id) const;
 		std::string get_label(const std::string& p_gfx_id) const;
 
