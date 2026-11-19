@@ -1324,13 +1324,15 @@ will be considered transparent.
 
 #### Managed Hacks
 
-Managed hacks permanently extend the project with additional capabilities. The required runtime patches are installed when building the output ROM. Hold Shift when enabling a hack.
+Managed hacks permanently extend the project with additional capabilities. The required runtime patches are installed when building the output ROM. Hold Shift when enabling a managed hack.
 
 - **Enable Stage Doors:** Converts same-world doors into flexible stage doors, allowing them to connect to any stage in the game. See the [Stage Door Hack](#stage-door-hack) documentation.
 
 - **Enable Double Tileset:** Duplicates the 9 existing tilesets, allowing all 18 tilesets to be edited and assigned independently. Requires an additional ROM bank for CHR data and installs runtime code to load tileset graphics from the appropriate bank. Available for expanded ROMs by default, depending on the `tileset_secondary_bank` configuration parameter.
 
-- **Enable Cinematic CHR Expansion:** Separates the intro and outro graphics into independent CHR banks and increases each from 128 to 256 tiles. This quadruples the total CHR capacity available across both cinematics, allowing their graphics to be edited independently. Available only for expanded ROMs.
+- **Enable Expanded Palettes:** Migrates the game from the vanilla 31-entry [world palette](#world-palettes) pool to an expanded pool containing 256 palettes. During migration, palettes 31-255 are initialized as copies of palette 0, allowing existing graphics and palette references to continue working without requiring additional setup. This feature is available in expanded ROMs and stores palette data in the bank specified by the `expanded_palette_bank` configuration parameter.
+
+- **Enable Cinematic CHR Expansion:** Separates the intro and outro graphics into independent CHR banks and increases each from 128 to 256 tiles. This quadruples the total CHR capacity available across both cinematics, allowing their graphics to be edited independently. Available for expanded ROMs by default, depending on the `expanded_intro_outro_bank` configuration parameter.
 
 <hr>
 
