@@ -323,7 +323,11 @@ Note how bank 9 is no longer congested. Tilemaps, SRAM runtime data and dynamic 
 ┌──────────────────────────────┐
 │ Bank 26                      │
 ├──────────────────────────────┤
-│                              │
+│ Expanded Palettes            │
+├─────────── $9000 ────────────┤
+│ Expanded HUD Attributes      │
+├─────────── $9100 ────────────┤
+│ Unused                       │
 ├─────────── $9fc0 ────────────┤
 │ Expanded Intro CHR bank      │
 ├─────────── $afc0 ────────────┤
@@ -374,6 +378,7 @@ You can change which banks, and in some case cpu-addresses, are used for differe
 - [Screen Tilemaps](user-guide.md#screen-tilemap): `tilemap_banks`
 - [Extended Strings](./advanced-modding.md#banked-string-opcodes): `string_banks`
 - [Double Tileset](./user-guide.md#managed-hacks): `tileset_secondary_bank`
+- [Expanded Palettes](./user-guide.md#managed-hacks): `expanded_palette_bank`
 - [Cinematic CHR Expansion](./user-guide.md#managed-hacks): `expanded_intro_outro_bank`, `expanded_intro_outro_addr`
 - [Dynamic Tilemap Changes](./advanced-modding.md#tilemap-change-system): `hack_tm_change_bank`, `hack_tm_change_cpu_addr`
 - [SRAM Runtime](general-hacks.md#sram-backed-hacks): `sram_code_bank`, `sram_code_addr`
