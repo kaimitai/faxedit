@@ -1112,6 +1112,10 @@ A collection of small gameplay and quality-of-life tweaks that do not warrant th
 | `safe_hourglass` | `false` | Prevent the Hourglass from reducing the player's HP |
 | `trigger_size` | `none` | Set the invisible dialogue trigger sprite's bounding box width and height in pixels, in the form `w:h` |
 | `intro_steps` | `none` | Change the intro footstep sound effect ID, or use `$ff` to disable the footsteps entirely |
+| `preserve_mattock` | `false` | Keep the Mattock after use |
+| `preserve_hourglass` | `false` | Keep the Hour Glass after use |
+| `preserve_wingboots` | `false` | Keep the Wing Boots after use |
+| `preserve_red_potion` | `false` | Keep the Red Potion after use |
 
 Any parameter may be omitted to leave the corresponding game behavior unchanged.
 
@@ -1137,6 +1141,8 @@ To make the trigger remain stationary, remove the falling behavior:
 ```
 
 For scripted events, a smaller hitbox combined with disabled gravity generally makes the trigger easier to position and control.
+
+> The parameters allowing you to keep items after using them only apply to the vanilla use-logic. If you override any of these via general hack `ItemScripts` you need to handle preservation logic yourself by using parameter `clear=false` and deciding when to consume the items in the use-scripts themselves.
 
 The `Misc` hack acts as a home for minor gameplay and quality-of-life changes which do not justify a dedicated hack of their own. New parameters may be added in future versions.
 

@@ -88,7 +88,11 @@ namespace fh {
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
 		constexpr word UseItem_JumpTable{ 0xc49d };
+		constexpr word UseRedPotion_ClearItem{ 0xc53b };
+		constexpr word UseWingBoots_ClearItem{ 0xc581 };
+		constexpr word UseHourGlass_ClearItem{ 0xc5d0 };
 		constexpr word Player_UseMattock{ 0xc616 };
+		constexpr word UseMattock_ClearItem{ 0xc64c };
 		constexpr word Game_ClearTimedItems{ 0xc6af };
 		constexpr word Player_PickUpWingBootsWithQuest{ 0xc6d0 };
 		constexpr word Player_PickUpBattleSuit_WeaponsCountBug{ 0xc6f8 };

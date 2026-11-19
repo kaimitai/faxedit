@@ -886,6 +886,11 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	const bool trigger_size{ p_hack.has_param("trigger_size") };
 	const bool has_intro_steps{ p_hack.has_param("intro_steps") };
 
+	const bool preserve_mattock{ p_hack.bool_or("preserve_mattock", false) };
+	const bool preserve_hourglass{ p_hack.bool_or("preserve_hourglass", false) };
+	const bool preserve_wingboots{ p_hack.bool_or("preserve_wingboots", false) };
+	const bool preserve_red_potion{ p_hack.bool_or("preserve_red_potion", false) };
+
 	klib::Asm6502 code;
 
 	if (startmenu) {
@@ -915,6 +920,23 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 		else
 			code.lda_imm(sound_id);
 		code.apply_hack_and_clear(p_rom, 12, cfg_word(p_config, c::ID_ROM_INTRO_PLAY_STEPS));
+	}
+
+	if (preserve_mattock) {
+		code.nop(3);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseMattock_ClearItem);
+	}
+	if (preserve_hourglass) {
+		code.nop(3);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseHourGlass_ClearItem);
+	}
+	if (preserve_wingboots) {
+		code.nop(3);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseWingBoots_ClearItem);
+	}
+	if (preserve_red_potion) {
+		code.nop(3);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseRedPotion_ClearItem);
 	}
 
 	return cpu_addr;
