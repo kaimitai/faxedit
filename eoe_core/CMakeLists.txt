@@ -35,6 +35,7 @@ add_library(eoe_core STATIC
     src/fe/Screen.cpp
     src/fe/Sprite.cpp
     src/fe/Sprite_set.cpp
+    src/fe/SpriteMetadataManager.cpp
     src/fe/StageManager.cpp
     src/fe/PaletteMusicMap.cpp
     src/fe/EditorSettings.cpp

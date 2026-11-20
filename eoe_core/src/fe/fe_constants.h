@@ -163,6 +163,7 @@ namespace fe {
 		// map IDs
 		constexpr char ID_WORLD_LABELS[]{ "world_labels" };
 		constexpr char ID_SPRITE_LABELS[]{ "sprite_labels" };
+		constexpr char ID_SPRITE_TYPE_LABELS[]{ "sprite_type_labels" };
 		constexpr char ID_BUILDING_LABELS[]{ "building_labels" };
 		constexpr char ID_BLOCK_PROP_LABELS[]{ "block_property_labels" };
 		constexpr char ID_DOOR_REQ_LABELS[]{ "door_requirement_labels" };
@@ -193,6 +194,12 @@ namespace fe {
 		constexpr char ID_EXPANDED_INTRO_OUTRO_ADDR[]{ "expanded_intro_outro_addr" };
 
 		// other
+		constexpr char ID_INTERACTION_BOX_OFFSET[]{ "sprite_interaction_box_offset" };
+		constexpr char ID_SPRITE_WEAPON_BOX_OFFSET[]{ "sprite_weapon_box_offset" };
+		constexpr char ID_SPRITE_COLLISION_BOX_COUNT[]{ "sprite_collision_box_count" };
+		constexpr char ID_SPRITE_COLLISION_BOX_WIDTH_OFFSET[]{ "sprite_collision_box_width_offset" };
+		constexpr char ID_SPRITE_COLLISION_BOX_HEIGHT_OFFSET[]{ "sprite_collision_box_height_offset" };
+		constexpr char ID_SPRITE_COLLISION_BOX_TYPE_OFFSET[]{ "sprite_collision_box_type_offset" };
 		constexpr char ID_SPRITE_TYPE_OFFSET[]{ "sprite_type_offset" };
 		constexpr char ID_SPRITE_HANDLER_GUI[]{ "sprite_update_handler_gui" };
 		constexpr char ID_BANK15_FREE_SPACE[]{ "bank15_free_space" };

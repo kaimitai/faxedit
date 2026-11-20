@@ -296,6 +296,12 @@
 		<!-- sprite data -->
 		<const name="sprite_drop_table_offset" value="0x3acfd" />
 		<const name="sprite_drop_table_count" value="64" />
+		<const name="sprite_interaction_box_offset" value="0x3b283" />
+		<const name="sprite_weapon_box_offset" value="0x3b417" />
+		<const name="sprite_collision_box_count" value="7" />
+		<const name="sprite_collision_box_width_offset" value="0x3b4e1" />
+		<const name="sprite_collision_box_height_offset" value="0x3b4e8" />
+		<const name="sprite_collision_box_type_offset" value="0x3b4ef" />
 		<const name="sprite_type_offset" value="0x3b554" />
 		<const name="sprite_hp_offset" value="0x3b5b9" />
 		<const name="sprite_hp_count" value="101" />
@@ -823,6 +829,17 @@
 			<entry byte="$62" str="Sky Spring" />
 			<entry byte="$63" str="Dungeon Spring" />
 			<entry byte="$64" str="Boss Death" />
+		</byte_to_string_map>
+		<!-- labels for sprites -->
+		<byte_to_string_map name="sprite_type_labels">
+			<entry byte="$00" str="Enemy" />
+			<entry byte="$01" str="Drop" />
+			<entry byte="$02" str="NPC" />
+			<entry byte="$03" str="Effect" />
+			<entry byte="$04" str="Trigger" />
+			<entry byte="$05" str="Item" />
+			<entry byte="$06" str="Magic" />
+			<entry byte="$07" str="Boss" />
 		</byte_to_string_map>
 		<!-- labels for palettes -->
 		<byte_to_string_map name="palette_labels">
