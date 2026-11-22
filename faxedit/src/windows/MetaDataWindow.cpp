@@ -499,6 +499,12 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 			ImGui::EndTabItem();
 		}
 
+		// SPRITE METADATA
+		if (ImGui::BeginTabItem("Sprites")) {
+			draw_sprite_metadata_tab();
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
 		ImGui::PopStyleColor(3);
 	}
@@ -885,4 +891,42 @@ void fe::MainWindow::show_scene(fe::Scene& p_scene, bool p_show_pos) {
 		ImGui::PopID();
 	}
 
+}
+
+bool fe::MainWindow::draw_sprite_slider(const std::string& p_id, std::size_t& p_sprite_no) {
+	return ui::imgui_slider_with_arrows(p_id.c_str(), get_sprite_label(p_sprite_no), p_sprite_no,
+		0, m_cache.m_sprite_count - 1, "", false, true);
+}
+
+void fe::MainWindow::draw_sprite_metadata_tab(void) {
+	static std::size_t ls_sel_sprite{ 0 };
+
+	ImGui::SeparatorText(std::format("Metadata for sprite {}:", ls_sel_sprite).c_str());
+	draw_sprite_slider("###sprmd", ls_sel_sprite);
+
+	auto& sprmd{ m_game->m_sprite_meta.m_sprite_meta.at(ls_sel_sprite) };
+	const auto& collmd{ m_game->m_sprite_meta.m_collision_boxes };
+	const bool legal_coll{ sprmd.m_collision_box_index < collmd.size() };
+
+	ImGui::SeparatorText("Sprite Type");
+	ui::imgui_slider_with_arrows("###smdtype",
+		get_description(sprmd.m_type, m_cache.m_labels_sprite_types), sprmd.m_type, 0, 7);
+
+	ImGui::SeparatorText("Collision Box");
+	const std::string coll_label{ legal_coll ?
+		std::format("Index {} (w={}px, h={}px)", sprmd.m_collision_box_index,
+			collmd.at(sprmd.m_collision_box_index).w, collmd.at(sprmd.m_collision_box_index).h) :
+		std::format("Index {} (unknown dimensions)", sprmd.m_collision_box_index)
+	};
+	ui::imgui_slider_with_arrows("###smdcollind", coll_label, sprmd.m_collision_box_index, 0, collmd.size() - 1);
+
+	ImGui::SeparatorText("Weapon Hitbox");
+	ui::imgui_slider_with_arrows("###smdwhw", "Width (px)", sprmd.m_weapon_box.w, 0, 255);
+	ui::imgui_slider_with_arrows("###smdwhh", "Height (px)", sprmd.m_weapon_box.h, 0, 255);
+
+	ImGui::SeparatorText("Interaction Box");
+	ui::imgui_signed_byte_slider("###smdiix", "x-offset (px)", sprmd.m_interaction_box.x_offset);
+	ui::imgui_signed_byte_slider("###smdiiy", "y-offset (px)", sprmd.m_interaction_box.y_offset);
+	ui::imgui_slider_with_arrows("###smdiiw", "Width (px)", sprmd.m_interaction_box.w, 0, 255);
+	ui::imgui_slider_with_arrows("###smdiih", "Height (px)", sprmd.m_interaction_box.h, 0, 255);
 }

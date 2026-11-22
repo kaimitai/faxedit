@@ -1,5 +1,6 @@
 #include "Imgui_helper.h"
 #include "../common/imgui/imgui_internal.h"
+#include <cstdint>
 
 std::vector<fe::ui::UIStyle> fe::ui::g_uiStyles = {
 	// Default (neutral blue from ImGui dark theme, slightly darkened)
@@ -139,6 +140,18 @@ bool fe::ui::imgui_float_slider(const char* p_id, const std::string& p_label, fl
 	ImGui::PopID();
 
 	return l_result;
+}
+
+bool fe::ui::imgui_signed_byte_slider(const char* p_id, const std::string& p_label, byte& value) {
+	int8_t signedval{ static_cast<int8_t>(value) };
+
+	const bool result{ imgui_slider_with_arrows(p_id, p_label,
+		signedval, static_cast<int8_t>(-128), static_cast<int8_t>(127)) };
+
+	if (result)
+		value = static_cast<byte>(signedval);
+
+	return result;
 }
 
 void fe::ui::imgui_tooltip(const char* p_txt) {

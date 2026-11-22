@@ -333,13 +333,15 @@ void fe::MainWindow::generate_metatile_textures(SDL_Renderer* p_rnd,
 }
 
 std::string fe::MainWindow::get_description(byte p_index,
-	const std::map<byte, std::string>& p_map) const {
+	const std::map<byte, std::string>& p_map, bool p_show_idx) const {
 	const auto iter{ p_map.find(p_index) };
 
 	if (iter == end(p_map))
 		return std::format("Unknown ({})", klib::Bitreader::byte_to_hex(p_index));
-	else
+	else if (p_show_idx)
 		return std::format("{} ({})", iter->second, klib::Bitreader::byte_to_hex(p_index));
+	else
+		return std::format("{}", iter->second);
 }
 
 std::string fe::MainWindow::get_description(byte p_index,
@@ -353,7 +355,8 @@ std::string fe::MainWindow::get_description(byte p_index,
 std::string fe::MainWindow::get_sprite_label(std::size_t p_sprite_id) const {
 	return std::format("{} ({})",
 		m_cache.m_labels_sprites[p_sprite_id],
-		fe::SpriteGUILoader::SpriteCatToString(m_cache.m_sprite_dims[p_sprite_id].category));
+		get_description(m_game->m_sprite_meta.m_sprite_meta.at(p_sprite_id).m_type, m_cache.m_labels_sprite_types, false)
+	);
 }
 
 void fe::MainWindow::add_message(const std::string& p_msg, fe::MsgType p_type, bool p_allow_repeat) {

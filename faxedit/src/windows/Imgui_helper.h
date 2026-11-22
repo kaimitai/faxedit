@@ -9,6 +9,8 @@
 #include "./../common/imgui/imgui_impl_sdl3.h"
 #include "./../common/imgui/imgui_impl_sdlrenderer3.h"
 
+using byte = unsigned char;
+
 namespace fe {
 
 	namespace ui {
@@ -30,6 +32,7 @@ namespace fe {
 		bool imgui_checkbox(const std::string& p_label, bool& p_val, const std::string& p_tooltip = std::string());
 		bool imgui_float_slider(const char* p_id, const std::string& p_label, float& value,
 			float p_min, float p_max, const std::string& p_tooltip_text = std::string());
+		bool imgui_signed_byte_slider(const char* p_id, const std::string& p_label, byte& value);
 		void imgui_tooltip(const char* p_txt);
 		void imgui_tooltip(const std::string& p_txt);
 		bool imgui_tab(const char* p_label, const char* p_tooltip);

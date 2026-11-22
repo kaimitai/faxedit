@@ -176,7 +176,7 @@ namespace fe {
 		std::string get_filepath(const std::string& p_ext, bool p_add_out = false) const;
 		std::string get_settings_xml_path(void) const;
 
-		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map) const;
+		std::string get_description(byte p_index, const std::map<byte, std::string>& p_map, bool p_show_idx = true) const;
 		std::string get_description(byte p_index, const std::vector<std::string>& p_vec) const;
 		std::string get_sprite_label(std::size_t p_sprite_id) const;
 
@@ -198,6 +198,9 @@ namespace fe {
 		void draw_visualization_window(SDL_Renderer* p_rnd);
 		void draw_settings_window(SDL_Renderer* p_rnd);
 		void draw_scripting_window(void);
+
+		bool draw_sprite_slider(const std::string& p_id, std::size_t& sprite_no);
+		void draw_sprite_metadata_tab(void);
 
 		void show_output_messages(void) const;
 
