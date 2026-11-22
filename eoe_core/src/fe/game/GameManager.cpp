@@ -122,7 +122,6 @@ void fe::game::save_game_xml_to_file(
 void fe::game::analyze_game_data(const Game& p_game, const Config& p_config, bool p_warn_tilemap_95_pct,
 	bool p_warn_00_doors, const MessageCallback& p_message) {
 	fe::ROM_Manager rom_mgr;
-	const auto lc_sprite_types{ p_game.extract_sprite_types(p_config) };
 
 	send_message(p_message, { "Starting integrity analysis", fe::MsgType::Info });
 
@@ -227,14 +226,16 @@ void fe::game::analyze_game_data(const Game& p_game, const Config& p_config, boo
 			// validate sprite counts and total ppu tile counts
 			// also check that only NPCs have scripts attached
 			const auto& sprites{ scr.m_sprite_set.m_sprites };
+			const auto& sprite_meta{ p_game.m_sprite_meta.m_sprite_meta };
+
 			std::size_t total_ppu_tile_count{ 0 };
 			for (std::size_t spr{ 0 }; spr < sprites.size(); ++spr) {
 				total_ppu_tile_count += p_game.m_sprite_gfx_manager.get_sprite_chr_bank_size(sprites[spr].m_id);
 
-				if (sprites[spr].m_text_id && sprites[spr].m_id < lc_sprite_types.size()) {
-					const auto sprite_cat{ lc_sprite_types[sprites[spr].m_id] };
-					if (sprite_cat != fe::SpriteType::NPC &&
-						sprite_cat != fe::SpriteType::GameTrigger)
+				if (sprites[spr].m_text_id && sprites[spr].m_id < sprite_meta.size()) {
+					const byte sprite_cat{ sprite_meta[sprites[spr].m_id].m_type };
+					if (sprite_cat != c::SPRITE_TYPE_NPC &&
+						sprite_cat != c::SPRITE_TYPE_TRIGGER)
 						send_message(p_message,
 							{ std::format("World {}, Screen {}, Sprite {}: Script attached, but sprite category is not compatible",
 								c, s, spr),

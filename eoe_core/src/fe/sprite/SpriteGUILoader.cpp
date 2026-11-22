@@ -80,10 +80,6 @@ void fe::SpriteGUILoader::load_sprites_for_gui(const fe::Config& p_config,
 		// ignore - this is just rendering
 	}
 
-	// extract sprite categories
-	for (std::size_t i{ 0 }; i < SPRITE_COUNT; ++i)
-		sprite_cats.push_back(fe::SpriteGUICategory(p_rom.at(SPRITE_TYPE_OFFSET + i)));
-
 	// copy all banks from the manager
 	for (const auto& bank : npcs.banks)
 		banks.push_back(bank);
@@ -130,8 +126,7 @@ std::vector<fe::SpriteAnimationGUIData> fe::SpriteGUILoader::get_animation_dimen
 		result.push_back(fe::SpriteAnimationGUIData{
 			.w = bounding_rect.first,
 			.h = bounding_rect.second,
-			.offsets = frame_offsets,
-			.category = sprite_cats.at(i)
+			.offsets = frame_offsets
 			});
 	}
 
@@ -170,19 +165,4 @@ void fe::SpriteGUILoader::stack_snake(FrameAnimation& frames) const {
 				frames[i].tilemap.push_back(row);
 	}
 	frames.pop_back();
-}
-
-std::string fe::SpriteGUILoader::SpriteCatToString(fe::SpriteGUICategory category) {
-	switch (category) {
-	case SpriteGUICategory::Enemy: return "Enemy";
-	case SpriteGUICategory::DroppedItem: return "Dropped Item";
-	case SpriteGUICategory::NPC: return "NPC";
-	case SpriteGUICategory::SpecialEffect: return "Special Effect";
-	case SpriteGUICategory::GameTrigger: return "Game Trigger";
-	case SpriteGUICategory::Item: return "Item";
-	case SpriteGUICategory::MagicEffect: return "Magic Effect";
-	case SpriteGUICategory::Boss: return "Boss";
-	case SpriteGUICategory::Glitched: return "Glitch";
-	default: return "Unknown";
-	}
 }

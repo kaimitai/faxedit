@@ -254,6 +254,16 @@ namespace fe {
 		constexpr byte BLOCK_PROPERTY_OW_FOREGROUND{ 0x0c };
 		constexpr byte BLOCK_PROPERTY_OW_RETURN{ 0x0d };
 
+		// sprite types
+		constexpr byte SPRITE_TYPE_ENEMY{ 0x00 };
+		constexpr byte SPRITE_TYPE_DROP{ 0x01 };
+		constexpr byte SPRITE_TYPE_NPC{ 0x02 };
+		constexpr byte SPRITE_TYPE_EFFECT{ 0x03 };
+		constexpr byte SPRITE_TYPE_TRIGGER{ 0x04 };
+		constexpr byte SPRITE_TYPE_ITEM{ 0x05 };
+		constexpr byte SPRITE_TYPE_MAGIC{ 0x06 };
+		constexpr byte SPRITE_TYPE_BOSS{ 0x07 };
+
 		// sceen rendering camera constants
 		constexpr int TILEMAP_SCREEN_MT_W{ 16 };
 		constexpr int TILEMAP_SCREEN_MT_H{ 13 };

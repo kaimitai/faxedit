@@ -17,26 +17,11 @@ using FrameAnimation = std::vector<fe::SpriteAnimationFrame>;
 
 namespace fe {
 
-	enum class SpriteGUICategory : byte {
-		Enemy = 0,
-		DroppedItem = 1,
-		NPC = 2,
-		SpecialEffect = 3,
-		GameTrigger = 4,
-		Item = 5,
-		MagicEffect = 6,
-		Boss = 7,
-		// not a real in-game category but we use this in the GUI
-		Glitched = 8
-	};
-
 	struct SpriteAnimationGUIData {
 		// w and h for the sprite
 		int w, h;
 		// x and y offsets per frame
 		std::vector<std::pair<int, int>> offsets;
-		// sprite category
-		fe::SpriteGUICategory category;
 	};
 
 	struct SpriteRenderOverrides {
@@ -59,7 +44,6 @@ namespace fe {
 		std::vector<FrameAnimation> animations;
 		std::vector<ChrBank> banks;
 		std::vector<std::size_t> npc_to_bank_idx;
-		std::vector<fe::SpriteGUICategory> sprite_cats;
 
 		fe::SpriteRenderOverrides load_render_overrides(const fe::Config& p_config,
 			const fe::SpriteGfxManager& p_mgr) const;
@@ -70,8 +54,6 @@ namespace fe {
 
 		std::vector<fe::SpriteAnimationGUIData> get_animation_dimension_data(void) const;
 		std::pair<int, int> get_bounding_rect(const FrameAnimation& frames) const;
-
-		static std::string SpriteCatToString(fe::SpriteGUICategory category);
 	};
 
 }

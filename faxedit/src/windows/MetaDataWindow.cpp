@@ -492,16 +492,17 @@ void fe::MainWindow::draw_metadata_window(SDL_Renderer* p_rnd) {
 
 				// GAME - FOG - END
 
+				if (ImGui::BeginTabItem("Sprites")) {
+					draw_sprite_metadata_tab();
+					ImGui::EndTabItem();
+				}
+
+				// GAME - SPRITE METADATA - END
+
 				ImGui::EndTabBar();
 				ImGui::PopStyleColor(3);
 			}
 
-			ImGui::EndTabItem();
-		}
-
-		// SPRITE METADATA
-		if (ImGui::BeginTabItem("Sprites")) {
-			draw_sprite_metadata_tab();
 			ImGui::EndTabItem();
 		}
 

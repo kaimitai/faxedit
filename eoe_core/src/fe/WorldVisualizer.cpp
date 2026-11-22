@@ -420,15 +420,15 @@ GfxTilemap fe::WorldVisualizer::render_screen(const fe::Game& p_game, std::size_
 	);
 
 	for (const auto& sprite : p_sprite_set.m_sprites) {
-		auto sprcat{ p_sprites.sprite_cats.at(sprite.m_id) };
+		auto sprcat{ p_game.m_sprite_meta.m_sprite_meta.at(sprite.m_id).m_type };
 
 		bool draw_sprite{ false };
-		if (sprcat == fe::SpriteGUICategory::Enemy ||
-			sprcat == fe::SpriteGUICategory::Boss)
+		if (sprcat == c::SPRITE_TYPE_ENEMY ||
+			sprcat == c::SPRITE_TYPE_BOSS)
 			draw_sprite = p_options.draw_enemies;
-		else if (sprcat == fe::SpriteGUICategory::Item)
+		else if (sprcat == c::SPRITE_TYPE_ITEM)
 			draw_sprite = p_options.draw_items;
-		else if (sprcat == fe::SpriteGUICategory::NPC)
+		else if (sprcat == c::SPRITE_TYPE_NPC)
 			draw_sprite = p_options.draw_npcs;
 		else
 			draw_sprite = p_options.draw_other;
