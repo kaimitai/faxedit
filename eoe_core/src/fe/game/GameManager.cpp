@@ -77,6 +77,7 @@ fe::Game fe::game::load_game_xml(
 	game.extract_hud_attributes(p_config);
 	game.generate_tilesets(p_config);
 	game.m_gfx_manager.initialize(p_config, game.m_rom_data, game.get_palette_file_offset(p_config));
+	game.m_sprite_meta.initialize(p_config, game.m_rom_data);
 
 	ROM_Manager rom_manager;
 	game.m_sprite_gfx_manager.load_rom(p_config, game.m_rom_data, rom_manager);
@@ -852,11 +853,14 @@ std::vector<byte> fe::game::patch_rom(
 		general_hack_ranges[15] = std::make_pair(bank15_res.free_range_cpu_start, bank15_res.free_range_cpu_end);
 	}
 
-	// sprite metadata
+	// sprite metadata (sprite placements on screens)
 	if (p_options.sprite_data) {
 		l_bret = rom_manager.encode_sprite_data(p_config, p_game, x_rom);
 		l_good &= check_patched_size("Sprite Data", l_bret.first, l_bret.second, p_message);
 		l_dyndata_bytes += l_bret.first;
+
+		// static sprite metadata tables, hitboxes, sprite types and such
+		p_game.m_sprite_meta.patch_rom(p_config, x_rom);
 	}
 
 	// world metadata

@@ -3,11 +3,11 @@
 
 #include <vector>
 
-class fe::Config;
-
 using byte = unsigned char;
 
 namespace fe {
+
+	class Config;
 
 	struct CollisionShape {
 		byte w, h;

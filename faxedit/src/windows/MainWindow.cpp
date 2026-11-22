@@ -892,6 +892,7 @@ void fe::MainWindow::cache_config_variables(void) {
 	m_cache.m_labels_music = m_config.bmap(c::ID_MUSIC_LABELS);
 	m_cache.m_labels_buildings = m_config.bmap(c::ID_BUILDING_LABELS);
 	m_cache.m_labels_tilesets = m_config.bmap(c::ID_TILESET_LABELS);
+	m_cache.m_labels_sprite_types = m_config.bmap(c::ID_SPRITE_TYPE_LABELS);
 
 	// constants
 	m_cache.m_sprite_count = m_config.constant(c::ID_SPRITE_COUNT);

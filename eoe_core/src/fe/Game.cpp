@@ -156,6 +156,8 @@ fe::Game::Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data) 
 	m_gfx_manager.initialize(p_config, p_rom_data, get_palette_file_offset(p_config));
 	// initialize cinematic data
 	cinematic.parse_rom(p_config, p_rom_data);
+	// initialize sprite metadata
+	m_sprite_meta.initialize(p_config, p_rom_data);
 }
 
 // return the 60 shared HUD CHR tiles (PPU indices 0-59)

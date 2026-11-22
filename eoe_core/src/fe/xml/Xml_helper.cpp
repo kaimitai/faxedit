@@ -219,6 +219,44 @@ fe::Game fe::xml::load_game_xml(const pugi::xml_document& l_doc) {
 		}
 	}
 
+	// if collision boxes are not defined, extract from ROM post-import
+	auto n_coll_boxes{ n_root.child(c::TAG_COLLISION_BOXES) };
+	if (n_coll_boxes) {
+		auto& boxes{ l_game.m_sprite_meta.m_collision_boxes };
+
+		for (auto n_box{ n_coll_boxes.child(c::TAG_COLLISION_BOX) }; n_box;
+			n_box = n_box.next_sibling(c::TAG_COLLISION_BOX)) {
+			boxes.push_back(fe::CollisionShape{
+				.w = parse_numeric_byte(n_box.attribute(c::ATTR_W).as_string()),
+				.h = parse_numeric_byte(n_box.attribute(c::ATTR_H).as_string())
+				});
+		}
+	}
+
+	// if sprite metadata is not defined, extract from ROM post-import
+	auto n_sprite_metas{ n_root.child(c::TAG_SPRITE_METADATA) };
+	if (n_sprite_metas) {
+		auto& sprite_metas{ l_game.m_sprite_meta.m_sprite_meta };
+
+		for (auto n_sprite_meta{ n_sprite_metas.child(c::TAG_SPRITE) }; n_sprite_meta;
+			n_sprite_meta = n_sprite_meta.next_sibling(c::TAG_SPRITE)) {
+			sprite_metas.push_back(fe::SpriteMetadata{
+				.m_interaction_box {
+					.x_offset = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_INTERACT_X).as_string()),
+					.y_offset = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_INTERACT_Y).as_string()),
+					.w = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_INTERACT_W).as_string()),
+					.h = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_INTERACT_H).as_string())
+				},
+				.m_weapon_box {
+					.w = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_WEAPON_BOX_W).as_string()),
+					.h = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_WEAPON_BOX_H).as_string())
+				},
+				.m_collision_box_index = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_COLLISION_INDEX).as_string()),
+				.m_type = parse_numeric_byte(n_sprite_meta.attribute(c::ATTR_TYPE).as_string())
+				});
+		}
+	}
+
 	// if palette to music map is not defined, extract from ROM post-import
 	auto n_pal2mus{ n_root.child(c::TAG_PALETTE_TO_MUSIC) };
 	if (n_pal2mus) {
@@ -809,6 +847,51 @@ pugi::xml_document fe::xml::save_game_xml(const fe::Game& p_game) {
 		n_scene.append_attribute(c::ATTR_Y);
 		n_scene.attribute(c::ATTR_Y).set_value(
 			byte_to_hex(p_game.m_building_scenes[i].m_y));
+	}
+
+	// collision boxes and sprite metadata
+	auto n_coll_boxes{ n_metadata.append_child(c::TAG_COLLISION_BOXES) };
+
+	const auto& collboxes{ p_game.m_sprite_meta.m_collision_boxes };
+	for (std::size_t i{ 0 }; i < collboxes.size(); ++i) {
+		auto n_coll_box{ n_coll_boxes.append_child(c::TAG_COLLISION_BOX) };
+		n_coll_box.append_attribute(c::ATTR_NO);
+		n_coll_box.attribute(c::ATTR_NO).set_value(i);
+
+		n_coll_box.append_attribute(c::ATTR_W);
+		n_coll_box.attribute(c::ATTR_W).set_value(collboxes[i].w);
+
+		n_coll_box.append_attribute(c::ATTR_H);
+		n_coll_box.attribute(c::ATTR_H).set_value(collboxes[i].h);
+	}
+
+	auto n_sprite_metas{ n_metadata.append_child(c::TAG_SPRITE_METADATA) };
+
+	const auto& spr_metas{ p_game.m_sprite_meta.m_sprite_meta };
+	for (std::size_t i{ 0 }; i < spr_metas.size(); ++i) {
+		auto n_sprite_meta{ n_sprite_metas.append_child(c::TAG_SPRITE) };
+		n_sprite_meta.append_attribute(c::ATTR_NO);
+		n_sprite_meta.attribute(c::ATTR_NO).set_value(i);
+
+		n_sprite_meta.append_attribute(c::ATTR_TYPE);
+		n_sprite_meta.attribute(c::ATTR_TYPE).set_value(spr_metas[i].m_type);
+
+		n_sprite_meta.append_attribute(c::ATTR_COLLISION_INDEX);
+		n_sprite_meta.attribute(c::ATTR_COLLISION_INDEX).set_value(spr_metas[i].m_collision_box_index);
+
+		n_sprite_meta.append_attribute(c::ATTR_INTERACT_X);
+		n_sprite_meta.attribute(c::ATTR_INTERACT_X).set_value(spr_metas[i].m_interaction_box.x_offset);
+		n_sprite_meta.append_attribute(c::ATTR_INTERACT_Y);
+		n_sprite_meta.attribute(c::ATTR_INTERACT_Y).set_value(spr_metas[i].m_interaction_box.y_offset);
+		n_sprite_meta.append_attribute(c::ATTR_INTERACT_W);
+		n_sprite_meta.attribute(c::ATTR_INTERACT_W).set_value(spr_metas[i].m_interaction_box.w);
+		n_sprite_meta.append_attribute(c::ATTR_INTERACT_H);
+		n_sprite_meta.attribute(c::ATTR_INTERACT_H).set_value(spr_metas[i].m_interaction_box.h);
+
+		n_sprite_meta.append_attribute(c::ATTR_WEAPON_BOX_W);
+		n_sprite_meta.attribute(c::ATTR_WEAPON_BOX_W).set_value(spr_metas[i].m_weapon_box.w);
+		n_sprite_meta.append_attribute(c::ATTR_WEAPON_BOX_H);
+		n_sprite_meta.attribute(c::ATTR_WEAPON_BOX_H).set_value(spr_metas[i].m_weapon_box.h);
 	}
 
 	// palette to music slots

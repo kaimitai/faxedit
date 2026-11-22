@@ -13,6 +13,7 @@
 #include "Scene.h"
 #include "PaletteMusicMap.h"
 #include "GfxTilemapManager.h"
+#include "SpriteMetadataManager.h"
 #include "./sprite/SpriteGfxManager.h"
 #include "Cinematic.h"
 
@@ -107,6 +108,7 @@ namespace fe {
 		fe::GfxTilemapManager m_gfx_manager;
 		fe::SpriteGfxManager m_sprite_gfx_manager;
 		fe::Cinematic cinematic;
+		fe::SpriteMetadataManager m_sprite_meta;
 
 		Game(const fe::Config& p_config, const std::vector<byte>& p_rom_data);
 		Game(void);

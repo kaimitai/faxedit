@@ -99,6 +99,17 @@ namespace fe {
 			constexpr char TAG_NPC_BUNDLES[]{ "building_params" };
 			constexpr char TAG_NPC_BUNDLE[]{ "building_param" };
 
+			constexpr char TAG_COLLISION_BOXES[]{ "collision_boxes" };
+			constexpr char TAG_COLLISION_BOX[]{ "collision_box" };
+			constexpr char TAG_SPRITE_METADATA[]{ "sprite_metadata" };
+			constexpr char ATTR_INTERACT_X[]{ "interact_x" };
+			constexpr char ATTR_INTERACT_Y[]{ "interact_y" };
+			constexpr char ATTR_INTERACT_W[]{ "interact_w" };
+			constexpr char ATTR_INTERACT_H[]{ "interact_h" };
+			constexpr char ATTR_COLLISION_INDEX[]{ "collision_box_index" };
+			constexpr char ATTR_WEAPON_BOX_W[]{ "weapon_box_w" };
+			constexpr char ATTR_WEAPON_BOX_H[]{ "weapon_box_h" };
+
 			constexpr char TAG_PALETTE_TO_MUSIC[]{ "palette_to_music" };
 			constexpr char TAG_SLOT[]{ "slot" };
 
@@ -184,6 +195,8 @@ namespace fe {
 			constexpr char ATTR_TEXT_ID[]{ "script_index" };
 			constexpr char ATTR_X[]{ "x" };
 			constexpr char ATTR_Y[]{ "y" };
+			constexpr char ATTR_W[]{ "w" };
+			constexpr char ATTR_H[]{ "h" };
 			constexpr char ATTR_DEST_X[]{ "destination_x" };
 			constexpr char ATTR_DEST_Y[]{ "destination_y" };
 			constexpr char ATTR_DEST_SCREEN_NO[]{ "destination_screen_no" };
