@@ -89,6 +89,7 @@ namespace fh {
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Pressed{ 0xc484 };
 		constexpr word GameLoop_CheckUseCurrentItem_LDA_Item{ 0xc48b };
 		constexpr word Player_ClearSelectedItem{ 0xc4bf };
+		constexpr word UseElixir{ 0xc4ca };
 		constexpr word UseItem_JumpTable{ 0xc49d };
 		constexpr word UseRedPotion_ClearItem{ 0xc53b };
 		constexpr word UseWingBoots_ClearItem{ 0xc581 };

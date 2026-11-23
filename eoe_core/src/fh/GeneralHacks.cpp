@@ -865,6 +865,7 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	const bool preserve_hourglass{ p_hack.bool_or("preserve_hourglass", false) };
 	const bool preserve_wingboots{ p_hack.bool_or("preserve_wingboots", false) };
 	const bool preserve_red_potion{ p_hack.bool_or("preserve_red_potion", false) };
+	const bool preserve_elixir{ p_hack.bool_or("preserve_elixir", false) };
 
 	klib::Asm6502 code;
 
@@ -912,6 +913,10 @@ word fh::HackManager::install_Misc(const fe::Config& p_config, std::vector<byte>
 	if (preserve_red_potion) {
 		code.nop(3);
 		code.apply_hack_and_clear(p_rom, 15, ROM::UseRedPotion_ClearItem);
+	}
+	if (preserve_elixir) {
+		code.nop(8);
+		code.apply_hack_and_clear(p_rom, 15, ROM::UseElixir);
 	}
 
 	return cpu_addr;

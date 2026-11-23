@@ -290,7 +290,7 @@ Another reason we need to know the fog world, is that the fog generating code is
 
 ## Sprite Metadata
 
-The **Sprite Metadata** tab exposes several low-level properties that control how sprites behave and interact with the player.
+The **Sprites** tab exposes several low-level properties that control how sprites behave and interact with the player.
 
 ![Sprite metadata](./img/win_metadata_game_sprites.png)
 

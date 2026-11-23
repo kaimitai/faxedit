@@ -1106,6 +1106,7 @@ A collection of small gameplay and quality-of-life tweaks that do not warrant th
 | `preserve_hourglass` | `false` | Keep the Hour Glass after use |
 | `preserve_wingboots` | `false` | Keep the Wing Boots after use |
 | `preserve_red_potion` | `false` | Keep the Red Potion after use |
+| `preserve_elixir` | `false` | Keep the Elixir after (automatic) use |
 
 Any parameter may be omitted to leave the corresponding game behavior unchanged.
 
