@@ -1420,7 +1420,7 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 
 # Changelog
 
-### 2026-11-xx: version beta-9.5 - "Post-Mortem"
+### 2026-11-23: version beta-9.5 - "Post-Mortem"
 
 **Sprite Metadata Editor** (`Game Metadata > Sprites`)
 - Added per-sprite editing of sprite types, collision box assignments, weapon hitboxes and interaction boxes.
