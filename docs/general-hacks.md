@@ -752,33 +752,23 @@ Items from index 0x16 and up can be stored and displayed in the inventory, but h
 
 Makes enemies and bosses execute assigned iScripts when killed.
 
-When an enemy or boss is defeated by a weapon or magic, the iScript assigned to that entity is executed before the game's normal death handling continues.
+When an enemy or boss is defeated by a weapon or magic, the iScript assigned to that sprite is executed before the game's normal death handling continues.
 
 This can be used to implement scripted events triggered by defeating enemies.
 
 | parameter | default | meaning |
 | --------- | ------- | ------- |
-| `enemies` | `true` | Execute scripts when normal enemies are killed |
-| `bosses` | `true` | Execute scripts when bosses are killed |
 | `sram` | `false` | Add SRAM backing |
-
-For example, this enables scripts for both enemies and bosses:
 
 ```text
 EnemyScripts
-```
-
-To enable scripts only for bosses:
-
-```text
-EnemyScripts enemies=false
 ```
 
 The hack does not assign scripts to sprites. It uses the script IDs already configured for them. (assign these in the Echoes of Eolis GUI)
 
 If no script is assigned to a sprite, no script is invoked when that sprite is killed of course.
 
-Scripts execute before the normal death routines, so the game will still perform its usual enemy or boss death handling after the script returns. Scripts that change live sprite data should be used with care.
+Scripts execute at the moment the sprite dies, before it is replaced with its "explosion". The game will perform its usual enemy or boss death handling after the script returns. Scripts that change live sprite data should be used with care.
 
 ---
 

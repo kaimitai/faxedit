@@ -589,65 +589,40 @@ word fh::HackManager::install_OintmentFix(const fe::Config& p_config, std::vecto
 
 word fh::HackManager::install_EnemyScripts(const fe::Config& p_config, std::vector<byte>& p_rom, word cpu_addr,
 	const fh::GeneralHack& p_hack) {
-	const bool enemies{ p_hack.bool_or("enemies", true) };
-	const bool bosses{ p_hack.bool_or("bosses", true) };
 	const bool sram{ p_hack.bool_or("sram", false) };
 
 	const word install_addr{ sram ? sram_hack_addr() : cpu_addr };
 
 	klib::Asm6502 code;
 
-	code.label("@common");
-	// preserve X (current enemy index)
-	code.txa();
-	code.pha();
 	code.lda_abs_x(RAM::EntityScriptRoot);
 	code.cmp_imm(0xff);
-	code.beq("@return");
-	// the enemy had a script assigned - run it
+	code.beq("@continue");
+
+	// the enemy had a script assigned - preserve X and run it
+	code.txa();
+	code.pha();
+
+	code.lda_abs_x(RAM::EntityScriptRoot);
 	code.jsr(cfg_word(p_config, c::ID_ROM_VANILLA_FAR_CALL));
 	code.db(12);
 	code.dw(ROM::IScripts_Begin - 1);
-	code.label("@return");
+
 	// restore X
 	code.pla();
 	code.tax();
-	code.rts();
 
-	code.label("@enemy_weapon");
-	code.jsr("@common");
-	code.jmp(ROM::Sprite_ShowEnemyDeathByWeapon);
-
-	code.label("@enemy_magic");
-	code.jsr("@common");
-	code.jmp(ROM::Sprite_ShowNormalEnemyDeathByMagic);
-
-	code.label("@boss");
-	code.jsr("@common");
-	code.jmp(ROM::Sprite_ShowBossDeath);
-
-	const word hook_enemy_weapon{ code.label_addr("@enemy_weapon", install_addr) };
-	const word hook_enemy_magic{ code.label_addr("@enemy_magic", install_addr) };
-	const word hook_boss{ code.label_addr("@boss", install_addr) };
+	code.label("@continue");
+	code.jmp(ROM::Sprite_SetBehaviorNotReady);
 
 	if (sram)
 		install_sram_hack(p_rom, code);
 	else
 		cpu_addr = code.apply_hack_and_clear_get_next_cpu_addr(p_rom, 14, cpu_addr);
 
-	// install hooks
-	if (enemies) {
-		code.jmp(hook_enemy_weapon);
-		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithWeapon_JMP_EnemyDeath);
-		code.jmp(hook_enemy_magic);
-		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithMagic_JMP_EnemyDeath);
-	}
-	if (bosses) {
-		code.jmp(hook_boss);
-		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithWeapon_JMP_BossDeath);
-		code.jmp(hook_boss);
-		code.apply_hack_and_clear(p_rom, 14, ROM::HitEnemyWithMagic_JMP_BossDeath);
-	}
+	// install hook
+	code.jmp(install_addr);
+	code.apply_hack_and_clear(p_rom, 14, ROM::Sprite_SetDeathState_JMP_Sprite_SetBehaviorNotReady);
 
 	return cpu_addr;
 }

@@ -160,7 +160,7 @@ namespace {
 		{ fh::GeneralHackLib::StageDoorDirection, { "left", "right", "start_left", "bank", "addr", "sram" }},
 		{ fh::GeneralHackLib::PushBlockScript, { "frames", "script", "sound", "sound_id", "sound_frames" }},
 		{ fh::GeneralHackLib::ExtraTitleScreenChr, { "file", "data", "sram" }},
-		{ fh::GeneralHackLib::EnemyScripts, { "bosses", "enemies", "sram" }},
+		{ fh::GeneralHackLib::EnemyScripts, { "sram" }},
 	};
 
 	void validate_general_hack_params(fh::GeneralHackLib p_type,
