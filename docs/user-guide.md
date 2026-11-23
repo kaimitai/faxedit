@@ -31,6 +31,7 @@ The data we can edit forms a data hierarchy, from the top-level game metadata do
   - [Jump-On Animation](#jump-on-animation)
   - [Palette to Music map](#palette-to-music-map)
   - [Fog metadata](#fog-metadata)
+  - [Sprite metadata](#sprite-metadata)
 - [World Metadata](#world-metadata)
   - [Metatile Definitions](#metatile-definitions)
   - [Scenes](#scenes)
@@ -286,6 +287,38 @@ The reason is that for the fog to be in effect, a certain combination of world n
 ![Fog](./img/win_metadata_game_fog.png)
 
 Another reason we need to know the fog world, is that the fog generating code is using certain chr-tiles of that world's tileset to generate the fog effect. When importing bmp we have to keep these tiles fixed, or else we will ruin the fog graphics.
+
+## Sprite Metadata
+
+The **Sprite Metadata** tab exposes several low-level properties that control how sprites behave and interact with the player.
+
+![Sprite metadata](./img/win_metadata_game_sprites.png)
+
+#### Sprite Type
+
+The type controls the interaction logic of a sprite. You can use this to turn enemies into NPCs and such.
+
+#### Collision Box Index
+
+Selects one of the shared collision box definitions used by the game for movement and magic-related collision checks. Multiple sprites may reference the same collision box.
+
+#### Weapon Hitbox
+
+Controls the area used when checking whether the player's weapon can hit the sprite.
+
+- **Width** - Horizontal hit range
+- **Height** - Vertical hit range
+
+#### Interaction Box
+
+Controls the rectangle used when the game checks for direct interaction between the player and the sprite, including touching enemies, NPC interaction, item collection, and similar contact-based events.
+
+- **x-offset** - Horizontal offset from the sprite's position
+- **y-offset** - Vertical offset from the sprite's position
+- **Width** - Interaction box width in pixels
+- **Height** - Interaction box height in pixels
+
+Changes to these values can significantly affect gameplay behavior. Large interaction boxes may cause sprites to be triggered from farther away, while smaller boxes may make them difficult or impossible to interact with.
 
 <hr>
 
@@ -1386,6 +1419,35 @@ This door hack can also be applied via the GUI for non-randomizer ROMs, giving m
 <hr>
 
 # Changelog
+
+### 2026-11-xx: version beta-9.5 - "Post-Mortem"
+
+**Sprite Metadata Editor** (`Game Metadata > Sprites`)
+- Added per-sprite editing of sprite types, collision box assignments, weapon hitboxes and interaction boxes.
+
+**Graphics and Fonts**
+- HUD graphics and 1 bit per pixel script fonts are now stored in the project XML.
+- Added CHR import/export support for these CHR-banks under `Bg Gfx > Bg CHR`.
+
+**New and Updated General Hacks**
+- `EnemyScripts`: Allows enemies and bosses to execute iScripts when defeated.
+- `ExtraTitleScreenChr`: Upload up to five custom CHR tiles for use on the title screen, either from a file or inline data.
+- `ItemScripts`: Added option `clear=false`, allowing the item-use scripts themselves to decide if and when an item should be consumed.
+- `Misc`: Added options for keeping vanilla items after use, configuring intro footstep sounds and fixing brief intro music playback when SRAM saves are enabled.
+- `BugFixes`: Added an option to remove the stray pixel from the HUD digit `5`.
+
+**New Managed Hacks** (`Settings > Advanced`)
+- **Expanded Palettes**: Expands the palette pool from 31 to 256 palettes.
+- **Expanded Cinematic CHR**: Adds separate intro and outro cinematic CHR banks in expanded ROMs, quadrupling available cinematic background graphics space.
+
+**New Script opcodes**
+- Added `ShowItem`, `GetItemSilent` and `ClearSelectedItem` opcodes.
+- Added `AtlasDevShowMessageTimed`, a message command that waits for a configurable number of frames instead of player input.
+- Added `AtlasDevItemBonus`, allowing equipment to grant attack and defense bonuses.
+- Added `AtlasDevLargeGolds` for larger gold rewards and costs.
+- Added `AtlasDevFlickerShare` to distribute sprite flicker among large enemies.
+
+---
 
 ### 2026-10-15: version beta-9.4 - "Bank Heist"
 

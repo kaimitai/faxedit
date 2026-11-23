@@ -49,6 +49,8 @@ mantra load.
 - [Weighted odds - common, uncommon, rare](#weighted-odds)
 - [A gambling den with a random payout](#random-payout)
 - [A chest that is sometimes a mimic](#mimic-chest)
+- [New usable items](#new-items)
+- [A reward for killing all enemies on a screen](#clear-all-enemies)
 
 <a name="give-item-once"></a>
 ### An NPC who gives an item once
@@ -941,3 +943,82 @@ Needs: `AtlasDevRandomVar`, `AtlasDevIfVarEqual`, `AtlasDevSpawnEntity`, `AtlasD
 | `2` | `maximum` | one mimic in three |
 | `$21` | `monster id` | who bites (SpawnEntity id) |
 | `$84` | `position` | packed YX spawn spot |
+
+### New items
+
+Three new items: An infinite use mana potion, an experience book and a crystal that teleports you to the last spawn point.
+
+Needs: `AtlasDevIfSelectedItem `, `GetXP`, `ClearSelectedItem`, `Respawn` - and the general hack `ItemScripts`
+
+We will add custom item-use logic for items Crystal (item 11), Black Potion (item 17) and Book (item 14) into one script with index 152. We could assign one script for each item, but we can also branch on selected item within one single script.
+
+Since we want to make the mana potion infinite use, we need to turn off automatic item consumption by setting hack parameter `clear=false`
+
+To make this assignment, we need the following entry under `general_hacks` in the override xml:
+
+```xml
+    ItemScripts data=11:152+17:152+14:152 clear=false
+```
+
+Then script 152 can be implemented as such:
+
+```asm
+.entrypoint 152
+.textbox GENERIC
+  AtlasDevIfSelectedItem UNUSED_BOOK @book
+  AtlasDevIfSelectedItem ITEM_POISON @black_potion
+  AtlasDevIfSelectedItem UNUSED_CRYSTAL @crystal
+  End
+  
+@book:
+  ClearSelectedItem ; consume the book
+  GetXP 100
+  Msg "Got 100 XP!"
+  End
+
+@black_potion:
+  Msg "Using Mana<n>Potion!"
+  GetMana 80
+  End
+  
+@crystal:
+  ClearSelectedItem ; consume the crystal
+  Respawn
+  End ; can be omitted since Respawn exits the script engine
+```
+
+<a name="clear-all-enemies"></a>
+### A reward for killing all enemies on a screen
+
+When all enemies on a screen are killed, the hero gets the Giant Blade.
+
+Needs: `AtlasDevIfEntityCountAtLeast`, `AtlasDevOpenTextbox` - and the general hacks `EnemyScripts` and `AtlasDevPreventTextbox`
+
+In the Echoes of Eolis GUI, we assign the script with index 152 to all enemies on a screen.
+
+To make it possible to prevent textboxes when scripts run, and to trigger scripts to run on enemy deaths, we need the following entries under `general_hacks` in the override xml:
+
+```xml
+    EnemyScripts
+    AtlasDevPreventTextbox
+```
+
+Then we create script with index 152, which will be called whenever an enemy connected to script 152 is killed. We need to prevent the textbox from showing until the last enemy is killed. 
+
+```asm
+.entrypoint 152
+.textbox $7f ; hidden textbox, enabled by hack AtlasDevPreventTextbox
+  IfItem WEAPON_GIANT_BLADE @done ; giant blade already owned, exit
+  AtlasDevIfEntityCountAtLeast 1 @done ; there is at least 1 sprite left, exit
+
+  AtlasDevShowTextBox ; turn the textbox back on
+  Msg "All enemies<n>killed. Here is<n>a reward."
+  GetItem WEAPON_GIANT_BLADE
+
+@done:
+  End
+```
+
+This approach can also be used to invoke other kinds of scripts when enemies are killed; like dynamic tilemap changes, open doors via general hack `FlagDoorRequirements`, setting and clearing flags and such.
+
+It is not required to use `AtlasDevShowTextBox` at all in the script like we did in this example, the entire script can be silent/hidden even when it triggers as long as it ends without requiring player input.

@@ -830,7 +830,7 @@
 			<entry byte="$63" str="Dungeon Spring" />
 			<entry byte="$64" str="Boss Death" />
 		</byte_to_string_map>
-		<!-- labels for sprites -->
+		<!-- labels for sprite types -->
 		<byte_to_string_map name="sprite_type_labels">
 			<entry byte="$00" str="Enemy" />
 			<entry byte="$01" str="Drop" />
