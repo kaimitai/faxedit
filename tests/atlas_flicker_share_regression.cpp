@@ -20,7 +20,7 @@
 // overflowed. bank 14 and the sram code area both run.
 namespace {
 	constexpr word ORG{ 0xbdb5 }, LOOP{ 0x800f }, DRAW{ 0x8bd2 }, SLOT{ 0x0378 }, STATE{ 0x04ff };
-	constexpr byte OVERFLOW{ 0x39 };
+	constexpr byte OVERFLOW_COUNT{ 0x39 };
 	constexpr std::size_t ROM_SIZE{ 0x40010 }, BUDGET{ 64 };
 	// $800f-$804d as in every retail rom
 	const std::vector<byte> LOOP_ORIG{
@@ -55,7 +55,7 @@ namespace {
 			const unsigned k{ m[SLOT] };
 			const unsigned got{ std::min(demand[k], left) };
 			drawn[k] = got; left -= got; order.push_back(k);
-			for (unsigned i{ got }; i < demand[k]; ++i) store(OVERFLOW, static_cast<byte>(m[OVERFLOW] + 1));
+			for (unsigned i{ got }; i < demand[k]; ++i) store(OVERFLOW_COUNT, static_cast<byte>(m[OVERFLOW_COUNT] + 1));
 		}
 
 		void step() {
@@ -97,7 +97,7 @@ namespace {
 		// one entity pass, called the way $8000 falls into it; $39 and the
 		// sprite count start at zero every frame
 		void pass() {
-			m[OVERFLOW] = 0; left = BUDGET; order.clear(); drawn = {};
+			m[OVERFLOW_COUNT] = 0; left = BUDGET; order.clear(); drawn = {};
 			for (unsigned k{ 0 }; k < 8; ++k) m[0x02cc + k] = demand[k] == 0 ? 0xff : 0x33;
 			m[0x0426] = 1;  // straight to the draw
 			store(static_cast<word>(0x100 | sp--), 0xff); store(static_cast<word>(0x100 | sp--), 0xfe);
@@ -182,7 +182,7 @@ namespace {
 				for (unsigned d : crowd) demand += d;
 				overflowed = demand > BUDGET;
 				for (word w : c.writes)
-					require(w == STATE || w == SLOT || w == OVERFLOW || w == 0x33 || (w >= 0x100 && w < 0x200),
+					require(w == STATE || w == SLOT || w == OVERFLOW_COUNT || w == 0x33 || (w >= 0x100 && w < 0x200),
 						std::format("{}: wrote ${:04x}", what, w));
 				require((c.m[STATE] & 0x7e) == 0, what + ": only bits 7 and 0 of the state are used");
 			}
